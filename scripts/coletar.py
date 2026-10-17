@@ -15,6 +15,7 @@ import argparse
 import datetime as dt
 import json
 import os
+import re
 import sys
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
@@ -27,6 +28,7 @@ API = os.environ.get("CAMARA_API", "https://dadosabertos.camara.leg.br/api/v2")
 RAIZ = Path(__file__).resolve().parent.parent
 DADOS = RAIZ / "dados"
 INICIO_LEGISLATURA = "2023-02-01"  # 57ª legislatura
+TRABALHADORES_SENADO = 2  # o Senado responde 503 quando apertado
 TRABALHADORES = 6  # requisições em paralelo; seja gentil com a API pública
 
 
@@ -373,56 +375,98 @@ def resultado_senado(texto: str | None, sim: int, nao: int) -> int | None:
     return None
 
 
+def pegar(d, *nomes):
+    """Valor da primeira chave existente, sem diferenciar maiúsculas: a API do Senado
+    mistura camelCase e PascalCase conforme o endpoint."""
+    if not isinstance(d, dict):
+        return None
+    baixo = {k.lower(): v for k, v in d.items()}
+    for n in nomes:
+        v = baixo.get(n.lower())
+        if v not in (None, ""):
+            return v
+    return None
+
+
+def normalizar_votacao_senado(v: dict) -> dict | None:
+    votos_brutos = pegar(v, "votos")
+    if isinstance(votos_brutos, dict):  # {"VotoParlamentar": [...]}
+        votos_brutos = next(iter(votos_brutos.values()), [])
+    votos = []
+    for x in como_lista(votos_brutos):
+        cod = pegar(x, "codigoParlamentar")
+        if cod is None and isinstance(pegar(x, "parlamentar"), dict):
+            cod = pegar(pegar(x, "parlamentar"), "codigoParlamentar")
+        if cod is None:
+            continue
+        votos.append([str(cod), tipo_voto_senado(pegar(x, "siglaVotoParlamentar", "siglaVoto", "voto"),
+                                                 pegar(x, "descricaoVotoParlamentar", "descricaoVoto", "voto"))])
+    if not votos:  # votação simbólica ou secreta: não há voto individual
+        return None
+    sessao = pegar(v, "sessaoPlenaria") or {}
+    data = str(pegar(v, "dataSessao", "data") or pegar(sessao, "dataSessao") or "")[:10]
+    if not data:
+        return None
+    if re.fullmatch(r"\d{8}", data):
+        data = f"{data[:4]}-{data[4:6]}-{data[6:]}"
+    sim = sum(1 for _, t in votos if t == "sim")
+    nao = sum(1 for _, t in votos if t == "nao")
+    sigla, numero, ano = pegar(v, "siglaMateria"), pegar(v, "numeroMateria"), pegar(v, "anoMateria")
+    ident = " ".join(x for x in (str(sigla or ""), f"{numero}/{ano}" if numero else "") if x) or pegar(v, "identificacao")
+    resultado = pegar(v, "resultadoVotacao", "resultado")
+    vid = str(pegar(v, "codigoSessaoVotacao", "codigoVotacao") or f"{pegar(v, 'codigoSessao')}-{pegar(v, 'sequencialSessao')}")
+    return {
+        "id": vid, "data": data, "hora": str(pegar(v, "horaInicio", "hora") or "")[:5] or None,
+        "descricao": str(pegar(v, "descricaoVotacao", "descricao") or "").strip(),
+        "proposicao": ident or None, "propId": pegar(v, "codigoMateria"),
+        "ementa": str(pegar(v, "ementa", "ementaMateria") or "").strip() or None,
+        "aprovada": resultado_senado(resultado, sim, nao), "resultadoTexto": resultado,
+        "votos": votos,
+    }
+
+
 def coletar_votacoes_senado() -> None:
     """Votações nominais do Plenário do Senado, com o voto de cada senador.
-    Um arquivo por ano em dados/senado_votacoes/ (vai para o git)."""
+    Um arquivo por ano em dados/senado_votacoes/ (vai para o git).
+    Não achei a documentação oficial para consultar daqui, então tenta mais de um
+    endpoint e deixa no log o formato da resposta para facilitar o ajuste."""
     pasta = DADOS / "senado_votacoes"
+    pasta.mkdir(parents=True, exist_ok=True)
     hoje = dt.date.today()
-    ultima = None
-    for arq in pasta.glob("*.json"):
-        for v in ler(arq, {}).values():
-            d = dt.date.fromisoformat(v["data"])
-            ultima = d if ultima is None or d > ultima else ultima
-    inicio = (ultima - dt.timedelta(days=5)) if ultima else dt.date.fromisoformat(INICIO_LEGISLATURA)
-    print(f"Votações do Senado de {inicio} a {hoje}")
-    por_ano: dict[str, dict] = {}
+    ultimo_ano = max((int(a.stem) for a in pasta.glob("*.json")), default=int(INICIO_LEGISLATURA[:4]))
     total = 0
-    atual = inicio
-    while atual <= hoje:
-        fim = min(atual + dt.timedelta(days=89), hoje, dt.date(atual.year, 12, 31))
-        try:
-            dados = get_senado("/votacao", dataInicio=atual.strftime("%Y%m%d"), dataFim=fim.strftime("%Y%m%d"))
-        except Exception as e:
-            avisar(f"votações do Senado de {atual} a {fim}: {e}")
-            atual = fim + dt.timedelta(days=1)
+    for ano in range(ultimo_ano, hoje.year + 1):
+        tentativas = [
+            ("nominais do ano", lambda ano=ano: get_senado(f"/plenario/votacao/nominal/{ano}")),
+            ("busca por datas", lambda ano=ano: get_senado("/votacao", dataInicio=f"{ano}-01-01",
+                                                          dataFim=min(dt.date(ano, 12, 31), hoje).isoformat())),
+        ]
+        achadas, erros = [], []
+        for nome, buscar in tentativas:
+            try:
+                dados = buscar()
+            except Exception as e:
+                erros.append(f"{nome}: {str(e)[:160]}")
+                continue
+            lista = dados
+            if isinstance(dados, dict):  # algumas versões embrulham a lista
+                lista = achar(dados, "Votacao") or achar(dados, "votacoes") or []
+            lista = como_lista(lista)
+            achadas = [n for n in (normalizar_votacao_senado(v) for v in lista if isinstance(v, dict)) if n]
+            if achadas:
+                break
+            amostra = lista[0] if lista else dados
+            erros.append(f"{nome}: {len(lista)} itens, nenhum com votos individuais; chaves: {sorted(amostra)[:25] if isinstance(amostra, dict) else type(amostra).__name__}")
+        if not achadas:
+            avisar(f"votações do Senado em {ano}: " + " | ".join(erros))
             continue
-        if isinstance(dados, dict):  # algumas versões embrulham a lista
-            dados = achar(dados, "votacoes") or achar(dados, "Votacao") or []
-        for v in como_lista(dados):
-            votos = [[str(x.get("codigoParlamentar")), tipo_voto_senado(x.get("siglaVotoParlamentar") or x.get("siglaVoto"), x.get("descricaoVotoParlamentar") or x.get("descricaoVoto"))]
-                     for x in como_lista(v.get("votos")) if x.get("codigoParlamentar")]
-            if not votos:  # votação simbólica ou secreta: não há voto individual
-                continue
-            data = str(v.get("dataSessao") or "")[:10]
-            if not data:
-                continue
-            sim = sum(1 for _, t in votos if t == "sim")
-            nao = sum(1 for _, t in votos if t == "nao")
-            ident = " ".join(str(x) for x in (v.get("siglaMateria"), v.get("numeroMateria") and f"{v.get('numeroMateria')}/{v.get('anoMateria')}") if x) or v.get("identificacao")
-            vid = str(v.get("codigoSessaoVotacao") or f"{v.get('codigoSessao')}-{v.get('sequencialSessao')}")
-            por_ano.setdefault(data[:4], ler(pasta / f"{data[:4]}.json", {}))[vid] = {
-                "id": vid, "data": data, "hora": str(v.get("horaInicio") or "")[:5] or None,
-                "descricao": (v.get("descricaoVotacao") or "").strip(),
-                "proposicao": ident or None, "propId": v.get("codigoMateria"),
-                "ementa": (v.get("ementa") or "").strip() or None,
-                "aprovada": resultado_senado(v.get("resultadoVotacao"), sim, nao),
-                "resultadoTexto": v.get("resultadoVotacao"),
-                "votos": votos,
-            }
-            total += 1
-        atual = fim + dt.timedelta(days=1)
-    for ano, mapa in por_ano.items():
+        mapa = ler(pasta / f"{ano}.json", {})
+        for n in achadas:
+            if n["data"][:4] == str(ano):
+                mapa[n["id"]] = n
         salvar(pasta / f"{ano}.json", mapa)
+        total += len(achadas)
+        print(f"  Senado {ano}: {len(achadas)} votações nominais")
     print(f"Votações nominais do Senado coletadas: {total}")
 
 
@@ -445,10 +489,10 @@ def coletar_autorias_senado() -> None:
                           "ementa": (m.get("Ementa") or "").strip(),
                           "principal": a.get("IndicadorAutorPrincipal") == "Sim",
                           "ap": str(m.get("Data") or m.get("DataApresentacao") or "")[:10] or None})
-        return sid, sorted(itens, key=lambda i: (i["ano"], int(i["numero"] or 0)), reverse=True)
+        return sid, sorted(itens, key=lambda i: (i["ano"], int(re.sub(r"\D", "", str(i["numero"] or "")) or 0)), reverse=True)
 
     falhas = 0
-    with ThreadPoolExecutor(TRABALHADORES) as ex:
+    with ThreadPoolExecutor(TRABALHADORES_SENADO) as ex:
         for f in as_completed([ex.submit(buscar, str(s["id"])) for s in senadores]):
             try:
                 sid, itens = f.result()
@@ -485,7 +529,7 @@ def coletar_autorias_senado() -> None:
         }
 
     feitos = falhas = 0
-    with ThreadPoolExecutor(TRABALHADORES) as ex:
+    with ThreadPoolExecutor(TRABALHADORES_SENADO) as ex:
         for f in as_completed([ex.submit(detalhe, i) for i in fila]):
             try:
                 cod, info = f.result()

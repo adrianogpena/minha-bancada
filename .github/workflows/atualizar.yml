@@ -40,6 +40,10 @@ jobs:
       - name: Coletar eleitos do TSE (só baixa de novo o que mudou)
         run: python scripts/coletar_tse.py
 
+      - name: Coletar o que o Presidente enviou ao Congresso
+        run: python scripts/coletar_executivo.py
+        continue-on-error: true
+
       - name: Gerar arquivos do site
         run: python scripts/gerar.py
 
@@ -49,7 +53,7 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           # só adiciona o que existe; um caminho ausente (coleta que falhou) derrubaria o passo
-          for f in dados/votacoes dados/proposicoes dados/proposicoes_detalhe.json dados/senado_votacoes dados/senado_materias.json dados/tse; do
+          for f in dados/votacoes dados/proposicoes dados/proposicoes_detalhe.json dados/senado_votacoes dados/senado_materias.json dados/executivo.json dados/tse; do
             if [ -e "$f" ]; then git add "$f"; fi
           done
           git diff --cached --quiet || git commit -m "Dados atualizados em $(date -u +%Y-%m-%d)"

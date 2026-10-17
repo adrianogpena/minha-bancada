@@ -220,13 +220,25 @@ def janelas(inicio: dt.date, fim: dt.date):
 
 def coletar_votos(votacao: dict) -> dict:
     votos = get(f"/votacoes/{votacao['id']}/votos").get("dados", [])
+    proposicao, ementa = votacao.get("proposicaoObjeto"), None
+    if votos:  # só nas nominais: busca a proposição votada, que a lista nem sempre traz
+        try:
+            det = get(f"/votacoes/{votacao['id']}").get("dados", {}) or {}
+            afetadas = det.get("proposicoesAfetadas") or []
+            if afetadas:
+                p = afetadas[0]
+                proposicao = proposicao or f"{p.get('siglaTipo')} {p.get('numero')}/{p.get('ano')}"
+                ementa = (p.get("ementa") or "").strip() or None
+        except Exception as e:
+            avisar(f"detalhe da votação {votacao['id']}: {e}")
     return {
         "id": votacao["id"],
         "data": votacao.get("data") or (votacao.get("dataHoraRegistro") or "")[:10],
         "hora": (votacao.get("dataHoraRegistro") or "")[11:16],
         "orgao": votacao.get("siglaOrgao"),
         "descricao": (votacao.get("descricao") or "").strip(),
-        "proposicao": votacao.get("proposicaoObjeto"),
+        "proposicao": proposicao,
+        "ementa": ementa,
         "aprovada": votacao.get("aprovacao"),
         "votos": [[v["deputado_"]["id"], v.get("tipoVoto")]
                   for v in votos if v.get("deputado_")],
@@ -257,6 +269,15 @@ def coletar_votacoes(dias_iniciais: int) -> None:
         # por enquanto só o Plenário, onde todos os deputados votam
         encontradas += [v for v in lote if v.get("siglaOrgao") == "PLEN"]
     print(f"Votações no Plenário encontradas: {len(encontradas)}")
+    # votações antigas salvas antes de guardarmos a proposição votada: completa uma vez
+    novas = {v["id"] for v in encontradas}
+    for arq in arquivos:
+        for v in ler(arq, {}).values():
+            if v.get("votos") and "ementa" not in v and v["id"] not in novas:
+                encontradas.append({"id": v["id"], "data": v["data"],
+                                    "dataHoraRegistro": f"{v['data']}T{v.get('hora') or '00:00'}:00",
+                                    "siglaOrgao": v.get("orgao"), "descricao": v.get("descricao"),
+                                    "proposicaoObjeto": v.get("proposicao"), "aprovacao": v.get("aprovada")})
 
     por_ano: dict[str, dict] = {}
     with ThreadPoolExecutor(TRABALHADORES) as ex:

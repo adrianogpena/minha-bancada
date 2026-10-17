@@ -286,6 +286,7 @@ async function paginaVotacao() {
     <section class="abertura">
       <p>${data(v.data, true)}${v.hora ? `, às ${esc(v.hora)}` : ""}, no Plenário</p>
       <h1 style="max-width:none;font-size:clamp(28px,4.5vw,44px)">${esc(v.proposicao || "Votação no Plenário")}</h1>
+      ${v.ementa ? `<p class="texto-longo"><b>Sobre o quê:</b> ${esc(v.ementa)}</p>` : ""}
       <p class="texto-longo">${esc(v.descricao)}</p>
     </section>
     <section class="painel">

@@ -77,6 +77,7 @@ def main():
         resumo = {
             "id": v["id"], "data": v["data"], "hora": v.get("hora"),
             "descricao": v["descricao"], "proposicao": v.get("proposicao"),
+            "ementa": v.get("ementa"),
             "aprovada": v.get("aprovada"), "placar": dict(placar),
         }
         lista_votacoes.append(resumo)

@@ -1,0 +1,8 @@
+# gerados a cada execução; não precisam ficar no git
+site/dados/
+dados/deputados/
+dados/deputados.json
+dados/meta.json
+__pycache__/
+*.tmp
+.venv/

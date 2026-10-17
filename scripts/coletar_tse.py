@@ -40,7 +40,7 @@ COLUNAS = ["SQ_CANDIDATO", "NR_TURNO", "DS_CARGO", "DS_SIT_TOT_TURNO", "SG_UF", 
            "NR_CANDIDATO", "NM_CANDIDATO", "NM_URNA_CANDIDATO", "SG_PARTIDO", "SG_FEDERACAO",
            "NM_FEDERACAO", "DT_NASCIMENTO", "DS_GENERO", "DS_GRAU_INSTRUCAO", "DS_OCUPACAO",
            "DS_COR_RACA", "ST_REELEICAO", "NM_COLIGACAO", "CD_ELEICAO", "DS_SITUACAO_CANDIDATURA"]
-VERSAO = 2  # aumente quando mudar o processamento, para refazer os anos em cache
+VERSAO = 3  # aumente quando mudar o processamento, para refazer os anos em cache
 
 ELEITO = {"ELEITO", "ELEITO POR QP", "ELEITO POR MÉDIA", "ELEITO POR MEDIA"}
 SEGUNDO_TURNO = {"2º TURNO", "2O TURNO", "2° TURNO"}
@@ -153,12 +153,32 @@ def coletar_ano(ano: int) -> None:
         return None
 
     # diagnóstico: situações encontradas nos cargos majoritários
-    vistas = Counter((l["DS_CARGO"].strip().upper(), (l.get("DS_SIT_TOT_TURNO") or "").strip())
+    vistas = Counter((l["DS_CARGO"].strip().upper(), (l.get("DS_SIT_TOT_TURNO") or "").strip(),
+                      (l.get("DS_SITUACAO_CANDIDATURA") or "").strip())
                      for l in candidatos.values()
                      if l["DS_CARGO"].strip().upper() in ("PRESIDENTE", "GOVERNADOR"))
     print(f"  situações (presidente/governador): {dict(vistas)}")
     if os.environ.get("GITHUB_ACTIONS"):
         print(f"::notice::TSE {ano} situações: {dict(vistas)}"[:900])
+
+    # durante o 2º turno, o TSE deixa sem resultado (#NULO) os finalistas de
+    # presidente e governador; contamos como 2º turno quem está apto num lugar
+    # que ainda não tem eleito
+    if ano == ANO_EM_ANDAMENTO:
+        com_eleito = {(l["DS_CARGO"].strip().upper(), l["SG_UE"]) for l in candidatos.values()
+                      if situacao(l) == "eleito"}
+        for l in candidatos.values():
+            cargo = l["DS_CARGO"].strip().upper()
+            if (cargo in ("PRESIDENTE", "GOVERNADOR")
+                    and (l.get("DS_SIT_TOT_TURNO") or "").strip().upper().startswith("#NULO")
+                    and (l.get("DS_SITUACAO_CANDIDATURA") or "").strip().upper() == "APTO"
+                    and (cargo, l["SG_UE"]) not in com_eleito):
+                l["DS_SIT_TOT_TURNO"] = "2º TURNO"
+        finalistas = Counter(l["SG_UE"] for l in candidatos.values()
+                             if l["DS_CARGO"].strip().upper() in ("PRESIDENTE", "GOVERNADOR") and situacao(l) == "2turno")
+        estranhos = {ue: n for ue, n in finalistas.items() if n != 2}
+        if estranhos:
+            avisar(f"TSE {ano}: lugares com número de finalistas diferente de 2: {estranhos}")
 
     chapas = {}
     for l in candidatos.values():

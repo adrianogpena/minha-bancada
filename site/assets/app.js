@@ -595,6 +595,25 @@ function casaLegislativa(p) {
   return { quem: "", em: `na Assembleia Legislativa${p.uf ? ` (${UFS[p.uf] || p.uf})` : ""}`, link: ASSEMBLEIAS[p.uf] ? ["Site da Assembleia Legislativa", `https://www.${ASSEMBLEIAS[p.uf]}`] : null };
 }
 
+/* Presidente em exercício: projetos e medidas provisórias que enviou ao Congresso e o que aconteceu com cada um. */
+const TIPOS_EXECUTIVO = { PL: "Projeto de lei", PLP: "Projeto de lei complementar", PEC: "Proposta de emenda à Constituição", MPV: "Medida provisória" };
+function desfechoExecutivo(x) {
+  const s = (x.sit || "").toLowerCase();
+  if (x.veto === "total" || s.startsWith("vetad")) return { rotulo: "Vetado", classe: "v-nao" };
+  if (s.startsWith("transformad")) return x.veto === "parcial" ? { rotulo: "Sancionado, com vetos", classe: "v-sim" } : { rotulo: "Virou lei", classe: "v-sim" };
+  if (s.includes("aguardando sanção")) return { rotulo: "Aguardando sanção", classe: "v-outro" };
+  if (!x.sit && x.tipo === "MPV") return { rotulo: "Em vigor, no prazo do Congresso", classe: "v-outro" };
+  if (s.startsWith("perdeu a efic")) return { rotulo: "Perdeu a eficácia", classe: "v-nao" };
+  return { rotulo: x.sit || "Em tramitação", classe: "v-outro" };
+}
+const itemExecutivo = (x) => {
+  const d = desfechoExecutivo(x);
+  return `<li><span class="quando">${esc(TIPOS_EXECUTIVO[x.tipo] || x.tipo)} ${esc(x.numero)}/${esc(x.ano)} · enviado em ${esc(data(x.apres))}</span>
+    <span class="voto ${d.classe}">${esc(d.rotulo)}</span>
+    <span class="texto">${esc(x.ementa)}${x.norma ? ` <b>${esc(x.norma)}</b>${x.dataNorma ? `, ${esc(data(x.dataNorma))}` : ""}.` : ""}
+      <a href="${esc(linkTramitacao(x.id))}" rel="noopener">Tramitação</a></span></li>`;
+};
+
 async function paginaPolitico() {
   const alvo = $("#conteudo");
   const f = param("f"), i = param("i");
@@ -664,7 +683,18 @@ async function paginaPolitico() {
     : `<p class="fonte">Fonte: <a href="https://legis.senado.leg.br/dadosabertos">Dados Abertos do Senado Federal</a>.${p.fimMandato ? ` Mandato até ${data(p.fimMandato, true)}.` : ""}</p>`}`;
 
   /* Para estes cargos ainda não temos votos nem projetos coletados; as abas dizem isso e levam à fonte oficial. */
-  const painelVotacoes = executivo
+  const presidente = p.cargoTse === "PRESIDENTE" && p.estado === "atual";
+  let enviados = [];
+  if (presidente) { try { enviados = await carregar("dados/executivo.json"); } catch { /* sem dados: cai no texto padrão */ } }
+  const comDados = presidente && enviados.length > 0;
+  const aprovados = enviados.filter((x) => /^(transformad|vetad)/i.test(x.sit || "") || x.veto);
+  const painelVotacoes = comDados
+    ? `<section class="painel"><div class="painel-titulo"><h2>Sanções e vetos</h2></div>
+        <p>${esc(p.cargo)} não vota em plenário. O que faz é propor leis, sancionar ou vetar o que o Congresso aprova, e editar decretos. Aqui estão os projetos e medidas provisórias que enviou e que viraram lei ou foram vetados: <b>${aprovados.length}</b>, sendo <b>${aprovados.filter((x) => x.veto === "parcial").length}</b> com vetos parciais.</p>
+        <div id="lista-sancoes"></div>
+        <p>Decretos ainda não estão no site. Quem vota o que ${esc(p.cargo.toLowerCase())} envia é ${esc(casa.quem)}.</p>
+        ${fontes([["Planalto: decretos e leis", "https://www.planalto.gov.br/ccivil_03/"], casa.link, ["Dados abertos da Câmara", "https://dadosabertos.camara.leg.br"]])}</section>`
+    : executivo
     ? `<section class="painel"><div class="painel-titulo"><h2>Votações</h2></div>
         <p>${esc(p.cargo)} é cargo do Poder Executivo: não vota projetos em plenário. O que faz é propor leis, sancionar ou vetar o que o Legislativo aprova, e editar decretos.</p>
         <p>Quem vota é ${esc(casa.quem)}. Para saber como os legisladores votaram o que ${esc(p.cargo.toLowerCase())} enviou, veja a fonte oficial.</p>
@@ -675,7 +705,8 @@ async function paginaPolitico() {
         ${fontes([casa.link].filter(Boolean))}</section>`;
 
   const painelPropostas = `<section class="painel"><div class="painel-titulo"><h2>Propostas</h2></div>
-      ${executivo
+      ${comDados ? `<p>Projetos de lei, leis complementares, emendas à Constituição e medidas provisórias enviados por ${esc(nome)} ao Congresso desde 2023: <b>${enviados.length}</b>. As propostas de campanha ficam no plano de governo da candidatura no TSE.</p><div id="lista-enviados"></div>` : ""}
+      ${comDados ? "" : executivo
         ? `<p>As propostas de ${esc(nome)} estão no plano de governo registrado na candidatura, quando o candidato o apresentou ao TSE. Ele fica na página da candidatura, junto com as certidões e a prestação de contas.</p>`
         : `<p>Ainda não temos os projetos apresentados por ${esc(nome)} ${esc(casa.em)}. A lista de autoria e a tramitação ficam no site oficial da casa.</p>
            <p>As propostas de campanha, quando registradas, ficam na página da candidatura no TSE.</p>`}
@@ -691,13 +722,17 @@ async function paginaPolitico() {
     </section>
     <div class="abas-pagina" role="tablist" aria-label="Seções do perfil">
       <button type="button" role="tab" id="aba-perfil" aria-controls="painel-perfil" data-aba="perfil">Perfil e bens</button>
-      <button type="button" role="tab" id="aba-votacoes" aria-controls="painel-votacoes" data-aba="votacoes">Votações</button>
+      <button type="button" role="tab" id="aba-votacoes" aria-controls="painel-votacoes" data-aba="votacoes">${comDados ? "Sanções e vetos" : "Votações"}</button>
       <button type="button" role="tab" id="aba-propostas" aria-controls="painel-propostas" data-aba="propostas">Propostas</button>
     </div>
     <div role="tabpanel" id="painel-perfil" aria-labelledby="aba-perfil">${painelPerfil}</div>
     <div role="tabpanel" id="painel-votacoes" aria-labelledby="aba-votacoes" hidden>${painelVotacoes}</div>
     <div role="tabpanel" id="painel-propostas" aria-labelledby="aba-propostas" hidden>${painelPropostas}</div>`;
   ligarAbas(alvo);
+  if (comDados) {
+    listaPaginada($("#lista-sancoes"), aprovados, itemExecutivo, 15, "Nenhum projeto virou lei ainda.");
+    listaPaginada($("#lista-enviados"), enviados, itemExecutivo, 15);
+  }
 
   if (p.fonte === "tse") {
     listaPaginada($("#lista-bens"), bens, ([tipo, desc, valor]) => `<li>

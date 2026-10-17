@@ -193,6 +193,8 @@ def main():
     salvar(SAIDA / "deputados.json", resumo_deps)
     gerar_senadores()
     gerar_politicos.gerar(deputados, gerar_estaduais.gerar())
+    if (BRUTO / "executivo.json").exists():
+        shutil.copy(BRUTO / "executivo.json", SAIDA / "executivo.json")
     meta = ler(BRUTO / "meta.json", {}) or {}
     meta["ano"] = next(iter(deputados.values()))["despesas"]["ano"] if deputados else None
     meta["periodoVotacoes"] = [votacoes[-1]["data"], votacoes[0]["data"]] if votacoes else None

@@ -11,41 +11,28 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
-      - name: Consultar endereços candidatos
+      - name: Sondar PR e MT
         run: |
-          testar() {
+          UA="Mozilla/5.0 (compatible; minha-bancada; projeto de transparencia)"
+          pegar() {
             local nome="$1" url="$2"
-            local saida
-            saida=$(curl -sS -L -m 30 -o /tmp/resp.txt -w "%{http_code} %{content_type} %{size_download}B" -A "Mozilla/5.0 (compatible; minha-bancada; projeto de transparencia)" -H "Accept: application/json" "$url" 2>&1) || saida="FALHOU: $saida"
-            echo "::group::$nome  $url"
-            echo "$saida"
-            head -c 400 /tmp/resp.txt 2>/dev/null | tr '\n' ' '
+            echo "=== $nome  $url"
+            curl -sS -k -L -m 30 -o /tmp/resp.txt -w "%{http_code} %{content_type} %{size_download}B\n" -A "$UA" -H "Accept: application/json" "$url" 2>&1 || true
+            head -c "${3:-500}" /tmp/resp.txt 2>/dev/null | tr '\n' ' '
             echo
-            echo "::endgroup::"
-            echo "$nome | $saida"
-            rm -f /tmp/resp.txt
           }
-          {
-            testar "MG deputados"      "https://dadosabertos.almg.gov.br/ws/deputados/em_exercicio?formato=json"
-            testar "MG swagger"        "https://dadosabertos.almg.gov.br/api/ajuda/swagger/view/lastest"
-            testar "MG portal"         "https://dadosabertos.almg.gov.br/"
-            testar "PR api"            "https://webservices.assembleia.pr.leg.br/api/public/"
-            testar "PR portal"         "https://dadosabertos.assembleia.pr.leg.br/"
-            testar "MT api"            "https://api.al.mt.gov.br/"
-            testar "MT portal"         "https://dadosabertos.al.mt.gov.br/"
-            testar "DF ckan"           "https://dadosabertos.cl.df.gov.br/api/3/action/package_list"
-            testar "DF portal"         "https://dadosabertos.cl.df.gov.br/"
-            testar "PE parlamentares"  "https://dadosabertos.alepe.pe.gov.br/api/v1/parlamentares?formato=json"
-            testar "AP leis"           "https://al.ap.leg.br/wp-json/wp/v2/leis"
-            testar "SP ckan"           "https://ckan.al.sp.gov.br/alesp-dados-abertos"
-            testar "RN portal"         "https://dadosabertos.al.rn.leg.br/"
-            testar "SC portal"         "https://dados.sc.gov.br/dataset"
-            testar "RR sapl"           "https://sapl.al.rr.leg.br/api/parlamentares/legislatura/"
-            testar "MT sapl"           "https://sapl.al.mt.leg.br/api/parlamentares/legislatura/"
-          } | tee /tmp/resumo.txt
-          {
-            echo "### Resultado"
-            echo '```'
-            grep ' | ' /tmp/resumo.txt
-            echo '```'
-          } >> "$GITHUB_STEP_SUMMARY"
+
+          echo "##### MT: links e rotas na página da API"
+          curl -sS -k -L -m 30 -A "$UA" https://api.al.mt.gov.br/ -o /tmp/mt.html || true
+          grep -o -E '(href|src|action)="[^"]+"' /tmp/mt.html | sort -u | head -80
+          for p in swagger swagger-ui docs api-docs v1 api deputados parlamentares proposicoes materias votacoes; do
+            pegar "MT /$p" "https://api.al.mt.gov.br/$p" 300
+          done
+
+          echo "##### PR: rotas da API pública"
+          for p in "" deputado deputado/list deputados parlamentar proposicao votacao sessao swagger-ui.html v3/api-docs swagger.json; do
+            pegar "PR /api/public/$p" "https://webservices.assembleia.pr.leg.br/api/public/$p" 400
+          done
+          pegar "PR raiz" "https://webservices.assembleia.pr.leg.br/" 600
+          pegar "PR portal transparência" "https://transparencia.assembleia.pr.leg.br/" 300
+          pegar "PR dados abertos" "https://www.assembleia.pr.leg.br/dados-abertos" 300

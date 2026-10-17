@@ -11,28 +11,23 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
-      - name: Sondar PR e MT
+      - name: Sondar MT
         run: |
           UA="Mozilla/5.0 (compatible; minha-bancada; projeto de transparencia)"
+          B=https://api.al.mt.gov.br/api/v1
           pegar() {
-            local nome="$1" url="$2"
-            echo "=== $nome  $url"
-            curl -sS -k -L -m 30 -o /tmp/resp.txt -w "%{http_code} %{content_type} %{size_download}B\n" -A "$UA" -H "Accept: application/json" "$url" 2>&1 || true
-            head -c "${3:-500}" /tmp/resp.txt 2>/dev/null | tr '\n' ' '
+            echo "=== $1"
+            curl -sS -k -L -m 30 -o /tmp/resp.txt -w "%{http_code} %{content_type} %{size_download}B\n" -A "$UA" -H "Accept: application/json" "$B/$1" 2>&1 || true
+            head -c "${2:-600}" /tmp/resp.txt 2>/dev/null | tr '\n' ' '
             echo
           }
-
-          echo "##### MT: links e rotas na página da API"
-          curl -sS -k -L -m 30 -A "$UA" https://api.al.mt.gov.br/ -o /tmp/mt.html || true
-          grep -o -E '(href|src|action)="[^"]+"' /tmp/mt.html | sort -u | head -80
-          for p in swagger swagger-ui docs api-docs v1 api deputados parlamentares proposicoes materias votacoes; do
-            pegar "MT /$p" "https://api.al.mt.gov.br/$p" 300
+          for r in ssl/parlamentar ssl/legislatura ssl/proposicao ssl/sessao-plenaria ssl/sessao-plenaria/proposicao-votada ssl/ordem-dia; do
+            pegar "$r" 700
           done
-
-          echo "##### PR: rotas da API pública"
-          for p in "" deputado deputado/list deputados parlamentar proposicao votacao sessao swagger-ui.html v3/api-docs swagger.json; do
-            pegar "PR /api/public/$p" "https://webservices.assembleia.pr.leg.br/api/public/$p" 400
-          done
-          pegar "PR raiz" "https://webservices.assembleia.pr.leg.br/" 600
-          pegar "PR portal transparência" "https://transparencia.assembleia.pr.leg.br/" 300
-          pegar "PR dados abertos" "https://www.assembleia.pr.leg.br/dados-abertos" 300
+          echo "##### documentação"
+          curl -sS -k -L -m 30 -A "$UA" "$B/ssl/parlamentar/documentation" -o /tmp/doc.html || true
+          sed -e 's/<[^>]*>/ /g' /tmp/doc.html | tr -s ' \n' | head -c 2500
+          echo
+          curl -sS -k -L -m 30 -A "$UA" "$B/ssl/sessao-plenaria/proposicao-votada/documentation" -o /tmp/doc2.html || true
+          sed -e 's/<[^>]*>/ /g' /tmp/doc2.html | tr -s ' \n' | head -c 2500
+          echo

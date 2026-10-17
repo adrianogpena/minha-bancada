@@ -50,8 +50,22 @@ S = sessao()
 def get(caminho: str, **params) -> dict:
     url = caminho if caminho.startswith("http") else f"{API}{caminho}"
     r = S.get(url, params=params or None, timeout=60)
-    r.raise_for_status()
+    if not r.ok:
+        corpo = r.text[:200].replace("\n", " ")
+        raise RuntimeError(f"HTTP {r.status_code} em {r.url}: {corpo}")
     return r.json()
+
+
+AVISOS: list[str] = []
+
+
+def avisar(msg: str) -> None:
+    """Mostra o problema no log; no GitHub Actions os primeiros viram anotações
+    visíveis no resumo da execução."""
+    print(f"  ! {msg}", file=sys.stderr)
+    AVISOS.append(msg)
+    if os.environ.get("GITHUB_ACTIONS") and len(AVISOS) <= 8:
+        print(f"::warning::{msg[:900]}")
 
 
 def get_todos(caminho: str, **params) -> list:
@@ -86,14 +100,32 @@ def ler(caminho: Path, padrao):
 def coletar_deputado(dep: dict, ano: int) -> dict:
     did = dep["id"]
     detalhe = get(f"/deputados/{did}").get("dados", {})
-    proposicoes = get_todos(
-        "/proposicoes", idDeputadoAutor=did,
-        dataApresentacaoInicio=INICIO_LEGISLATURA,
-        dataApresentacaoFim=dt.date.today().isoformat(),
-        ordem="DESC", ordenarPor="id",
-    )
-    despesas = get_todos(f"/deputados/{did}/despesas", ano=ano,
-                         ordem="DESC", ordenarPor="dataDocumento")
+
+    # proposições ano a ano (a API limita o intervalo de datas de cada consulta)
+    proposicoes, vistos = [], set()
+    for a in range(int(INICIO_LEGISLATURA[:4]), ano + 1):
+        inicio = max(dt.date(a, 1, 1), dt.date.fromisoformat(INICIO_LEGISLATURA))
+        fim = min(dt.date(a, 12, 31), dt.date.today())
+        try:
+            lote = get_todos("/proposicoes", idDeputadoAutor=did,
+                             dataApresentacaoInicio=inicio.isoformat(),
+                             dataApresentacaoFim=fim.isoformat(),
+                             ordem="DESC", ordenarPor="id")
+        except Exception as e:
+            avisar(f"proposições de {dep.get('nome')} em {a}: {e}")
+            continue
+        for p in lote:
+            if p["id"] not in vistos:
+                vistos.add(p["id"])
+                proposicoes.append(p)
+    proposicoes.sort(key=lambda p: p["id"], reverse=True)
+
+    try:
+        despesas = get_todos(f"/deputados/{did}/despesas", ano=ano,
+                             ordem="DESC", ordenarPor="dataDocumento")
+    except Exception as e:
+        avisar(f"despesas de {dep.get('nome')}: {e}")
+        despesas = []
 
     status = detalhe.get("ultimoStatus", {}) or {}
     return {
@@ -148,7 +180,7 @@ def coletar_deputados(limite: int | None) -> list:
                 resumo.append(dep["id"])
             except Exception as e:  # um deputado com erro não derruba a coleta
                 falhas += 1
-                print(f"  ! falha em {dep.get('nome')} ({dep['id']}): {e}", file=sys.stderr)
+                avisar(f"deputado {dep.get('nome')} ({dep['id']}): {e}")
             if i % 50 == 0:
                 print(f"  {i}/{len(lista)}")
     salvar(DADOS / "deputados.json", sorted(resumo))
@@ -200,8 +232,12 @@ def coletar_votacoes(dias_iniciais: int) -> None:
 
     encontradas = []
     for a, b in janelas(inicio, hoje):
-        lote = get_todos("/votacoes", dataInicio=a.isoformat(), dataFim=b.isoformat(),
-                         ordem="ASC", ordenarPor="dataHoraRegistro", itens=200)
+        try:
+            lote = get_todos("/votacoes", dataInicio=a.isoformat(), dataFim=b.isoformat(),
+                             ordem="ASC", ordenarPor="dataHoraRegistro", itens=200)
+        except Exception as e:
+            avisar(f"votações de {a} a {b}: {e}")
+            continue
         # por enquanto só o Plenário, onde todos os deputados votam
         encontradas += [v for v in lote if v.get("siglaOrgao") == "PLEN"]
     print(f"Votações no Plenário encontradas: {len(encontradas)}")
@@ -212,7 +248,7 @@ def coletar_votacoes(dias_iniciais: int) -> None:
             try:
                 v = f.result()
             except Exception as e:
-                print(f"  ! falha em votos: {e}", file=sys.stderr)
+                avisar(f"votos: {e}")
                 continue
             ano = v["data"][:4]
             if ano not in por_ano:
@@ -242,4 +278,11 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    try:
+        main()
+    except Exception as e:
+        if os.environ.get("GITHUB_ACTIONS"):
+            print(f"::error::Coleta interrompida: {str(e)[:900]}")
+        raise
+    if AVISOS:
+        print(f"Concluído com {len(AVISOS)} avisos.")

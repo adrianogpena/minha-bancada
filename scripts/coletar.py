@@ -353,9 +353,9 @@ def tipo_voto_senado(sigla: str | None, descricao: str | None) -> str:
     t = f"{sigla or ''} {descricao or ''}".lower()
     if any(k in t for k in ("compareceu", "ncom", "licen", "ausente", "missão", "missao", "representa")):
         return "ausente"  # antes do "não": "Não compareceu" não é voto contra
-    if "sim" in t.split():
+    if re.search(r"\bsim\b|favor", t):
         return "sim"
-    if "não" in t or "nao" in t.split():
+    if re.search(r"\bn[aã]o\b|contr", t):
         return "nao"
     if "absten" in t:
         return "abstencao"
@@ -367,10 +367,10 @@ def tipo_voto_senado(sigla: str | None, descricao: str | None) -> str:
 
 
 def resultado_senado(texto: str | None, sim: int, nao: int) -> int | None:
-    t = (texto or "").lower()
-    if "aprovad" in t:
+    t = (texto or "").strip().lower()
+    if t in ("a", "aprovado", "aprovada", "aprovado(a)") or "aprovad" in t:
         return 1
-    if "rejeitad" in t or "prejudicad" in t:
+    if t in ("r", "rejeitado", "rejeitada", "p", "prejudicado", "prejudicada") or "rejeitad" in t or "prejudicad" in t:
         return 0
     return None
 
@@ -399,8 +399,10 @@ def normalizar_votacao_senado(v: dict) -> dict | None:
             cod = pegar(pegar(x, "parlamentar"), "codigoParlamentar")
         if cod is None:
             continue
-        votos.append([str(cod), tipo_voto_senado(pegar(x, "siglaVotoParlamentar", "siglaVoto", "voto"),
-                                                 pegar(x, "descricaoVotoParlamentar", "descricaoVoto", "voto"))])
+        sigla = pegar(x, "siglaVotoParlamentar", "siglaVoto", "voto")
+        desc = pegar(x, "descricaoVotoParlamentar", "descricaoVoto", "voto")
+        # 3º item: rótulo como o Senado publicou, para poder reclassificar sem consultar de novo
+        votos.append([str(cod), tipo_voto_senado(sigla, desc), f"{sigla or ''}|{desc or ''}"])
     if not votos:  # votação simbólica ou secreta: não há voto individual
         return None
     sessao = pegar(v, "sessaoPlenaria") or {}
@@ -409,8 +411,8 @@ def normalizar_votacao_senado(v: dict) -> dict | None:
         return None
     if re.fullmatch(r"\d{8}", data):
         data = f"{data[:4]}-{data[4:6]}-{data[6:]}"
-    sim = sum(1 for _, t in votos if t == "sim")
-    nao = sum(1 for _, t in votos if t == "nao")
+    sim = sum(1 for _, t, _r in votos if t == "sim")
+    nao = sum(1 for _, t, _r in votos if t == "nao")
     sigla, numero, ano = pegar(v, "siglaMateria"), pegar(v, "numeroMateria"), pegar(v, "anoMateria")
     ident = " ".join(x for x in (str(sigla or ""), f"{numero}/{ano}" if numero else "") if x) or pegar(v, "identificacao")
     resultado = pegar(v, "resultadoVotacao", "resultado")
@@ -434,6 +436,11 @@ def coletar_votacoes_senado() -> None:
     pasta.mkdir(parents=True, exist_ok=True)
     hoje = dt.date.today()
     ultimo_ano = max((int(a.stem) for a in pasta.glob("*.json")), default=int(INICIO_LEGISLATURA[:4]))
+    # arquivos de antes de guardarmos o rótulo original do voto: consulta de novo
+    sem_rotulo = [int(a.stem) for a in pasta.glob("[0-9]*.json")
+                  if any(len(v["votos"][0]) < 3 for v in ler(a, {}).values() if v.get("votos"))]
+    if sem_rotulo:
+        ultimo_ano = min(ultimo_ano, min(sem_rotulo))
     total = 0
     for ano in range(ultimo_ano, hoje.year + 1):
         tentativas = [
@@ -468,6 +475,17 @@ def coletar_votacoes_senado() -> None:
         total += len(achadas)
         print(f"  Senado {ano}: {len(achadas)} votações nominais")
     print(f"Votações nominais do Senado coletadas: {total}")
+    # resumo dos rótulos de voto por classificação, para conferir se o mapeamento está certo
+    rotulos: dict[str, dict[str, int]] = {}
+    for arq in pasta.glob("[0-9]*.json"):
+        for v in ler(arq, {}).values():
+            for x in v["votos"]:
+                if len(x) > 2:
+                    r = rotulos.setdefault(x[1], {})
+                    r[x[2]] = r.get(x[2], 0) + 1
+    salvar(pasta / "_rotulos.json", rotulos)
+    for tipo, r in rotulos.items():
+        print(f"  {tipo}: {sorted(r.items(), key=lambda kv: -kv[1])[:6]}")
 
 
 def coletar_autorias_senado() -> None:

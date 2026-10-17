@@ -11,6 +11,7 @@ import shutil
 from collections import Counter, defaultdict
 from pathlib import Path
 
+import gerar_estaduais
 import gerar_politicos
 
 RAIZ = Path(__file__).resolve().parent.parent
@@ -53,7 +54,7 @@ def gerar_senadores() -> None:
     if not senadores:
         return
     votacoes = []
-    for arq in sorted((BRUTO / "senado_votacoes").glob("*.json")):
+    for arq in sorted((BRUTO / "senado_votacoes").glob("[0-9]*.json")):
         votacoes += ler(arq, {}).values()
     votacoes.sort(key=lambda v: (v["data"], v.get("hora") or ""), reverse=True)
     autorias = ler(BRUTO / "senado_autorias.json", {}) or {}
@@ -61,14 +62,14 @@ def gerar_senadores() -> None:
 
     resumo, votos_por_sen, primeira = [], defaultdict(dict), {}
     for v in votacoes:
-        placar = Counter(t for _, t in v["votos"])
+        placar = Counter(x[1] for x in v["votos"])
         resumo.append({
             "id": v["id"], "data": v["data"], "hora": v.get("hora"), "descricao": v["descricao"],
             "proposicao": v.get("proposicao"), "propId": v.get("propId"), "ementa": v.get("ementa"),
             "aprovada": v.get("aprovada"), "resultadoTexto": v.get("resultadoTexto"),
             "placar": {k: n for k, n in placar.items() if k != "ausente"},
         })
-        for sid, t in v["votos"]:
+        for sid, t, *_ in v["votos"]:
             votos_por_sen[sid][v["id"]] = t
             if sid not in primeira or v["data"] < primeira[sid]:
                 primeira[sid] = v["data"]
@@ -191,7 +192,7 @@ def main():
     resumo_deps.sort(key=lambda x: x["nome"])
     salvar(SAIDA / "deputados.json", resumo_deps)
     gerar_senadores()
-    gerar_politicos.gerar(deputados)
+    gerar_politicos.gerar(deputados, gerar_estaduais.gerar())
     meta = ler(BRUTO / "meta.json", {}) or {}
     meta["ano"] = next(iter(deputados.values()))["despesas"]["ano"] if deputados else None
     meta["periodoVotacoes"] = [votacoes[-1]["data"], votacoes[0]["data"]] if votacoes else None

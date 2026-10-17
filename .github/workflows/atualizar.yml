@@ -48,7 +48,7 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add dados/votacoes/ dados/proposicoes/ dados/tse/
+          git add dados/votacoes/ dados/proposicoes/ dados/proposicoes_detalhe.json dados/tse/
           git diff --cached --quiet || git commit -m "Dados atualizados em $(date -u +%Y-%m-%d)"
           git push
 

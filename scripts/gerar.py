@@ -36,6 +36,16 @@ def tipo_voto(v: str | None) -> str:
     return VOTOS_NORMAIS.get(v or "", "outro")
 
 
+def juntar_detalhe(p: dict, det: dict | None) -> dict:
+    """Acrescenta à proposição a situação atual, quando já foi consultada.
+    Nomes curtos para o JSON do site ficar leve."""
+    if not det:
+        return p
+    campos = {"apres": "ap", "sit": "sit", "desp": "desp", "org": "org", "data": "dt",
+              "inteiroTeor": "pdf", "detalhada": "det", "palavras": "kw"}
+    return {**p, **{curto: det[longo] for longo, curto in campos.items() if det.get(longo)}}
+
+
 def main():
     ids = ler(BRUTO / "deputados.json", [])
     if not ids:
@@ -52,6 +62,8 @@ def main():
     for arq in sorted((BRUTO / "votacoes").glob("*.json")):
         votacoes += [v for v in ler(arq, {}).values() if v.get("votos")]
     votacoes.sort(key=lambda v: (v["data"], v.get("hora") or ""), reverse=True)
+
+    detalhes = ler(BRUTO / "proposicoes_detalhe.json", {}) or {}
 
     if SAIDA.exists():
         shutil.rmtree(SAIDA)
@@ -79,7 +91,7 @@ def main():
         resumo = {
             "id": v["id"], "data": v["data"], "hora": v.get("hora"),
             "descricao": v["descricao"], "proposicao": v.get("proposicao"),
-            "ementa": v.get("ementa"),
+            "propId": v.get("propId"), "ementa": v.get("ementa"),
             "aprovada": v.get("aprovada"), "placar": dict(placar),
         }
         lista_votacoes.append(resumo)
@@ -112,7 +124,7 @@ def main():
             "nascimento": d.get("nascimento"),
             "naturalidade": ", ".join(x for x in (d.get("municipioNascimento"), d.get("ufNascimento")) if x),
             "escolaridade": d.get("escolaridade"), "redesSociais": d.get("redesSociais", []),
-            "proposicoes": d["proposicoes"],
+            "proposicoes": [juntar_detalhe(p, detalhes.get(str(p["id"]))) for p in d["proposicoes"]],
             "votos": votos,
             "totalVotacoes": total_nominais,
             "despesas": {

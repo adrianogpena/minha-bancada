@@ -122,7 +122,7 @@ input:focus, select:focus { border-color: var(--marca); outline: none; box-shado
 .v-art17 { background: var(--tinta-suave) !important; }
 .legenda { display: flex; flex-wrap: wrap; gap: 6px 18px; margin-top: 14px; font-size: 14px; color: var(--tinta-suave); }
 .legenda span::before { content: ""; display: inline-block; width: 11px; height: 11px; border-radius: 2px; margin-right: 6px; vertical-align: -1px; background: var(--c); }
-.numeros { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1px; background: var(--linha); border: 1px solid var(--linha); border-radius: var(--raio); overflow: hidden; margin-top: 16px; }
+.numeros { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 1px; background: var(--linha); border: 1px solid var(--linha); border-radius: var(--raio); overflow: hidden; margin-top: 16px; }
 .numeros div { background: var(--superficie); padding: 12px 14px; }
 .numeros b { display: block; font: 700 26px/1.1 var(--display); font-variant-numeric: tabular-nums; }
 .numeros span { font-size: 14px; color: var(--tinta-suave); }
@@ -202,3 +202,22 @@ select:disabled { opacity: .55; }
   .linha-pol { grid-template-columns: 44px 1fr; }
   .linha-pol .etiqueta { grid-column: 2; justify-self: start; }
 }
+
+/* abas da página do deputado */
+.abas-pagina { display: flex; gap: 4px; margin: 20px 0 8px; border-bottom: 2px solid var(--linha); overflow-x: auto; }
+.abas-pagina button { font: 700 16px var(--texto); padding: 10px 16px; border: 0; border-bottom: 3px solid transparent; margin-bottom: -2px; background: none; color: var(--tinta-suave); cursor: pointer; white-space: nowrap; }
+.abas-pagina button small { font-weight: 400; margin-left: 4px; font-variant-numeric: tabular-nums; }
+.abas-pagina button[aria-selected="true"] { color: var(--tinta); border-bottom-color: var(--tinta); }
+.abas-pagina button:focus-visible { outline: 3px solid var(--tinta); outline-offset: -3px; }
+[role="tabpanel"][hidden] { display: none; }
+
+/* resultado de votação ou destino de um projeto */
+.resultado { display: inline-block; justify-self: start; font: 700 13px var(--texto); padding: 2px 8px; border-radius: 999px; border: 1.5px solid var(--linha); }
+.r-aprovada { color: var(--sim); border-color: currentColor; }
+.r-rejeitada { color: var(--nao); border-color: currentColor; }
+.r-tramitando { color: var(--tinta); }
+.r-sem { color: var(--tinta-suave); }
+.itens .cartao-item { grid-template-columns: 1fr; }
+.ementa { color: var(--tinta-suave); font-size: 15px; }
+.fontes { font-size: 13px; color: var(--tinta-suave); }
+.fontes a { color: inherit; }

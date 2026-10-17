@@ -205,6 +205,77 @@ def coletar_deputados(limite: int | None) -> list:
         raise SystemExit("Muitas falhas ao coletar deputados; abortando para não publicar dados incompletos.")
     return resumo
 
+# ---------------------------------------------------------------- detalhes das proposições
+
+# tipos que são projetos de verdade; requerimentos, emendas e pareceres ficam só na lista
+TIPOS_PRINCIPAIS = {"PL", "PLP", "PEC", "PDL", "PRC", "PLN", "PFC", "PLV", "MPV", "PLS", "PDC", "PDS"}
+ORCAMENTO_DETALHES = int(os.environ.get("DETALHES_POR_EXECUCAO", "4000"))
+RENOVAR_APOS_DIAS = 7  # proposição ainda em tramitação é consultada de novo depois disso
+
+
+def coletar_detalhes_proposicoes() -> None:
+    """Situação atual de cada projeto (aprovado, arquivado, em tramitação...).
+    Guardado em dados/proposicoes_detalhe.json (vai para o git). Há muitos
+    projetos, então cada execução consulta no máximo ORCAMENTO_DETALHES:
+    primeiro os que nunca foram consultados, depois os mais desatualizados
+    que ainda tramitam. Com os dias o cache se completa."""
+    arquivo = DADOS / "proposicoes_detalhe.json"
+    cache = ler(arquivo, {})
+    todos = set()
+    for arq in (DADOS / "proposicoes").glob("*.json"):
+        for p in ler(arq, {"itens": []})["itens"]:
+            if p.get("siglaTipo") in TIPOS_PRINCIPAIS:
+                todos.add(str(p["id"]))
+    hoje = dt.date.today()
+    limite_velho = (hoje - dt.timedelta(days=RENOVAR_APOS_DIAS)).isoformat()
+    novos = sorted(todos - cache.keys(), reverse=True)
+    velhos = sorted((i for i in todos & cache.keys()
+                     if not cache[i].get("fim") and cache[i].get("em", "") < limite_velho),
+                    key=lambda i: cache[i].get("em", ""))
+    fila = (novos + velhos)[:ORCAMENTO_DETALHES]
+    print(f"Detalhes de proposições: {len(todos)} projetos, {len(novos)} novos, {len(velhos)} a renovar; consultando {len(fila)}")
+
+    def buscar(pid: str) -> tuple[str, dict]:
+        d = get(f"/proposicoes/{pid}").get("dados", {}) or {}
+        st = d.get("statusProposicao") or d.get("ultimoStatus") or {}
+        situacao = st.get("descricaoSituacao") or ""
+        return pid, {
+            "apres": (d.get("dataApresentacao") or "")[:10] or None,
+            "sit": situacao or None,
+            "tram": st.get("descricaoTramitacao"),
+            "desp": (st.get("despacho") or "").strip() or None,
+            "org": st.get("siglaOrgao"),
+            "data": (st.get("dataHora") or "")[:10] or None,
+            "regime": st.get("regime"),
+            "inteiroTeor": d.get("urlInteiroTeor"),
+            "detalhada": (d.get("ementaDetalhada") or "").strip() or None,
+            "palavras": (d.get("keywords") or "").strip() or None,
+            "em": hoje.isoformat(),
+            "fim": situacao_final(situacao),
+        }
+
+    feitos = falhas = 0
+    with ThreadPoolExecutor(TRABALHADORES) as ex:
+        for f in as_completed([ex.submit(buscar, i) for i in fila]):
+            try:
+                pid, info = f.result()
+                cache[pid] = info
+                feitos += 1
+            except Exception as e:
+                falhas += 1
+                if falhas <= 5:
+                    avisar(f"detalhe de proposição: {e}")
+            if feitos and feitos % 1000 == 0:
+                salvar(arquivo, cache)  # não perde o trabalho se a execução for interrompida
+    salvar(arquivo, cache)
+    print(f"Detalhes salvos: {feitos}, falhas: {falhas}, no cache: {len(cache)}")
+
+
+def situacao_final(situacao: str) -> bool:
+    """True quando a proposição não vai mais tramitar (não precisa ser reconsultada)."""
+    s = (situacao or "").lower()
+    return any(k in s for k in ("arquivad", "transformad", "retirad", "perdeu a eficácia", "vetad", "sancionad", "devolvid"))
+
 
 # ---------------------------------------------------------------- senado
 
@@ -254,13 +325,14 @@ def janelas(inicio: dt.date, fim: dt.date):
 
 def coletar_votos(votacao: dict) -> dict:
     votos = get(f"/votacoes/{votacao['id']}/votos").get("dados", [])
-    proposicao, ementa = votacao.get("proposicaoObjeto"), None
+    proposicao, ementa, prop_id = votacao.get("proposicaoObjeto"), None, None
     if votos:  # só nas nominais: busca a proposição votada, que a lista nem sempre traz
         try:
             det = get(f"/votacoes/{votacao['id']}").get("dados", {}) or {}
             afetadas = det.get("proposicoesAfetadas") or []
             if afetadas:
                 p = afetadas[0]
+                prop_id = p.get("id")
                 proposicao = proposicao or f"{p.get('siglaTipo')} {p.get('numero')}/{p.get('ano')}"
                 ementa = (p.get("ementa") or "").strip() or None
         except Exception as e:
@@ -272,6 +344,7 @@ def coletar_votos(votacao: dict) -> dict:
         "orgao": votacao.get("siglaOrgao"),
         "descricao": (votacao.get("descricao") or "").strip(),
         "proposicao": proposicao,
+        "propId": prop_id,
         "ementa": ementa,
         "aprovada": votacao.get("aprovacao"),
         "votos": [[v["deputado_"]["id"], v.get("tipoVoto")]
@@ -307,7 +380,7 @@ def coletar_votacoes(dias_iniciais: int) -> None:
     novas = {v["id"] for v in encontradas}
     for arq in arquivos:
         for v in ler(arq, {}).values():
-            if v.get("votos") and "ementa" not in v and v["id"] not in novas:
+            if v.get("votos") and ("ementa" not in v or "propId" not in v) and v["id"] not in novas:
                 encontradas.append({"id": v["id"], "data": v["data"],
                                     "dataHoraRegistro": f"{v['data']}T{v.get('hora') or '00:00'}:00",
                                     "siglaOrgao": v.get("orgao"), "descricao": v.get("descricao"),
@@ -335,12 +408,17 @@ def main():
     p = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     p.add_argument("--limite", type=int, help="coletar só os N primeiros deputados (teste)")
     p.add_argument("--dias", type=int, default=90, help="dias de votações na primeira coleta")
-    p.add_argument("--so", choices=["deputados", "votacoes", "senado"], help="coletar só uma parte")
+    p.add_argument("--so", choices=["deputados", "votacoes", "proposicoes", "senado"], help="coletar só uma parte")
     a = p.parse_args()
     if a.so in (None, "deputados"):
         coletar_deputados(a.limite)
     if a.so in (None, "votacoes"):
         coletar_votacoes(a.dias)
+    if a.so in (None, "proposicoes"):
+        try:
+            coletar_detalhes_proposicoes()
+        except Exception as e:  # os detalhes são um complemento: não derrubam a coleta
+            avisar(f"detalhes das proposições: {e}")
     if a.so in (None, "senado"):
         try:
             coletar_senado()

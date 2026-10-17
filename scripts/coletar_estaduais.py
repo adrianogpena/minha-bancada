@@ -30,6 +30,9 @@ ASSEMBLEIAS = {
     "AM": "sapl.al.am.leg.br",
     "AL": "sapl.al.al.leg.br",   # confirmado: documentos públicos servidos por esse host
     "RO": "sapl.al.ro.leg.br",   # a Assembleia usa SAPL, mas o host é o padrão dos outros: se falhar, só avisa
+    "AC": "sapl.al.ac.leg.br",
+    "PI": "sapl.al.pi.leg.br",
+    "TO": "sapl.al.to.leg.br",
 }
 TRABALHADORES = 4
 RENOVAR_ANO_ANTIGO_DIAS = 7   # projetos de anos anteriores são consultados de novo só de vez em quando

@@ -606,6 +606,9 @@ function desfechoExecutivo(x) {
   if (s.startsWith("perdeu a efic")) return { rotulo: "Perdeu a eficácia", classe: "v-nao" };
   return { rotulo: x.sit || "Em tramitação", classe: "v-outro" };
 }
+const itemGoverno = (x) => `<li><span class="quando">${esc(x.td)} ${esc(x.numero)}/${esc(x.ano)}${x.ap ? ` · enviado em ${esc(data(x.ap))}` : ""}</span>
+  <span class="voto v-outro">${esc(x.sit)}</span>
+  <span class="texto">${esc(x.ementa)} ${x.pdf ? `<a href="${esc(x.pdf)}" rel="noopener">Texto</a>` : ""}</span></li>`;
 const itemExecutivo = (x) => {
   const d = desfechoExecutivo(x);
   return `<li><span class="quando">${esc(TIPOS_EXECUTIVO[x.tipo] || x.tipo)} ${esc(x.numero)}/${esc(x.ano)} · enviado em ${esc(data(x.apres))}</span>
@@ -687,8 +690,22 @@ async function paginaPolitico() {
   let enviados = [];
   if (presidente) { try { enviados = await carregar("dados/executivo.json"); } catch { /* sem dados: cai no texto padrão */ } }
   const comDados = presidente && enviados.length > 0;
+  /* Governador em exercício: o que enviou à Assembleia, quando ela usa um sistema que já coletamos. */
+  let governo = null;
+  if (p.cargoTse === "GOVERNADOR" && p.estado === "atual" && /^[A-Z]{2}$/.test(p.uf || "")) {
+    try { governo = await carregar(`dados/governo/${p.uf}.json`); } catch { /* sem dados: cai no texto padrão */ }
+  }
+  const vetosGov = governo ? governo.materias.filter((x) => x.tipo === "VET") : [];
+  const enviadosGov = governo ? governo.materias.filter((x) => x.tipo !== "VET") : [];
+  const comGoverno = enviadosGov.length + vetosGov.length > 0;
   const aprovados = enviados.filter((x) => /^(transformad|vetad)/i.test(x.sit || "") || x.veto);
-  const painelVotacoes = comDados
+  const painelVotacoes = comGoverno
+    ? `<section class="painel"><div class="painel-titulo"><h2>Vetos</h2></div>
+        <p>${esc(p.cargo)} não vota em plenário. O que faz é propor leis, sancionar ou vetar o que a Assembleia aprova, e editar decretos. Aqui estão os vetos enviados à Assembleia desde 2023: <b>${vetosGov.length}</b>. A situação é a que a Assembleia registra no sistema dela, e nem sempre é atualizada.</p>
+        <div id="lista-vetos"></div>
+        <p>Sanções e decretos ainda não estão no site. Quem vota é ${esc(casa.quem)}.</p>
+        ${fontes([casa.link, ["Sistema de processo legislativo", `https://${governo.host}`]])}</section>`
+    : comDados
     ? `<section class="painel"><div class="painel-titulo"><h2>Sanções e vetos</h2></div>
         <p>${esc(p.cargo)} não vota em plenário. O que faz é propor leis, sancionar ou vetar o que o Congresso aprova, e editar decretos. Aqui estão os projetos e medidas provisórias que enviou e que viraram lei ou foram vetados: <b>${aprovados.length}</b>, sendo <b>${aprovados.filter((x) => x.veto === "parcial").length}</b> com vetos parciais.</p>
         <div id="lista-sancoes"></div>
@@ -706,7 +723,8 @@ async function paginaPolitico() {
 
   const painelPropostas = `<section class="painel"><div class="painel-titulo"><h2>Propostas</h2></div>
       ${comDados ? `<p>Projetos de lei, leis complementares, emendas à Constituição e medidas provisórias enviados por ${esc(nome)} ao Congresso desde 2023: <b>${enviados.length}</b>. As propostas de campanha ficam no plano de governo da candidatura no TSE.</p><div id="lista-enviados"></div>` : ""}
-      ${comDados ? "" : executivo
+      ${comGoverno ? `<p>Projetos de lei, leis complementares, emendas à Constituição, medidas provisórias e mensagens enviados por ${esc(nome)} à Assembleia desde 2023: <b>${enviadosGov.length}</b>. As propostas de campanha ficam no plano de governo da candidatura no TSE.</p><div id="lista-enviados-gov"></div>` : ""}
+      ${comDados || comGoverno ? "" : executivo
         ? `<p>As propostas de ${esc(nome)} estão no plano de governo registrado na candidatura, quando o candidato o apresentou ao TSE. Ele fica na página da candidatura, junto com as certidões e a prestação de contas.</p>`
         : `<p>Ainda não temos os projetos apresentados por ${esc(nome)} ${esc(casa.em)}. A lista de autoria e a tramitação ficam no site oficial da casa.</p>
            <p>As propostas de campanha, quando registradas, ficam na página da candidatura no TSE.</p>`}
@@ -722,13 +740,17 @@ async function paginaPolitico() {
     </section>
     <div class="abas-pagina" role="tablist" aria-label="Seções do perfil">
       <button type="button" role="tab" id="aba-perfil" aria-controls="painel-perfil" data-aba="perfil">Perfil e bens</button>
-      <button type="button" role="tab" id="aba-votacoes" aria-controls="painel-votacoes" data-aba="votacoes">${comDados ? "Sanções e vetos" : "Votações"}</button>
+      <button type="button" role="tab" id="aba-votacoes" aria-controls="painel-votacoes" data-aba="votacoes">${comDados ? "Sanções e vetos" : comGoverno ? "Vetos" : "Votações"}</button>
       <button type="button" role="tab" id="aba-propostas" aria-controls="painel-propostas" data-aba="propostas">Propostas</button>
     </div>
     <div role="tabpanel" id="painel-perfil" aria-labelledby="aba-perfil">${painelPerfil}</div>
     <div role="tabpanel" id="painel-votacoes" aria-labelledby="aba-votacoes" hidden>${painelVotacoes}</div>
     <div role="tabpanel" id="painel-propostas" aria-labelledby="aba-propostas" hidden>${painelPropostas}</div>`;
   ligarAbas(alvo);
+  if (comGoverno) {
+    listaPaginada($("#lista-vetos"), vetosGov, itemGoverno, 15, "Nenhum veto registrado.");
+    listaPaginada($("#lista-enviados-gov"), enviadosGov, itemGoverno, 15);
+  }
   if (comDados) {
     listaPaginada($("#lista-sancoes"), aprovados, itemExecutivo, 15, "Nenhum projeto virou lei ainda.");
     listaPaginada($("#lista-enviados"), enviados, itemExecutivo, 15);

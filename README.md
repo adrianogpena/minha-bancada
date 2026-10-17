@@ -23,11 +23,11 @@ O arquivo `.github/workflows/atualizar.yml` roda as duas etapas todo dia às 6h1
 3. Envie os arquivos deste projeto para o repositório. O jeito mais simples, no computador:
    ```bash
    cd minha-bancada
-   git init -b main
+   git init -b master
    git add .
    git commit -m "Primeira versão"
    git remote add origin https://github.com/SEU_USUARIO/minha-bancada.git
-   git push -u origin main
+   git push -u origin master
    ```
    Se preferir pelo site do GitHub ("Add file" > "Upload files"), confira depois se a pasta `.github/workflows` subiu. Ela começa com ponto e alguns sistemas a escondem. Se não subiu, crie o arquivo pelo botão "Add file" > "Create new file", digitando o caminho `.github/workflows/atualizar.yml`, e cole o conteúdo.
 4. No repositório, vá em **Settings > Pages** e, em "Source", escolha **GitHub Actions**.

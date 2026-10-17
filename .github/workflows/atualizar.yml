@@ -5,7 +5,7 @@ on:
     - cron: "17 9 * * *"   # todo dia às 09:17 UTC (06:17 em Brasília)
   workflow_dispatch:        # permite rodar manualmente pela aba Actions
   push:
-    branches: [main]
+    branches: [master]
     paths: ["site/**", "scripts/**", ".github/workflows/**"]
 
 permissions:

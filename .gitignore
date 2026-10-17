@@ -7,3 +7,4 @@ __pycache__/
 *.tmp
 .venv/
 dados/senado.json
+dados/senado_autorias.json

@@ -28,6 +28,8 @@ DADOS = RAIZ / "dados" / "estaduais"
 ASSEMBLEIAS = {
     "PB": "sapl.al.pb.leg.br",
     "AM": "sapl.al.am.leg.br",
+    "AL": "sapl.al.al.leg.br",   # confirmado: documentos públicos servidos por esse host
+    "RO": "sapl.al.ro.leg.br",   # a Assembleia usa SAPL, mas o host é o padrão dos outros: se falhar, só avisa
 }
 TRABALHADORES = 4
 RENOVAR_ANO_ANTIGO_DIAS = 7   # projetos de anos anteriores são consultados de novo só de vez em quando

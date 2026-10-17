@@ -695,6 +695,15 @@ async function paginaPolitico() {
   if (p.cargoTse === "GOVERNADOR" && p.estado === "atual" && /^[A-Z]{2}$/.test(p.uf || "")) {
     try { governo = await carregar(`dados/governo/${p.uf}.json`); } catch { /* sem dados: cai no texto padrão */ }
   }
+  /* Vice-governador: não propõe nem veta; quando a Assembleia está coletada, leva à página do governador. */
+  let doVice = null;
+  if (p.cargoTse === "VICE-GOVERNADOR" && p.estado === "atual" && /^[A-Z]{2}$/.test(p.uf || "")) {
+    try {
+      const [g, indice] = await Promise.all([carregar(`dados/governo/${p.uf}.json`), carregar(`dados/indice/${p.uf}.json`)]);
+      const gov = indice.find((x) => x.k === 5 && x.e === "atual");
+      if (gov && g.materias.length) doVice = { gov, host: g.host };
+    } catch { /* sem dados: cai no texto padrão */ }
+  }
   const vetosGov = governo ? governo.materias.filter((x) => x.tipo === "VET") : [];
   const enviadosGov = governo ? governo.materias.filter((x) => x.tipo !== "VET") : [];
   const comGoverno = enviadosGov.length + vetosGov.length > 0;
@@ -705,6 +714,11 @@ async function paginaPolitico() {
         <div id="lista-vetos"></div>
         <p>Sanções e decretos ainda não estão no site. Quem vota é ${esc(casa.quem)}.</p>
         ${fontes([casa.link, ["Sistema de processo legislativo", `https://${governo.host}`]])}</section>`
+    : doVice
+    ? `<section class="painel"><div class="painel-titulo"><h2>Votações</h2></div>
+        <p>${esc(p.cargo)} não vota projetos em plenário nem envia ou veta leis: quem faz isso é o governador. Substitui o governador quando ele se ausenta e assume se o cargo ficar vago.</p>
+        <p>Veja o que <a href="${esc(linkPolitico(doVice.gov))}">${esc(doVice.gov.n)}</a> enviou e vetou na Assembleia.</p>
+        ${fontes([casa.link, ["Sistema de processo legislativo", `https://${doVice.host}`]])}</section>`
     : comDados
     ? `<section class="painel"><div class="painel-titulo"><h2>Sanções e vetos</h2></div>
         <p>${esc(p.cargo)} não vota em plenário. O que faz é propor leis, sancionar ou vetar o que o Congresso aprova, e editar decretos. Aqui estão os projetos e medidas provisórias que enviou e que viraram lei ou foram vetados: <b>${aprovados.length}</b>, sendo <b>${aprovados.filter((x) => x.veto === "parcial").length}</b> com vetos parciais.</p>
@@ -724,7 +738,8 @@ async function paginaPolitico() {
   const painelPropostas = `<section class="painel"><div class="painel-titulo"><h2>Propostas</h2></div>
       ${comDados ? `<p>Projetos de lei, leis complementares, emendas à Constituição e medidas provisórias enviados por ${esc(nome)} ao Congresso desde 2023: <b>${enviados.length}</b>. As propostas de campanha ficam no plano de governo da candidatura no TSE.</p><div id="lista-enviados"></div>` : ""}
       ${comGoverno ? `<p>Projetos de lei, leis complementares, emendas à Constituição, medidas provisórias e mensagens enviados por ${esc(nome)} à Assembleia desde 2023: <b>${enviadosGov.length}</b>. As propostas de campanha ficam no plano de governo da candidatura no TSE.</p><div id="lista-enviados-gov"></div>` : ""}
-      ${comDados || comGoverno ? "" : executivo
+      ${doVice ? `<p>${esc(p.cargo)} não apresenta projetos à Assembleia. Os projetos enviados pelo governo, e os vetos, estão na página de <a href="${esc(linkPolitico(doVice.gov))}">${esc(doVice.gov.n)}</a>.</p>` : ""}
+      ${comDados || comGoverno || doVice ? "" : executivo
         ? `<p>As propostas de ${esc(nome)} estão no plano de governo registrado na candidatura, quando o candidato o apresentou ao TSE. Ele fica na página da candidatura, junto com as certidões e a prestação de contas.</p>`
         : `<p>Ainda não temos os projetos apresentados por ${esc(nome)} ${esc(casa.em)}. A lista de autoria e a tramitação ficam no site oficial da casa.</p>
            <p>As propostas de campanha, quando registradas, ficam na página da candidatura no TSE.</p>`}

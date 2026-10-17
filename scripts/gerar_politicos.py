@@ -66,7 +66,8 @@ def rotulo(cargo: str, genero: str | None) -> tuple[str, int]:
     return (f if (genero or "").upper().startswith("F") else m), ordem
 
 
-def gerar(deputados: dict) -> dict:
+def gerar(deputados: dict, estaduais: dict | None = None) -> dict:
+    estaduais = estaduais or {}
     indice = defaultdict(list)       # UF -> entradas
     fichas = defaultdict(dict)       # arquivo -> {id: ficha}
 
@@ -116,9 +117,14 @@ def gerar(deputados: dict) -> dict:
                 if estado != "atual":
                     atual_href = paginas_atuais.get(chave_nome(e.get("nome"), uf)) or \
                         paginas_atuais.get(chave_nome(e.get("urna"), uf))
+                estadual = None
+                if estado == "atual" and cargo_tse in ("DEPUTADO ESTADUAL", "DEPUTADO DISTRITAL"):
+                    achado = estaduais.get(chave_nome(e.get("urna"), uf)) or estaduais.get(chave_nome(e.get("nome"), uf))
+                    estadual = {"uf": achado[0], "id": achado[1]} if achado else None
                 fichas[arquivo][e["sq"]] = {
                     **e, "cargo": cargo, "cargoTse": cargo_tse, "ano": ano, "fonte": "tse",
                     "estado": estado, "fimMandato": FIM_MANDATO.get(ano), "paginaAtual": atual_href,
+                    **({"estadual": estadual} if estadual else {}),
                 }
                 indice[uf].append({
                     "i": e["sq"], "f": arquivo, "n": e["urna"], "c": cargo, "k": ordem,

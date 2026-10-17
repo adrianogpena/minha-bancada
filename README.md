@@ -55,6 +55,7 @@ Sem `--limite` a coleta pega todos os deputados em exercício. `--dias` só vale
 | `scripts/coletar.py` | Baixa deputados, proposições, despesas e votações do Plenário (com o voto de cada um). |
 | `scripts/gerar.py` | Monta os JSONs enxutos que o site lê. Não acessa a internet. |
 | `dados/votacoes/` | Histórico de votações, um arquivo por ano. Vai crescendo a cada execução. |
+| `dados/proposicoes/` | Proposições já coletadas de cada deputado. A API só aceita 3 meses por consulta, então a primeira coleta é longa e as seguintes buscam só o período novo. |
 | `site/` | O site: HTML, CSS e um único `assets/app.js`, sem framework nem etapa de build. |
 | `.github/workflows/atualizar.yml` | Agenda diária, coleta, salva o histórico e publica. |
 

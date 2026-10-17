@@ -40,13 +40,13 @@ jobs:
       - name: Gerar arquivos do site
         run: python scripts/gerar.py
 
-      - name: Salvar histórico de votações no repositório
-        # só as votações ficam no git (crescem aos poucos); o resto é baixado de novo a cada execução
+      - name: Salvar histórico no repositório
+        # votações e proposições ficam no git (crescem aos poucos); o resto é baixado de novo a cada execução
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add dados/votacoes/
-          git diff --cached --quiet || git commit -m "Votações atualizadas em $(date -u +%Y-%m-%d)"
+          git add dados/votacoes/ dados/proposicoes/
+          git diff --cached --quiet || git commit -m "Dados atualizados em $(date -u +%Y-%m-%d)"
           git push
 
       - uses: actions/configure-pages@v5

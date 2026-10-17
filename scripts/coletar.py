@@ -97,28 +97,44 @@ def ler(caminho: Path, padrao):
 
 # ---------------------------------------------------------------- deputados
 
+def coletar_proposicoes(dep: dict) -> list:
+    """A API aceita no máximo 3 meses por consulta. Guardamos o que já foi
+    coletado em dados/proposicoes/ (salvo no git) e, nas execuções seguintes,
+    buscamos só o período novo."""
+    did = dep["id"]
+    arquivo = DADOS / "proposicoes" / f"{did}.json"
+    cache = ler(arquivo, {"ate": None, "itens": []})
+    hoje = dt.date.today()
+    inicio = (dt.date.fromisoformat(cache["ate"]) - dt.timedelta(days=10)) if cache["ate"] \
+        else dt.date.fromisoformat(INICIO_LEGISLATURA)
+    por_id = {p["id"]: p for p in cache["itens"]}
+    completo = True
+    atual = inicio
+    while atual <= hoje:
+        fim = min(atual + dt.timedelta(days=88), hoje)
+        try:
+            for p in get_todos("/proposicoes", idDeputadoAutor=did,
+                               dataApresentacaoInicio=atual.isoformat(),
+                               dataApresentacaoFim=fim.isoformat(),
+                               ordem="DESC", ordenarPor="id"):
+                por_id[p["id"]] = {"id": p["id"], "siglaTipo": p.get("siglaTipo"),
+                                   "numero": p.get("numero"), "ano": p.get("ano"),
+                                   "ementa": (p.get("ementa") or "").strip()}
+        except Exception as e:
+            avisar(f"proposições de {dep.get('nome')} de {atual} a {fim}: {e}")
+            completo = False
+        atual = fim + dt.timedelta(days=1)
+    itens = sorted(por_id.values(), key=lambda p: p["id"], reverse=True)
+    # só avança a data se tudo deu certo, para tentar de novo o que falhou
+    salvar(arquivo, {"ate": hoje.isoformat() if completo else cache["ate"], "itens": itens})
+    return itens
+
+
 def coletar_deputado(dep: dict, ano: int) -> dict:
     did = dep["id"]
     detalhe = get(f"/deputados/{did}").get("dados", {})
 
-    # proposições ano a ano (a API limita o intervalo de datas de cada consulta)
-    proposicoes, vistos = [], set()
-    for a in range(int(INICIO_LEGISLATURA[:4]), ano + 1):
-        inicio = max(dt.date(a, 1, 1), dt.date.fromisoformat(INICIO_LEGISLATURA))
-        fim = min(dt.date(a, 12, 31), dt.date.today())
-        try:
-            lote = get_todos("/proposicoes", idDeputadoAutor=did,
-                             dataApresentacaoInicio=inicio.isoformat(),
-                             dataApresentacaoFim=fim.isoformat(),
-                             ordem="DESC", ordenarPor="id")
-        except Exception as e:
-            avisar(f"proposições de {dep.get('nome')} em {a}: {e}")
-            continue
-        for p in lote:
-            if p["id"] not in vistos:
-                vistos.add(p["id"])
-                proposicoes.append(p)
-    proposicoes.sort(key=lambda p: p["id"], reverse=True)
+    proposicoes = coletar_proposicoes(dep)
 
     try:
         despesas = get_todos(f"/deputados/{did}/despesas", ano=ano,

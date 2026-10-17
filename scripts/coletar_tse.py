@@ -40,7 +40,7 @@ COLUNAS = ["SQ_CANDIDATO", "NR_TURNO", "DS_CARGO", "DS_SIT_TOT_TURNO", "SG_UF", 
            "NR_CANDIDATO", "NM_CANDIDATO", "NM_URNA_CANDIDATO", "SG_PARTIDO", "SG_FEDERACAO",
            "NM_FEDERACAO", "DT_NASCIMENTO", "DS_GENERO", "DS_GRAU_INSTRUCAO", "DS_OCUPACAO",
            "DS_COR_RACA", "ST_REELEICAO", "NM_COLIGACAO", "CD_ELEICAO", "DS_SITUACAO_CANDIDATURA"]
-VERSAO = 4  # aumente quando mudar o processamento, para refazer os anos em cache
+VERSAO = 5  # aumente quando mudar o processamento, para refazer os anos em cache
 
 ELEITO = {"ELEITO", "ELEITO POR QP", "ELEITO POR MÉDIA", "ELEITO POR MEDIA"}
 SEGUNDO_TURNO = {"2º TURNO", "2O TURNO", "2° TURNO"}
@@ -134,9 +134,9 @@ def coletar_ano(ano: int) -> None:
         if diag is None:
             diag = [k for k in l.keys() if "SIT" in k or "JULG" in k or "TURNO" in k]
             print(f"  colunas de situação: {diag}")
-            if os.environ.get("GITHUB_ACTIONS"):
+            if os.environ.get("GITHUB_ACTIONS") and ano != 2022:
                 print(f"::notice::TSE {ano} colunas: {diag}")
-        if (os.environ.get("TSE_DIAG") and l["DS_CARGO"].strip().upper() in ("PRESIDENTE", "GOVERNADOR")
+        if (os.environ.get("TSE_DIAG") and ano != 2022 and l["DS_CARGO"].strip().upper() in ("PRESIDENTE", "GOVERNADOR", "VICE-PREFEITO")
                 and (l.get("DS_SIT_TOT_TURNO") or "").startswith("#NULO")):
             amostras.append({k: l.get(k) for k in diag + ["SG_UE"]})
         sq = l["SQ_CANDIDATO"]
@@ -151,7 +151,7 @@ def coletar_ano(ano: int) -> None:
             candidatos[sq] = enxuto
     zip_cand.unlink()
     print(f"  candidaturas: {len(candidatos)}")
-    for a in amostras[:12]:
+    for a in amostras[:3] + [a for a in amostras if a.get("SG_UE") in ("SP", "BR")][:3]:
         print(f"  #NULO: {a}")
         if os.environ.get("GITHUB_ACTIONS"):
             print(f"::notice::TSE {ano} #NULO {a}"[:900])
@@ -171,7 +171,7 @@ def coletar_ano(ano: int) -> None:
                      for l in candidatos.values()
                      if l["DS_CARGO"].strip().upper() in ("PRESIDENTE", "GOVERNADOR"))
     print(f"  situações (presidente/governador): {dict(vistas)}")
-    if os.environ.get("GITHUB_ACTIONS"):
+    if os.environ.get("GITHUB_ACTIONS") and ano != 2022:
         print(f"::notice::TSE {ano} situações: {dict(vistas)}"[:900])
 
     # durante o 2º turno, o TSE deixa sem resultado (#NULO) os finalistas de

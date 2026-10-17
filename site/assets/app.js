@@ -347,7 +347,7 @@ function montarParlamentar(alvo, c) {
     <div><b>${cont.tramitando || 0}</b><span>em tramitação</span></div>
     <div><b>${cont.aprovada || 0}</b><span>aprovados ou viraram lei</span></div>
     <div><b>${cont.rejeitada || 0}</b><span>arquivados ou retirados</span></div>
-    <div><b>${cont.sem || 0}</b><span>situação a consultar</span></div>`;
+    <div><b>${cont.sem || 0}</b><span>${esc(c.rotuloSem || "situação a consultar")}</span></div>`;
 
   const renderProj = (p) => {
     const [texto, classe] = desfecho(p);
@@ -766,6 +766,7 @@ async function montarEstadual(alvo, p, nome, ficha, situacao) {
     linhaDoTempo, proposicoes: dep.proposicoes, tipoProjeto: () => true,
     textoLegislatura: "como autor ou coautor nesta legislatura",
     aviso: "Só entram projetos (de lei, resolução, decreto legislativo, emendas à Constituição e afins). A situação vem do sistema da Assembleia.",
+    rotuloSem: "tramitação encerrada, sem resultado informado",
     semOutros: "Requerimentos, indicações e outros documentos da Assembleia não estão no site. Veja no sistema de tramitação da Assembleia.",
     fonteTramitacao: "Tramitação (Assembleia)",
     linkTramitacao: (x) => `https://${dep.host}/materia/${encodeURIComponent(x.id)}`,

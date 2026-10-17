@@ -10,6 +10,7 @@ do TSE à página com votos e projetos. Não acessa a internet.
 """
 
 import json
+import re
 from collections import defaultdict
 from pathlib import Path
 
@@ -96,7 +97,8 @@ def gerar() -> dict:
         return ligacao
     for pasta in sorted(p for p in BRUTO.iterdir() if p.is_dir()):
         for d in gerar_assembleia(pasta.name, pasta):
-            for nome in (d.get("nome"), d.get("nomeCivil")):
+            civil = re.sub(r"\s*\(.*?\)", "", d.get("nomeCivil") or "")  # "Fulano da Silva (Fulaninho)" -> nome sem apelido
+            for nome in (d.get("nome"), d.get("nomeCivil"), civil):
                 if nome:
                     ligacao[chave_nome(nome, pasta.name)] = (pasta.name, d["id"])
     return ligacao

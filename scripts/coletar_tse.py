@@ -40,7 +40,7 @@ COLUNAS = ["SQ_CANDIDATO", "NR_TURNO", "DS_CARGO", "DS_SIT_TOT_TURNO", "SG_UF", 
            "NR_CANDIDATO", "NM_CANDIDATO", "NM_URNA_CANDIDATO", "SG_PARTIDO", "SG_FEDERACAO",
            "NM_FEDERACAO", "DT_NASCIMENTO", "DS_GENERO", "DS_GRAU_INSTRUCAO", "DS_OCUPACAO",
            "DS_COR_RACA", "ST_REELEICAO", "NM_COLIGACAO", "CD_ELEICAO", "DS_SITUACAO_CANDIDATURA"]
-VERSAO = 5  # aumente quando mudar o processamento, para refazer os anos em cache
+VERSAO = 6  # aumente quando mudar o processamento, para refazer os anos em cache
 
 ELEITO = {"ELEITO", "ELEITO POR QP", "ELEITO POR MÉDIA", "ELEITO POR MEDIA"}
 SEGUNDO_TURNO = {"2º TURNO", "2O TURNO", "2° TURNO"}
@@ -123,7 +123,6 @@ def coletar_ano(ano: int) -> None:
     candidatos: dict[str, dict] = {}
     obrigatorias = {"SQ_CANDIDATO", "DS_CARGO", "DS_SIT_TOT_TURNO", "SG_UF", "SG_UE", "NM_UE", "NR_CANDIDATO"}
     verificado = False
-    diag, amostras = None, []
     for l in linhas_csv(zip_cand):
         if not verificado:
             faltando = obrigatorias - l.keys()
@@ -131,14 +130,6 @@ def coletar_ano(ano: int) -> None:
                 raise SystemExit(f"Colunas ausentes no arquivo do TSE {ano}: {sorted(faltando)}. "
                                  f"Colunas encontradas: {sorted(l.keys())[:60]}")
             verificado = True
-        if diag is None:
-            diag = [k for k in l.keys() if "SIT" in k or "JULG" in k or "TURNO" in k]
-            print(f"  colunas de situação: {diag}")
-            if os.environ.get("GITHUB_ACTIONS") and ano != 2022:
-                print(f"::notice::TSE {ano} colunas: {diag}")
-        if (os.environ.get("TSE_DIAG") and ano != 2022 and l["DS_CARGO"].strip().upper() in ("PRESIDENTE", "GOVERNADOR", "VICE-PREFEITO")
-                and (l.get("DS_SIT_TOT_TURNO") or "").startswith("#NULO")):
-            amostras.append({k: l.get(k) for k in diag + ["SG_UE"]})
         sq = l["SQ_CANDIDATO"]
         try:
             turno = int(l.get("NR_TURNO") or 1)
@@ -151,10 +142,6 @@ def coletar_ano(ano: int) -> None:
             candidatos[sq] = enxuto
     zip_cand.unlink()
     print(f"  candidaturas: {len(candidatos)}")
-    for a in amostras[:3] + [a for a in amostras if a.get("SG_UE") in ("SP", "BR")][:3]:
-        print(f"  #NULO: {a}")
-        if os.environ.get("GITHUB_ACTIONS"):
-            print(f"::notice::TSE {ano} #NULO {a}"[:900])
 
     # 2) titulares eleitos (ou no 2º turno), para achar os vices da mesma chapa
     def situacao(l):
@@ -165,27 +152,12 @@ def coletar_ano(ano: int) -> None:
             return "2turno"
         return None
 
-    # diagnóstico: situações encontradas nos cargos majoritários
-    vistas = Counter((l["DS_CARGO"].strip().upper(), (l.get("DS_SIT_TOT_TURNO") or "").strip(),
-                      (l.get("DS_SITUACAO_CANDIDATURA") or "").strip())
-                     for l in candidatos.values()
-                     if l["DS_CARGO"].strip().upper() in ("PRESIDENTE", "GOVERNADOR"))
-    print(f"  situações (presidente/governador): {dict(vistas)}")
-    if os.environ.get("GITHUB_ACTIONS") and ano != 2022:
-        print(f"::notice::TSE {ano} situações: {dict(vistas)}"[:900])
-
-    # durante o 2º turno, o TSE deixa sem resultado (#NULO) os finalistas de
-    # presidente e governador; contamos como 2º turno quem está apto num lugar
-    # que ainda não tem eleito
+    # enquanto o 2º turno não acontece, os finalistas de presidente e governador
+    # já têm uma linha de 2º turno, ainda sem resultado (#NULO)
     if ano == ANO_EM_ANDAMENTO:
-        com_eleito = {(l["DS_CARGO"].strip().upper(), l["SG_UE"]) for l in candidatos.values()
-                      if situacao(l) == "eleito"}
         for l in candidatos.values():
-            cargo = l["DS_CARGO"].strip().upper()
-            if (cargo in ("PRESIDENTE", "GOVERNADOR")
-                    and (l.get("DS_SIT_TOT_TURNO") or "").strip().upper().startswith("#NULO")
-                    and (l.get("DS_SITUACAO_CANDIDATURA") or "").strip().upper() == "APTO"
-                    and (cargo, l["SG_UE"]) not in com_eleito):
+            if (l["DS_CARGO"].strip().upper() in ("PRESIDENTE", "GOVERNADOR") and l["_turno"] == 2
+                    and (l.get("DS_SIT_TOT_TURNO") or "").strip().upper().startswith("#NULO")):
                 l["DS_SIT_TOT_TURNO"] = "2º TURNO"
         finalistas = Counter(l["SG_UE"] for l in candidatos.values()
                              if l["DS_CARGO"].strip().upper() in ("PRESIDENTE", "GOVERNADOR") and situacao(l) == "2turno")
@@ -199,18 +171,22 @@ def coletar_ano(ano: int) -> None:
         if cargo in VICES.values() and situacao(l):
             chapas[(cargo, l["SG_UE"], l["NR_CANDIDATO"])] = situacao(l)
 
-    # se uma chapa tem mais de um vice registrado (troca antes da eleição), fica o apto
-    vices_aptos = {(l["DS_CARGO"].strip().upper(), l["SG_UE"], l["NR_CANDIDATO"])
-                   for l in candidatos.values()
-                   if l["DS_CARGO"].strip().upper() in VICES
-                   and (l.get("DS_SITUACAO_CANDIDATURA") or "").strip().upper() == "APTO"}
+    # se uma chapa tem mais de um vice registrado (troca antes da eleição),
+    # fica o registro mais recente: o substituto recebe número de registro maior
+    vice_da_chapa = {}
+    for sq, l in candidatos.items():
+        cargo = l["DS_CARGO"].strip().upper()
+        if cargo in VICES:
+            chave = (cargo, l["SG_UE"], l["NR_CANDIDATO"])
+            atual = vice_da_chapa.get(chave)
+            if atual is None or (l["_turno"], int(sq)) > (candidatos[atual]["_turno"], int(atual)):
+                vice_da_chapa[chave] = sq
 
     eleitos = {}
     for sq, l in candidatos.items():
         cargo = l["DS_CARGO"].strip().upper()
         if cargo in VICES:
-            chave = (cargo, l["SG_UE"], l["NR_CANDIDATO"])
-            if chave in vices_aptos and (l.get("DS_SITUACAO_CANDIDATURA") or "").strip().upper() != "APTO":
+            if vice_da_chapa.get((cargo, l["SG_UE"], l["NR_CANDIDATO"])) != sq:
                 continue
             sit = chapas.get((VICES[cargo], l["SG_UE"], l["NR_CANDIDATO"]))
         else:

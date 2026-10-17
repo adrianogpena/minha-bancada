@@ -154,6 +154,33 @@ async function paginaCamara() {
 }
 
 /* ---------- perfil do deputado ---------- */
+const CAMARA_API = "https://dadosabertos.camara.leg.br/api/v2";
+const resultado = (a) => (a === 1 ? ["Aprovada", "aprovada"] : a === 0 ? ["Rejeitada", "rejeitada"] : ["Sem resultado informado", "sem"]);
+
+// projetos de verdade; o resto (requerimentos, emendas, pareceres) só aparece em "Outros documentos"
+const TIPOS_PROJETO = { PL: "Projeto de lei", PLP: "Projeto de lei complementar", PEC: "Proposta de emenda à Constituição", PDL: "Projeto de decreto legislativo",
+  PRC: "Projeto de resolução", PLC: "Projeto de lei da Câmara", PLS: "Projeto de lei do Senado", PRS: "Projeto de resolução do Senado", PDS: "Projeto de decreto legislativo do Senado", PLN: "Projeto de lei do Congresso", PFC: "Proposta de fiscalização e controle", PLV: "Projeto de lei de conversão", MPV: "Medida provisória" };
+
+// resume a situação da Câmara em um destino compreensível
+function desfecho(p) {
+  const s = semAcento(p.sit || "");
+  if (!p.sit) return ["Situação ainda não consultada", "sem"];
+  if (/transformad[ao] em norma|transformad[ao] em lei|sancionad/.test(s)) return ["Virou lei", "aprovada"];
+  if (/arquivad/.test(s)) return ["Arquivada", "rejeitada"];
+  if (/retirad/.test(s)) return ["Retirada pelo autor", "rejeitada"];
+  if (/vetad/.test(s)) return ["Vetada", "rejeitada"];
+  if (/prejudicad/.test(s)) return ["Prejudicada", "rejeitada"];
+  if (/remetid[ao] a camara/.test(s)) return ["Aprovada no Senado", "aprovada"];
+  if (/aguardando sancao|remetid.*(sancao|senado)/.test(s)) return ["Aprovada na Câmara", "aprovada"];
+  return ["Em tramitação", "tramitando"];
+}
+
+const linkTramitacao = (id) => `https://www.camara.leg.br/proposicoesWeb/fichadetramitacao?idProposicao=${encodeURIComponent(id)}`;
+
+function fontes(links) {
+  return `<span class="fontes">Fonte: ${links.filter(Boolean).map(([t, h]) => `<a href="${esc(h)}" rel="noopener">${esc(t)}</a>`).join(" · ")}</span>`;
+}
+
 async function paginaDeputado() {
   const alvo = $("#conteudo");
   const id = param("id");
@@ -164,46 +191,10 @@ async function paginaDeputado() {
   document.title = `${dep.nome} (${dep.partido}/${dep.uf}) | Minha Bancada`;
 
   const meus = new Map(dep.votos.map((v) => [v.id, v.voto]));
-  const linhaDoTempo = votacoes.map((v) => ({ ...v, voto: meus.get(v.id) || "ausente" })); // mais recente primeiro
-  const contagem = linhaDoTempo.reduce((c, v) => ((c[v.voto] = (c[v.voto] || 0) + 1), c), {});
-  const votou = linhaDoTempo.length - (contagem.ausente || 0) - (contagem.obstrucao || 0);
   const desp = dep.despesas;
   const maxTipo = desp.porTipo[0]?.[1] || 1;
-
-  alvo.innerHTML = `
-    <section class="perfil">
-      ${foto(dep, true)}
-      <div>
-        <h1>${esc(dep.nome)}</h1>
-        <p class="sub"><span class="selo">${esc(dep.partido)}/${esc(dep.uf)}</span> ${dep.situacao ? esc(dep.situacao) : ""}</p>
-      </div>
-    </section>
-
-    <section class="painel" aria-labelledby="t-painel">
-      <div class="painel-titulo">
-        <h2 id="t-painel">Votos no Plenário</h2>
-        <p>${linhaDoTempo.length} votações nominais${votacoes.length ? `, de ${data(votacoes.at(-1).data)} a ${data(votacoes[0].data)}` : ""}. Da mais antiga para a mais recente.</p>
-      </div>
-      <div class="faixa" role="list">${[...linhaDoTempo].reverse().map((v) =>
-        `<a role="listitem" class="v-${v.voto}" href="votacao.html?id=${encodeURIComponent(v.id)}" title="${esc(data(v.data))}: ${esc(VOTOS[v.voto]?.rotulo)}. ${esc(v.proposicao || "")} ${esc(v.descricao.slice(0, 120))}" aria-label="${esc(data(v.data))}, ${esc(VOTOS[v.voto]?.rotulo)}"></a>`).join("")}</div>
-      ${legenda(["sim", "nao", "abstencao", "obstrucao", "ausente"])}
-      <div class="numeros">
-        <div><b>${pct(votou, linhaDoTempo.length)}</b><span>votou (sim, não ou abstenção)</span></div>
-        <div><b>${contagem.sim || 0}</b><span>votos sim</span></div>
-        <div><b>${contagem.nao || 0}</b><span>votos não</span></div>
-        <div><b>${contagem.ausente || 0}</b><span>sem voto registrado</span></div>
-      </div>
-    </section>
-
-    <h2 id="votos">Como votou</h2>
-    <div class="abas" id="abas-votos"></div>
-    <div id="lista-votos"></div>
-
-    <h2 id="proposicoes">Proposições apresentadas <small class="sub">(${dep.proposicoes.length})</small></h2>
-    <div class="abas" id="abas-prop"></div>
-    <div id="lista-prop"></div>
-
-    <h2 id="gastos">Gastos da cota parlamentar em ${desp.ano}</h2>
+  const painelPerfil = `
+    <h2>Gastos da cota parlamentar em ${desp.ano}</h2>
     <p>Total no ano: <b>${reaisCentavos(desp.total)}</b>. A cota paga despesas do mandato, como passagens, aluguel de escritório e divulgação.</p>
     <div class="duas-colunas">
       <div>
@@ -219,6 +210,7 @@ async function paginaDeputado() {
           : `<p class="vazio">Sem fornecedores no período.</p>`}
       </div>
     </div>
+    ${fontes([["Cota parlamentar (API da Câmara)", `${CAMARA_API}/deputados/${encodeURIComponent(dep.id)}/despesas?ano=${desp.ano}`], ["Portal da Câmara", `https://www.camara.leg.br/deputados/${encodeURIComponent(dep.id)}`]])}
 
     <h2>Ficha</h2>
     <dl class="ficha">
@@ -230,22 +222,148 @@ async function paginaDeputado() {
       ${(dep.redesSociais || []).map((r) => `<dt>Rede social</dt><dd><a href="${esc(r)}" rel="noopener">${esc(r.replace(/^https?:\/\/(www\.)?/, ""))}</a></dd>`).join("")}
     </dl>`;
 
-  const renderVoto = (v) => `<li>
-      <span class="quando">${data(v.data)}${v.proposicao ? `, ${esc(v.proposicao)}` : ""}</span>${selo(v.voto)}
-      <a class="texto" href="votacao.html?id=${encodeURIComponent(v.id)}">${esc(v.descricao || "Votação sem descrição")}</a></li>`;
+  montarParlamentar(alvo, {
+    nome: dep.nome, foto: dep,
+    subtitulo: `<span class="selo">${esc(dep.partido)}/${esc(dep.uf)}</span> ${dep.situacao ? esc(dep.situacao) : ""}`,
+    painelPerfil, rotuloPerfil: "Perfil e gastos",
+    linhaDoTempo: votacoes.map((v) => ({ ...v, voto: meus.get(v.id) || "ausente" })), // mais recente primeiro
+    proposicoes: dep.proposicoes, tipoProjeto: (p) => !!TIPOS_PROJETO[p.tipo],
+    textoLegislatura: "como autor ou coautor nesta legislatura (desde fev. de 2023)",
+    aviso: "A situação vem da ficha de tramitação da Câmara e é atualizada aos poucos todo dia.",
+    fonteTramitacao: "Ficha de tramitação (Câmara)",
+    linkTramitacao: (p) => linkTramitacao(p.id),
+    linkApi: (p) => `${CAMARA_API}/proposicoes/${encodeURIComponent(p.id)}`,
+    hrefVotacao: (v) => `votacao.html?id=${encodeURIComponent(v.id)}`,
+    fontesVotacao: (v) => [["Votos de cada deputado (API da Câmara)", `${CAMARA_API}/votacoes/${encodeURIComponent(v.id)}/votos`], ["Detalhes da votação", `${CAMARA_API}/votacoes/${encodeURIComponent(v.id)}`], v.propId ? ["Tramitação do projeto", linkTramitacao(v.propId)] : null],
+  });
+}
+
+/* As três abas (perfil, votações, propostas) de um parlamentar. Serve a deputados e senadores. */
+function montarParlamentar(alvo, c) {
+  const nome = c.nome, linhaDoTempo = c.linhaDoTempo;
+  const projetos = c.proposicoes.filter(c.tipoProjeto), outros = c.proposicoes.filter((p) => !c.tipoProjeto(p));
+  const contagem = linhaDoTempo.reduce((m, v) => ((m[v.voto] = (m[v.voto] || 0) + 1), m), {});
+  const votou = linhaDoTempo.length - (contagem.ausente || 0) - (contagem.obstrucao || 0);
+
+  const painelVotacoes = `
+    <section class="painel" aria-labelledby="t-painel">
+      <div class="painel-titulo">
+        <h2 id="t-painel">Votos no Plenário</h2>
+        <p>${linhaDoTempo.length} votações nominais${linhaDoTempo.length ? `, de ${data(linhaDoTempo.at(-1).data)} a ${data(linhaDoTempo[0].data)}` : ""}. Da mais antiga para a mais recente.</p>
+      </div>
+      <div class="faixa" role="list">${[...linhaDoTempo].reverse().map((v) =>
+        `<a role="listitem" class="v-${v.voto}" ${c.hrefVotacao ? `href="${esc(c.hrefVotacao(v))}"` : ""} title="${esc(data(v.data))}: ${esc(VOTOS[v.voto]?.rotulo)}. ${esc(v.proposicao || "")} ${esc((v.descricao || "").slice(0, 120))}" aria-label="${esc(data(v.data))}, ${esc(VOTOS[v.voto]?.rotulo)}"></a>`).join("")}</div>
+      ${legenda(["sim", "nao", "abstencao", "obstrucao", "ausente"])}
+      <div class="numeros">
+        <div><b>${pct(votou, linhaDoTempo.length)}</b><span>votou (sim, não ou abstenção)</span></div>
+        <div><b>${contagem.sim || 0}</b><span>votos sim</span></div>
+        <div><b>${contagem.nao || 0}</b><span>votos não</span></div>
+        <div><b>${contagem.abstencao || 0}</b><span>abstenções</span></div>
+        <div><b>${(contagem.obstrucao || 0) + (contagem.art17 || 0) + (contagem.outro || 0)}</b><span>obstrução e outros</span></div>
+        <div><b>${contagem.ausente || 0}</b><span>sem voto registrado</span></div>
+      </div>
+    </section>
+    <h2 id="votos">Como votou</h2>
+    <p>Cada linha mostra o voto de ${esc(nome)}, o resultado final da votação e o placar geral.</p>
+    <div class="abas" id="abas-votos"></div>
+    <div id="lista-votos"></div>`;
+
+  const painelPropostas = `
+    <section class="painel">
+      <div class="painel-titulo"><h2>Propostas de ${esc(nome)}</h2>
+        <p>${c.proposicoes.length} documentos apresentados ${esc(c.textoLegislatura)}.</p></div>
+      <div class="numeros" id="numeros-prop"></div>
+    </section>
+    <h2 id="proposicoes">Projetos <small class="sub">(${projetos.length})</small></h2>
+    <p>Projetos de lei, emendas à Constituição e similares. ${esc(c.aviso)}</p>
+    <div class="abas" id="abas-proj"></div>
+    <div id="lista-proj"></div>
+    <h2>Outros documentos <small class="sub">(${outros.length})</small></h2>
+    <p>Requerimentos, indicações, emendas a outros projetos, pareceres e afins. Cada um tem a tramitação como fonte.</p>
+    <div class="abas" id="abas-outros"></div>
+    <div id="lista-outros"></div>`;
+
+  alvo.innerHTML = `
+    <section class="perfil">
+      ${foto(c.foto, true)}
+      <div>
+        <h1>${esc(nome)}</h1>
+        <p class="sub">${c.subtitulo}</p>
+      </div>
+    </section>
+    ${c.antes || ""}
+    <div class="abas-pagina" role="tablist" aria-label="Seções do perfil">
+      <button type="button" role="tab" id="aba-perfil" aria-controls="painel-perfil" data-aba="perfil">${esc(c.rotuloPerfil)}</button>
+      <button type="button" role="tab" id="aba-votacoes" aria-controls="painel-votacoes" data-aba="votacoes">Votações <small>${linhaDoTempo.length}</small></button>
+      <button type="button" role="tab" id="aba-propostas" aria-controls="painel-propostas" data-aba="propostas">Propostas <small>${c.proposicoes.length}</small></button>
+    </div>
+    <div role="tabpanel" id="painel-perfil" aria-labelledby="aba-perfil">${c.painelPerfil}</div>
+    <div role="tabpanel" id="painel-votacoes" aria-labelledby="aba-votacoes" hidden>${painelVotacoes}</div>
+    <div role="tabpanel" id="painel-propostas" aria-labelledby="aba-propostas" hidden>${painelPropostas}</div>`;
+
+  function irParaAba(nome, atualizarUrl = true) {
+    if (!$(`#painel-${nome}`)) nome = "perfil";
+    alvo.querySelectorAll("[data-aba]").forEach((b) => b.setAttribute("aria-selected", b.dataset.aba === nome));
+    alvo.querySelectorAll("[role=tabpanel]").forEach((p) => (p.hidden = p.id !== `painel-${nome}`));
+    if (atualizarUrl) history.replaceState(null, "", nome === "perfil" ? location.pathname + location.search : `${location.pathname}${location.search}#${nome}`);
+  }
+  $(".abas-pagina", alvo).addEventListener("click", (e) => { const b = e.target.closest("[data-aba]"); if (b) irParaAba(b.dataset.aba); });
+  irParaAba(location.hash.slice(1), false);
+  window.addEventListener("hashchange", () => irParaAba(location.hash.slice(1), false));
+
+  /* --- aba Votações --- */
+  const renderVoto = (v) => {
+    const [res, classe] = resultado(v.aprovada);
+    const pl = v.placar || {};
+    return `<li class="cartao-item">
+      <span class="quando">${data(v.data)}${v.proposicao ? `, <b>${esc(v.proposicao)}</b>` : ""}</span>
+      <span>${selo(v.voto)} <span class="resultado r-${classe}">${esc(res)}</span></span>
+      ${c.hrefVotacao ? `<a class="texto" href="${esc(c.hrefVotacao(v))}">${esc(v.descricao || "Votação sem descrição")}</a>` : `<span class="texto">${esc(v.descricao || "Votação sem descrição")}</span>`}
+      ${v.ementa ? `<span class="texto ementa">${esc(v.ementa)}</span>` : ""}
+      <span class="texto">${barraPlacar(pl)}<span class="quando">Placar: Sim ${pl.sim || 0} · Não ${pl.nao || 0} · Abstenção ${pl.abstencao || 0}${pl.obstrucao ? ` · Obstrução ${pl.obstrucao}` : ""}</span></span>
+      <span class="texto">${fontes(c.fontesVotacao(v))}</span>
+    </li>`;
+  };
   const filtrosVoto = { todos: () => true, sim: (v) => v.voto === "sim", nao: (v) => v.voto === "nao", outros: (v) => ["abstencao", "obstrucao", "art17", "outro"].includes(v.voto), ausente: (v) => v.voto === "ausente" };
-  const mostrarVotos = (f) => listaPaginada($("#lista-votos"), linhaDoTempo.filter(filtrosVoto[f]), renderVoto, 15, "Nenhuma votação nesse filtro.");
+  const mostrarVotos = (f) => listaPaginada($("#lista-votos"), linhaDoTempo.filter(filtrosVoto[f]), renderVoto, 10, "Nenhuma votação nesse filtro.");
   abas($("#abas-votos"), [{ valor: "todos", rotulo: "Todas" }, { valor: "sim", rotulo: "Sim" }, { valor: "nao", rotulo: "Não" }, { valor: "outros", rotulo: "Abstenção e obstrução" }, { valor: "ausente", rotulo: "Sem voto" }], mostrarVotos);
   mostrarVotos("todos");
 
-  const tipos = [...new Set(dep.proposicoes.map((p) => p.tipo))].sort();
-  const renderProp = (p) => `<li>
+  /* --- aba Propostas --- */
+  const destinos = projetos.map((p) => desfecho(p)[1]);
+  const cont = destinos.reduce((m, d) => ((m[d] = (m[d] || 0) + 1), m), {});
+  $("#numeros-prop").innerHTML = `
+    <div><b>${projetos.length}</b><span>projetos</span></div>
+    <div><b>${cont.tramitando || 0}</b><span>em tramitação</span></div>
+    <div><b>${cont.aprovada || 0}</b><span>aprovados ou viraram lei</span></div>
+    <div><b>${cont.rejeitada || 0}</b><span>arquivados ou retirados</span></div>
+    <div><b>${cont.sem || 0}</b><span>situação a consultar</span></div>`;
+
+  const renderProj = (p) => {
+    const [texto, classe] = desfecho(p);
+    return `<li class="cartao-item">
+      <span class="quando"><b>${esc(p.tipo)} ${esc(p.numero)}/${esc(p.ano)}</b>${p.ap ? `, apresentado em ${data(p.ap)}` : ""}${p.principal ? ", autor principal" : ""}</span>
+      <span class="resultado r-${classe}">${esc(texto)}</span>
+      <span class="texto">${esc(p.ementa || "Sem ementa")}</span>
+      ${p.sit ? `<span class="texto"><b>Situação:</b> ${esc(p.sit)}${p.org ? ` (${esc(p.org)})` : ""}${p.dt ? `, em ${data(p.dt)}` : ""}.${p.desp ? ` <span class="quando">Despacho: ${esc(p.desp.slice(0, 300))}</span>` : ""}</span>` : ""}
+      ${p.kw ? `<span class="texto quando">Temas: ${esc(p.kw)}</span>` : ""}
+      <span class="texto">${fontes([[c.fonteTramitacao, c.linkTramitacao(p)], p.pdf ? ["Texto integral", p.pdf] : null, ["Dados na API", c.linkApi(p)]])}</span>
+    </li>`;
+  };
+  const tiposProj = [...new Set(projetos.map((p) => p.tipo))].sort();
+  const filtroProj = (f) => projetos.filter((p) => f === "todos" ? true : ["tramitando", "aprovada", "rejeitada"].includes(f) ? desfecho(p)[1] === f : p.tipo === f);
+  const mostrarProj = (f) => listaPaginada($("#lista-proj"), filtroProj(f), renderProj, 10, "Nenhum projeto nesse filtro.");
+  abas($("#abas-proj"), [{ valor: "todos", rotulo: "Todos" }, { valor: "tramitando", rotulo: "Em tramitação" }, { valor: "aprovada", rotulo: "Aprovados" }, { valor: "rejeitada", rotulo: "Arquivados" }, ...tiposProj.map((t) => ({ valor: t, rotulo: t }))], mostrarProj);
+  mostrarProj("todos");
+
+  const renderOutro = (p) => `<li>
       <span class="quando"><b>${esc(p.tipo)} ${esc(p.numero)}/${esc(p.ano)}</b></span>
-      <a href="https://www.camara.leg.br/proposicoesWeb/fichadetramitacao?idProposicao=${encodeURIComponent(p.id)}" rel="noopener" style="font-size:14px">Tramitação</a>
-      <span class="texto">${esc(p.ementa || "Sem ementa")}</span></li>`;
-  const mostrarProp = (t) => listaPaginada($("#lista-prop"), dep.proposicoes.filter((p) => t === "todos" || p.tipo === t), renderProp, 10, "Nenhuma proposição apresentada nesta legislatura.");
-  abas($("#abas-prop"), [{ valor: "todos", rotulo: "Todas" }, ...tipos.map((t) => ({ valor: t, rotulo: t }))], mostrarProp);
-  mostrarProp("todos");
+      <span class="texto">${esc(p.ementa || "Sem ementa")}</span>
+      <span class="texto">${fontes([[c.fonteTramitacao, c.linkTramitacao(p)]])}</span></li>`;
+  const tiposOutros = [...new Set(outros.map((p) => p.tipo))].sort();
+  const mostrarOutros = (t) => listaPaginada($("#lista-outros"), outros.filter((p) => t === "todos" || p.tipo === t), renderOutro, 10, "Nenhum documento apresentado no período.");
+  abas($("#abas-outros"), [{ valor: "todos", rotulo: "Todos" }, ...tiposOutros.map((t) => ({ valor: t, rotulo: t }))], mostrarOutros);
+  mostrarOutros("todos");
 }
 
 /* ---------- lista de votações ---------- */
@@ -484,6 +602,11 @@ async function paginaPolitico() {
     ["E-mail", p.email ? `<a href="mailto:${esc(p.email)}">${esc(p.email)}</a>` : null, true],
   ].filter(([, v]) => v);
 
+  if (p.fonte === "senado") {
+    const montado = await montarSenador(alvo, p, nome, ficha);
+    if (montado) return;
+  }
+
   const bens = p.bens || [];
   alvo.innerHTML = `
     <section class="perfil">
@@ -515,6 +638,41 @@ async function paginaPolitico() {
       <span class="quando"><b>${esc(tipo)}</b></span><b>${reais(valor)}</b>
       ${desc ? `<span class="texto">${esc(desc.charAt(0) + desc.slice(1).toLowerCase())}</span>` : ""}</li>`, 10, "Nenhum bem declarado.");
   }
+}
+
+/* senador: mesmas abas do deputado. Devolve false se os dados de votos e projetos ainda não existem. */
+const SENADO_API = "https://legis.senado.leg.br/dadosabertos";
+const linkMateriaSenado = (id) => `https://www25.senado.leg.br/web/atividade/materias/-/materia/${encodeURIComponent(id)}`;
+
+async function montarSenador(alvo, p, nome, ficha) {
+  let sen, lista;
+  try { [sen, lista] = await Promise.all([carregar(`dados/senador/${encodeURIComponent(p.id)}.json`), carregar("dados/votacoes_senado.json")]); } catch { return false; }
+  const meus = new Map(sen.votos.map((v) => [v.id, v.voto]));
+  const linhaDoTempo = lista.filter((v) => meus.has(v.id)).map((v) => ({ ...v, voto: meus.get(v.id) }));
+  const situacao = p.fimMandato ? `Mandato até ${data(p.fimMandato, true)}.` : "";
+  const apiVotacao = (v) => `${SENADO_API}/votacao?dataInicio=${v.data.replaceAll("-", "")}&dataFim=${v.data.replaceAll("-", "")}`;
+  montarParlamentar(alvo, {
+    nome, foto: { nome, foto: p.foto },
+    subtitulo: `<span class="selo">${esc(p.partido || "")}/${esc(p.uf)}</span> ${esc(p.cargo)}${p.participacao && p.participacao !== "Titular" ? `, ${esc(p.participacao.toLowerCase())}` : ""}`,
+    painelPerfil: `<p class="situacao">${esc(situacao)}</p>
+      <h2>Ficha</h2>
+      <dl class="ficha">${ficha.map(([k, v, html]) => `<dt>${k}</dt><dd>${html ? v : esc(v)}</dd>`).join("")}
+        <dt>Onde atua</dt><dd>${esc(UFS[p.uf] || p.uf)}</dd>
+        ${p.pagina ? `<dt>Página oficial</dt><dd><a href="${esc(p.pagina)}" rel="noopener">Perfil no Senado Federal</a></dd>` : ""}
+      </dl>
+      <p class="aviso">Gastos da cota (CEAPS) de senadores ainda não estão no site. Veja no <a href="https://www12.senado.leg.br/transparencia/sen/${encodeURIComponent(p.id)}" rel="noopener">Portal da Transparência do Senado</a>.</p>
+      ${fontes([["Dados Abertos do Senado", `${SENADO_API}/senador/${encodeURIComponent(p.id)}`]])}`,
+    rotuloPerfil: "Perfil",
+    linhaDoTempo, proposicoes: sen.proposicoes, tipoProjeto: (x) => !!TIPOS_PROJETO[x.tipo],
+    textoLegislatura: "como autor ou coautor desde 2019",
+    aviso: "A situação vem da tramitação no Senado e é atualizada aos poucos todo dia.",
+    fonteTramitacao: "Tramitação (Senado)",
+    linkTramitacao: (x) => linkMateriaSenado(x.id),
+    linkApi: (x) => `${SENADO_API}/materia/${encodeURIComponent(x.id)}`,
+    hrefVotacao: null,
+    fontesVotacao: (v) => [["Votos de cada senador (API do Senado)", apiVotacao(v)], v.propId ? ["Tramitação da matéria", linkMateriaSenado(v.propId)] : null],
+  });
+  return true;
 }
 
 /* ---------- início ---------- */

@@ -205,6 +205,77 @@ def coletar_deputados(limite: int | None) -> list:
         raise SystemExit("Muitas falhas ao coletar deputados; abortando para não publicar dados incompletos.")
     return resumo
 
+# ---------------------------------------------------------------- detalhes das proposições
+
+# tipos que são projetos de verdade; requerimentos, emendas e pareceres ficam só na lista
+TIPOS_PRINCIPAIS = {"PL", "PLP", "PEC", "PDL", "PRC", "PLN", "PFC", "PLV", "MPV", "PLS", "PDC", "PDS"}
+ORCAMENTO_DETALHES = int(os.environ.get("DETALHES_POR_EXECUCAO", "4000"))
+RENOVAR_APOS_DIAS = 7  # proposição ainda em tramitação é consultada de novo depois disso
+
+
+def coletar_detalhes_proposicoes() -> None:
+    """Situação atual de cada projeto (aprovado, arquivado, em tramitação...).
+    Guardado em dados/proposicoes_detalhe.json (vai para o git). Há muitos
+    projetos, então cada execução consulta no máximo ORCAMENTO_DETALHES:
+    primeiro os que nunca foram consultados, depois os mais desatualizados
+    que ainda tramitam. Com os dias o cache se completa."""
+    arquivo = DADOS / "proposicoes_detalhe.json"
+    cache = ler(arquivo, {})
+    todos = set()
+    for arq in (DADOS / "proposicoes").glob("*.json"):
+        for p in ler(arq, {"itens": []})["itens"]:
+            if p.get("siglaTipo") in TIPOS_PRINCIPAIS:
+                todos.add(str(p["id"]))
+    hoje = dt.date.today()
+    limite_velho = (hoje - dt.timedelta(days=RENOVAR_APOS_DIAS)).isoformat()
+    novos = sorted(todos - cache.keys(), reverse=True)
+    velhos = sorted((i for i in todos & cache.keys()
+                     if not cache[i].get("fim") and cache[i].get("em", "") < limite_velho),
+                    key=lambda i: cache[i].get("em", ""))
+    fila = (novos + velhos)[:ORCAMENTO_DETALHES]
+    print(f"Detalhes de proposições: {len(todos)} projetos, {len(novos)} novos, {len(velhos)} a renovar; consultando {len(fila)}")
+
+    def buscar(pid: str) -> tuple[str, dict]:
+        d = get(f"/proposicoes/{pid}").get("dados", {}) or {}
+        st = d.get("statusProposicao") or d.get("ultimoStatus") or {}
+        situacao = st.get("descricaoSituacao") or ""
+        return pid, {
+            "apres": (d.get("dataApresentacao") or "")[:10] or None,
+            "sit": situacao or None,
+            "tram": st.get("descricaoTramitacao"),
+            "desp": (st.get("despacho") or "").strip() or None,
+            "org": st.get("siglaOrgao"),
+            "data": (st.get("dataHora") or "")[:10] or None,
+            "regime": st.get("regime"),
+            "inteiroTeor": d.get("urlInteiroTeor"),
+            "detalhada": (d.get("ementaDetalhada") or "").strip() or None,
+            "palavras": (d.get("keywords") or "").strip() or None,
+            "em": hoje.isoformat(),
+            "fim": situacao_final(situacao),
+        }
+
+    feitos = falhas = 0
+    with ThreadPoolExecutor(TRABALHADORES) as ex:
+        for f in as_completed([ex.submit(buscar, i) for i in fila]):
+            try:
+                pid, info = f.result()
+                cache[pid] = info
+                feitos += 1
+            except Exception as e:
+                falhas += 1
+                if falhas <= 5:
+                    avisar(f"detalhe de proposição: {e}")
+            if feitos and feitos % 1000 == 0:
+                salvar(arquivo, cache)  # não perde o trabalho se a execução for interrompida
+    salvar(arquivo, cache)
+    print(f"Detalhes salvos: {feitos}, falhas: {falhas}, no cache: {len(cache)}")
+
+
+def situacao_final(situacao: str) -> bool:
+    """True quando a proposição não vai mais tramitar (não precisa ser reconsultada)."""
+    s = (situacao or "").lower()
+    return any(k in s for k in ("arquivad", "transformad", "retirad", "perdeu a eficácia", "vetad", "sancionad", "devolvid"))
+
 
 # ---------------------------------------------------------------- senado
 
@@ -240,6 +311,196 @@ def coletar_senado() -> None:
     print(f"Senadores em exercício: {len(senadores)}")
 
 
+# ---------------------------------------------------------------- senado: votos e autorias
+
+TIPOS_PROJETO_SENADO = TIPOS_PRINCIPAIS | {"PLC", "PRS", "PDS", "PLS"}
+ORCAMENTO_MATERIAS = int(os.environ.get("MATERIAS_POR_EXECUCAO", "1500"))
+
+
+def get_senado(caminho: str, **params):
+    r = S.get(f"{SENADO}{caminho}", params=params or None, headers={"Accept": "application/json"}, timeout=90)
+    if not r.ok:
+        raise RuntimeError(f"HTTP {r.status_code} em {r.url}: {r.text[:200]!r}")
+    return r.json()
+
+
+def achar(obj, chave: str):
+    """Primeiro valor da chave em qualquer nível. A API do Senado converte XML em JSON e
+    ora devolve objeto, ora lista, ora muda o aninhamento; assim não dependemos disso."""
+    if isinstance(obj, dict):
+        if chave in obj:
+            return obj[chave]
+        for v in obj.values():
+            r = achar(v, chave)
+            if r is not None:
+                return r
+    elif isinstance(obj, list):
+        for v in obj:
+            r = achar(v, chave)
+            if r is not None:
+                return r
+    return None
+
+
+def como_lista(x) -> list:
+    return x if isinstance(x, list) else ([] if x is None else [x])
+
+
+def tipo_voto_senado(sigla: str | None, descricao: str | None) -> str:
+    """Normaliza o voto para as chaves que o site usa. Quem não votou fica como 'ausente'."""
+    t = f"{sigla or ''} {descricao or ''}".lower()
+    if any(k in t for k in ("compareceu", "ncom", "licen", "ausente", "missão", "missao", "representa")):
+        return "ausente"  # antes do "não": "Não compareceu" não é voto contra
+    if "sim" in t.split():
+        return "sim"
+    if "não" in t or "nao" in t.split():
+        return "nao"
+    if "absten" in t:
+        return "abstencao"
+    if "obstru" in t:
+        return "obstrucao"
+    if "presidente" in t or "art. 51" in t:
+        return "art17"
+    return "outro"
+
+
+def resultado_senado(texto: str | None, sim: int, nao: int) -> int | None:
+    t = (texto or "").lower()
+    if "aprovad" in t:
+        return 1
+    if "rejeitad" in t or "prejudicad" in t:
+        return 0
+    return None
+
+
+def coletar_votacoes_senado() -> None:
+    """Votações nominais do Plenário do Senado, com o voto de cada senador.
+    Um arquivo por ano em dados/senado_votacoes/ (vai para o git)."""
+    pasta = DADOS / "senado_votacoes"
+    hoje = dt.date.today()
+    ultima = None
+    for arq in pasta.glob("*.json"):
+        for v in ler(arq, {}).values():
+            d = dt.date.fromisoformat(v["data"])
+            ultima = d if ultima is None or d > ultima else ultima
+    inicio = (ultima - dt.timedelta(days=5)) if ultima else dt.date.fromisoformat(INICIO_LEGISLATURA)
+    print(f"Votações do Senado de {inicio} a {hoje}")
+    por_ano: dict[str, dict] = {}
+    total = 0
+    atual = inicio
+    while atual <= hoje:
+        fim = min(atual + dt.timedelta(days=89), hoje, dt.date(atual.year, 12, 31))
+        try:
+            dados = get_senado("/votacao", dataInicio=atual.strftime("%Y%m%d"), dataFim=fim.strftime("%Y%m%d"))
+        except Exception as e:
+            avisar(f"votações do Senado de {atual} a {fim}: {e}")
+            atual = fim + dt.timedelta(days=1)
+            continue
+        if isinstance(dados, dict):  # algumas versões embrulham a lista
+            dados = achar(dados, "votacoes") or achar(dados, "Votacao") or []
+        for v in como_lista(dados):
+            votos = [[str(x.get("codigoParlamentar")), tipo_voto_senado(x.get("siglaVotoParlamentar") or x.get("siglaVoto"), x.get("descricaoVotoParlamentar") or x.get("descricaoVoto"))]
+                     for x in como_lista(v.get("votos")) if x.get("codigoParlamentar")]
+            if not votos:  # votação simbólica ou secreta: não há voto individual
+                continue
+            data = str(v.get("dataSessao") or "")[:10]
+            if not data:
+                continue
+            sim = sum(1 for _, t in votos if t == "sim")
+            nao = sum(1 for _, t in votos if t == "nao")
+            ident = " ".join(str(x) for x in (v.get("siglaMateria"), v.get("numeroMateria") and f"{v.get('numeroMateria')}/{v.get('anoMateria')}") if x) or v.get("identificacao")
+            vid = str(v.get("codigoSessaoVotacao") or f"{v.get('codigoSessao')}-{v.get('sequencialSessao')}")
+            por_ano.setdefault(data[:4], ler(pasta / f"{data[:4]}.json", {}))[vid] = {
+                "id": vid, "data": data, "hora": str(v.get("horaInicio") or "")[:5] or None,
+                "descricao": (v.get("descricaoVotacao") or "").strip(),
+                "proposicao": ident or None, "propId": v.get("codigoMateria"),
+                "ementa": (v.get("ementa") or "").strip() or None,
+                "aprovada": resultado_senado(v.get("resultadoVotacao"), sim, nao),
+                "resultadoTexto": v.get("resultadoVotacao"),
+                "votos": votos,
+            }
+            total += 1
+        atual = fim + dt.timedelta(days=1)
+    for ano, mapa in por_ano.items():
+        salvar(pasta / f"{ano}.json", mapa)
+    print(f"Votações nominais do Senado coletadas: {total}")
+
+
+def coletar_autorias_senado() -> None:
+    """Matérias de que cada senador em exercício é autor, e a situação atual delas."""
+    senadores = ler(DADOS / "senado.json", [])
+    autorias: dict[str, list] = {}
+
+    def buscar(sid: str) -> tuple[str, list]:
+        dados = get_senado(f"/senador/{sid}/autorias")
+        itens = []
+        for a in como_lista(achar(dados, "Autoria")):
+            m = a.get("Materia") or a
+            codigo = m.get("Codigo") or achar(a, "CodigoMateria")
+            ano = int(m.get("Ano") or 0)
+            if not codigo or ano < 2019:  # mandato mais antigo em exercício começou em 2019
+                continue
+            itens.append({"id": str(codigo), "tipo": m.get("Sigla") or m.get("SiglaSubtipoMateria"),
+                          "numero": m.get("Numero"), "ano": ano,
+                          "ementa": (m.get("Ementa") or "").strip(),
+                          "principal": a.get("IndicadorAutorPrincipal") == "Sim",
+                          "ap": str(m.get("Data") or m.get("DataApresentacao") or "")[:10] or None})
+        return sid, sorted(itens, key=lambda i: (i["ano"], int(i["numero"] or 0)), reverse=True)
+
+    falhas = 0
+    with ThreadPoolExecutor(TRABALHADORES) as ex:
+        for f in as_completed([ex.submit(buscar, str(s["id"])) for s in senadores]):
+            try:
+                sid, itens = f.result()
+                autorias[sid] = itens
+            except Exception as e:
+                falhas += 1
+                if falhas <= 5:
+                    avisar(f"autorias de senador: {e}")
+    salvar(DADOS / "senado_autorias.json", autorias)
+    print(f"Autorias de {len(autorias)} senadores, falhas: {falhas}")
+
+    # situação atual das matérias que são projetos
+    arquivo = DADOS / "senado_materias.json"
+    cache = ler(arquivo, {})
+    todos = {i["id"] for itens in autorias.values() for i in itens if i["tipo"] in TIPOS_PROJETO_SENADO}
+    hoje = dt.date.today()
+    limite_velho = (hoje - dt.timedelta(days=RENOVAR_APOS_DIAS)).isoformat()
+    novos = sorted(todos - cache.keys(), reverse=True)
+    velhos = sorted((i for i in todos & cache.keys() if not cache[i].get("fim") and cache[i].get("em", "") < limite_velho),
+                    key=lambda i: cache[i].get("em", ""))
+    fila = (novos + velhos)[:ORCAMENTO_MATERIAS]
+    print(f"Matérias do Senado: {len(todos)} projetos, {len(novos)} novos, {len(velhos)} a renovar; consultando {len(fila)}")
+
+    def detalhe(cod: str) -> tuple[str, dict]:
+        d = get_senado(f"/materia/{cod}")
+        sit = achar(d, "DescricaoSituacao")
+        return cod, {
+            "sit": sit, "org": achar(d, "SiglaLocal") or achar(d, "NomeLocal"),
+            "data": str(achar(d, "DataSituacao") or achar(d, "DataLocal") or "")[:10] or None,
+            "ap": str(achar(d, "DataApresentacao") or "")[:10] or None,
+            "det": (achar(d, "ExplicacaoEmentaMateria") or "").strip() or None,
+            "kw": (achar(d, "IndexacaoMateria") or "").strip() or None,
+            "em": hoje.isoformat(), "fim": situacao_final(sit or ""),
+        }
+
+    feitos = falhas = 0
+    with ThreadPoolExecutor(TRABALHADORES) as ex:
+        for f in as_completed([ex.submit(detalhe, i) for i in fila]):
+            try:
+                cod, info = f.result()
+                cache[cod] = info
+                feitos += 1
+            except Exception as e:
+                falhas += 1
+                if falhas <= 5:
+                    avisar(f"detalhe de matéria do Senado: {e}")
+            if feitos and feitos % 500 == 0:
+                salvar(arquivo, cache)
+    salvar(arquivo, cache)
+    print(f"Matérias do Senado salvas: {feitos}, falhas: {falhas}, no cache: {len(cache)}")
+
+
 # ---------------------------------------------------------------- votações
 
 def janelas(inicio: dt.date, fim: dt.date):
@@ -254,13 +515,14 @@ def janelas(inicio: dt.date, fim: dt.date):
 
 def coletar_votos(votacao: dict) -> dict:
     votos = get(f"/votacoes/{votacao['id']}/votos").get("dados", [])
-    proposicao, ementa = votacao.get("proposicaoObjeto"), None
+    proposicao, ementa, prop_id = votacao.get("proposicaoObjeto"), None, None
     if votos:  # só nas nominais: busca a proposição votada, que a lista nem sempre traz
         try:
             det = get(f"/votacoes/{votacao['id']}").get("dados", {}) or {}
             afetadas = det.get("proposicoesAfetadas") or []
             if afetadas:
                 p = afetadas[0]
+                prop_id = p.get("id")
                 proposicao = proposicao or f"{p.get('siglaTipo')} {p.get('numero')}/{p.get('ano')}"
                 ementa = (p.get("ementa") or "").strip() or None
         except Exception as e:
@@ -272,6 +534,7 @@ def coletar_votos(votacao: dict) -> dict:
         "orgao": votacao.get("siglaOrgao"),
         "descricao": (votacao.get("descricao") or "").strip(),
         "proposicao": proposicao,
+        "propId": prop_id,
         "ementa": ementa,
         "aprovada": votacao.get("aprovacao"),
         "votos": [[v["deputado_"]["id"], v.get("tipoVoto")]
@@ -307,7 +570,7 @@ def coletar_votacoes(dias_iniciais: int) -> None:
     novas = {v["id"] for v in encontradas}
     for arq in arquivos:
         for v in ler(arq, {}).values():
-            if v.get("votos") and "ementa" not in v and v["id"] not in novas:
+            if v.get("votos") and ("ementa" not in v or "propId" not in v) and v["id"] not in novas:
                 encontradas.append({"id": v["id"], "data": v["data"],
                                     "dataHoraRegistro": f"{v['data']}T{v.get('hora') or '00:00'}:00",
                                     "siglaOrgao": v.get("orgao"), "descricao": v.get("descricao"),
@@ -335,17 +598,27 @@ def main():
     p = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     p.add_argument("--limite", type=int, help="coletar só os N primeiros deputados (teste)")
     p.add_argument("--dias", type=int, default=90, help="dias de votações na primeira coleta")
-    p.add_argument("--so", choices=["deputados", "votacoes", "senado"], help="coletar só uma parte")
+    p.add_argument("--so", choices=["deputados", "votacoes", "proposicoes", "senado"], help="coletar só uma parte")
     a = p.parse_args()
     if a.so in (None, "deputados"):
         coletar_deputados(a.limite)
     if a.so in (None, "votacoes"):
         coletar_votacoes(a.dias)
+    if a.so in (None, "proposicoes"):
+        try:
+            coletar_detalhes_proposicoes()
+        except Exception as e:  # os detalhes são um complemento: não derrubam a coleta
+            avisar(f"detalhes das proposições: {e}")
     if a.so in (None, "senado"):
         try:
             coletar_senado()
         except Exception as e:
             avisar(f"senado: {e}")
+        for etapa in (coletar_votacoes_senado, coletar_autorias_senado):  # complementos: cada um falha sozinho
+            try:
+                etapa()
+            except Exception as e:
+                avisar(f"{etapa.__name__}: {e}")
     salvar(DADOS / "meta.json", {
         "atualizadoEm": dt.datetime.now(dt.timezone.utc).isoformat(timespec="seconds"),
         "fonte": "API de Dados Abertos da Câmara dos Deputados",

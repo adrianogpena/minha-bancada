@@ -36,6 +36,62 @@ def tipo_voto(v: str | None) -> str:
     return VOTOS_NORMAIS.get(v or "", "outro")
 
 
+def juntar_detalhe(p: dict, det: dict | None) -> dict:
+    """Acrescenta à proposição a situação atual, quando já foi consultada.
+    Nomes curtos para o JSON do site ficar leve."""
+    if not det:
+        return p
+    campos = {"apres": "ap", "sit": "sit", "desp": "desp", "org": "org", "data": "dt",
+              "inteiroTeor": "pdf", "detalhada": "det", "palavras": "kw"}
+    return {**p, **{curto: det[longo] for longo, curto in campos.items() if det.get(longo)}}
+
+
+def gerar_senadores() -> None:
+    """Votos e projetos dos senadores em exercício -> site/dados/senador/<id>.json
+    e site/dados/votacoes_senado.json (lista de votações, sem o voto de cada um)."""
+    senadores = ler(BRUTO / "senado.json", []) or []
+    if not senadores:
+        return
+    votacoes = []
+    for arq in sorted((BRUTO / "senado_votacoes").glob("*.json")):
+        votacoes += ler(arq, {}).values()
+    votacoes.sort(key=lambda v: (v["data"], v.get("hora") or ""), reverse=True)
+    autorias = ler(BRUTO / "senado_autorias.json", {}) or {}
+    materias = ler(BRUTO / "senado_materias.json", {}) or {}
+
+    resumo, votos_por_sen, primeira = [], defaultdict(dict), {}
+    for v in votacoes:
+        placar = Counter(t for _, t in v["votos"])
+        resumo.append({
+            "id": v["id"], "data": v["data"], "hora": v.get("hora"), "descricao": v["descricao"],
+            "proposicao": v.get("proposicao"), "propId": v.get("propId"), "ementa": v.get("ementa"),
+            "aprovada": v.get("aprovada"), "resultadoTexto": v.get("resultadoTexto"),
+            "placar": {k: n for k, n in placar.items() if k != "ausente"},
+        })
+        for sid, t in v["votos"]:
+            votos_por_sen[sid][v["id"]] = t
+            if sid not in primeira or v["data"] < primeira[sid]:
+                primeira[sid] = v["data"]
+    salvar(SAIDA / "votacoes_senado.json", resumo)
+
+    campos = {"ap": "ap", "sit": "sit", "org": "org", "data": "dt", "det": "det", "kw": "kw"}
+    for s in senadores:
+        sid = str(s["id"])
+        desde = primeira.get(sid)  # antes do primeiro voto o senador pode nem estar em exercício
+        propostas = []
+        for a in autorias.get(sid, []):
+            det = materias.get(a["id"]) or {}
+            extra = {curto: det[longo] for longo, curto in campos.items() if det.get(longo)}
+            propostas.append({**a, **{k: v for k, v in extra.items() if not (k == "ap" and a.get("ap"))}})
+        salvar(SAIDA / "senador" / f"{sid}.json", {
+            "id": sid,
+            "votos": [{"id": v["id"], "voto": votos_por_sen[sid].get(v["id"], "ausente")}
+                      for v in resumo if desde and v["data"] >= desde],
+            "proposicoes": propostas,
+        })
+    print(f"Gerado: {len(senadores)} senadores, {len(resumo)} votações nominais do Senado")
+
+
 def main():
     ids = ler(BRUTO / "deputados.json", [])
     if not ids:
@@ -52,6 +108,8 @@ def main():
     for arq in sorted((BRUTO / "votacoes").glob("*.json")):
         votacoes += [v for v in ler(arq, {}).values() if v.get("votos")]
     votacoes.sort(key=lambda v: (v["data"], v.get("hora") or ""), reverse=True)
+
+    detalhes = ler(BRUTO / "proposicoes_detalhe.json", {}) or {}
 
     if SAIDA.exists():
         shutil.rmtree(SAIDA)
@@ -79,7 +137,7 @@ def main():
         resumo = {
             "id": v["id"], "data": v["data"], "hora": v.get("hora"),
             "descricao": v["descricao"], "proposicao": v.get("proposicao"),
-            "ementa": v.get("ementa"),
+            "propId": v.get("propId"), "ementa": v.get("ementa"),
             "aprovada": v.get("aprovada"), "placar": dict(placar),
         }
         lista_votacoes.append(resumo)
@@ -112,7 +170,7 @@ def main():
             "nascimento": d.get("nascimento"),
             "naturalidade": ", ".join(x for x in (d.get("municipioNascimento"), d.get("ufNascimento")) if x),
             "escolaridade": d.get("escolaridade"), "redesSociais": d.get("redesSociais", []),
-            "proposicoes": d["proposicoes"],
+            "proposicoes": [juntar_detalhe(p, detalhes.get(str(p["id"]))) for p in d["proposicoes"]],
             "votos": votos,
             "totalVotacoes": total_nominais,
             "despesas": {
@@ -132,6 +190,7 @@ def main():
 
     resumo_deps.sort(key=lambda x: x["nome"])
     salvar(SAIDA / "deputados.json", resumo_deps)
+    gerar_senadores()
     gerar_politicos.gerar(deputados)
     meta = ler(BRUTO / "meta.json", {}) or {}
     meta["ano"] = next(iter(deputados.values()))["despesas"]["ano"] if deputados else None

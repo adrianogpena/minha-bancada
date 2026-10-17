@@ -57,6 +57,9 @@ Sem `--limite` a coleta pega todos os deputados em exercício. `--dias` só vale
 | `scripts/coletar_tse.py` | Baixa do TSE os eleitos de 2022, 2024 e 2026, com bens declarados. Anos encerrados são baixados uma vez só. |
 | `scripts/gerar.py` | Monta os JSONs enxutos que o site lê. Não acessa a internet. |
 | `scripts/gerar_politicos.py` | Junta TSE, Câmara e Senado no índice de todos os políticos (chamado pelo `gerar.py`). |
+| `dados/proposicoes_detalhe.json` | Situação atual de cada projeto (aprovado, arquivado, em tramitação), da API da Câmara. Cada execução consulta até 4000 projetos (`DETALHES_POR_EXECUCAO`), então o cache se completa em alguns dias. |
+| `dados/senado_votacoes/` | Votações nominais do Plenário do Senado, com o voto de cada senador. |
+| `dados/senado_materias.json` | Situação atual dos projetos de senadores, da API do Senado (até 1500 por execução, `MATERIAS_POR_EXECUCAO`). |
 | `dados/votacoes/` | Histórico de votações, um arquivo por ano. Vai crescendo a cada execução. |
 | `dados/tse/` | Eleitos de cada eleição, um arquivo por estado. |
 | `dados/proposicoes/` | Proposições já coletadas de cada deputado. A API só aceita 3 meses por consulta, então a primeira coleta é longa e as seguintes buscam só o período novo. |
@@ -71,7 +74,7 @@ Sem `--limite` a coleta pega todos os deputados em exercício. `--dias` só vale
 
 ## Próximos passos possíveis
 
-- Votações e projetos dos senadores (API do Senado).
+- Gastos dos senadores (CEAPS) e página de detalhe de cada votação do Senado.
 - Assembleias legislativas e câmaras municipais que publicam dados abertos.
 - Orientação dos partidos em cada votação (`/votacoes/{id}/orientacoes`), para mostrar quem votou contra o próprio partido.
 - Votações nas comissões, além do Plenário.

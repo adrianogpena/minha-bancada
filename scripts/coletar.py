@@ -206,6 +206,40 @@ def coletar_deputados(limite: int | None) -> list:
     return resumo
 
 
+# ---------------------------------------------------------------- senado
+
+SENADO = os.environ.get("SENADO_API", "https://legis.senado.leg.br/dadosabertos")
+
+
+def coletar_senado() -> None:
+    r = S.get(f"{SENADO}/senador/lista/atual.json", timeout=60)
+    r.raise_for_status()
+    lista = r.json()["ListaParlamentarEmExercicio"]["Parlamentares"]["Parlamentar"]
+    if isinstance(lista, dict):
+        lista = [lista]
+    senadores = []
+    for s in lista:
+        ident = s.get("IdentificacaoParlamentar", {})
+        mandato = s.get("Mandato", {}) or {}
+        fim = max((mandato.get(k, {}) or {}).get("DataFim") or "" for k in
+                  ("PrimeiraLegislaturaDoMandato", "SegundaLegislaturaDoMandato")) or None
+        senadores.append({
+            "id": ident.get("CodigoParlamentar"),
+            "nome": ident.get("NomeParlamentar"),
+            "nomeCivil": ident.get("NomeCompletoParlamentar"),
+            "partido": ident.get("SiglaPartidoParlamentar"),
+            "uf": ident.get("UfParlamentar") or mandato.get("UfParlamentar"),
+            "foto": ident.get("UrlFotoParlamentar"),
+            "pagina": ident.get("UrlPaginaParlamentar"),
+            "email": ident.get("EmailParlamentar"),
+            "genero": ident.get("SexoParlamentar"),
+            "participacao": mandato.get("DescricaoParticipacao"),
+            "fimMandato": fim,
+        })
+    salvar(DADOS / "senado.json", senadores)
+    print(f"Senadores em exercício: {len(senadores)}")
+
+
 # ---------------------------------------------------------------- votações
 
 def janelas(inicio: dt.date, fim: dt.date):
@@ -301,12 +335,17 @@ def main():
     p = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     p.add_argument("--limite", type=int, help="coletar só os N primeiros deputados (teste)")
     p.add_argument("--dias", type=int, default=90, help="dias de votações na primeira coleta")
-    p.add_argument("--so", choices=["deputados", "votacoes"], help="coletar só uma parte")
+    p.add_argument("--so", choices=["deputados", "votacoes", "senado"], help="coletar só uma parte")
     a = p.parse_args()
     if a.so in (None, "deputados"):
         coletar_deputados(a.limite)
     if a.so in (None, "votacoes"):
         coletar_votacoes(a.dias)
+    if a.so in (None, "senado"):
+        try:
+            coletar_senado()
+        except Exception as e:
+            avisar(f"senado: {e}")
     salvar(DADOS / "meta.json", {
         "atualizadoEm": dt.datetime.now(dt.timezone.utc).isoformat(timespec="seconds"),
         "fonte": "API de Dados Abertos da Câmara dos Deputados",

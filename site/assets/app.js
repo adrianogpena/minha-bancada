@@ -79,16 +79,17 @@ function abas(alvo, opcoes, aoMudar) {
 
 /* ---------- moldura comum ---------- */
 function moldura(pagina) {
-  const links = [["index.html", "Deputados", "inicio"], ["votacoes.html", "Votações", "votacoes"], ["sobre.html", "Sobre os dados", "sobre"]];
+  const links = [["index.html", "Políticos", "inicio"], ["camara.html", "Câmara", "camara"], ["votacoes.html", "Votações", "votacoes"], ["sobre.html", "Sobre os dados", "sobre"]];
+  const atual = { deputado: "camara", votacao: "votacoes", politico: "inicio" }[pagina] || pagina;
   document.body.insertAdjacentHTML("afterbegin", `
     <header class="topo"><div class="recipiente">
       <a class="marca" href="index.html"><span class="marca-icone" aria-hidden="true">${"<i></i>".repeat(9)}</span>Minha Bancada</a>
-      <nav class="nav" aria-label="Principal">${links.map(([h, t, p]) => `<a href="${h}"${p === pagina || (p === "inicio" && pagina === "deputado") || (p === "votacoes" && pagina === "votacao") ? ' aria-current="page"' : ""}>${t}</a>`).join("")}</nav>
+      <nav class="nav" aria-label="Principal">${links.map(([h, t, p]) => `<a href="${h}"${p === atual ? ' aria-current="page"' : ""}>${t}</a>`).join("")}</nav>
     </div></header>`);
   document.body.insertAdjacentHTML("beforeend", `
     <footer class="rodape"><div class="recipiente" id="rodape">
-      Dados públicos da <a href="https://dadosabertos.camara.leg.br">API de Dados Abertos da Câmara dos Deputados</a>, atualizados automaticamente.
-      Projeto independente, sem vínculo com a Câmara. Encontrou um erro? Confira sempre a fonte oficial.
+      Dados públicos do <a href="https://dadosabertos.tse.jus.br">TSE</a>, da <a href="https://dadosabertos.camara.leg.br">Câmara dos Deputados</a> e do <a href="https://www12.senado.leg.br/dados-abertos">Senado Federal</a>, atualizados automaticamente.
+      Projeto independente, sem vínculo com órgãos públicos ou partidos. Encontrou um erro? Confira sempre a fonte oficial.
     </div></footer>`);
   carregar("dados/meta.json").then((m) => {
     if (m.atualizadoEm) $("#rodape").insertAdjacentHTML("beforeend", ` Última atualização: ${new Date(m.atualizadoEm).toLocaleString("pt-BR")}.`);
@@ -100,8 +101,8 @@ function erro(alvo, e) {
   console.error(e);
 }
 
-/* ---------- página inicial: lista de deputados ---------- */
-async function paginaInicio() {
+/* ---------- Câmara: lista de deputados federais ---------- */
+async function paginaCamara() {
   const alvo = $("#resultado");
   let deps;
   try { deps = await carregar("dados/deputados.json"); } catch (e) { return erro(alvo, e); }
@@ -318,7 +319,205 @@ async function paginaVotacao() {
   desenhar();
 }
 
+/* ---------- todos os políticos ---------- */
+const UFS = { AC: "Acre", AL: "Alagoas", AP: "Amapá", AM: "Amazonas", BA: "Bahia", CE: "Ceará", DF: "Distrito Federal",
+  ES: "Espírito Santo", GO: "Goiás", MA: "Maranhão", MT: "Mato Grosso", MS: "Mato Grosso do Sul", MG: "Minas Gerais",
+  PA: "Pará", PB: "Paraíba", PR: "Paraná", PE: "Pernambuco", PI: "Piauí", RJ: "Rio de Janeiro", RN: "Rio Grande do Norte",
+  RS: "Rio Grande do Sul", RO: "Rondônia", RR: "Roraima", SC: "Santa Catarina", SP: "São Paulo", SE: "Sergipe", TO: "Tocantins" };
+
+// grupos na ordem em que aparecem; k = ordem do cargo vinda do gerador
+const GRUPOS = [
+  { titulo: "Presidência da República", ks: [1, 2] },
+  { titulo: "Senado Federal", ks: [3] },
+  { titulo: "Câmara dos Deputados", ks: [4] },
+  { titulo: "Governo do estado", ks: [5, 6] },
+  { titulo: (uf) => (uf === "DF" ? "Câmara Legislativa" : "Assembleia Legislativa"), ks: [7] },
+  { titulo: "Prefeitura", ks: [8, 9], municipal: true },
+  { titulo: "Câmara Municipal", ks: [10], municipal: true },
+];
+
+const lembrar = (k, v) => { try { v == null ? localStorage.removeItem(k) : localStorage.setItem(k, v); } catch {} };
+const lembrado = (k) => { try { return localStorage.getItem(k); } catch { return null; } };
+
+function linkPolitico(x) {
+  return x.h || `politico.html?f=${encodeURIComponent(x.f)}&i=${encodeURIComponent(x.i)}`;
+}
+
+function etiquetaEstado(e) {
+  if (e === "eleito") return `<span class="etiqueta">Eleito em 2026</span>`;
+  if (e === "2turno") return `<span class="etiqueta segundo">No 2º turno</span>`;
+  return "";
+}
+
+function linhaPolitico(x) {
+  return `<li><a class="linha-pol" href="${linkPolitico(x)}">
+    ${foto({ nome: x.n || "?", foto: x.fo })}
+    <span><span class="nome">${esc(x.n)}</span><br><span class="sigla">${esc(x.c)}${x.p ? `, ${esc(x.p)}` : ""}${x.m ? ` em ${esc(x.m)}` : ""}</span></span>
+    ${etiquetaEstado(x.e)}
+  </a></li>`;
+}
+
+async function paginaPoliticos() {
+  const alvo = $("#resultado");
+  const q = new URLSearchParams(location.search);
+  const selUf = $("#uf"), selMun = $("#municipio"), busca = $("#busca");
+  selUf.insertAdjacentHTML("beforeend", Object.entries(UFS).map(([k, v]) => `<option value="${k}">${v}</option>`).join(""));
+
+  let br = [];
+  try { br = await carregar("dados/indice/BR.json"); } catch (e) { return erro(alvo, e); }
+  const cache = {};
+  let lista = [];
+
+  let periodo = q.get("periodo") === "2026" ? "2026" : "agora";
+  abas($("#periodo"), [{ valor: "agora", rotulo: "No cargo agora" }, { valor: "2026", rotulo: "Eleitos em 2026" }], (v) => { periodo = v; desenhar(); });
+  $("#periodo").querySelectorAll("button").forEach((b) => b.setAttribute("aria-pressed", b.dataset.v === periodo));
+
+  async function trocarUf() {
+    const uf = selUf.value;
+    lembrar("mb-uf", uf || null);
+    selMun.innerHTML = `<option value="">Todos os municípios</option>`;
+    selMun.disabled = !uf;
+    if (!uf) { lista = []; return desenhar(); }
+    alvo.innerHTML = `<p class="vazio">Carregando ${esc(UFS[uf])}…</p>`;
+    try { cache[uf] ||= await carregar(`dados/indice/${uf}.json`); } catch (e) { return erro(alvo, e); }
+    lista = cache[uf];
+    const muns = new Map();
+    lista.forEach((x) => x.g && muns.set(x.g, x.m));
+    selMun.insertAdjacentHTML("beforeend", [...muns].sort((a, b) => a[1].localeCompare(b[1], "pt-BR"))
+      .map(([g, m]) => `<option value="${esc(g)}">${esc(m)}</option>`).join(""));
+    const mun = q.get("municipio") || lembrado(`mb-mun-${uf}`);
+    if (mun && muns.has(mun)) selMun.value = mun;
+    desenhar();
+  }
+
+  function desenhar() {
+    const uf = selUf.value, mun = selMun.value, termo = semAcento(busca.value.trim());
+    lembrar(`mb-mun-${uf}`, mun || null);
+    const nova = new URLSearchParams();
+    if (uf) nova.set("uf", uf);
+    if (mun) nova.set("municipio", mun);
+    if (periodo === "2026") nova.set("periodo", "2026");
+    history.replaceState(null, "", nova.toString() ? "?" + nova : location.pathname);
+
+    const doPeriodo = (x) => (periodo === "agora" ? x.e === "atual" : x.e !== "atual");
+    const todos = [...br, ...lista].filter(doPeriodo).filter((x) => !termo || semAcento(`${x.n} ${x.p} ${x.m || ""}`).includes(termo));
+    let html = "", total = 0;
+    for (const g of GRUPOS) {
+      let itens = todos.filter((x) => g.ks.includes(x.k));
+      if (g.municipal) {
+        if (!uf) continue;
+        if (mun) itens = itens.filter((x) => x.g === mun);
+        else if (!termo) {
+          if (itens.length) html += `<section class="grupo"><h2>${g.titulo}</h2><p class="vazio">Escolha um município para ver ${g.ks.includes(10) ? "os vereadores" : "o prefeito e o vice"}, ou busque pelo nome.</p></section>`;
+          continue;
+        }
+      } else if (g.ks[0] > 2 && !uf) continue;
+      if (!itens.length) continue;
+      total += itens.length;
+      const titulo = typeof g.titulo === "function" ? g.titulo(uf) : g.titulo;
+      html += `<section class="grupo"><h2>${titulo} <small class="sub">${itens.length}</small></h2><ul class="lista" data-grupo="${g.ks[0]}"></ul></section>`;
+      g._itens = itens;
+    }
+    if (!uf) html += `<p class="aviso">Escolha um estado para ver senadores, deputados, governo, prefeitos e vereadores.</p>`;
+    if (periodo === "2026" && !total && uf) html += `<p class="vazio">Nenhum eleito em 2026 encontrado com esses filtros.</p>`;
+    alvo.innerHTML = html || `<p class="vazio">Nada encontrado. Tente outro nome ou limpe a busca.</p>`;
+    for (const g of GRUPOS) {
+      const ul = alvo.querySelector(`ul[data-grupo="${g.ks[0]}"]`);
+      if (!ul) continue;
+      // listas longas (vereadores de uma capital) crescem aos poucos
+      const itens = g._itens; let n = 0;
+      const mais = () => {
+        ul.insertAdjacentHTML("beforeend", itens.slice(n, n + 60).map(linhaPolitico).join(""));
+        n += 60;
+        botao.hidden = n >= itens.length;
+        botao.textContent = `Mostrar mais (${itens.length - n} restantes)`;
+      };
+      const botao = document.createElement("button");
+      botao.className = "mais"; botao.addEventListener("click", mais);
+      ul.after(botao); mais();
+    }
+    $("#contagem").textContent = uf ? `${total} políticos ${periodo === "agora" ? "no cargo" : "eleitos ou no 2º turno em 2026"}${mun ? ` em ${selMun.selectedOptions[0].text}` : ` em ${UFS[uf]}`}` : "";
+  }
+
+  selUf.addEventListener("input", () => { q.delete("municipio"); trocarUf(); });
+  selMun.addEventListener("input", desenhar);
+  busca.addEventListener("input", desenhar);
+  const inicial = q.get("uf") || lembrado("mb-uf");
+  if (inicial && UFS[inicial]) selUf.value = inicial;
+  trocarUf();
+}
+
+/* ---------- ficha de um político (TSE ou Senado) ---------- */
+async function paginaPolitico() {
+  const alvo = $("#conteudo");
+  const f = param("f"), i = param("i");
+  let p;
+  try {
+    if (!f || !/^[\w/-]+$/.test(f)) throw new Error("Endereço incompleto");
+    p = (await carregar(`dados/p/${f}.json`))[i];
+    if (!p) throw new Error("Político não encontrado. Ele pode ter deixado o cargo desde a última atualização");
+  } catch (e) { return erro(alvo, e); }
+
+  const nome = p.urna || p.nome;
+  const local = p.municipio ? `${p.municipio} (${p.uf})` : p.uf === "BR" ? "Brasil" : UFS[p.uf] || p.uf;
+  document.title = `${nome}, ${p.cargo} | Minha Bancada`;
+  const idade = p.nascimento ? Math.floor((Date.now() - new Date(p.nascimento + "T12:00:00Z")) / 31557600000) : null;
+
+  let situacao = "";
+  if (p.estado === "atual") situacao = p.fimMandato ? `No cargo, com mandato até ${data(p.fimMandato, true)}.` : "No cargo.";
+  if (p.estado === "eleito") situacao = `Eleito em 2026. Toma posse em 2027.`;
+  if (p.estado === "2turno") situacao = `Disputa o 2º turno da eleição de 2026.`;
+  if (p.fonte === "senado" && p.participacao && p.participacao !== "Titular") situacao += ` Em exercício como ${esc(p.participacao.toLowerCase())}.`;
+
+  const ficha = [
+    ["Nome completo", p.nomeCivil || p.nome],
+    ["Número", p.numero],
+    ["Partido", p.partido],
+    ["Federação", p.federacao],
+    ["Coligação", p.coligacao],
+    ["Nascimento", p.nascimento ? `${data(p.nascimento, true)}${idade ? ` (${idade} anos)` : ""}` : null],
+    ["Gênero", p.genero ? p.genero[0] + p.genero.slice(1).toLowerCase() : null],
+    ["Cor ou raça", p.corRaca],
+    ["Escolaridade", p.instrucao],
+    ["Ocupação declarada", p.ocupacao],
+    ["Buscava reeleição", p.fonte === "tse" ? (p.reeleicao ? "Sim" : "Não") : null],
+    ["E-mail", p.email ? `<a href="mailto:${esc(p.email)}">${esc(p.email)}</a>` : null, true],
+  ].filter(([, v]) => v);
+
+  const bens = p.bens || [];
+  alvo.innerHTML = `
+    <section class="perfil">
+      ${foto({ nome, foto: p.foto }, true)}
+      <div>
+        <h1>${esc(nome)}</h1>
+        <p class="sub"><span class="selo">${esc(p.partido || "")}${p.uf && p.uf !== "BR" ? "/" + esc(p.uf) : ""}</span> ${esc(p.cargo)}${p.municipio ? ` em ${esc(p.municipio)}` : ""}</p>
+      </div>
+    </section>
+    <p class="situacao">${situacao}</p>
+    ${p.paginaAtual ? `<p class="aviso">Já tem mandato hoje. <a href="${esc(p.paginaAtual)}">Ver votos, projetos e gastos do mandato atual</a>.</p>` : ""}
+    ${p.fonte === "senado" ? `<p class="aviso">Votos e projetos de senadores ainda não estão no site. Veja no <a href="${esc(p.pagina)}" rel="noopener">perfil oficial no Senado</a>.</p>`
+      : p.estado === "atual" && !p.paginaAtual ? `<p class="aviso">Ainda não temos votos e projetos para este cargo. Por enquanto mostramos os dados da candidatura registrados no TSE.</p>` : ""}
+
+    <h2>Ficha</h2>
+    <dl class="ficha">${ficha.map(([k, v, html]) => `<dt>${k}</dt><dd>${html ? v : esc(v)}</dd>`).join("")}
+      <dt>Onde atua</dt><dd>${esc(local)}</dd>
+    </dl>
+
+    ${p.fonte === "tse" ? `
+    <h2>Bens declarados em ${esc(p.ano)}</h2>
+    <p>Total: <b>${reaisCentavos(p.totalBens)}</b>${bens.length ? `, em ${bens.length} ${bens.length === 1 ? "item" : "itens"}` : ""}. Valores informados pelo próprio candidato ao registrar a candidatura.</p>
+    <div id="lista-bens"></div>
+    <p class="fonte">Fonte: <a href="https://dadosabertos.tse.jus.br">Portal de Dados Abertos do TSE</a>, eleição de ${esc(p.ano)}.</p>`
+    : `<p class="fonte">Fonte: <a href="https://legis.senado.leg.br/dadosabertos">Dados Abertos do Senado Federal</a>.${p.fimMandato ? ` Mandato até ${data(p.fimMandato, true)}.` : ""}</p>`}`;
+
+  if (p.fonte === "tse") {
+    listaPaginada($("#lista-bens"), bens, ([tipo, desc, valor]) => `<li>
+      <span class="quando"><b>${esc(tipo)}</b></span><b>${reais(valor)}</b>
+      ${desc ? `<span class="texto">${esc(desc.charAt(0) + desc.slice(1).toLowerCase())}</span>` : ""}</li>`, 10, "Nenhum bem declarado.");
+  }
+}
+
 /* ---------- início ---------- */
 const pagina = document.body.dataset.pagina;
 moldura(pagina);
-({ inicio: paginaInicio, deputado: paginaDeputado, votacoes: paginaVotacoes, votacao: paginaVotacao }[pagina] || (() => {}))();
+({ inicio: paginaPoliticos, politico: paginaPolitico, camara: paginaCamara, deputado: paginaDeputado, votacoes: paginaVotacoes, votacao: paginaVotacao }[pagina] || (() => {}))();

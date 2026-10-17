@@ -37,15 +37,18 @@ jobs:
       - name: Coletar dados da Câmara
         run: python scripts/coletar.py
 
+      - name: Coletar eleitos do TSE (só baixa de novo o que mudou)
+        run: python scripts/coletar_tse.py
+
       - name: Gerar arquivos do site
         run: python scripts/gerar.py
 
       - name: Salvar histórico no repositório
-        # votações e proposições ficam no git (crescem aos poucos); o resto é baixado de novo a cada execução
+        # votações, proposições e eleitos do TSE ficam no git (crescem aos poucos); o resto é baixado de novo a cada execução
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add dados/votacoes/ dados/proposicoes/
+          git add dados/votacoes/ dados/proposicoes/ dados/tse/
           git diff --cached --quiet || git commit -m "Dados atualizados em $(date -u +%Y-%m-%d)"
           git push
 

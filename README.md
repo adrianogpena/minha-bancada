@@ -1,6 +1,6 @@
 # Minha Bancada
 
-Site estático que mostra como votam os deputados federais, o que propõem e quanto gastam da cota parlamentar. Os dados vêm da [API de Dados Abertos da Câmara](https://dadosabertos.camara.leg.br) e são atualizados sozinhos todo dia.
+Site estático com todos os políticos com mandato no Brasil, de vereador a presidente, e os eleitos de 2026. Para deputados federais, mostra também como votam, o que propõem e quanto gastam. Os dados vêm do [TSE](https://dadosabertos.tse.jus.br), da [Câmara](https://dadosabertos.camara.leg.br) e do [Senado](https://legis.senado.leg.br/dadosabertos) e são atualizados sozinhos todo dia.
 
 **Custo: zero.** Tudo roda no GitHub: o GitHub Actions coleta os dados e o GitHub Pages hospeda o site.
 
@@ -42,6 +42,7 @@ Precisa de Python 3.10 ou mais novo.
 ```bash
 pip install -r requirements.txt
 python scripts/coletar.py --limite 20 --dias 30   # amostra rápida: 20 deputados, 30 dias
+python scripts/coletar_tse.py --anos 2024           # eleitos municipais (baixa ~100 MB)
 python scripts/gerar.py
 python -m http.server 8000 -d site                # abra http://localhost:8000
 ```
@@ -53,8 +54,11 @@ Sem `--limite` a coleta pega todos os deputados em exercício. `--dias` só vale
 | Caminho | O que é |
 |---|---|
 | `scripts/coletar.py` | Baixa deputados, proposições, despesas e votações do Plenário (com o voto de cada um). |
+| `scripts/coletar_tse.py` | Baixa do TSE os eleitos de 2022, 2024 e 2026, com bens declarados. Anos encerrados são baixados uma vez só. |
 | `scripts/gerar.py` | Monta os JSONs enxutos que o site lê. Não acessa a internet. |
+| `scripts/gerar_politicos.py` | Junta TSE, Câmara e Senado no índice de todos os políticos (chamado pelo `gerar.py`). |
 | `dados/votacoes/` | Histórico de votações, um arquivo por ano. Vai crescendo a cada execução. |
+| `dados/tse/` | Eleitos de cada eleição, um arquivo por estado. |
 | `dados/proposicoes/` | Proposições já coletadas de cada deputado. A API só aceita 3 meses por consulta, então a primeira coleta é longa e as seguintes buscam só o período novo. |
 | `site/` | O site: HTML, CSS e um único `assets/app.js`, sem framework nem etapa de build. |
 | `.github/workflows/atualizar.yml` | Agenda diária, coleta, salva o histórico e publica. |
@@ -67,10 +71,12 @@ Sem `--limite` a coleta pega todos os deputados em exercício. `--dias` só vale
 
 ## Próximos passos possíveis
 
-- Senado: API em `https://legis.senado.leg.br/dadosabertos`, com senadores, matérias e votações nominais.
+- Votações e projetos dos senadores (API do Senado).
+- Assembleias legislativas e câmaras municipais que publicam dados abertos.
 - Orientação dos partidos em cada votação (`/votacoes/{id}/orientacoes`), para mostrar quem votou contra o próprio partido.
 - Votações nas comissões, além do Plenário.
-- TSE: bens declarados e doações de campanha (`https://dadosabertos.tse.jus.br`).
+- Doações e gastos de campanha (TSE).
+- Seguir políticos: lista salva no navegador de cada pessoa.
 - Busca por tema nas ementas das proposições.
 
 ## Aviso

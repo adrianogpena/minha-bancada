@@ -11,6 +11,8 @@ import shutil
 from collections import Counter, defaultdict
 from pathlib import Path
 
+import gerar_politicos
+
 RAIZ = Path(__file__).resolve().parent.parent
 BRUTO = RAIZ / "dados"
 SAIDA = RAIZ / "site" / "dados"
@@ -130,6 +132,7 @@ def main():
 
     resumo_deps.sort(key=lambda x: x["nome"])
     salvar(SAIDA / "deputados.json", resumo_deps)
+    gerar_politicos.gerar(deputados)
     meta = ler(BRUTO / "meta.json", {}) or {}
     meta["ano"] = next(iter(deputados.values()))["despesas"]["ano"] if deputados else None
     meta["periodoVotacoes"] = [votacoes[-1]["data"], votacoes[0]["data"]] if votacoes else None

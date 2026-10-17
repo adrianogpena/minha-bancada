@@ -6,3 +6,4 @@ dados/meta.json
 __pycache__/
 *.tmp
 .venv/
+dados/senado.json

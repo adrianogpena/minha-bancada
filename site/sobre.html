@@ -19,17 +19,25 @@
 </section>
 <div class="texto-longo">
   <h2>De onde vêm</h2>
-  <p>Da <a href="https://dadosabertos.camara.leg.br">API de Dados Abertos da Câmara dos Deputados</a>. Um robô consulta a API uma vez por dia e publica o resultado neste site.</p>
+  <ul>
+    <li><b>Vereadores, prefeitos e vices:</b> eleitos em 2024, segundo o <a href="https://dadosabertos.tse.jus.br">Portal de Dados Abertos do TSE</a>.</li>
+    <li><b>Governadores, vices, deputados estaduais e distritais, presidente e vice:</b> eleitos em 2022, também pelo TSE.</li>
+    <li><b>Deputados federais em exercício:</b> <a href="https://dadosabertos.camara.leg.br">API de Dados Abertos da Câmara</a>, com votos, projetos e gastos.</li>
+    <li><b>Senadores em exercício:</b> <a href="https://legis.senado.leg.br/dadosabertos">Dados Abertos do Senado</a>.</li>
+    <li><b>Eleitos em 2026:</b> TSE, atualizado a cada dois dias até o resultado final. Inclui quem disputa o 2º turno.</li>
+  </ul>
+  <p>Um robô consulta essas fontes todo dia e publica o resultado aqui. Nada é editado à mão.</p>
   <h2>Como ler os números</h2>
   <ul>
-    <li><b>Votou</b> é a parcela das votações nominais do Plenário no período coletado em que o deputado registrou sim, não ou abstenção. Obstrução e ausência contam como não votou.</li>
-    <li>Um deputado que assumiu o mandato no meio do período, ou esteve de licença, aparece com participação menor sem ter faltado. Confira a situação na página oficial.</li>
-    <li><b>Proposições</b> são as de autoria do deputado apresentadas desde fevereiro de 2023 (57ª legislatura), incluindo requerimentos.</li>
-    <li><b>Gastos</b> são as despesas da Cota para o Exercício da Atividade Parlamentar no ano corrente, pelo valor líquido.</li>
+    <li><b>Votou</b> é a parcela das votações nominais do Plenário da Câmara no período coletado em que o deputado registrou sim, não ou abstenção. Obstrução e ausência contam como não votou.</li>
+    <li>Um deputado que assumiu o mandato no meio do período, ou esteve de licença, aparece com participação menor sem ter faltado.</li>
+    <li><b>Proposições</b> são as de autoria do deputado desde fevereiro de 2023, incluindo requerimentos assinados em conjunto.</li>
+    <li><b>Gastos</b> são as despesas da cota parlamentar no ano corrente, pelo valor líquido.</li>
+    <li><b>Bens declarados</b> são os informados pelo próprio candidato ao TSE no registro da candidatura. Não são auditados.</li>
   </ul>
   <h2>Limitações</h2>
-  <p>Por enquanto o site cobre só a Câmara dos Deputados e só o Plenário. Senado, comissões e dados eleitorais do TSE podem entrar depois.</p>
-  <p>Este é um projeto independente, sem vínculo com a Câmara ou com partidos. Em caso de dúvida, a fonte oficial prevalece.</p>
+  <p>Para vereadores, prefeitos, governadores e deputados estaduais, o TSE informa quem foi eleito, não quem está no cargo hoje. Quem renunciou, foi cassado ou foi substituído por suplente pode aparecer aqui até essas fontes entrarem no site. Votos e projetos por enquanto existem só para deputados federais.</p>
+  <p>Este é um projeto independente, sem vínculo com órgãos públicos ou partidos. Em caso de dúvida, a fonte oficial prevalece.</p>
 </div>
 </main>
 <script src="assets/app.js"></script>

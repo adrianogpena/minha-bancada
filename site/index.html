@@ -3,8 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Minha Bancada | Como votam os deputados federais</title>
-<meta name="description" content="Veja como cada deputado federal vota, o que propõe e quanto gasta, com dados oficiais da Câmara.">
+<title>Minha Bancada | Quem representa você, de vereador a presidente</title>
+<meta name="description" content="Encontre todos os políticos com mandato no Brasil, de vereador a presidente, com dados oficiais do TSE, da Câmara e do Senado.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Bricolage+Grotesque:opsz,wght@12..96,700;12..96,800&display=swap" rel="stylesheet">
@@ -14,19 +14,17 @@
 <body data-pagina="inicio">
 <main class="recipiente">
 <section class="abertura">
-  <h1>Veja como vota quem representa você</h1>
-  <p>Votos no Plenário, projetos apresentados e gastos da cota parlamentar de cada deputado federal em exercício, com dados oficiais da Câmara atualizados todo dia.</p>
+  <h1>Quem representa você</h1>
+  <p>Todos os políticos com mandato, de vereador a presidente. Escolha seu estado e seu município para montar a sua bancada.</p>
 </section>
-<form class="filtros" role="search" onsubmit="return false">
-  <label class="campo">Nome do deputado<input id="busca" type="search" placeholder="Ex.: Maria" autocomplete="off"></label>
-  <label class="campo">Estado<select id="uf"><option value="">Todos</option></select></label>
-  <label class="campo">Partido<select id="partido"><option value="">Todos</option></select></label>
-  <label class="campo">Ordenar por<select id="ordem">
-    <option value="nome">Nome</option><option value="participacao">Quem mais votou</option>
-    <option value="proposicoes">Mais proposições</option><option value="gasto">Maiores gastos</option></select></label>
+<div class="abas periodo" id="periodo" role="group" aria-label="Período"></div>
+<form class="filtros tres" role="search" onsubmit="return false">
+  <label class="campo">Estado<select id="uf"><option value="">Escolha</option></select></label>
+  <label class="campo">Município<select id="municipio" disabled><option value="">Todos os municípios</option></select></label>
+  <label class="campo">Nome<input id="busca" type="search" placeholder="Ex.: Maria, PT, Campinas" autocomplete="off"></label>
 </form>
-<p class="contagem" id="contagem" aria-live="polite">Carregando…</p>
-<div id="resultado"></div>
+<p class="contagem" id="contagem" aria-live="polite"></p>
+<div id="resultado"><p class="vazio">Carregando…</p></div>
 </main>
 <script src="assets/app.js"></script>
 </body>

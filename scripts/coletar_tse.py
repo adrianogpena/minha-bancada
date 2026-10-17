@@ -40,7 +40,7 @@ COLUNAS = ["SQ_CANDIDATO", "NR_TURNO", "DS_CARGO", "DS_SIT_TOT_TURNO", "SG_UF", 
            "NR_CANDIDATO", "NM_CANDIDATO", "NM_URNA_CANDIDATO", "SG_PARTIDO", "SG_FEDERACAO",
            "NM_FEDERACAO", "DT_NASCIMENTO", "DS_GENERO", "DS_GRAU_INSTRUCAO", "DS_OCUPACAO",
            "DS_COR_RACA", "ST_REELEICAO", "NM_COLIGACAO", "CD_ELEICAO", "DS_SITUACAO_CANDIDATURA"]
-VERSAO = 3  # aumente quando mudar o processamento, para refazer os anos em cache
+VERSAO = 4  # aumente quando mudar o processamento, para refazer os anos em cache
 
 ELEITO = {"ELEITO", "ELEITO POR QP", "ELEITO POR MÉDIA", "ELEITO POR MEDIA"}
 SEGUNDO_TURNO = {"2º TURNO", "2O TURNO", "2° TURNO"}
@@ -123,6 +123,7 @@ def coletar_ano(ano: int) -> None:
     candidatos: dict[str, dict] = {}
     obrigatorias = {"SQ_CANDIDATO", "DS_CARGO", "DS_SIT_TOT_TURNO", "SG_UF", "SG_UE", "NM_UE", "NR_CANDIDATO"}
     verificado = False
+    diag, amostras = None, []
     for l in linhas_csv(zip_cand):
         if not verificado:
             faltando = obrigatorias - l.keys()
@@ -130,6 +131,14 @@ def coletar_ano(ano: int) -> None:
                 raise SystemExit(f"Colunas ausentes no arquivo do TSE {ano}: {sorted(faltando)}. "
                                  f"Colunas encontradas: {sorted(l.keys())[:60]}")
             verificado = True
+        if diag is None:
+            diag = [k for k in l.keys() if "SIT" in k or "JULG" in k or "TURNO" in k]
+            print(f"  colunas de situação: {diag}")
+            if os.environ.get("GITHUB_ACTIONS"):
+                print(f"::notice::TSE {ano} colunas: {diag}")
+        if (os.environ.get("TSE_DIAG") and l["DS_CARGO"].strip().upper() in ("PRESIDENTE", "GOVERNADOR")
+                and (l.get("DS_SIT_TOT_TURNO") or "").startswith("#NULO")):
+            amostras.append({k: l.get(k) for k in diag + ["SG_UE"]})
         sq = l["SQ_CANDIDATO"]
         try:
             turno = int(l.get("NR_TURNO") or 1)
@@ -142,6 +151,10 @@ def coletar_ano(ano: int) -> None:
             candidatos[sq] = enxuto
     zip_cand.unlink()
     print(f"  candidaturas: {len(candidatos)}")
+    for a in amostras[:12]:
+        print(f"  #NULO: {a}")
+        if os.environ.get("GITHUB_ACTIONS"):
+            print(f"::notice::TSE {ano} #NULO {a}"[:900])
 
     # 2) titulares eleitos (ou no 2º turno), para achar os vices da mesma chapa
     def situacao(l):

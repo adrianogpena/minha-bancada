@@ -39,6 +39,8 @@ jobs:
 
       - name: Coletar eleitos do TSE (só baixa de novo o que mudou)
         run: python scripts/coletar_tse.py
+        env:
+          TSE_DIAG: "1"
 
       - name: Gerar arquivos do site
         run: python scripts/gerar.py

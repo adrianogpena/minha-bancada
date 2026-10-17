@@ -37,6 +37,19 @@ def tipo_voto(v: str) -> str:
     return VOTOS.get((v or "").strip().lower(), "outro")
 
 
+def gerar_governo(uf: str, pasta: Path, host: str) -> None:
+    """site/dados/governo/<UF>.json: o que o governador enviou à Assembleia, do mais novo ao mais antigo."""
+    itens = []
+    for arq in sorted(pasta.glob("governo_[0-9]*.json")):
+        for mid, m in ler(arq, {}).get("materias", {}).items():
+            itens.append({"id": mid, "tipo": m["t"], "td": m["td"], "numero": m["n"], "ano": m["a"], "ap": m.get("ap"),
+                          "ementa": re.sub(r"\s+", " ", m["e"]).strip(), "sit": m["sit"], "pdf": m.get("pdf")})
+    if not itens:
+        return
+    itens.sort(key=lambda x: (x["ap"] or "", x["id"]), reverse=True)
+    salvar(SAIDA / "governo" / f"{uf}.json", {"host": host, "materias": itens})
+
+
 def gerar_assembleia(uf: str, pasta: Path) -> list[dict]:
     info = ler(pasta / "deputados.json")
     if not info:
@@ -84,6 +97,7 @@ def gerar_assembleia(uf: str, pasta: Path) -> list[dict]:
                       for v in resumo if desde and v["data"] >= desde],
             "proposicoes": meus,
         })
+    gerar_governo(uf, pasta, host)
     print(f"Gerado: {uf}, {len(deputados)} deputados, {len(resumo)} votações nominais, "
           f"{sum(len(v) for v in projetos.values())} autorias de projetos")
     return list(deputados.values())

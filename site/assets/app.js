@@ -165,6 +165,9 @@ const TIPOS_PROJETO = { PL: "Projeto de lei", PLP: "Projeto de lei complementar"
 function desfecho(p) {
   const s = semAcento(p.sit || "");
   if (!p.sit) return ["Situação ainda não consultada", "sem"];
+  if (/tramitacao encerrada/.test(s)) return ["Tramitação encerrada", "sem"];
+  if (/^(aprovad|sancionad|promulgad)/.test(s)) return ["Aprovada", "aprovada"];
+  if (/^rejeitad/.test(s)) return ["Rejeitada", "rejeitada"];
   if (/transformad[ao] em norma|transformad[ao] em lei|sancionad/.test(s)) return ["Virou lei", "aprovada"];
   if (/arquivad/.test(s)) return ["Arquivada", "rejeitada"];
   if (/retirad/.test(s)) return ["Retirada pelo autor", "rejeitada"];
@@ -292,10 +295,11 @@ function montarParlamentar(alvo, c) {
     <p>Projetos de lei, emendas à Constituição e similares. ${esc(c.aviso)}</p>
     <div class="abas" id="abas-proj"></div>
     <div id="lista-proj"></div>
+    ${c.semOutros ? `<p class="aviso">${esc(c.semOutros)}</p>` : `
     <h2>Outros documentos <small class="sub">(${outros.length})</small></h2>
     <p>Requerimentos, indicações, emendas a outros projetos, pareceres e afins. Cada um tem a tramitação como fonte.</p>
     <div class="abas" id="abas-outros"></div>
-    <div id="lista-outros"></div>`;
+    <div id="lista-outros"></div>`}`;
 
   alvo.innerHTML = `
     <section class="perfil">
@@ -366,10 +370,12 @@ function montarParlamentar(alvo, c) {
       <span class="quando"><b>${esc(p.tipo)} ${esc(p.numero)}/${esc(p.ano)}</b></span>
       <span class="texto">${esc(p.ementa || "Sem ementa")}</span>
       <span class="texto">${fontes([[c.fonteTramitacao, c.linkTramitacao(p)]])}</span></li>`;
-  const tiposOutros = [...new Set(outros.map((p) => p.tipo))].sort();
-  const mostrarOutros = (t) => listaPaginada($("#lista-outros"), outros.filter((p) => t === "todos" || p.tipo === t), renderOutro, 10, "Nenhum documento apresentado no período.");
-  abas($("#abas-outros"), [{ valor: "todos", rotulo: "Todos" }, ...tiposOutros.map((t) => ({ valor: t, rotulo: t }))], mostrarOutros);
-  mostrarOutros("todos");
+  if (!c.semOutros) {
+    const tiposOutros = [...new Set(outros.map((p) => p.tipo))].sort();
+    const mostrarOutros = (t) => listaPaginada($("#lista-outros"), outros.filter((p) => t === "todos" || p.tipo === t), renderOutro, 10, "Nenhum documento apresentado no período.");
+    abas($("#abas-outros"), [{ valor: "todos", rotulo: "Todos" }, ...tiposOutros.map((t) => ({ valor: t, rotulo: t }))], mostrarOutros);
+    mostrarOutros("todos");
+  }
 }
 
 /* ---------- lista de votações ---------- */
@@ -629,6 +635,10 @@ async function paginaPolitico() {
     const montado = await montarSenador(alvo, p, nome, ficha);
     if (montado) return;
   }
+  if (p.estadual) {
+    const montado = await montarEstadual(alvo, p, nome, ficha, situacao);
+    if (montado) return;
+  }
 
   const bens = p.bens || [];
   const executivo = EXECUTIVOS.has(p.cargoTse);
@@ -728,6 +738,44 @@ async function montarSenador(alvo, p, nome, ficha) {
     hrefVotacao: null,
     fontesVotacao: (v) => [["Votos de cada senador (API do Senado)", apiVotacao(v)], v.propId ? ["Tramitação da matéria", linkMateriaSenado(v.propId)] : null],
   });
+  return true;
+}
+
+/* deputado estadual (Assembleias que usam o SAPL): mesmas abas do deputado federal. Devolve false se os dados ainda não existem. */
+async function montarEstadual(alvo, p, nome, ficha, situacao) {
+  const { uf, id } = p.estadual;
+  let dep, lista;
+  try { [dep, lista] = await Promise.all([carregar(`dados/estadual/${encodeURIComponent(uf)}/${encodeURIComponent(id)}.json`), carregar(`dados/votacoes_estadual_${encodeURIComponent(uf)}.json`)]); } catch { return false; }
+  const meus = new Map(dep.votos.map((v) => [v.id, v.voto]));
+  const linhaDoTempo = lista.filter((v) => meus.has(v.id)).map((v) => ({ ...v, voto: meus.get(v.id) }));
+  const api = `https://${dep.host}/api`;
+  const bens = p.bens || [];
+  montarParlamentar(alvo, {
+    nome, foto: { nome, foto: p.foto },
+    subtitulo: `<span class="selo">${esc(p.partido || "")}/${esc(p.uf)}</span> ${esc(p.cargo)}`,
+    painelPerfil: `<p class="situacao">${situacao}</p>
+      <h2>Ficha</h2>
+      <dl class="ficha">${ficha.map(([k, v, html]) => `<dt>${k}</dt><dd>${html ? v : esc(v)}</dd>`).join("")}
+        <dt>Onde atua</dt><dd>${esc(UFS[p.uf] || p.uf)}</dd>
+      </dl>
+      <h2>Bens declarados em ${esc(p.ano)}</h2>
+      <p>Total: <b>${reaisCentavos(p.totalBens)}</b>${bens.length ? `, em ${bens.length} ${bens.length === 1 ? "item" : "itens"}` : ""}. Valores informados pelo próprio candidato ao registrar a candidatura.</p>
+      <div id="lista-bens"></div>
+      ${fontes([["Portal de Dados Abertos do TSE", "https://dadosabertos.tse.jus.br"], ["Assembleia Legislativa (SAPL)", `https://${dep.host}`]])}`,
+    rotuloPerfil: "Perfil e bens",
+    linhaDoTempo, proposicoes: dep.proposicoes, tipoProjeto: () => true,
+    textoLegislatura: "como autor ou coautor nesta legislatura",
+    aviso: "Só entram projetos (de lei, resolução, decreto legislativo, emendas à Constituição e afins). A situação vem do sistema da Assembleia.",
+    semOutros: "Requerimentos, indicações e outros documentos da Assembleia não estão no site. Veja no sistema de tramitação da Assembleia.",
+    fonteTramitacao: "Tramitação (Assembleia)",
+    linkTramitacao: (x) => `https://${dep.host}/materia/${encodeURIComponent(x.id)}`,
+    linkApi: (x) => `${api}/materia/materialegislativa/${encodeURIComponent(x.id)}/`,
+    hrefVotacao: null,
+    fontesVotacao: (v) => [["Dados da votação (API da Assembleia)", `${api}/sessao/registrovotacao/${encodeURIComponent(v.id)}/`]],
+  });
+  listaPaginada($("#lista-bens"), bens, ([tipo, desc, valor]) => `<li>
+      <span class="quando"><b>${esc(tipo)}</b></span><b>${reais(valor)}</b>
+      ${desc ? `<span class="texto">${esc(desc.charAt(0) + desc.slice(1).toLowerCase())}</span>` : ""}</li>`, 10, "Nenhum bem declarado.");
   return true;
 }
 

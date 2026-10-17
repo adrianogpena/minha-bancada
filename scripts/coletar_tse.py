@@ -22,7 +22,7 @@ import os
 import sys
 import tempfile
 import zipfile
-from collections import defaultdict
+from collections import Counter, defaultdict
 from pathlib import Path
 
 import requests
@@ -39,7 +39,8 @@ DIAS_ENTRE_ATUALIZACOES = 2
 COLUNAS = ["SQ_CANDIDATO", "NR_TURNO", "DS_CARGO", "DS_SIT_TOT_TURNO", "SG_UF", "SG_UE", "NM_UE",
            "NR_CANDIDATO", "NM_CANDIDATO", "NM_URNA_CANDIDATO", "SG_PARTIDO", "SG_FEDERACAO",
            "NM_FEDERACAO", "DT_NASCIMENTO", "DS_GENERO", "DS_GRAU_INSTRUCAO", "DS_OCUPACAO",
-           "DS_COR_RACA", "ST_REELEICAO", "NM_COLIGACAO", "CD_ELEICAO"]
+           "DS_COR_RACA", "ST_REELEICAO", "NM_COLIGACAO", "CD_ELEICAO", "DS_SITUACAO_CANDIDATURA"]
+VERSAO = 2  # aumente quando mudar o processamento, para refazer os anos em cache
 
 ELEITO = {"ELEITO", "ELEITO POR QP", "ELEITO POR MÉDIA", "ELEITO POR MEDIA"}
 SEGUNDO_TURNO = {"2º TURNO", "2O TURNO", "2° TURNO"}
@@ -145,11 +146,19 @@ def coletar_ano(ano: int) -> None:
     # 2) titulares eleitos (ou no 2º turno), para achar os vices da mesma chapa
     def situacao(l):
         s = (l.get("DS_SIT_TOT_TURNO") or "").strip().upper()
-        if s in ELEITO:
+        if s in ELEITO or (s.startswith("ELEITO") and "NÃO" not in s):
             return "eleito"
-        if s in SEGUNDO_TURNO:
+        if s in SEGUNDO_TURNO or ("TURNO" in s and "2" in s):
             return "2turno"
         return None
+
+    # diagnóstico: situações encontradas nos cargos majoritários
+    vistas = Counter((l["DS_CARGO"].strip().upper(), (l.get("DS_SIT_TOT_TURNO") or "").strip())
+                     for l in candidatos.values()
+                     if l["DS_CARGO"].strip().upper() in ("PRESIDENTE", "GOVERNADOR"))
+    print(f"  situações (presidente/governador): {dict(vistas)}")
+    if os.environ.get("GITHUB_ACTIONS"):
+        print(f"::notice::TSE {ano} situações: {dict(vistas)}"[:900])
 
     chapas = {}
     for l in candidatos.values():
@@ -157,10 +166,19 @@ def coletar_ano(ano: int) -> None:
         if cargo in VICES.values() and situacao(l):
             chapas[(cargo, l["SG_UE"], l["NR_CANDIDATO"])] = situacao(l)
 
+    # se uma chapa tem mais de um vice registrado (troca antes da eleição), fica o apto
+    vices_aptos = {(l["DS_CARGO"].strip().upper(), l["SG_UE"], l["NR_CANDIDATO"])
+                   for l in candidatos.values()
+                   if l["DS_CARGO"].strip().upper() in VICES
+                   and (l.get("DS_SITUACAO_CANDIDATURA") or "").strip().upper() == "APTO"}
+
     eleitos = {}
     for sq, l in candidatos.items():
         cargo = l["DS_CARGO"].strip().upper()
         if cargo in VICES:
+            chave = (cargo, l["SG_UE"], l["NR_CANDIDATO"])
+            if chave in vices_aptos and (l.get("DS_SITUACAO_CANDIDATURA") or "").strip().upper() != "APTO":
+                continue
             sit = chapas.get((VICES[cargo], l["SG_UE"], l["NR_CANDIDATO"]))
         else:
             sit = situacao(l)
@@ -230,6 +248,7 @@ def coletar_ano(ano: int) -> None:
     (pasta / "_coleta.json").write_text(json.dumps({
         "coletadoEm": dt.datetime.now(dt.timezone.utc).isoformat(timespec="seconds"),
         "eleitos": len(eleitos),
+        "versao": VERSAO,
     }), encoding="utf-8")
     print(f"  salvo em {pasta} ({len(por_uf)} arquivos)")
 
@@ -238,9 +257,12 @@ def precisa_coletar(ano: int, forcar: bool) -> bool:
     marca = DADOS / str(ano) / "_coleta.json"
     if forcar or not marca.exists():
         return True
+    info = json.loads(marca.read_text())
+    if info.get("versao", 1) < VERSAO:
+        return True
     if ano != ANO_EM_ANDAMENTO:
         return False
-    quando = dt.datetime.fromisoformat(json.loads(marca.read_text())["coletadoEm"])
+    quando = dt.datetime.fromisoformat(info["coletadoEm"])
     return dt.datetime.now(dt.timezone.utc) - quando > dt.timedelta(days=DIAS_ENTRE_ATUALIZACOES)
 
 

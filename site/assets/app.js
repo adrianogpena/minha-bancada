@@ -755,7 +755,7 @@ function desfechoExecutivo(x) {
 }
 const itemGoverno = (x) => `<li><span class="quando">${esc(x.td)} ${esc(x.numero)}/${esc(x.ano)}${x.ap ? ` · enviado em ${esc(data(x.ap))}` : ""}</span>
   <span class="voto v-outro">${esc(x.sit)}</span>
-  <span class="texto">${esc(x.ementa)} ${x.pdf ? `<a href="${esc(x.pdf)}" rel="noopener">Texto</a>` : ""}</span></li>`;
+  <span class="texto">${esc(x.ementa)} ${x.pdf ? `<a href="${esc(x.pdf)}" rel="noopener">${/\.pdf$/i.test(x.pdf) ? "Texto" : "Tramitação"}</a>` : ""}</span></li>`;
 const itemExecutivo = (x) => {
   const d = desfechoExecutivo(x);
   return `<li><span class="quando">${esc(TIPOS_EXECUTIVO[x.tipo] || x.tipo)} ${esc(x.numero)}/${esc(x.ano)} · enviado em ${esc(data(x.apres))}</span>

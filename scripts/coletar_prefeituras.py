@@ -29,6 +29,9 @@ CAMARAS = {
     "RN": ("17612", "sapl.natal.rn.leg.br"),
     "PB": ("20516", "sapl.joaopessoa.pb.leg.br"),
 }
+# Câmaras com sistema próprio, cada uma com seu coletor em scripts/coletar_prefeitura_<uf>.py
+OUTRAS = {"SP": ("71072", "splegisconsulta.saopaulo.sp.leg.br")}
+TODAS = {**CAMARAS, **OUTRAS}
 # projetos, vetos e mensagens do prefeito; emendas, pareceres e requerimentos ficam de fora
 TIPO_PREFEITO = re.compile(r"^(projeto de lei|lei ordin|proposta de emenda|projeto de emenda|medida provis|veto|mensagem)", re.I)
 NAO_PREFEITO = re.compile(r"legislativo|substitutivo", re.I)
@@ -63,9 +66,13 @@ def coletar(uf: str, host: str) -> None:
 
 
 def main() -> None:
-    for uf in [a.upper() for a in sys.argv[1:]] or list(CAMARAS):
+    for uf in [a.upper() for a in sys.argv[1:]] or list(TODAS):
         try:
-            coletar(uf, CAMARAS[uf][1])
+            if uf == "SP":
+                import coletar_prefeitura_sp
+                coletar_prefeitura_sp.coletar()
+            else:
+                coletar(uf, CAMARAS[uf][1])
         except Exception as e:
             avisar(f"{uf}: prefeitura: {e}")
 

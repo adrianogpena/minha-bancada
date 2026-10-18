@@ -243,4 +243,5 @@ select:disabled { opacity: .55; }
   .mapa-painel { position: static; }
   .mapa svg { max-height: 56vh; }
 }
-.mapa path.unico { fill: color-mix(in srgb, var(--marca) 55%, var(--superficie)); cursor: default; }
+.mapa path.unico { cursor: default; }
+.mapa path.unico:hover { fill: var(--marca); }

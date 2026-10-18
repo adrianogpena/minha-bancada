@@ -103,6 +103,14 @@ def partido_de(ano: int, e: dict):
     return r
 
 
+def alianca_de(ano: int, e: dict):
+    """Tipo (C coligação, F federação, I isolado), nome, composição e situação da legenda do partido do eleito
+    (dados/tse/coligacoes/<ano>/<UF>.json), ou None."""
+    local = resumo_tse("coligacoes", ano, e["uf"]).get(f"{e['cargo']}|{e['ue']}")
+    i = local and local["p"].get(e.get("partido"))
+    return dict(zip("tncs", local["c"][i])) if i is not None else None
+
+
 def eleitos_por_nome(cargo_tse: str) -> dict:
     """Eleitos de 2018 e 2022 a um cargo federal, por nome e UF, para ligar com a Câmara e o Senado."""
     achados = defaultdict(list)
@@ -117,6 +125,7 @@ def eleitos_por_nome(cargo_tse: str) -> dict:
                 bloco["secoes"] = secoes_de(ano, e)
                 bloco["disputa"] = disputa_de(ano, e)
                 bloco["partidoVotos"] = partido_de(ano, e)
+                bloco["alianca"] = alianca_de(ano, e)
                 for n in (e.get("nome"), e.get("urna")):
                     achados[chave_nome(n, e["uf"])].append(bloco)
     return achados
@@ -224,6 +233,7 @@ def gerar(deputados: dict, estaduais: dict | None = None) -> dict:
                     "secoes": secoes_de(ano, e),
                     "disputa": disputa_de(ano, e),
                     "partidoVotos": partido_de(ano, e),
+                    "alianca": alianca_de(ano, e),
                     **({"estadual": estadual} if estadual else {}),
                 }
                 indice[uf].append({

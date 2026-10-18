@@ -81,6 +81,11 @@ Todas as coletas rodam sozinhas no GitHub Actions (`.github/workflows/atualizar.
 - **De onde:** `https://cdn.tse.jus.br/estatistica/sead/odsele/votacao_partido_munzona/votacao_partido_munzona_<ano>.zip` (colunas iguais nos dois anos; 2022 tem 4 colunas a mais de coligação que não usamos).
 - **Como:** `python scripts/baixar_tse.py votacao_partido_munzona` e `python scripts/coletar_partidos.py`, que soma as zonas por cargo, local e partido: votos de legenda (`QT_TOTAL_VOTOS_LEG_VALIDOS`), nominais (`QT_VOTOS_NOMINAIS_VALIDOS`) e a federação. O quociente eleitoral mostrado é votos válidos dos partidos ÷ vagas (vagas de `consulta_vagas`). Roda só localmente.
 
+### TSE: coligações e federações (`dados/tse/coligacoes/<ano>/<UF>.json`)
+- **Entrada:** 2026-10-18, 2022 e 2024. Aparece na aba "Quem o elegeu?" como "Alianças do partido", depois de "Votos do partido".
+- **De onde:** `https://cdn.tse.jus.br/estatistica/sead/odsele/consulta_coligacao/consulta_coligacao_<ano>.zip` (colunas iguais nos dois anos).
+- **Como:** `python scripts/baixar_tse.py consulta_coligacao` e `python scripts/coletar_coligacoes.py`, que guarda tipo (coligação, federação ou partido isolado), nome, partidos e situação da legenda. Só guarda o partido de quem foi eleito (lê `dados/tse/<ano>/<UF>.json`), por isso precisa rodar depois de `coletar_tse.py`; sem isso o arquivo de 2024 passa de 6 MB. Roda só localmente.
+
 ## Outros arquivos do TSE (ainda não usados no site)
 Existem em `https://cdn.tse.jus.br/estatistica/sead/odsele/<pasta>/<arquivo>.zip`; URLs e tamanhos conferidos em 2026-10-18 (HTTP 200). Baixados com `python scripts/baixar_tse.py`, para `dados/tse_bruto/` (fora do git).
 
@@ -91,7 +96,7 @@ Existem em `https://cdn.tse.jus.br/estatistica/sead/odsele/<pasta>/<arquivo>.zip
 | Votos por seção | `votacao_secao/votacao_secao_<ano>_<UF>.zip` (um por UF, `ZZ` = exterior; SP: 901 MB e 476 MB) | por UF | por UF |
 | Perfil do eleitorado (já usado) | `perfil_eleitorado/perfil_eleitorado_<ano>.zip` | 77 MB | 334 MB |
 | Comparecimento, brancos e nulos | `detalhe_votacao_munzona/detalhe_votacao_munzona_<ano>.zip` | 4 MB | 1,5 MB |
-| Coligações | `consulta_coligacao/consulta_coligacao_<ano>.zip` | 0,4 MB | 11 MB |
+| Coligações (já usado) | `consulta_coligacao/consulta_coligacao_<ano>.zip` | 0,4 MB | 11 MB |
 | Vagas | `consulta_vagas/consulta_vagas_<ano>.zip` | 0,2 MB | 0,6 MB |
 | Motivo de cassação (só indeferimento de candidatura; pouco útil para eleitos) | `motivo_cassacao/motivo_cassacao_<ano>.zip` | 0,2 MB | 0,6 MB |
 

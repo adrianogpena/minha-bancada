@@ -870,6 +870,20 @@ function blocoPartido(e, fontesLista) {
   return html;
 }
 
+/* Com quem o partido se aliou na eleição (TSE: consulta de coligações): tipo, partidos e situação da legenda. */
+function blocoAlianca(e, fontesLista) {
+  const a = e.alianca;
+  if (!a) return e.ano < 2026 ? `<h3>Alianças do partido</h3><p>${semFonte("coligação ou federação desta eleição")}</p>` : "";
+  fontesLista.push([`Coligações e federações ${e.ano} (TSE)`, `${TSE_CDN}/consulta_coligacao/consulta_coligacao_${e.ano}.zip`]);
+  const nome = esc(e.partido);
+  const quais = esc(a.c.replace(/\(\d+-/g, "(").replace(/ \/ \d+-/g, " / "));
+  const frase = { C: `O ${nome} concorreu em coligação${a.n ? ` <b>${esc(a.n)}</b>` : ""}, com os partidos: ${quais}.`,
+    F: `O ${nome} concorreu em federação, que vale como um partido só: ${quais}.`,
+    I: `O ${nome} concorreu sozinho, sem coligação nem federação.` }[a.t];
+  const aviso = a.s && a.s !== "Deferido" ? ` Situação da legenda no TSE: <b>${esc(a.s)}</b>.` : "";
+  return `<h3>Alianças do partido</h3><p>${frase}${aviso}</p>`;
+}
+
 /* Onde foi votado: mapa dos locais de votação com mais votos e, nos cargos estaduais e federais, os municípios. */
 function blocoOndeVotou(e, fontesLista) {
   const s = e.secoes;
@@ -935,7 +949,7 @@ function painelEleicao(nome, e, o = {}) {
     corpo += `<ul class="lista-eleicao">${e.votos.map((v) => `<li><span class="quando">${v.turno}º turno${v.data ? `, ${esc(data(v.data, true))}` : ""}</span>
       <b>${numeroBr(v.votos)} votos</b>${v.pct != null ? ` (${String(v.pct).replace(".", ",")}% dos votos válidos)` : ""}</li>`).join("")}</ul>`;
     corpo += `<p>Local: ${esc(local)}.${e.resultado ? ` Resultado oficial: <b>${esc(rotuloResultado(e.resultado))}</b>.` : ""}</p>`;
-    corpo += blocoDisputa(e, fontesLista) + blocoPartido(e, fontesLista) + blocoOndeVotou(e, fontesLista) + blocoCampanha(e, fontesLista);
+    corpo += blocoDisputa(e, fontesLista) + blocoPartido(e, fontesLista) + blocoAlianca(e, fontesLista) + blocoOndeVotou(e, fontesLista) + blocoCampanha(e, fontesLista);
     if (cargoTse && !MAJORITARIOS.has(cargoTse)) corpo += `<p>Nas eleições proporcionais as vagas são distribuídas entre os partidos pelo quociente eleitoral; por isso o número de votos de cada candidato não diz sozinho quem foi eleito.</p>`;
     if (cargoTse) fontesLista.push([`Constituição Federal, art. ${ARTIGO_ELEICAO[cargoTse]}`, linkCF(ARTIGO_ELEICAO[cargoTse])]);
     if (cargoTse && !MAJORITARIOS.has(cargoTse)) fontesLista.push(["Código Eleitoral, art. 106", CODIGO_ELEITORAL_URL]);

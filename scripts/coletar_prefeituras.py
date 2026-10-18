@@ -24,7 +24,7 @@ ANO_INICIAL = 2025  # mandato atual começa em 1º de janeiro de 2025
 # UF da capital -> (código TSE do município, host do SAPL da Câmara Municipal).
 # Câmaras de capitais com API aberta, dados atuais e o Executivo registrado como autor, verificadas em 2026-10.
 # Ficaram de fora Porto Velho e Fortaleza (matérias do Executivo sem autor), Manaus e Palmas (sem dados atuais).
-# Verificadas em 2026-10 e sem fonte estruturada confiável (sem SAPL nem API aberta localizada): Belém, Goiânia,
+# Verificadas em 2026-10 e sem fonte estruturada confiável (sem SAPL nem API aberta localizada): Belém,
 # Maceió, Teresina, Macapá, Cuiabá, Florianópolis, Curitiba, Vitória; Recife tem SAPL, mas ficou em manutenção (503);
 # Rio de Janeiro, Belo Horizonte e Porto Alegre não responderam. São Luís, Campo Grande e Aracaju: sem host SAPL achado.
 CAMARAS = {
@@ -35,7 +35,8 @@ CAMARAS = {
 }
 # Câmaras com sistema próprio, cada uma com seu coletor em scripts/coletar_prefeitura_<uf>.py
 OUTRAS = {"SP": ("71072", "splegisconsulta.saopaulo.sp.leg.br"),
-          "BA": ("38490", "cmsalvador.sys.inf.br/cl/prop_interna/")}
+          "BA": ("38490", "cmsalvador.sys.inf.br/cl/prop_interna/"),
+          "GO": ("93734", "suap.camaragyn.go.gov.br")}
 TODAS = {**CAMARAS, **OUTRAS}
 # projetos, vetos e mensagens do prefeito; emendas, pareceres e requerimentos ficam de fora
 TIPO_PREFEITO = re.compile(r"^(projeto de lei|lei ordin|proposta de emenda|projeto de emenda|medida provis|veto|mensagem)", re.I)

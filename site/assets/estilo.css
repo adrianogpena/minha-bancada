@@ -56,6 +56,8 @@ img { max-width: 100%; display: block; }
 .marca-icone i:nth-child(3n+2) { background: var(--nao); }
 .marca-icone i:nth-child(5) { background: var(--ausente); }
 .nav { display: flex; gap: 20px; margin-left: auto; }
+.repo { order: 3; display: flex; color: var(--tinta-suave); }
+.repo:hover { color: var(--tinta); }
 .nav a { color: var(--tinta-suave); text-decoration: none; font-weight: 700; font-size: 15px; padding: 18px 0; border-bottom: 3px solid transparent; }
 .nav a[aria-current="page"], .nav a:hover { color: var(--tinta); border-color: var(--marca); }
 
@@ -158,6 +160,8 @@ input:focus, select:focus { border-color: var(--marca); outline: none; box-shado
 .ficha { display: grid; grid-template-columns: max-content 1fr; gap: 6px 16px; margin: 0; }
 .ficha dt { color: var(--tinta-suave); }
 .ficha dd { margin: 0; }
+.ficha dt.embaixo { grid-column: 1 / -1; margin-top: 8px; }
+.ficha dd.embaixo { grid-column: 1 / -1; text-align: left; }
 .aviso { background: var(--marca-clara); border-radius: var(--raio); padding: 12px 14px; font-size: 15px; }
 .vazio { color: var(--tinta-suave); padding: 16px 0; }
 .texto-longo { max-width: 68ch; }
@@ -167,7 +171,9 @@ input:focus, select:focus { border-color: var(--marca); outline: none; box-shado
 
 @media (max-width: 760px) {
   body { font-size: 16px; }
-  .nav { gap: 14px; margin-left: 0; width: 100%; }
+  .repo { margin-left: auto; order: 1; }
+  .marca { order: 0; }
+  .nav { order: 2; gap: 14px; margin-left: 0; width: 100%; }
   .nav a { padding: 10px 0; }
   .topo .recipiente { gap: 4px; padding-top: 10px; }
   .filtros { grid-template-columns: 1fr 1fr; }

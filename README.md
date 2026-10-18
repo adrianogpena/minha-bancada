@@ -2,6 +2,8 @@
 
 Site estático com todos os políticos com mandato no Brasil, de vereador a presidente, e os eleitos de 2026. Para deputados federais, mostra também como votam, o que propõem e quanto gastam. Os dados vêm do [TSE](https://dadosabertos.tse.jus.br), da [Câmara](https://dadosabertos.camara.leg.br) e do [Senado](https://legis.senado.leg.br/dadosabertos) e são atualizados sozinhos todo dia.
 
+**Site: https://adrianogpena.github.io/minha-bancada/**
+
 **Custo: zero.** Tudo roda no GitHub: o GitHub Actions coleta os dados e o GitHub Pages hospeda o site.
 
 ## Como funciona
@@ -59,6 +61,7 @@ Sem `--limite` a coleta pega todos os deputados em exercício. `--dias` só vale
 | `scripts/gerar_politicos.py` | Junta TSE, Câmara e Senado no índice de todos os políticos (chamado pelo `gerar.py`). |
 | `dados/proposicoes_detalhe.json` | Situação atual de cada projeto (aprovado, arquivado, em tramitação), da API da Câmara. Cada execução consulta até 4000 projetos (`DETALHES_POR_EXECUCAO`), então o cache se completa em alguns dias. |
 | `dados/senado_votacoes/` | Votações nominais do Plenário do Senado, com o voto de cada senador. |
+| `dados/senado_ceaps.json` | Gastos da cota (CEAPS) do ano corrente, de todos os senadores, da API administrativa do Senado. Fica fora do git: é baixado de novo a cada execução. |
 | `dados/senado_materias.json` | Situação atual dos projetos de senadores, da API do Senado (até 1500 por execução, `MATERIAS_POR_EXECUCAO`). |
 | `dados/votacoes/` | Histórico de votações, um arquivo por ano. Vai crescendo a cada execução. |
 | `dados/tse/` | Eleitos de cada eleição, um arquivo por estado. |
@@ -74,7 +77,7 @@ Sem `--limite` a coleta pega todos os deputados em exercício. `--dias` só vale
 
 ## Próximos passos possíveis
 
-- Gastos dos senadores (CEAPS) e página de detalhe de cada votação do Senado.
+- Página de detalhe de cada votação do Senado.
 - Assembleias legislativas e câmaras municipais que publicam dados abertos.
 - Orientação dos partidos em cada votação (`/votacoes/{id}/orientacoes`), para mostrar quem votou contra o próprio partido.
 - Votações nas comissões, além do Plenário.

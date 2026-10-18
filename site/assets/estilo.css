@@ -291,3 +291,8 @@ select:disabled { opacity: .55; }
 .eleitorado summary { cursor: pointer; }
 .eleitorado h3 { font-size: 16px; margin: 14px 0 8px; }
 .eleitorado .fonte-link { margin: 14px 0 0; font-size: 14px; color: var(--tinta-suave); }
+
+.mapa-mun { margin: 8px 0 4px; }
+.mapa-mun path, .mapa-mun path:hover { cursor: default; }
+.legenda-mapa { display: flex; align-items: center; gap: 8px; font-size: .85rem; color: var(--tinta-suave); margin: 0 0 12px; }
+.legenda-mapa i { flex: 0 1 160px; height: 10px; border-radius: 5px; background: linear-gradient(90deg, color-mix(in srgb, var(--marca) 12%, var(--superficie)), var(--marca)); }

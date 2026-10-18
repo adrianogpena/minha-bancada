@@ -69,7 +69,7 @@ Todas as coletas rodam sozinhas no GitHub Actions (`.github/workflows/atualizar.
 ### TSE: onde cada eleito foi votado (`dados/tse/secoes/<ano>/<UF>.json`)
 - **Entrada:** 2026-10-18, para os eleitos de 2022 e 2024. Aparece na aba "Quem o elegeu?", com mapa.
 - **De onde:** `.../votacao_secao/votacao_secao_<ano>_<UF>.zip` (votos por seção; `_BR` para presidente em 2022) e `.../eleitorado_locais_votacao/eleitorado_local_votacao_<ano>.zip` (latitude e longitude dos locais de votação). O mapa usa Leaflet (cdnjs) e blocos do OpenStreetMap, carregados pelo navegador.
-- **Como:** `python scripts/baixar_tse.py votacao_secao eleitorado_locais_votacao` e `python scripts/coletar_secoes.py` (uns 4 min por ano). Guarda por eleito os principais locais (5 para vereador, 10 nos demais) e, nos cargos estaduais e federais, os 10 municípios com mais votos. Roda só localmente.
+- **Como:** `python scripts/baixar_tse.py votacao_secao eleitorado_locais_votacao` e `python scripts/coletar_secoes.py` (uns 4 min por ano). Guarda por eleito os principais locais (5 para vereador, 10 nos demais) e, nos cargos estaduais e federais, os 10 municípios com mais votos. 2026-10-18: nesses cargos (menos presidente) guarda também os votos em todos os municípios (`mp`, código TSE), refeito dos ZIPs já baixados, para o mapa colorido por município; as malhas vêm da API do IBGE no navegador e o código TSE→IBGE de `dados/municipios_ibge.json`. Roda só localmente.
 
 ### TSE: perfil do eleitorado (`dados/tse/eleitorado/<ano>/<UF>.json`)
 - **Entrada:** 2026-10-18, 2022 e 2024. Aparece na página inicial, abaixo da contagem, ao escolher um estado ou município (o ano mais recente que o estado tem: 2024; o DF só tem 2022).

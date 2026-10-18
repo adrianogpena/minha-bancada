@@ -897,6 +897,11 @@ function blocoOndeVotou(e, fontesLista) {
   let html = `<h3>Onde foi votado</h3><p>${(s.l || []).length ? "Locais de votação" : "Municípios"} com mais votos no ${esc(s.n)}º turno de ${esc(e.ano)}, de um total de ${numeroBr(s.t)} votos.</p>`;
   if (pontos.length) html += `<div class="mapa-votos" role="img" aria-label="Mapa dos locais de votação com mais votos" data-pontos="${esc(JSON.stringify(pontos))}"></div>`;
   if (s.l && s.l.length) html += `<ol class="lista-eleicao">${s.l.map(([n, , , v]) => `<li>${esc(n)}: <b>${numeroBr(v)} votos</b>${pct(v)}</li>`).join("")}</ol>`;
+  if (s.mp && s.mp.length) {
+    fontesLista.push(["Malhas municipais (IBGE)", "https://servicodados.ibge.gov.br/api/v3/malhas"]);
+    html += `<h4>Votos por município</h4><div class="mapa mapa-mun" role="img" aria-label="Mapa dos votos em cada município" data-uf="${esc(e.uf)}" data-mp="${esc(JSON.stringify(s.mp))}"></div>
+      <p class="legenda-mapa"><span>menos votos</span><i></i><span>mais votos</span></p>`;
+  }
   if (s.m && s.m.length) html += `<h4>Municípios com mais votos</h4><ol class="lista-eleicao">${s.m.map(([n, v]) => `<li>${esc(n)}: <b>${numeroBr(v)} votos</b>${pct(v)}</li>`).join("")}</ol>`;
   return html;
 }
@@ -925,9 +930,32 @@ function desenharMapaVotos(el) {
     mapa.fitBounds(grupo.getBounds().pad(0.2), { maxZoom: 15 });
   }).catch(() => { el.textContent = "Não foi possível carregar o mapa."; });
 }
+/* Mapa colorido por município (malha do IBGE; código TSE -> IBGE em dados/municipios_ibge.json). */
+let ibgeDeTse;
+async function desenharMapaMunicipios(el) {
+  try {
+    ibgeDeTse ||= await carregar("dados/municipios_ibge.json");
+    const tseDeIbge = Object.fromEntries(Object.entries(ibgeDeTse).map(([t, i]) => [i, t]));
+    const fc = await carregar(`${MALHAS}/estados/${COD_UF[el.dataset.uf]}?formato=application/vnd.geo+json&intrarregiao=municipio&qualidade=minima`);
+    const votos = new Map(JSON.parse(el.dataset.mp).map(([c, v]) => [String(c).padStart(5, "0"), v]));
+    const maximo = Math.max(...votos.values());
+    el.innerHTML = svgMapa(fc, (f) => tseDeIbge[f.properties.codarea] || "");
+    const nomes = new Map(fc.features.map((f) => [tseDeIbge[f.properties.codarea], f.properties.nome]));
+    el.querySelectorAll("path").forEach((p) => {
+      const v = votos.get(p.dataset.id) || 0;
+      p.removeAttribute("tabindex"); p.removeAttribute("role");
+      p.style.fill = v ? `color-mix(in srgb, var(--marca) ${Math.round(12 + 88 * Math.sqrt(v / maximo))}%, var(--superficie))` : "var(--ausente)";
+      p.insertAdjacentHTML("afterbegin", `<title>${esc(nomes.get(p.dataset.id) || "")}: ${numeroBr(v)} votos</title>`);
+    });
+  } catch (err) { el.textContent = "Não foi possível carregar o mapa."; }
+}
 if (window.IntersectionObserver) {
-  const visto = new IntersectionObserver((itens) => itens.forEach((i) => { if (i.isIntersecting) { visto.unobserve(i.target); desenharMapaVotos(i.target); } }));
-  new MutationObserver(() => document.querySelectorAll(".mapa-votos:not([data-visto])").forEach((el) => { el.dataset.visto = "1"; visto.observe(el); }))
+  const visto = new IntersectionObserver((itens) => itens.forEach((i) => {
+    if (!i.isIntersecting) return;
+    visto.unobserve(i.target);
+    (i.target.classList.contains("mapa-mun") ? desenharMapaMunicipios : desenharMapaVotos)(i.target);
+  }));
+  new MutationObserver(() => document.querySelectorAll(".mapa-votos:not([data-visto]), .mapa-mun:not([data-visto])").forEach((el) => { el.dataset.visto = "1"; visto.observe(el); }))
     .observe(document.body, { childList: true, subtree: true });
 }
 

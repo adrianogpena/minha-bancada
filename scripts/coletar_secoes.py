@@ -7,6 +7,8 @@ coletar_contas.py; vice usa a chapa do titular):
     t  votos totais (no último turno disputado) e n  número desse turno
     l  principais locais de votação: [nome, latitude, longitude, votos]
     m  principais municípios (só cargos estaduais e federais): [nome, votos]
+    mp votos em todos os municípios (cargos estaduais e federais, menos presidente), para o mapa:
+       [[código TSE do município, votos], ...]
 
 Não guarda o endereço das escolas; o site mostra o local no mapa e a fonte.
 
@@ -34,7 +36,7 @@ ANOS = [2022, 2024]
 MUNICIPAIS = {"PREFEITO", "VICE-PREFEITO", "VEREADOR"}
 TOP_LOCAIS = {"VEREADOR": 5, "PREFEITO": 10, "VICE-PREFEITO": 10}   # demais cargos: 10
 TOP_MUNICIPIOS = 10
-VERSAO = 1
+VERSAO = 2
 
 csv.field_size_limit(1 << 24)
 
@@ -87,6 +89,7 @@ def coletar_ano(ano: int) -> None:
     por_local = defaultdict(int)   # (sq, turno, uf, município, zona, local) -> votos
     nome_local = {}
     por_mun = defaultdict(int)     # (sq, turno, nome do município) -> votos
+    por_cod = defaultdict(int)     # (sq, turno, código TSE do município) -> votos
 
     pasta_zips = BRUTO / "votacao_secao"
     for zip_path in sorted(pasta_zips.glob(f"votacao_secao_{ano}_*.zip")):
@@ -106,6 +109,7 @@ def coletar_ano(ano: int) -> None:
                 if chave not in nome_local:
                     nome_local[chave] = l[nl_i].strip()
                 por_mun[(sq, turno, l[nm_i].strip())] += votos
+                por_cod[(sq, turno, int(l[mun_i]))] += votos
 
     ultimo = {}
     for (sq, turno) in total:
@@ -119,6 +123,11 @@ def coletar_ano(ano: int) -> None:
         if ultimo.get(sq) == turno and v > 0:
             mun_de[sq].append([nome, v])
 
+    cod_de = defaultdict(list)
+    for (sq, turno, cod), v in por_cod.items():
+        if ultimo.get(sq) == turno and v > 0:
+            cod_de[sq].append([cod, v])
+
     por_uf = defaultdict(dict)
     for sq, turno in ultimo.items():
         uf, cargo = alvo[sq]
@@ -128,6 +137,8 @@ def coletar_ano(ano: int) -> None:
             item["l"] = [[nome_local[c], *coords.get((c[2], c[3], c[4], c[5]), (None, None)), v] for v, c in top]
         if cargo not in MUNICIPAIS:
             item["m"] = sorted(mun_de[sq], key=lambda x: -x[1])[:TOP_MUNICIPIOS]
+            if cargo != "PRESIDENTE":
+                item["mp"] = sorted(cod_de[sq], key=lambda x: -x[1])
         por_uf[uf][sq] = item
 
     pasta = TSE / "secoes" / str(ano)

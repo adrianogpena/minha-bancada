@@ -539,19 +539,22 @@ async function paginaPoliticos() {
   async function desenharMapa() {
     const minha = ++versao;
     try {
+      // o DF não tem municípios (nem eleição municipal): desenha só o contorno, com mais detalhe
+      const semMunicipios = uf === "DF";
       const fc = uf
-        ? await geo(`${MALHAS}/estados/${COD_UF[uf]}?formato=application/vnd.geo+json&intrarregiao=municipio&qualidade=minima`)
+        ? await geo(`${MALHAS}/estados/${COD_UF[uf]}?formato=application/vnd.geo+json${semMunicipios ? "&qualidade=intermediaria" : "&intrarregiao=municipio&qualidade=minima"}`)
         : await geo(`${MALHAS}/paises/BR?formato=application/vnd.geo+json&intrarregiao=UF&qualidade=minima`);
       if (minha !== versao) return;
       mapa.innerHTML = svgMapa(fc, uf ? (f) => tseDeIbge[f.properties.codarea] || "" : (f) => UF_COD[f.properties.codarea] || "");
       mapa.querySelectorAll("path").forEach((p) => {
         const nome = uf ? nomes.get(p.dataset.id) : UFS[p.dataset.id];
+        if (semMunicipios) { p.classList.add("unico"); p.removeAttribute("tabindex"); p.removeAttribute("role"); p.setAttribute("aria-label", UFS[uf]); return; }
         if (!nome) { p.classList.add("fundo"); p.removeAttribute("tabindex"); p.removeAttribute("role"); return; }
         p.setAttribute("aria-label", nome);
         p.insertAdjacentHTML("afterbegin", `<title>${esc(nome)}</title>`);
         if (uf && p.dataset.id === mun) p.classList.add("escolhido");
       });
-      dica.textContent = uf ? "Clique em um município para ver os políticos dele." : "Clique em um estado para ver os políticos dele.";
+      dica.textContent = semMunicipios ? "O Distrito Federal não tem municípios nem prefeitos: o governo e a Câmara Legislativa cuidam de tudo." : uf ? "Clique em um município para ver os políticos dele." : "Clique em um estado para ver os políticos dele.";
     } catch (e) {
       if (minha === versao) mapa.innerHTML = `<p class="vazio">Não foi possível carregar o mapa. Use os campos ao lado.</p>`;
     }
@@ -570,6 +573,7 @@ async function paginaPoliticos() {
         try { cache[uf] ||= await carregar(`dados/indice/${uf}.json`); } catch (e) { return erro(alvo, e); }
         lista = cache[uf];
         lista.forEach((x) => x.g && nomes.set(x.g, x.m));
+        selMun.disabled = !nomes.size;
         selMun.insertAdjacentHTML("beforeend", [...nomes].sort((a, b) => a[1].localeCompare(b[1], "pt-BR"))
           .map(([g, m]) => `<option value="${esc(g)}">${esc(m)}</option>`).join(""));
       }
@@ -635,10 +639,10 @@ async function paginaPoliticos() {
     $("#contagem").textContent = `${total} políticos ${periodo === "agora" ? "no cargo" : "eleitos ou no 2º turno em 2026"}: ${onde}`;
   }
 
-  const clicar = (p) => { if (p && !p.classList.contains("fundo")) irPara(uf || p.dataset.id, uf ? p.dataset.id : ""); };
+  const clicar = (p) => { if (p && !p.classList.contains("fundo") && !p.classList.contains("unico")) irPara(uf || p.dataset.id, uf ? p.dataset.id : ""); };
   mapa.addEventListener("click", (e) => clicar(e.target.closest("path")));
   mapa.addEventListener("keydown", (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); clicar(e.target.closest("path")); } });
-  const nomeSob = (e) => { const p = e.target.closest?.("path"); if (p && !p.classList.contains("fundo")) dica.textContent = uf ? nomes.get(p.dataset.id) : UFS[p.dataset.id]; };
+  const nomeSob = (e) => { const p = e.target.closest?.("path"); if (p && !p.classList.contains("fundo") && !p.classList.contains("unico")) dica.textContent = uf ? nomes.get(p.dataset.id) : UFS[p.dataset.id]; };
   mapa.addEventListener("mouseover", nomeSob);
   mapa.addEventListener("focusin", nomeSob);
   trilha.addEventListener("click", (e) => { const b = e.target.closest("button"); if (b) irPara(b.dataset.ir === "br" ? "" : uf); });

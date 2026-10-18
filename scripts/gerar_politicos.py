@@ -64,15 +64,29 @@ def periodo(ano: int, cargo_tse: str) -> tuple[str | None, str | None]:
 CAMPOS_ELEICAO = ("ano", "sq", "eleicao", "ue", "uf", "cargoTse", "resultado", "votos", "titular")
 
 
-_CONTAS = {}
+_RESUMOS = {}
+
+
+def resumo_tse(pasta: str, ano: int, uf: str) -> dict:
+    chave = (pasta, ano, uf)
+    if chave not in _RESUMOS:
+        _RESUMOS[chave] = ler(BRUTO / "tse" / pasta / str(ano) / f"{uf}.json", {})
+    return _RESUMOS[chave]
 
 
 def contas_de(ano: int, e: dict):
     """Resumo da prestação de contas de campanha (dados/tse/contas/<ano>/<UF>.json), ou None."""
-    chave = (ano, e["uf"])
-    if chave not in _CONTAS:
-        _CONTAS[chave] = ler(BRUTO / "tse" / "contas" / str(ano) / f"{e['uf']}.json", {})
-    return _CONTAS[chave].get(e.get("chapaSq") or e["sq"])
+    return resumo_tse("contas", ano, e["uf"]).get(e.get("chapaSq") or e["sq"])
+
+
+def secoes_de(ano: int, e: dict):
+    """Onde o eleito foi votado (dados/tse/secoes/<ano>/<UF>.json), ou None."""
+    return resumo_tse("secoes", ano, e["uf"]).get(e.get("chapaSq") or e["sq"])
+
+
+def disputa_de(ano: int, e: dict):
+    """Comparecimento e vagas do cargo e local da eleição (dados/tse/disputa/<ano>/<UF>.json), ou None."""
+    return resumo_tse("disputa", ano, e["uf"]).get(f"{e['cargo'].replace('VICE-', '')}|{e['ue']}")
 
 
 def eleitos_por_nome(cargo_tse: str) -> dict:
@@ -86,6 +100,8 @@ def eleitos_por_nome(cargo_tse: str) -> dict:
                 bloco = {**{k: e.get(k) for k in CAMPOS_ELEICAO if k != "ano"}, "ano": ano, "cargoTse": cargo_tse}
                 bloco["inicioMandato"], bloco["fimMandato"] = periodo(ano, cargo_tse)
                 bloco["contas"] = contas_de(ano, e)
+                bloco["secoes"] = secoes_de(ano, e)
+                bloco["disputa"] = disputa_de(ano, e)
                 for n in (e.get("nome"), e.get("urna")):
                     achados[chave_nome(n, e["uf"])].append(bloco)
     return achados
@@ -190,6 +206,8 @@ def gerar(deputados: dict, estaduais: dict | None = None) -> dict:
                     "estado": estado, "inicioMandato": periodo(ano, cargo_tse)[0], "fimMandato": periodo(ano, cargo_tse)[1],
                     "paginaAtual": atual_href,
                     "contas": contas_de(ano, e),
+                    "secoes": secoes_de(ano, e),
+                    "disputa": disputa_de(ano, e),
                     **({"estadual": estadual} if estadual else {}),
                 }
                 indice[uf].append({

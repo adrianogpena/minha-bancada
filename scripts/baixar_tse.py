@@ -28,7 +28,7 @@ CHANGELOG = RAIZ / "CHANGELOG.md"
 CDN = os.environ.get("TSE_CDN", "https://cdn.tse.jus.br/estatistica/sead/odsele")
 ANOS = [2022, 2024]
 UFS = ["AC", "AL", "AM", "AP", "BA", "CE", "DF", "ES", "GO", "MA", "MG", "MS", "MT", "PA", "PB", "PE", "PI",
-       "PR", "RJ", "RN", "RO", "RR", "RS", "SC", "SE", "SP", "TO", "ZZ"]  # ZZ = exterior
+       "PR", "RJ", "RN", "RO", "RR", "RS", "SC", "SE", "SP", "TO", "ZZ", "BR"]  # ZZ = exterior; BR = presidente (só 2022)
 
 # conjunto -> (pasta no CDN, modelo do nome do arquivo, um arquivo por UF?, o que é)
 CONJUNTOS = {
@@ -43,6 +43,8 @@ CONJUNTOS = {
                                 "Comparecimento, brancos e nulos por município e zona"),
     "consulta_coligacao": ("consulta_coligacao", "consulta_coligacao_{ano}", False, "Coligações e federações"),
     "consulta_vagas": ("consulta_vagas", "consulta_vagas_{ano}", False, "Vagas (cadeiras em disputa) por cargo"),
+    "eleitorado_locais_votacao": ("eleitorado_locais_votacao", "eleitorado_local_votacao_{ano}", False,
+                                  "Locais de votação com endereço e coordenadas (latitude/longitude)"),
     "motivo_cassacao": ("motivo_cassacao", "motivo_cassacao_{ano}", False,
                         "Motivos de indeferimento/cassação de candidaturas (pouco útil para eleitos)"),
 }

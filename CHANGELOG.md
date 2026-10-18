@@ -61,6 +61,16 @@ Todas as coletas rodam sozinhas no GitHub Actions (`.github/workflows/atualizar.
 - **De onde:** `https://cdn.tse.jus.br/estatistica/sead/odsele/prestacao_contas/prestacao_de_contas_eleitorais_candidatos_<ano>.zip` (arquivos `receitas_candidatos_<ano>_BRASIL.csv` e `despesas_contratadas_candidatos_<ano>_BRASIL.csv`).
 - **Como:** `python scripts/baixar_tse.py prestacao_contas` (ZIP em `dados/tse_bruto/`, fora do git) e depois `python scripts/coletar_contas.py`, que lê os CSV em streaming e guarda por eleito: total arrecadado, total contratado, receita por origem, 5 maiores doadores (só o nome, sem CPF) e 6 maiores tipos de gasto. Roda só localmente (anos encerrados não mudam); vice usa a prestação do titular da chapa.
 
+### TSE: comparecimento e vagas (`dados/tse/disputa/<ano>/<UF>.json`)
+- **Entrada:** 2026-10-18, eleições de 2022 e 2024. Aparece na aba "Quem o elegeu?".
+- **De onde:** `https://cdn.tse.jus.br/estatistica/sead/odsele/detalhe_votacao_munzona/detalhe_votacao_munzona_<ano>.zip` (aptos, comparecimento, abstenções, brancos, nulos, votos válidos) e `.../consulta_vagas/consulta_vagas_<ano>.zip` (vagas).
+- **Como:** `python scripts/baixar_tse.py detalhe_votacao_munzona consulta_vagas` e `python scripts/coletar_disputa.py`, que soma as zonas de cada cargo e local (o `*_BRASIL.csv` é ignorado porque repete os outros). Roda só localmente.
+
+### TSE: onde cada eleito foi votado (`dados/tse/secoes/<ano>/<UF>.json`)
+- **Entrada:** 2026-10-18, para os eleitos de 2022 e 2024. Aparece na aba "Quem o elegeu?", com mapa.
+- **De onde:** `.../votacao_secao/votacao_secao_<ano>_<UF>.zip` (votos por seção; `_BR` para presidente em 2022) e `.../eleitorado_locais_votacao/eleitorado_local_votacao_<ano>.zip` (latitude e longitude dos locais de votação). O mapa usa Leaflet (cdnjs) e blocos do OpenStreetMap, carregados pelo navegador.
+- **Como:** `python scripts/baixar_tse.py votacao_secao eleitorado_locais_votacao` e `python scripts/coletar_secoes.py` (uns 4 min por ano). Guarda por eleito os principais locais (5 para vereador, 10 nos demais) e, nos cargos estaduais e federais, os 10 municípios com mais votos. Roda só localmente.
+
 ## Outros arquivos do TSE (ainda não usados no site)
 Existem em `https://cdn.tse.jus.br/estatistica/sead/odsele/<pasta>/<arquivo>.zip`; URLs e tamanhos conferidos em 2026-10-18 (HTTP 200). Baixados com `python scripts/baixar_tse.py`, para `dados/tse_bruto/` (fora do git).
 
@@ -146,3 +156,6 @@ Filiação partidária e certidões criminais: não achadas em dadosabertos.tse.
 - 2026-10-18 21:28: `dados/tse_bruto/votacao_secao/votacao_secao_2024_SE.zip` ← https://cdn.tse.jus.br/estatistica/sead/odsele/votacao_secao/votacao_secao_2024_SE.zip (15.6 MB, sha256 `06a51a88f213f4e1…`)
 - 2026-10-18 21:35: `dados/tse_bruto/votacao_secao/votacao_secao_2024_SP.zip` ← https://cdn.tse.jus.br/estatistica/sead/odsele/votacao_secao/votacao_secao_2024_SP.zip (475.8 MB, sha256 `3d7063c453ca4d2e…`)
 - 2026-10-18 21:35: `dados/tse_bruto/votacao_secao/votacao_secao_2024_TO.zip` ← https://cdn.tse.jus.br/estatistica/sead/odsele/votacao_secao/votacao_secao_2024_TO.zip (10.2 MB, sha256 `9258920a27193be8…`)
+- 2026-10-18 22:23: `dados/tse_bruto/eleitorado_locais_votacao/eleitorado_local_votacao_2022.zip` ← https://cdn.tse.jus.br/estatistica/sead/odsele/eleitorado_locais_votacao/eleitorado_local_votacao_2022.zip (24.0 MB, sha256 `6dc19c1ddb746cc0…`)
+- 2026-10-18 22:23: `dados/tse_bruto/eleitorado_locais_votacao/eleitorado_local_votacao_2024.zip` ← https://cdn.tse.jus.br/estatistica/sead/odsele/eleitorado_locais_votacao/eleitorado_local_votacao_2024.zip (45.3 MB, sha256 `352ea0731f862b8a…`)
+- 2026-10-18 22:29: `dados/tse_bruto/votacao_secao/votacao_secao_2022_BR.zip` ← https://cdn.tse.jus.br/estatistica/sead/odsele/votacao_secao/votacao_secao_2022_BR.zip (271.3 MB, sha256 `9353993de5cf0377…`)

@@ -817,6 +817,64 @@ function blocoCampanha(e, fontesLista) {
     ${c.g.length ? `<h4>Em que gastou</h4>${linhas(c.g, ([g, v]) => `<span class="quando">${esc(g)}</span> <b>${reaisCentavos(v)}</b>`)}` : ""}`;
 }
 
+/* Comparecimento e vagas da eleição (TSE: detalhe da votação e vagas). */
+function blocoDisputa(e, fontesLista) {
+  const d = e.disputa;
+  if (!d) return e.ano < 2026 ? `<h3>Comparecimento e vagas</h3><p>${semFonte("comparecimento desta eleição ainda não coletado")}</p>` : "";
+  fontesLista.push([`Detalhe da votação ${e.ano} (TSE)`, `${TSE_CDN}/detalhe_votacao_munzona/detalhe_votacao_munzona_${e.ano}.zip`]);
+  if (d.v != null) fontesLista.push([`Vagas ${e.ano} (TSE)`, `${TSE_CDN}/consulta_vagas/consulta_vagas_${e.ano}.zip`]);
+  const pct = (a, b) => (b ? `${((100 * a) / b).toFixed(1).replace(".", ",")}%` : "");
+  const turnos = Object.entries(d.t).sort(([a], [b]) => a - b).map(([n, t]) => `<li><span class="quando">${esc(n)}º turno</span>
+    ${numeroBr(t.aptos)} eleitores aptos · compareceram <b>${numeroBr(t.comparecimento)}</b> (${pct(t.comparecimento, t.aptos)}) · abstenção ${numeroBr(t.abstencoes)} (${pct(t.abstencoes, t.aptos)})
+    · brancos ${numeroBr(t.brancos)} · nulos ${numeroBr(t.nulos)} · votos válidos ${numeroBr(t.validos)}</li>`).join("");
+  return `<h3>Comparecimento e vagas</h3>${d.v != null ? `<p>Vagas em disputa neste cargo e local: <b>${numeroBr(d.v)}</b>.</p>` : ""}<ul class="lista-eleicao">${turnos}</ul>`;
+}
+
+/* Onde foi votado: mapa dos locais de votação com mais votos e, nos cargos estaduais e federais, os municípios. */
+function blocoOndeVotou(e, fontesLista) {
+  const s = e.secoes;
+  if (!s) return e.ano < 2026 ? `<h3>Onde foi votado</h3><p>${semFonte("votos por seção desta eleição ainda não coletados")}</p>` : "";
+  fontesLista.push([`Votação por seção ${e.ano} (TSE)`, `${TSE_CDN}/votacao_secao/votacao_secao_${e.ano}_${e.uf}.zip`],
+    [`Locais de votação ${e.ano} (TSE)`, `${TSE_CDN}/eleitorado_locais_votacao/eleitorado_local_votacao_${e.ano}.zip`]);
+  const pct = (v) => (s.t ? ` (${((100 * v) / s.t).toFixed(1).replace(".", ",")}%)` : "");
+  const pontos = (s.l || []).filter(([, la, lo]) => la != null && lo != null);
+  let html = `<h3>Onde foi votado</h3><p>${(s.l || []).length ? "Locais de votação" : "Municípios"} com mais votos no ${esc(s.n)}º turno de ${esc(e.ano)}, de um total de ${numeroBr(s.t)} votos.</p>`;
+  if (pontos.length) html += `<div class="mapa-votos" role="img" aria-label="Mapa dos locais de votação com mais votos" data-pontos="${esc(JSON.stringify(pontos))}"></div>`;
+  if (s.l && s.l.length) html += `<ol class="lista-eleicao">${s.l.map(([n, , , v]) => `<li>${esc(n)}: <b>${numeroBr(v)} votos</b>${pct(v)}</li>`).join("")}</ol>`;
+  if (s.m && s.m.length) html += `<h4>Municípios com mais votos</h4><ol class="lista-eleicao">${s.m.map(([n, v]) => `<li>${esc(n)}: <b>${numeroBr(v)} votos</b>${pct(v)}</li>`).join("")}</ol>`;
+  return html;
+}
+
+/* Mapas dos locais de votação (Leaflet, carregado só quando aparece um mapa na tela). */
+const LEAFLET = "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4";
+let leafletPronto;
+function carregarLeaflet() {
+  leafletPronto ||= new Promise((ok, falha) => {
+    const css = document.createElement("link");
+    css.rel = "stylesheet"; css.href = `${LEAFLET}/leaflet.min.css`;
+    const js = document.createElement("script");
+    js.src = `${LEAFLET}/leaflet.min.js`; js.onload = () => ok(window.L); js.onerror = falha;
+    document.head.append(css, js);
+  });
+  return leafletPronto;
+}
+function desenharMapaVotos(el) {
+  carregarLeaflet().then((L) => {
+    const pontos = JSON.parse(el.dataset.pontos);
+    const mapa = L.map(el, { scrollWheelZoom: false });
+    L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", { maxZoom: 18, attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>' }).addTo(mapa);
+    const maximo = Math.max(...pontos.map((p) => p[3]));
+    const grupo = L.featureGroup(pontos.map(([nome, la, lo, v]) => L.circleMarker([la, lo], { radius: 6 + 14 * Math.sqrt(v / maximo), weight: 1, fillOpacity: 0.55 })
+      .bindTooltip(`${nome}: ${numeroBr(v)} votos`))).addTo(mapa);
+    mapa.fitBounds(grupo.getBounds().pad(0.2), { maxZoom: 15 });
+  }).catch(() => { el.textContent = "Não foi possível carregar o mapa."; });
+}
+if (window.IntersectionObserver) {
+  const visto = new IntersectionObserver((itens) => itens.forEach((i) => { if (i.isIntersecting) { visto.unobserve(i.target); desenharMapaVotos(i.target); } }));
+  new MutationObserver(() => document.querySelectorAll(".mapa-votos:not([data-visto])").forEach((el) => { el.dataset.visto = "1"; visto.observe(el); }))
+    .observe(document.body, { childList: true, subtree: true });
+}
+
 /* Aba "Quem o elegeu?": votação (ano, data, resultado) ou, para suplente, quem ele substituiu e desde quando. */
 function painelEleicao(nome, e, o = {}) {
   const cargoTse = (e && e.cargoTse) || o.cargoTse;
@@ -837,7 +895,7 @@ function painelEleicao(nome, e, o = {}) {
     corpo += `<ul class="lista-eleicao">${e.votos.map((v) => `<li><span class="quando">${v.turno}º turno${v.data ? `, ${esc(data(v.data, true))}` : ""}</span>
       <b>${numeroBr(v.votos)} votos</b>${v.pct != null ? ` (${String(v.pct).replace(".", ",")}% dos votos válidos)` : ""}</li>`).join("")}</ul>`;
     corpo += `<p>Local: ${esc(local)}.${e.resultado ? ` Resultado oficial: <b>${esc(rotuloResultado(e.resultado))}</b>.` : ""}</p>`;
-    corpo += blocoCampanha(e, fontesLista);
+    corpo += blocoDisputa(e, fontesLista) + blocoOndeVotou(e, fontesLista) + blocoCampanha(e, fontesLista);
     if (cargoTse && !MAJORITARIOS.has(cargoTse)) corpo += `<p>Nas eleições proporcionais as vagas são distribuídas entre os partidos pelo quociente eleitoral; por isso o número de votos de cada candidato não diz sozinho quem foi eleito.</p>`;
     if (cargoTse) fontesLista.push([`Constituição Federal, art. ${ARTIGO_ELEICAO[cargoTse]}`, linkCF(ARTIGO_ELEICAO[cargoTse])]);
     if (cargoTse && !MAJORITARIOS.has(cargoTse)) fontesLista.push(["Código Eleitoral, art. 106", CODIGO_ELEITORAL_URL]);

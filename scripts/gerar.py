@@ -47,6 +47,22 @@ def juntar_detalhe(p: dict, det: dict | None) -> dict:
     return {**p, **{curto: det[longo] for longo, curto in campos.items() if det.get(longo)}}
 
 
+def resumir_despesas(ano: int, itens: list) -> dict:
+    """Totais por tipo, mês e fornecedor, no formato que o site usa para deputados e senadores."""
+    por_tipo, por_mes, fornecedores = Counter(), Counter(), Counter()
+    for i in itens:
+        por_tipo[i["tipo"] or "Outros"] += i["valor"]
+        por_mes[i["mes"]] += i["valor"]
+        fornecedores[i["fornecedor"] or "Não informado"] += i["valor"]
+    return {
+        "ano": ano, "total": round(sum(por_tipo.values()), 2),
+        "porTipo": sorted(([k, round(v, 2)] for k, v in por_tipo.items()), key=lambda x: -x[1]),
+        "porMes": sorted(([k, round(v, 2)] for k, v in por_mes.items())),
+        "fornecedores": [[k, round(v, 2)] for k, v in fornecedores.most_common(10)],
+        "recentes": itens[:30],
+    }
+
+
 def gerar_senadores() -> None:
     """Votos e projetos dos senadores em exercício -> site/dados/senador/<id>.json
     e site/dados/votacoes_senado.json (lista de votações, sem o voto de cada um)."""
@@ -59,6 +75,7 @@ def gerar_senadores() -> None:
     votacoes.sort(key=lambda v: (v["data"], v.get("hora") or ""), reverse=True)
     autorias = ler(BRUTO / "senado_autorias.json", {}) or {}
     materias = ler(BRUTO / "senado_materias.json", {}) or {}
+    ceaps = ler(BRUTO / "senado_ceaps.json", {}) or {}
 
     resumo, votos_por_sen, primeira = [], defaultdict(dict), {}
     for v in votacoes:
@@ -89,6 +106,8 @@ def gerar_senadores() -> None:
             "votos": [{"id": v["id"], "voto": votos_por_sen[sid].get(v["id"], "ausente")}
                       for v in resumo if desde and v["data"] >= desde],
             "proposicoes": propostas,
+            # sem o arquivo (coleta falhou) o site mostra só o link para o Portal da Transparência
+            **({"despesas": resumir_despesas(ceaps["ano"], ceaps["itens"].get(sid, []))} if ceaps else {}),
         })
     print(f"Gerado: {len(senadores)} senadores, {len(resumo)} votações nominais do Senado")
 

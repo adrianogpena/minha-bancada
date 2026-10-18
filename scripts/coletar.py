@@ -282,6 +282,7 @@ def situacao_final(situacao: str) -> bool:
 # ---------------------------------------------------------------- senado
 
 SENADO = os.environ.get("SENADO_API", "https://legis.senado.leg.br/dadosabertos")
+SENADO_ADM = os.environ.get("SENADO_ADM_API", "https://adm.senado.gov.br/adm-dadosabertos/api/v1")
 
 
 def coletar_senado() -> None:
@@ -494,6 +495,26 @@ def coletar_votacoes_senado() -> None:
         print(f"  {tipo}: {sorted(r.items(), key=lambda kv: -kv[1])[:6]}")
 
 
+def coletar_ceaps_senado() -> None:
+    """Gastos da cota (CEAPS) do ano corrente, de todos os senadores, numa chamada só.
+    Fica em dados/senado_ceaps.json (não vai para o git: é baixado de novo a cada execução)."""
+    ano = dt.date.today().year
+    r = S.get(f"{SENADO_ADM}/senadores/despesas_ceaps/{ano}", headers={"Accept": "application/json"}, timeout=180)
+    r.raise_for_status()
+    itens: dict[str, list] = {}
+    for d in r.json():
+        if not d.get("codSenador"):
+            continue
+        itens.setdefault(str(d["codSenador"]), []).append({
+            "mes": d.get("mes"), "tipo": d.get("tipoDespesa"), "valor": d.get("valorReembolsado") or 0,
+            "fornecedor": d.get("fornecedor"), "data": d.get("data"),
+        })
+    for lista in itens.values():
+        lista.sort(key=lambda i: i["data"] or "", reverse=True)
+    salvar(DADOS / "senado_ceaps.json", {"ano": ano, "itens": itens})
+    print(f"CEAPS {ano}: {sum(len(v) for v in itens.values())} despesas de {len(itens)} senadores")
+
+
 def coletar_autorias_senado() -> None:
     """Matérias de que cada senador em exercício é autor, e a situação atual delas."""
     senadores = ler(DADOS / "senado.json", [])
@@ -682,7 +703,7 @@ def main():
             coletar_senado()
         except Exception as e:
             avisar(f"senado: {e}")
-        for etapa in (coletar_votacoes_senado, coletar_autorias_senado):  # complementos: cada um falha sozinho
+        for etapa in (coletar_votacoes_senado, coletar_autorias_senado, coletar_ceaps_senado):  # complementos: cada um falha sozinho
             try:
                 etapa()
             except Exception as e:

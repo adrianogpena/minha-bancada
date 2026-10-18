@@ -220,21 +220,12 @@ function fontes(links) {
   return `<span class="fontes"><span class="rotulo-fonte">Fonte</span><span class="fontes-lista">${links.filter(Boolean).map(([t, h]) => `<a href="${esc(h)}" rel="noopener">${esc(t)}</a>`).join("")}</span></span>`;
 }
 
-async function paginaDeputado() {
-  const alvo = $("#conteudo");
-  const id = param("id");
-  let dep, votacoes;
-  try {
-    [dep, votacoes] = await Promise.all([carregar(`dados/deputado/${encodeURIComponent(id)}.json`), carregar("dados/votacoes.json")]);
-  } catch (e) { return erro(alvo, e); }
-  document.title = `${dep.nome} (${dep.partido}/${dep.uf}) | Minha Bancada`;
-
-  const meus = new Map(dep.votos.map((v) => [v.id, v.voto]));
-  const desp = dep.despesas;
+/* gastos da cota (deputado: CEAP; senador: CEAPS); desp vem de gerar.py */
+function painelGastos(desp, explicacao) {
   const maxTipo = desp.porTipo[0]?.[1] || 1;
-  const painelPerfil = `
+  return `
     <h2>Gastos da cota parlamentar em ${desp.ano}</h2>
-    <p>Total no ano: <b>${reaisCentavos(desp.total)}</b>. A cota paga despesas do mandato, como passagens, aluguel de escritório e divulgação.</p>
+    <p>Total no ano: <b>${reaisCentavos(desp.total)}</b>. ${esc(explicacao)}</p>
     <div class="duas-colunas">
       <div>
         <h3>Por tipo de despesa</h3>
@@ -249,6 +240,22 @@ async function paginaDeputado() {
           : `<p class="vazio">Sem fornecedores no período.</p>`}
       </div>
     </div>
+  `;
+}
+
+async function paginaDeputado() {
+  const alvo = $("#conteudo");
+  const id = param("id");
+  let dep, votacoes;
+  try {
+    [dep, votacoes] = await Promise.all([carregar(`dados/deputado/${encodeURIComponent(id)}.json`), carregar("dados/votacoes.json")]);
+  } catch (e) { return erro(alvo, e); }
+  document.title = `${dep.nome} (${dep.partido}/${dep.uf}) | Minha Bancada`;
+
+  const meus = new Map(dep.votos.map((v) => [v.id, v.voto]));
+  const desp = dep.despesas;
+  const painelPerfil = `
+    ${painelGastos(desp, "A cota paga despesas do mandato, como passagens, aluguel de escritório e divulgação.")}
     ${fontes([["Cota parlamentar (API da Câmara)", `${CAMARA_API}/deputados/${encodeURIComponent(dep.id)}/despesas?ano=${desp.ano}`], ["Portal da Câmara", `https://www.camara.leg.br/deputados/${encodeURIComponent(dep.id)}`]])}
 
     <h2>Ficha</h2>
@@ -992,6 +999,7 @@ async function paginaPolitico() {
 
 /* senador: mesmas abas do deputado. Devolve false se os dados de votos e projetos ainda não existem. */
 const SENADO_API = "https://legis.senado.leg.br/dadosabertos";
+const SENADO_ADM_API = "https://adm.senado.gov.br/adm-dadosabertos/api/v1";
 const linkMateriaSenado = (id) => `https://www25.senado.leg.br/web/atividade/materias/-/materia/${encodeURIComponent(id)}`;
 
 async function montarSenador(alvo, p, nome, ficha) {
@@ -1010,9 +1018,10 @@ async function montarSenador(alvo, p, nome, ficha) {
         <dt>Onde atua</dt><dd>${esc(UFS[p.uf] || p.uf)}</dd>
         ${p.pagina ? `<dt>Página oficial</dt><dd><a href="${esc(p.pagina)}" rel="noopener">Perfil no Senado Federal</a></dd>` : ""}
       </dl>
-      <p class="aviso">Gastos da cota (CEAPS) de senadores ainda não estão no site. Veja no <a href="https://www12.senado.leg.br/transparencia/sen/${encodeURIComponent(p.id)}" rel="noopener">Portal da Transparência do Senado</a>.</p>
-      ${fontes([["Dados Abertos do Senado", `${SENADO_API}/senador/${encodeURIComponent(p.id)}`]])}`,
-    rotuloPerfil: "Perfil",
+      ${sen.despesas ? painelGastos(sen.despesas, "A cota (CEAPS) reembolsa despesas do mandato, como passagens, aluguel de escritório e divulgação. Os valores são os reembolsados pelo Senado.")
+        : `<p class="aviso">Os gastos da cota (CEAPS) não puderam ser carregados agora. Veja no <a href="https://www12.senado.leg.br/transparencia/sen/${encodeURIComponent(p.id)}" rel="noopener">Portal da Transparência do Senado</a>.</p>`}
+      ${fontes([["Dados Abertos do Senado", `${SENADO_API}/senador/${encodeURIComponent(p.id)}`], sen.despesas ? ["Cota parlamentar (CEAPS)", `${SENADO_ADM_API}/senadores/despesas_ceaps/${sen.despesas.ano}`] : null, ["Portal da Transparência do Senado", `https://www12.senado.leg.br/transparencia/sen/${encodeURIComponent(p.id)}`]])}`,
+    rotuloPerfil: sen.despesas ? "Perfil e gastos" : "Perfil",
     linhaDoTempo, proposicoes: sen.proposicoes, tipoProjeto: (x) => !!TIPOS_PROJETO[x.tipo],
     textoLegislatura: "como autor ou coautor desde 2019",
     aviso: "A situação vem da tramitação no Senado e é atualizada aos poucos todo dia.",

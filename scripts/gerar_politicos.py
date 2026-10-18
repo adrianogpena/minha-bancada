@@ -41,7 +41,56 @@ MANDATO_ATUAL = {
 }
 ELEICAO_NOVA = 2026
 MUNICIPAIS = {"PREFEITO", "VICE-PREFEITO", "VEREADOR"}
-FIM_MANDATO = {2022: "2026-12-31", 2024: "2028-12-31", 2026: None}
+# (início, fim) do mandato por eleição e cargo. Presidente e governadores tomam posse em 5 e 6 de
+# janeiro desde a EC 111/2021 (a partir de 2027); o mandato acaba um dia antes da posse seguinte.
+MANDATOS = {
+    2018: {"SENADOR": ("2019-02-01", "2027-01-31")},
+    2022: {"PRESIDENTE": ("2023-01-01", "2027-01-04"), "VICE-PRESIDENTE": ("2023-01-01", "2027-01-04"),
+           "GOVERNADOR": ("2023-01-01", "2027-01-05"), "VICE-GOVERNADOR": ("2023-01-01", "2027-01-05"),
+           "SENADOR": ("2023-02-01", "2031-01-31"),
+           **{c: ("2023-02-01", "2027-01-31") for c in ("DEPUTADO FEDERAL", "DEPUTADO ESTADUAL", "DEPUTADO DISTRITAL")}},
+    2024: {c: ("2025-01-01", "2028-12-31") for c in ("PREFEITO", "VICE-PREFEITO", "VEREADOR")},
+    2026: {"PRESIDENTE": ("2027-01-05", "2031-01-04"), "VICE-PRESIDENTE": ("2027-01-05", "2031-01-04"),
+           "GOVERNADOR": ("2027-01-06", "2031-01-05"), "VICE-GOVERNADOR": ("2027-01-06", "2031-01-05"),
+           "SENADOR": ("2027-02-01", "2035-01-31"),
+           **{c: ("2027-02-01", "2031-01-31") for c in ("DEPUTADO FEDERAL", "DEPUTADO ESTADUAL", "DEPUTADO DISTRITAL")}},
+}
+
+
+def periodo(ano: int, cargo_tse: str) -> tuple[str | None, str | None]:
+    return MANDATOS.get(ano, {}).get(cargo_tse, (None, None))
+
+
+CAMPOS_ELEICAO = ("ano", "sq", "eleicao", "ue", "uf", "cargoTse", "resultado", "votos", "titular")
+
+
+def eleitos_por_nome(cargo_tse: str) -> dict:
+    """Eleitos de 2018 e 2022 a um cargo federal, por nome e UF, para ligar com a Câmara e o Senado."""
+    achados = defaultdict(list)
+    for ano in (2018, 2022):
+        for arq in sorted((BRUTO / "tse" / str(ano)).glob("[A-Z][A-Z].json")):
+            for e in ler(arq, []):
+                if e["cargo"] != cargo_tse:
+                    continue
+                bloco = {**{k: e.get(k) for k in CAMPOS_ELEICAO if k != "ano"}, "ano": ano, "cargoTse": cargo_tse}
+                bloco["inicioMandato"], bloco["fimMandato"] = periodo(ano, cargo_tse)
+                for n in (e.get("nome"), e.get("urna")):
+                    achados[chave_nome(n, e["uf"])].append(bloco)
+    return achados
+
+
+def achar_eleicao(achados: dict, nomes: list, uf: str, fim: str | None = None):
+    for n in nomes:
+        for b in sorted(achados.get(chave_nome(n, uf), []), key=lambda b: -b["ano"]):
+            if not fim or b["fimMandato"][:4] == fim[:4]:
+                return b
+    return None
+
+
+def eleicao_deputados(deputados: dict) -> dict:
+    """id do deputado federal -> como foi eleito em 2022 (None se for suplente que assumiu)."""
+    achados = eleitos_por_nome("DEPUTADO FEDERAL")
+    return {did: achar_eleicao(achados, [d.get("nomeCivil"), d.get("nome")], d["uf"]) for did, d in deputados.items()}
 
 
 def ler(caminho: Path, padrao=None):
@@ -87,10 +136,13 @@ def gerar(deputados: dict, estaduais: dict | None = None) -> dict:
         })
 
     # --- senadores em exercício (Senado)
+    eleitos_senado = eleitos_por_nome("SENADOR")
     for s in ler(BRUTO / "senado.json", []) or []:
         cargo, ordem = rotulo("SENADOR", s.get("genero"))
         sid = str(s["id"])
-        fichas["senado"][sid] = {**s, "cargo": cargo, "fonte": "senado", "estado": "atual"}
+        fichas["senado"][sid] = {**s, "cargo": cargo, "fonte": "senado", "estado": "atual",
+                                 "eleicao": achar_eleicao(eleitos_senado, [s.get("titular")] if s.get("titular") else [s.get("nomeCivil"), s.get("nome")],
+                                                          s["uf"], s.get("fimMandato"))}
         paginas_atuais[chave_nome(s.get("nomeCivil"), s["uf"])] = f"politico.html?f=senado&i={sid}"
         paginas_atuais[chave_nome(s.get("nome"), s["uf"])] = f"politico.html?f=senado&i={sid}"
         indice[s["uf"]].append({
@@ -123,7 +175,8 @@ def gerar(deputados: dict, estaduais: dict | None = None) -> dict:
                     estadual = {"uf": achado[0], "id": achado[1]} if achado else None
                 fichas[arquivo][e["sq"]] = {
                     **e, "cargo": cargo, "cargoTse": cargo_tse, "ano": ano, "fonte": "tse",
-                    "estado": estado, "fimMandato": FIM_MANDATO.get(ano), "paginaAtual": atual_href,
+                    "estado": estado, "inicioMandato": periodo(ano, cargo_tse)[0], "fimMandato": periodo(ano, cargo_tse)[1],
+                    "paginaAtual": atual_href,
                     **({"estadual": estadual} if estadual else {}),
                 }
                 indice[uf].append({

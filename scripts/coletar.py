@@ -296,7 +296,13 @@ def coletar_senado() -> None:
         mandato = s.get("Mandato", {}) or {}
         fim = max((mandato.get(k, {}) or {}).get("DataFim") or "" for k in
                   ("PrimeiraLegislaturaDoMandato", "SegundaLegislaturaDoMandato")) or None
+        exercicios = (mandato.get("Exercicios", {}) or {}).get("Exercicio") or []
+        if isinstance(exercicios, dict):
+            exercicios = [exercicios]
+        abertos = [x.get("DataInicio") for x in exercicios if not x.get("DataFim") and x.get("DataInicio")]
         senadores.append({
+            "titular": (mandato.get("Titular", {}) or {}).get("NomeParlamentar"),
+            "exercicioDesde": max(abertos) if abertos else None,
             "id": ident.get("CodigoParlamentar"),
             "nome": ident.get("NomeParlamentar"),
             "nomeCivil": ident.get("NomeCompletoParlamentar"),

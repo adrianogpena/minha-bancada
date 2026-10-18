@@ -32,7 +32,10 @@ RAIZ = Path(__file__).resolve().parent.parent
 DADOS = RAIZ / "dados" / "tse"
 CDN = os.environ.get("TSE_CDN", "https://cdn.tse.jus.br/estatistica/sead/odsele")
 
-ANOS = [2022, 2024, 2026]
+ANOS = [2018, 2022, 2024, 2026]
+# 2018 entra só para dizer quem elegeu os senadores que ainda estão no mandato
+SO_CARGOS = {2018: {"SENADOR"}}
+MAJORITARIOS = {"PRESIDENTE", "GOVERNADOR", "PREFEITO"}
 ANO_EM_ANDAMENTO = 2026
 DIAS_ENTRE_ATUALIZACOES = 2
 
@@ -41,7 +44,7 @@ COLUNAS = ["SQ_CANDIDATO", "NR_TURNO", "DS_CARGO", "DS_SIT_TOT_TURNO", "SG_UF", 
            "NR_CANDIDATO", "NM_CANDIDATO", "NM_URNA_CANDIDATO", "SG_PARTIDO", "SG_FEDERACAO",
            "NM_FEDERACAO", "DT_NASCIMENTO", "DS_GENERO", "DS_GRAU_INSTRUCAO", "DS_OCUPACAO",
            "DS_COR_RACA", "ST_REELEICAO", "NM_COLIGACAO", "CD_ELEICAO", "DS_SITUACAO_CANDIDATURA"]
-VERSAO = 7  # aumente quando mudar o processamento, para refazer os anos em cache
+VERSAO = 8  # aumente quando mudar o processamento, para refazer os anos em cache
 
 ELEITO = {"ELEITO", "ELEITO POR QP", "ELEITO POR MÉDIA", "ELEITO POR MEDIA"}
 SEGUNDO_TURNO = {"2º TURNO", "2O TURNO", "2° TURNO"}
@@ -192,6 +195,46 @@ def coletar_fotos(ano: int, eleitos: dict) -> None:
     print(f"  com foto: {sum(1 for e in eleitos.values() if e['foto'])}")
 
 
+def coletar_votos(ano: int, eleitos: dict) -> None:
+    """Votos de cada eleito (e a data da eleição) por turno, somando as zonas eleitorais.
+    Nos cargos majoritários calcula também a porcentagem dos votos válidos."""
+    ids = set(eleitos)
+    for e in eleitos.values():
+        if e.get("chapaSq"):
+            ids.add(e["chapaSq"])
+    votos = defaultdict(dict)        # sq -> {turno: [data, votos]}
+    totais = defaultdict(float)      # (cargo, ue, turno) -> votos válidos
+    zip_votos = baixar(f"{CDN}/votacao_candidato_munzona/votacao_candidato_munzona_{ano}.zip")
+    for l in linhas_csv(zip_votos):
+        cargo = (l.get("DS_CARGO") or "").strip().upper()
+        if cargo in SO_CARGOS.get(ano, {cargo}) and cargo:
+            turno = int(l.get("NR_TURNO") or 1)
+            qt = numero(l.get("QT_VOTOS_NOMINAIS_VALIDOS") or l.get("QT_VOTOS_NOMINAIS"))
+            if cargo in MAJORITARIOS:
+                totais[(cargo, l["SG_UE"].strip(), turno)] += qt
+            sq = l.get("SQ_CANDIDATO")
+            if sq in ids:
+                d = votos[sq].setdefault(turno, [limpo(l.get("DT_ELEICAO")), 0.0])
+                d[1] += qt
+    zip_votos.unlink()
+
+    def data_iso(v):
+        if v and "/" in v:
+            d, m, a = v.split("/")
+            return f"{a}-{m}-{d}"
+        return v
+
+    for e in eleitos.values():
+        fonte_sq = e.get("chapaSq") or e["sq"]
+        turnos = []
+        for turno, (data, qt) in sorted(votos.get(fonte_sq, {}).items()):
+            total = totais.get((e["cargo"].replace("VICE-", ""), e["ue"], turno))
+            turnos.append({"turno": turno, "data": data_iso(data), "votos": int(qt),
+                           "pct": round(100 * qt / total, 2) if total else None})
+        e["votos"] = turnos
+    print(f"  com votos: {sum(1 for e in eleitos.values() if e['votos'])}")
+
+
 def coletar_ano(ano: int) -> None:
     pasta = DADOS / str(ano)
     zip_cand = baixar(f"{CDN}/consulta_cand/consulta_cand_{ano}.zip")
@@ -243,10 +286,12 @@ def coletar_ano(ano: int) -> None:
             avisar(f"TSE {ano}: lugares com número de finalistas diferente de 2: {estranhos}")
 
     chapas = {}
-    for l in candidatos.values():
+    titulares = {}
+    for sq, l in candidatos.items():
         cargo = l["DS_CARGO"].strip().upper()
         if cargo in VICES.values() and situacao(l):
             chapas[(cargo, l["SG_UE"], l["NR_CANDIDATO"])] = situacao(l)
+            titulares[(cargo, l["SG_UE"], l["NR_CANDIDATO"])] = sq
 
     # se uma chapa tem mais de um vice registrado (troca antes da eleição),
     # fica o registro mais recente: o substituto recebe número de registro maior
@@ -268,8 +313,14 @@ def coletar_ano(ano: int) -> None:
             sit = chapas.get((VICES[cargo], l["SG_UE"], l["NR_CANDIDATO"]))
         else:
             sit = situacao(l)
-        if not sit or "SUPLENTE" in cargo:
+        if not sit or "SUPLENTE" in cargo or cargo not in SO_CARGOS.get(ano, {cargo}):
             continue
+        chapa_sq = titular_nome = None
+        if cargo in VICES:
+            chapa_sq = titulares.get((VICES[cargo], l["SG_UE"], l["NR_CANDIDATO"]))
+            if chapa_sq:
+                tl = candidatos[chapa_sq]
+                titular_nome = titulo(limpo(tl.get("NM_URNA_CANDIDATO"))) or titulo(limpo(tl.get("NM_CANDIDATO")))
         uf = l["SG_UF"].strip().upper()
         nascimento = limpo(l.get("DT_NASCIMENTO"))
         if nascimento and "/" in nascimento:
@@ -295,6 +346,10 @@ def coletar_ano(ano: int) -> None:
             "reeleicao": (l.get("ST_REELEICAO") or "").strip().upper() == "S",
             "coligacao": titulo(limpo(l.get("NM_COLIGACAO"))),
             "eleicao": limpo(l.get("CD_ELEICAO")),
+            "resultado": frase(limpo(l.get("DS_SIT_TOT_TURNO"))),
+            "chapaSq": chapa_sq,
+            "titular": titular_nome,
+            "votos": [],
             "bens": [],
             "totalBens": 0.0,
             "redes": [],
@@ -304,6 +359,14 @@ def coletar_ano(ano: int) -> None:
     print(f"  eleitos{' e no 2º turno' if ano == ANO_EM_ANDAMENTO else ''}: {len(eleitos)}")
     if not eleitos:
         raise SystemExit(f"Nenhum eleito encontrado em {ano}; algo mudou no arquivo do TSE.")
+
+    try:
+        coletar_votos(ano, eleitos)
+    except Exception as e:
+        avisar(f"votos de {ano}: {e}")
+    if ano in SO_CARGOS:
+        salvar_ano(ano, pasta, eleitos)
+        return
 
     # 3) bens declarados, só dos eleitos
     try:
@@ -333,6 +396,10 @@ def coletar_ano(ano: int) -> None:
     except Exception as e:
         avisar(f"fotos de {ano}: {e}")
 
+    salvar_ano(ano, pasta, eleitos)
+
+
+def salvar_ano(ano: int, pasta: Path, eleitos: dict) -> None:
     # 5) salva por UF (BR = presidente e vice)
     por_uf = defaultdict(list)
     for e in eleitos.values():

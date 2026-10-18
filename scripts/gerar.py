@@ -151,6 +151,7 @@ def main():
 
     total_nominais = len(votacoes)
     resumo_deps = []
+    eleicoes_deps = gerar_politicos.eleicao_deputados(deputados)
     for did, d in deputados.items():
         itens = d["despesas"]["itens"]
         por_tipo = Counter()
@@ -173,7 +174,7 @@ def main():
             "escolaridade": d.get("escolaridade"), "redesSociais": d.get("redesSociais", []),
             "proposicoes": [juntar_detalhe(p, detalhes.get(str(p["id"]))) for p in d["proposicoes"]],
             "votos": votos,
-            "totalVotacoes": total_nominais,
+            "totalVotacoes": total_nominais, "eleicao": eleicoes_deps.get(did), "condicao": d.get("condicaoEleitoral"),
             "despesas": {
                 "ano": d["despesas"]["ano"], "total": total_gasto,
                 "porTipo": sorted(([k, round(v, 2)] for k, v in por_tipo.items()), key=lambda x: -x[1]),

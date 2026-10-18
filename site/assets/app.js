@@ -256,6 +256,7 @@ async function paginaDeputado() {
       ${dep.nomeCivil ? `<dt>Nome civil</dt><dd>${esc(dep.nomeCivil)}</dd>` : ""}
       ${dep.nascimento ? `<dt>Nascimento</dt><dd>${data(dep.nascimento, true)}${dep.naturalidade ? `, ${esc(dep.naturalidade)}` : ""}</dd>` : ""}
       ${dep.escolaridade ? `<dt>Escolaridade</dt><dd>${esc(dep.escolaridade)}</dd>` : ""}
+      <dt>No cargo até</dt><dd>${linhaNoCargoAte({ fimMandato: "2027-01-31", estado: "atual" }, "DEPUTADO FEDERAL")[1]}</dd>
       ${dep.email ? `<dt>E-mail</dt><dd><a href="mailto:${esc(dep.email)}">${esc(dep.email)}</a></dd>` : ""}
       <dt>Página oficial</dt><dd><a href="https://www.camara.leg.br/deputados/${encodeURIComponent(dep.id)}">camara.leg.br/deputados/${esc(dep.id)}</a></dd>
       ${(dep.redesSociais || []).map((r) => `<dt>Rede social</dt><dd><a href="${esc(r)}" rel="noopener">${esc(r.replace(/^https?:\/\/(www\.)?/, ""))}</a> <span class="fonte-link">fonte: <a href="${CAMARA_API}/deputados/${encodeURIComponent(dep.id)}" rel="noopener">cadastro na API da Câmara</a></span></dd>`).join("")}
@@ -264,6 +265,8 @@ async function paginaDeputado() {
 
   montarParlamentar(alvo, {
     nome: dep.nome, foto: dep,
+    painelEleicao: painelEleicao(dep.nome, dep.eleicao, { suplente: /suplente/i.test(dep.condicao || ""), condicao: dep.condicao, cargoTse: "DEPUTADO FEDERAL",
+      fontes: [["Cadastro do deputado (API da Câmara)", `${CAMARA_API}/deputados/${encodeURIComponent(dep.id)}`]] }),
     subtitulo: `<span class="selo">${esc(dep.partido)}/${esc(dep.uf)}</span> ${dep.situacao ? esc(dep.situacao) : ""}`,
     painelPerfil, rotuloPerfil: "Perfil e gastos",
     linhaDoTempo: votacoes.map((v) => ({ ...v, voto: meus.get(v.id) || "ausente" })), // mais recente primeiro
@@ -348,10 +351,12 @@ function montarParlamentar(alvo, c) {
     ${c.antes || ""}
     <div class="abas-pagina" role="tablist" aria-label="Seções do perfil">
       <button type="button" role="tab" id="aba-perfil" aria-controls="painel-perfil" data-aba="perfil">${esc(c.rotuloPerfil)}</button>
+      <button type="button" role="tab" id="aba-eleicao" aria-controls="painel-eleicao" data-aba="eleicao">Quem o elegeu?</button>
       <button type="button" role="tab" id="aba-votacoes" aria-controls="painel-votacoes" data-aba="votacoes">Votações <small>${linhaDoTempo.length}</small></button>
       <button type="button" role="tab" id="aba-propostas" aria-controls="painel-propostas" data-aba="propostas">Propostas <small>${c.proposicoes.length}</small></button>
     </div>
     <div role="tabpanel" id="painel-perfil" aria-labelledby="aba-perfil">${c.painelPerfil}</div>
+    <div role="tabpanel" id="painel-eleicao" aria-labelledby="aba-eleicao" hidden>${c.painelEleicao}</div>
     <div role="tabpanel" id="painel-votacoes" aria-labelledby="aba-votacoes" hidden>${painelVotacoes}</div>
     <div role="tabpanel" id="painel-propostas" aria-labelledby="aba-propostas" hidden>${painelPropostas}</div>`;
 
@@ -746,6 +751,79 @@ const fonteRedesTse = (p) => {
 
 const divulgaUrl = (p) => p.fonte === "tse" && p.eleicao && p.ue ? `https://divulgacandcontas.tse.jus.br/divulga/#/candidato/${encodeURIComponent(p.ano)}/${encodeURIComponent(p.eleicao)}/${encodeURIComponent(p.ue)}/${encodeURIComponent(p.sq)}` : null;
 
+const CF_URL = "https://www.planalto.gov.br/ccivil_03/constituicao/constituicao.htm";
+const EC111_URL = "https://www.planalto.gov.br/ccivil_03/constituicao/emendas/emc/emc111.htm";
+const CODIGO_ELEITORAL_URL = "https://www.planalto.gov.br/ccivil_03/leis/l4737compilado.htm";
+const ARTIGO_CARGO = { PRESIDENTE: 82, "VICE-PRESIDENTE": 79, GOVERNADOR: 28, "VICE-GOVERNADOR": 28, SENADOR: 46, "DEPUTADO FEDERAL": 44,
+  "DEPUTADO ESTADUAL": 27, "DEPUTADO DISTRITAL": 32, PREFEITO: 29, "VICE-PREFEITO": 29, VEREADOR: 29 };
+const ARTIGO_ELEICAO = { PRESIDENTE: 77, "VICE-PRESIDENTE": 77, GOVERNADOR: 28, "VICE-GOVERNADOR": 28, SENADOR: 46, "DEPUTADO FEDERAL": 45,
+  "DEPUTADO ESTADUAL": 27, "DEPUTADO DISTRITAL": 32, PREFEITO: 29, "VICE-PREFEITO": 29, VEREADOR: 29 };
+const MAJORITARIOS = new Set(["PRESIDENTE", "VICE-PRESIDENTE", "GOVERNADOR", "VICE-GOVERNADOR", "PREFEITO", "VICE-PREFEITO", "SENADOR"]);
+const ALTERA_POSSE = new Set(["PRESIDENTE", "VICE-PRESIDENTE", "GOVERNADOR", "VICE-GOVERNADOR"]);
+const linkCF = (art) => `${CF_URL}#art${art}`;
+
+const semFonte = (porque) => `<span class="sem-fonte" title="Ainda não temos uma fonte pública para este dado">⚠ dado sem fonte${porque ? `: ${esc(porque)}` : ""}</span>`;
+
+/* Linha "No cargo até" da ficha, com a fonte do prazo: Senado (senadores) ou Constituição (demais). */
+function linhaNoCargoAte(p, cargoTse = p.cargoTse) {
+  if (!p.fimMandato) return ["No cargo até", semFonte("fim do mandato"), true];
+  let origem;
+  if (p.fonte === "senado") origem = `<a href="${esc(`${SENADO_API}/senador/${encodeURIComponent(p.id)}`)}" rel="noopener">Dados Abertos do Senado</a>`;
+  else if (ARTIGO_CARGO[cargoTse]) {
+    origem = `<a href="${linkCF(ARTIGO_CARGO[cargoTse])}" rel="noopener">Constituição Federal, art. ${ARTIGO_CARGO[cargoTse]}</a>`
+      + (ALTERA_POSSE.has(cargoTse) ? ` e <a href="${EC111_URL}" rel="noopener">Emenda Constitucional 111/2021</a>` : "");
+  }
+  const antes = p.estado === "eleito" && p.inicioMandato ? `Toma posse em ${data(p.inicioMandato, true)}. Mandato até ` : p.estado === "2turno" ? "Se eleito, até " : "";
+  return ["No cargo até", `${antes}${data(p.fimMandato, true)} ${origem ? `<span class="fonte-link">fonte: ${origem}</span>` : semFonte("prazo do mandato")}`, true];
+}
+
+const numeroBr = (n) => n.toLocaleString("pt-BR");
+const rotuloResultado = (r) => /turno/i.test(r) ? "Vai ao 2º turno" : ({ "eleito por qp": "Eleito por quociente partidário", "eleito por média": "Eleito por média", "eleito por media": "Eleito por média" })[r.toLowerCase()] || r;
+
+/* Aba "Quem o elegeu?": votação (ano, data, resultado) ou, para suplente, quem ele substituiu e desde quando. */
+function painelEleicao(nome, e, o = {}) {
+  const cargoTse = (e && e.cargoTse) || o.cargoTse;
+  const ehVice = /^VICE-/.test(cargoTse || "");
+  const fontesLista = [...(o.fontes || [])];
+  let corpo = "";
+  if (o.suplente) {
+    corpo += `<p><b>${esc(nome)}</b> exerce o mandato como <b>${esc((o.condicao || "suplente").toLowerCase())}</b>${o.titular ? `, no lugar de <b>${esc(o.titular)}</b>` : ""}${o.desde ? `, desde ${esc(data(o.desde, true))}` : ""}.</p>`;
+    if (!o.titular) corpo += `<p>${semFonte("não sabemos quem foi substituído")}</p>`;
+    if (!o.desde) corpo += `<p>${semFonte("data em que assumiu")}</p>`;
+    corpo += `<p>O suplente é eleito junto com o titular, na mesma chapa, e assume quando o titular se afasta${o.titular ? `. A eleição abaixo é a da chapa de ${esc(o.titular)}` : ""}.</p>`;
+    fontesLista.push(["Constituição Federal, art. 56", linkCF(56)]);
+  }
+  if (e && e.votos && e.votos.length) {
+    const local = e.municipio ? `${e.municipio} (${e.uf})` : e.uf === "BR" ? "todo o Brasil" : UFS[e.uf] || e.uf;
+    corpo += `<h3>Eleição de ${esc(e.ano)}</h3>`;
+    if (ehVice && e.titular) corpo += `<p>${esc(nome)} foi eleito na chapa de <b>${esc(e.titular)}</b>: o eleitor vota na chapa inteira, então os votos abaixo são os da chapa.</p>`;
+    corpo += `<ul class="lista-eleicao">${e.votos.map((v) => `<li><span class="quando">${v.turno}º turno${v.data ? `, ${esc(data(v.data, true))}` : ""}</span>
+      <b>${numeroBr(v.votos)} votos</b>${v.pct != null ? ` (${String(v.pct).replace(".", ",")}% dos votos válidos)` : ""}</li>`).join("")}</ul>`;
+    corpo += `<p>Local: ${esc(local)}.${e.resultado ? ` Resultado oficial: <b>${esc(rotuloResultado(e.resultado))}</b>.` : ""}</p>`;
+    if (cargoTse && !MAJORITARIOS.has(cargoTse)) corpo += `<p>Nas eleições proporcionais as vagas são distribuídas entre os partidos pelo quociente eleitoral; por isso o número de votos de cada candidato não diz sozinho quem foi eleito.</p>`;
+    if (cargoTse) fontesLista.push([`Constituição Federal, art. ${ARTIGO_ELEICAO[cargoTse]}`, linkCF(ARTIGO_ELEICAO[cargoTse])]);
+    if (cargoTse && !MAJORITARIOS.has(cargoTse)) fontesLista.push(["Código Eleitoral, art. 106", CODIGO_ELEITORAL_URL]);
+    const d = divulgaUrl({ fonte: "tse", ano: e.ano, eleicao: e.eleicao, ue: e.ue, sq: e.sq });
+    if (d) fontesLista.unshift(["Candidatura no DivulgaCandContas (TSE)", d]);
+    fontesLista.unshift([`Votação por zona eleitoral ${e.ano} (TSE)`, `${TSE_CDN}/votacao_candidato_munzona/votacao_candidato_munzona_${e.ano}.zip`]);
+  } else if (e) {
+    corpo += `<p>Eleito em ${esc(e.ano)}. ${semFonte("votos ainda não coletados")}</p>`;
+  } else if (!o.suplente) {
+    corpo += `<p>${semFonte("não encontramos como foi eleito")}</p>`;
+  }
+  return `<section class="painel"><div class="painel-titulo"><h2>Quem o elegeu?</h2></div>${corpo}${fontes(fontesLista)}</section>`;
+}
+
+/* Monta a aba a partir da ficha de um político (TSE ou Senado). */
+function painelEleicaoDe(p, nome) {
+  if (p.fonte === "senado") {
+    const suplente = !!(p.participacao && p.participacao !== "Titular");
+    return painelEleicao(nome, p.eleicao, { suplente, condicao: p.participacao, titular: p.titular, desde: p.exercicioDesde, cargoTse: "SENADOR",
+      fontes: [["Dados Abertos do Senado", `${SENADO_API}/senador/${encodeURIComponent(p.id)}`]] });
+  }
+  return painelEleicao(nome, p, {});
+}
+
 async function paginaPolitico() {
   const alvo = $("#conteudo");
   const f = param("f"), i = param("i");
@@ -780,6 +858,7 @@ async function paginaPolitico() {
     ["Ocupação declarada", p.ocupacao],
     ["Buscava reeleição", p.fonte === "tse" ? (p.reeleicao ? "Sim" : "Não") : null],
     ["E-mail", p.email ? `<a href="mailto:${esc(p.email)}">${esc(p.email)}</a>` : null, true],
+    linhaNoCargoAte(p),
     ["Redes e sites declarados na candidatura", linksRedes(p.redes, { ...p, fonteRedes: fonteRedesTse(p) }), true],
   ].filter(([, v]) => v);
 
@@ -886,10 +965,12 @@ async function paginaPolitico() {
     </section>
     <div class="abas-pagina" role="tablist" aria-label="Seções do perfil">
       <button type="button" role="tab" id="aba-perfil" aria-controls="painel-perfil" data-aba="perfil">Perfil e bens</button>
+      <button type="button" role="tab" id="aba-eleicao" aria-controls="painel-eleicao" data-aba="eleicao">Quem o elegeu?</button>
       <button type="button" role="tab" id="aba-votacoes" aria-controls="painel-votacoes" data-aba="votacoes">${comDados ? "Sanções e vetos" : comGoverno ? "Vetos" : "Votações"}</button>
       <button type="button" role="tab" id="aba-propostas" aria-controls="painel-propostas" data-aba="propostas">Propostas</button>
     </div>
     <div role="tabpanel" id="painel-perfil" aria-labelledby="aba-perfil">${painelPerfil}</div>
+    <div role="tabpanel" id="painel-eleicao" aria-labelledby="aba-eleicao" hidden>${painelEleicaoDe(p, nome)}</div>
     <div role="tabpanel" id="painel-votacoes" aria-labelledby="aba-votacoes" hidden>${painelVotacoes}</div>
     <div role="tabpanel" id="painel-propostas" aria-labelledby="aba-propostas" hidden>${painelPropostas}</div>`;
   ligarAbas(alvo);
@@ -921,7 +1002,7 @@ async function montarSenador(alvo, p, nome, ficha) {
   const situacao = p.fimMandato ? `Mandato até ${data(p.fimMandato, true)}.` : "";
   const apiVotacao = (v) => `${SENADO_API}/votacao?dataInicio=${v.data.replaceAll("-", "")}&dataFim=${v.data.replaceAll("-", "")}`;
   montarParlamentar(alvo, {
-    nome, foto: { nome, foto: p.foto },
+    nome, foto: { nome, foto: p.foto }, painelEleicao: painelEleicaoDe(p, nome),
     subtitulo: `<span class="selo">${esc(p.partido || "")}/${esc(p.uf)}</span> ${esc(p.cargo)}${p.participacao && p.participacao !== "Titular" ? `, ${esc(p.participacao.toLowerCase())}` : ""}`,
     painelPerfil: `<p class="situacao">${esc(situacao)}</p>
       <h2>Ficha</h2>
@@ -954,7 +1035,7 @@ async function montarEstadual(alvo, p, nome, ficha, situacao) {
   const api = `https://${dep.host}/api`;
   const bens = p.bens || [];
   montarParlamentar(alvo, {
-    nome, foto: { nome, foto: p.foto },
+    nome, foto: { nome, foto: p.foto }, painelEleicao: painelEleicaoDe(p, nome),
     subtitulo: `<span class="selo">${esc(p.partido || "")}/${esc(p.uf)}</span> ${esc(p.cargo)}`,
     painelPerfil: `<p class="situacao">${situacao}</p>
       <h2>Ficha</h2>

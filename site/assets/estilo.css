@@ -286,3 +286,8 @@ select:disabled { opacity: .55; }
 }
 
 .mapa-votos { height: 320px; margin: 8px 0 12px; border: 1px solid var(--linha); border-radius: var(--raio); overflow: hidden; z-index: 0; }
+
+.eleitorado { border: 1px solid var(--linha); border-radius: var(--raio); background: var(--superficie); padding: 10px 14px; margin: 0 0 14px; }
+.eleitorado summary { cursor: pointer; }
+.eleitorado h3 { font-size: 16px; margin: 14px 0 8px; }
+.eleitorado .fonte-link { margin: 14px 0 0; font-size: 14px; color: var(--tinta-suave); }

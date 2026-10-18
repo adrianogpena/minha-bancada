@@ -565,6 +565,29 @@ function svgMapa(fc, idDe) {
   return `<svg viewBox="0 0 ${px(x1)} ${py(y0)}" xmlns="http://www.w3.org/2000/svg">${caminhos.join("")}</svg>`;
 }
 
+/* Perfil do eleitorado (TSE) do estado ou município escolhido: total e divisão por gênero, faixa etária e escolaridade. */
+const FAIXAS = ["16 e 17 anos", "18 a 24", "25 a 34", "35 a 44", "45 a 54", "55 a 64", "65 a 74", "75 ou mais"];
+const ESCOLARIDADE = ["Analfabeto", "Lê e escreve", "Fundamental incompleto", "Fundamental completo", "Médio incompleto", "Médio completo", "Superior incompleto", "Superior completo"];
+const eleitoradoUf = {};
+async function desenharEleitorado(el, uf, mun, nomeLocal) {
+  if (!uf) { el.hidden = true; return; }
+  try { eleitoradoUf[uf] ||= await carregar(`dados/eleitorado/${uf}.json`); } catch (e) { el.hidden = true; return; }
+  const { ano, d } = eleitoradoUf[uf];
+  const r = d[mun || "_uf"];
+  if (!r || !r.t) { el.hidden = true; return; }
+  const porcento = (v, base) => (base ? `${((100 * v) / base).toFixed(1).replace(".", ",")}%` : "");
+  const barras = (rotulos, valores, base) => `<div class="barras">${rotulos.map((r, i) => `<div><div class="barra-rotulo"><span>${esc(r)}</span>
+    <b>${numeroBr(valores[i])} · ${porcento(valores[i], base)}</b></div><div class="barra"><i style="width:${base ? (100 * valores[i]) / base : 0}%"></i></div></div>`).join("")}</div>`;
+  const faixas = r.f.reduce((a, b) => a + b, 0), escolas = r.e.reduce((a, b) => a + b, 0), genero = r.g[0] + r.g[1];
+  el.innerHTML = `<summary>Eleitorado de ${esc(nomeLocal)}: <b>${numeroBr(r.t)}</b> eleitores (${esc(ano)})</summary>
+    <h3>Gênero</h3>${barras(["Mulheres", "Homens"], [r.g[1], r.g[0]], genero)}
+    <h3>Faixa etária</h3>${barras(FAIXAS, r.f, faixas)}
+    <h3>Escolaridade</h3>${barras(ESCOLARIDADE, r.e, escolas)}
+    <p class="fonte-link"><span class="rotulo-fonte">Fonte</span> <a href="${TSE_CDN}/perfil_eleitorado/perfil_eleitorado_${ano}.zip" rel="noopener">Perfil do eleitorado ${esc(ano)} (TSE)</a>.
+    Os percentuais de cada grupo são sobre quem tem a informação registrada.</p>`;
+  el.hidden = false;
+}
+
 async function paginaPoliticos() {
   const alvo = $("#resultado"), mapa = $("#mapa"), dica = $("#dica"), trilha = $("#trilha");
   const q = new URLSearchParams(location.search);
@@ -698,6 +721,7 @@ async function paginaPoliticos() {
       ul.after(botao); mais();
     }
     const onde = mun ? `${nomes.get(mun)}, ${UFS[uf]}` : uf ? UFS[uf] : "Brasil";
+    desenharEleitorado($("#eleitorado"), uf, mun, mun ? `${nomes.get(mun)}, ${uf}` : uf ? UFS[uf] : "");
     $("#contagem").textContent = `${total} políticos ${periodo === "agora" ? "no cargo" : "eleitos ou no 2º turno em 2026"}: ${onde}`;
   }
 

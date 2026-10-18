@@ -114,6 +114,16 @@ def gerar_senadores() -> None:
     print(f"Gerado: {len(senadores)} senadores, {len(resumo)} votações nominais do Senado")
 
 
+def gerar_eleitorado() -> None:
+    """Perfil do eleitorado por estado (dados/tse/eleitorado): o ano mais recente que o estado tem."""
+    for arq in sorted((BRUTO / "tse" / "eleitorado" / "2022").glob("[A-Z][A-Z].json")):
+        for ano in (2024, 2022):
+            dados = ler(BRUTO / "tse" / "eleitorado" / str(ano) / arq.name)
+            if dados:
+                salvar(SAIDA / "eleitorado" / arq.name, {"ano": ano, "d": dados})
+                break
+
+
 def main():
     ids = ler(BRUTO / "deputados.json", [])
     if not ids:
@@ -216,6 +226,7 @@ def main():
     gerar_senadores()
     gerar_politicos.gerar(deputados, gerar_estaduais.gerar())
     gerar_prefeituras.gerar()
+    gerar_eleitorado()
     if (BRUTO / "executivo.json").exists():
         shutil.copy(BRUTO / "executivo.json", SAIDA / "executivo.json")
     shutil.copy(BRUTO / "municipios_ibge.json", SAIDA / "municipios_ibge.json")

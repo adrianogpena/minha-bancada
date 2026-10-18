@@ -58,8 +58,8 @@ Todas as coletas rodam sozinhas no GitHub Actions (`.github/workflows/atualizar.
 
 ### TSE: prestação de contas de campanha (`dados/tse/contas/<ano>/<UF>.json`)
 - **Entrada:** 2026-10-18, para os eleitos de 2022 (1.626) e 2024 (63.722). Aparece na aba "Quem o elegeu?".
-- **De onde:** `https://cdn.tse.jus.br/estatistica/sead/odsele/prestacao_contas/prestacao_de_contas_eleitorais_candidatos_<ano>.zip` (arquivos `receitas_candidatos_<ano>_BRASIL.csv` e `despesas_contratadas_candidatos_<ano>_BRASIL.csv`).
-- **Como:** `python scripts/baixar_tse.py prestacao_contas` (ZIP em `dados/tse_bruto/`, fora do git) e depois `python scripts/coletar_contas.py`, que lê os CSV em streaming e guarda por eleito: total arrecadado, total contratado, receita por origem, 5 maiores doadores (só o nome, sem CPF) e 6 maiores tipos de gasto. Roda só localmente (anos encerrados não mudam); vice usa a prestação do titular da chapa.
+- **De onde:** `https://cdn.tse.jus.br/estatistica/sead/odsele/prestacao_contas/prestacao_de_contas_eleitorais_candidatos_<ano>.zip` (arquivos `receitas_candidatos_<ano>_BRASIL.csv`, `receitas_candidatos_doador_originario_<ano>_BRASIL.csv` e `despesas_contratadas_candidatos_<ano>_BRASIL.csv`).
+- **Como:** `python scripts/baixar_tse.py prestacao_contas` (ZIP em `dados/tse_bruto/`, fora do git) e depois `python scripts/coletar_contas.py`, que lê os CSV em streaming e guarda por eleito: total arrecadado, total contratado, receita por origem, 5 maiores doadores (só o nome, sem CPF) e 6 maiores tipos de gasto. 2026-10-18: passou a guardar também os 5 maiores doadores originários (só o nome) dos repasses de partido e de outros candidatos, ligando `SQ_RECEITA` do arquivo de doador originário à receita do candidato (feito a partir do ZIP já baixado, sem novo download). Roda só localmente (anos encerrados não mudam); vice usa a prestação do titular da chapa.
 
 ### TSE: comparecimento e vagas (`dados/tse/disputa/<ano>/<UF>.json`)
 - **Entrada:** 2026-10-18, eleições de 2022 e 2024. Aparece na aba "Quem o elegeu?".

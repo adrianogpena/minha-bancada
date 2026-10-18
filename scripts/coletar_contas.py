@@ -4,7 +4,9 @@ doadores) a partir do ZIP do TSE baixado por scripts/baixar_tse.py, e guarda um 
 UF em dados/tse/contas/<ano>/<UF>.json (vai para o git; o ZIP em dados/tse_bruto/ não).
 
 Só roda na sua máquina: o ZIP tem 0,5 a 1,3 GB e anos encerrados não mudam. O Actions
-só lê os JSONs resumidos. Não guarda CPF de doadores, só o nome que consta na prestação.
+só lê os JSONs resumidos. Não guarda CPF de doadores, só o nome que consta na prestação. Os doadores originários
+(arquivo receitas_candidatos_doador_originario) mostram quem está por trás dos repasses de
+partido e de outros candidatos.
 
 Uso:
     python scripts/baixar_tse.py prestacao_contas
@@ -30,7 +32,9 @@ ZIPS = RAIZ / "dados" / "tse_bruto" / "prestacao_contas"
 ANOS = [2022, 2024]
 TOP_DOADORES = 5
 TOP_GASTOS = 6
-VERSAO = 1
+TOP_ORIGINARIOS = 5
+REPASSES = ("partido", "outros candidatos")
+VERSAO = 2
 
 csv.field_size_limit(1 << 24)
 
@@ -69,6 +73,7 @@ def coletar_ano(ano: int) -> None:
     print(f"TSE contas {ano}: {len(alvo)} prestações de eleitos")
 
     receita = defaultdict(float)
+    repasse = {}  # SQ_RECEITA de repasse de partido/outro candidato -> SQ_CANDIDATO
     por_origem = defaultdict(lambda: defaultdict(float))
     doadores = defaultdict(dict)  # sq -> chave do doador -> [nome, origem, valor]
     for l in linhas(zip_path, f"receitas_candidatos_{ano}_BRASIL.csv"):
@@ -79,12 +84,22 @@ def coletar_ano(ano: int) -> None:
         origem = nulo(l["DS_ORIGEM_RECEITA"]) or "Não informada"
         receita[sq] += v
         por_origem[sq][origem] += v
+        if any(r in origem.lower() for r in REPASSES):
+            repasse[l["SQ_RECEITA"]] = sq
         if origem == "Recursos próprios" or "próprios" in origem:
             continue
         nome = nulo(l["NM_DOADOR_RFB"]) or nulo(l["NM_DOADOR"])
         if nome:
             d = doadores[sq].setdefault(nulo(l["NR_CPF_CNPJ_DOADOR"]) or nome, [nome, origem, 0.0])
             d[2] += v
+
+    originarios = defaultdict(dict)  # sq -> chave do doador -> [nome, valor]
+    for l in linhas(zip_path, f"receitas_candidatos_doador_originario_{ano}_BRASIL.csv"):
+        sq = repasse.get(l["SQ_RECEITA"])
+        nome = sq and (nulo(l["NM_DOADOR_ORIGINARIO_RFB"]) or nulo(l["NM_DOADOR_ORIGINARIO"]))
+        if nome:
+            d = originarios[sq].setdefault(nulo(l["NR_CPF_CNPJ_DOADOR_ORIGINARIO"]) or nome, [nome, 0.0])
+            d[1] += valor(l["VR_RECEITA"])
 
     despesa = defaultdict(float)
     por_gasto = defaultdict(lambda: defaultdict(float))
@@ -101,11 +116,13 @@ def coletar_ano(ano: int) -> None:
         if sq not in receita and sq not in despesa:
             continue
         top = sorted(doadores[sq].values(), key=lambda d: -d[2])[:TOP_DOADORES]
+        orig = sorted(originarios[sq].values(), key=lambda d: -d[1])[:TOP_ORIGINARIOS]
         gastos = sorted(por_gasto[sq].items(), key=lambda g: -g[1])[:TOP_GASTOS]
         por_uf[uf][sq] = {
             "r": round(receita[sq], 2), "d": round(despesa[sq], 2),
             "o": sorted(([k, round(v, 2)] for k, v in por_origem[sq].items() if v), key=lambda x: -x[1]),
             "dn": [[n, o, round(v, 2)] for n, o, v in top if v > 0],
+            "do": [[n, round(v, 2)] for n, v in orig if v > 0],
             "g": [[k, round(v, 2)] for k, v in gastos if v > 0],
         }
     pasta = TSE / "contas" / str(ano)

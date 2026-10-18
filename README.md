@@ -59,7 +59,7 @@ Sem `--limite` a coleta pega todos os deputados em exercício. `--dias` só vale
 | `scripts/coletar_tse.py` | Baixa do TSE os eleitos de 2022, 2024 e 2026, com bens declarados. Anos encerrados são baixados uma vez só. |
 | `scripts/baixar_tse.py` | Baixa arquivos extras do TSE (prestação de contas, votos por seção, perfil do eleitorado…) para `dados/tse_bruto/` e registra no CHANGELOG. |
 | `CHANGELOG.md` | De onde vem cada dado, quando entrou e como foi baixado. |
-| `scripts/coletar_contas.py` | Resume a prestação de contas de campanha dos eleitos (rodar localmente, depois de `baixar_tse.py prestacao_contas`). |
+| `scripts/coletar_contas.py` | Resume a prestação de contas de campanha dos eleitos, incluindo os doadores originários por trás dos repasses de partido (rodar localmente, depois de `baixar_tse.py prestacao_contas`). |
 | `scripts/coletar_disputa.py`, `scripts/coletar_secoes.py` | Resumem comparecimento/vagas e onde cada eleito foi votado (locais com coordenadas), a partir dos arquivos baixados por `baixar_tse.py`. |
 | `scripts/coletar_eleitorado.py` | Resume o perfil do eleitorado (total, gênero, faixa etária, escolaridade) de cada município e estado, a partir do arquivo baixado por `baixar_tse.py perfil_eleitorado`. |
 | `scripts/coletar_partidos.py` | Resume os votos de legenda e nominais de cada partido (e federação) nos cargos proporcionais, a partir do arquivo baixado por `baixar_tse.py votacao_partido_munzona`. |

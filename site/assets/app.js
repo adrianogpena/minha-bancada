@@ -838,6 +838,8 @@ function blocoCampanha(e, fontesLista) {
     ${c.o.length ? `<h4>De onde veio o dinheiro</h4>${linhas(c.o, ([o, v]) => `<span class="quando">${esc(o)}</span> <b>${reaisCentavos(v)}</b>${c.r ? ` (${Math.round((100 * v) / c.r)}%)` : ""}`)}` : ""}
     ${c.dn.length ? `<h4>Maiores doadores</h4>${linhas(c.dn, ([n, o, v]) => `<b>${esc(n)}</b> <span class="quando">${esc(o)}</span> <b>${reaisCentavos(v)}</b>`)}
       <p>"Recursos de partido político" inclui o fundo eleitoral e o fundo partidário repassados pelo partido.</p>` : ""}
+    ${c.do && c.do.length ? `<h4>Quem está por trás dos repasses</h4>${linhas(c.do, ([n, v]) => `<b>${esc(n)}</b> <b>${reaisCentavos(v)}</b>`)}
+      <p>Pessoas e empresas que doaram ao partido (ou a outro candidato) e tiveram o dinheiro repassado a esta campanha, segundo o TSE. O repasse de fundo público não tem doador originário.</p>` : ""}
     ${c.g.length ? `<h4>Em que gastou</h4>${linhas(c.g, ([g, v]) => `<span class="quando">${esc(g)}</span> <b>${reaisCentavos(v)}</b>`)}` : ""}`;
 }
 

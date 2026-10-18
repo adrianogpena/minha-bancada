@@ -1,10 +1,9 @@
 # Capitais sem dados dos projetos do prefeito
 
-Situação em 2026-10. Das 26 capitais (Brasília não tem prefeito), 4 têm dados: São Paulo (SPLegis) e Rio Branco, Boa Vista, Natal e João Pessoa (SAPL). As outras 22 não têm.
+Situação em 2026-10. Das 26 capitais (Brasília não tem prefeito), 5 têm dados: São Paulo (SPLegis), Salvador (consulta própria) e Rio Branco, Boa Vista, Natal e João Pessoa (SAPL). As outras 21 não têm.
 
 ## Verificadas e sem fonte estruturada
 Sem SAPL nem API aberta localizada.
-- Salvador
 - Belém
 - Goiânia
 - Maceió

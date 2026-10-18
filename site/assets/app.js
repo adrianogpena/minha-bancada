@@ -272,6 +272,7 @@ async function paginaDeputado() {
       ${dep.escolaridade ? `<dt>Escolaridade</dt><dd>${esc(dep.escolaridade)}</dd>` : ""}
       <dt>No cargo até</dt><dd>${linhaNoCargoAte({ fimMandato: "2027-01-31", estado: "atual" }, "DEPUTADO FEDERAL")[1]}</dd>
       ${dep.email ? `<dt>E-mail</dt><dd><a href="mailto:${esc(dep.email)}">${esc(dep.email)}</a></dd>` : ""}
+      ${dep.gabinete ? `<dt>Gabinete</dt><dd>${esc([dep.gabinete.predio && `Prédio ${dep.gabinete.predio}`, dep.gabinete.andar && `${dep.gabinete.andar}º andar`, dep.gabinete.sala && `sala ${dep.gabinete.sala}`].filter(Boolean).join(", "))}${dep.gabinete.telefone ? `, tel. ${esc(dep.gabinete.telefone)}` : ""}${dep.gabinete.email && dep.gabinete.email !== dep.email ? `, <a href="mailto:${esc(dep.gabinete.email)}">${esc(dep.gabinete.email)}</a>` : ""} <span class="fonte-link"><span class="rotulo-fonte">Fonte</span> <a href="${CAMARA_API}/deputados/${encodeURIComponent(dep.id)}" rel="noopener">cadastro na API da Câmara</a></span></dd>` : ""}
       <dt>Página oficial</dt><dd><a href="https://www.camara.leg.br/deputados/${encodeURIComponent(dep.id)}">camara.leg.br/deputados/${esc(dep.id)}</a></dd>
       ${(dep.redesSociais || []).map((r) => `<dt>Rede social</dt><dd><span class="link-bloco"><a class="link-rede" href="${esc(r)}" rel="noopener">${esc(r.replace(/^https?:\/\/(www\.)?/, ""))}</a> <span class="fonte-link"><span class="rotulo-fonte">Fonte</span> <a href="${CAMARA_API}/deputados/${encodeURIComponent(dep.id)}" rel="noopener">cadastro na API da Câmara</a></span></span></dd>`).join("")}
     </dl>
@@ -411,6 +412,7 @@ function montarParlamentar(alvo, c) {
       <span class="resultado r-${classe}">${esc(texto)}</span>
       <span class="texto">${esc(p.ementa || "Sem ementa")}</span>
       ${p.sit ? `<span class="texto"><b>Situação:</b> ${esc(p.sit)}${p.org ? ` (${esc(p.org)})` : ""}${p.dt ? `, em ${data(p.dt)}` : ""}.${p.desp ? ` <span class="quando">Despacho: ${esc(p.desp.slice(0, 300))}</span>` : ""}</span>` : ""}
+      ${p.td || p.tram || p.reg || p.co ? `<span class="texto quando">${[p.td && `Tipo: ${esc(p.td)}`, p.reg && `Regime: ${esc(p.reg)}`, p.tram && `Tramitação: ${esc(p.tram)}`, p.co && `Coautores: ${esc(p.co.join(", "))}`].filter(Boolean).join(" · ")}</span>` : ""}
       ${p.kw ? `<span class="texto quando">Temas: ${esc(p.kw)}</span>` : ""}
       <span class="texto">${fontes([[c.fonteTramitacao, c.linkTramitacao(p)], p.pdf ? ["Texto integral", p.pdf] : null, ["Dados na API", c.linkApi(p)]])}</span>
     </li>`;
@@ -868,11 +870,14 @@ async function paginaPolitico() {
 
   const ficha = [
     ["Nome completo", p.nomeCivil || p.nome],
+    ["Nome social", p.nomeSocial],
     ["Número", p.numero],
     ["Partido", p.partido],
     ["Federação", p.federacao],
-    ["Coligação", p.coligacao],
+    ["Coligação", p.coligacao ? `${esc(p.coligacao)}${p.composicaoColigacao ? ` (${esc(p.composicaoColigacao)})` : ""}` : null, true],
     ["Nascimento", p.nascimento ? `${data(p.nascimento, true)}${idade ? ` (${idade} anos)` : ""}` : null],
+    ["Estado civil", p.estadoCivil],
+    ["Nasceu em (UF)", p.ufNascimento && UFS[p.ufNascimento] ? UFS[p.ufNascimento] : null],
     ["Gênero", p.genero ? p.genero[0] + p.genero.slice(1).toLowerCase() : null],
     ["Cor ou raça", p.corRaca],
     ["Escolaridade", p.instrucao],
@@ -1063,8 +1068,10 @@ async function montarEstadual(alvo, p, nome, ficha, situacao) {
   const linhaDoTempo = lista.filter((v) => meus.has(v.id)).map((v) => ({ ...v, voto: meus.get(v.id) }));
   const api = `https://${dep.host}/api`;
   const bens = p.bens || [];
+  if (!p.email && dep.email) ficha.push(["E-mail", `<a href="mailto:${esc(dep.email)}">${esc(dep.email)}</a>`, true]);
+  if (dep.titular === false) ficha.push(["Exercício", "Suplente em exercício"]);
   montarParlamentar(alvo, {
-    nome, foto: { nome, foto: p.foto }, painelEleicao: painelEleicaoDe(p, nome),
+    nome, foto: { nome, foto: p.foto || dep.foto }, painelEleicao: painelEleicaoDe(p, nome),
     subtitulo: `<span class="selo">${esc(p.partido || "")}/${esc(p.uf)}</span> ${esc(p.cargo)}`,
     painelPerfil: `<p class="situacao">${situacao}</p>
       <h2>Ficha</h2>

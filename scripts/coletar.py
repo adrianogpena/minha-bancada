@@ -156,6 +156,8 @@ def coletar_deputado(dep: dict, ano: int) -> dict:
         "email": status.get("email") or dep.get("email"),
         "situacao": status.get("situacao"),
         "condicaoEleitoral": status.get("condicaoEleitoral"),
+        "gabinete": {k: v for k, v in (status.get("gabinete") or {}).items()
+                     if k in ("predio", "sala", "andar", "telefone", "email") and v},
         "nascimento": detalhe.get("dataNascimento"),
         "municipioNascimento": detalhe.get("municipioNascimento"),
         "ufNascimento": detalhe.get("ufNascimento"),

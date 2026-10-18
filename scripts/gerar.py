@@ -44,7 +44,8 @@ def juntar_detalhe(p: dict, det: dict | None) -> dict:
     if not det:
         return p
     campos = {"apres": "ap", "sit": "sit", "desp": "desp", "org": "org", "data": "dt",
-              "inteiroTeor": "pdf", "detalhada": "det", "palavras": "kw"}
+              "inteiroTeor": "pdf", "detalhada": "det", "palavras": "kw",
+              "tram": "tram", "regime": "reg"}
     return {**p, **{curto: det[longo] for longo, curto in campos.items() if det.get(longo)}}
 
 
@@ -188,7 +189,7 @@ def main():
         salvar(SAIDA / "deputado" / f"{did}.json", {
             "id": did, "nome": d["nome"], "nomeCivil": d.get("nomeCivil"),
             "partido": d["partido"], "uf": d["uf"], "foto": d.get("foto"),
-            "email": d.get("email"), "situacao": d.get("situacao"),
+            "email": d.get("email"), "situacao": d.get("situacao"), "gabinete": d.get("gabinete") or None,
             "nascimento": d.get("nascimento"),
             "naturalidade": ", ".join(x for x in (d.get("municipioNascimento"), d.get("ufNascimento")) if x),
             "escolaridade": d.get("escolaridade"), "redesSociais": d.get("redesSociais", []),

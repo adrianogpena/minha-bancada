@@ -85,14 +85,17 @@ def gerar_assembleia(uf: str, pasta: Path) -> list[dict]:
     for arq in sorted(pasta.glob("materias_[0-9]*.json")):
         for mid, m in ler(arq, {}).get("materias", {}).items():
             for pid in m["dep"]:
-                projetos[pid].append({"id": mid, "tipo": m["t"], "numero": m["n"], "ano": m["a"], "ap": m.get("ap"),
-                                      "ementa": m["e"], "sit": m["sit"], "pdf": m.get("pdf")})
+                coautores = [deputados[o]["nome"] for o in m["dep"] if o != pid and o in deputados and deputados[o].get("nome")]
+                projetos[pid].append({"id": mid, "tipo": m["t"], "td": m.get("td"), "numero": m["n"], "ano": m["a"],
+                                      "ap": m.get("ap"), "ementa": m["e"], "sit": m["sit"], "tr": m.get("tr"),
+                                      "pdf": m.get("pdf"), **({"co": coautores} if coautores else {})})
 
     for pid in deputados:
         desde = primeira.get(pid)  # antes do primeiro voto o deputado pode nem estar em exercício
         meus = sorted(projetos.get(pid, []), key=lambda p: (p["ap"] or "", p["id"]), reverse=True)
         salvar(SAIDA / "estadual" / uf / f"{pid}.json", {
-            "id": pid, "host": host,
+            "id": pid, "host": host, "foto": deputados[pid].get("foto"), "email": deputados[pid].get("email"),
+            "titular": deputados[pid].get("titular"),
             "votos": [{"id": v["id"], "voto": votos_dep[pid].get(v["id"], "ausente")}
                       for v in resumo if desde and v["data"] >= desde],
             "proposicoes": meus,

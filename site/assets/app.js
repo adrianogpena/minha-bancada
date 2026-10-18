@@ -31,6 +31,10 @@ async function carregar(caminho) {
   return r.json();
 }
 
+const TSE_CDN = "https://cdn.tse.jus.br/estatistica/sead/odsele";
+const arquivoTse = (conjunto, p) => `${TSE_CDN}/${conjunto}/${conjunto}_${p.ano}.zip`;
+const arquivoRedesTse = (p) => `${TSE_CDN}/consulta_cand/rede_social_candidato_${p.ano}${p.ano === 2022 ? `_${p.uf === "BR" ? "BR" : p.uf}` : ""}.zip`;
+
 const SOBRENOMES_COMUNS = new Set(["silva", "santos", "souza", "oliveira", "pereira", "costa", "filho", "junior", "neto", "sobrinho"]);
 
 function perfilDoPolitico(url, p) {
@@ -53,8 +57,8 @@ function linksRedes(redes, p) {
   const proprios = todas.filter((r) => perfilDoPolitico(r, p));
   const outros = todas.filter((r) => !perfilDoPolitico(r, p));
   if (!todas.length) return null;
-  const fonte = `<span class="fonte-link">fonte: ${p.divulga ? `<a href="${esc(p.divulga)}" rel="noopener">registro da candidatura de ${esc(p.ano)} no TSE</a>` : `registro da candidatura de ${esc(p.ano)} no TSE`}</span>`;
-  let html = proprios.length ? lista(proprios.map(item)) : "";
+  const fonte = p.fonteRedes || "";
+  let html = proprios.length ? lista(proprios.map((r) => `${item(r)} ${fonte}`)) : "";
   if (outros.length) {
     html += `${html ? "<br><br>" : ""}<b>Outros perfis e sites citados na candidatura</b> (sem o nome do político no endereço)<br>`
       + lista(outros.map((r) => `${item(r)} ${fonte}`));
@@ -254,8 +258,9 @@ async function paginaDeputado() {
       ${dep.escolaridade ? `<dt>Escolaridade</dt><dd>${esc(dep.escolaridade)}</dd>` : ""}
       ${dep.email ? `<dt>E-mail</dt><dd><a href="mailto:${esc(dep.email)}">${esc(dep.email)}</a></dd>` : ""}
       <dt>Página oficial</dt><dd><a href="https://www.camara.leg.br/deputados/${encodeURIComponent(dep.id)}">camara.leg.br/deputados/${esc(dep.id)}</a></dd>
-      ${(dep.redesSociais || []).map((r) => `<dt>Rede social</dt><dd><a href="${esc(r)}" rel="noopener">${esc(r.replace(/^https?:\/\/(www\.)?/, ""))}</a></dd>`).join("")}
-    </dl>`;
+      ${(dep.redesSociais || []).map((r) => `<dt>Rede social</dt><dd><a href="${esc(r)}" rel="noopener">${esc(r.replace(/^https?:\/\/(www\.)?/, ""))}</a> <span class="fonte-link">fonte: <a href="${CAMARA_API}/deputados/${encodeURIComponent(dep.id)}" rel="noopener">cadastro na API da Câmara</a></span></dd>`).join("")}
+    </dl>
+    ${fontes([["Cadastro do deputado (API da Câmara)", `${CAMARA_API}/deputados/${encodeURIComponent(dep.id)}`], ["Portal da Câmara", `https://www.camara.leg.br/deputados/${encodeURIComponent(dep.id)}`]])}`;
 
   montarParlamentar(alvo, {
     nome: dep.nome, foto: dep,
@@ -733,6 +738,12 @@ const itemExecutivo = (x) => {
       <a href="${esc(linkTramitacao(x.id))}" rel="noopener">Tramitação</a></span></li>`;
 };
 
+const fonteRedesTse = (p) => {
+  if (p.fonte !== "tse") return "";
+  const d = divulgaUrl(p);
+  return `<span class="fonte-link">fonte: ${d ? `<a href="${esc(d)}" rel="noopener">candidatura ${esc(p.ano)} no DivulgaCandContas</a> · ` : ""}<a href="${esc(arquivoRedesTse(p))}" rel="noopener">arquivo de redes do TSE</a></span>`;
+};
+
 const divulgaUrl = (p) => p.fonte === "tse" && p.eleicao && p.ue ? `https://divulgacandcontas.tse.jus.br/divulga/#/candidato/${encodeURIComponent(p.ano)}/${encodeURIComponent(p.eleicao)}/${encodeURIComponent(p.ue)}/${encodeURIComponent(p.sq)}` : null;
 
 async function paginaPolitico() {
@@ -769,7 +780,7 @@ async function paginaPolitico() {
     ["Ocupação declarada", p.ocupacao],
     ["Buscava reeleição", p.fonte === "tse" ? (p.reeleicao ? "Sim" : "Não") : null],
     ["E-mail", p.email ? `<a href="mailto:${esc(p.email)}">${esc(p.email)}</a>` : null, true],
-    ["Redes e sites declarados na candidatura", linksRedes(p.redes, { ...p, divulga: divulgaUrl(p) }), true],
+    ["Redes e sites declarados na candidatura", linksRedes(p.redes, { ...p, fonteRedes: fonteRedesTse(p) }), true],
   ].filter(([, v]) => v);
 
   if (p.fonte === "senado") {
@@ -796,12 +807,13 @@ async function paginaPolitico() {
     <dl class="ficha">${ficha.map(([k, v, html]) => `<dt>${k}</dt><dd>${html ? v : esc(v)}</dd>`).join("")}
       <dt>Onde atua</dt><dd>${esc(local)}</dd>
     </dl>
+    ${p.fonte === "tse" ? fontes([...fonteTse, ["Dados de candidatos (TSE)", arquivoTse("consulta_cand", p)]]) : ""}
 
     ${p.fonte === "tse" ? `
     <h2>Bens declarados em ${esc(p.ano)}</h2>
     <p>Total: <b>${reaisCentavos(p.totalBens)}</b>${bens.length ? `, em ${bens.length} ${bens.length === 1 ? "item" : "itens"}` : ""}. Valores informados pelo próprio candidato ao registrar a candidatura.</p>
     <div id="lista-bens"></div>
-    <p class="fonte">Fonte: <a href="https://dadosabertos.tse.jus.br">Portal de Dados Abertos do TSE</a>, eleição de ${esc(p.ano)}.</p>`
+    ${fontes([...fonteTse, ["Bens de candidatos (TSE)", arquivoTse("bem_candidato", p)], ["Portal de Dados Abertos do TSE", "https://dadosabertos.tse.jus.br"]])}`
     : `<p class="fonte">Fonte: <a href="https://legis.senado.leg.br/dadosabertos">Dados Abertos do Senado Federal</a>.${p.fimMandato ? ` Mandato até ${data(p.fimMandato, true)}.` : ""}</p>`}`;
 
   /* Para estes cargos ainda não temos votos nem projetos coletados; as abas dizem isso e levam à fonte oficial. */

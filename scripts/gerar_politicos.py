@@ -64,6 +64,17 @@ def periodo(ano: int, cargo_tse: str) -> tuple[str | None, str | None]:
 CAMPOS_ELEICAO = ("ano", "sq", "eleicao", "ue", "uf", "cargoTse", "resultado", "votos", "titular")
 
 
+_CONTAS = {}
+
+
+def contas_de(ano: int, e: dict):
+    """Resumo da prestação de contas de campanha (dados/tse/contas/<ano>/<UF>.json), ou None."""
+    chave = (ano, e["uf"])
+    if chave not in _CONTAS:
+        _CONTAS[chave] = ler(BRUTO / "tse" / "contas" / str(ano) / f"{e['uf']}.json", {})
+    return _CONTAS[chave].get(e.get("chapaSq") or e["sq"])
+
+
 def eleitos_por_nome(cargo_tse: str) -> dict:
     """Eleitos de 2018 e 2022 a um cargo federal, por nome e UF, para ligar com a Câmara e o Senado."""
     achados = defaultdict(list)
@@ -74,6 +85,7 @@ def eleitos_por_nome(cargo_tse: str) -> dict:
                     continue
                 bloco = {**{k: e.get(k) for k in CAMPOS_ELEICAO if k != "ano"}, "ano": ano, "cargoTse": cargo_tse}
                 bloco["inicioMandato"], bloco["fimMandato"] = periodo(ano, cargo_tse)
+                bloco["contas"] = contas_de(ano, e)
                 for n in (e.get("nome"), e.get("urna")):
                     achados[chave_nome(n, e["uf"])].append(bloco)
     return achados
@@ -177,6 +189,7 @@ def gerar(deputados: dict, estaduais: dict | None = None) -> dict:
                     **e, "cargo": cargo, "cargoTse": cargo_tse, "ano": ano, "fonte": "tse",
                     "estado": estado, "inicioMandato": periodo(ano, cargo_tse)[0], "fimMandato": periodo(ano, cargo_tse)[1],
                     "paginaAtual": atual_href,
+                    "contas": contas_de(ano, e),
                     **({"estadual": estadual} if estadual else {}),
                 }
                 indice[uf].append({

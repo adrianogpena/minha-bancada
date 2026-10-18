@@ -59,6 +59,7 @@ Sem `--limite` a coleta pega todos os deputados em exercício. `--dias` só vale
 | `scripts/coletar_tse.py` | Baixa do TSE os eleitos de 2022, 2024 e 2026, com bens declarados. Anos encerrados são baixados uma vez só. |
 | `scripts/baixar_tse.py` | Baixa arquivos extras do TSE (prestação de contas, votos por seção, perfil do eleitorado…) para `dados/tse_bruto/` e registra no CHANGELOG. |
 | `CHANGELOG.md` | De onde vem cada dado, quando entrou e como foi baixado. |
+| `scripts/coletar_contas.py` | Resume a prestação de contas de campanha dos eleitos (rodar localmente, depois de `baixar_tse.py prestacao_contas`). |
 | `scripts/gerar.py` | Monta os JSONs enxutos que o site lê. Não acessa a internet. |
 | `scripts/gerar_politicos.py` | Junta TSE, Câmara e Senado no índice de todos os políticos (chamado pelo `gerar.py`). |
 | `dados/proposicoes_detalhe.json` | Situação atual de cada projeto (aprovado, arquivado, em tramitação), da API da Câmara. Cada execução consulta até 4000 projetos (`DETALHES_POR_EXECUCAO`), então o cache se completa em alguns dias. |

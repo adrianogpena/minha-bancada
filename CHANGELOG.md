@@ -56,6 +56,11 @@ Todas as coletas rodam sozinhas no GitHub Actions (`.github/workflows/atualizar.
 - Malhas do mapa do Brasil: carregadas pelo navegador direto da API do IBGE, `https://servicodados.ibge.gov.br/api/v3/malhas` (`site/assets/app.js`); nada fica salvo no projeto.
 - `site/geo/df_ras.json` (Regiões Administrativas do DF), entrada em 2026-10-18: camada do IPE-DF baixada à mão e simplificada com `python scripts/simplificar_df.py <arquivo>`. URL da camada não registrada; pendente.
 
+### TSE: prestação de contas de campanha (`dados/tse/contas/<ano>/<UF>.json`)
+- **Entrada:** 2026-10-18, para os eleitos de 2022 (1.626) e 2024 (63.722). Aparece na aba "Quem o elegeu?".
+- **De onde:** `https://cdn.tse.jus.br/estatistica/sead/odsele/prestacao_contas/prestacao_de_contas_eleitorais_candidatos_<ano>.zip` (arquivos `receitas_candidatos_<ano>_BRASIL.csv` e `despesas_contratadas_candidatos_<ano>_BRASIL.csv`).
+- **Como:** `python scripts/baixar_tse.py prestacao_contas` (ZIP em `dados/tse_bruto/`, fora do git) e depois `python scripts/coletar_contas.py`, que lê os CSV em streaming e guarda por eleito: total arrecadado, total contratado, receita por origem, 5 maiores doadores (só o nome, sem CPF) e 6 maiores tipos de gasto. Roda só localmente (anos encerrados não mudam); vice usa a prestação do titular da chapa.
+
 ## Outros arquivos do TSE (ainda não usados no site)
 Existem em `https://cdn.tse.jus.br/estatistica/sead/odsele/<pasta>/<arquivo>.zip`; URLs e tamanhos conferidos em 2026-10-18 (HTTP 200). Baixados com `python scripts/baixar_tse.py`, para `dados/tse_bruto/` (fora do git).
 

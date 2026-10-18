@@ -803,6 +803,20 @@ function linhaNoCargoAte(p, cargoTse = p.cargoTse) {
 const numeroBr = (n) => n.toLocaleString("pt-BR");
 const rotuloResultado = (r) => /turno/i.test(r) ? "Vai ao 2º turno" : ({ "eleito por qp": "Eleito por quociente partidário", "eleito por média": "Eleito por média", "eleito por media": "Eleito por média" })[r.toLowerCase()] || r;
 
+/* Dinheiro da campanha (prestação de contas ao TSE): quanto arrecadou, de onde veio, quem mais doou e em que gastou. */
+function blocoCampanha(e, fontesLista) {
+  const c = e.contas;
+  if (!c) return e.ano < 2026 ? `<h3>Campanha de ${esc(e.ano)}</h3><p>${semFonte("prestação de contas desta eleição ainda não coletada")}</p>` : "";
+  const linhas = (itens, rotuloDe) => `<ul class="lista-eleicao">${itens.map((x) => `<li>${rotuloDe(x)}</li>`).join("")}</ul>`;
+  fontesLista.unshift([`Prestação de contas de campanha ${e.ano} (TSE)`, `${TSE_CDN}/prestacao_contas/prestacao_de_contas_eleitorais_candidatos_${e.ano}.zip`]);
+  return `<h3>Campanha de ${esc(e.ano)}: quem pagou</h3>
+    <p>Arrecadou <b>${reaisCentavos(c.r)}</b> e contratou <b>${reaisCentavos(c.d)}</b> em despesas. Valores declarados pelo próprio candidato na prestação de contas ao TSE.</p>
+    ${c.o.length ? `<h4>De onde veio o dinheiro</h4>${linhas(c.o, ([o, v]) => `<span class="quando">${esc(o)}</span> <b>${reaisCentavos(v)}</b>${c.r ? ` (${Math.round((100 * v) / c.r)}%)` : ""}`)}` : ""}
+    ${c.dn.length ? `<h4>Maiores doadores</h4>${linhas(c.dn, ([n, o, v]) => `<b>${esc(n)}</b> <span class="quando">${esc(o)}</span> <b>${reaisCentavos(v)}</b>`)}
+      <p>"Recursos de partido político" inclui o fundo eleitoral e o fundo partidário repassados pelo partido.</p>` : ""}
+    ${c.g.length ? `<h4>Em que gastou</h4>${linhas(c.g, ([g, v]) => `<span class="quando">${esc(g)}</span> <b>${reaisCentavos(v)}</b>`)}` : ""}`;
+}
+
 /* Aba "Quem o elegeu?": votação (ano, data, resultado) ou, para suplente, quem ele substituiu e desde quando. */
 function painelEleicao(nome, e, o = {}) {
   const cargoTse = (e && e.cargoTse) || o.cargoTse;
@@ -823,6 +837,7 @@ function painelEleicao(nome, e, o = {}) {
     corpo += `<ul class="lista-eleicao">${e.votos.map((v) => `<li><span class="quando">${v.turno}º turno${v.data ? `, ${esc(data(v.data, true))}` : ""}</span>
       <b>${numeroBr(v.votos)} votos</b>${v.pct != null ? ` (${String(v.pct).replace(".", ",")}% dos votos válidos)` : ""}</li>`).join("")}</ul>`;
     corpo += `<p>Local: ${esc(local)}.${e.resultado ? ` Resultado oficial: <b>${esc(rotuloResultado(e.resultado))}</b>.` : ""}</p>`;
+    corpo += blocoCampanha(e, fontesLista);
     if (cargoTse && !MAJORITARIOS.has(cargoTse)) corpo += `<p>Nas eleições proporcionais as vagas são distribuídas entre os partidos pelo quociente eleitoral; por isso o número de votos de cada candidato não diz sozinho quem foi eleito.</p>`;
     if (cargoTse) fontesLista.push([`Constituição Federal, art. ${ARTIGO_ELEICAO[cargoTse]}`, linkCF(ARTIGO_ELEICAO[cargoTse])]);
     if (cargoTse && !MAJORITARIOS.has(cargoTse)) fontesLista.push(["Código Eleitoral, art. 106", CODIGO_ELEITORAL_URL]);

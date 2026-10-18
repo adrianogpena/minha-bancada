@@ -221,3 +221,25 @@ select:disabled { opacity: .55; }
 .ementa { color: var(--tinta-suave); font-size: 15px; }
 .fontes { font-size: 13px; color: var(--tinta-suave); }
 .fontes a { color: inherit; }
+
+/* início: mapa à esquerda, políticos à direita */
+.inicio { display: grid; grid-template-columns: minmax(280px, 1fr) minmax(0, 1.2fr); gap: 28px; align-items: start; }
+.mapa-painel { position: sticky; top: 12px; }
+.trilha { display: flex; flex-wrap: wrap; gap: 4px 8px; align-items: center; font-size: 15px; margin-bottom: 8px; min-height: 28px; }
+.trilha button { font: inherit; background: none; border: 0; padding: 2px 0; color: var(--marca); text-decoration: underline; cursor: pointer; }
+.trilha b { font-weight: 700; }
+.trilha span[aria-hidden] { color: var(--tinta-suave); }
+.mapa { background: var(--superficie); border: 1px solid var(--linha); border-radius: var(--raio); padding: 8px; }
+.mapa svg { display: block; width: 100%; height: auto; max-height: 72vh; }
+.mapa path { fill: color-mix(in srgb, var(--marca) 38%, var(--superficie)); stroke: var(--superficie); stroke-width: 1.2; vector-effect: non-scaling-stroke; cursor: pointer; transition: fill .12s; }
+.mapa path:hover, .mapa path:focus-visible { fill: var(--marca); outline: none; }
+.mapa path.escolhido { fill: var(--sim); }
+.mapa path.fundo { fill: var(--ausente); cursor: default; pointer-events: none; }
+.dica { font-size: 14px; color: var(--tinta-suave); margin: 6px 0 0; min-height: 21px; }
+.filtros.dois { grid-template-columns: 1fr 1fr; margin-top: 12px; }
+.filtros.dois .largo { grid-column: 1 / -1; }
+@media (max-width: 860px) {
+  .inicio { grid-template-columns: 1fr; }
+  .mapa-painel { position: static; }
+  .mapa svg { max-height: 56vh; }
+}

@@ -133,6 +133,9 @@ def gerar(deputados: dict, estaduais: dict | None = None) -> dict:
                     "e": estado, "b": e.get("totalBens") or None,
                 })
 
+    # cargos federais do Brasil todo, para a visão nacional da página inicial (u = estado)
+    indice["BR"] += [{**x, "u": uf} for uf, lista in indice.items() if uf != "BR" for x in lista if x["k"] in (3, 4)]
+
     # --- grava
     for uf, lista in indice.items():
         lista.sort(key=lambda x: (x["k"], x.get("m") or "", x["n"] or ""))

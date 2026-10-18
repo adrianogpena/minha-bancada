@@ -466,8 +466,10 @@ const GRUPOS = [
   { titulo: "Câmara Municipal", ks: [10], municipal: true },
 ];
 
-const lembrar = (k, v) => { try { v == null ? localStorage.removeItem(k) : localStorage.setItem(k, v); } catch {} };
-const lembrado = (k) => { try { return localStorage.getItem(k); } catch { return null; } };
+const UF_COD = { 11: "RO", 12: "AC", 13: "AM", 14: "RR", 15: "PA", 16: "AP", 17: "TO", 21: "MA", 22: "PI", 23: "CE", 24: "RN", 25: "PB", 26: "PE", 27: "AL",
+  28: "SE", 29: "BA", 31: "MG", 32: "ES", 33: "RJ", 35: "SP", 41: "PR", 42: "SC", 43: "RS", 50: "MS", 51: "MT", 52: "GO", 53: "DF" };
+const COD_UF = Object.fromEntries(Object.entries(UF_COD).map(([c, u]) => [u, c]));
+const MALHAS = "https://servicodados.ibge.gov.br/api/v3/malhas";
 
 function linkPolitico(x) {
   return x.h || `politico.html?f=${encodeURIComponent(x.f)}&i=${encodeURIComponent(x.i)}`;
@@ -482,47 +484,107 @@ function etiquetaEstado(e) {
 function linhaPolitico(x) {
   return `<li><a class="linha-pol" href="${linkPolitico(x)}">
     ${foto({ nome: x.n || "?", foto: x.fo })}
-    <span><span class="nome">${esc(x.n)}</span><br><span class="sigla">${esc(x.c)}${x.p ? `, ${esc(x.p)}` : ""}${x.m ? ` em ${esc(x.m)}` : ""}</span></span>
+    <span><span class="nome">${esc(x.n)}</span><br><span class="sigla">${esc(x.c)}${x.p ? `, ${esc(x.p)}` : ""}${x.m ? ` em ${esc(x.m)}` : x.u ? `, ${esc(x.u)}` : ""}</span></span>
     ${etiquetaEstado(x.e)}
   </a></li>`;
 }
 
+/* Desenha um GeoJSON do IBGE como SVG (projeção simples, corrigida pela latitude média). */
+function svgMapa(fc, idDe) {
+  const poligonos = (g) => (g.type === "Polygon" ? [g.coordinates] : g.coordinates);
+  let x0 = 180, x1 = -180, y0 = 90, y1 = -90;
+  for (const f of fc.features) for (const poli of poligonos(f.geometry)) for (const anel of poli) for (const [x, y] of anel) {
+    if (x < x0) x0 = x;
+    if (x > x1) x1 = x;
+    if (y < y0) y0 = y;
+    if (y > y1) y1 = y;
+  }
+  const k = Math.cos((((y0 + y1) / 2) * Math.PI) / 180), escala = 1000 / ((x1 - x0) * k);
+  const px = (x) => Math.round((x - x0) * k * escala * 10) / 10, py = (y) => Math.round((y1 - y) * escala * 10) / 10;
+  const caminhos = fc.features.map((f) => {
+    const d = poligonos(f.geometry).map((poli) => poli.map((anel) => "M" + anel.map(([x, y]) => `${px(x)} ${py(y)}`).join("L") + "Z").join("")).join("");
+    return `<path d="${d}" data-id="${esc(idDe(f))}" tabindex="0" role="link"></path>`;
+  });
+  return `<svg viewBox="0 0 ${px(x1)} ${py(y0)}" xmlns="http://www.w3.org/2000/svg">${caminhos.join("")}</svg>`;
+}
+
 async function paginaPoliticos() {
-  const alvo = $("#resultado");
+  const alvo = $("#resultado"), mapa = $("#mapa"), dica = $("#dica"), trilha = $("#trilha");
   const q = new URLSearchParams(location.search);
   const selUf = $("#uf"), selMun = $("#municipio"), busca = $("#busca");
   selUf.insertAdjacentHTML("beforeend", Object.entries(UFS).map(([k, v]) => `<option value="${k}">${v}</option>`).join(""));
 
   let br = [];
   try { br = await carregar("dados/indice/BR.json"); } catch (e) { return erro(alvo, e); }
-  const cache = {};
-  let lista = [];
+  const cache = {}, geos = {};
+  let lista = [], uf = null, mun = "", tseDeIbge = {}, nomes = new Map(), versao = 0;
+  carregar("dados/municipios_ibge.json").then((m) => {
+    tseDeIbge = Object.fromEntries(Object.entries(m).map(([t, i]) => [i, t]));
+    if (uf) desenharMapa();
+  }).catch(() => {});
 
   let periodo = q.get("periodo") === "2026" ? "2026" : "agora";
   abas($("#periodo"), [{ valor: "agora", rotulo: "No cargo agora" }, { valor: "2026", rotulo: "Eleitos em 2026" }], (v) => { periodo = v; desenhar(); });
   $("#periodo").querySelectorAll("button").forEach((b) => b.setAttribute("aria-pressed", b.dataset.v === periodo));
 
-  async function trocarUf() {
-    const uf = selUf.value;
-    lembrar("mb-uf", uf || null);
-    selMun.innerHTML = `<option value="">Todos os municípios</option>`;
-    selMun.disabled = !uf;
-    if (!uf) { lista = []; return desenhar(); }
-    alvo.innerHTML = `<p class="vazio">Carregando ${esc(UFS[uf])}…</p>`;
-    try { cache[uf] ||= await carregar(`dados/indice/${uf}.json`); } catch (e) { return erro(alvo, e); }
-    lista = cache[uf];
-    const muns = new Map();
-    lista.forEach((x) => x.g && muns.set(x.g, x.m));
-    selMun.insertAdjacentHTML("beforeend", [...muns].sort((a, b) => a[1].localeCompare(b[1], "pt-BR"))
-      .map(([g, m]) => `<option value="${esc(g)}">${esc(m)}</option>`).join(""));
-    const mun = q.get("municipio") || lembrado(`mb-mun-${uf}`);
-    if (mun && muns.has(mun)) selMun.value = mun;
+  const geo = async (url) => (geos[url] ||= await carregar(url));
+
+  function desenharTrilha() {
+    const partes = [uf ? `<button type="button" data-ir="br">Brasil</button>` : `<b>Brasil</b>`];
+    if (uf) partes.push(mun ? `<button type="button" data-ir="uf">${esc(UFS[uf])}</button>` : `<b>${esc(UFS[uf])}</b>`);
+    if (mun) partes.push(`<b>${esc(nomes.get(mun) || "")}</b>`);
+    trilha.innerHTML = partes.join(`<span aria-hidden="true">›</span>`);
+  }
+
+  async function desenharMapa() {
+    const minha = ++versao;
+    try {
+      const fc = uf
+        ? await geo(`${MALHAS}/estados/${COD_UF[uf]}?formato=application/vnd.geo+json&intrarregiao=municipio&qualidade=minima`)
+        : await geo(`${MALHAS}/paises/BR?formato=application/vnd.geo+json&intrarregiao=UF&qualidade=minima`);
+      if (minha !== versao) return;
+      mapa.innerHTML = svgMapa(fc, uf ? (f) => tseDeIbge[f.properties.codarea] || "" : (f) => UF_COD[f.properties.codarea] || "");
+      mapa.querySelectorAll("path").forEach((p) => {
+        const nome = uf ? nomes.get(p.dataset.id) : UFS[p.dataset.id];
+        if (!nome) { p.classList.add("fundo"); p.removeAttribute("tabindex"); p.removeAttribute("role"); return; }
+        p.setAttribute("aria-label", nome);
+        p.insertAdjacentHTML("afterbegin", `<title>${esc(nome)}</title>`);
+        if (uf && p.dataset.id === mun) p.classList.add("escolhido");
+      });
+      dica.textContent = uf ? "Clique em um município para ver os políticos dele." : "Clique em um estado para ver os políticos dele.";
+    } catch (e) {
+      if (minha === versao) mapa.innerHTML = `<p class="vazio">Não foi possível carregar o mapa. Use os campos ao lado.</p>`;
+    }
+  }
+
+  async function irPara(novoUf, novoMun = "") {
+    if (novoUf !== uf || (novoUf && !lista.length)) {
+      uf = novoUf; mun = "";
+      selUf.value = uf;
+      selMun.innerHTML = `<option value="">Todos os municípios</option>`;
+      selMun.disabled = !uf;
+      nomes = new Map();
+      lista = [];
+      if (uf) {
+        alvo.innerHTML = `<p class="vazio">Carregando ${esc(UFS[uf])}…</p>`;
+        try { cache[uf] ||= await carregar(`dados/indice/${uf}.json`); } catch (e) { return erro(alvo, e); }
+        lista = cache[uf];
+        lista.forEach((x) => x.g && nomes.set(x.g, x.m));
+        selMun.insertAdjacentHTML("beforeend", [...nomes].sort((a, b) => a[1].localeCompare(b[1], "pt-BR"))
+          .map(([g, m]) => `<option value="${esc(g)}">${esc(m)}</option>`).join(""));
+      }
+      mapa.innerHTML = `<p class="vazio">Carregando mapa…</p>`;
+      desenharMapa();
+    }
+    mun = nomes.has(novoMun) ? novoMun : "";
+    selMun.value = mun;
+    mapa.querySelectorAll("path").forEach((p) => p.classList.toggle("escolhido", !!mun && p.dataset.id === mun));
+    desenharTrilha();
     desenhar();
   }
 
   function desenhar() {
-    const uf = selUf.value, mun = selMun.value, termo = semAcento(busca.value.trim());
-    lembrar(`mb-mun-${uf}`, mun || null);
+    const termo = semAcento(busca.value.trim());
     const nova = new URLSearchParams();
     if (uf) nova.set("uf", uf);
     if (mun) nova.set("municipio", mun);
@@ -530,35 +592,38 @@ async function paginaPoliticos() {
     history.replaceState(null, "", nova.toString() ? "?" + nova : location.pathname);
 
     const doPeriodo = (x) => (periodo === "agora" ? x.e === "atual" : x.e !== "atual");
-    const todos = [...br, ...lista].filter(doPeriodo).filter((x) => !termo || semAcento(`${x.n} ${x.p} ${x.m || ""}`).includes(termo));
+    // no Brasil, o BR.json traz a presidência e os cargos federais; no estado, os cargos vêm do arquivo do estado
+    const base = uf ? lista : br;
+    const todos = base.filter(doPeriodo).filter((x) => !termo || semAcento(`${x.n} ${x.p} ${x.m || ""} ${x.u || ""}`).includes(termo));
+    const grupos = uf && mun ? [...GRUPOS].sort((a, b) => !!b.municipal - !!a.municipal) : GRUPOS;
     let html = "", total = 0;
-    for (const g of GRUPOS) {
+    for (const g of GRUPOS) g._itens = null;
+    for (const g of grupos) {
       let itens = todos.filter((x) => g.ks.includes(x.k));
       if (g.municipal) {
         if (!uf) continue;
         if (mun) itens = itens.filter((x) => x.g === mun);
         else if (!termo) {
-          if (itens.length) html += `<section class="grupo"><h2>${g.titulo}</h2><p class="vazio">Escolha um município para ver ${g.ks.includes(10) ? "os vereadores" : "o prefeito e o vice"}, ou busque pelo nome.</p></section>`;
+          if (itens.length) html += `<section class="grupo"><h2>${g.titulo}</h2><p class="vazio">Clique em um município no mapa para ver ${g.ks.includes(10) ? "os vereadores" : "o prefeito e o vice"}, ou busque pelo nome.</p></section>`;
           continue;
         }
-      } else if (g.ks[0] > 2 && !uf) continue;
+      }
       if (!itens.length) continue;
       total += itens.length;
       const titulo = typeof g.titulo === "function" ? g.titulo(uf) : g.titulo;
       html += `<section class="grupo"><h2>${titulo} <small class="sub">${itens.length}</small></h2><ul class="lista" data-grupo="${g.ks[0]}"></ul></section>`;
       g._itens = itens;
     }
-    if (!uf) html += `<p class="aviso">Escolha um estado para ver senadores, deputados, governo, prefeitos e vereadores.</p>`;
-    if (periodo === "2026" && !total && uf) html += `<p class="vazio">Nenhum eleito em 2026 encontrado com esses filtros.</p>`;
+    if (periodo === "2026" && !total) html += `<p class="vazio">Nenhum eleito em 2026 encontrado com esses filtros.</p>`;
     alvo.innerHTML = html || `<p class="vazio">Nada encontrado. Tente outro nome ou limpe a busca.</p>`;
     for (const g of GRUPOS) {
-      const ul = alvo.querySelector(`ul[data-grupo="${g.ks[0]}"]`);
+      const ul = g._itens && alvo.querySelector(`ul[data-grupo="${g.ks[0]}"]`);
       if (!ul) continue;
-      // listas longas (vereadores de uma capital) crescem aos poucos
+      // listas longas (Câmara, vereadores de uma capital) crescem aos poucos
       const itens = g._itens; let n = 0;
       const mais = () => {
-        ul.insertAdjacentHTML("beforeend", itens.slice(n, n + 60).map(linhaPolitico).join(""));
-        n += 60;
+        ul.insertAdjacentHTML("beforeend", itens.slice(n, n + 30).map(linhaPolitico).join(""));
+        n += 30;
         botao.hidden = n >= itens.length;
         botao.textContent = `Mostrar mais (${itens.length - n} restantes)`;
       };
@@ -566,15 +631,22 @@ async function paginaPoliticos() {
       botao.className = "mais"; botao.addEventListener("click", mais);
       ul.after(botao); mais();
     }
-    $("#contagem").textContent = uf ? `${total} políticos ${periodo === "agora" ? "no cargo" : "eleitos ou no 2º turno em 2026"}${mun ? ` em ${selMun.selectedOptions[0].text}` : ` em ${UFS[uf]}`}` : "";
+    const onde = mun ? `${nomes.get(mun)}, ${UFS[uf]}` : uf ? UFS[uf] : "Brasil";
+    $("#contagem").textContent = `${total} políticos ${periodo === "agora" ? "no cargo" : "eleitos ou no 2º turno em 2026"}: ${onde}`;
   }
 
-  selUf.addEventListener("input", () => { q.delete("municipio"); trocarUf(); });
-  selMun.addEventListener("input", desenhar);
+  const clicar = (p) => { if (p && !p.classList.contains("fundo")) irPara(uf || p.dataset.id, uf ? p.dataset.id : ""); };
+  mapa.addEventListener("click", (e) => clicar(e.target.closest("path")));
+  mapa.addEventListener("keydown", (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); clicar(e.target.closest("path")); } });
+  const nomeSob = (e) => { const p = e.target.closest?.("path"); if (p && !p.classList.contains("fundo")) dica.textContent = uf ? nomes.get(p.dataset.id) : UFS[p.dataset.id]; };
+  mapa.addEventListener("mouseover", nomeSob);
+  mapa.addEventListener("focusin", nomeSob);
+  trilha.addEventListener("click", (e) => { const b = e.target.closest("button"); if (b) irPara(b.dataset.ir === "br" ? "" : uf); });
+  selUf.addEventListener("input", () => irPara(selUf.value));
+  selMun.addEventListener("input", () => irPara(uf, selMun.value));
   busca.addEventListener("input", desenhar);
-  const inicial = q.get("uf") || lembrado("mb-uf");
-  if (inicial && UFS[inicial]) selUf.value = inicial;
-  trocarUf();
+  const inicial = q.get("uf");
+  irPara(inicial && UFS[inicial] ? inicial : "", q.get("municipio") || "");
 }
 
 /* ---------- ficha de um político (TSE ou Senado) ---------- */

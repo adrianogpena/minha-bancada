@@ -1,10 +1,17 @@
-"""Baixa as Regiões Administrativas do DF (IPE-DF) e grava um GeoJSON leve em site/geo/df_ras.json.
+"""Baixa as Regiões Administrativas do DF (camada geonode:regioes_administrativas do catálogo do
+IPE-DF, via WFS) e grava um GeoJSON leve em site/geo/df_ras.json.
 
-Uso: python scripts/simplificar_df.py arquivo_baixado.json
+Uso: python scripts/simplificar_df.py [arquivo_baixado.json]   (sem argumento, baixa da fonte)
+
+Fonte: https://catalogo.ipe.df.gov.br/layers/geonode_data:geonode:regioes_administrativas
 """
 import json
 import sys
+import urllib.request
 from pathlib import Path
+
+FONTE = ("https://catalogo.ipe.df.gov.br/geoserver/ows?service=WFS&version=1.0.0&request=GetFeature"
+         "&typeName=geonode:regioes_administrativas&outputFormat=application/json&srsName=EPSG:4326")
 
 TOLERANCIA = 0.0006   # graus (~65 m)
 
@@ -50,8 +57,12 @@ def anel(a):
     return [[round(x, 4), round(y, 4)] for x, y in r] if len(r) >= 4 else None
 
 
-def main(origem: str) -> None:
-    dados = json.loads(Path(origem).read_text(encoding="utf-8"))
+def main(origem: str | None) -> None:
+    if origem:
+        dados = json.loads(Path(origem).read_text(encoding="utf-8"))
+    else:
+        with urllib.request.urlopen(urllib.request.Request(FONTE, headers={"User-Agent": "minha-bancada"}), timeout=120) as r:
+            dados = json.load(r)
     saida = []
     for f in dados["features"]:
         g = f["geometry"]
@@ -67,4 +78,4 @@ def main(origem: str) -> None:
     print(len(saida), "RAs,", destino.stat().st_size // 1024, "KB")
 
 
-main(sys.argv[1])
+main(sys.argv[1] if len(sys.argv) > 1 else None)

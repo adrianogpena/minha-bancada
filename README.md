@@ -64,6 +64,7 @@ Sem `--limite` a coleta pega todos os deputados em exercício. `--dias` só vale
 | `scripts/coletar_eleitorado.py` | Resume o perfil do eleitorado (total, gênero, faixa etária, escolaridade) de cada município e estado, a partir do arquivo baixado por `baixar_tse.py perfil_eleitorado`. |
 | `scripts/coletar_partidos.py` | Resume os votos de legenda e nominais de cada partido (e federação) nos cargos proporcionais, a partir do arquivo baixado por `baixar_tse.py votacao_partido_munzona`. |
 | `scripts/coletar_coligacoes.py` | Resume coligações, federações e a situação da legenda do partido de cada eleito, a partir do arquivo baixado por `baixar_tse.py consulta_coligacao` (rodar depois de `coletar_tse.py`). |
+| `scripts/gerar_municipios_ibge.py`, `scripts/simplificar_df.py` | Refazem `dados/municipios_ibge.json` (código TSE → IBGE) e `site/geo/df_ras.json` (regiões administrativas do DF) a partir das fontes oficiais. Rodar só se mudarem. |
 | `scripts/gerar.py` | Monta os JSONs enxutos que o site lê. Não acessa a internet. |
 | `scripts/gerar_politicos.py` | Junta TSE, Câmara e Senado no índice de todos os políticos (chamado pelo `gerar.py`). |
 | `dados/proposicoes_detalhe.json` | Situação atual de cada projeto (aprovado, arquivado, em tramitação), da API da Câmara. Cada execução consulta até 4000 projetos (`DETALHES_POR_EXECUCAO`), então o cache se completa em alguns dias. |

@@ -31,13 +31,35 @@ async function carregar(caminho) {
   return r.json();
 }
 
-function linksRedes(redes) {
-  const links = [...new Set((redes || []).filter((r) => !/\s/.test(r)))].map((r) =>
-    `<a href="${esc(r)}" rel="noopener">${esc(r.replace(/^https?:\/\/(www\.)?/, "").replace(/[?#].*$/, "").replace(/\/$/, ""))}</a>`);
-  if (!links.length) return null;
-  const aberto = links.slice(0, 6).join("<br>");
-  const resto = links.slice(6);
-  return resto.length ? `${aberto}<details><summary>mais ${resto.length}</summary>${resto.join("<br>")}</details>` : aberto;
+const SOBRENOMES_COMUNS = new Set(["silva", "santos", "souza", "oliveira", "pereira", "costa", "filho", "junior", "neto", "sobrinho"]);
+
+function perfilDoPolitico(url, p) {
+  const nomes = `${p.urna || ""} ${p.nome || ""}`;
+  const partes = semAcento(nomes).split(/[^a-z0-9]+/).filter((t) => t.length >= 4 && !SOBRENOMES_COMUNS.has(t));
+  let alvo;
+  try { const u = new URL(url); alvo = `${u.hostname}${u.pathname}`; } catch { alvo = url; }
+  alvo = semAcento(decodeURIComponent(alvo.replace(/%(?![0-9a-f]{2})/gi, ""))).replace(/[^a-z0-9]/g, "");
+  return partes.some((t) => alvo.includes(t));
+}
+
+function linksRedes(redes, p) {
+  const todas = [...new Set((redes || []).filter((r) => !/\s/.test(r)))];
+  const item = (r) => `<a href="${esc(r)}" rel="noopener">${esc(r.replace(/^https?:\/\/(www\.)?/, "").replace(/[?#].*$/, "").replace(/\/$/, ""))}</a>`;
+  const lista = (itens) => {
+    const aberto = itens.slice(0, 6).join("<br>");
+    const resto = itens.slice(6);
+    return resto.length ? `${aberto}<details><summary>mais ${resto.length}</summary>${resto.join("<br>")}</details>` : aberto;
+  };
+  const proprios = todas.filter((r) => perfilDoPolitico(r, p));
+  const outros = todas.filter((r) => !perfilDoPolitico(r, p));
+  if (!todas.length) return null;
+  const fonte = `<span class="fonte-link">fonte: ${p.divulga ? `<a href="${esc(p.divulga)}" rel="noopener">registro da candidatura de ${esc(p.ano)} no TSE</a>` : `registro da candidatura de ${esc(p.ano)} no TSE`}</span>`;
+  let html = proprios.length ? lista(proprios.map(item)) : "";
+  if (outros.length) {
+    html += `${html ? "<br><br>" : ""}<b>Outros perfis e sites citados na candidatura</b> (sem o nome do político no endereço)<br>`
+      + lista(outros.map((r) => `${item(r)} ${fonte}`));
+  }
+  return html;
 }
 
 function foto(dep, grande = false) {
@@ -711,6 +733,8 @@ const itemExecutivo = (x) => {
       <a href="${esc(linkTramitacao(x.id))}" rel="noopener">Tramitação</a></span></li>`;
 };
 
+const divulgaUrl = (p) => p.fonte === "tse" && p.eleicao && p.ue ? `https://divulgacandcontas.tse.jus.br/divulga/#/candidato/${encodeURIComponent(p.ano)}/${encodeURIComponent(p.eleicao)}/${encodeURIComponent(p.ue)}/${encodeURIComponent(p.sq)}` : null;
+
 async function paginaPolitico() {
   const alvo = $("#conteudo");
   const f = param("f"), i = param("i");
@@ -745,7 +769,7 @@ async function paginaPolitico() {
     ["Ocupação declarada", p.ocupacao],
     ["Buscava reeleição", p.fonte === "tse" ? (p.reeleicao ? "Sim" : "Não") : null],
     ["E-mail", p.email ? `<a href="mailto:${esc(p.email)}">${esc(p.email)}</a>` : null, true],
-    ["Redes e sites declarados na candidatura", linksRedes(p.redes), true],
+    ["Redes e sites declarados na candidatura", linksRedes(p.redes, { ...p, divulga: divulgaUrl(p) }), true],
   ].filter(([, v]) => v);
 
   if (p.fonte === "senado") {
@@ -760,7 +784,7 @@ async function paginaPolitico() {
   const bens = p.bens || [];
   const executivo = EXECUTIVOS.has(p.cargoTse);
   const casa = casaLegislativa(p);
-  const divulga = p.fonte === "tse" && p.eleicao && p.ue ? `https://divulgacandcontas.tse.jus.br/divulga/#/candidato/${encodeURIComponent(p.ano)}/${encodeURIComponent(p.eleicao)}/${encodeURIComponent(p.ue)}/${encodeURIComponent(p.sq)}` : null;
+  const divulga = divulgaUrl(p);
   const fonteTse = divulga ? [["Candidatura no DivulgaCandContas (TSE)", divulga]] : [];
 
   const painelPerfil = `

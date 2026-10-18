@@ -65,7 +65,7 @@ img { max-width: 100%; display: block; }
 .abertura { padding: 48px 0 28px; }
 .abertura h1 {
   font: 800 clamp(34px, 6vw, 64px)/1.02 var(--display);
-  letter-spacing: -0.025em; margin: 0 0 14px; max-width: 14ch;
+  letter-spacing: -0.025em; margin: 0 0 14px;
 }
 .abertura p { margin: 0; color: var(--tinta-suave); max-width: 60ch; }
 h1, h2, h3 { font-family: var(--display); letter-spacing: -0.01em; }

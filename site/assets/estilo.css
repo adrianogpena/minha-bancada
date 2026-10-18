@@ -219,8 +219,13 @@ select:disabled { opacity: .55; }
 .r-sem { color: var(--tinta-suave); }
 .itens .cartao-item { grid-template-columns: 1fr; }
 .ementa { color: var(--tinta-suave); font-size: 15px; }
-.fontes { font-size: 13px; color: var(--tinta-suave); }
-.fontes a { color: inherit; }
+.fontes { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 10px; font-size: 13px; color: var(--tinta-suave); margin-top: 8px; }
+.fontes-lista { display: flex; flex-wrap: wrap; gap: 2px 14px; }
+.fontes a { color: var(--tinta-suave); }
+.rotulo-fonte { display: inline-block; font: 700 11px/1.6 var(--texto); text-transform: uppercase; letter-spacing: .06em; padding: 0 7px; border-radius: 3px; border: 1px solid var(--linha); background: var(--papel); color: var(--tinta-suave); white-space: nowrap; }
+.link-bloco { display: block; margin: 0 0 10px; }
+.link-rede { font-weight: 700; overflow-wrap: anywhere; }
+.link-rede::after { content: " ↗"; font-weight: 400; }
 
 /* início: mapa à esquerda, políticos à direita */
 .inicio { display: grid; grid-template-columns: minmax(280px, 1fr) minmax(0, 1.2fr); gap: 28px; align-items: start; }
@@ -245,3 +250,31 @@ select:disabled { opacity: .55; }
 }
 .mapa path.unico { cursor: default; }
 .mapa path.unico:hover { fill: var(--marca); }
+
+/* celular */
+.dd-quebra, .ficha dd { overflow-wrap: anywhere; }
+@media (max-width: 760px) {
+  .recipiente { padding: 0 14px; }
+  .topo .recipiente { min-height: 0; padding-bottom: 0; }
+  .nav { overflow-x: auto; white-space: nowrap; gap: 18px; scrollbar-width: none; }
+  .nav a { padding: 10px 0 8px; }
+  .abertura { padding: 28px 0 16px; }
+  h2 { font-size: 22px; margin-top: 30px; }
+  input, select { font-size: 16px; padding: 12px; min-height: 46px; }
+  .abas button, .mais { min-height: 40px; padding: 8px 14px; }
+  .abas-pagina { margin-left: -14px; margin-right: -14px; padding: 0 14px; }
+  .abas-pagina button { padding: 12px 14px; }
+  .perfil { flex-direction: column; align-items: flex-start; gap: 12px; }
+  .painel { padding: 14px; }
+  .linha-dep, .linha-pol { padding: 12px 4px; }
+  .ficha { grid-template-columns: 1fr; gap: 0; }
+  .ficha dt { font-size: 13px; margin-top: 12px; }
+  .ficha dd { padding-bottom: 10px; border-bottom: 1px solid var(--linha); }
+  .itens li { grid-template-columns: 1fr; }
+  .itens li .voto, .itens li .resultado { justify-self: start; }
+  .link-rede, .fontes a { display: inline-block; padding: 4px 0; }
+  .fontes { flex-direction: column; align-items: flex-start; }
+  .fontes-lista { flex-direction: column; gap: 2px; }
+  .mapa svg { max-height: 44vh; }
+  .rodape { margin-top: 40px; }
+}

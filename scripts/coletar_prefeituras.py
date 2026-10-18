@@ -23,6 +23,9 @@ ANO_INICIAL = 2025  # mandato atual começa em 1º de janeiro de 2025
 # UF da capital -> (código TSE do município, host do SAPL da Câmara Municipal).
 # Câmaras de capitais com API aberta, dados atuais e o Executivo registrado como autor, verificadas em 2026-10.
 # Ficaram de fora Porto Velho e Fortaleza (matérias do Executivo sem autor), Manaus e Palmas (sem dados atuais).
+# Verificadas em 2026-10 e sem fonte estruturada confiável (sem SAPL nem API aberta localizada): Salvador, Belém, Goiânia,
+# Maceió, Teresina, Macapá, Cuiabá, Florianópolis, Curitiba, Vitória; Recife tem SAPL, mas ficou em manutenção (503);
+# Rio de Janeiro, Belo Horizonte e Porto Alegre não responderam. São Luís, Campo Grande e Aracaju: sem host SAPL achado.
 CAMARAS = {
     "AC": ("01392", "sapl.riobranco.ac.leg.br"),
     "RR": ("03018", "sapl.boavista.rr.leg.br"),

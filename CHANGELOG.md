@@ -76,13 +76,18 @@ Todas as coletas rodam sozinhas no GitHub Actions (`.github/workflows/atualizar.
 - **De onde:** `https://cdn.tse.jus.br/estatistica/sead/odsele/perfil_eleitorado/perfil_eleitorado_<ano>.zip` (colunas iguais nos dois anos).
 - **Como:** `python scripts/baixar_tse.py perfil_eleitorado` e `python scripts/coletar_eleitorado.py` (1 min), que soma os eleitores por município (`CD_MUNICIPIO`, o código TSE) e por estado em gênero, 8 faixas etárias e 8 graus de escolaridade. `ZZ` (exterior) fica guardado, mas o site não o mostra. Roda só localmente.
 
+### TSE: votos do partido (`dados/tse/partidos/<ano>/<UF>.json`)
+- **Entrada:** 2026-10-18, 2022 e 2024, cargos proporcionais (deputados e vereadores). Aparece na aba "Quem o elegeu?", depois de "Comparecimento e vagas".
+- **De onde:** `https://cdn.tse.jus.br/estatistica/sead/odsele/votacao_partido_munzona/votacao_partido_munzona_<ano>.zip` (colunas iguais nos dois anos; 2022 tem 4 colunas a mais de coligação que não usamos).
+- **Como:** `python scripts/baixar_tse.py votacao_partido_munzona` e `python scripts/coletar_partidos.py`, que soma as zonas por cargo, local e partido: votos de legenda (`QT_TOTAL_VOTOS_LEG_VALIDOS`), nominais (`QT_VOTOS_NOMINAIS_VALIDOS`) e a federação. O quociente eleitoral mostrado é votos válidos dos partidos ÷ vagas (vagas de `consulta_vagas`). Roda só localmente.
+
 ## Outros arquivos do TSE (ainda não usados no site)
 Existem em `https://cdn.tse.jus.br/estatistica/sead/odsele/<pasta>/<arquivo>.zip`; URLs e tamanhos conferidos em 2026-10-18 (HTTP 200). Baixados com `python scripts/baixar_tse.py`, para `dados/tse_bruto/` (fora do git).
 
 | Conjunto | Pasta / arquivo | 2022 | 2024 |
 |---|---|---|---|
 | Prestação de contas (receitas, despesas, doadores) | `prestacao_contas/prestacao_de_contas_eleitorais_candidatos_<ano>.zip` | 467 MB | 1,3 GB |
-| Votos do partido por município/zona | `votacao_partido_munzona/votacao_partido_munzona_<ano>.zip` | 26 MB | 6 MB |
+| Votos do partido por município/zona (já usado) | `votacao_partido_munzona/votacao_partido_munzona_<ano>.zip` | 26 MB | 6 MB |
 | Votos por seção | `votacao_secao/votacao_secao_<ano>_<UF>.zip` (um por UF, `ZZ` = exterior; SP: 901 MB e 476 MB) | por UF | por UF |
 | Perfil do eleitorado (já usado) | `perfil_eleitorado/perfil_eleitorado_<ano>.zip` | 77 MB | 334 MB |
 | Comparecimento, brancos e nulos | `detalhe_votacao_munzona/detalhe_votacao_munzona_<ano>.zip` | 4 MB | 1,5 MB |

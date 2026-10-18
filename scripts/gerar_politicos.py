@@ -89,6 +89,20 @@ def disputa_de(ano: int, e: dict):
     return resumo_tse("disputa", ano, e["uf"]).get(f"{e['cargo'].replace('VICE-', '')}|{e['ue']}")
 
 
+def partido_de(ano: int, e: dict):
+    """Votos do partido (e da federação) no cargo e local da eleição (dados/tse/partidos/<ano>/<UF>.json), ou None.
+    l = legenda, n = nominais, t = votos válidos dos partidos; f/fl/fn = federação e seus votos de legenda e nominais."""
+    local = resumo_tse("partidos", ano, e["uf"]).get(f"{e['cargo']}|{e['ue']}")
+    p = local and local["p"].get(e.get("partido"))
+    if not p:
+        return None
+    r = {"l": p[0], "n": p[1], "t": local["t"]}
+    if p[2]:
+        membros = [v for v in local["p"].values() if v[2] == p[2]]
+        r.update(f=p[2], fl=sum(v[0] for v in membros), fn=sum(v[1] for v in membros))
+    return r
+
+
 def eleitos_por_nome(cargo_tse: str) -> dict:
     """Eleitos de 2018 e 2022 a um cargo federal, por nome e UF, para ligar com a Câmara e o Senado."""
     achados = defaultdict(list)
@@ -102,6 +116,7 @@ def eleitos_por_nome(cargo_tse: str) -> dict:
                 bloco["contas"] = contas_de(ano, e)
                 bloco["secoes"] = secoes_de(ano, e)
                 bloco["disputa"] = disputa_de(ano, e)
+                bloco["partidoVotos"] = partido_de(ano, e)
                 for n in (e.get("nome"), e.get("urna")):
                     achados[chave_nome(n, e["uf"])].append(bloco)
     return achados
@@ -208,6 +223,7 @@ def gerar(deputados: dict, estaduais: dict | None = None) -> dict:
                     "contas": contas_de(ano, e),
                     "secoes": secoes_de(ano, e),
                     "disputa": disputa_de(ano, e),
+                    "partidoVotos": partido_de(ano, e),
                     **({"estadual": estadual} if estadual else {}),
                 }
                 indice[uf].append({

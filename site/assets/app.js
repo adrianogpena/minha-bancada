@@ -854,6 +854,22 @@ function blocoDisputa(e, fontesLista) {
   return `<h3>Comparecimento e vagas</h3>${d.v != null ? `<p>Vagas em disputa neste cargo e local: <b>${numeroBr(d.v)}</b>.</p>` : ""}<ul class="lista-eleicao">${turnos}</ul>`;
 }
 
+/* Votos do partido (TSE: votação por partido): legenda, nominais e quociente eleitoral, nos cargos proporcionais. */
+function blocoPartido(e, fontesLista) {
+  const v = e.partidoVotos;
+  if (!v) return e.ano < 2026 && !MAJORITARIOS.has(e.cargoTse) ? `<h3>Votos do partido</h3><p>${semFonte("votos do partido nesta eleição")}</p>` : "";
+  fontesLista.push([`Votação por partido ${e.ano} (TSE)`, `${TSE_CDN}/votacao_partido_munzona/votacao_partido_munzona_${e.ano}.zip`]);
+  const pct = (a, b) => (b ? ` (${((100 * a) / b).toFixed(1).replace(".", ",")}%)` : "");
+  const total = v.l + v.n;
+  const vagas = e.disputa && e.disputa.v;
+  const qe = vagas ? v.t / vagas : 0;
+  const nome = esc(e.partido);
+  let html = `<h3>Votos do partido</h3><p>O ${nome} teve <b>${numeroBr(total)}</b> votos válidos${pct(total, v.t)}: <b>${numeroBr(v.n)}</b> em candidatos e <b>${numeroBr(v.l)}</b> só na legenda (o eleitor digitou o número do partido).</p>`;
+  if (v.f) html += `<p>O ${nome} concorreu na federação ${esc(v.f.replace(/\//g, " / "))}, que conta como um partido só para dividir as vagas: <b>${numeroBr(v.fl + v.fn)}</b> votos${pct(v.fl + v.fn, v.t)}, sendo ${numeroBr(v.fl)} de legenda.</p>`;
+  if (qe) html += `<p>Quociente eleitoral: ${numeroBr(v.t)} votos válidos ÷ ${numeroBr(vagas)} vagas = <b>${numeroBr(Math.round(qe))}</b> votos por vaga. ${v.f ? "A federação" : "O partido"} teve ${((v.f ? v.fl + v.fn : total) / qe).toFixed(1).replace(".", ",")} quocientes.</p>`;
+  return html;
+}
+
 /* Onde foi votado: mapa dos locais de votação com mais votos e, nos cargos estaduais e federais, os municípios. */
 function blocoOndeVotou(e, fontesLista) {
   const s = e.secoes;
@@ -919,7 +935,7 @@ function painelEleicao(nome, e, o = {}) {
     corpo += `<ul class="lista-eleicao">${e.votos.map((v) => `<li><span class="quando">${v.turno}º turno${v.data ? `, ${esc(data(v.data, true))}` : ""}</span>
       <b>${numeroBr(v.votos)} votos</b>${v.pct != null ? ` (${String(v.pct).replace(".", ",")}% dos votos válidos)` : ""}</li>`).join("")}</ul>`;
     corpo += `<p>Local: ${esc(local)}.${e.resultado ? ` Resultado oficial: <b>${esc(rotuloResultado(e.resultado))}</b>.` : ""}</p>`;
-    corpo += blocoDisputa(e, fontesLista) + blocoOndeVotou(e, fontesLista) + blocoCampanha(e, fontesLista);
+    corpo += blocoDisputa(e, fontesLista) + blocoPartido(e, fontesLista) + blocoOndeVotou(e, fontesLista) + blocoCampanha(e, fontesLista);
     if (cargoTse && !MAJORITARIOS.has(cargoTse)) corpo += `<p>Nas eleições proporcionais as vagas são distribuídas entre os partidos pelo quociente eleitoral; por isso o número de votos de cada candidato não diz sozinho quem foi eleito.</p>`;
     if (cargoTse) fontesLista.push([`Constituição Federal, art. ${ARTIGO_ELEICAO[cargoTse]}`, linkCF(ARTIGO_ELEICAO[cargoTse])]);
     if (cargoTse && !MAJORITARIOS.has(cargoTse)) fontesLista.push(["Código Eleitoral, art. 106", CODIGO_ELEITORAL_URL]);

@@ -64,6 +64,8 @@ Sem `--limite` a coleta pega todos os deputados em exercício. `--dias` só vale
 | `dados/senado_ceaps.json` | Gastos da cota (CEAPS) do ano corrente, de todos os senadores, da API administrativa do Senado. Fica fora do git: é baixado de novo a cada execução. |
 | `dados/senado_materias.json` | Situação atual dos projetos de senadores, da API do Senado (até 1500 por execução, `MATERIAS_POR_EXECUCAO`). |
 | `dados/votacoes/` | Histórico de votações, um arquivo por ano. Vai crescendo a cada execução. |
+| `scripts/coletar_prefeituras.py` | Baixa o que os prefeitos de capitais enviaram às Câmaras Municipais que usam o SAPL (Rio Branco, Boa Vista, Natal e João Pessoa), incluindo vetos. As outras capitais mostram só o link oficial da Câmara. |
+| `dados/municipais/` | Cache dessas coletas, um arquivo por ano e capital. |
 | `dados/tse/` | Eleitos de cada eleição, um arquivo por estado. |
 | `dados/proposicoes/` | Proposições já coletadas de cada deputado. A API só aceita 3 meses por consulta, então a primeira coleta é longa e as seguintes buscam só o período novo. |
 | `site/` | O site: HTML, CSS e um único `assets/app.js`, sem framework nem etapa de build. |

@@ -12,6 +12,7 @@ from collections import Counter, defaultdict
 from pathlib import Path
 
 import gerar_estaduais
+import gerar_prefeituras
 import gerar_politicos
 
 RAIZ = Path(__file__).resolve().parent.parent
@@ -213,6 +214,7 @@ def main():
     salvar(SAIDA / "deputados.json", resumo_deps)
     gerar_senadores()
     gerar_politicos.gerar(deputados, gerar_estaduais.gerar())
+    gerar_prefeituras.gerar()
     if (BRUTO / "executivo.json").exists():
         shutil.copy(BRUTO / "executivo.json", SAIDA / "executivo.json")
     shutil.copy(BRUTO / "municipios_ibge.json", SAIDA / "municipios_ibge.json")

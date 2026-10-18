@@ -724,13 +724,20 @@ const ASSEMBLEIAS = { AC: "aleac.gov.br", AL: "al.al.leg.br", AP: "al.ap.leg.br"
   PR: "assembleia.pr.leg.br", PE: "alepe.pe.gov.br", PI: "alepi.pi.leg.br", RJ: "alerj.rj.gov.br", RN: "al.rn.leg.br", RS: "al.rs.gov.br", RO: "al.ro.leg.br",
   RR: "al.rr.leg.br", SC: "alesc.sc.gov.br", SP: "al.sp.gov.br", SE: "al.se.leg.br", TO: "al.to.leg.br" };
 
+/* Site da Câmara Municipal de cada capital, pelo código TSE do município. */
+const CAMARAS_CAPITAIS = { "01392": "riobranco.ac.leg.br", "27855": "maceio.al.leg.br", "06050": "macapa.ap.leg.br", "02550": "cmm.am.gov.br",
+  "38490": "cms.ba.gov.br", "13897": "cmfor.ce.gov.br", "57053": "cmvv.es.gov.br", "93734": "goiania.go.leg.br", "90670": "camaracuiaba.mt.gov.br",
+  "41238": "cmbh.mg.gov.br", "04278": "cmb.pa.gov.br", "20516": "joaopessoa.pb.leg.br", "75353": "cmc.pr.gov.br", "25313": "recife.pe.leg.br",
+  "12190": "teresina.pi.leg.br", "60011": "camara.rio", "17612": "natal.rn.leg.br", "88013": "camarapoa.rs.gov.br", "00035": "portovelho.ro.leg.br",
+  "03018": "boavista.rr.leg.br", "81051": "cmf.sc.gov.br", "71072": "saopaulo.sp.leg.br", "73440": "palmas.to.leg.br" };
+
 /* A casa legislativa ligada ao cargo: quem vota, onde, e o link oficial quando conhecemos. */
 function casaLegislativa(p) {
   const c = p.cargoTse || "";
   if (p.fonte === "senado") return { quem: "o Senado", em: "no Senado", link: ["Senado Federal", "https://www25.senado.leg.br"] };
   if (c === "PRESIDENTE" || c === "VICE-PRESIDENTE") return { quem: "o Congresso Nacional", em: "no Congresso", link: ["Câmara dos Deputados", "https://www.camara.leg.br"] };
   if (c === "GOVERNADOR" || c === "VICE-GOVERNADOR") return { quem: `a Assembleia Legislativa${p.uf ? ` (${UFS[p.uf] || p.uf})` : ""}`, em: "na Assembleia", link: ASSEMBLEIAS[p.uf] ? ["Site da Assembleia Legislativa", `https://www.${ASSEMBLEIAS[p.uf]}`] : null };
-  if (c === "PREFEITO" || c === "VICE-PREFEITO") return { quem: `a Câmara Municipal${p.municipio ? ` de ${p.municipio}` : ""}`, em: "na Câmara Municipal", link: null };
+  if (c === "PREFEITO" || c === "VICE-PREFEITO") return { quem: `a Câmara Municipal${p.municipio ? ` de ${p.municipio}` : ""}`, em: "na Câmara Municipal", link: CAMARAS_CAPITAIS[p.ue] ? ["Site da Câmara Municipal", `https://www.${CAMARAS_CAPITAIS[p.ue]}`] : null };
   if (c === "VEREADOR") return { quem: "", em: `na Câmara Municipal${p.municipio ? ` de ${p.municipio}` : ""}`, link: null };
   return { quem: "", em: `na Assembleia Legislativa${p.uf ? ` (${UFS[p.uf] || p.uf})` : ""}`, link: ASSEMBLEIAS[p.uf] ? ["Site da Assembleia Legislativa", `https://www.${ASSEMBLEIAS[p.uf]}`] : null };
 }
@@ -928,13 +935,19 @@ async function paginaPolitico() {
       if (gov && g.materias.length) doVice = { gov, host: g.host };
     } catch { /* sem dados: cai no texto padrão */ }
   }
+  /* Prefeito de capital em exercício: o que enviou à Câmara Municipal, quando ela usa um sistema que já coletamos. */
+  const prefeito = p.cargoTse === "PREFEITO";
+  if (prefeito && p.estado === "atual" && p.ue) {
+    try { governo = await carregar(`dados/prefeitura/${p.ue}.json`); } catch { /* sem dados: cai no texto padrão */ }
+  }
+  const orgao = prefeito ? "à Câmara Municipal" : "à Assembleia";
   const vetosGov = governo ? governo.materias.filter((x) => x.tipo === "VET") : [];
   const enviadosGov = governo ? governo.materias.filter((x) => x.tipo !== "VET") : [];
   const comGoverno = enviadosGov.length + vetosGov.length > 0;
   const aprovados = enviados.filter((x) => /^(transformad|vetad)/i.test(x.sit || "") || x.veto);
   const painelVotacoes = comGoverno
     ? `<section class="painel"><div class="painel-titulo"><h2>Vetos</h2></div>
-        <p>${esc(p.cargo)} não vota em plenário. O que faz é propor leis, sancionar ou vetar o que a Assembleia aprova, e editar decretos. Aqui estão os vetos enviados à Assembleia desde 2023: <b>${vetosGov.length}</b>. A situação é a que a Assembleia registra no sistema dela, e nem sempre é atualizada.</p>
+        <p>${esc(p.cargo)} não vota em plenário. O que faz é propor leis, sancionar ou vetar o que ${prefeito ? "a Câmara" : "a Assembleia"} aprova, e editar decretos. Aqui estão os vetos enviados ${orgao} desde ${prefeito ? 2025 : 2023}: <b>${vetosGov.length}</b>. A situação é a que ${prefeito ? "a Câmara" : "a Assembleia"} registra no sistema dela, e nem sempre é atualizada.</p>
         <div id="lista-vetos"></div>
         <p>Sanções e decretos ainda não estão no site. Quem vota é ${esc(casa.quem)}.</p>
         ${fontes([casa.link, ["Sistema de processo legislativo", `https://${governo.host}`]])}</section>`
@@ -961,7 +974,7 @@ async function paginaPolitico() {
 
   const painelPropostas = `<section class="painel"><div class="painel-titulo"><h2>Propostas</h2></div>
       ${comDados ? `<p>Projetos de lei, leis complementares, emendas à Constituição e medidas provisórias enviados por ${esc(nome)} ao Congresso desde 2023: <b>${enviados.length}</b>. As propostas de campanha ficam no plano de governo da candidatura no TSE.</p><div id="lista-enviados"></div>` : ""}
-      ${comGoverno ? `<p>Projetos de lei, leis complementares, emendas à Constituição, medidas provisórias e mensagens enviados por ${esc(nome)} à Assembleia desde 2023: <b>${enviadosGov.length}</b>. As propostas de campanha ficam no plano de governo da candidatura no TSE.</p><div id="lista-enviados-gov"></div>` : ""}
+      ${comGoverno ? `<p>Projetos de lei, leis complementares, ${prefeito ? "emendas à Lei Orgânica" : "emendas à Constituição"}, medidas provisórias e mensagens enviados por ${esc(nome)} ${orgao} desde ${prefeito ? 2025 : 2023}: <b>${enviadosGov.length}</b>. As propostas de campanha ficam no plano de governo da candidatura no TSE.</p><div id="lista-enviados-gov"></div>` : ""}
       ${doVice ? `<p>${esc(p.cargo)} não apresenta projetos à Assembleia. Os projetos enviados pelo governo, e os vetos, estão na página de <a href="${esc(linkPolitico(doVice.gov))}">${esc(doVice.gov.n)}</a>.</p>` : ""}
       ${comDados || comGoverno || doVice ? "" : executivo
         ? `<p>As propostas de ${esc(nome)} estão no plano de governo registrado na candidatura, quando o candidato o apresentou ao TSE. Ele fica na página da candidatura, junto com as certidões e a prestação de contas.</p>`

@@ -34,7 +34,7 @@ TOP_DOADORES = 5
 TOP_GASTOS = 6
 TOP_ORIGINARIOS = 5
 REPASSES = ("partido", "outros candidatos")
-VERSAO = 2
+VERSAO = 3
 
 csv.field_size_limit(1 << 24)
 
@@ -111,6 +111,16 @@ def coletar_ano(ano: int) -> None:
         despesa[sq] += v
         por_gasto[sq][nulo(l["DS_ORIGEM_DESPESA"]) or "Não informada"] += v
 
+    pago = defaultdict(float)
+    dono = {}  # SQ_DESPESA -> SQ_CANDIDATO (o arquivo de pagamentos não traz o candidato)
+    for l in linhas(zip_path, f"despesas_contratadas_candidatos_{ano}_BRASIL.csv"):
+        if l["SQ_CANDIDATO"] in alvo:
+            dono[l["SQ_DESPESA"]] = l["SQ_CANDIDATO"]
+    for l in linhas(zip_path, f"despesas_pagas_candidatos_{ano}_BRASIL.csv"):
+        sq = dono.get(l["SQ_DESPESA"])
+        if sq:
+            pago[sq] += valor(l["VR_PAGTO_DESPESA"])
+
     por_uf = defaultdict(dict)
     for sq, uf in alvo.items():
         if sq not in receita and sq not in despesa:
@@ -119,7 +129,7 @@ def coletar_ano(ano: int) -> None:
         orig = sorted(originarios[sq].values(), key=lambda d: -d[1])[:TOP_ORIGINARIOS]
         gastos = sorted(por_gasto[sq].items(), key=lambda g: -g[1])[:TOP_GASTOS]
         por_uf[uf][sq] = {
-            "r": round(receita[sq], 2), "d": round(despesa[sq], 2),
+            "r": round(receita[sq], 2), "d": round(despesa[sq], 2), "p": round(pago[sq], 2),
             "o": sorted(([k, round(v, 2)] for k, v in por_origem[sq].items() if v), key=lambda x: -x[1]),
             "dn": [[n, o, round(v, 2)] for n, o, v in top if v > 0],
             "do": [[n, round(v, 2)] for n, v in orig if v > 0],

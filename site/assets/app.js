@@ -834,7 +834,7 @@ function blocoCampanha(e, fontesLista) {
   const linhas = (itens, rotuloDe) => `<ul class="lista-eleicao">${itens.map((x) => `<li>${rotuloDe(x)}</li>`).join("")}</ul>`;
   fontesLista.unshift([`Prestação de contas de campanha ${e.ano} (TSE)`, `${TSE_CDN}/prestacao_contas/prestacao_de_contas_eleitorais_candidatos_${e.ano}.zip`]);
   return `<h3>Campanha de ${esc(e.ano)}: quem pagou</h3>
-    <p>Arrecadou <b>${reaisCentavos(c.r)}</b> e contratou <b>${reaisCentavos(c.d)}</b> em despesas. Valores declarados pelo próprio candidato na prestação de contas ao TSE.</p>
+    <p>Arrecadou <b>${reaisCentavos(c.r)}</b> e contratou <b>${reaisCentavos(c.d)}</b> em despesas. ${c.p != null && c.d - c.p > 1 ? `Pagou <b>${reaisCentavos(c.p)}</b> até a prestação de contas; <b>${reaisCentavos(c.d - c.p)}</b> ficaram contratados e sem pagamento registrado.` : ""} Valores declarados pelo próprio candidato na prestação de contas ao TSE.</p>
     ${c.o.length ? `<h4>De onde veio o dinheiro</h4>${linhas(c.o, ([o, v]) => `<span class="quando">${esc(o)}</span> <b>${reaisCentavos(v)}</b>${c.r ? ` (${Math.round((100 * v) / c.r)}%)` : ""}`)}` : ""}
     ${c.dn.length ? `<h4>Maiores doadores</h4>${linhas(c.dn, ([n, o, v]) => `<b>${esc(n)}</b> <span class="quando">${esc(o)}</span> <b>${reaisCentavos(v)}</b>`)}
       <p>"Recursos de partido político" inclui o fundo eleitoral e o fundo partidário repassados pelo partido.</p>` : ""}

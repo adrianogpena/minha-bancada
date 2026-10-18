@@ -48,20 +48,20 @@ function perfilDoPolitico(url, p) {
 
 function linksRedes(redes, p) {
   const todas = [...new Set((redes || []).filter((r) => !/\s/.test(r)))];
-  const item = (r) => `<a href="${esc(r)}" rel="noopener">${esc(r.replace(/^https?:\/\/(www\.)?/, "").replace(/[?#].*$/, "").replace(/\/$/, ""))}</a>`;
+  const item = (r) => `<a class="link-rede" href="${esc(r)}" rel="noopener">${esc(r.replace(/^https?:\/\/(www\.)?/, "").replace(/[?#].*$/, "").replace(/\/$/, ""))}</a>`;
   const lista = (itens) => {
-    const aberto = itens.slice(0, 6).join("<br>");
+    const aberto = itens.slice(0, 6).join("");
     const resto = itens.slice(6);
-    return resto.length ? `${aberto}<details><summary>mais ${resto.length}</summary>${resto.join("<br>")}</details>` : aberto;
+    return resto.length ? `${aberto}<details><summary>mais ${resto.length}</summary>${resto.join("")}</details>` : aberto;
   };
   const proprios = todas.filter((r) => perfilDoPolitico(r, p));
   const outros = todas.filter((r) => !perfilDoPolitico(r, p));
   if (!todas.length) return null;
   const fonte = p.fonteRedes || "";
-  let html = proprios.length ? lista(proprios.map((r) => `${item(r)} ${fonte}`)) : "";
+  let html = proprios.length ? lista(proprios.map((r) => `<span class="link-bloco">${item(r)}${fonte}</span>`)) : "";
   if (outros.length) {
     html += `${html ? "<br><br>" : ""}<b>Outros perfis e sites citados na candidatura</b> (sem o nome do político no endereço)<br>`
-      + lista(outros.map((r) => `${item(r)} ${fonte}`));
+      + lista(outros.map((r) => `<span class="link-bloco">${item(r)}${fonte}</span>`));
   }
   return html;
 }
@@ -217,7 +217,7 @@ const linkTramitacao = (id) => `https://www.camara.leg.br/proposicoesWeb/fichade
 
 function fontes(links) {
   if (!links.filter(Boolean).length) return "";
-  return `<span class="fontes">Fonte: ${links.filter(Boolean).map(([t, h]) => `<a href="${esc(h)}" rel="noopener">${esc(t)}</a>`).join(" · ")}</span>`;
+  return `<span class="fontes"><span class="rotulo-fonte">Fonte</span><span class="fontes-lista">${links.filter(Boolean).map(([t, h]) => `<a href="${esc(h)}" rel="noopener">${esc(t)}</a>`).join("")}</span></span>`;
 }
 
 async function paginaDeputado() {
@@ -259,7 +259,7 @@ async function paginaDeputado() {
       <dt>No cargo até</dt><dd>${linhaNoCargoAte({ fimMandato: "2027-01-31", estado: "atual" }, "DEPUTADO FEDERAL")[1]}</dd>
       ${dep.email ? `<dt>E-mail</dt><dd><a href="mailto:${esc(dep.email)}">${esc(dep.email)}</a></dd>` : ""}
       <dt>Página oficial</dt><dd><a href="https://www.camara.leg.br/deputados/${encodeURIComponent(dep.id)}">camara.leg.br/deputados/${esc(dep.id)}</a></dd>
-      ${(dep.redesSociais || []).map((r) => `<dt>Rede social</dt><dd><a href="${esc(r)}" rel="noopener">${esc(r.replace(/^https?:\/\/(www\.)?/, ""))}</a> <span class="fonte-link">fonte: <a href="${CAMARA_API}/deputados/${encodeURIComponent(dep.id)}" rel="noopener">cadastro na API da Câmara</a></span></dd>`).join("")}
+      ${(dep.redesSociais || []).map((r) => `<dt>Rede social</dt><dd><span class="link-bloco"><a class="link-rede" href="${esc(r)}" rel="noopener">${esc(r.replace(/^https?:\/\/(www\.)?/, ""))}</a> <span class="fonte-link"><span class="rotulo-fonte">Fonte</span> <a href="${CAMARA_API}/deputados/${encodeURIComponent(dep.id)}" rel="noopener">cadastro na API da Câmara</a></span></span></dd>`).join("")}
     </dl>
     ${fontes([["Cadastro do deputado (API da Câmara)", `${CAMARA_API}/deputados/${encodeURIComponent(dep.id)}`], ["Portal da Câmara", `https://www.camara.leg.br/deputados/${encodeURIComponent(dep.id)}`]])}`;
 
@@ -746,7 +746,7 @@ const itemExecutivo = (x) => {
 const fonteRedesTse = (p) => {
   if (p.fonte !== "tse") return "";
   const d = divulgaUrl(p);
-  return `<span class="fonte-link">fonte: ${d ? `<a href="${esc(d)}" rel="noopener">candidatura ${esc(p.ano)} no DivulgaCandContas</a> · ` : ""}<a href="${esc(arquivoRedesTse(p))}" rel="noopener">arquivo de redes do TSE</a></span>`;
+  return `<span class="fonte-link"><span class="rotulo-fonte">Fonte</span> ${d ? `<a href="${esc(d)}" rel="noopener">candidatura ${esc(p.ano)} no DivulgaCandContas</a> · ` : ""}<a href="${esc(arquivoRedesTse(p))}" rel="noopener">arquivo de redes do TSE</a></span>`;
 };
 
 const divulgaUrl = (p) => p.fonte === "tse" && p.eleicao && p.ue ? `https://divulgacandcontas.tse.jus.br/divulga/#/candidato/${encodeURIComponent(p.ano)}/${encodeURIComponent(p.eleicao)}/${encodeURIComponent(p.ue)}/${encodeURIComponent(p.sq)}` : null;
@@ -774,7 +774,7 @@ function linhaNoCargoAte(p, cargoTse = p.cargoTse) {
       + (ALTERA_POSSE.has(cargoTse) ? ` e <a href="${EC111_URL}" rel="noopener">Emenda Constitucional 111/2021</a>` : "");
   }
   const antes = p.estado === "eleito" && p.inicioMandato ? `Toma posse em ${data(p.inicioMandato, true)}. Mandato até ` : p.estado === "2turno" ? "Se eleito, até " : "";
-  return ["No cargo até", `${antes}${data(p.fimMandato, true)} ${origem ? `<span class="fonte-link">fonte: ${origem}</span>` : semFonte("prazo do mandato")}`, true];
+  return ["No cargo até", `${antes}${data(p.fimMandato, true)} ${origem ? `<span class="fonte-link"><span class="rotulo-fonte">Fonte</span> ${origem}</span>` : semFonte("prazo do mandato")}`, true];
 }
 
 const numeroBr = (n) => n.toLocaleString("pt-BR");
@@ -893,7 +893,7 @@ async function paginaPolitico() {
     <p>Total: <b>${reaisCentavos(p.totalBens)}</b>${bens.length ? `, em ${bens.length} ${bens.length === 1 ? "item" : "itens"}` : ""}. Valores informados pelo próprio candidato ao registrar a candidatura.</p>
     <div id="lista-bens"></div>
     ${fontes([...fonteTse, ["Bens de candidatos (TSE)", arquivoTse("bem_candidato", p)], ["Portal de Dados Abertos do TSE", "https://dadosabertos.tse.jus.br"]])}`
-    : `<p class="fonte">Fonte: <a href="https://legis.senado.leg.br/dadosabertos">Dados Abertos do Senado Federal</a>.${p.fimMandato ? ` Mandato até ${data(p.fimMandato, true)}.` : ""}</p>`}`;
+    : `<p class="fonte"><span class="rotulo-fonte">Fonte</span> <a href="https://legis.senado.leg.br/dadosabertos">Dados Abertos do Senado Federal</a>.${p.fimMandato ? ` Mandato até ${data(p.fimMandato, true)}.` : ""}</p>`}`;
 
   /* Para estes cargos ainda não temos votos nem projetos coletados; as abas dizem isso e levam à fonte oficial. */
   const presidente = p.cargoTse === "PRESIDENTE" && p.estado === "atual";

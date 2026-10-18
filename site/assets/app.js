@@ -31,6 +31,15 @@ async function carregar(caminho) {
   return r.json();
 }
 
+function linksRedes(redes) {
+  const links = [...new Set((redes || []).filter((r) => !/\s/.test(r)))].map((r) =>
+    `<a href="${esc(r)}" rel="noopener">${esc(r.replace(/^https?:\/\/(www\.)?/, "").replace(/[?#].*$/, "").replace(/\/$/, ""))}</a>`);
+  if (!links.length) return null;
+  const aberto = links.slice(0, 6).join("<br>");
+  const resto = links.slice(6);
+  return resto.length ? `${aberto}<details><summary>mais ${resto.length}</summary>${resto.join("<br>")}</details>` : aberto;
+}
+
 function foto(dep, grande = false) {
   const classe = "foto" + (grande ? " grande" : "");
   const iniciais = esc(dep.nome.split(/\s+/).filter(Boolean).slice(0, 2).map((p) => p[0]).join(""));
@@ -736,6 +745,7 @@ async function paginaPolitico() {
     ["Ocupação declarada", p.ocupacao],
     ["Buscava reeleição", p.fonte === "tse" ? (p.reeleicao ? "Sim" : "Não") : null],
     ["E-mail", p.email ? `<a href="mailto:${esc(p.email)}">${esc(p.email)}</a>` : null, true],
+    ["Redes e sites declarados na candidatura", linksRedes(p.redes), true],
   ].filter(([, v]) => v);
 
   if (p.fonte === "senado") {

@@ -22,6 +22,7 @@ import os
 import sys
 import tempfile
 import zipfile
+from urllib.parse import urlparse
 from collections import Counter, defaultdict
 from pathlib import Path
 
@@ -40,12 +41,19 @@ COLUNAS = ["SQ_CANDIDATO", "NR_TURNO", "DS_CARGO", "DS_SIT_TOT_TURNO", "SG_UF", 
            "NR_CANDIDATO", "NM_CANDIDATO", "NM_URNA_CANDIDATO", "SG_PARTIDO", "SG_FEDERACAO",
            "NM_FEDERACAO", "DT_NASCIMENTO", "DS_GENERO", "DS_GRAU_INSTRUCAO", "DS_OCUPACAO",
            "DS_COR_RACA", "ST_REELEICAO", "NM_COLIGACAO", "CD_ELEICAO", "DS_SITUACAO_CANDIDATURA"]
-VERSAO = 6  # aumente quando mudar o processamento, para refazer os anos em cache
+VERSAO = 7  # aumente quando mudar o processamento, para refazer os anos em cache
 
 ELEITO = {"ELEITO", "ELEITO POR QP", "ELEITO POR MÉDIA", "ELEITO POR MEDIA"}
 SEGUNDO_TURNO = {"2º TURNO", "2O TURNO", "2° TURNO"}
 # cargo do vice -> cargo do titular da mesma chapa
 VICES = {"VICE-PREFEITO": "PREFEITO", "VICE-GOVERNADOR": "GOVERNADOR", "VICE-PRESIDENTE": "PRESIDENTE"}
+
+# fotos só dos cargos estaduais e federais (as de vereador e prefeito somam centenas de MB)
+CARGOS_COM_FOTO = {"PRESIDENTE", "VICE-PRESIDENTE", "GOVERNADOR", "VICE-GOVERNADOR",
+                   "DEPUTADO ESTADUAL", "DEPUTADO DISTRITAL"}
+CDN_FOTOS = "https://cdn.tse.jus.br/estatistica/sead/eleicoes/eleicoes{ano}/fotos/foto_cand{ano}_{uf}_div.zip"
+FOTOS = RAIZ / "site" / "fotos"
+LADO_FOTO = 160
 
 AVISOS = 0
 
@@ -60,7 +68,9 @@ def avisar(msg: str) -> None:
 
 def baixar(url: str) -> Path:
     print(f"Baixando {url}")
-    destino = Path(tempfile.mkstemp(suffix=".zip")[1])
+    fd, caminho = tempfile.mkstemp(suffix=".zip")
+    os.close(fd)
+    destino = Path(caminho)
     with requests.get(url, stream=True, timeout=300,
                       headers={"User-Agent": "minha-bancada (projeto de transparencia)"}) as r:
         r.raise_for_status()
@@ -113,6 +123,73 @@ def titulo(s: str | None) -> str | None:
 def frase(s: str | None) -> str | None:
     """'SUPERIOR COMPLETO' -> 'Superior completo'"""
     return s[:1].upper() + s[1:].lower() if s else s
+
+
+def url_rede(v: str | None) -> str | None:
+    """Só aceita endereços http(s); o TSE traz também @usuario e texto solto."""
+    v = (v or "").strip()
+    if not v or v.startswith("#"):
+        return None
+    if not v.lower().startswith(("http://", "https://")):
+        v = "https://" + v.lstrip("@/")
+    try:
+        partes = urlparse(v)
+    except ValueError:
+        return None
+    return v if partes.netloc and "." in partes.netloc else None
+
+
+def coletar_redes(ano: int, eleitos: dict) -> None:
+    """Redes sociais e sites que cada candidato declarou ao registrar a candidatura."""
+    base = f"{CDN}/consulta_cand/rede_social_candidato_{ano}"
+    # 2022 vem um arquivo por UF; 2024 e 2026, um só
+    urls = [f"{base}_{uf}.zip" for uf in sorted({e["uf"] for e in eleitos.values()})] if ano == 2022 else [f"{base}.zip"]
+    for url in urls:
+        try:
+            z = baixar(url)
+        except Exception as e:
+            avisar(f"redes sociais de {ano} ({url.rsplit('/', 1)[-1]}): {e}")
+            continue
+        for l in linhas_csv(z):
+            e = eleitos.get(l.get("SQ_CANDIDATO"))
+            link = url_rede(l.get("DS_URL"))
+            if e and link and link not in e["redes"]:
+                e["redes"].append(link)
+        z.unlink()
+    print(f"  com redes sociais: {sum(1 for e in eleitos.values() if e['redes'])}")
+
+
+def coletar_fotos(ano: int, eleitos: dict) -> None:
+    """Fotos oficiais da candidatura, reduzidas, só de quem ocupa cargo estadual ou federal."""
+    from PIL import Image
+    por_uf = defaultdict(list)
+    for e in eleitos.values():
+        if e["cargo"] in CARGOS_COM_FOTO:
+            por_uf[e["uf"]].append(e)
+    pasta = FOTOS / str(ano)
+    pasta.mkdir(parents=True, exist_ok=True)
+    for uf, lista in sorted(por_uf.items()):
+        try:
+            z = baixar(CDN_FOTOS.format(ano=ano, uf=uf))
+        except Exception as ex:
+            avisar(f"fotos de {ano}/{uf}: {ex}")
+            continue
+        with zipfile.ZipFile(z) as arq:
+            nomes = {n.rsplit("/", 1)[-1]: n for n in arq.namelist() if n.lower().endswith(".jpg")}
+            for e in lista:
+                nome = nomes.get(f"F{uf}{e['sq']}_div.jpg") or nomes.get(f"FBR{e['sq']}_div.jpg")
+                if not nome:
+                    continue
+                try:
+                    with arq.open(nome) as f:
+                        img = Image.open(f).convert("RGB")
+                    img.thumbnail((LADO_FOTO, LADO_FOTO))
+                    img.save(pasta / f"{e['sq']}.jpg", quality=80, optimize=True)
+                    e["foto"] = f"fotos/{ano}/{e['sq']}.jpg"
+                except Exception as ex:
+                    avisar(f"foto {e['sq']}: {ex}")
+        z.unlink()
+    print(f"  com foto: {sum(1 for e in eleitos.values() if e['foto'])}")
 
 
 def coletar_ano(ano: int) -> None:
@@ -220,6 +297,8 @@ def coletar_ano(ano: int) -> None:
             "eleicao": limpo(l.get("CD_ELEICAO")),
             "bens": [],
             "totalBens": 0.0,
+            "redes": [],
+            "foto": None,
         }
     del candidatos
     print(f"  eleitos{' e no 2º turno' if ano == ANO_EM_ANDAMENTO else ''}: {len(eleitos)}")
@@ -244,7 +323,17 @@ def coletar_ano(ano: int) -> None:
         e["totalBens"] = round(e["totalBens"], 2)
         e["bens"].sort(key=lambda b: -b[2])
 
-    # 4) salva por UF (BR = presidente e vice)
+    # 4) redes sociais declaradas e fotos
+    try:
+        coletar_redes(ano, eleitos)
+    except Exception as e:
+        avisar(f"redes sociais de {ano}: {e}")
+    try:
+        coletar_fotos(ano, eleitos)
+    except Exception as e:
+        avisar(f"fotos de {ano}: {e}")
+
+    # 5) salva por UF (BR = presidente e vice)
     por_uf = defaultdict(list)
     for e in eleitos.values():
         por_uf[e["uf"]].append(e)

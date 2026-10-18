@@ -131,6 +131,7 @@ def gerar(deputados: dict, estaduais: dict | None = None) -> dict:
                     "p": e.get("partido"), "m": e.get("municipio"),
                     "g": e["ue"] if cargo_tse in MUNICIPAIS else None,
                     "e": estado, "b": e.get("totalBens") or None,
+                    "fo": e.get("foto"),
                 })
 
     # cargos federais do Brasil todo, para a visão nacional da página inicial (u = estado)

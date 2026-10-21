@@ -308,81 +308,129 @@ def test_ceaps_agrupa_por_senador_ordena_e_ignora_sem_codigo(dados, monkeypatch)
     assert r["itens"]["1"][0]["valor"] == 0
 
 
-def votacao_s(codigo, data, voto="Sim"):
-    return {"codigoSessaoVotacao": codigo, "dataSessao": data, "siglaMateria": "PL", "numeroMateria": "1", "anoMateria": "2025",
-            "votos": [{"codigoParlamentar": 1, "siglaVotoParlamentar": voto, "descricaoVotoParlamentar": voto}]}
+def votacao_s(codigo, data, voto="Sim", **extra):
+    """Votação no formato do endpoint /votacao."""
+    return {"codigoSessaoVotacao": codigo, "dataSessao": data, "identificacao": "PL 1/2025", "codigoMateria": 10, "resultadoVotacao": "A",
+            "votos": [{"codigoParlamentar": 1, "siglaVotoParlamentar": voto, "descricaoVotoParlamentar": None}], **extra}
 
 
-def test_votacoes_senado_usa_endpoint_alternativo_quando_o_primeiro_falha(dados, monkeypatch):
+def ano_atual(monkeypatch):
     ano = dt.date.today().year
     monkeypatch.setattr(coletar, "INICIO_LEGISLATURA", f"{ano}-01-01")
+    return ano
+
+
+def test_votacoes_senado_consulta_o_endpoint_votacao_por_datas(dados, monkeypatch):
+    ano = ano_atual(monkeypatch)
+    chamadas = []
 
     def get_senado(caminho, **p):
-        if caminho.startswith("/plenario"):
-            raise RuntimeError("HTTP 404")
-        return {"Votacoes": {"Votacao": [votacao_s(1, f"{ano}-01-10"), {"semVotos": True}]}}
+        chamadas.append((caminho, p))
+        return [votacao_s(1, f"{ano}-01-10"), {"semVotos": True}]
 
     monkeypatch.setattr(coletar, "get_senado", get_senado)
     coletar.coletar_votacoes_senado()
+    assert chamadas == [("/votacao", {"dataInicio": f"{ano}-01-01", "dataFim": min(dt.date(ano, 12, 31), dt.date.today()).isoformat()})]
     salvo = json.loads((dados / "senado_votacoes" / f"{ano}.json").read_text())
     assert list(salvo) == ["1"] and salvo["1"]["votos"][0][:2] == ["1", "sim"]
     assert "sim" in json.loads((dados / "senado_votacoes" / "_rotulos.json").read_text())
 
 
 def test_votacoes_senado_so_guarda_votacoes_do_proprio_ano(dados, monkeypatch):
-    ano = dt.date.today().year
-    monkeypatch.setattr(coletar, "INICIO_LEGISLATURA", f"{ano}-01-01")
+    ano = ano_atual(monkeypatch)
     monkeypatch.setattr(coletar, "get_senado", lambda c, **p: [votacao_s(1, f"{ano}-02-01"), votacao_s(2, f"{ano - 1}-12-31")])
     coletar.coletar_votacoes_senado()
     assert list(json.loads((dados / "senado_votacoes" / f"{ano}.json").read_text())) == ["1"]
 
 
+def test_votacoes_senado_preserva_o_que_ja_estava_salvo(dados, monkeypatch):
+    ano = ano_atual(monkeypatch)
+    coletar.salvar(dados / "senado_votacoes" / f"{ano}.json", {"0": {"id": "0", "data": f"{ano}-01-01", "votos": [["1", "sim", "Sim|"]]}})
+    monkeypatch.setattr(coletar, "get_senado", lambda c, **p: [votacao_s(1, f"{ano}-02-01")])
+    coletar.coletar_votacoes_senado()
+    assert sorted(json.loads((dados / "senado_votacoes" / f"{ano}.json").read_text())) == ["0", "1"]
+
+
+def test_votacoes_senado_reclassifica_o_que_ja_estava_salvo(dados, monkeypatch):
+    ano = ano_atual(monkeypatch)
+    coletar.salvar(dados / "senado_votacoes" / f"{ano}.json",
+                   {"0": {"id": "0", "data": f"{ano}-01-01", "votos": [["1", "nao", "P-NRV|Presente – Não registrou voto"]]}})
+    monkeypatch.setattr(coletar, "get_senado", lambda c, **p: [])
+    coletar.coletar_votacoes_senado()
+    assert json.loads((dados / "senado_votacoes" / f"{ano}.json").read_text())["0"]["votos"][0][1] == "ausente"
+
+
 def test_votacoes_senado_sem_resultado_avisa(dados, monkeypatch):
-    ano = dt.date.today().year
-    monkeypatch.setattr(coletar, "INICIO_LEGISLATURA", f"{ano}-01-01")
+    ano = ano_atual(monkeypatch)
     monkeypatch.setattr(coletar, "get_senado", lambda c, **p: [])
     coletar.coletar_votacoes_senado()
     assert any(str(ano) in a for a in coletar.AVISOS)
 
 
-def test_autorias_senado_e_situacao_das_materias(dados, monkeypatch):
-    coletar.salvar(dados / "senado.json", [{"id": "5001"}])
+def test_votacoes_senado_erro_http_avisa_sem_derrubar(dados, monkeypatch):
+    ano = ano_atual(monkeypatch)
+    monkeypatch.setattr(coletar, "get_senado", lambda c, **p: (_ for _ in ()).throw(RuntimeError("HTTP 502")))
+    coletar.coletar_votacoes_senado()
+    assert any("502" in a for a in coletar.AVISOS) and not (dados / "senado_votacoes" / f"{ano}.json").exists()
+
+
+def processo_s(cod, identificacao, **extra):
+    return {"id": cod * 10, "codigoMateria": cod, "identificacao": identificacao, "ementa": f" Ementa {cod} ", "autoria": "Senador Sena Dor (ABC/PE), Senador Outro (XYZ/SP)",
+            "dataApresentacao": "2024-03-04", "situacaoAtual": "ARQUIVADA", "dataSituacaoAtual": "2025-01-02", "tramitando": "Não", **extra}
+
+
+def test_autorias_senado_com_situacao_das_materias(dados, monkeypatch):
+    coletar.salvar(dados / "senado.json", [{"id": "5001", "nome": "Sena Dor"}])
+    chamadas = []
 
     def get_senado(caminho, **p):
-        if caminho == "/senador/5001/autorias":
-            return {"MateriasAutoriaParlamentar": {"Parlamentar": {"Autorias": {"Autoria": [
-                {"IndicadorAutorPrincipal": "Sim", "Materia": {"Codigo": "111", "Sigla": "PL", "Numero": "0010", "Ano": "2024", "Ementa": " Ementa ", "Data": "2024-03-04T00:00"}},
-                {"IndicadorAutorPrincipal": "Não", "Materia": {"Codigo": "112", "Sigla": "REQ", "Numero": "5", "Ano": "2025"}},
-                {"Materia": {"Codigo": "113", "Sigla": "PL", "Numero": "1", "Ano": "2018"}},  # antes de 2019: ignorada
-            ]}}}}
-        if caminho == "/materia/111":
-            return {"DetalheMateria": {"Materia": {"SituacaoAtual": {"Autuacoes": {"Autuacao": {"Situacao": {"DescricaoSituacao": "Arquivada", "DataSituacao": "2025-01-02"}}}},
-                                                   "DadosBasicosMateria": {"DataApresentacao": "2024-03-04", "IndexacaoMateria": "tema"}}}}
-        raise AssertionError(caminho)
+        chamadas.append((caminho, p))
+        return [processo_s(111, "PL 10/2024"), processo_s(112, "REQ 5/2025", autoria="Senador Outro (XYZ/SP), Senador Sena Dor (ABC/PE)"),
+                processo_s(113, "PL 1/2018"),            # antes de 2019: ignorada
+                processo_s(114, "PL 3/2025", situacaoAtual="AGUARDANDO DESPACHO", dataSituacaoAtual="2025-06-01")]
 
     monkeypatch.setattr(coletar, "get_senado", get_senado)
     coletar.coletar_autorias_senado()
+    assert chamadas == [("/processo", {"codigoParlamentarAutor": "5001"})]
     aut = json.loads((dados / "senado_autorias.json").read_text())["5001"]
-    assert [a["id"] for a in aut] == ["112", "111"]  # 2025 antes de 2024
+    assert [a["id"] for a in aut] == ["112", "114", "111"]   # 2025 (nº 5 antes do 3) e depois 2024
     pl = next(a for a in aut if a["id"] == "111")
-    assert pl["principal"] is True and pl["ementa"] == "Ementa" and pl["ap"] == "2024-03-04"
+    assert pl["principal"] is True and pl["ementa"] == "Ementa 111" and pl["ap"] == "2024-03-04" and pl["sit"] == "ARQUIVADA" and pl["dt"] == "2025-01-02"
+    assert next(a for a in aut if a["id"] == "112")["principal"] is False   # o primeiro autor é outro
     cache = json.loads((dados / "senado_materias.json").read_text())
-    assert list(cache) == ["111"]  # REQ não é projeto
-    assert cache["111"]["sit"] == "Arquivada" and cache["111"]["fim"] is True and cache["111"]["kw"] == "tema"
+    assert sorted(cache) == ["111", "114"]   # REQ não é projeto
+    assert cache["111"] == {"sit": "ARQUIVADA", "data": "2025-01-02", "ap": "2024-03-04", "proc": 1110}
+    assert cache["114"]["sit"] == "AGUARDANDO DESPACHO"
 
 
-def test_autorias_senado_falha_individual_nao_derruba(dados, monkeypatch):
-    coletar.salvar(dados / "senado.json", [{"id": "1"}, {"id": "2"}])
+def test_autorias_senado_coautoria_vira_uma_materia_so(dados, monkeypatch):
+    coletar.salvar(dados / "senado.json", [{"id": "1", "nome": "A"}, {"id": "2", "nome": "B"}])
+    monkeypatch.setattr(coletar, "get_senado", lambda c, **p: [processo_s(111, "PL 10/2024")])
+    coletar.coletar_autorias_senado()
+    assert len(json.loads((dados / "senado_materias.json").read_text())) == 1
+
+
+def test_autorias_senado_falha_individual_nao_derruba_nem_apaga_o_cache(dados, monkeypatch):
+    coletar.salvar(dados / "senado.json", [{"id": "1", "nome": "A"}, {"id": "2", "nome": "B"}])
+    coletar.salvar(dados / "senado_materias.json", {"999": {"sit": "APROVADA", "data": None, "ap": None, "proc": 1}})
 
     def get_senado(caminho, **p):
-        if caminho == "/senador/1/autorias":
+        if p["codigoParlamentarAutor"] == "1":
             raise RuntimeError("HTTP 503")
-        return {"Autoria": []}
+        return [processo_s(111, "PL 10/2024")]
 
     monkeypatch.setattr(coletar, "get_senado", get_senado)
     coletar.coletar_autorias_senado()
     assert list(json.loads((dados / "senado_autorias.json").read_text())) == ["2"]
+    assert sorted(json.loads((dados / "senado_materias.json").read_text())) == ["111", "999"]
     assert coletar.AVISOS
+
+
+def test_autorias_senado_sem_lista_de_senadores_nao_apaga_nada(dados):
+    coletar.salvar(dados / "senado_materias.json", {"1": {"sit": "X"}})
+    with pytest.raises(RuntimeError, match="senadores vazia"):
+        coletar.coletar_autorias_senado()
+    assert json.loads((dados / "senado_materias.json").read_text()) == {"1": {"sit": "X"}}
 
 
 # ---------------------------------------------------------------- main

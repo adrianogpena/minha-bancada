@@ -18,7 +18,7 @@ def csv(colunas, linhas):
 def cand(sq, cargo, sit, nr, nome, ue="71072", uf="SP", turno=1, **extra):
     base = {"SQ_CANDIDATO": sq, "NR_TURNO": turno, "DS_CARGO": cargo, "DS_SIT_TOT_TURNO": sit, "SG_UF": uf, "SG_UE": ue, "NM_UE": "SÃO PAULO",
             "NR_CANDIDATO": nr, "NM_CANDIDATO": nome, "NM_URNA_CANDIDATO": nome, "SG_PARTIDO": "ABC", "DT_NASCIMENTO": "03/02/1980",
-            "DS_GENERO": "FEMININO", "DS_GRAU_INSTRUCAO": "SUPERIOR COMPLETO", "DS_OCUPACAO": "ADVOGADO", "ST_REELEICAO": "S",
+            "DS_GENERO": "FEMININO", "DS_GRAU_INSTRUCAO": "SUPERIOR COMPLETO", "DS_OCUPACAO": "ADVOGADO",
             "DS_EMAIL": "FULANO@EXEMPLO.COM", "CD_ELEICAO": "619", "SG_FEDERACAO": "#NULO#", "NM_COLIGACAO": "UNIÃO DE TODOS", "DS_EMAIL ": ""}
     base.update(extra)
     return [base.get(c, "#NULO#") for c in CAND]
@@ -84,7 +84,7 @@ def test_coletar_ano_2024_completo(tse, tmp_path):
     prefeito = sp["1"]
     assert prefeito["nome"] == "José da Silva" and prefeito["cargo"] == "PREFEITO" and prefeito["situacao"] == "eleito"
     assert prefeito["municipio"] == "São Paulo" and prefeito["nascimento"] == "1980-02-03" and prefeito["email"] == "fulano@exemplo.com"
-    assert prefeito["instrucao"] == "Superior completo" and prefeito["reeleicao"] is True and prefeito["federacao"] is None
+    assert prefeito["instrucao"] == "Superior completo" and "reeleicao" not in prefeito and prefeito["federacao"] is None
     assert prefeito["votos"] == [{"turno": 1, "data": "2024-10-06", "votos": 400, "pct": 40.0}]   # 400 de 1000 válidos
     assert prefeito["totalBens"] == 300000.5 and prefeito["bens"][0] == ["Casa", "Casa na praia", 250000.5]  # ordenado por valor
     assert prefeito["redes"] == ["https://instagram.com/jose"]   # sem duplicata nem @usuario

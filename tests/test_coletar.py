@@ -117,29 +117,26 @@ def test_situacao_final_falsa(sit):
 
 # ---------------------------------------------------------------- Senado
 
-def test_achar_em_qualquer_nivel():
-    obj = {"a": [{"b": {"alvo": 5}}]}
-    assert coletar.achar(obj, "alvo") == 5
-    assert coletar.achar(obj, "nada") is None
-    assert coletar.achar([{"x": 1}, {"alvo": 2}], "alvo") == 2
-
-
-def test_como_lista():
-    assert coletar.como_lista(None) == []
-    assert coletar.como_lista({"a": 1}) == [{"a": 1}]
-    assert coletar.como_lista([1, 2]) == [1, 2]
-
-
 @pytest.mark.parametrize("sigla,desc,esperado", [
     ("Sim", None, "sim"),
     ("Não", "Não", "nao"),
+    ("Abstenção", None, "abstencao"),
+    ("Presidente (art. 51 RISF)", None, "art17"),
+    ("Votou", None, "outro"),                       # votação secreta
+    ("NCom", "Não Compareceu", "ausente"),          # "Não compareceu" não é voto contra
+    ("P-NRV", "Presente – Não registrou voto", "ausente"),   # estava presente, mas não votou "Não"
+    ("NA", "Dispositivo não citado", "ausente"),
+    ("AP", "Atividade parlamentar", "ausente"),
+    ("LS", "Licença saúde", "ausente"),
+    ("LP", "Licença Particular", "ausente"),
+    ("LAP", "Licença paternidade ou ao adotante", "ausente"),
+    ("MIS", "Missão da Casa no País/exterior", "ausente"),
+    # siglas que o Senado ainda não usava: cai na descrição
     (None, "Voto contrário", "nao"),
     (None, "Voto a favor", "sim"),
-    ("NCom", "Não compareceu", "ausente"),  # "Não compareceu" não é voto contra
     (None, "Licença", "ausente"),
-    ("Abstenção", None, "abstencao"),
     (None, "Obstrução", "obstrucao"),
-    (None, "Presidente (art. 51 RISF)", "art17"),
+    ("XX", "Presente sem voto", "ausente"),
     (None, "Xyz", "outro"),
     (None, None, "outro"),
 ])
@@ -148,29 +145,23 @@ def test_tipo_voto_senado(sigla, desc, esperado):
 
 
 @pytest.mark.parametrize("texto,esperado", [
-    ("Aprovado", 1), ("APROVADA", 1), ("A", 1), ("Rejeitada", 0), ("Prejudicado", 0), ("P", 0), ("Retirado", None), (None, None), ("", None),
+    ("Aprovado", 1), ("APROVADA", 1), ("A", 1), ("Rejeitada", 0), ("Prejudicado", 0), ("R", 0), ("P", 0), ("Retirado", None), (None, None), ("", None),
 ])
 def test_resultado_senado(texto, esperado):
-    assert coletar.resultado_senado(texto, 0, 0) == esperado
-
-
-def test_pegar_ignora_caixa_e_vazios():
-    assert coletar.pegar({"CodigoX": 7}, "codigox") == 7
-    assert coletar.pegar({"a": "", "b": 2}, "a", "b") == 2
-    assert coletar.pegar({"a": None}, "a") is None
-    assert coletar.pegar("nao-dict", "a") is None
+    assert coletar.resultado_senado(texto) == esperado
 
 
 def votacao_senado(**extra):
+    """Formato do endpoint /votacao."""
     base = {
-        "codigoSessaoVotacao": 123, "dataSessao": "2024-05-10T10:00:00", "horaInicio": "14:35:10",
-        "siglaMateria": "PL", "numeroMateria": "10", "anoMateria": "2024", "codigoMateria": 999,
-        "descricaoVotacao": " Votação do PL ", "resultadoVotacao": "Aprovado",
+        "codigoSessaoVotacao": 7106, "dataSessao": "2026-10-14", "codigoMateria": 174386, "idProcesso": 9056435,
+        "identificacao": "PEC 221/2019", "sigla": "PEC", "numero": "221", "ano": 2019, "ementa": " Altera o art. 7º ",
+        "descricaoVotacao": " Votação nominal da PEC 221/2019. ", "resultadoVotacao": "A", "votacaoSecreta": "N",
         "votos": [
-            {"codigoParlamentar": 1, "siglaVotoParlamentar": "Sim", "descricaoVotoParlamentar": "Sim"},
-            {"codigoParlamentar": 2, "siglaVotoParlamentar": "Não", "descricaoVotoParlamentar": "Não"},
-            {"codigoParlamentar": 3, "siglaVotoParlamentar": "Sim", "descricaoVotoParlamentar": "Sim"},
-            {"parlamentar": {"codigoParlamentar": 4}, "descricaoVotoParlamentar": "Abstenção"},
+            {"codigoParlamentar": 5672, "siglaVotoParlamentar": "Sim", "descricaoVotoParlamentar": None},
+            {"codigoParlamentar": 5982, "siglaVotoParlamentar": "Não", "descricaoVotoParlamentar": None},
+            {"codigoParlamentar": 6358, "siglaVotoParlamentar": "P-NRV", "descricaoVotoParlamentar": "Presente – Não registrou voto"},
+            {"codigoParlamentar": 1, "siglaVotoParlamentar": "Abstenção", "descricaoVotoParlamentar": None},
             {"siglaVotoParlamentar": "Sim"},  # sem código: ignorado
         ],
     }
@@ -179,31 +170,67 @@ def votacao_senado(**extra):
 
 def test_normalizar_votacao_senado():
     v = coletar.normalizar_votacao_senado(votacao_senado())
-    assert v["id"] == "123"
-    assert v["data"] == "2024-05-10"
-    assert v["hora"] == "14:35"
-    assert v["proposicao"] == "PL 10/2024"
-    assert v["propId"] == 999
-    assert v["aprovada"] == 1
-    assert v["descricao"] == "Votação do PL"
-    assert [x[:2] for x in v["votos"]] == [["1", "sim"], ["2", "nao"], ["3", "sim"], ["4", "abstencao"]]
+    assert v["id"] == "7106" and v["data"] == "2026-10-14" and v["hora"] is None
+    assert v["proposicao"] == "PEC 221/2019" and v["propId"] == 174386
+    assert v["ementa"] == "Altera o art. 7º" and v["descricao"] == "Votação nominal da PEC 221/2019."
+    assert v["aprovada"] == 1 and v["resultadoTexto"] == "A"
+    assert v["votos"] == [["5672", "sim", "Sim|"], ["5982", "nao", "Não|"],
+                          ["6358", "ausente", "P-NRV|Presente – Não registrou voto"], ["1", "abstencao", "Abstenção|"]]
 
 
-def test_normalizar_votacao_senado_votos_em_dict_e_data_compacta():
-    bruto = votacao_senado(dataSessao="20240510", votos={"VotoParlamentar": [{"codigoParlamentar": 1, "siglaVotoParlamentar": "Sim"}]})
-    v = coletar.normalizar_votacao_senado(bruto)
-    assert v["data"] == "2024-05-10"
-    assert len(v["votos"]) == 1
+def test_normalizar_votacao_senado_rejeitada_e_sem_ementa():
+    v = coletar.normalizar_votacao_senado(votacao_senado(resultadoVotacao="R", ementa=None))
+    assert v["aprovada"] == 0 and v["ementa"] is None
 
 
 def test_normalizar_votacao_senado_sem_votos_nominais_e_ignorada():
     assert coletar.normalizar_votacao_senado(votacao_senado(votos=[])) is None
+    assert coletar.normalizar_votacao_senado(votacao_senado(votos=None)) is None
 
 
 def test_normalizar_votacao_senado_sem_data_e_ignorada():
     assert coletar.normalizar_votacao_senado(votacao_senado(dataSessao=None)) is None
 
 
-def test_normalizar_votacao_senado_data_na_sessao_plenaria():
-    bruto = votacao_senado(dataSessao=None, sessaoPlenaria={"dataSessao": "2024-06-01"})
-    assert coletar.normalizar_votacao_senado(bruto)["data"] == "2024-06-01"
+def test_reclassificar_votos_senado_usa_o_rotulo_original(tmp_path):
+    coletar.salvar(tmp_path / "2025.json", {"1": {"id": "1", "votos": [
+        ["1", "nao", "P-NRV|Presente – Não registrou voto"], ["2", "nao", "Não|Não"], ["3", "outro", "AP|Atividade parlamentar"], ["4", "sim"]]}})
+    assert coletar.reclassificar_votos_senado(tmp_path) == 2
+    votos = coletar.ler(tmp_path / "2025.json", {})["1"]["votos"]
+    assert [x[1] for x in votos] == ["ausente", "nao", "ausente", "sim"]
+    assert coletar.reclassificar_votos_senado(tmp_path) == 0   # idempotente
+
+
+@pytest.mark.parametrize("autoria,nome,esperado", [
+    ("Senador Alan Rick (UNIÃO/AC), Senador Flávio Arns (PSB/PR)", "Alan Rick", True),
+    ("Senador Alan Rick (UNIÃO/AC), Senador Flávio Arns (PSB/PR)", "Flávio Arns", False),   # só o primeiro é principal
+    ("Senadora Damares Alves (REPUBLICANOS/DF)", "damares alves", True),
+    ("Líder do PL Carlos Portinho (PL/RJ)", "Carlos Portinho", False),
+    ("Câmara dos Deputados", "Alan Rick", False),
+    (None, "Alan Rick", False),
+    ("Senador Alan Rick (UNIÃO/AC)", None, False),
+])
+def test_primeiro_autor_senado(autoria, nome, esperado):
+    assert coletar.primeiro_autor_senado(autoria, nome) is esperado
+
+
+def processo(**extra):
+    base = {"id": 9056435, "codigoMateria": 174386, "identificacao": "PEC 221/2019", "ementa": " Altera o art. 7º ", "autoria": "Senador Alan Rick (UNIÃO/AC)",
+            "dataApresentacao": "2026-05-28", "situacaoAtual": "AGUARDANDO DESPACHO", "dataSituacaoAtual": "2026-06-01", "tramitando": "Sim"}
+    return {**base, **extra}
+
+
+def test_autoria_senado():
+    a = coletar.autoria_senado(processo(), "Alan Rick")
+    assert a == {"id": "174386", "proc": 9056435, "tipo": "PEC", "numero": "221", "ano": 2019, "ementa": "Altera o art. 7º", "principal": True,
+                 "ap": "2026-05-28", "sit": "AGUARDANDO DESPACHO", "dt": "2026-06-01"}
+
+
+def test_autoria_senado_numero_com_ponto_e_tipo_com_ponto():
+    a = coletar.autoria_senado(processo(identificacao="R.S 1.234/2024"), "x")
+    assert a["tipo"] == "R.S" and a["numero"] == "1234"
+
+
+@pytest.mark.parametrize("extra", [{"identificacao": "PL 1/2018"}, {"identificacao": "sem numero"}, {"codigoMateria": None}, {"identificacao": None}])
+def test_autoria_senado_descarta_o_que_o_site_nao_mostra(extra):
+    assert coletar.autoria_senado(processo(**extra), "x") is None

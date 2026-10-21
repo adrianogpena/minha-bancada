@@ -1,357 +1,360 @@
 {
- "fonte": "https://legis.senado.leg.br/dadosabertos/plenario/votacao/nominal/{ano}",
+ "fonte": "https://legis.senado.leg.br/dadosabertos/votacao",
  "capturadoEm": "2026-10-21",
- "amostra": {
-  "ListaVotacoes": {
-   "noNamespaceSchemaLocation": "https://legis.senado.leg.br/dadosabertos/dados/ListaVotacoesv2.xsd",
-   "Metadados": {
-    "Versao": "21/10/2026 14:22:02",
-    "VersaoServico": "2",
-    "DataVersaoServico": "2017-02-01",
-    "DescricaoDataSet": "Lista de Votações Nominais por ano das Sessões.",
-    "Descontinuacao": {
-     "DataDepreciacao": "2025-03-18",
-     "DataDesativacaoCompleta": "2026-02-01",
-     "UrlServicoSubstituto": "https://legis.senado.leg.br/dadosabertos/votacao"
-    }
+ "amostra": [
+  {
+   "ano": 2022,
+   "casaSessao": "SF",
+   "codigoMateria": 171682,
+   "codigoSessao": 581816,
+   "codigoSessaoLegislativa": 874,
+   "codigoSessaoVotacao": 7101,
+   "dataApresentacao": "2025-11-17",
+   "dataSessao": "2026-08-12",
+   "descricaoVotacao": "Votação nominal do Substitutivo da Câmara dos Deputados ao Projeto de Lei Complementar nº 124, de 2022, na forma do texto consolidado apresentado pelo parecer.",
+   "ementa": "Altera a Lei nº 5.172, de 25 de outubro de 1966 (Código Tributário Nacional), a fim de estabelecer normas gerais sobre solução de controvérsias, consensualidade e processo administrativo em matéria tributária e aduaneira; e altera a Lei nº 9.430, de 27 de dezembro de 1996.",
+   "idProcesso": 8957659,
+   "identificacao": "PLP 124/2022 (Substitutivo-CD)",
+   "informeLegislativo": {
+    "casaColegiado": "SF",
+    "casaEnteAdm": "SF",
+    "codigoColegiado": 1998,
+    "data": "2026-08-12",
+    "id": 2307003,
+    "idEnteAdm": 13594,
+    "idEvento": 11366137,
+    "nomeColegiado": "Plenário do Senado Federal",
+    "nomeEnteAdm": "Secretaria de Atas e Diários",
+    "numeroAutuacao": 1,
+    "siglaColegiado": "PLEN",
+    "siglaEnteAdm": "SEADI",
+    "texto": "(Sessão Deliberativa Ordinária - semipresencial - de 12 de agosto de 2026) \nAprovado o Requerimento nº 467, de 2026, por meio do qual se solicita urgência para a matéria. \nEncaminhado à publicação o Parecer nº 138, de 2026-Plen/SF, proferido pelo Senador Efraim Filho, no qual se acolhe parte das alt"
    },
-   "Votacoes": {
-    "Votacao": [
-     {
-      "CodigoSessao": "550469",
-      "SiglaCasa": "SF",
-      "CodigoSessaoLegislativa": "874",
-      "TipoSessao": "DOR",
-      "NumeroSessao": "4",
-      "DataSessao": "2026-02-24",
-      "HoraInicio": "14:00",
-      "CodigoVotacaoSve": "4360",
-      "CodigoSessaoVotacao": "7047",
-      "SequencialSessao": "1",
-      "Secreta": "N",
-      "DescricaoVotacao": "Votação nominal da Emenda nº 5 (Substitutivo) à Proposta de Emenda à Constituição nº 22, de 2025, nos termos do parecer de Plenário (1º Turno).",
-      "Resultado": "A",
-      "CodigoMateria": "168484",
-      "SiglaMateria": "PEC",
-      "NumeroMateria": "22",
-      "AnoMateria": "2025",
-      "SiglaCasaMateria": "SF",
-      "DescricaoObjetivoProcesso": "Iniciadora",
-      "DescricaoIdentificacaoMateria": "PEC 22/2025",
-      "Votos": {
-       "VotoParlamentar": [
-        {
-         "CodigoParlamentar": "22",
-         "NomeParlamentar": "Esperidião Amin",
-         "SexoParlamentar": "M",
-         "SiglaPartido": "PP",
-         "SiglaUF": "SC",
-         "Url": "http://www25.senado.leg.br/web/senadores/senador/-/perfil/22",
-         "Foto": "http://www.senado.leg.br/senadores/img/fotos-oficiais/senador22.jpg",
-         "Tratamento": "Senador",
-         "Voto": "Sim"
-        },
-        {
-         "CodigoParlamentar": "70",
-         "NomeParlamentar": "Renan Calheiros",
-         "SexoParlamentar": "M",
-         "SiglaPartido": "MDB",
-         "SiglaUF": "AL",
-         "Url": "http://www25.senado.leg.br/web/senadores/senador/-/perfil/70",
-         "UrlPaginaParticular": "https://www.renancalheiros.com.br/",
-         "Foto": "http://www.senado.leg.br/senadores/img/fotos-oficiais/senador70.jpg",
-         "Tratamento": "Senador",
-         "Voto": "Sim"
-        }
-       ]
-      }
-     },
-     {
-      "CodigoSessao": "550469",
-      "SiglaCasa": "SF",
-      "CodigoSessaoLegislativa": "874",
-      "TipoSessao": "DOR",
-      "NumeroSessao": "4",
-      "DataSessao": "2026-02-24",
-      "HoraInicio": "14:00",
-      "CodigoVotacaoSve": "4361",
-      "CodigoSessaoVotacao": "7048",
-      "SequencialSessao": "2",
-      "Secreta": "N",
-      "DescricaoVotacao": "Votação nominal da Proposta de Emenda à Constituição nº 22, de 2025, nos termos do parecer da Comissão Diretora (2º Turno).",
-      "Resultado": "A",
-      "CodigoMateria": "168484",
-      "SiglaMateria": "PEC",
-      "NumeroMateria": "22",
-      "AnoMateria": "2025",
-      "SiglaCasaMateria": "SF",
-      "DescricaoObjetivoProcesso": "Iniciadora",
-      "DescricaoIdentificacaoMateria": "PEC 22/2025",
-      "Votos": {
-       "VotoParlamentar": [
-        {
-         "CodigoParlamentar": "22",
-         "NomeParlamentar": "Esperidião Amin",
-         "SexoParlamentar": "M",
-         "SiglaPartido": "PP",
-         "SiglaUF": "SC",
-         "Url": "http://www25.senado.leg.br/web/senadores/senador/-/perfil/22",
-         "Foto": "http://www.senado.leg.br/senadores/img/fotos-oficiais/senador22.jpg",
-         "Tratamento": "Senador",
-         "Voto": "Sim"
-        },
-        {
-         "CodigoParlamentar": "70",
-         "NomeParlamentar": "Renan Calheiros",
-         "SexoParlamentar": "M",
-         "SiglaPartido": "MDB",
-         "SiglaUF": "AL",
-         "Url": "http://www25.senado.leg.br/web/senadores/senador/-/perfil/70",
-         "UrlPaginaParticular": "https://www.renancalheiros.com.br/",
-         "Foto": "http://www.senado.leg.br/senadores/img/fotos-oficiais/senador70.jpg",
-         "Tratamento": "Senador",
-         "Voto": "Sim"
-        }
-       ]
-      }
-     }
-    ]
-   }
+   "numero": "124",
+   "numeroSessao": 113,
+   "resultadoVotacao": "A",
+   "sequencialSessao": 1,
+   "sequencialVotacao": 4415,
+   "sigla": "PLP",
+   "siglaTipoSessao": "DOR",
+   "totalVotosAbstencao": null,
+   "totalVotosNao": null,
+   "totalVotosSim": null,
+   "votacaoSecreta": "N",
+   "votos": [
+    {
+     "codigoParlamentar": 5672,
+     "descricaoVotoParlamentar": null,
+     "nomeParlamentar": "Alan Rick",
+     "sexoParlamentar": "M",
+     "siglaPartidoParlamentar": "REPUBLICANOS",
+     "siglaUFParlamentar": "AC",
+     "siglaVotoParlamentar": "Sim"
+    },
+    {
+     "codigoParlamentar": 5982,
+     "descricaoVotoParlamentar": null,
+     "nomeParlamentar": "Alessandro Vieira",
+     "sexoParlamentar": "M",
+     "siglaPartidoParlamentar": "MDB",
+     "siglaUFParlamentar": "SE",
+     "siglaVotoParlamentar": "Sim"
+    }
+   ]
+  },
+  {
+   "ano": 2026,
+   "casaSessao": "SF",
+   "codigoMateria": 175446,
+   "codigoSessao": 581816,
+   "codigoSessaoLegislativa": 874,
+   "codigoSessaoVotacao": 7102,
+   "dataApresentacao": "2026-08-12",
+   "dataSessao": "2026-08-12",
+   "descricaoVotacao": "Votação nominal do Projeto de Lei Complementar nº 114, de 2026, nos termos do parecer, ressalvado o destaque.",
+   "ementa": "Dispõe sobre regras para renúncias de receita com o objetivo de mitigar os impactos econômicos causados pelo choque no mercado internacional de energia decorrente do conflito no Oriente Médio e excepcionaliza os benefícios tributários destinados à Política Nacional de Minerais Críticos e Estratégico",
+   "idProcesso": 9095355,
+   "identificacao": "PLP 114/2026",
+   "informeLegislativo": {
+    "casaColegiado": "SF",
+    "casaEnteAdm": "SF",
+    "codigoColegiado": 1998,
+    "data": "2026-09-01",
+    "id": 2306950,
+    "idEnteAdm": 13594,
+    "idEvento": 11366120,
+    "nomeColegiado": "Plenário do Senado Federal",
+    "nomeEnteAdm": "Secretaria de Atas e Diários",
+    "numeroAutuacao": 1,
+    "siglaColegiado": "PLEN",
+    "siglaEnteAdm": "SEADI",
+    "texto": "(Sessão Deliberativa Ordinária - semipresencial - de 12 de agosto de 2026)  \nEncaminhado à publicação - e aprovado – o Requerimento nº 587, de 2026, por meio do qual se solicita urgência para a matéria. \nEncaminhado à publicação o Parecer nº 140, de 2026-Plen/SF, proferido pela Senadora Teresa Leitã"
+   },
+   "numero": "114",
+   "numeroSessao": 113,
+   "resultadoVotacao": "A",
+   "sequencialSessao": 2,
+   "sequencialVotacao": 4416,
+   "sigla": "PLP",
+   "siglaTipoSessao": "DOR",
+   "totalVotosAbstencao": null,
+   "totalVotosNao": null,
+   "totalVotosSim": null,
+   "votacaoSecreta": "N",
+   "votos": [
+    {
+     "codigoParlamentar": 5672,
+     "descricaoVotoParlamentar": null,
+     "nomeParlamentar": "Alan Rick",
+     "sexoParlamentar": "M",
+     "siglaPartidoParlamentar": "REPUBLICANOS",
+     "siglaUFParlamentar": "AC",
+     "siglaVotoParlamentar": "Sim"
+    },
+    {
+     "codigoParlamentar": 5982,
+     "descricaoVotoParlamentar": null,
+     "nomeParlamentar": "Alessandro Vieira",
+     "sexoParlamentar": "M",
+     "siglaPartidoParlamentar": "MDB",
+     "siglaUFParlamentar": "SE",
+     "siglaVotoParlamentar": "Sim"
+    }
+   ]
   }
- },
+ ],
  "forma": {
-  "ListaVotacoes": {
+  "[]": {
    "tipos": [
     "dict"
    ]
   },
-  "ListaVotacoes.Metadados": {
+  "[].ano": {
+   "tipos": [
+    "int"
+   ]
+  },
+  "[].casaSessao": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "[].codigoMateria": {
+   "tipos": [
+    "int"
+   ]
+  },
+  "[].codigoSessao": {
+   "tipos": [
+    "int"
+   ]
+  },
+  "[].codigoSessaoLegislativa": {
+   "tipos": [
+    "int"
+   ]
+  },
+  "[].codigoSessaoVotacao": {
+   "tipos": [
+    "int"
+   ]
+  },
+  "[].dataApresentacao": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "[].dataSessao": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "[].descricaoVotacao": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "[].ementa": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "[].idProcesso": {
+   "tipos": [
+    "int"
+   ]
+  },
+  "[].identificacao": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "[].informeLegislativo": {
    "tipos": [
     "dict"
    ]
   },
-  "ListaVotacoes.Metadados.DataVersaoServico": {
+  "[].informeLegislativo.casaColegiado": {
    "tipos": [
     "str"
    ]
   },
-  "ListaVotacoes.Metadados.Descontinuacao": {
-   "tipos": [
-    "dict"
-   ]
-  },
-  "ListaVotacoes.Metadados.Descontinuacao.DataDepreciacao": {
+  "[].informeLegislativo.casaEnteAdm": {
    "tipos": [
     "str"
    ]
   },
-  "ListaVotacoes.Metadados.Descontinuacao.DataDesativacaoCompleta": {
+  "[].informeLegislativo.codigoColegiado": {
+   "tipos": [
+    "int"
+   ]
+  },
+  "[].informeLegislativo.data": {
    "tipos": [
     "str"
    ]
   },
-  "ListaVotacoes.Metadados.Descontinuacao.UrlServicoSubstituto": {
+  "[].informeLegislativo.id": {
+   "tipos": [
+    "int"
+   ]
+  },
+  "[].informeLegislativo.idEnteAdm": {
+   "tipos": [
+    "int"
+   ]
+  },
+  "[].informeLegislativo.idEvento": {
+   "tipos": [
+    "int"
+   ]
+  },
+  "[].informeLegislativo.nomeColegiado": {
    "tipos": [
     "str"
    ]
   },
-  "ListaVotacoes.Metadados.DescricaoDataSet": {
+  "[].informeLegislativo.nomeEnteAdm": {
    "tipos": [
     "str"
    ]
   },
-  "ListaVotacoes.Metadados.Versao": {
+  "[].informeLegislativo.numeroAutuacao": {
+   "tipos": [
+    "int"
+   ]
+  },
+  "[].informeLegislativo.siglaColegiado": {
    "tipos": [
     "str"
    ]
   },
-  "ListaVotacoes.Metadados.VersaoServico": {
+  "[].informeLegislativo.siglaEnteAdm": {
    "tipos": [
     "str"
    ]
   },
-  "ListaVotacoes.Votacoes": {
+  "[].informeLegislativo.texto": {
    "tipos": [
-    "dict"
+    "str"
    ]
   },
-  "ListaVotacoes.Votacoes.Votacao": {
+  "[].numero": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "[].numeroSessao": {
+   "tipos": [
+    "int"
+   ]
+  },
+  "[].resultadoVotacao": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "[].sequencialSessao": {
+   "tipos": [
+    "int"
+   ]
+  },
+  "[].sequencialVotacao": {
+   "tipos": [
+    "int"
+   ]
+  },
+  "[].sigla": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "[].siglaTipoSessao": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "[].totalVotosAbstencao": {
+   "tipos": [
+    "null"
+   ]
+  },
+  "[].totalVotosNao": {
+   "tipos": [
+    "null"
+   ]
+  },
+  "[].totalVotosSim": {
+   "tipos": [
+    "null"
+   ]
+  },
+  "[].votacaoSecreta": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "[].votos": {
    "tipos": [
     "list"
    ]
   },
-  "ListaVotacoes.Votacoes.Votacao[]": {
+  "[].votos[]": {
    "tipos": [
     "dict"
    ]
   },
-  "ListaVotacoes.Votacoes.Votacao[].AnoMateria": {
+  "[].votos[].codigoParlamentar": {
+   "tipos": [
+    "int"
+   ]
+  },
+  "[].votos[].descricaoVotoParlamentar": {
+   "tipos": [
+    "null"
+   ]
+  },
+  "[].votos[].nomeParlamentar": {
    "tipos": [
     "str"
    ]
   },
-  "ListaVotacoes.Votacoes.Votacao[].CodigoMateria": {
+  "[].votos[].sexoParlamentar": {
    "tipos": [
     "str"
    ]
   },
-  "ListaVotacoes.Votacoes.Votacao[].CodigoSessao": {
+  "[].votos[].siglaPartidoParlamentar": {
    "tipos": [
     "str"
    ]
   },
-  "ListaVotacoes.Votacoes.Votacao[].CodigoSessaoLegislativa": {
+  "[].votos[].siglaUFParlamentar": {
    "tipos": [
     "str"
    ]
   },
-  "ListaVotacoes.Votacoes.Votacao[].CodigoSessaoVotacao": {
-   "tipos": [
-    "str"
-   ]
-  },
-  "ListaVotacoes.Votacoes.Votacao[].CodigoVotacaoSve": {
-   "tipos": [
-    "str"
-   ]
-  },
-  "ListaVotacoes.Votacoes.Votacao[].DataSessao": {
-   "tipos": [
-    "str"
-   ]
-  },
-  "ListaVotacoes.Votacoes.Votacao[].DescricaoIdentificacaoMateria": {
-   "tipos": [
-    "str"
-   ]
-  },
-  "ListaVotacoes.Votacoes.Votacao[].DescricaoObjetivoProcesso": {
-   "tipos": [
-    "str"
-   ]
-  },
-  "ListaVotacoes.Votacoes.Votacao[].DescricaoVotacao": {
-   "tipos": [
-    "str"
-   ]
-  },
-  "ListaVotacoes.Votacoes.Votacao[].HoraInicio": {
-   "tipos": [
-    "str"
-   ]
-  },
-  "ListaVotacoes.Votacoes.Votacao[].NumeroMateria": {
-   "tipos": [
-    "str"
-   ]
-  },
-  "ListaVotacoes.Votacoes.Votacao[].NumeroSessao": {
-   "tipos": [
-    "str"
-   ]
-  },
-  "ListaVotacoes.Votacoes.Votacao[].Resultado": {
-   "tipos": [
-    "str"
-   ]
-  },
-  "ListaVotacoes.Votacoes.Votacao[].Secreta": {
-   "tipos": [
-    "str"
-   ]
-  },
-  "ListaVotacoes.Votacoes.Votacao[].SequencialSessao": {
-   "tipos": [
-    "str"
-   ]
-  },
-  "ListaVotacoes.Votacoes.Votacao[].SiglaCasa": {
-   "tipos": [
-    "str"
-   ]
-  },
-  "ListaVotacoes.Votacoes.Votacao[].SiglaCasaMateria": {
-   "tipos": [
-    "str"
-   ]
-  },
-  "ListaVotacoes.Votacoes.Votacao[].SiglaMateria": {
-   "tipos": [
-    "str"
-   ]
-  },
-  "ListaVotacoes.Votacoes.Votacao[].TipoSessao": {
-   "tipos": [
-    "str"
-   ]
-  },
-  "ListaVotacoes.Votacoes.Votacao[].Votos": {
-   "tipos": [
-    "dict"
-   ]
-  },
-  "ListaVotacoes.Votacoes.Votacao[].Votos.VotoParlamentar": {
-   "tipos": [
-    "list"
-   ]
-  },
-  "ListaVotacoes.Votacoes.Votacao[].Votos.VotoParlamentar[]": {
-   "tipos": [
-    "dict"
-   ]
-  },
-  "ListaVotacoes.Votacoes.Votacao[].Votos.VotoParlamentar[].CodigoParlamentar": {
-   "tipos": [
-    "str"
-   ]
-  },
-  "ListaVotacoes.Votacoes.Votacao[].Votos.VotoParlamentar[].Foto": {
-   "tipos": [
-    "str"
-   ]
-  },
-  "ListaVotacoes.Votacoes.Votacao[].Votos.VotoParlamentar[].NomeParlamentar": {
-   "tipos": [
-    "str"
-   ]
-  },
-  "ListaVotacoes.Votacoes.Votacao[].Votos.VotoParlamentar[].SexoParlamentar": {
-   "tipos": [
-    "str"
-   ]
-  },
-  "ListaVotacoes.Votacoes.Votacao[].Votos.VotoParlamentar[].SiglaPartido": {
-   "tipos": [
-    "str"
-   ]
-  },
-  "ListaVotacoes.Votacoes.Votacao[].Votos.VotoParlamentar[].SiglaUF": {
-   "tipos": [
-    "str"
-   ]
-  },
-  "ListaVotacoes.Votacoes.Votacao[].Votos.VotoParlamentar[].Tratamento": {
-   "tipos": [
-    "str"
-   ]
-  },
-  "ListaVotacoes.Votacoes.Votacao[].Votos.VotoParlamentar[].Url": {
-   "tipos": [
-    "str"
-   ]
-  },
-  "ListaVotacoes.Votacoes.Votacao[].Votos.VotoParlamentar[].UrlPaginaParticular": {
-   "tipos": [
-    "str"
-   ],
-   "opcional": true
-  },
-  "ListaVotacoes.Votacoes.Votacao[].Votos.VotoParlamentar[].Voto": {
-   "tipos": [
-    "str"
-   ]
-  },
-  "ListaVotacoes.noNamespaceSchemaLocation": {
+  "[].votos[].siglaVotoParlamentar": {
    "tipos": [
     "str"
    ]

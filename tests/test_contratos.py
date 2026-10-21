@@ -157,10 +157,9 @@ def test_ha_fixtures_gravadas():
     assert len(SO_COM_FIXTURE) >= 30
 
 
-# campos que o coletor lê mas que a API real não devolve na amostra gravada: lacunas conhecidas do projeto.
-# Se a API voltar a devolver o campo (ou o coletor mudar), remova a linha: o teste abaixo exige que a lista seja exata.
+# campos que o coletor lê mas que a API real não devolve na amostra gravada. Se a API voltar a devolver o campo (ou o
+# coletor mudar), remova a linha: o teste abaixo exige que a lista seja exata.
 LACUNAS = {
-    "senado_materia": {"**DescricaoSituacao", "**SiglaLocal", "**DataSituacao", "**ExplicacaoEmentaMateria"},
     # só aparecem para suplentes e para exercícios já encerrados; a amostra de 2 senadores não tem
     "senado_lista": {"ListaParlamentarEmExercicio.Parlamentares.Parlamentar[].Mandato.Titular.NomeParlamentar",
                      "ListaParlamentarEmExercicio.Parlamentares.Parlamentar[].Mandato.Exercicios.Exercicio[].DataFim"},
@@ -186,12 +185,11 @@ PRECISAM_DE_DADOS = {
 }
 
 
-def test_colunas_do_tse_que_o_coletor_tolera_mas_nao_vem():
+def test_colunas_do_tse_que_o_coletor_le_existem_no_csv_real():
     import coletar_tse
     cand = fixture("tse_consulta_cand")["colunas"]
-    ausentes = [col for col in coletar_tse.COLUNAS if col not in cand]
-    # ST_REELEICAO deixou de existir em 2024: o campo "reeleicao" sai sempre False (ver relatório do contrato)
-    assert ausentes == ["ST_REELEICAO"]
+    assert [col for col in coletar_tse.COLUNAS if col not in cand] == []
+    assert "ST_REELEICAO" not in coletar_tse.COLUNAS   # coluna que o TSE parou de publicar
 
 
 # ---------------------------------------------------------------- Câmara com respostas reais
@@ -250,15 +248,25 @@ def test_executivo_com_respostas_reais(monkeypatch):
 
 def test_votacoes_reais_do_senado_sao_normalizadas():
     import coletar
-    lista = amostra("senado_votacoes")["ListaVotacoes"]["Votacoes"]["Votacao"]
+    lista = amostra("senado_votacoes")
     assert lista
     for bruto in lista:
         n = coletar.normalizar_votacao_senado(bruto)
         assert n, "votação nominal real descartada"
-        assert n["id"] and n["data"].count("-") == 2 and n["proposicao"] and n["votos"]
+        assert n["id"] and n["data"].count("-") == 2 and n["proposicao"] and n["votos"] and n["propId"]
         assert n["aprovada"] in (0, 1, None)
         for cod, tipo, rotulo in n["votos"]:
-            assert cod.isdigit() and tipo != "outro", rotulo
+            assert cod.isdigit(), rotulo
+            # nenhum rótulo real pode cair em "outro", exceto o voto secreto ("Votou")
+            assert tipo != "outro" or rotulo.startswith("Votou"), rotulo
+
+
+def test_nenhum_rotulo_real_de_nao_voto_vira_voto_contra():
+    import coletar
+    for bruto in amostra("senado_votacoes"):
+        for x in bruto["votos"]:
+            if x["siglaVotoParlamentar"] in coletar.SEM_VOTO_SENADO:
+                assert coletar.tipo_voto_senado(x["siglaVotoParlamentar"], x["descricaoVotoParlamentar"]) == "ausente"
 
 
 def test_lista_real_de_senadores(monkeypatch, tmp_path):
@@ -276,14 +284,14 @@ def test_lista_real_de_senadores(monkeypatch, tmp_path):
     assert s and all(x["id"] and x["nome"] and x["partido"] and len(x["uf"]) == 2 and x["fimMandato"] for x in s)
 
 
-def test_autorias_reais_do_senado(monkeypatch, tmp_path):
+def test_processos_reais_do_senado_viram_autorias(monkeypatch, tmp_path):
     import coletar
     monkeypatch.setattr(coletar, "DADOS", tmp_path)
-    coletar.salvar(tmp_path / "senado.json", [{"id": "5672"}])
-    monkeypatch.setattr(coletar, "get_senado", lambda caminho, **p: amostra("senado_autorias") if "autorias" in caminho else amostra("senado_materia"))
+    coletar.salvar(tmp_path / "senado.json", [{"id": "5672", "nome": "Alan Rick"}])
+    monkeypatch.setattr(coletar, "get_senado", lambda caminho, **p: amostra("senado_processos"))
     coletar.coletar_autorias_senado()
     aut = json.loads((tmp_path / "senado_autorias.json").read_text())["5672"]
-    assert aut and all(a["id"] and a["tipo"] and a["ano"] >= 2019 for a in aut)
+    assert aut and all(a["id"] and a["proc"] and a["tipo"] and a["numero"].isdigit() and a["ano"] >= 2019 and a["sit"] and a["ap"] for a in aut)
 
 
 def test_ceaps_real(monkeypatch, tmp_path):

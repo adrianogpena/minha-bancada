@@ -300,22 +300,18 @@ def _(ctx):
     return r
 
 
-@ep("senado_votacoes", f"{SENADO}/plenario/votacao/nominal/{{ano}}", ["**votos", "**codigoParlamentar", "**voto", "**dataSessao", "**horaInicio", "**siglaMateria", "**numeroMateria", "**anoMateria",
-                                                                                        "**codigoMateria", "**codigoSessaoVotacao", "**descricaoVotacao", "**resultado"])
+@ep("senado_votacoes", f"{SENADO}/votacao",
+    campos("[]", "codigoSessaoVotacao", "dataSessao", "descricaoVotacao", "identificacao", "codigoMateria", "ementa", "resultadoVotacao", "votacaoSecreta")
+    + campos("[].votos[]", "codigoParlamentar", "siglaVotoParlamentar", "descricaoVotoParlamentar"))
 def _(ctx):
-    return http_json(f"{SENADO}/plenario/votacao/nominal/{ANO}")
+    ini = (HOJE - dt.timedelta(days=90)).isoformat()
+    return http_json(f"{SENADO}/votacao", dataInicio=ini, dataFim=HOJE.isoformat())
 
 
-@ep("senado_autorias", f"{SENADO}/senador/{{id}}/autorias", ["**Autoria", "**Codigo", "**Sigla", "**Numero", "**Ano", "**Ementa", "**Data", "**IndicadorAutorPrincipal"])
+@ep("senado_processos", f"{SENADO}/processo?codigoParlamentarAutor={{id}}",
+    campos("[]", "id", "identificacao", "codigoMateria", "ementa", "autoria", "dataApresentacao", "situacaoAtual", "dataSituacaoAtual"))
 def _(ctx):
-    r = http_json(f"{SENADO}/senador/{ctx['senador']}/autorias")
-    ctx["materia"] = next((x for x in iterar(r, "Codigo")), None)
-    return r
-
-
-@ep("senado_materia", f"{SENADO}/materia/{{codigo}}", ["**DescricaoSituacao", "**SiglaLocal", "**DataSituacao", "**DataApresentacao", "**ExplicacaoEmentaMateria", "**IndexacaoMateria"])
-def _(ctx):
-    return http_json(f"{SENADO}/materia/{ctx['materia']}")
+    return http_json(f"{SENADO}/processo", codigoParlamentarAutor=ctx["senador"])
 
 
 @ep("senado_ceaps", f"{SENADO_ADM}/senadores/despesas_ceaps/{{ano}}",
@@ -512,7 +508,8 @@ def executar(selecionados: list[str], acao):
         try:
             resp = e.buscar(ctx)
         except Exception as ex:
-            saida[e.nome] = (e, None, f"{type(ex).__name__}: {str(ex)[:160]}")
+            if not nomes or e.nome in nomes:   # falha de quem só serve de ponte para o contexto não conta
+                saida[e.nome] = (e, None, f"{type(ex).__name__}: {str(ex)[:160]}")
             continue
         if not nomes or e.nome in nomes:
             saida[e.nome] = (e, resp, None)

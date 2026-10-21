@@ -76,7 +76,6 @@ def gerar_senadores() -> None:
         votacoes += ler(arq, {}).values()
     votacoes.sort(key=lambda v: (v["data"], v.get("hora") or ""), reverse=True)
     autorias = ler(BRUTO / "senado_autorias.json", {}) or {}
-    materias = ler(BRUTO / "senado_materias.json", {}) or {}
     ceaps = ler(BRUTO / "senado_ceaps.json", {}) or {}
 
     resumo, votos_por_sen, primeira = [], defaultdict(dict), {}
@@ -94,15 +93,10 @@ def gerar_senadores() -> None:
                 primeira[sid] = v["data"]
     salvar(SAIDA / "votacoes_senado.json", resumo)
 
-    campos = {"ap": "ap", "sit": "sit", "org": "org", "data": "dt", "det": "det", "kw": "kw"}
     for s in senadores:
         sid = str(s["id"])
         desde = primeira.get(sid)  # antes do primeiro voto o senador pode nem estar em exercício
-        propostas = []
-        for a in autorias.get(sid, []):
-            det = materias.get(a["id"]) or {}
-            extra = {curto: det[longo] for longo, curto in campos.items() if det.get(longo)}
-            propostas.append({**a, **{k: v for k, v in extra.items() if not (k == "ap" and a.get("ap"))}})
+        propostas = [{k: v for k, v in a.items() if v not in (None, "")} for a in autorias.get(sid, [])]
         salvar(SAIDA / "senador" / f"{sid}.json", {
             "id": sid,
             "votos": [{"id": v["id"], "voto": votos_por_sen[sid].get(v["id"], "ausente")}

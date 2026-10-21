@@ -448,3 +448,13 @@ def test_main_etapa_complementar_com_erro_nao_aborta(dados, monkeypatch):
     assert chamadas == ["dep", "vot", "sen", "coletar_votacoes_senado", "coletar_autorias_senado", "coletar_ceaps_senado"]
     assert any("detalhes das proposições" in a for a in coletar.AVISOS)
     assert "atualizadoEm" in json.loads((dados / "meta.json").read_text())
+
+
+def test_votacoes_senado_consulta_de_novo_arquivos_sem_voto_secreto_e_placar(dados, monkeypatch):
+    ano = ano_atual(monkeypatch)
+    coletar.salvar(dados / "senado_votacoes" / f"{ano - 1}.json",
+                   {"0": {"id": "0", "data": f"{ano - 1}-03-01", "votos": [["1", "sim", "Sim|"]]}})
+    chamadas = []
+    monkeypatch.setattr(coletar, "get_senado", lambda c, **p: chamadas.append(p["dataInicio"]) or [])
+    coletar.coletar_votacoes_senado()
+    assert chamadas[0] == f"{ano - 1}-01-01"

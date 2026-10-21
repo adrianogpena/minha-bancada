@@ -337,7 +337,7 @@ def get_senado(caminho: str, **params):
 # siglas de voto do Senado (campo siglaVotoParlamentar) -> chaves que o site usa
 VOTOS_SENADO = {"sim": "sim", "não": "nao", "abstenção": "abstencao", "obstrução": "obstrucao",
                 "presidente (art. 51 risf)": "art17",
-                "votou": "outro"}  # votação secreta: o Senado informa que votou, mas não como
+                "votou": "secreto"}  # votação secreta: o Senado informa que votou, mas não como
 # quem não registrou voto (licenças, missão, atividade parlamentar, presença sem voto, dispositivo não citado)
 SEM_VOTO_SENADO = {"ncom", "ls", "lp", "lap", "mis", "ap", "p-nrv", "na"}
 
@@ -389,12 +389,19 @@ def normalizar_votacao_senado(v: dict) -> dict | None:
     if not votos or not data:
         return None
     resultado = v.get("resultadoVotacao")
+    # placar oficial do Senado; nulo em parte das votações (aí o site conta os votos individuais)
+    totais = {k: v[campo] for k, campo in (("sim", "totalVotosSim"), ("nao", "totalVotosNao"), ("abstencao", "totalVotosAbstencao"))
+              if v.get(campo) is not None}
+    sessao = {k: v[campo] for k, campo in (("numero", "numeroSessao"), ("tipo", "siglaTipoSessao"), ("sequencial", "sequencialSessao"),
+                                           ("votacao", "sequencialVotacao")) if v.get(campo) is not None}
     return {
         "id": str(v["codigoSessaoVotacao"]), "data": data, "hora": None,
         "descricao": (v.get("descricaoVotacao") or "").strip(),
         "proposicao": v.get("identificacao") or None, "propId": v.get("codigoMateria"),
         "ementa": (v.get("ementa") or "").strip() or None,
         "aprovada": resultado_senado(resultado), "resultadoTexto": resultado,
+        "secreta": str(v.get("votacaoSecreta") or "").upper() == "S",
+        "totais": totais or None, "sessao": sessao or None, "processo": v.get("idProcesso"),
         "votos": votos,
     }
 
@@ -427,8 +434,10 @@ def coletar_votacoes_senado() -> None:
     # arquivos de antes de guardarmos o rótulo original do voto: consulta de novo
     sem_rotulo = [int(a.stem) for a in pasta.glob("[0-9]*.json")
                   if any(len(v["votos"][0]) < 3 for v in ler(a, {}).values() if v.get("votos"))]
-    if sem_rotulo:
-        ultimo_ano = min(ultimo_ano, min(sem_rotulo))
+    # arquivos de antes de guardarmos voto secreto e placar oficial: consulta de novo
+    sem_detalhe = [int(a.stem) for a in pasta.glob("[0-9]*.json") if any("secreta" not in v for v in ler(a, {}).values())]
+    if sem_rotulo or sem_detalhe:
+        ultimo_ano = min([ultimo_ano, *sem_rotulo, *sem_detalhe])
     reclassificados = reclassificar_votos_senado(pasta)
     if reclassificados:
         print(f"  Votos do Senado reclassificados a partir do rótulo original: {reclassificados}")

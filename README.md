@@ -136,7 +136,6 @@ Para saber se algum endpoint em uso foi marcado como descontinuado, rode `python
 
 ## Próximos passos possíveis
 
-- Página de detalhe de cada votação do Senado.
 - Assembleias legislativas e câmaras municipais que publicam dados abertos.
 - Orientação dos partidos em cada votação (`/votacoes/{id}/orientacoes`), para mostrar quem votou contra o próprio partido.
 - Votações nas comissões, além do Plenário.

@@ -356,3 +356,11 @@ select:disabled { opacity: .55; }
 .painel details > summary { cursor: pointer; font-weight: 700; }
 .painel .ficha .ficha { margin: 4px 0 4px 8px; }
 .painel a.mais { display: inline-block; text-decoration: none; }
+
+.legenda-status { margin: 10px 0; font-size: 15px; }
+.legenda-status > summary { cursor: pointer; font-weight: 700; }
+.legenda-status dl { margin: 8px 0 0; display: grid; grid-template-columns: max-content 1fr; gap: 6px 14px; }
+.legenda-status dt { font-weight: 700; }
+.legenda-status dd { margin: 0; color: var(--tinta-suave); }
+.aviso-dados { font-size: 14px; color: var(--tinta-suave); border-left: 3px solid var(--linha); padding-left: 10px; margin: 12px 0; }
+@media (max-width: 560px) { .legenda-status dl { grid-template-columns: 1fr; gap: 0; } .legenda-status dd { margin-bottom: 8px; } }

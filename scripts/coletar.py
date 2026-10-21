@@ -275,6 +275,67 @@ def coletar_detalhes_proposicoes() -> None:
     print(f"Detalhes salvos: {feitos}, falhas: {falhas}, no cache: {len(cache)}")
 
 
+# mesmos tipos que o site trata como projeto (TIPOS_PROJETO em site/assets/app.js)
+TIPOS_PROJETO = {"PL", "PLP", "PEC", "PDL", "PRC", "PLC", "PLS", "PRS", "PDS", "PLN", "PFC", "PLV", "MPV"}
+ORCAMENTO_AUTORES = int(os.environ.get("AUTORES_POR_EXECUCAO", "6000"))
+
+
+def autores_da_resposta(autores: list) -> dict:
+    """De /proposicoes/{id}/autores para {"p": idDeputadoPrincipal, "a": [[idDeputado, nome, tipo], ...]},
+    na ordem de assinatura. Quem não é deputado (Executivo, Senado, comissões) entra com id nulo e o
+    `tipo` da Câmara ("Órgão do Poder Executivo"...); para deputados o tipo é omitido.
+    O principal é quem assinou primeiro (proponente 1, senão ordemAssinatura 1); se não for deputado, p fica nulo."""
+    lista = sorted((a for a in autores if a.get("nome")), key=lambda a: a.get("ordemAssinatura") or 10**6)
+    saida = []
+    for a in lista:
+        m = re.search(r"/deputados/(\d+)$", a.get("uri") or "")
+        if m:
+            saida.append([int(m.group(1)), a["nome"].strip()])
+        else:
+            saida.append([None, a["nome"].strip(), (a.get("tipo") or "").strip() or None])
+    if not lista:
+        return {"p": None, "a": []}
+    i = next((k for k, a in enumerate(lista) if a.get("proponente") == 1), 0)
+    return {"p": saida[i][0], "a": saida}
+
+
+def coletar_autores_proposicoes() -> None:
+    """Quem assinou cada projeto e em que ordem, para o site separar autor principal
+    de coautor. Guardado em dados/proposicoes_autores.json (vai para o git). A autoria
+    não muda, então cada projeto é consultado uma vez só; cada execução consulta no
+    máximo ORCAMENTO_AUTORES (os mais novos primeiro) e com os dias o arquivo se completa."""
+    arquivo = DADOS / "proposicoes_autores.json"
+    cache = ler(arquivo, {})
+    todos = set()
+    for arq in (DADOS / "proposicoes").glob("*.json"):
+        for p in ler(arq, {"itens": []})["itens"]:
+            if p.get("siglaTipo") in TIPOS_PROJETO:
+                todos.add(str(p["id"]))
+    faltam = todos - cache.keys()
+    fila = sorted(faltam, key=int, reverse=True)[:ORCAMENTO_AUTORES]
+    print(f"Autores de proposições: {len(todos)} projetos, {len(faltam)} sem autoria; consultando {len(fila)}")
+
+    def buscar(pid: str) -> tuple[str, dict]:
+        return pid, autores_da_resposta(get(f"/proposicoes/{pid}/autores").get("dados", []) or [])
+
+    feitos = falhas = 0
+    with ThreadPoolExecutor(TRABALHADORES) as ex:
+        for f in as_completed([ex.submit(buscar, i) for i in fila]):
+            try:
+                pid, info = f.result()
+                cache[pid] = info
+                feitos += 1
+            except Exception as e:
+                falhas += 1
+                if falhas <= 5:
+                    avisar(f"autores de proposição: {e}")
+            if feitos and feitos % 1000 == 0:
+                salvar(arquivo, cache)  # não perde o trabalho se a execução for interrompida
+    if feitos:  # sem nada novo (ou com a API fora do ar) o arquivo anterior fica como está
+        salvar(arquivo, cache)
+    print(f"Autores salvos: {feitos}, falhas: {falhas}, no arquivo: {len(cache)}")
+
+
 def situacao_final(situacao: str) -> bool:
     """True quando a proposição não vai mais tramitar (não precisa ser reconsultada)."""
     s = (situacao or "").lower()
@@ -656,6 +717,10 @@ def main():
             coletar_detalhes_proposicoes()
         except Exception as e:  # os detalhes são um complemento: não derrubam a coleta
             avisar(f"detalhes das proposições: {e}")
+        try:
+            coletar_autores_proposicoes()
+        except Exception as e:
+            avisar(f"autores das proposições: {e}")
     if a.so in (None, "senado"):
         try:
             coletar_senado()

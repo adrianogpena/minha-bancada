@@ -316,7 +316,8 @@ async function paginaDeputado() {
     linhaDoTempo: votacoes.map((v) => ({ ...v, voto: meus.get(v.id) || "ausente" })), // mais recente primeiro
     proposicoes: dep.proposicoes, tipoProjeto: (p) => !!TIPOS_PROJETO[p.tipo],
     textoLegislatura: "como autor ou coautor nesta legislatura (desde fev. de 2023)",
-    papel: () => "autor ou coautor. A Câmara lista os dois juntos e este site ainda não separa quem assinou primeiro.",
+    papel: (p) => p.principal === undefined ? "autor ou coautor. A Câmara lista os dois juntos e a ordem de assinatura desta proposição ainda não foi coletada."
+      : p.principal ? "<b>autor principal</b> (o primeiro a assinar)." : "<b>coautor</b> (assinou depois do autor principal).",
     aviso: "A situação vem da ficha de tramitação da Câmara e é atualizada aos poucos todo dia.",
     fonteTramitacao: "Ficha de tramitação (Câmara)",
     linkTramitacao: (p) => linkTramitacao(p.id),
@@ -462,7 +463,7 @@ function montarParlamentar(alvo, c) {
       <span class="texto">${esc(p.ementa || "Sem ementa")}</span>
       ${c.papel ? `<span class="texto"><b>Papel de ${esc(nome)}:</b> ${c.papel(p)}</span>` : ""}
       ${p.sit ? `<span class="texto"><b>Situação:</b> ${esc(p.sit)}${p.org ? ` (${esc(p.org)})` : ""}${p.dt ? `, em ${data(p.dt)}` : ""}.${p.desp ? ` <span class="quando">Despacho: ${esc(p.desp.slice(0, 300))}</span>` : ""}</span>` : ""}
-      ${p.td || p.tram || p.reg || p.co ? `<span class="texto quando">${[p.td && `Tipo: ${esc(p.td)}`, p.reg && `Regime: ${esc(p.reg)}`, p.tram && `Tramitação: ${esc(p.tram)}`, p.co && `Coautores: ${esc(p.co.join(", "))}`].filter(Boolean).join(" · ")}</span>` : ""}
+      ${p.td || p.tram || p.reg || p.co || p.ini ? `<span class="texto quando">${[p.td && `Tipo: ${esc(p.td)}`, p.ini && `Iniciativa: ${esc(p.ini)}`, p.n && `Assinado por ${p.n} autores${p.pp ? ` de ${p.pp} partidos` : ""}`, p.reg && `Regime: ${esc(p.reg)}`, p.tram && `Tramitação: ${esc(p.tram)}`, p.co && `Coautores: ${esc(p.co.join(", "))}`].filter(Boolean).join(" · ")}</span>` : ""}
       ${p.kw ? `<span class="texto quando">Temas: ${esc(p.kw)}</span>` : ""}
       <span class="texto">${fontes([[c.fonteTramitacao, c.linkTramitacao(p)], p.pdf ? ["Texto integral", p.pdf] : null, ["Dados na API", c.linkApi(p)]])}</span>
     </li>`;

@@ -278,8 +278,8 @@ select:disabled { opacity: .55; }
   .ficha { grid-template-columns: 1fr; gap: 0; }
   .ficha dt { font-size: 13px; margin-top: 12px; }
   .ficha dd { padding-bottom: 10px; border-bottom: 1px solid var(--linha); }
-  .itens li { grid-template-columns: 1fr; }
-  .itens li .voto, .itens li .resultado { justify-self: start; }
+  .itens li { grid-template-columns: minmax(0, 1fr); }
+  .itens li .voto, .itens li .resultado { justify-self: start; white-space: normal; overflow-wrap: anywhere; }
   .link-rede, .fontes a { display: inline-block; padding: 4px 0; }
   .fontes { flex-direction: column; align-items: flex-start; }
   .fontes-lista { flex-direction: column; gap: 2px; }

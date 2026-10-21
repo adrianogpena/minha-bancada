@@ -238,7 +238,7 @@ def gerar(deputados: dict, estaduais: dict | None = None) -> dict:
                     "alianca": alianca_de(ano, e),
                     **({"estadual": estadual} if estadual else {}),
                 }
-                alvo = None   # código que a página Fique informado grava; só para quem tem dados acompanháveis (ver scripts/assinaturas.py)
+                alvo = None   # código dos feeds da página Fique informado; só para quem tem dados acompanháveis (ver scripts/feeds.py)
                 if estado == "atual":
                     if cargo_tse == "PRESIDENTE":
                         alvo = "pres"

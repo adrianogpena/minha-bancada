@@ -1258,21 +1258,20 @@ async function montarEstadual(alvo, p, nome, ficha, situacao) {
 }
 
 /* ---------- Fique informado ---------- */
-/* Endereço do Apps Script que guarda os assinantes (assinaturas/LEIAME.md). Vazio = recurso ainda não ligado. */
-const URL_ASSINATURAS = "";
+/* Feeds RSS estáticos (site/feeds/<código>.xml, gerados por scripts/feeds.py). Nada é enviado nem guardado: quem assina é o leitor de RSS da pessoa. */
+const arquivoFeed = (codigo) => `feeds/${codigo.replace(/:/g, "-")}.xml`;
+const urlFeed = (codigo) => new URL(arquivoFeed(codigo), location.href).href;
 
 async function paginaInformado() {
   const alvo = $("#informado");
-  if (!URL_ASSINATURAS) { alvo.innerHTML = `<p class="vazio">Os avisos por e-mail estarão disponíveis em breve.</p>`; return; }
   const cobertura = await carregar("dados/cobertura.json").catch(() => ({ estados: [], capitais: {} }));
-  const locais = new Map();       // código -> rótulo
-  const politicos = new Map();    // código -> rótulo
+  const escolhidos = new Map();   // código -> rótulo
   const nomeUf = (uf) => UFS[uf] || uf;
   alvo.innerHTML = `
-    <form class="informado" id="form-informado" novalidate>
+    <div class="informado">
       <fieldset>
         <legend>1. O que você quer acompanhar?</legend>
-        <p class="dica-form">Cada escolha vira uma seção no e-mail. Você pode misturar.</p>
+        <p class="dica-form">Cada escolha vira um feed. Você pode misturar.</p>
         <div class="filtros dois">
           <label class="campo">Brasil
             <button type="button" class="mais" id="add-br">Câmara, Senado e Presidência</button></label>
@@ -1294,68 +1293,63 @@ async function paginaInformado() {
         <p class="dica-form">Aparecem só políticos de quem já acompanhamos propostas: Presidente, governadores, deputados federais, deputados estaduais (Assembleias coletadas) e prefeitos de capitais com dados.</p>
       </fieldset>
       <fieldset>
-        <legend>3. Seu e-mail</legend>
+        <legend>3. Seus feeds</legend>
         <ul class="escolhas" id="escolhas" aria-live="polite"></ul>
-        <label class="campo">E-mail<input id="inf-email" type="email" required autocomplete="email" placeholder="voce@exemplo.com"></label>
-        <p><button type="submit" class="botao" id="inf-enviar">Quero receber os avisos</button></p>
-        <p class="aviso-form" id="inf-msg" role="status" aria-live="polite"></p>
-        <p class="dica-form">Enviamos um e-mail para você confirmar. Seu endereço serve só para os avisos e todo e-mail traz o link para cancelar.</p>
+        <p id="opml-p" hidden><button type="button" class="botao" id="opml">Baixar todos (arquivo OPML)</button></p>
+        <details>
+          <summary>Como usar um feed RSS</summary>
+          <p class="dica-form">Cole o endereço do feed (ou importe o arquivo OPML) num leitor de RSS, como Feedly, Inoreader, NetNewsWire, Thunderbird ou o leitor de notícias do seu celular. Quando houver novidade, ela aparece lá, no máximo uma vez por dia. Alguns leitores, como o Feedly e o Inoreader, também mandam o aviso por e-mail ou notificação.</p>
+        </details>
+        <p class="dica-form">Sem cadastro: não pedimos nem guardamos e-mail ou qualquer dado seu. Seu leitor busca um arquivo público, igual a abrir uma página do site.</p>
       </fieldset>
-    </form>`;
+    </div>`;
 
   const desenhar = () => {
-    const todos = [...[...locais].map(([c, r]) => [c, r, locais]), ...[...politicos].map(([c, r]) => [c, r, politicos])];
+    const todos = [...escolhidos];
     $("#escolhas").innerHTML = todos.length
-      ? todos.map(([c, r], i) => `<li><span>${esc(r)}</span><button type="button" data-i="${i}" aria-label="Remover ${esc(r)}">remover</button></li>`).join("")
+      ? todos.map(([c, r], i) => `<li><span>${esc(r)}<br><small><a href="${esc(arquivoFeed(c))}">${esc(urlFeed(c))}</a></small></span>
+          <span class="acoes"><button type="button" data-copiar="${i}">copiar</button><button type="button" data-tirar="${i}" aria-label="Remover ${esc(r)}">remover</button></span></li>`).join("")
       : `<li class="vazio">Nada escolhido ainda.</li>`;
-    $("#escolhas").onclick = (e) => { const b = e.target.closest("button"); if (b) { const [c,, mapa] = todos[b.dataset.i]; mapa.delete(c); desenhar(); mostrarAchados(); } };
+    $("#opml-p").hidden = !todos.length;
+    $("#escolhas").onclick = async (e) => {
+      const b = e.target.closest("button"); if (!b) return;
+      if (b.dataset.tirar != null) { escolhidos.delete(todos[b.dataset.tirar][0]); desenhar(); mostrarAchados(); return; }
+      try { await navigator.clipboard.writeText(urlFeed(todos[b.dataset.copiar][0])); b.textContent = "copiado"; } catch { b.textContent = "selecione o endereço"; }
+    };
   };
-  const adicionar = (mapa, codigo, rotulo) => { if (codigo) { mapa.set(codigo, rotulo); desenhar(); mostrarAchados(); } };
-  $("#add-br").onclick = () => adicionar(locais, "BR", "Brasil: Câmara, Senado e Presidência");
-  $("#inf-uf").onchange = (e) => { const u = e.target.value; adicionar(locais, u && `UF:${u}`, `Estado: ${nomeUf(u)}`); e.target.value = ""; };
-  $("#inf-capital").onchange = (e) => { const u = e.target.value; adicionar(locais, u && `MUN:${u}`, `Capital: ${cobertura.capitais[u]} (${u})`); e.target.value = ""; };
+  const adicionar = (codigo, rotulo) => { if (codigo) { escolhidos.set(codigo, rotulo); desenhar(); mostrarAchados(); } };
+  $("#add-br").onclick = () => adicionar("BR", "Brasil: Câmara, Senado e Presidência");
+  $("#inf-uf").onchange = (e) => { const u = e.target.value; adicionar(u && `UF:${u}`, `Estado: ${nomeUf(u)}`); e.target.value = ""; };
+  $("#inf-capital").onchange = (e) => { const u = e.target.value; adicionar(u && `MUN:${u}`, `Capital: ${cobertura.capitais[u]} (${u})`); e.target.value = ""; };
+  $("#opml").onclick = () => {
+    const xml = `<?xml version="1.0" encoding="UTF-8"?><opml version="2.0"><head><title>Minha Bancada</title></head><body>${
+      [...escolhidos].map(([c, r]) => `<outline type="rss" text="${esc(r)}" title="${esc(r)}" xmlUrl="${esc(urlFeed(c))}"/>`).join("")}</body></opml>`;
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(new Blob([xml], { type: "text/x-opml" }));
+    a.download = "minha-bancada.opml";
+    a.click();
+    URL.revokeObjectURL(a.href);
+  };
 
-  /* políticos: lista do índice do estado (ou do Brasil), só quem tem código "a" */
+  /* políticos: índice do estado (ou do Brasil), só quem tem código "a" */
   let indice = [];
   const mostrarAchados = () => {
     const q = semAcento($("#pol-busca").value.trim());
     const achados = indice.filter((x) => x.a && (!q || semAcento(`${x.n} ${x.c} ${x.p || ""} ${x.m || ""}`).includes(q))).slice(0, 12);
     $("#pol-achados").innerHTML = achados.length
       ? achados.map((x, i) => `<li><span><b>${esc(x.n)}</b> <small>${esc(x.c)}${x.p ? ` · ${esc(x.p)}` : ""}${x.m ? ` · ${esc(x.m)}` : ""}</small></span>
-          <button type="button" data-i="${i}"${politicos.has(x.a) ? " disabled" : ""}>${politicos.has(x.a) ? "adicionado" : "acompanhar"}</button></li>`).join("")
+          <button type="button" data-i="${i}"${escolhidos.has(x.a) ? " disabled" : ""}>${escolhidos.has(x.a) ? "adicionado" : "acompanhar"}</button></li>`).join("")
       : `<li class="vazio">Ninguém encontrado com dados acompanháveis.</li>`;
     $("#pol-achados").onclick = (e) => {
       const b = e.target.closest("button"); if (!b) return;
       const x = achados[b.dataset.i];
-      adicionar(politicos, x.a, `${x.c}: ${x.n}`);
+      adicionar(x.a, `${x.c}: ${x.n}`);
     };
   };
-  const carregarIndice = async () => {
-    indice = await carregar(`dados/indice/${$("#pol-uf").value}.json`).catch(() => []);
-    mostrarAchados();
-  };
-  $("#pol-uf").onchange = carregarIndice;
+  $("#pol-uf").onchange = async () => { indice = await carregar(`dados/indice/${$("#pol-uf").value}.json`).catch(() => []); mostrarAchados(); };
   $("#pol-busca").oninput = mostrarAchados;
   desenhar();
-  carregarIndice();
-
-  $("#form-informado").addEventListener("submit", async (e) => {
-    e.preventDefault();
-    const msg = $("#inf-msg"), email = $("#inf-email").value.trim();
-    if (!locais.size && !politicos.size) { msg.textContent = "Escolha pelo menos um local ou político."; return; }
-    if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) { msg.textContent = "Digite um e-mail válido."; return; }
-    $("#inf-enviar").disabled = true;
-    msg.textContent = "Enviando…";
-    try {
-      /* text/plain evita o pedido de verificação do navegador; o Apps Script não responde com CORS, então a resposta é opaca */
-      await fetch(URL_ASSINATURAS, { method: "POST", mode: "no-cors", headers: { "Content-Type": "text/plain;charset=utf-8" },
-        body: JSON.stringify({ email, locais: [...locais.keys()], politicos: [...politicos.keys()], rotulos: [...locais.values(), ...politicos.values()] }) });
-      msg.textContent = "Pronto! Enviamos um e-mail para confirmar. Se não chegar em alguns minutos, olhe o spam.";
-    } catch {
-      msg.textContent = "Não foi possível enviar agora. Tente de novo em instantes.";
-    }
-    $("#inf-enviar").disabled = false;
-  });
+  $("#pol-uf").onchange();
 }
 
 /* ---------- início ---------- */

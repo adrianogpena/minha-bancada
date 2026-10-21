@@ -312,3 +312,6 @@ select:disabled { opacity: .55; }
 .informado .mais { margin-top: 0; font-weight: 700; }
 .dica-form { color: var(--tinta-suave); font-size: 14px; margin: 8px 0 0; }
 .aviso-form { font-weight: 700; min-height: 1.4em; }
+.informado .acoes { display: flex; gap: 6px; }
+.informado li small a { word-break: break-all; color: var(--tinta-suave); }
+.informado details { margin: 10px 0; }

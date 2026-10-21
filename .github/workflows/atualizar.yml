@@ -72,6 +72,7 @@ jobs:
           git push
 
       - name: Gerar feeds RSS do Fique informado (últimos 14 dias, a partir do histórico git)
+        continue-on-error: true   # sem feeds o site ainda publica
         run: |
           git fetch --shallow-since="20 days ago" -q origin master
           python scripts/feeds.py --dias 14

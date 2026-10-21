@@ -144,6 +144,12 @@ function erro(alvo, e) {
   console.error(e);
 }
 
+/* Sem o JSON local (item que o site não coletou): mostra direto a versão legível da API oficial. */
+function semDadosLocais(alvo, e, api) {
+  if (api) return location.replace(`fonte.html?u=${encodeURIComponent(api)}`); // direto, não por urlLegivel: ele voltaria a esta página
+  erro(alvo, e);
+}
+
 /* ---------- Câmara: lista de deputados federais ---------- */
 async function paginaCamara() {
   const alvo = $("#resultado");
@@ -279,7 +285,7 @@ async function paginaDeputado() {
   let dep, votacoes;
   try {
     [dep, votacoes] = await Promise.all([carregar(`dados/deputado/${encodeURIComponent(id)}.json`), carregar("dados/votacoes.json")]);
-  } catch (e) { return erro(alvo, e); }
+  } catch (e) { return semDadosLocais(alvo, e, `${CAMARA_API}/deputados/${encodeURIComponent(id)}`); }
   document.title = `${dep.nome} (${dep.partido}/${dep.uf}) | Minha Bancada`;
 
   const meus = new Map(dep.votos.map((v) => [v.id, v.voto]));
@@ -505,7 +511,7 @@ async function paginaVotacao() {
   const alvo = $("#conteudo");
   const senado = param("casa") === "senado";
   let v;
-  try { v = await carregar(`dados/${senado ? "votacao_senado" : "votacao"}/${encodeURIComponent(param("id"))}.json`); } catch (e) { return erro(alvo, e); }
+  try { v = await carregar(`dados/${senado ? "votacao_senado" : "votacao"}/${encodeURIComponent(param("id"))}.json`); } catch (e) { return semDadosLocais(alvo, e, senado ? null : `${CAMARA_API}/votacoes/${encodeURIComponent(param("id"))}`); }
   const quem = senado ? "senador" : "deputado";
   const linkQuem = (d) => senado ? (d.anterior ? "" : `politico.html?f=senado&i=${encodeURIComponent(d.id)}`) : `deputado.html?id=${d.id}`;
   document.title = `${v.proposicao || "Votação"} em ${data(v.data)} | Minha Bancada`;

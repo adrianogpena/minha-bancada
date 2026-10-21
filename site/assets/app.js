@@ -7,6 +7,7 @@ const VOTOS = {
   abstencao: { rotulo: "Abstenção", cor: "var(--abstencao)" },
   obstrucao: { rotulo: "Obstrução", cor: "var(--obstrucao)" },
   art17: { rotulo: "Art. 17 (presidência)", cor: "var(--tinta-suave)" },
+  secreto: { rotulo: "Voto secreto", cor: "var(--secreto)" },
   outro: { rotulo: "Outro", cor: "var(--tinta-suave)" },
   ausente: { rotulo: "Sem voto registrado", cor: "var(--ausente)" },
 };
@@ -309,6 +310,8 @@ function ligarAbas(alvo) {
   window.addEventListener("hashchange", () => irParaAba(location.hash.slice(1), false));
 }
 
+const TIPOS_SESSAO = { DOR: "Sessão deliberativa ordinária", DEX: "Sessão deliberativa extraordinária", NOR: "Sessão não deliberativa", ESP: "Sessão especial" };
+
 /* As três abas (perfil, votações, propostas) de um parlamentar. Serve a deputados e senadores. */
 function montarParlamentar(alvo, c) {
   const nome = c.nome, linhaDoTempo = c.linhaDoTempo;
@@ -324,13 +327,14 @@ function montarParlamentar(alvo, c) {
       </div>
       <div class="faixa" role="list">${[...linhaDoTempo].reverse().map((v) =>
         `<a role="listitem" class="v-${v.voto}" ${c.hrefVotacao ? `href="${esc(c.hrefVotacao(v))}"` : ""} title="${esc(data(v.data))}: ${esc(VOTOS[v.voto]?.rotulo)}. ${esc(v.proposicao || "")} ${esc((v.descricao || "").slice(0, 120))}" aria-label="${esc(data(v.data))}, ${esc(VOTOS[v.voto]?.rotulo)}"></a>`).join("")}</div>
-      ${legenda(["sim", "nao", "abstencao", "obstrucao", "ausente"])}
+      ${legenda(["sim", "nao", "abstencao", "obstrucao", ...(contagem.secreto ? ["secreto"] : []), "ausente"])}
       <div class="numeros">
         <div><b>${pct(votou, linhaDoTempo.length)}</b><span>votou (sim, não ou abstenção)</span></div>
         <div><b>${contagem.sim || 0}</b><span>votos sim</span></div>
         <div><b>${contagem.nao || 0}</b><span>votos não</span></div>
         <div><b>${contagem.abstencao || 0}</b><span>abstenções</span></div>
         <div><b>${(contagem.obstrucao || 0) + (contagem.art17 || 0) + (contagem.outro || 0)}</b><span>obstrução e outros</span></div>
+        ${contagem.secreto ? `<div><b>${contagem.secreto}</b><span>votos secretos</span></div>` : ""}
         <div><b>${contagem.ausente || 0}</b><span>sem voto registrado</span></div>
       </div>
     </section>
@@ -378,21 +382,34 @@ function montarParlamentar(alvo, c) {
   ligarAbas(alvo);
 
   /* --- aba Votações --- */
+  const textoPlacar = (v) => {
+    const pl = v.placar || {};
+    const partes = [`Sim ${pl.sim || 0}`, `Não ${pl.nao || 0}`, `Abstenção ${pl.abstencao || 0}`];
+    if (pl.obstrucao) partes.push(`Obstrução ${pl.obstrucao}`);
+    if (pl.secreto) partes.push(`Voto secreto ${pl.secreto}`);
+    if (pl.art17) partes.push(`Presidente (art. 51) ${pl.art17}`);
+    if (pl.outro) partes.push(`Outros ${pl.outro}`);
+    if (v.ausentes) partes.push(`Sem voto registrado ${v.ausentes}`);
+    return partes.join(" · ");
+  };
   const renderVoto = (v) => {
     const [res, classe] = resultado(v.aprovada);
     const pl = v.placar || {};
+    const sessao = v.sessao ? [v.sessao.tipo && (TIPOS_SESSAO[v.sessao.tipo] || `Sessão ${v.sessao.tipo}`), v.sessao.numero && `nº ${v.sessao.numero}`, v.sessao.votacao && `votação ${v.sessao.votacao} do dia`].filter(Boolean).join(", ") : "";
     return `<li class="cartao-item">
-      <span class="quando">${data(v.data)}${v.proposicao ? `, <b>${esc(v.proposicao)}</b>` : ""}</span>
+      <span class="quando">${data(v.data)}${v.hora ? `, ${esc(v.hora)}` : ""}${v.proposicao ? `, <b>${esc(v.proposicao)}</b>` : ""}</span>
       <span>${selo(v.voto)} <span class="resultado r-${classe}">${esc(res)}</span></span>
       ${c.hrefVotacao ? `<a class="texto" href="${esc(c.hrefVotacao(v))}">${esc(v.descricao || "Votação sem descrição")}</a>` : `<span class="texto">${esc(v.descricao || "Votação sem descrição")}</span>`}
-      ${v.ementa ? `<span class="texto ementa">${esc(v.ementa)}</span>` : ""}
-      <span class="texto">${barraPlacar(pl)}<span class="quando">Placar: Sim ${pl.sim || 0} · Não ${pl.nao || 0} · Abstenção ${pl.abstencao || 0}${pl.obstrucao ? ` · Obstrução ${pl.obstrucao}` : ""}</span></span>
+      ${v.secreta ? `<span class="texto aviso-ementa"><b>Votação secreta:</b> o Senado informa que cada senador votou, mas não como. O voto individual não é público.</span>` : ""}
+      ${v.ementa ? `<span class="texto ementa">${esc(v.ementa)}</span>` : `<span class="texto ementa sem-ementa">Ementa não informada${c.fonteEmenta ? ` pelo ${esc(c.fonteEmenta)}` : ""}.</span>`}
+      <span class="texto">${barraPlacar(pl)}<span class="quando">Placar${v.placarOficial === undefined ? "" : v.placarOficial ? " oficial" : " (contado dos votos individuais)"}: ${esc(textoPlacar(v))}</span></span>
+      ${sessao ? `<span class="texto quando">${esc(sessao)}${v.resultadoTexto ? ` · Resultado informado: ${esc(v.resultadoTexto)}` : ""}</span>` : ""}
       <span class="texto">${fontes(c.fontesVotacao(v))}</span>
     </li>`;
   };
-  const filtrosVoto = { todos: () => true, sim: (v) => v.voto === "sim", nao: (v) => v.voto === "nao", outros: (v) => ["abstencao", "obstrucao", "art17", "outro"].includes(v.voto), ausente: (v) => v.voto === "ausente" };
+  const filtrosVoto = { todos: () => true, sim: (v) => v.voto === "sim", nao: (v) => v.voto === "nao", outros: (v) => ["abstencao", "obstrucao", "art17", "outro"].includes(v.voto), secreto: (v) => v.voto === "secreto", ausente: (v) => v.voto === "ausente" };
   const mostrarVotos = (f) => listaPaginada($("#lista-votos"), linhaDoTempo.filter(filtrosVoto[f]), renderVoto, 10, "Nenhuma votação nesse filtro.");
-  abas($("#abas-votos"), [{ valor: "todos", rotulo: "Todas" }, { valor: "sim", rotulo: "Sim" }, { valor: "nao", rotulo: "Não" }, { valor: "outros", rotulo: "Abstenção e obstrução" }, { valor: "ausente", rotulo: "Sem voto" }], mostrarVotos);
+  abas($("#abas-votos"), [{ valor: "todos", rotulo: "Todas" }, { valor: "sim", rotulo: "Sim" }, { valor: "nao", rotulo: "Não" }, { valor: "outros", rotulo: "Abstenção e obstrução" }, ...(contagem.secreto ? [{ valor: "secreto", rotulo: "Voto secreto" }] : []), { valor: "ausente", rotulo: "Sem voto" }], mostrarVotos);
   mostrarVotos("todos");
 
   /* --- aba Propostas --- */
@@ -439,7 +456,7 @@ function montarParlamentar(alvo, c) {
 function barraPlacar(placar) {
   const total = Object.values(placar).reduce((a, b) => a + b, 0) || 1;
   return `<div class="placar" role="img" aria-label="${Object.entries(placar).map(([k, n]) => `${VOTOS[k]?.rotulo || k}: ${n}`).join(", ")}">
-    ${["sim", "nao", "abstencao", "obstrucao", "art17", "outro"].filter((k) => placar[k]).map((k) => `<i style="width:${(placar[k] / total) * 100}%;background:${VOTOS[k].cor}"></i>`).join("")}</div>`;
+    ${["sim", "nao", "abstencao", "obstrucao", "secreto", "art17", "outro"].filter((k) => placar[k]).map((k) => `<i style="width:${(placar[k] / total) * 100}%;background:${VOTOS[k].cor}"></i>`).join("")}</div>`;
 }
 
 async function paginaVotacoes() {
@@ -1062,7 +1079,7 @@ async function paginaPolitico() {
   const painelPerfil = `
     <p class="situacao">${situacao}</p>
     ${p.paginaAtual ? `<p class="aviso">Já tem mandato hoje. <a href="${esc(p.paginaAtual)}">Ver votos, projetos e gastos do mandato atual</a>.</p>` : ""}
-    ${p.fonte === "senado" ? `<p class="aviso">Votos e projetos de senadores ainda não estão no site. Veja no <a href="${esc(p.pagina)}" rel="noopener">perfil oficial no Senado</a>.</p>` : ""}
+    ${p.fonte === "senado" ? `<p class="aviso">Os votos e projetos deste senador não puderam ser carregados agora. Veja no <a href="${esc(p.pagina)}" rel="noopener">perfil oficial no Senado</a>.</p>` : ""}
 
     <h2>Ficha</h2>
     <dl class="ficha">${ficha.map(itemFicha).join("")}
@@ -1207,6 +1224,7 @@ async function montarSenador(alvo, p, nome, ficha) {
     textoLegislatura: "como autor ou coautor desde 2019",
     aviso: "A situação vem da tramitação no Senado e é atualizada aos poucos todo dia.",
     fonteTramitacao: "Tramitação (Senado)",
+    fonteEmenta: "Senado",
     linkTramitacao: (x) => linkMateriaSenado(x.id),
     linkApi: (x) => `${SENADO_API}/processo/${encodeURIComponent(x.proc)}`,
     hrefVotacao: null,

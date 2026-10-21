@@ -80,12 +80,21 @@ def gerar_senadores() -> None:
 
     resumo, votos_por_sen, primeira = [], defaultdict(dict), {}
     for v in votacoes:
-        placar = Counter(x[1] for x in v["votos"])
+        contagem = Counter(x[1] for x in v["votos"])
+        placar = {k: n for k, n in contagem.items() if k != "ausente"}
+        # placar oficial da API quando ela informa; senão, o que se conta dos votos individuais
+        totais = v.get("totais")
+        if totais:
+            placar.update(totais)
+        # votação em que ninguém tem voto com direção só pode ser secreta, mesmo em dados salvos antes do campo existir
+        secreta = bool(v.get("secreta")) or (contagem["secreto"] > 0 and not any(contagem[k] for k in ("sim", "nao", "abstencao", "obstrucao")))
         resumo.append({
             "id": v["id"], "data": v["data"], "hora": v.get("hora"), "descricao": v["descricao"],
             "proposicao": v.get("proposicao"), "propId": v.get("propId"), "ementa": v.get("ementa"),
             "aprovada": v.get("aprovada"), "resultadoTexto": v.get("resultadoTexto"),
-            "placar": {k: n for k, n in placar.items() if k != "ausente"},
+            "placar": placar, "placarOficial": bool(totais), "ausentes": contagem["ausente"],
+            **({"secreta": True} if secreta else {}),
+            **({"sessao": v["sessao"]} if v.get("sessao") else {}),
         })
         for sid, t, *_ in v["votos"]:
             votos_por_sen[sid][v["id"]] = t

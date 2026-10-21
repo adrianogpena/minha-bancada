@@ -257,8 +257,9 @@ def test_votacoes_reais_do_senado_sao_normalizadas():
         assert n["aprovada"] in (0, 1, None)
         for cod, tipo, rotulo in n["votos"]:
             assert cod.isdigit(), rotulo
-            # nenhum rótulo real pode cair em "outro", exceto o voto secreto ("Votou")
-            assert tipo != "outro" or rotulo.startswith("Votou"), rotulo
+            # nenhum rótulo real pode cair em "outro"; o voto secreto ("Votou") tem tipo próprio
+            assert tipo != "outro", rotulo
+            assert (tipo == "secreto") == rotulo.startswith("Votou"), rotulo
 
 
 def test_nenhum_rotulo_real_de_nao_voto_vira_voto_contra():

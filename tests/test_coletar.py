@@ -122,7 +122,7 @@ def test_situacao_final_falsa(sit):
     ("Não", "Não", "nao"),
     ("Abstenção", None, "abstencao"),
     ("Presidente (art. 51 RISF)", None, "art17"),
-    ("Votou", None, "outro"),                       # votação secreta
+    ("Votou", None, "secreto"),                     # votação secreta
     ("NCom", "Não Compareceu", "ausente"),          # "Não compareceu" não é voto contra
     ("P-NRV", "Presente – Não registrou voto", "ausente"),   # estava presente, mas não votou "Não"
     ("NA", "Dispositivo não citado", "ausente"),
@@ -174,8 +174,18 @@ def test_normalizar_votacao_senado():
     assert v["proposicao"] == "PEC 221/2019" and v["propId"] == 174386
     assert v["ementa"] == "Altera o art. 7º" and v["descricao"] == "Votação nominal da PEC 221/2019."
     assert v["aprovada"] == 1 and v["resultadoTexto"] == "A"
+    assert v["secreta"] is False and v["totais"] is None and v["sessao"] is None and v["processo"] == 9056435
     assert v["votos"] == [["5672", "sim", "Sim|"], ["5982", "nao", "Não|"],
                           ["6358", "ausente", "P-NRV|Presente – Não registrou voto"], ["1", "abstencao", "Abstenção|"]]
+
+
+def test_normalizar_votacao_senado_guarda_secreta_placar_oficial_e_sessao():
+    v = coletar.normalizar_votacao_senado(votacao_senado(
+        votacaoSecreta="S", totalVotosSim=40, totalVotosNao=3, totalVotosAbstencao=None, numeroSessao=113, siglaTipoSessao="DOR", sequencialVotacao=4415,
+        votos=[{"codigoParlamentar": 1, "siglaVotoParlamentar": "Votou", "descricaoVotoParlamentar": "Votou"}]))
+    assert v["secreta"] is True and v["totais"] == {"sim": 40, "nao": 3}
+    assert v["sessao"] == {"numero": 113, "tipo": "DOR", "votacao": 4415}
+    assert v["votos"] == [["1", "secreto", "Votou|Votou"]]
 
 
 def test_normalizar_votacao_senado_rejeitada_e_sem_ementa():

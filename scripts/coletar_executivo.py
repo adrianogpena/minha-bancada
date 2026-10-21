@@ -35,22 +35,56 @@ def final(sit: str | None) -> bool:
 NORMA = re.compile(r"Transformad[oa] n[ao] (Lei [\w ]*?\d[\d.]*/\d{4}|Emenda Constitucional[\w ]*?\d[\d.]*/\d{4})", re.I)
 
 
+SANCAO = re.compile(r"\bà sanção\b", re.I)
+RAZOES = re.compile(r"Razões do veto:?\s*(DOU[^.]*?COL\s*\d+)", re.I)
+MSC_VETO = re.compile(r"MSC-PE\s*(\d+/\d+)", re.I)
+
+
 def desfecho(id_: int) -> dict:
-    """Número da lei e se houve veto, lidos na tramitação (ex.: 'Transformado na Lei Ordinária 15421/2026. ... Vetado parcialmente.')."""
-    for t in get(f"/proposicoes/{id_}/tramitacoes")["dados"]:
+    """O que aconteceu depois que o Congresso votou, lido na tramitação.
+
+    norma/dataNorma/veto: ex. 'Transformado na Lei Ordinária 15421/2026. ... Vetado parcialmente.'
+    remessa: data em que a matéria foi enviada à sanção do presidente.
+    razoes/msc: onde estão publicadas as razões do veto (DOU) e a mensagem do veto.
+    edicao: data de publicação da medida provisória (vale desde então).
+    """
+    tram = get(f"/proposicoes/{id_}/tramitacoes")["dados"]
+    saida = {"t": 1}
+    for t in tram:
         desp = t.get("despacho") or ""
+        if "Publicação da Medida Provisória" in desp and "edicao" not in saida:
+            saida["edicao"] = (t.get("dataHora") or "")[:10]
         m = NORMA.search(desp)
+        sit = t.get("descricaoSituacao") or ""
         if m or "veto" in (t.get("descricaoSituacao") or "").lower():
-            return {"norma": m.group(1) if m else None, "dataNorma": (t.get("dataHora") or "")[:10],
-                    "veto": "total" if re.search(r"vetad[oa] total", desp + (t.get("descricaoSituacao") or ""), re.I)
-                    else "parcial" if re.search(r"veto parcial|vetad[oa] parcial", desp + (t.get("descricaoSituacao") or ""), re.I) else None}
-    return {}
+            texto = desp + sit
+            saida.update({"norma": m.group(1) if m else None, "dataNorma": (t.get("dataHora") or "")[:10],
+                          "veto": "total" if re.search(r"vetad[oa] total", texto, re.I)
+                          else "parcial" if re.search(r"veto parcial|vetad[oa] parcial", texto, re.I) else None})
+            r, c = RAZOES.search(desp), MSC_VETO.search(desp)
+            if r:
+                saida["razoes"] = re.sub(r"\s+", " ", r.group(1)).strip()
+            if c:
+                saida["msc"] = c.group(1)
+            break
+    fim = saida.get("dataNorma") or "9999"
+    for t in tram:
+        if SANCAO.search(t.get("despacho") or "") and (t.get("dataHora") or "")[:10] <= fim:
+            saida["remessa"] = (t.get("dataHora") or "")[:10]
+            break
+    return saida
+
+
+def tramitacao_lida(p: dict) -> bool:
+    """Itens que viraram lei ou foram vetados só estão completos depois de lida a tramitação."""
+    return not (p.get("sit") or "").lower().startswith(("transformad", "vetad")) or p.get("t") == 1
 
 
 def detalhar(prop: dict) -> dict:
     d = get(f"/proposicoes/{prop['id']}")["dados"]
     st = d.get("statusProposicao") or {}
-    extra = desfecho(prop["id"]) if (st.get("descricaoSituacao") or "").lower().startswith(("transformad", "vetad")) else {}
+    sit = (st.get("descricaoSituacao") or "").lower()
+    extra = desfecho(prop["id"]) if sit.startswith(("transformad", "vetad", "aguardando sanção")) else {}
     return {**extra,
         "id": prop["id"], "tipo": d["siglaTipo"], "numero": d["numero"], "ano": d["ano"],
         "ementa": (d.get("ementa") or "").strip(),
@@ -78,7 +112,7 @@ def main() -> None:
     novos = {}
     pendentes = []
     for p in achados:
-        if p["id"] in antigo and final(antigo[p["id"]].get("sit")):
+        if p["id"] in antigo and final(antigo[p["id"]].get("sit")) and tramitacao_lida(antigo[p["id"]]):
             novos[p["id"]] = antigo[p["id"]]
         else:
             pendentes.append(p)

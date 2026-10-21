@@ -34,6 +34,7 @@ Todas as coletas rodam sozinhas no GitHub Actions (`.github/workflows/atualizar.
 - **Entrada:** 2026-10-17.
 - **De onde:** API da Câmara (`https://dadosabertos.camara.leg.br/api/v2`), proposições PL, PLP, PEC e MPV de autoria do Presidente desde 2023, com a situação (sancionado, vetado, em tramitação…).
 - **Como:** `python scripts/coletar_executivo.py`.
+- **2026-10-21, o que o presidente fez em cada item:** lendo a tramitação (`/proposicoes/{id}/tramitacoes`), cada proposição sancionada, vetada ou aguardando sanção passa a guardar `remessa` (data em que o Congresso mandou à sanção), `razoes` e `msc` (onde o DOU publicou as razões do veto e a mensagem do veto) e, nas MPs convertidas, `edicao`; `t: 1` marca a tramitação já lida. A página do político usa isso para mostrar, passo a passo, quem fez o quê.
 
 ### Assembleias Legislativas: deputados, projetos e votos nominais (`dados/estaduais/<UF>/`)
 - **Entrada:** 2026-10-17, para AC, AL, AM, PB, PI, RO e TO (Assembleias que usam o SAPL do Interlegis).

@@ -29,7 +29,18 @@ def test_desfecho_extrai_lei_e_veto_parcial(monkeypatch):
         {"despacho": "Remeta-se", "descricaoSituacao": "Em tramitação", "dataHora": "2025-01-01T10:00"},
         {"despacho": "Transformado na Lei Ordinária 15421/2026. Vetado parcialmente.", "descricaoSituacao": "Transformado em Norma Jurídica",
          "dataHora": "2026-05-06T12:00"}))
-    assert ex.desfecho(1) == {"norma": "Lei Ordinária 15421/2026", "dataNorma": "2026-05-06", "veto": "parcial"}
+    assert ex.desfecho(1) == {"t": 1, "norma": "Lei Ordinária 15421/2026", "dataNorma": "2026-05-06", "veto": "parcial"}
+
+
+def test_desfecho_remessa_a_sancao_razoes_do_veto_e_edicao_da_mp(monkeypatch):
+    monkeypatch.setattr(ex, "get", lambda c, **p: tramitacoes(
+        {"despacho": "Publicação da Medida Provisória no Diário Oficial da União.", "dataHora": "2026-03-19T00:00"},
+        {"despacho": "Recebido Ofício que comunica remessa de Projeto de Lei à sanção.", "dataHora": "2026-05-28T00:00"},
+        {"despacho": "Transformado na Lei Ordinária 15421/2026. Vetado parcialmente. MSC-PE 499/26. Razões do veto: DOU 02/06/2026 PÁG 07 COL 01.",
+         "descricaoSituacao": "Transformado em Norma Jurídica", "dataHora": "2026-06-01T12:00"}))
+    r = ex.desfecho(1)
+    assert r["edicao"] == "2026-03-19" and r["remessa"] == "2026-05-28"
+    assert r["razoes"] == "DOU 02/06/2026 PÁG 07 COL 01" and r["msc"] == "499/26"
 
 
 def test_desfecho_emenda_constitucional_e_veto_total(monkeypatch):
@@ -38,12 +49,12 @@ def test_desfecho_emenda_constitucional_e_veto_total(monkeypatch):
     r = ex.desfecho(1)
     assert r["norma"] == "Emenda Constitucional 130/2025" and r["veto"] is None
     monkeypatch.setattr(ex, "get", lambda c, **p: tramitacoes({"despacho": "Vetado totalmente.", "descricaoSituacao": "Aguardando Apreciação de Veto", "dataHora": "2025-02-02T00:00"}))
-    assert ex.desfecho(1) == {"norma": None, "dataNorma": "2025-02-02", "veto": "total"}
+    assert ex.desfecho(1) == {"t": 1, "norma": None, "dataNorma": "2025-02-02", "veto": "total"}
 
 
 def test_desfecho_sem_norma(monkeypatch):
     monkeypatch.setattr(ex, "get", lambda c, **p: tramitacoes({"despacho": "Aguarda", "descricaoSituacao": "Em tramitação"}))
-    assert ex.desfecho(1) == {}
+    assert ex.desfecho(1) == {"t": 1}
 
 
 def prop_api(id_, sit, tipo="PL"):

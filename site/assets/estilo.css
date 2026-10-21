@@ -136,6 +136,8 @@ input:focus, select:focus { border-color: var(--marca); outline: none; box-shado
 .itens li { padding: 12px 2px; border-bottom: 1px solid var(--linha); display: grid; grid-template-columns: 1fr auto; gap: 4px 14px; }
 .itens .quando { font-size: 14px; color: var(--tinta-suave); font-variant-numeric: tabular-nums; }
 .itens .texto { grid-column: 1 / -1; }
+.itens ul.etapas { list-style: none; margin: 4px 0 6px; padding: 0 0 0 12px; border-left: 3px solid var(--linha); }
+.itens ul.etapas li { display: block; padding: 2px 0; border: 0; }
 .voto { font-weight: 700; font-size: 14px; padding: 2px 9px; border-radius: 4px; color: #fff; white-space: nowrap; align-self: start; }
 .voto.v-ausente { background: var(--ausente); color: var(--tinta); }
 .mais { margin-top: 12px; font: 700 15px var(--texto); background: none; border: 1.5px solid var(--linha); color: var(--tinta); border-radius: var(--raio); padding: 8px 14px; cursor: pointer; }

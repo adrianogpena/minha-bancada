@@ -823,22 +823,42 @@ function casaLegislativa(p) {
 const TIPOS_EXECUTIVO = { PL: "Projeto de lei", PLP: "Projeto de lei complementar", PEC: "Proposta de emenda à Constituição", MPV: "Medida provisória" };
 function desfechoExecutivo(x) {
   const s = (x.sit || "").toLowerCase();
-  if (x.veto === "total" || s.startsWith("vetad")) return { rotulo: "Vetado", classe: "v-nao" };
-  if (s.startsWith("transformad")) return x.veto === "parcial" ? { rotulo: "Sancionado, com vetos", classe: "v-sim" } : { rotulo: "Virou lei", classe: "v-sim" };
-  if (s.includes("aguardando sanção")) return { rotulo: "Aguardando sanção", classe: "v-outro" };
-  if (!x.sit && x.tipo === "MPV") return { rotulo: "Em vigor, no prazo do Congresso", classe: "v-outro" };
-  if (s.startsWith("perdeu a efic")) return { rotulo: "Perdeu a eficácia", classe: "v-nao" };
-  return { rotulo: x.sit || "Em tramitação", classe: "v-outro" };
+  if (x.veto === "total" || s.startsWith("vetad")) return { rotulo: "Vetou", classe: "v-nao" };
+  if (s.startsWith("transformad")) return x.veto === "parcial" ? { rotulo: "Sancionou, com vetos", classe: "v-sim" } : { rotulo: x.tipo === "MPV" && !x.remessa ? "Virou lei" : "Sancionou", classe: "v-sim" };
+  if (s.includes("aguardando sanção")) return { rotulo: "Decide se sanciona", classe: "v-outro" };
+  if (!x.sit && x.tipo === "MPV") return { rotulo: "MP em vigor", classe: "v-outro" };
+  if (s.startsWith("perdeu a efic")) return { rotulo: "MP deixou de valer", classe: "v-nao" };
+  if (/^(arquivad|retirad|rejeitad|prejudicad)/.test(s)) return { rotulo: "Não virou lei", classe: "v-nao" };
+  return { rotulo: "No Congresso", classe: "v-outro" };
+}
+/* Frases curtas, uma por etapa, dizendo quem fez o quê: o presidente (enviou, sancionou, vetou) ou o Congresso (aprovou, deixou caducar). */
+function etapasExecutivo(x) {
+  const mp = x.tipo === "MPV", s = (x.sit || "").toLowerCase();
+  const e = [mp ? `<b>O presidente editou</b> a medida provisória em ${data(x.apres)}; ela vale como lei desde então, mas o Congresso precisa aprová-la em até 120 dias.`
+    : `<b>O presidente enviou</b> o projeto ao Congresso em ${data(x.apres)}.`];
+  if (x.remessa) e.push(`<b>O Congresso aprovou</b> e mandou à sanção em ${data(x.remessa)}.`);
+  if (x.veto === "total" || s.startsWith("vetad")) e.push(`<b>O presidente vetou o texto inteiro</b>${x.dataNorma ? ` em ${data(x.dataNorma)}` : ""}.${x.razoes ? ` Razões do veto: ${esc(x.razoes)}.` : ""}`);
+  else if (s.startsWith("transformad")) {
+    const lei = x.norma ? ` (<b>${esc(x.norma)}</b>)` : "";
+    if (mp && !x.remessa) e.push(`<b>O Congresso aprovou</b> a medida provisória sem mudanças e ela virou lei${lei}${x.dataNorma ? ` em ${data(x.dataNorma)}` : ""}. Nesse caso não há sanção: quem promulga é o Congresso.`);
+    else if (x.veto === "parcial") e.push(`<b>O presidente sancionou</b> o texto${x.dataNorma ? ` em ${data(x.dataNorma)}` : ""}${lei}, mas <b>vetou trechos</b>.${x.razoes ? ` Razões do veto: ${esc(x.razoes)}.` : ""} O Congresso ainda pode derrubar os vetos.`);
+    else e.push(`<b>O presidente sancionou</b> o texto sem vetos${x.dataNorma ? ` em ${data(x.dataNorma)}` : ""}${lei}.`);
+  } else if (s.includes("aguardando sanção")) e.push("<b>O presidente ainda não decidiu:</b> tem 15 dias úteis para sancionar ou vetar.");
+  else if (s.startsWith("perdeu a efic")) e.push(`<b>O Congresso não votou a tempo</b> e a medida provisória perdeu a eficácia${x.data ? ` em ${data(x.data)}` : ""}.`);
+  else if (/^(arquivad|retirad|rejeitad|prejudicad)/.test(s)) e.push(`<b>Não virou lei:</b> ${esc(x.sit.toLowerCase())}${x.data ? ` em ${data(x.data)}` : ""}. Não houve sanção nem veto.`);
+  else if (x.sit) e.push(`<b>Ainda no Congresso:</b> ${esc(x.sit.toLowerCase())}. Ainda não chegou à sanção.`);
+  return e;
 }
 const itemGoverno = (x) => `<li><span class="quando">${esc(x.td)} ${esc(x.numero)}/${esc(x.ano)}${x.ap ? ` · enviado em ${esc(data(x.ap))}` : ""}</span>
   <span class="voto v-outro">${esc(x.sit)}</span>
   <span class="texto">${esc(x.ementa)} ${x.pdf ? `<a href="${esc(x.pdf)}" rel="noopener">${/\.pdf$/i.test(x.pdf) ? "Texto" : "Tramitação"}</a>` : ""}</span></li>`;
 const itemExecutivo = (x) => {
   const d = desfechoExecutivo(x);
-  return `<li><span class="quando">${esc(TIPOS_EXECUTIVO[x.tipo] || x.tipo)} ${esc(x.numero)}/${esc(x.ano)} · enviado em ${esc(data(x.apres))}</span>
+  return `<li><span class="quando">${esc(TIPOS_EXECUTIVO[x.tipo] || x.tipo)} ${esc(x.numero)}/${esc(x.ano)}</span>
     <span class="voto ${d.classe}">${esc(d.rotulo)}</span>
-    <span class="texto">${esc(x.ementa)}${x.norma ? ` <b>${esc(x.norma)}</b>${x.dataNorma ? `, ${esc(data(x.dataNorma))}` : ""}.` : ""}
-      <a href="${esc(linkTramitacao(x.id))}" rel="noopener">Tramitação</a></span></li>`;
+    <span class="texto">${esc(x.ementa)}</span>
+    <div class="texto"><ul class="etapas">${etapasExecutivo(x).map((t) => `<li>${t}</li>`).join("")}</ul>
+      <a href="${esc(linkTramitacao(x.id))}" rel="noopener">Tramitação</a></div></li>`;
 };
 
 const fonteRedesTse = (p) => {
@@ -1156,7 +1176,7 @@ async function paginaPolitico() {
   const vetosGov = governo ? governo.materias.filter((x) => x.tipo === "VET") : [];
   const enviadosGov = governo ? governo.materias.filter((x) => x.tipo !== "VET") : [];
   const comGoverno = enviadosGov.length + vetosGov.length > 0;
-  const aprovados = enviados.filter((x) => /^(transformad|vetad)/i.test(x.sit || "") || x.veto);
+  const aprovados = enviados.filter((x) => /^(transformad|vetad|aguardando sanção)/i.test(x.sit || "") || x.veto);
   const painelVotacoes = comGoverno
     ? `<section class="painel"><div class="painel-titulo"><h2>Vetos</h2></div>
         <p>${esc(p.cargo)} não vota em plenário. O que faz é propor leis, sancionar ou vetar o que ${prefeito ? "a Câmara" : "a Assembleia"} aprova, e editar decretos. Aqui estão os vetos enviados ${orgao} desde ${prefeito ? 2025 : 2023}: <b>${vetosGov.length}</b>. A situação é a que ${prefeito ? "a Câmara" : "a Assembleia"} registra no sistema dela, e nem sempre é atualizada.</p>
@@ -1170,7 +1190,7 @@ async function paginaPolitico() {
         ${fontes([casa.link, ["Sistema de processo legislativo", `https://${doVice.host}`]])}</section>`
     : comDados
     ? `<section class="painel"><div class="painel-titulo"><h2>Sanções e vetos</h2></div>
-        <p>${esc(p.cargo)} não vota em plenário. O que faz é propor leis, sancionar ou vetar o que o Congresso aprova, e editar decretos. Aqui estão os projetos e medidas provisórias que enviou e que viraram lei ou foram vetados: <b>${aprovados.length}</b>, sendo <b>${aprovados.filter((x) => x.veto === "parcial").length}</b> com vetos parciais.</p>
+        <p>${esc(p.cargo)} não vota em plenário. O que faz é propor leis, sancionar ou vetar o que o Congresso aprova, e editar decretos. Aqui estão os projetos e medidas provisórias que enviou e que o Congresso aprovou: <b>${aprovados.length}</b>, sendo <b>${aprovados.filter((x) => x.veto === "parcial").length}</b> sancionados com vetos parciais. Cada item mostra, passo a passo, o que o presidente fez (enviou, editou, sancionou ou vetou) e o que o Congresso fez.</p>
         <div id="lista-sancoes"></div>
         <p>Decretos ainda não estão no site. Quem vota o que ${esc(p.cargo.toLowerCase())} envia é ${esc(casa.quem)}.</p>
         ${fontes([["Planalto: decretos e leis", "https://www.planalto.gov.br/ccivil_03/"], casa.link, ["Dados abertos da Câmara", "https://dadosabertos.camara.leg.br"]])}</section>`

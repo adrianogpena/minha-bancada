@@ -13,5 +13,8 @@ jobs:
     if: github.event.pull_request.merged == true && github.event.pull_request.head.repo.full_name == github.repository && github.event.pull_request.head.ref != 'master' && github.event.pull_request.head.ref != 'main'
     runs-on: ubuntu-latest
     steps:
-      - name: Apagar ${{ github.event.pull_request.head.ref }}
-        run: git push "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git" --delete "${{ github.event.pull_request.head.ref }}"
+      - name: Apagar a branch pela API (o job não faz checkout)
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RAMO: ${{ github.event.pull_request.head.ref }}
+        run: gh api --method DELETE "repos/${{ github.repository }}/git/refs/heads/$RAMO"

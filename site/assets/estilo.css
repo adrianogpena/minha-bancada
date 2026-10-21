@@ -120,7 +120,9 @@ input:focus, select:focus { border-color: var(--marca); outline: none; box-shado
 .faixa a:hover { transform: scaleY(1.2); }
 .v-sim { background: var(--sim) !important; }
 .v-nao { background: var(--nao) !important; }
-.v-abstencao { background: var(--abstencao) !important; }
+.v-abstencao, .v-outro { background: var(--abstencao) !important; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .voto.v-outro { color: #1a1a1a; } }
+:root[data-theme="dark"] .voto.v-outro { color: #1a1a1a; }
 .v-obstrucao { background: var(--obstrucao) !important; }
 .v-secreto { background: var(--secreto) !important; }
 .v-art17 { background: var(--tinta-suave) !important; }
@@ -225,7 +227,7 @@ select:disabled { opacity: .55; }
 .resultado { display: inline-block; justify-self: start; font: 700 13px var(--texto); padding: 2px 8px; border-radius: 999px; border: 1.5px solid var(--linha); }
 .r-aprovada { color: var(--sim); border-color: currentColor; }
 .r-rejeitada { color: var(--nao); border-color: currentColor; }
-.r-tramitando { color: var(--tinta); }
+.r-andamento { color: var(--abstencao); border-color: currentColor; }
 .r-sem { color: var(--tinta-suave); }
 .itens .cartao-item { grid-template-columns: 1fr; }
 .ementa { color: var(--tinta-suave); font-size: 15px; }

@@ -215,16 +215,17 @@ function desfecho(p) {
   const s = semAcento(p.sit || "");
   if (!p.sit) return ["Situação ainda não consultada", "sem"];
   if (/tramitacao encerrada/.test(s)) return ["Tramitação encerrada", "sem"];
-  if (/^(aprovad|sancionad|promulgad)/.test(s)) return ["Aprovada", "aprovada"];
+  if (/^(sancionad|promulgad)/.test(s)) return ["Aprovada", "aprovada"];
+  if (/^aprovad/.test(s)) return ["Aprovada", "aprovada", "andamento"];
   if (/^rejeitad/.test(s)) return ["Rejeitada", "rejeitada"];
   if (/transformad[ao] em norma|transformad[ao] em lei|sancionad/.test(s)) return ["Virou lei", "aprovada"];
   if (/arquivad/.test(s)) return ["Arquivada", "rejeitada"];
   if (/retirad/.test(s)) return ["Retirada pelo autor", "rejeitada"];
   if (/vetad/.test(s)) return ["Vetada", "rejeitada"];
   if (/prejudicad/.test(s)) return ["Prejudicada", "rejeitada"];
-  if (/remetid[ao] a camara/.test(s)) return ["Aprovada no Senado", "aprovada"];
-  if (/aguardando sancao|remetid.*(sancao|senado)/.test(s)) return ["Aprovada na Câmara", "aprovada"];
-  return ["Em tramitação", "tramitando"];
+  if (/remetid[ao] a camara/.test(s)) return ["Aprovada no Senado", "aprovada", "andamento"];
+  if (/aguardando sancao|remetid.*(sancao|senado)/.test(s)) return ["Aprovada na Câmara", "aprovada", "andamento"];
+  return ["Em tramitação", "tramitando", "andamento"];
 }
 
 const linkTramitacao = (id) => `https://www.camara.leg.br/proposicoesWeb/fichadetramitacao?idProposicao=${encodeURIComponent(id)}`;
@@ -456,7 +457,7 @@ function montarParlamentar(alvo, c) {
     <div><b>${cont.sem || 0}</b><span>${esc(c.rotuloSem || "situação a consultar")}</span></div>`;
 
   const renderProj = (p) => {
-    const [texto, classe] = desfecho(p);
+    const [texto, destino, cor] = desfecho(p), classe = cor || destino;
     return `<li class="cartao-item">
       <span class="quando"><b>${esc(p.tipo)} ${esc(p.numero)}/${esc(p.ano)}</b>${p.ap ? `, apresentado em ${data(p.ap)}` : ""}${p.principal ? ", autor principal" : ""}</span>
       <span class="resultado r-${classe}">${esc(texto)}</span>

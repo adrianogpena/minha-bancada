@@ -93,6 +93,25 @@ jobs:
           # sem commit de hoje (nada mudou), não reenvia o de ontem
           [ -n "$DEPOIS" ] && [ "$(git log -1 --format=%cs "$DEPOIS")" = "$(date -u +%F)" ] && python scripts/resumo_email.py "$DEPOIS~1" "$DEPOIS" --enviar
 
+      - name: Enviar avisos aos assinantes de "Fique informado" (e-mails cifrados)
+        # só na execução agendada; a chave privada decifra os cadastros só na memória deste passo (assinaturas/LEIAME.md); falha aqui não derruba a publicação
+        if: github.event_name == 'schedule'
+        continue-on-error: true
+        env:
+          SMTP_HOST: ${{ secrets.SMTP_HOST }}
+          SMTP_PORT: ${{ secrets.SMTP_PORT }}
+          SMTP_USUARIO: ${{ secrets.SMTP_USUARIO }}
+          SMTP_SENHA: ${{ secrets.SMTP_SENHA }}
+          ASSINANTES_URL: ${{ secrets.ASSINANTES_URL }}
+          ASSINANTES_CHAVE: ${{ secrets.ASSINANTES_CHAVE }}
+          ASSINANTES_CHAVE_PRIVADA: ${{ secrets.ASSINANTES_CHAVE_PRIVADA }}
+        run: |
+          if [ -z "$SMTP_HOST" ] || [ -z "$ASSINANTES_URL" ]; then echo "Segredos de assinantes não configurados; pulando."; exit 0; fi
+          git fetch --deepen=50 -q || true
+          DEPOIS=$(git log -1 --grep='^Dados atualizados em' --format=%H)
+          # sem commit de hoje (nada mudou), não manda aviso; confirmações pendentes esperam o próximo dia com dados
+          [ -n "$DEPOIS" ] && [ "$(git log -1 --format=%cs "$DEPOIS")" = "$(date -u +%F)" ] && python scripts/assinaturas.py "$DEPOIS~1" "$DEPOIS" --enviar
+
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v4
         with:

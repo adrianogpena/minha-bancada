@@ -1260,6 +1260,8 @@ async function montarEstadual(alvo, p, nome, ficha, situacao) {
 /* ---------- Fique informado ---------- */
 /* Feeds RSS estáticos (site/feeds/<código>.xml, gerados por scripts/feeds.py). Nada é enviado nem guardado: quem assina é o leitor de RSS da pessoa. */
 const arquivoFeed = (codigo) => `feeds/${codigo.replace(/:/g, "-")}.xml`;
+/* Endereço do Apps Script que guarda os cadastros cifrados (assinaturas/LEIAME.md). Vazio = aviso por e-mail desligado. */
+const URL_ASSINATURAS = "";
 const urlFeed = (codigo) => new URL(arquivoFeed(codigo), location.href).href;
 
 async function paginaInformado() {
@@ -1300,7 +1302,17 @@ async function paginaInformado() {
           <summary>Como usar um feed RSS</summary>
           <p class="dica-form">Cole o endereço do feed (ou importe o arquivo OPML) num leitor de RSS, como Feedly, Inoreader, NetNewsWire, Thunderbird ou o leitor de notícias do seu celular. Quando houver novidade, ela aparece lá, no máximo uma vez por dia. Alguns leitores, como o Feedly e o Inoreader, também mandam o aviso por e-mail ou notificação.</p>
         </details>
-        <p class="dica-form">Sem cadastro: não pedimos nem guardamos e-mail ou qualquer dado seu. Seu leitor busca um arquivo público, igual a abrir uma página do site.</p>
+        <p class="dica-form">No RSS não há cadastro: não pedimos nem guardamos e-mail ou qualquer dado seu. Seu leitor busca um arquivo público, igual a abrir uma página do site.</p>
+      </fieldset>
+      <fieldset id="sec-email" hidden>
+        <legend>4. Prefere por e-mail? <small>(opcional)</small></legend>
+        <p class="dica-form">Um e-mail por dia, só quando houver novidade no que você escolheu acima. Seu endereço é <b>criptografado no seu navegador</b> antes de sair: o site e a planilha onde fica o cadastro só guardam texto ilegível. Só o robô diário do GitHub, que tem a chave, consegue abri-lo para enviar o aviso. Quem administra o projeto controla esse robô e, tecnicamente, poderia mudá-lo para ler os endereços; se isso não é aceitável para você, use o RSS acima, que não pede nenhum dado.</p>
+        <form id="form-email" novalidate>
+          <label class="campo">E-mail<input id="inf-email" type="email" autocomplete="email" placeholder="voce@exemplo.com"></label>
+          <p><button type="submit" class="botao" id="inf-enviar">Quero receber por e-mail</button></p>
+          <p class="aviso-form" id="inf-msg" role="status" aria-live="polite"></p>
+        </form>
+        <p class="dica-form">Você recebe um e-mail para confirmar (a confirmação sai junto com o próximo envio diário, até 24 horas) e todo aviso traz o link para cancelar.</p>
       </fieldset>
     </div>`;
 
@@ -1350,6 +1362,42 @@ async function paginaInformado() {
   $("#pol-busca").oninput = mostrarAchados;
   desenhar();
   $("#pol-uf").onchange();
+
+  /* aviso por e-mail: cifra no navegador (AES-256-GCM, chave de uso único embrulhada com RSA-OAEP) e manda só o texto cifrado */
+  const chavePublica = URL_ASSINATURAS ? await carregar("chave_publica.json").catch(() => null) : null;
+  if (chavePublica) {
+    $("#sec-email").hidden = false;
+    const b64 = (buf) => btoa(String.fromCharCode(...new Uint8Array(buf)));
+    const hex = (buf) => [...new Uint8Array(buf)].map((x) => x.toString(16).padStart(2, "0")).join("");
+    $("#form-email").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const msg = $("#inf-msg"), email = $("#inf-email").value.trim();
+      const locais = [...escolhidos.keys()].filter((c) => /^(BR|UF:|MUN:)/.test(c));
+      const politicos = [...escolhidos.keys()].filter((c) => !locais.includes(c));
+      if (!escolhidos.size) { msg.textContent = "Escolha acima pelo menos um local ou político."; return; }
+      if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) { msg.textContent = "Digite um e-mail válido."; return; }
+      $("#inf-enviar").disabled = true;
+      msg.textContent = "Enviando…";
+      try {
+        const enc = new TextEncoder();
+        const token = hex(crypto.getRandomValues(new Uint8Array(32)));   // só vai no e-mail de quem assina; a planilha guarda o SHA-256 dele
+        const aes = await crypto.subtle.generateKey({ name: "AES-GCM", length: 256 }, true, ["encrypt"]);
+        const iv = crypto.getRandomValues(new Uint8Array(12));
+        const dados = enc.encode(JSON.stringify({ email, token, locais, politicos, rotulos: [...escolhidos.values()] }));
+        const cifrado = await crypto.subtle.encrypt({ name: "AES-GCM", iv }, aes, dados);
+        const rsa = await crypto.subtle.importKey("jwk", chavePublica, { name: "RSA-OAEP", hash: "SHA-256" }, false, ["encrypt"]);
+        const k = await crypto.subtle.encrypt({ name: "RSA-OAEP" }, rsa, await crypto.subtle.exportKey("raw", aes));
+        const h = hex(await crypto.subtle.digest("SHA-256", enc.encode(token)));
+        /* text/plain evita o pedido de verificação do navegador; o Apps Script não responde com CORS, então a resposta é opaca */
+        await fetch(URL_ASSINATURAS, { method: "POST", mode: "no-cors", headers: { "Content-Type": "text/plain;charset=utf-8" },
+          body: JSON.stringify({ v: 1, h, k: b64(k), iv: b64(iv), c: b64(cifrado) }) });
+        msg.textContent = "Pedido enviado. Você receberá um e-mail de confirmação em até 24 horas; se não chegar, olhe o spam.";
+      } catch {
+        msg.textContent = "Não foi possível enviar agora. Tente de novo em instantes.";
+      }
+      $("#inf-enviar").disabled = false;
+    });
+  }
 }
 
 /* ---------- início ---------- */

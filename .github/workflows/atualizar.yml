@@ -71,6 +71,21 @@ jobs:
           git diff --cached --quiet || git commit -m "Dados atualizados em $(date -u +%Y-%m-%d)"
           git push
 
+      - name: Enviar resumo do que mudou por e-mail
+        # só roda se os segredos SMTP_* e EMAIL_PARA existirem; falha aqui não derruba a publicação
+        continue-on-error: true
+        env:
+          SMTP_HOST: ${{ secrets.SMTP_HOST }}
+          SMTP_PORT: ${{ secrets.SMTP_PORT }}
+          SMTP_USUARIO: ${{ secrets.SMTP_USUARIO }}
+          SMTP_SENHA: ${{ secrets.SMTP_SENHA }}
+          EMAIL_PARA: ${{ secrets.EMAIL_PARA }}
+        run: |
+          if [ -z "$SMTP_HOST" ]; then echo "Segredos de e-mail não configurados; pulando."; exit 0; fi
+          git fetch --deepen=50 -q || true
+          DEPOIS=$(git log -1 --grep='^Dados atualizados em' --format=%H)
+          [ -n "$DEPOIS" ] && python scripts/resumo_email.py "$DEPOIS~1" "$DEPOIS" --enviar
+
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v4
         with:

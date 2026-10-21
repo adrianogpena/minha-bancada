@@ -29,7 +29,7 @@ def test_desfecho_extrai_lei_e_veto_parcial(monkeypatch):
         {"despacho": "Remeta-se", "descricaoSituacao": "Em tramitação", "dataHora": "2025-01-01T10:00"},
         {"despacho": "Transformado na Lei Ordinária 15421/2026. Vetado parcialmente.", "descricaoSituacao": "Transformado em Norma Jurídica",
          "dataHora": "2026-05-06T12:00"}))
-    assert ex.desfecho(1) == {"t": 1, "norma": "Lei Ordinária 15421/2026", "dataNorma": "2026-05-06", "veto": "parcial"}
+    assert ex.desfecho(1) == {"tramitacaoLida": True, "norma": "Lei Ordinária 15421/2026", "dataNorma": "2026-05-06", "veto": "parcial"}
 
 
 def test_desfecho_remessa_a_sancao_razoes_do_veto_e_edicao_da_mp(monkeypatch):
@@ -39,8 +39,8 @@ def test_desfecho_remessa_a_sancao_razoes_do_veto_e_edicao_da_mp(monkeypatch):
         {"despacho": "Transformado na Lei Ordinária 15421/2026. Vetado parcialmente. MSC-PE 499/26. Razões do veto: DOU 02/06/2026 PÁG 07 COL 01.",
          "descricaoSituacao": "Transformado em Norma Jurídica", "dataHora": "2026-06-01T12:00"}))
     r = ex.desfecho(1)
-    assert r["edicao"] == "2026-03-19" and r["remessa"] == "2026-05-28"
-    assert r["razoes"] == "DOU 02/06/2026 PÁG 07 COL 01" and r["msc"] == "499/26"
+    assert r["dataEdicao"] == "2026-03-19" and r["remessa"] == "2026-05-28"
+    assert r["razoesVeto"] == "DOU 02/06/2026 PÁG 07 COL 01" and r["mensagemVeto"] == "499/26"
 
 
 def test_desfecho_emenda_constitucional_e_veto_total(monkeypatch):
@@ -49,12 +49,12 @@ def test_desfecho_emenda_constitucional_e_veto_total(monkeypatch):
     r = ex.desfecho(1)
     assert r["norma"] == "Emenda Constitucional 130/2025" and r["veto"] is None
     monkeypatch.setattr(ex, "get", lambda c, **p: tramitacoes({"despacho": "Vetado totalmente.", "descricaoSituacao": "Aguardando Apreciação de Veto", "dataHora": "2025-02-02T00:00"}))
-    assert ex.desfecho(1) == {"t": 1, "norma": None, "dataNorma": "2025-02-02", "veto": "total"}
+    assert ex.desfecho(1) == {"tramitacaoLida": True, "norma": None, "dataNorma": "2025-02-02", "veto": "total"}
 
 
 def test_desfecho_sem_norma(monkeypatch):
     monkeypatch.setattr(ex, "get", lambda c, **p: tramitacoes({"despacho": "Aguarda", "descricaoSituacao": "Em tramitação"}))
-    assert ex.desfecho(1) == {"t": 1}
+    assert ex.desfecho(1) == {"tramitacaoLida": True}
 
 
 def prop_api(id_, sit, tipo="PL"):
@@ -65,8 +65,8 @@ def prop_api(id_, sit, tipo="PL"):
 def test_detalhar(monkeypatch):
     monkeypatch.setattr(ex, "get", lambda c, **p: prop_api(5, "Aguardando Parecer"))
     d = ex.detalhar({"id": 5})
-    assert d == {"id": 5, "tipo": "PL", "numero": 5, "ano": 2026, "ementa": "ementa 5", "apres": "2026-03-01",
-                 "sit": "Aguardando Parecer", "data": "2026-04-02", "inteiroTeor": "http://pdf"}
+    assert d == {"id": 5, "tipo": "PL", "numero": 5, "ano": 2026, "ementa": "ementa 5", "dataApresentacao": "2026-03-01",
+                 "situacao": "Aguardando Parecer", "dataSituacao": "2026-04-02", "inteiroTeor": "http://pdf"}
 
 
 def test_detalhar_busca_desfecho_so_quando_transformada(monkeypatch):
@@ -93,34 +93,34 @@ def arquivo_exec(tmp_path, monkeypatch):
 
 def test_executivo_main_salva_ordenado_por_apresentacao(arquivo_exec, monkeypatch):
     monkeypatch.setattr(ex, "get_todos", lambda c, **p: [{"id": 1}, {"id": 2}])
-    monkeypatch.setattr(ex, "detalhar", lambda p: {"id": p["id"], "apres": f"2026-0{p['id']}-01", "sit": "Em tramitação"})
+    monkeypatch.setattr(ex, "detalhar", lambda p: {"id": p["id"], "dataApresentacao": f"2026-0{p['id']}-01", "situacao": "Em tramitação"})
     ex.main()
     assert [p["id"] for p in json.loads(arquivo_exec.read_text())] == [2, 1]
 
 
 def test_executivo_main_reaproveita_finais_sem_consultar(arquivo_exec, monkeypatch):
-    arquivo_exec.write_text(json.dumps([{"id": 1, "apres": "2026-01-01", "sit": "Arquivada"}]))
+    arquivo_exec.write_text(json.dumps([{"id": 1, "dataApresentacao": "2026-01-01", "situacao": "Arquivada"}]))
     monkeypatch.setattr(ex, "get_todos", lambda c, **p: [{"id": 1}, {"id": 2}])
     consultados = []
-    monkeypatch.setattr(ex, "detalhar", lambda p: consultados.append(p["id"]) or {"id": p["id"], "apres": "2026-02-01", "sit": "x"})
+    monkeypatch.setattr(ex, "detalhar", lambda p: consultados.append(p["id"]) or {"id": p["id"], "dataApresentacao": "2026-02-01", "situacao": "x"})
     ex.main()
     assert consultados == [2]
     assert {p["id"] for p in json.loads(arquivo_exec.read_text())} == {1, 2}
 
 
 def test_executivo_main_erro_de_detalhe_mantem_versao_antiga(arquivo_exec, monkeypatch):
-    arquivo_exec.write_text(json.dumps([{"id": 1, "apres": "2026-01-01", "sit": "Em tramitação"}]))
+    arquivo_exec.write_text(json.dumps([{"id": 1, "dataApresentacao": "2026-01-01", "situacao": "Em tramitação"}]))
     monkeypatch.setattr(ex, "get_todos", lambda c, **p: [{"id": 1}])
     monkeypatch.setattr(ex, "detalhar", lambda p: (_ for _ in ()).throw(RuntimeError("HTTP 500")))
     ex.main()
-    assert json.loads(arquivo_exec.read_text())[0]["sit"] == "Em tramitação"
+    assert json.loads(arquivo_exec.read_text())[0]["situacao"] == "Em tramitação"
 
 
 def test_executivo_main_nada_coletado_nao_apaga_arquivo(arquivo_exec, monkeypatch):
-    arquivo_exec.write_text(json.dumps([{"id": 1, "apres": "2026-01-01", "sit": "x"}]))
+    arquivo_exec.write_text(json.dumps([{"id": 1, "dataApresentacao": "2026-01-01", "situacao": "x"}]))
     monkeypatch.setattr(ex, "get_todos", lambda c, **p: (_ for _ in ()).throw(RuntimeError("API fora")))
     ex.main()
-    assert json.loads(arquivo_exec.read_text()) == [{"id": 1, "apres": "2026-01-01", "sit": "x"}]
+    assert json.loads(arquivo_exec.read_text()) == [{"id": 1, "dataApresentacao": "2026-01-01", "situacao": "x"}]
 
 
 # ================================================================ SAPL (Assembleias)
@@ -185,11 +185,11 @@ def test_situacao(m, esperado):
 
 def test_compactar_materia():
     r = est.compactar_materia({"tipo": 1, "numero": 10, "ano": 2026, "data_apresentacao": "2026-02-01", "ementa": " e ", "em_tramitacao": True,
-                               "texto_original": "http://pdf", "autores": [3]}, {1: {"s": "PL", "d": "Projeto de Lei"}})
-    assert r == {"t": "PL", "td": "Projeto de Lei", "n": 10, "a": 2026, "ap": "2026-02-01", "e": "e", "sit": "Em tramitação", "tr": True,
-                 "pdf": "https://pdf", "au": [3]}
+                               "texto_original": "http://pdf", "autores": [3]}, {1: {"sigla": "PL", "descricao": "Projeto de Lei"}})
+    assert r == {"tipo": "PL", "tipoDescricao": "Projeto de Lei", "numero": 10, "ano": 2026, "dataApresentacao": "2026-02-01", "ementa": "e",
+                 "situacao": "Em tramitação", "emTramitacao": True, "linkTexto": "https://pdf", "idsAutores": [3]}
     desconhecido = est.compactar_materia({"tipo": 99, "numero": 1, "ano": 2026}, {})
-    assert desconhecido["t"] == "?" and desconhecido["pdf"] is None and desconhecido["au"] == []
+    assert desconhecido["tipo"] == "?" and desconhecido["linkTexto"] is None and desconhecido["idsAutores"] == []
 
 
 @pytest.mark.parametrize("nome,nat,esperado", [
@@ -252,11 +252,11 @@ def test_coletar_materias_filtra_tipo_e_autoria(sapl, monkeypatch):
         {"id": 3, "tipo": 1, "ano": ano, "numero": 3, "autores": [10, 11]},
     ]
     s = sapl(**{"materia/materialegislativa": mats})
-    tipos = {1: {"s": "PL", "d": "Projeto de Lei"}, 2: {"s": "REQ", "d": "Requerimento"}}
+    tipos = {1: {"sigla": "PL", "descricao": "Projeto de Lei"}, 2: {"sigla": "REQ", "descricao": "Requerimento"}}
     est.coletar_materias("h", "PB", {"data_inicio": f"{ano}-01-01"}, {10: 100, 11: 101}, tipos)
     salvo = json.loads((est.DADOS / "PB" / f"materias_{ano}.json").read_text())["materias"]
     assert sorted(salvo) == ["1", "3"]
-    assert salvo["3"]["dep"] == [100, 101] and salvo["1"]["t"] == "PL"
+    assert salvo["3"]["idsDeputados"] == [100, 101] and salvo["1"]["tipo"] == "PL"
     assert all(c[1].get("tipo") != 2 for c in s.chamadas if c[0] == "materia/materialegislativa")  # requerimentos nem são consultados
 
 
@@ -265,7 +265,7 @@ def test_coletar_materias_ano_antigo_recente_vem_do_cache(sapl):
     ontem = (dt.date.today() - dt.timedelta(days=1)).isoformat()
     est.salvar(est.DADOS / "PB" / f"materias_{ano - 1}.json", {"coletadoEm": ontem, "materias": {}})
     s = sapl(**{"materia/materialegislativa": []})
-    est.coletar_materias("h", "PB", {"data_inicio": f"{ano - 1}-01-01"}, {}, {1: {"s": "PL", "d": "Projeto de Lei"}})
+    est.coletar_materias("h", "PB", {"data_inicio": f"{ano - 1}-01-01"}, {}, {1: {"sigla": "PL", "descricao": "Projeto de Lei"}})
     anos = {c[1]["ano"] for c in s.chamadas if c[0] == "materia/materialegislativa"}
     assert anos == {ano}
 
@@ -284,11 +284,11 @@ def test_coletar_votacoes_agrega_votos_e_resultado(sapl):
     est.coletar_votacoes("h", "PB", {"data_inicio": "2023-02-01"}, {100: {}, 101: {}})
     v = json.loads((est.DADOS / "PB" / "votacoes.json").read_text())["votacoes"]
     assert list(v) == ["5"]  # a 6 falhou e é ignorada
-    assert v["5"] == {"d": "2026-05-04", "m": 77, "ok": 1, "res": "Aprovado", "sim": 20, "nao": 3, "abs": 1, "v": [[100, "Sim"], [101, "Não"]]}
+    assert v["5"] == {"data": "2026-05-04", "idMateria": 77, "aprovada": 1, "resultado": "Aprovado", "sim": 20, "nao": 3, "abstencoes": 1, "votos": [[100, "Sim"], [101, "Não"]]}
 
 
 def test_coletar_votacoes_incremental_comeca_14_dias_antes_da_ultima(sapl):
-    est.salvar(est.DADOS / "PB" / "votacoes.json", {"votacoes": {"1": {"d": "2026-05-20", "v": []}}})
+    est.salvar(est.DADOS / "PB" / "votacoes.json", {"votacoes": {"1": {"data": "2026-05-20", "votos": []}}})
     s = sapl(**{"sessao/tiporesultadovotacao": [], "sessao/votoparlamentar": []})
     est.coletar_votacoes("h", "PB", {"data_inicio": "2023-02-01"}, {})
     filtro = next(p for c, p in s.chamadas if c == "sessao/votoparlamentar")["data_hora__gte"]
@@ -297,13 +297,13 @@ def test_coletar_votacoes_incremental_comeca_14_dias_antes_da_ultima(sapl):
 
 
 def test_coletar_materias_votadas_so_busca_o_que_falta(sapl):
-    est.salvar(est.DADOS / "PB" / "votacoes.json", {"votacoes": {"a": {"m": 1, "d": "x", "v": []}, "b": {"m": 2, "d": "x", "v": []}, "c": {"m": None, "d": "x", "v": []}}})
-    est.salvar(est.DADOS / "PB" / "materias_votadas.json", {"1": {"t": "PL"}})
+    est.salvar(est.DADOS / "PB" / "votacoes.json", {"votacoes": {"a": {"idMateria": 1, "data": "x", "votos": []}, "b": {"idMateria": 2, "data": "x", "votos": []}, "c": {"idMateria": None, "data": "x", "votos": []}}})
+    est.salvar(est.DADOS / "PB" / "materias_votadas.json", {"1": {"tipo": "PL"}})
     s = sapl(**{"materia/materialegislativa/2": {"tipo": 1, "numero": 9, "ano": 2026, "ementa": "x", "em_tramitacao": False}})
-    est.coletar_materias_votadas("h", "PB", {1: {"s": "PL", "d": "Projeto"}})
+    est.coletar_materias_votadas("h", "PB", {1: {"sigla": "PL", "descricao": "Projeto"}})
     assert [c[0] for c in s.chamadas] == ["materia/materialegislativa/2"]
     r = json.loads((est.DADOS / "PB" / "materias_votadas.json").read_text())
-    assert r["2"] == {"t": "PL", "td": "Projeto", "n": 9, "a": 2026, "e": "x"} and "1" in r
+    assert r["2"] == {"tipo": "PL", "tipoDescricao": "Projeto", "numero": 9, "ano": 2026, "ementa": "x"} and "1" in r
 
 
 def test_coletar_assembleia_sem_deputados_falha(sapl):
@@ -356,7 +356,7 @@ def test_coletar_prefeitura_filtra_tipos_e_autoria(sapl, monkeypatch):
     pref.coletar("PB", "h")
     salvo = json.loads((pref.DADOS / "PB" / f"prefeitura_{ano}.json").read_text())
     assert list(salvo["materias"]) == ["1"] and salvo["host"] == "h"
-    assert salvo["materias"]["1"]["t"] == "PL"
+    assert salvo["materias"]["1"]["tipo"] == "PL"
     assert {p["tipo"] for c, p in s.chamadas if c == "materia/materialegislativa"} == {1}
 
 

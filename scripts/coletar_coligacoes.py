@@ -6,7 +6,7 @@ dados/tse/coligacoes/<ano>/<UF>.json (vai para o git), chaveado por "CARGO|códi
 Só guarda o partido de quem foi eleito (dados/tse/<ano>/<UF>.json, de coletar_tse.py), para o arquivo
 não crescer com todos os partidos de todos os municípios.
 
-Cada local: {"c": [[tipo, nome, composição, situação], ...], "p": {sigla do partido: índice em "c"}}.
+Cada local: {"coligacoes": [[tipo, nome, composição, situação], ...], "coligacaoDoPartido": {sigla do partido: índice em "coligacoes"}}.
 tipo: C coligação, F federação, I partido isolado. Os suplentes de senador ficam de fora.
 
 Uso:
@@ -43,7 +43,7 @@ def limpo(v: str) -> str:
 def eleitos(ano: int, uf: str) -> set:
     arq = RAIZ / "dados" / "tse" / str(ano) / f"{uf}.json"
     lista = json.loads(arq.read_text(encoding="utf-8")) if arq.exists() else []
-    return {(e["cargo"], e["ue"], e.get("partido")) for e in lista}
+    return {(e["cargo"], e["unidadeEleitoral"], e.get("partido")) for e in lista}
 
 
 def coletar_ano(ano: int) -> None:
@@ -58,7 +58,7 @@ def coletar_ano(ano: int) -> None:
                 continue
             uf = nome.rsplit("_", 1)[1][:2]
             quero = eleitos(ano, uf)
-            mapa = defaultdict(lambda: {"c": [], "p": {}})
+            mapa = defaultdict(lambda: {"coligacoes": [], "coligacaoDoPartido": {}})
             with z.open(nome) as f:
                 for l in csv.DictReader(io.TextIOWrapper(f, encoding="latin-1", newline=""), delimiter=";"):
                     cargo = l["DS_CARGO"].upper()
@@ -69,9 +69,9 @@ def coletar_ano(ano: int) -> None:
                     d = mapa[f"{cargo}|{l['SG_UE']}"]
                     c = [TIPOS.get(l["TP_AGREMIACAO"].upper(), "I"), limpo(l["NM_COLIGACAO"]),
                          limpo(l["DS_COMPOSICAO_COLIGACAO"]), l["DS_SITUACAO"].capitalize()]
-                    if c not in d["c"]:
-                        d["c"].append(c)
-                    d["p"][l["SG_PARTIDO"]] = d["c"].index(c)
+                    if c not in d["coligacoes"]:
+                        d["coligacoes"].append(c)
+                    d["coligacaoDoPartido"][l["SG_PARTIDO"]] = d["coligacoes"].index(c)
             (pasta / f"{uf}.json").write_text(json.dumps(mapa, ensure_ascii=False, separators=(",", ":")), encoding="utf-8")
             locais += len(mapa)
     (pasta / "_coleta.json").write_text(json.dumps({

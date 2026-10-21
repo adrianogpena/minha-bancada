@@ -212,8 +212,8 @@ const TIPOS_PROJETO = { PL: "Projeto de lei", PLP: "Projeto de lei complementar"
 
 // resume a situação da Câmara em um destino compreensível
 function desfecho(p) {
-  const s = semAcento(p.sit || "");
-  if (!p.sit) return ["Situação ainda não consultada", "sem"];
+  const s = semAcento(p.situacao || "");
+  if (!p.situacao) return ["Situação ainda não consultada", "sem"];
   if (/tramitacao encerrada/.test(s)) return ["Tramitação encerrada", "sem"];
   if (/^(sancionad|promulgad)/.test(s)) return ["Aprovada", "aprovada"];
   if (/^aprovad/.test(s)) return ["Aprovada", "aprovada", "andamento"];
@@ -459,14 +459,14 @@ function montarParlamentar(alvo, c) {
   const renderProj = (p) => {
     const [texto, destino, cor] = desfecho(p), classe = cor || destino;
     return `<li class="cartao-item">
-      <span class="quando"><b>${esc(p.tipo)} ${esc(p.numero)}/${esc(p.ano)}</b>${p.ap ? `, apresentado em ${data(p.ap)}` : ""}${p.principal ? ", autor principal" : ""}</span>
+      <span class="quando"><b>${esc(p.tipo)} ${esc(p.numero)}/${esc(p.ano)}</b>${p.dataApresentacao ? `, apresentado em ${data(p.dataApresentacao)}` : ""}${p.principal ? ", autor principal" : ""}</span>
       <span class="resultado r-${classe}">${esc(texto)}</span>
       <span class="texto">${esc(p.ementa || "Sem ementa")}</span>
       ${c.papel ? `<span class="texto"><b>Papel de ${esc(nome)}:</b> ${c.papel(p)}</span>` : ""}
-      ${p.sit ? `<span class="texto"><b>Situação:</b> ${esc(p.sit)}${p.org ? ` (${esc(p.org)})` : ""}${p.dt ? `, em ${data(p.dt)}` : ""}.${p.desp ? ` <span class="quando">Despacho: ${esc(p.desp.slice(0, 300))}</span>` : ""}</span>` : ""}
-      ${p.td || p.tram || p.reg || p.co || p.ini ? `<span class="texto quando">${[p.td && `Tipo: ${esc(p.td)}`, p.ini && `Iniciativa: ${esc(p.ini)}`, p.n && `Assinado por ${p.n} autores${p.pp ? ` de ${p.pp} partidos` : ""}`, p.reg && `Regime: ${esc(p.reg)}`, p.tram && `Tramitação: ${esc(p.tram)}`, p.co && `Coautores: ${esc(p.co.join(", "))}`].filter(Boolean).join(" · ")}</span>` : ""}
-      ${p.kw ? `<span class="texto quando">Temas: ${esc(p.kw)}</span>` : ""}
-      <span class="texto">${fontes([[c.fonteTramitacao, c.linkTramitacao(p)], p.pdf ? ["Texto integral", p.pdf] : null, ["Dados na API", c.linkApi(p)]])}</span>
+      ${p.situacao ? `<span class="texto"><b>Situação:</b> ${esc(p.situacao)}${p.orgao ? ` (${esc(p.orgao)})` : ""}${p.dataSituacao ? `, em ${data(p.dataSituacao)}` : ""}.${p.despacho ? ` <span class="quando">Despacho: ${esc(p.despacho.slice(0, 300))}</span>` : ""}</span>` : ""}
+      ${p.tipoDescricao || p.tramitacao || p.regime || p.coautores || p.iniciativa ? `<span class="texto quando">${[p.tipoDescricao && `Tipo: ${esc(p.tipoDescricao)}`, p.iniciativa && `Iniciativa: ${esc(p.iniciativa)}`, p.totalAutores && `Assinado por ${p.totalAutores} autores${p.partidosDistintos ? ` de ${p.partidosDistintos} partidos` : ""}`, p.regime && `Regime: ${esc(p.regime)}`, p.tramitacao && `Tramitação: ${esc(p.tramitacao)}`, p.coautores && `Coautores: ${esc(p.coautores.join(", "))}`].filter(Boolean).join(" · ")}</span>` : ""}
+      ${p.palavrasChave ? `<span class="texto quando">Temas: ${esc(p.palavrasChave)}</span>` : ""}
+      <span class="texto">${fontes([[c.fonteTramitacao, c.linkTramitacao(p)], p.linkTexto ? ["Texto integral", p.linkTexto] : null, ["Dados na API", c.linkApi(p)]])}</span>
     </li>`;
   };
   const tiposProj = [...new Set(projetos.map((p) => p.tipo))].sort();
@@ -572,13 +572,13 @@ const UFS = { AC: "Acre", AL: "Alagoas", AP: "Amapá", AM: "Amazonas", BA: "Bahi
 
 // grupos na ordem em que aparecem; k = ordem do cargo vinda do gerador
 const GRUPOS = [
-  { titulo: "Presidência da República", ks: [1, 2] },
-  { titulo: "Senado Federal", ks: [3] },
-  { titulo: "Câmara dos Deputados", ks: [4] },
-  { titulo: "Governo do estado", ks: [5, 6] },
-  { titulo: (uf) => (uf === "DF" ? "Câmara Legislativa" : "Assembleia Legislativa"), ks: [7] },
-  { titulo: "Prefeitura", ks: [8, 9], municipal: true },
-  { titulo: "Câmara Municipal", ks: [10], municipal: true },
+  { titulo: "Presidência da República", ordens: [1, 2] },
+  { titulo: "Senado Federal", ordens: [3] },
+  { titulo: "Câmara dos Deputados", ordens: [4] },
+  { titulo: "Governo do estado", ordens: [5, 6] },
+  { titulo: (uf) => (uf === "DF" ? "Câmara Legislativa" : "Assembleia Legislativa"), ordens: [7] },
+  { titulo: "Prefeitura", ordens: [8, 9], municipal: true },
+  { titulo: "Câmara Municipal", ordens: [10], municipal: true },
 ];
 
 const UF_COD = { 11: "RO", 12: "AC", 13: "AM", 14: "RR", 15: "PA", 16: "AP", 17: "TO", 21: "MA", 22: "PI", 23: "CE", 24: "RN", 25: "PB", 26: "PE", 27: "AL",
@@ -587,7 +587,7 @@ const COD_UF = Object.fromEntries(Object.entries(UF_COD).map(([c, u]) => [u, c])
 const MALHAS = "https://servicodados.ibge.gov.br/api/v3/malhas";
 
 function linkPolitico(x) {
-  return x.h || `politico.html?f=${encodeURIComponent(x.f)}&i=${encodeURIComponent(x.i)}`;
+  return x.pagina || `politico.html?f=${encodeURIComponent(x.arquivoFicha)}&i=${encodeURIComponent(x.id)}`;
 }
 
 function etiquetaEstado(e) {
@@ -598,9 +598,9 @@ function etiquetaEstado(e) {
 
 function linhaPolitico(x) {
   return `<li><a class="linha-pol" href="${linkPolitico(x)}">
-    ${foto({ nome: x.n || "?", foto: x.fo })}
-    <span><span class="nome">${esc(x.n)}</span><br><span class="sigla">${esc(x.c)}${x.p ? `, ${esc(x.p)}` : ""}${x.m ? ` em ${esc(x.m)}` : x.u ? `, ${esc(x.u)}` : ""}</span></span>
-    ${etiquetaEstado(x.e)}
+    ${foto({ nome: x.nome || "?", foto: x.foto })}
+    <span><span class="nome">${esc(x.nome)}</span><br><span class="sigla">${esc(x.cargo)}${x.partido ? `, ${esc(x.partido)}` : ""}${x.municipio ? ` em ${esc(x.municipio)}` : x.uf ? `, ${esc(x.uf)}` : ""}</span></span>
+    ${etiquetaEstado(x.estado)}
   </a></li>`;
 }
 
@@ -630,17 +630,17 @@ const eleitoradoUf = {};
 async function desenharEleitorado(el, uf, mun, nomeLocal) {
   if (!uf) { el.hidden = true; return; }
   try { eleitoradoUf[uf] ||= await carregar(`dados/eleitorado/${uf}.json`); } catch (e) { el.hidden = true; return; }
-  const { ano, d } = eleitoradoUf[uf];
-  const r = d[mun || "_uf"];
-  if (!r || !r.t) { el.hidden = true; return; }
+  const { ano, locais } = eleitoradoUf[uf];
+  const r = locais[mun || "_uf"];
+  if (!r || !r.total) { el.hidden = true; return; }
   const porcento = (v, base) => (base ? `${((100 * v) / base).toFixed(1).replace(".", ",")}%` : "");
   const barras = (rotulos, valores, base) => `<div class="barras">${rotulos.map((r, i) => `<div><div class="barra-rotulo"><span>${esc(r)}</span>
     <b>${numeroBr(valores[i])} · ${porcento(valores[i], base)}</b></div><div class="barra"><i style="width:${base ? (100 * valores[i]) / base : 0}%"></i></div></div>`).join("")}</div>`;
-  const faixas = r.f.reduce((a, b) => a + b, 0), escolas = r.e.reduce((a, b) => a + b, 0), genero = r.g[0] + r.g[1];
-  el.innerHTML = `<summary>Eleitorado de ${esc(nomeLocal)}: <b>${numeroBr(r.t)}</b> eleitores (${esc(ano)})</summary>
-    <h3>Gênero</h3>${barras(["Mulheres", "Homens"], [r.g[1], r.g[0]], genero)}
-    <h3>Faixa etária</h3>${barras(FAIXAS, r.f, faixas)}
-    <h3>Escolaridade</h3>${barras(ESCOLARIDADE, r.e, escolas)}
+  const faixas = r.porFaixaEtaria.reduce((a, b) => a + b, 0), escolas = r.porEscolaridade.reduce((a, b) => a + b, 0), genero = r.porGenero[0] + r.porGenero[1];
+  el.innerHTML = `<summary>Eleitorado de ${esc(nomeLocal)}: <b>${numeroBr(r.total)}</b> eleitores (${esc(ano)})</summary>
+    <h3>Gênero</h3>${barras(["Mulheres", "Homens"], [r.porGenero[1], r.porGenero[0]], genero)}
+    <h3>Faixa etária</h3>${barras(FAIXAS, r.porFaixaEtaria, faixas)}
+    <h3>Escolaridade</h3>${barras(ESCOLARIDADE, r.porEscolaridade, escolas)}
     <p class="fonte-link"><span class="rotulo-fonte">Fonte</span> <a href="${TSE_CDN}/perfil_eleitorado/perfil_eleitorado_${ano}.zip" rel="noopener">Perfil do eleitorado ${esc(ano)} (TSE)</a>.
     Os percentuais de cada grupo são sobre quem tem a informação registrada.</p>`;
   el.hidden = false;
@@ -715,7 +715,7 @@ async function paginaPoliticos() {
         alvo.innerHTML = `<p class="vazio">Carregando ${esc(UFS[uf])}…</p>`;
         try { cache[uf] ||= await carregar(`dados/indice/${uf}.json`); } catch (e) { return erro(alvo, e); }
         lista = cache[uf];
-        lista.forEach((x) => x.g && nomes.set(x.g, x.m));
+        lista.forEach((x) => x.codigoMunicipio && nomes.set(x.codigoMunicipio, x.municipio));
         selMun.disabled = !nomes.size;
         selMun.insertAdjacentHTML("beforeend", [...nomes].sort((a, b) => a[1].localeCompare(b[1], "pt-BR"))
           .map(([g, m]) => `<option value="${esc(g)}">${esc(m)}</option>`).join(""));
@@ -738,33 +738,33 @@ async function paginaPoliticos() {
     if (periodo === "2026") nova.set("periodo", "2026");
     history.replaceState(null, "", nova.toString() ? "?" + nova : location.pathname);
 
-    const doPeriodo = (x) => (periodo === "agora" ? x.e === "atual" : x.e !== "atual");
+    const doPeriodo = (x) => (periodo === "agora" ? x.estado === "atual" : x.estado !== "atual");
     // no Brasil, o BR.json traz a presidência e os cargos federais; no estado, os cargos vêm do arquivo do estado
     const base = uf ? lista : br;
-    const todos = base.filter(doPeriodo).filter((x) => !termo || semAcento(`${x.n} ${x.p} ${x.m || ""} ${x.u || ""}`).includes(termo));
+    const todos = base.filter(doPeriodo).filter((x) => !termo || semAcento(`${x.nome} ${x.partido} ${x.municipio || ""} ${x.uf || ""}`).includes(termo));
     const grupos = uf && mun ? [...GRUPOS].sort((a, b) => !!b.municipal - !!a.municipal) : GRUPOS;
     let html = "", total = 0;
     for (const g of GRUPOS) g._itens = null;
     for (const g of grupos) {
-      let itens = todos.filter((x) => g.ks.includes(x.k));
+      let itens = todos.filter((x) => g.ordens.includes(x.ordemCargo));
       if (g.municipal) {
         if (!uf) continue;
-        if (mun) itens = itens.filter((x) => x.g === mun);
+        if (mun) itens = itens.filter((x) => x.codigoMunicipio === mun);
         else if (!termo) {
-          if (itens.length) html += `<section class="grupo"><h2>${g.titulo}</h2><p class="vazio">Clique em um município no mapa para ver ${g.ks.includes(10) ? "os vereadores" : "o prefeito e o vice"}, ou busque pelo nome.</p></section>`;
+          if (itens.length) html += `<section class="grupo"><h2>${g.titulo}</h2><p class="vazio">Clique em um município no mapa para ver ${g.ordens.includes(10) ? "os vereadores" : "o prefeito e o vice"}, ou busque pelo nome.</p></section>`;
           continue;
         }
       }
       if (!itens.length) continue;
       total += itens.length;
       const titulo = typeof g.titulo === "function" ? g.titulo(uf) : g.titulo;
-      html += `<section class="grupo"><h2>${titulo} <small class="sub">${itens.length}</small></h2><ul class="lista" data-grupo="${g.ks[0]}"></ul></section>`;
+      html += `<section class="grupo"><h2>${titulo} <small class="sub">${itens.length}</small></h2><ul class="lista" data-grupo="${g.ordens[0]}"></ul></section>`;
       g._itens = itens;
     }
     if (periodo === "2026" && !total) html += `<p class="vazio">Nenhum eleito em 2026 encontrado com esses filtros.</p>`;
     alvo.innerHTML = html || `<p class="vazio">Nada encontrado. Tente outro nome ou limpe a busca.</p>`;
     for (const g of GRUPOS) {
-      const ul = g._itens && alvo.querySelector(`ul[data-grupo="${g.ks[0]}"]`);
+      const ul = g._itens && alvo.querySelector(`ul[data-grupo="${g.ordens[0]}"]`);
       if (!ul) continue;
       // listas longas (Câmara, vereadores de uma capital) crescem aos poucos
       const itens = g._itens; let n = 0;
@@ -829,39 +829,39 @@ function casaLegislativa(p) {
 /* Presidente em exercício: projetos e medidas provisórias que enviou ao Congresso e o que aconteceu com cada um. */
 const TIPOS_EXECUTIVO = { PL: "Projeto de lei", PLP: "Projeto de lei complementar", PEC: "Proposta de emenda à Constituição", MPV: "Medida provisória" };
 function desfechoExecutivo(x) {
-  const s = (x.sit || "").toLowerCase();
+  const s = (x.situacao || "").toLowerCase();
   if (x.veto === "total" || s.startsWith("vetad")) return { rotulo: "Vetou", classe: "v-nao" };
   if (s.startsWith("transformad")) return { rotulo: x.veto === "parcial" ? "Virou lei, com vetos" : "Virou lei", classe: "v-sim" };
   if (s.includes("aguardando sanção")) return { rotulo: "Decide se sanciona", classe: "v-outro" };
-  if (!x.sit && x.tipo === "MPV") return { rotulo: "MP em vigor", classe: "v-outro" };
+  if (!x.situacao && x.tipo === "MPV") return { rotulo: "MP em vigor", classe: "v-outro" };
   if (s.startsWith("perdeu a efic")) return { rotulo: "MP deixou de valer", classe: "v-nao" };
   if (/^(arquivad|retirad|rejeitad|prejudicad)/.test(s)) return { rotulo: "Não virou lei", classe: "v-nao" };
   return { rotulo: "No Congresso", classe: "v-outro" };
 }
 /* Frases curtas, uma por etapa, dizendo quem fez o quê: o presidente (enviou, sancionou, vetou) ou o Congresso (aprovou, deixou caducar). */
 function etapasExecutivo(x) {
-  const mp = x.tipo === "MPV", s = (x.sit || "").toLowerCase();
-  const e = [mp ? `<b>O presidente editou</b> a medida provisória em ${data(x.apres)}; ela vale como lei desde então, mas o Congresso precisa aprová-la em até 120 dias.`
-    : `<b>O presidente enviou</b> o projeto ao Congresso em ${data(x.apres)}.`];
+  const mp = x.tipo === "MPV", s = (x.situacao || "").toLowerCase();
+  const e = [mp ? `<b>O presidente editou</b> a medida provisória em ${data(x.dataApresentacao)}; ela vale como lei desde então, mas o Congresso precisa aprová-la em até 120 dias.`
+    : `<b>O presidente enviou</b> o projeto ao Congresso em ${data(x.dataApresentacao)}.`];
   if (x.remessa) e.push(`<b>O Congresso aprovou</b> e mandou à sanção em ${data(x.remessa)}.`);
-  if (x.veto === "total" || s.startsWith("vetad")) e.push(`<b>O presidente vetou o texto inteiro</b>${x.dataNorma ? ` em ${data(x.dataNorma)}` : ""}.${x.razoes ? ` Razões do veto: ${esc(x.razoes)}.` : ""}`);
+  if (x.veto === "total" || s.startsWith("vetad")) e.push(`<b>O presidente vetou o texto inteiro</b>${x.dataNorma ? ` em ${data(x.dataNorma)}` : ""}.${x.razoesVeto ? ` Razões do veto: ${esc(x.razoesVeto)}.` : ""}`);
   else if (s.startsWith("transformad")) {
     const lei = x.norma ? ` (<b>${esc(x.norma)}</b>)` : "";
     if (mp && !x.remessa) e.push(`<b>O Congresso aprovou</b> a medida provisória sem mudanças e ela virou lei${lei}${x.dataNorma ? ` em ${data(x.dataNorma)}` : ""}. Nesse caso não há sanção: quem promulga é o Congresso.`);
-    else if (x.veto === "parcial") e.push(`<b>O presidente sancionou</b> o texto${x.dataNorma ? ` em ${data(x.dataNorma)}` : ""}${lei}, mas <b>vetou trechos</b>.${x.razoes ? ` Razões do veto: ${esc(x.razoes)}.` : ""} O Congresso ainda pode derrubar os vetos.`);
+    else if (x.veto === "parcial") e.push(`<b>O presidente sancionou</b> o texto${x.dataNorma ? ` em ${data(x.dataNorma)}` : ""}${lei}, mas <b>vetou trechos</b>.${x.razoesVeto ? ` Razões do veto: ${esc(x.razoesVeto)}.` : ""} O Congresso ainda pode derrubar os vetos.`);
     else e.push(`<b>O presidente sancionou</b> o texto sem vetos${x.dataNorma ? ` em ${data(x.dataNorma)}` : ""}${lei}.`);
   } else if (s.includes("aguardando sanção")) e.push("<b>O presidente ainda não decidiu:</b> tem 15 dias úteis para sancionar ou vetar.");
-  else if (s.startsWith("perdeu a efic")) e.push(`<b>O Congresso não votou a tempo</b> e a medida provisória perdeu a eficácia${x.data ? ` em ${data(x.data)}` : ""}.`);
-  else if (/^(arquivad|retirad|rejeitad|prejudicad)/.test(s)) e.push(`<b>Não virou lei:</b> ${esc(x.sit.toLowerCase())}${x.data ? ` em ${data(x.data)}` : ""}. Não houve sanção nem veto.`);
-  else if (x.sit) e.push(`<b>Ainda no Congresso:</b> ${esc(x.sit.toLowerCase())}. Ainda não chegou à sanção.`);
+  else if (s.startsWith("perdeu a efic")) e.push(`<b>O Congresso não votou a tempo</b> e a medida provisória perdeu a eficácia${x.dataSituacao ? ` em ${data(x.dataSituacao)}` : ""}.`);
+  else if (/^(arquivad|retirad|rejeitad|prejudicad)/.test(s)) e.push(`<b>Não virou lei:</b> ${esc(x.situacao.toLowerCase())}${x.dataSituacao ? ` em ${data(x.dataSituacao)}` : ""}. Não houve sanção nem veto.`);
+  else if (x.situacao) e.push(`<b>Ainda no Congresso:</b> ${esc(x.situacao.toLowerCase())}. Ainda não chegou à sanção.`);
   return e;
 }
 /* Governador e prefeito: o sistema de cada Casa só informa tipo, situação e ementa, então os desfechos são mais genéricos que os do presidente. */
 function etapasGoverno(x, prefeito) {
   const chefe = prefeito ? "O prefeito" : "O governador", casa = prefeito ? "A Câmara" : "A Assembleia";
-  const sit = (x.sit || "").trim(), s = sit.toLowerCase(), td = (x.td || "").toLowerCase();
-  const quando = x.ap ? ` em ${data(x.ap)}` : "";
-  const alcance = /total|integral/i.test(`${x.td} ${x.ementa}`) ? "total" : /parcial/i.test(`${x.td} ${x.ementa}`) ? "parcial" : null;
+  const sit = (x.situacao || "").trim(), s = sit.toLowerCase(), td = (x.tipoDescricao || "").toLowerCase();
+  const quando = x.dataApresentacao ? ` em ${data(x.dataApresentacao)}` : "";
+  const alcance = /total|integral/i.test(`${x.tipoDescricao} ${x.ementa}`) ? "total" : /parcial/i.test(`${x.tipoDescricao} ${x.ementa}`) ? "parcial" : null;
   if (x.tipo === "VET") {
     const e = [`<b>${chefe} vetou</b> ${alcance === "total" ? "o texto inteiro" : alcance === "parcial" ? "trechos do texto" : "o texto (o sistema não informa se inteiro ou em parte)"}; a mensagem de veto chegou${prefeito ? "" : " à Assembleia"}${quando}.`];
     if (/^em tr(amita|âmite)/.test(s)) e.push(`<b>${casa} ainda vai decidir</b> se mantém o veto ou o derruba.`);
@@ -890,11 +890,11 @@ function etapasGoverno(x, prefeito) {
 }
 const itemGoverno = (prefeito) => (x) => {
   const d = etapasGoverno(x, prefeito);
-  return `<li><span class="quando">${esc(x.td)} ${esc(x.numero)}/${esc(x.ano)}</span>
+  return `<li><span class="quando">${esc(x.tipoDescricao)} ${esc(x.numero)}/${esc(x.ano)}</span>
   <span class="voto ${d.classe}">${esc(d.rotulo)}</span>
   <span class="texto">${esc(x.ementa)}</span>
   <div class="texto"><ul class="etapas">${d.etapas.map((t) => `<li>${t}</li>`).join("")}</ul>
-    ${x.pdf ? `<a href="${esc(x.pdf)}" rel="noopener">${/\.pdf$/i.test(x.pdf) ? "Texto" : "Tramitação"}</a>` : ""}</div></li>`;
+    ${x.linkTexto ? `<a href="${esc(x.linkTexto)}" rel="noopener">${/\.pdf$/i.test(x.linkTexto) ? "Texto" : "Tramitação"}</a>` : ""}</div></li>`;
 };
 
 /* Legenda recolhida com o significado de cada selo, e aviso do que a fonte não informa. */
@@ -947,7 +947,7 @@ const fonteRedesTse = (p) => {
   return `<span class="fonte-link"><span class="rotulo-fonte">Fonte</span> ${d ? `<a href="${esc(d)}" rel="noopener">candidatura ${esc(p.ano)} no DivulgaCandContas</a> · ` : ""}<a href="${esc(arquivoRedesTse(p))}" rel="noopener">arquivo de redes do TSE</a></span>`;
 };
 
-const divulgaUrl = (p) => p.fonte === "tse" && p.eleicao && p.ue ? `https://divulgacandcontas.tse.jus.br/divulga/#/candidato/${encodeURIComponent(p.ano)}/${encodeURIComponent(p.eleicao)}/${encodeURIComponent(p.ue)}/${encodeURIComponent(p.sq)}` : null;
+const divulgaUrl = (p) => p.fonte === "tse" && p.eleicao && p.unidadeEleitoral ? `https://divulgacandcontas.tse.jus.br/divulga/#/candidato/${encodeURIComponent(p.ano)}/${encodeURIComponent(p.eleicao)}/${encodeURIComponent(p.unidadeEleitoral)}/${encodeURIComponent(p.sequencial)}` : null;
 
 const CF_URL = "https://www.planalto.gov.br/ccivil_03/constituicao/constituicao.htm";
 const EC111_URL = "https://www.planalto.gov.br/ccivil_03/constituicao/emendas/emc/emc111.htm";
@@ -985,13 +985,13 @@ function blocoCampanha(e, fontesLista) {
   const linhas = (itens, rotuloDe) => `<ul class="lista-eleicao">${itens.map((x) => `<li>${rotuloDe(x)}</li>`).join("")}</ul>`;
   fontesLista.unshift([`Prestação de contas de campanha ${e.ano} (TSE)`, `${TSE_CDN}/prestacao_contas/prestacao_de_contas_eleitorais_candidatos_${e.ano}.zip`]);
   return `<h3>Campanha de ${esc(e.ano)}: quem pagou</h3>
-    <p>Arrecadou <b>${reaisCentavos(c.r)}</b> e contratou <b>${reaisCentavos(c.d)}</b> em despesas. ${c.p != null && c.d - c.p > 1 ? `Pagou <b>${reaisCentavos(c.p)}</b> até a prestação de contas; <b>${reaisCentavos(c.d - c.p)}</b> ficaram contratados e sem pagamento registrado.` : ""} Valores declarados pelo próprio candidato na prestação de contas ao TSE.</p>
-    ${c.o.length ? `<h4>De onde veio o dinheiro</h4>${linhas(c.o, ([o, v]) => `<span class="quando">${esc(o)}</span> <b>${reaisCentavos(v)}</b>${c.r ? ` (${Math.round((100 * v) / c.r)}%)` : ""}`)}` : ""}
-    ${c.dn.length ? `<h4>Maiores doadores</h4>${linhas(c.dn, ([n, o, v]) => `<b>${esc(n)}</b> <span class="quando">${esc(o)}</span> <b>${reaisCentavos(v)}</b>`)}
+    <p>Arrecadou <b>${reaisCentavos(c.receitas)}</b> e contratou <b>${reaisCentavos(c.despesasContratadas)}</b> em despesas. ${c.despesasPagas != null && c.despesasContratadas - c.despesasPagas > 1 ? `Pagou <b>${reaisCentavos(c.despesasPagas)}</b> até a prestação de contas; <b>${reaisCentavos(c.despesasContratadas - c.despesasPagas)}</b> ficaram contratados e sem pagamento registrado.` : ""} Valores declarados pelo próprio candidato na prestação de contas ao TSE.</p>
+    ${c.origensReceita.length ? `<h4>De onde veio o dinheiro</h4>${linhas(c.origensReceita, ([o, v]) => `<span class="quando">${esc(o)}</span> <b>${reaisCentavos(v)}</b>${c.receitas ? ` (${Math.round((100 * v) / c.receitas)}%)` : ""}`)}` : ""}
+    ${c.principaisDoadores.length ? `<h4>Maiores doadores</h4>${linhas(c.principaisDoadores, ([n, o, v]) => `<b>${esc(n)}</b> <span class="quando">${esc(o)}</span> <b>${reaisCentavos(v)}</b>`)}
       <p>"Recursos de partido político" inclui o fundo eleitoral e o fundo partidário repassados pelo partido.</p>` : ""}
-    ${c.do && c.do.length ? `<h4>Quem está por trás dos repasses</h4>${linhas(c.do, ([n, v]) => `<b>${esc(n)}</b> <b>${reaisCentavos(v)}</b>`)}
+    ${c.doadoresOriginarios && c.doadoresOriginarios.length ? `<h4>Quem está por trás dos repasses</h4>${linhas(c.doadoresOriginarios, ([n, v]) => `<b>${esc(n)}</b> <b>${reaisCentavos(v)}</b>`)}
       <p>Pessoas e empresas que doaram ao partido (ou a outro candidato) e tiveram o dinheiro repassado a esta campanha, segundo o TSE. O repasse de fundo público não tem doador originário.</p>` : ""}
-    ${c.g.length ? `<h4>Em que gastou</h4>${linhas(c.g, ([g, v]) => `<span class="quando">${esc(g)}</span> <b>${reaisCentavos(v)}</b>`)}` : ""}`;
+    ${c.gastosPorCategoria.length ? `<h4>Em que gastou</h4>${linhas(c.gastosPorCategoria, ([g, v]) => `<span class="quando">${esc(g)}</span> <b>${reaisCentavos(v)}</b>`)}` : ""}`;
 }
 
 /* Comparecimento e vagas da eleição (TSE: detalhe da votação e vagas). */
@@ -999,12 +999,12 @@ function blocoDisputa(e, fontesLista) {
   const d = e.disputa;
   if (!d) return e.ano < 2026 ? `<h3>Comparecimento e vagas</h3><p>${semFonte("comparecimento desta eleição ainda não coletado")}</p>` : "";
   fontesLista.push([`Detalhe da votação ${e.ano} (TSE)`, `${TSE_CDN}/detalhe_votacao_munzona/detalhe_votacao_munzona_${e.ano}.zip`]);
-  if (d.v != null) fontesLista.push([`Vagas ${e.ano} (TSE)`, `${TSE_CDN}/consulta_vagas/consulta_vagas_${e.ano}.zip`]);
+  if (d.vagas != null) fontesLista.push([`Vagas ${e.ano} (TSE)`, `${TSE_CDN}/consulta_vagas/consulta_vagas_${e.ano}.zip`]);
   const pct = (a, b) => (b ? `${((100 * a) / b).toFixed(1).replace(".", ",")}%` : "");
-  const turnos = Object.entries(d.t).sort(([a], [b]) => a - b).map(([n, t]) => `<li><span class="quando">${esc(n)}º turno</span>
+  const turnos = Object.entries(d.turnos).sort(([a], [b]) => a - b).map(([n, t]) => `<li><span class="quando">${esc(n)}º turno</span>
     ${numeroBr(t.aptos)} eleitores aptos · compareceram <b>${numeroBr(t.comparecimento)}</b> (${pct(t.comparecimento, t.aptos)}) · abstenção ${numeroBr(t.abstencoes)} (${pct(t.abstencoes, t.aptos)})
     · brancos ${numeroBr(t.brancos)} · nulos ${numeroBr(t.nulos)} · votos válidos ${numeroBr(t.validos)}</li>`).join("");
-  return `<h3>Comparecimento e vagas</h3>${d.v != null ? `<p>Vagas em disputa neste cargo e local: <b>${numeroBr(d.v)}</b>.</p>` : ""}<ul class="lista-eleicao">${turnos}</ul>`;
+  return `<h3>Comparecimento e vagas</h3>${d.vagas != null ? `<p>Vagas em disputa neste cargo e local: <b>${numeroBr(d.vagas)}</b>.</p>` : ""}<ul class="lista-eleicao">${turnos}</ul>`;
 }
 
 /* Votos do partido (TSE: votação por partido): legenda, nominais e quociente eleitoral, nos cargos proporcionais. */
@@ -1013,13 +1013,13 @@ function blocoPartido(e, fontesLista) {
   if (!v) return e.ano < 2026 && !MAJORITARIOS.has(e.cargoTse) ? `<h3>Votos do partido</h3><p>${semFonte("votos do partido nesta eleição")}</p>` : "";
   fontesLista.push([`Votação por partido ${e.ano} (TSE)`, `${TSE_CDN}/votacao_partido_munzona/votacao_partido_munzona_${e.ano}.zip`]);
   const pct = (a, b) => (b ? ` (${((100 * a) / b).toFixed(1).replace(".", ",")}%)` : "");
-  const total = v.l + v.n;
-  const vagas = e.disputa && e.disputa.v;
-  const qe = vagas ? v.t / vagas : 0;
+  const total = v.votosLegenda + v.votosNominais;
+  const vagas = e.disputa && e.disputa.vagas;
+  const qe = vagas ? v.totalVotosPartidos / vagas : 0;
   const nome = esc(e.partido);
-  let html = `<h3>Votos do partido</h3><p>O ${nome} teve <b>${numeroBr(total)}</b> votos válidos${pct(total, v.t)}: <b>${numeroBr(v.n)}</b> em candidatos e <b>${numeroBr(v.l)}</b> só na legenda (o eleitor digitou o número do partido).</p>`;
-  if (v.f) html += `<p>O ${nome} concorreu na federação ${esc(v.f.replace(/\//g, " / "))}, que conta como um partido só para dividir as vagas: <b>${numeroBr(v.fl + v.fn)}</b> votos${pct(v.fl + v.fn, v.t)}, sendo ${numeroBr(v.fl)} de legenda.</p>`;
-  if (qe) html += `<p>Quociente eleitoral: ${numeroBr(v.t)} votos válidos ÷ ${numeroBr(vagas)} vagas = <b>${numeroBr(Math.round(qe))}</b> votos por vaga. ${v.f ? "A federação" : "O partido"} teve ${((v.f ? v.fl + v.fn : total) / qe).toFixed(1).replace(".", ",")} quocientes.</p>`;
+  let html = `<h3>Votos do partido</h3><p>O ${nome} teve <b>${numeroBr(total)}</b> votos válidos${pct(total, v.totalVotosPartidos)}: <b>${numeroBr(v.votosNominais)}</b> em candidatos e <b>${numeroBr(v.votosLegenda)}</b> só na legenda (o eleitor digitou o número do partido).</p>`;
+  if (v.federacao) html += `<p>O ${nome} concorreu na federação ${esc(v.federacao.replace(/\//g, " / "))}, que conta como um partido só para dividir as vagas: <b>${numeroBr(v.votosLegendaFederacao + v.votosNominaisFederacao)}</b> votos${pct(v.votosLegendaFederacao + v.votosNominaisFederacao, v.totalVotosPartidos)}, sendo ${numeroBr(v.votosLegendaFederacao)} de legenda.</p>`;
+  if (qe) html += `<p>Quociente eleitoral: ${numeroBr(v.totalVotosPartidos)} votos válidos ÷ ${numeroBr(vagas)} vagas = <b>${numeroBr(Math.round(qe))}</b> votos por vaga. ${v.federacao ? "A federação" : "O partido"} teve ${((v.federacao ? v.votosLegendaFederacao + v.votosNominaisFederacao : total) / qe).toFixed(1).replace(".", ",")} quocientes.</p>`;
   return html;
 }
 
@@ -1029,11 +1029,11 @@ function blocoAlianca(e, fontesLista) {
   if (!a) return e.ano < 2026 ? `<h3>Alianças do partido</h3><p>${semFonte("coligação ou federação desta eleição")}</p>` : "";
   fontesLista.push([`Coligações e federações ${e.ano} (TSE)`, `${TSE_CDN}/consulta_coligacao/consulta_coligacao_${e.ano}.zip`]);
   const nome = esc(e.partido);
-  const quais = esc(a.c.replace(/\(\d+-/g, "(").replace(/ \/ \d+-/g, " / "));
-  const frase = { C: `O ${nome} concorreu em coligação${a.n ? ` <b>${esc(a.n)}</b>` : ""}, com os partidos: ${quais}.`,
+  const quais = esc(a.composicao.replace(/\(\d+-/g, "(").replace(/ \/ \d+-/g, " / "));
+  const frase = { C: `O ${nome} concorreu em coligação${a.nome ? ` <b>${esc(a.nome)}</b>` : ""}, com os partidos: ${quais}.`,
     F: `O ${nome} concorreu em federação, que vale como um partido só: ${quais}.`,
-    I: `O ${nome} concorreu sozinho, sem coligação nem federação.` }[a.t];
-  const aviso = a.s && a.s !== "Deferido" ? ` Situação da legenda no TSE: <b>${esc(a.s)}</b>.` : "";
+    I: `O ${nome} concorreu sozinho, sem coligação nem federação.` }[a.tipo];
+  const aviso = a.situacao && a.situacao !== "Deferido" ? ` Situação da legenda no TSE: <b>${esc(a.situacao)}</b>.` : "";
   return `<h3>Alianças do partido</h3><p>${frase}${aviso}</p>`;
 }
 
@@ -1043,17 +1043,17 @@ function blocoOndeVotou(e, fontesLista) {
   if (!s) return e.ano < 2026 ? `<h3>Onde foi votado</h3><p>${semFonte("votos por seção desta eleição ainda não coletados")}</p>` : "";
   fontesLista.push([`Votação por seção ${e.ano} (TSE)`, `${TSE_CDN}/votacao_secao/votacao_secao_${e.ano}_${e.uf}.zip`],
     [`Locais de votação ${e.ano} (TSE)`, `${TSE_CDN}/eleitorado_locais_votacao/eleitorado_local_votacao_${e.ano}.zip`]);
-  const pct = (v) => (s.t ? ` (${((100 * v) / s.t).toFixed(1).replace(".", ",")}%)` : "");
-  const pontos = (s.l || []).filter(([, la, lo]) => la != null && lo != null);
-  let html = `<h3>Onde foi votado</h3><p>${(s.l || []).length ? "Locais de votação" : "Municípios"} com mais votos no ${esc(s.n)}º turno de ${esc(e.ano)}, de um total de ${numeroBr(s.t)} votos.</p>`;
+  const pct = (v) => (s.totalVotos ? ` (${((100 * v) / s.totalVotos).toFixed(1).replace(".", ",")}%)` : "");
+  const pontos = (s.locaisDeVotacao || []).filter(([, la, lo]) => la != null && lo != null);
+  let html = `<h3>Onde foi votado</h3><p>${(s.locaisDeVotacao || []).length ? "Locais de votação" : "Municípios"} com mais votos no ${esc(s.turno)}º turno de ${esc(e.ano)}, de um total de ${numeroBr(s.totalVotos)} votos.</p>`;
   if (pontos.length) html += `<div class="mapa-votos" role="img" aria-label="Mapa dos locais de votação com mais votos" data-pontos="${esc(JSON.stringify(pontos))}"></div>`;
-  if (s.l && s.l.length) html += `<ol class="lista-eleicao">${s.l.map(([n, , , v]) => `<li>${esc(n)}: <b>${numeroBr(v)} votos</b>${pct(v)}</li>`).join("")}</ol>`;
-  if (s.mp && s.mp.length) {
+  if (s.locaisDeVotacao && s.locaisDeVotacao.length) html += `<ol class="lista-eleicao">${s.locaisDeVotacao.map(([n, , , v]) => `<li>${esc(n)}: <b>${numeroBr(v)} votos</b>${pct(v)}</li>`).join("")}</ol>`;
+  if (s.votosPorMunicipio && s.votosPorMunicipio.length) {
     fontesLista.push(["Malhas municipais (IBGE)", "https://servicodados.ibge.gov.br/api/v3/malhas"]);
-    html += `<h4>Votos por município</h4><div class="mapa mapa-mun" role="img" aria-label="Mapa dos votos em cada município" data-uf="${esc(e.uf)}" data-mp="${esc(JSON.stringify(s.mp))}"></div>
+    html += `<h4>Votos por município</h4><div class="mapa mapa-mun" role="img" aria-label="Mapa dos votos em cada município" data-uf="${esc(e.uf)}" data-votos-por-municipio="${esc(JSON.stringify(s.votosPorMunicipio))}"></div>
       <p class="legenda-mapa"><span>menos votos</span><i></i><span>mais votos</span></p>`;
   }
-  if (s.m && s.m.length) html += `<h4>Municípios com mais votos</h4><ol class="lista-eleicao">${s.m.map(([n, v]) => `<li>${esc(n)}: <b>${numeroBr(v)} votos</b>${pct(v)}</li>`).join("")}</ol>`;
+  if (s.municipios && s.municipios.length) html += `<h4>Municípios com mais votos</h4><ol class="lista-eleicao">${s.municipios.map(([n, v]) => `<li>${esc(n)}: <b>${numeroBr(v)} votos</b>${pct(v)}</li>`).join("")}</ol>`;
   return html;
 }
 
@@ -1088,7 +1088,7 @@ async function desenharMapaMunicipios(el) {
     ibgeDeTse ||= await carregar("dados/municipios_ibge.json");
     const tseDeIbge = Object.fromEntries(Object.entries(ibgeDeTse).map(([t, i]) => [i, t]));
     const fc = await carregar(`${MALHAS}/estados/${COD_UF[el.dataset.uf]}?formato=application/vnd.geo+json&intrarregiao=municipio&qualidade=minima`);
-    const votos = new Map(JSON.parse(el.dataset.mp).map(([c, v]) => [String(c).padStart(5, "0"), v]));
+    const votos = new Map(JSON.parse(el.dataset.votosPorMunicipio).map(([c, v]) => [String(c).padStart(5, "0"), v]));
     const maximo = Math.max(...votos.values());
     el.innerHTML = svgMapa(fc, (f) => tseDeIbge[f.properties.codarea] || "");
     const nomes = new Map(fc.features.map((f) => [tseDeIbge[f.properties.codarea], f.properties.nome]));
@@ -1128,13 +1128,13 @@ function painelEleicao(nome, e, o = {}) {
     corpo += `<h3>Eleição de ${esc(e.ano)}</h3>`;
     if (ehVice && e.titular) corpo += `<p>${esc(nome)} foi eleito na chapa de <b>${esc(e.titular)}</b>: o eleitor vota na chapa inteira, então os votos abaixo são os da chapa.</p>`;
     corpo += `<ul class="lista-eleicao">${e.votos.map((v) => `<li><span class="quando">${v.turno}º turno${v.data ? `, ${esc(data(v.data, true))}` : ""}</span>
-      <b>${numeroBr(v.votos)} votos</b>${v.pct != null ? ` (${String(v.pct).replace(".", ",")}% dos votos válidos)` : ""}</li>`).join("")}</ul>`;
+      <b>${numeroBr(v.votos)} votos</b>${v.percentual != null ? ` (${String(v.percentual).replace(".", ",")}% dos votos válidos)` : ""}</li>`).join("")}</ul>`;
     corpo += `<p>Local: ${esc(local)}.${e.resultado ? ` Resultado oficial: <b>${esc(rotuloResultado(e.resultado))}</b>.` : ""}</p>`;
     corpo += blocoDisputa(e, fontesLista) + blocoPartido(e, fontesLista) + blocoAlianca(e, fontesLista) + blocoOndeVotou(e, fontesLista) + blocoCampanha(e, fontesLista);
     if (cargoTse && !MAJORITARIOS.has(cargoTse)) corpo += `<p>Nas eleições proporcionais as vagas são distribuídas entre os partidos pelo quociente eleitoral; por isso o número de votos de cada candidato não diz sozinho quem foi eleito.</p>`;
     if (cargoTse) fontesLista.push([`Constituição Federal, art. ${ARTIGO_ELEICAO[cargoTse]}`, linkCF(ARTIGO_ELEICAO[cargoTse])]);
     if (cargoTse && !MAJORITARIOS.has(cargoTse)) fontesLista.push(["Código Eleitoral, art. 106", CODIGO_ELEITORAL_URL]);
-    const d = divulgaUrl({ fonte: "tse", ano: e.ano, eleicao: e.eleicao, ue: e.ue, sq: e.sq });
+    const d = divulgaUrl({ fonte: "tse", ano: e.ano, eleicao: e.eleicao, unidadeEleitoral: e.unidadeEleitoral, sequencial: e.sequencial });
     if (d) fontesLista.unshift(["Candidatura no DivulgaCandContas (TSE)", d]);
     fontesLista.unshift([`Votação por zona eleitoral ${e.ano} (TSE)`, `${TSE_CDN}/votacao_candidato_munzona/votacao_candidato_munzona_${e.ano}.zip`]);
   } else if (e) {
@@ -1243,20 +1243,20 @@ async function paginaPolitico() {
   if (p.cargoTse === "VICE-GOVERNADOR" && p.estado === "atual" && /^[A-Z]{2}$/.test(p.uf || "")) {
     try {
       const [g, indice] = await Promise.all([carregar(`dados/governo/${p.uf}.json`), carregar(`dados/indice/${p.uf}.json`)]);
-      const gov = indice.find((x) => x.k === 5 && x.e === "atual");
+      const gov = indice.find((x) => x.ordemCargo === 5 && x.estado === "atual");
       if (gov && g.materias.length) doVice = { gov, host: g.host };
     } catch { /* sem dados: cai no texto padrão */ }
   }
   /* Prefeito de capital em exercício: o que enviou à Câmara Municipal, quando ela usa um sistema que já coletamos. */
   const prefeito = p.cargoTse === "PREFEITO";
-  if (prefeito && p.estado === "atual" && p.ue) {
-    try { governo = await carregar(`dados/prefeitura/${p.ue}.json`); } catch { /* sem dados: cai no texto padrão */ }
+  if (prefeito && p.estado === "atual" && p.unidadeEleitoral) {
+    try { governo = await carregar(`dados/prefeitura/${p.unidadeEleitoral}.json`); } catch { /* sem dados: cai no texto padrão */ }
   }
   const orgao = prefeito ? "à Câmara Municipal" : "à Assembleia";
   const vetosGov = governo ? governo.materias.filter((x) => x.tipo === "VET") : [];
   const enviadosGov = governo ? governo.materias.filter((x) => x.tipo !== "VET") : [];
   const comGoverno = enviadosGov.length + vetosGov.length > 0;
-  const aprovados = enviados.filter((x) => /^(transformad|vetad|aguardando sanção)/i.test(x.sit || "") || x.veto);
+  const aprovados = enviados.filter((x) => /^(transformad|vetad|aguardando sanção)/i.test(x.situacao || "") || x.veto);
   const painelVotacoes = comGoverno
     ? `<section class="painel"><div class="painel-titulo"><h2>Vetos</h2></div>
         <p>${esc(p.cargo)} não vota em plenário. O que faz é propor leis, sancionar ou vetar o que ${prefeito ? "a Câmara" : "a Assembleia"} aprova, e editar decretos. Aqui estão os vetos enviados ${orgao} desde ${prefeito ? 2025 : 2023}: <b>${vetosGov.length}</b>. A situação é a que ${prefeito ? "a Câmara" : "a Assembleia"} registra no sistema dela, e nem sempre é atualizada.</p>
@@ -1394,7 +1394,7 @@ async function montarEstadual(alvo, p, nome, ficha, situacao) {
     rotuloPerfil: "Perfil e bens",
     linhaDoTempo, proposicoes: dep.proposicoes, tipoProjeto: () => true,
     textoLegislatura: "como autor ou coautor nesta legislatura",
-    papel: (x) => x.co && x.co.length ? `<b>autor ou coautor</b>, junto com ${esc(x.co.join(", "))}.` : "<b>autor ou coautor</b>. A Assembleia não lista outros deputados nesta proposta.",
+    papel: (x) => x.coautores && x.coautores.length ? `<b>autor ou coautor</b>, junto com ${esc(x.coautores.join(", "))}.` : "<b>autor ou coautor</b>. A Assembleia não lista outros deputados nesta proposta.",
     aviso: "Só entram projetos (de lei, resolução, decreto legislativo, emendas à Constituição e afins). A situação vem do sistema da Assembleia.",
     rotuloSem: "tramitação encerrada, sem resultado informado",
     semOutros: "Requerimentos, indicações e outros documentos da Assembleia não estão no site. Veja no sistema de tramitação da Assembleia.",
@@ -1496,19 +1496,19 @@ async function paginaInformado() {
     URL.revokeObjectURL(a.href);
   };
 
-  /* políticos: índice do estado (ou do Brasil), só quem tem código "a" */
+  /* políticos: índice do estado (ou do Brasil), só quem tem código "codigoFeed" */
   let indice = [];
   const mostrarAchados = () => {
     const q = semAcento($("#pol-busca").value.trim());
-    const achados = indice.filter((x) => x.a && (!q || semAcento(`${x.n} ${x.c} ${x.p || ""} ${x.m || ""}`).includes(q))).slice(0, 12);
+    const achados = indice.filter((x) => x.codigoFeed && (!q || semAcento(`${x.nome} ${x.cargo} ${x.partido || ""} ${x.municipio || ""}`).includes(q))).slice(0, 12);
     $("#pol-achados").innerHTML = achados.length
-      ? achados.map((x, i) => `<li><span><b>${esc(x.n)}</b> <small>${esc(x.c)}${x.p ? ` · ${esc(x.p)}` : ""}${x.m ? ` · ${esc(x.m)}` : ""}</small></span>
-          <button type="button" data-i="${i}"${escolhidos.has(x.a) ? " disabled" : ""}>${escolhidos.has(x.a) ? "adicionado" : "acompanhar"}</button></li>`).join("")
+      ? achados.map((x, i) => `<li><span><b>${esc(x.nome)}</b> <small>${esc(x.cargo)}${x.partido ? ` · ${esc(x.partido)}` : ""}${x.municipio ? ` · ${esc(x.municipio)}` : ""}</small></span>
+          <button type="button" data-i="${i}"${escolhidos.has(x.codigoFeed) ? " disabled" : ""}>${escolhidos.has(x.codigoFeed) ? "adicionado" : "acompanhar"}</button></li>`).join("")
       : `<li class="vazio">Ninguém encontrado com dados acompanháveis.</li>`;
     $("#pol-achados").onclick = (e) => {
       const b = e.target.closest("button"); if (!b) return;
       const x = achados[b.dataset.i];
-      adicionar(x.a, `${x.c}: ${x.n}`);
+      adicionar(x.codigoFeed, `${x.cargo}: ${x.nome}`);
     };
   };
   $("#pol-uf").onchange = async () => { indice = await carregar(`dados/indice/${$("#pol-uf").value}.json`).catch(() => []); mostrarAchados(); };
@@ -1563,43 +1563,43 @@ const SEM_POLITICO = "Sem político específico (votações e matérias gerais)"
 function noEscopo(e, codigos) {
   if (!codigos.length) return true;
   return codigos.some((c) => {
-    if (c === "BR") return e.l === "BR";
-    if (c.startsWith("UF:")) { const uf = c.slice(3); return e.l === c || e.l === `MUN:${uf}` || e.uf === uf; }
-    if (c.startsWith("MUN:")) return e.l === c;
-    return (e.p || []).some((p) => p.c === c);
+    if (c === "BR") return e.local === "BR";
+    if (c.startsWith("UF:")) { const uf = c.slice(3); return e.local === c || e.local === `MUN:${uf}` || e.uf === uf; }
+    if (c.startsWith("MUN:")) return e.local === c;
+    return (e.politicos || []).some((p) => p.codigo === c);
   });
 }
 
 /* Cargo exibido ao lado do nome do político. */
 function cargoHist(p) {
-  const c = p.c || "";
+  const c = p.codigo || "";
   if (c.startsWith("dep:")) return "Deputado(a) federal";
   if (c.startsWith("est:")) return "Deputado(a) estadual";
-  if ((p.h || "").includes("f=senado")) return "Senador(a)";
+  if ((p.pagina || "").includes("f=senado")) return "Senador(a)";
   if (c === "pres") return "Presidente da República";
   if (c.startsWith("gov:")) return "Governador(a)";
   if (c.startsWith("pref:")) return "Prefeito(a)";
   return "";
 }
 
-const somar = (eventos) => eventos.reduce((t, e) => t + (e.n || 1), 0);   // um evento "lote" resume vários registros
+const somar = (eventos) => eventos.reduce((t, e) => t + (e.quantidade || 1), 0);   // um evento "lote" resume vários registros
 
 /* Locais acompanhados no dia que não tiveram item: distingue "nada aconteceu" de "não foi acompanhado" e mostra coleta parada. */
 function coberturaSemNovidade(dia, codigos, local, mostrar) {
   if (!dia.cobertura || !mostrar) return "";
-  const lista = Object.entries(dia.cobertura).filter(([c, x]) => !x.e && (local && local !== "__avisos" ? c === local : noEscopo({ l: c, uf: c.startsWith("UF:") ? c.slice(3) : null, p: [] }, codigos)));
+  const lista = Object.entries(dia.cobertura).filter(([c, x]) => !x.itens && (local && local !== "__avisos" ? c === local : noEscopo({ local: c, uf: c.startsWith("UF:") ? c.slice(3) : null, politicos: [] }, codigos)));
   if (!lista.length) return "";
-  const motivo = (x) => x.m ? "os dados mudaram, mas sem item novo" : x.u ? `sem alteração nos dados desde ${data(x.u)}` : "sem alteração nos dados";
+  const motivo = (x) => x.mudou ? "os dados mudaram, mas sem item novo" : x.ultimaMudanca ? `sem alteração nos dados desde ${data(x.ultimaMudanca)}` : "sem alteração nos dados";
   return `<section class="painel hist-sem"><h2>Acompanhados, sem novidade <small>${lista.length}</small></h2>
-    <ul>${lista.map(([c, x]) => `<li><b>${esc(x.n)}</b>: ${esc(motivo(x))}</li>`).join("")}</ul></section>`;
+    <ul>${lista.map(([c, x]) => `<li><b>${esc(x.nome)}</b>: ${esc(motivo(x))}</li>`).join("")}</ul></section>`;
 }
 
 function itemHistorico(e) {
-  const mudanca = e.m ? `<p class="hist-mudanca"><span>${esc(e.m[0])}</span> → <b>${esc(e.m[1])}</b></p>` : "";
-  return `<li class="hist-item r-${e.r || 2}">
-    <div class="hist-cab"><span class="hist-tag k-${esc(e.k)}">${esc(CATEGORIAS_HIST[e.k] || e.k)}</span> <b>${esc(e.t)}</b>${e.d ? ` <span class="quando">${esc(data(e.d))}</span>` : ""}</div>
-    ${e.x ? `<p class="texto">${esc(e.x)}</p>` : ""}${mudanca}${e.s ? `<p class="hist-resumo">${esc(e.s)}</p>` : ""}${e.i ? `<details class="hist-lista"><summary>Ver os ${e.i.length} títulos</summary><p>${e.i.map(esc).join(" · ")}</p></details>` : ""}
-    ${fontes(e.f || [])}</li>`;
+  const mudanca = e.mudanca ? `<p class="hist-mudanca"><span>${esc(e.mudanca[0])}</span> → <b>${esc(e.mudanca[1])}</b></p>` : "";
+  return `<li class="hist-item r-${e.relevancia || 2}">
+    <div class="hist-cab"><span class="hist-tag k-${esc(e.categoria)}">${esc(CATEGORIAS_HIST[e.categoria] || e.categoria)}</span> <b>${esc(e.titulo)}</b>${e.dataDoAto ? ` <span class="quando">${esc(data(e.dataDoAto))}</span>` : ""}</div>
+    ${e.texto ? `<p class="texto">${esc(e.texto)}</p>` : ""}${mudanca}${e.resumo ? `<p class="hist-resumo">${esc(e.resumo)}</p>` : ""}${e.titulos ? `<details class="hist-lista"><summary>Ver os ${e.titulos.length} títulos</summary><p>${e.titulos.map(esc).join(" · ")}</p></details>` : ""}
+    ${fontes(e.fontes || [])}</li>`;
 }
 
 async function paginaHistorico() {
@@ -1609,12 +1609,12 @@ async function paginaHistorico() {
   if (!indice.length) { alvo.innerHTML = `<p class="vazio">O histórico começa no próximo dia com novidades nos dados.</p>`; return; }
   const q = new URLSearchParams(location.search);
   let codigos = (q.get("locais") || "").split(",").filter(Boolean);
-  const dias = indice.map((x) => x.d);
+  const dias = indice.map((x) => x.data);
   const diaInicial = dias.includes(q.get("dia")) ? q.get("dia") : dias[0];
 
   alvo.innerHTML = `
     <div class="filtros hist-filtros">
-      <label class="campo">Dia<select id="h-dia">${indice.map((x) => `<option value="${esc(x.d)}">${esc(data(x.d))} (${x.n})</option>`).join("")}</select></label>
+      <label class="campo">Dia<select id="h-dia">${indice.map((x) => `<option value="${esc(x.data)}">${esc(data(x.data))} (${x.total})</option>`).join("")}</select></label>
       <label class="campo">Local<select id="h-local"></select></label>
       <label class="campo">Tipo<select id="h-tipo"><option value="">Todos</option>${Object.entries(CATEGORIAS_HIST).map(([k, v]) => `<option value="${k}">${esc(v)}</option>`).join("")}</select></label>
       <label class="campo">Importância<select id="h-imp">${Object.entries(IMPORTANCIA_HIST).map(([k, v]) => `<option value="${k}">${esc(v)}</option>`).join("")}</select></label>
@@ -1641,8 +1641,8 @@ async function paginaHistorico() {
 
   function desenhar() {
     const tipo = $("#h-tipo").value, imp = Number($("#h-imp").value) || 0, busca = semAcento($("#h-busca").value.trim());
-    const filtrados = dia.eventos.filter((e) => noEscopo(e, codigos) && (!tipo || e.k === tipo) && (e.r || 2) >= imp
-      && (!busca || semAcento([e.t, e.x, e.s, ...(e.p || []).map((p) => p.n)].join(" ")).includes(busca)));
+    const filtrados = dia.eventos.filter((e) => noEscopo(e, codigos) && (!tipo || e.categoria === tipo) && (e.relevancia || 2) >= imp
+      && (!busca || semAcento([e.titulo, e.texto, e.resumo, ...(e.politicos || []).map((p) => p.nome)].join(" ")).includes(busca)));
     const novo = new URLSearchParams();
     novo.set("dia", dia.data);
     if (codigos.length) novo.set("locais", codigos.join(","));
@@ -1651,25 +1651,25 @@ async function paginaHistorico() {
     if (busca) novo.set("busca", $("#h-busca").value.trim());
     history.replaceState(null, "", "?" + novo);
 
-    const locais = [...new Set(filtrados.map((e) => e.l))];
+    const locais = [...new Set(filtrados.map((e) => e.local))];
     $("#h-contagem").textContent = `${somar(filtrados)} de ${somar(dia.eventos)} mudanças em ${data(dia.data, true)}, em ${locais.length} ${locais.length === 1 ? "local" : "locais"}.`;
     const semNovidade = coberturaSemNovidade(dia, codigos, $("#h-local").value, tipo || busca || imp ? 0 : 1);
     if (!filtrados.length) { $("#h-lista").innerHTML = `<p class="vazio">Nada com esses filtros neste dia. Tente outro dia ou limpe os filtros.</p>${semNovidade}`; return; }
     const abrir = filtrados.length <= 60;
     $("#h-lista").innerHTML = locais.map((l) => {
-      const doLocal = filtrados.filter((e) => e.l === l);
+      const doLocal = filtrados.filter((e) => e.local === l);
       const grupos = new Map();   // nome do político -> {p, eventos}
-      for (const e of doLocal) for (const p of (e.p?.length ? e.p : [{ n: SEM_POLITICO }])) {
-        if (!grupos.has(p.n)) grupos.set(p.n, { p, eventos: [] });
-        grupos.get(p.n).eventos.push(e);
+      for (const e of doLocal) for (const p of (e.politicos?.length ? e.politicos : [{ nome: SEM_POLITICO }])) {
+        if (!grupos.has(p.nome)) grupos.set(p.nome, { p, eventos: [] });
+        grupos.get(p.nome).eventos.push(e);
       }
-      const peso = (g) => Math.max(...g.eventos.map((e) => e.r || 2));   // o político com o fato mais importante vem primeiro
-      for (const g of grupos.values()) g.eventos.sort((a, b) => (b.r || 2) - (a.r || 2));
-      const ordenados = [...grupos.values()].sort((a, b) => peso(b) - peso(a) || (a.p.c ? 0 : 1) - (b.p.c ? 0 : 1) || b.eventos.length - a.eventos.length || a.p.n.localeCompare(b.p.n, "pt-BR"));
+      const peso = (g) => Math.max(...g.eventos.map((e) => e.relevancia || 2));   // o político com o fato mais importante vem primeiro
+      for (const g of grupos.values()) g.eventos.sort((a, b) => (b.relevancia || 2) - (a.relevancia || 2));
+      const ordenados = [...grupos.values()].sort((a, b) => peso(b) - peso(a) || (a.p.codigo ? 0 : 1) - (b.p.codigo ? 0 : 1) || b.eventos.length - a.eventos.length || a.p.nome.localeCompare(b.p.nome, "pt-BR"));
       return `<section class="painel hist-local">
         <h2>${esc(dia.locais[l])} <small>${somar(doLocal)} ${somar(doLocal) === 1 ? "mudança" : "mudanças"}</small></h2>
         ${ordenados.map(({ p, eventos }) => `<details class="hist-pol"${abrir ? " open" : ""}>
-          <summary>${p.h ? `<a href="${esc(p.h)}">${esc(p.n)}</a>` : esc(p.n)}${cargoHist(p) ? ` <span class="quando">${esc(cargoHist(p))}</span>` : ""} <small>${eventos.length}</small></summary>
+          <summary>${p.pagina ? `<a href="${esc(p.pagina)}">${esc(p.nome)}</a>` : esc(p.nome)}${cargoHist(p) ? ` <span class="quando">${esc(cargoHist(p))}</span>` : ""} <small>${eventos.length}</small></summary>
           <ul class="hist-itens">${eventos.map(itemHistorico).join("")}</ul></details>`).join("")}
       </section>`;
     }).join("") + semNovidade;

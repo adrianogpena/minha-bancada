@@ -53,8 +53,8 @@ def linhas(resp: dict) -> list[dict]:
     res = []
     for tr in re.split(r'<TR\s+class="scGridField(?:Odd|Even)"', corpo(resp))[1:]:
         par = re.search(r"nm_gp_submit5\('/cl/prop_interna_tram/', '/cl/prop_interna/', '([^']*)'", tr)
-        res.append({"prop": campo(tr, "proposicao"), "ementa": campo(tr, "pro_ementa"), "sit": campo(tr, "sit_nome_futuro"),
-                    "par": par.group(1) if par else None})
+        res.append({"prop": campo(tr, "proposicao"), "ementa": campo(tr, "pro_ementa"), "situacao": campo(tr, "sit_nome_futuro"),
+                    "parametros": par.group(1) if par else None})
     return res
 
 
@@ -68,8 +68,8 @@ def historico(par: str) -> list[dict]:
     for tr in re.split(r'<TR\s+class="scGridField(?:Odd|Even)"', corpo(ajax(TRAM, sci.group(1), "muda_qt_linhas", str(POR_PAGINA))))[1:]:
         cel = re.search(r'css_situacao_grid_line[^>]*>(.*?)</TD>', tr, re.S)
         link = re.search(r"nm_gp_submit5\('(https?://[^']*)'", tr)
-        movs.append({"d": campo(tr, "tra_dt_movimentacao"), "s": limpar(cel.group(1)) if cel else "", "o": campo(tr, "tra_observacao"),
-                     "pdf": link.group(1) if link else None})
+        movs.append({"data": campo(tr, "tra_dt_movimentacao"), "situacao": limpar(cel.group(1)) if cel else "", "observacao": campo(tr, "tra_observacao"),
+                     "link": link.group(1) if link else None})
     return movs
 
 
@@ -80,10 +80,10 @@ def iso(d: str) -> str:
 def situacao(tipo: str, movs: list[dict], da_grade: str) -> str:
     """Situação do projeto: "Armazenado" na grade só diz que o processo foi guardado, o desfecho está no histórico."""
     if tipo != "VET":
-        passos = {m["s"].lower() for m in movs}
+        passos = {m["situacao"].lower() for m in movs}
         if "sancionado" in passos:
             for m in movs:
-                lei = re.match(r"\s*LEI\s*N\D{0,3}\s*([\d.]+)/(\d+).*PUBLICADO", m["o"], re.I)
+                lei = re.match(r"\s*LEI\s*N\D{0,3}\s*([\d.]+)/(\d+).*PUBLICADO", m["observacao"], re.I)
                 if lei:
                     return f"Sancionado (Lei {int(lei.group(1).replace('.', '')):,}/{lei.group(2)})".replace(",", ".")
             return "Sancionado"
@@ -91,7 +91,7 @@ def situacao(tipo: str, movs: list[dict], da_grade: str) -> str:
             return "Retirado pelo prefeito"
         if "arquivado" in passos:
             return "Arquivado"
-    return da_grade or (movs[0]["s"] if movs else "")
+    return da_grade or (movs[0]["situacao"] if movs else "")
 
 
 def coletar() -> None:
@@ -111,16 +111,17 @@ def coletar() -> None:
             m = re.match(r"([A-Z]+)-(\d+)/(\d{4})$", x["prop"])
             if not m or m.group(1) not in TIPOS or int(m.group(3)) < ANO_INICIAL:
                 continue
-            if not x["par"]:
+            if not x["parametros"]:
                 raise RuntimeError(f"{x['prop']}: sem histórico")
             t, td = TIPOS[m.group(1)]
-            movs = historico(x["par"])
-            prot = [mv for mv in movs if mv["s"].lower().startswith("protocolado")]
-            integra = next((mv["pdf"] for mv in reversed(movs) if mv["s"].lower().startswith("anexado integra") and mv["pdf"]), None)
-            sit = situacao(t, movs, x["sit"])
+            movs = historico(x["parametros"])
+            prot = [mv for mv in movs if mv["situacao"].lower().startswith("protocolado")]
+            integra = next((mv["link"] for mv in reversed(movs) if mv["situacao"].lower().startswith("anexado integra") and mv["link"]), None)
+            sit = situacao(t, movs, x["situacao"])
             anos.setdefault(int(m.group(3)), {})[x["prop"]] = {
-                "t": t, "td": td, "n": int(m.group(2)), "a": int(m.group(3)), "ap": iso(prot[-1]["d"]) if prot else None,
-                "e": x["ementa"], "sit": sit, "tr": x["sit"] not in ("Armazenado", ""), "pdf": integra}
+                "tipo": t, "tipoDescricao": td, "numero": int(m.group(2)), "ano": int(m.group(3)),
+                "dataApresentacao": iso(prot[-1]["data"]) if prot else None,
+                "ementa": x["ementa"], "situacao": sit, "emTramitacao": x["situacao"] not in ("Armazenado", ""), "linkTexto": integra}
         if vistas >= total or not pagina:
             break
         resp = ajax(BASE, sci, "rec", str(vistas + 1))

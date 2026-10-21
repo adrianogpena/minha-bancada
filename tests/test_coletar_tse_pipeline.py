@@ -78,26 +78,26 @@ def test_coletar_ano_2024_completo(tse, tmp_path):
 
     por_uf = {p.stem: json.loads(p.read_text(encoding="utf-8")) for p in (t.DADOS / "2024").glob("[A-Z][A-Z].json")}
     assert set(por_uf) == {"SP", "AC"}
-    sp = {e["sq"]: e for e in por_uf["SP"]}
+    sp = {e["sequencial"]: e for e in por_uf["SP"]}
     assert set(sp) == {"1", "2", "4"}   # suplente e não eleitos ficam de fora
 
     prefeito = sp["1"]
     assert prefeito["nome"] == "José da Silva" and prefeito["cargo"] == "PREFEITO" and prefeito["situacao"] == "eleito"
     assert prefeito["municipio"] == "São Paulo" and prefeito["nascimento"] == "1980-02-03" and prefeito["email"] == "fulano@exemplo.com"
     assert prefeito["instrucao"] == "Superior completo" and "reeleicao" not in prefeito and prefeito["federacao"] is None
-    assert prefeito["votos"] == [{"turno": 1, "data": "2024-10-06", "votos": 400, "pct": 40.0}]   # 400 de 1000 válidos
+    assert prefeito["votos"] == [{"turno": 1, "data": "2024-10-06", "votos": 400, "percentual": 40.0}]   # 400 de 1000 válidos
     assert prefeito["totalBens"] == 300000.5 and prefeito["bens"][0] == ["Casa", "Casa na praia", 250000.5]  # ordenado por valor
     assert prefeito["redes"] == ["https://instagram.com/jose"]   # sem duplicata nem @usuario
 
     vice = sp["2"]
-    assert vice["chapaSq"] == "1" and vice["titular"] == "José da Silva" and vice["situacao"] == "eleito"
+    assert vice["sequencialChapa"] == "1" and vice["titular"] == "José da Silva" and vice["situacao"] == "eleito"
     assert vice["votos"][0]["votos"] == 400   # vice herda os votos da chapa
 
     assert sp["4"]["situacao"] == "eleito" and sp["4"]["votos"][0]["votos"] == 50 and sp["4"]["redes"] == ["https://x.com/ana"]
 
-    ac = {e["sq"]: e for e in por_uf["AC"]}
+    ac = {e["sequencial"]: e for e in por_uf["AC"]}
     assert set(ac) == {"7"}   # só o vencedor do 2º turno
-    assert ac["7"]["votos"] == [{"turno": 2, "data": "2024-10-27", "votos": 1000, "pct": 25.0}]
+    assert ac["7"]["votos"] == [{"turno": 2, "data": "2024-10-27", "votos": 1000, "percentual": 25.0}]
 
     marca = json.loads((t.DADOS / "2024" / "_coleta.json").read_text())
     assert marca["versao"] == t.VERSAO and marca["eleitos"] == 4
@@ -109,7 +109,7 @@ def test_coletar_ano_falha_nas_partes_opcionais_nao_impede_salvar(tse):
     t.coletar_ano(2024)
     assert t.AVISOS >= 3
     sp = json.loads((t.DADOS / "2024" / "SP.json").read_text(encoding="utf-8"))
-    assert {e["sq"] for e in sp} == {"1", "2", "4"} and all(e["votos"] == [] and e["totalBens"] == 0 for e in sp)
+    assert {e["sequencial"] for e in sp} == {"1", "2", "4"} and all(e["votos"] == [] and e["totalBens"] == 0 for e in sp)
 
 
 def test_coletar_ano_sem_eleitos_levanta(tse):
@@ -137,7 +137,7 @@ def test_vice_substituido_fica_com_o_registro_mais_recente(tse):
         cand("9", "VICE-PREFEITO", "ELEITO", "10", "VICE NOVO"),
     ])
     t.coletar_ano(2024)
-    sp = {e["sq"] for e in json.loads((t.DADOS / "2024" / "SP.json").read_text(encoding="utf-8"))}
+    sp = {e["sequencial"] for e in json.loads((t.DADOS / "2024" / "SP.json").read_text(encoding="utf-8"))}
     assert sp == {"1", "9"}
 
 
@@ -150,7 +150,7 @@ def test_2026_finalistas_ainda_sem_resultado_entram_como_segundo_turno(tse, monk
     ])
     t.coletar_ano(2026)
     sp = json.loads((t.DADOS / "2026" / "SP.json").read_text(encoding="utf-8"))
-    assert {e["sq"]: e["situacao"] for e in sp} == {"1": "2turno", "2": "2turno"}
+    assert {e["sequencial"]: e["situacao"] for e in sp} == {"1": "2turno", "2": "2turno"}
 
 
 def test_2026_numero_de_finalistas_estranho_avisa(tse, monkeypatch):

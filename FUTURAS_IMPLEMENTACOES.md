@@ -28,7 +28,7 @@ total de autores e de partidos, iniciativa (Executivo, Senado, comissão) quando
 - Proporção de projetos como autor principal versus coautor, por deputado.
 - Rede de coautoria: com quem cada deputado mais coassina e índice de colaboração entre partidos.
 - Aprovados ou sancionados em que foi autor principal (situação em `proposicoes_detalhe.json`).
-- Projetos suprapartidários (`pp` alto) versus de bancada única.
+- Projetos suprapartidários (`partidosDistintos` alto) versus de bancada única.
 - Ranking de deputados por iniciativas próprias (principal) em vez de coautorias.
 
 ## Cobertura

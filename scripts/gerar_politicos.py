@@ -63,7 +63,7 @@ def periodo(ano: int, cargo_tse: str) -> tuple[str | None, str | None]:
     return MANDATOS.get(ano, {}).get(cargo_tse, (None, None))
 
 
-CAMPOS_ELEICAO = ("ano", "sq", "eleicao", "ue", "uf", "cargoTse", "resultado", "votos", "titular")
+CAMPOS_ELEICAO = ("ano", "sequencial", "eleicao", "unidadeEleitoral", "uf", "cargoTse", "resultado", "votos", "titular")
 
 
 _RESUMOS = {}
@@ -78,39 +78,40 @@ def resumo_tse(pasta: str, ano: int, uf: str) -> dict:
 
 def contas_de(ano: int, e: dict):
     """Resumo da prestação de contas de campanha (dados/tse/contas/<ano>/<UF>.json), ou None."""
-    return resumo_tse("contas", ano, e["uf"]).get(e.get("chapaSq") or e["sq"])
+    return resumo_tse("contas", ano, e["uf"]).get(e.get("sequencialChapa") or e["sequencial"])
 
 
 def secoes_de(ano: int, e: dict):
     """Onde o eleito foi votado (dados/tse/secoes/<ano>/<UF>.json), ou None."""
-    return resumo_tse("secoes", ano, e["uf"]).get(e.get("chapaSq") or e["sq"])
+    return resumo_tse("secoes", ano, e["uf"]).get(e.get("sequencialChapa") or e["sequencial"])
 
 
 def disputa_de(ano: int, e: dict):
     """Comparecimento e vagas do cargo e local da eleição (dados/tse/disputa/<ano>/<UF>.json), ou None."""
-    return resumo_tse("disputa", ano, e["uf"]).get(f"{e['cargo'].replace('VICE-', '')}|{e['ue']}")
+    return resumo_tse("disputa", ano, e["uf"]).get(f"{e['cargo'].replace('VICE-', '')}|{e['unidadeEleitoral']}")
 
 
 def partido_de(ano: int, e: dict):
     """Votos do partido (e da federação) no cargo e local da eleição (dados/tse/partidos/<ano>/<UF>.json), ou None.
-    l = legenda, n = nominais, t = votos válidos dos partidos; f/fl/fn = federação e seus votos de legenda e nominais."""
-    local = resumo_tse("partidos", ano, e["uf"]).get(f"{e['cargo']}|{e['ue']}")
-    p = local and local["p"].get(e.get("partido"))
+    Devolve votosLegenda, votosNominais e totalVotosPartidos (votos válidos de todos os partidos do local); com federação,
+    também federacao, votosLegendaFederacao e votosNominaisFederacao."""
+    local = resumo_tse("partidos", ano, e["uf"]).get(f"{e['cargo']}|{e['unidadeEleitoral']}")
+    p = local and local["partidos"].get(e.get("partido"))
     if not p:
         return None
-    r = {"l": p[0], "n": p[1], "t": local["t"]}
+    r = {"votosLegenda": p[0], "votosNominais": p[1], "totalVotosPartidos": local["totalVotos"]}
     if p[2]:
-        membros = [v for v in local["p"].values() if v[2] == p[2]]
-        r.update(f=p[2], fl=sum(v[0] for v in membros), fn=sum(v[1] for v in membros))
+        membros = [v for v in local["partidos"].values() if v[2] == p[2]]
+        r.update(federacao=p[2], votosLegendaFederacao=sum(v[0] for v in membros), votosNominaisFederacao=sum(v[1] for v in membros))
     return r
 
 
 def alianca_de(ano: int, e: dict):
-    """Tipo (C coligação, F federação, I isolado), nome, composição e situação da legenda do partido do eleito
+    """tipo (C coligação, F federação, I isolado), nome, composicao e situacao da legenda do partido do eleito
     (dados/tse/coligacoes/<ano>/<UF>.json), ou None."""
-    local = resumo_tse("coligacoes", ano, e["uf"]).get(f"{e['cargo']}|{e['ue']}")
-    i = local and local["p"].get(e.get("partido"))
-    return dict(zip("tncs", local["c"][i])) if i is not None else None
+    local = resumo_tse("coligacoes", ano, e["uf"]).get(f"{e['cargo']}|{e['unidadeEleitoral']}")
+    i = local and local["coligacaoDoPartido"].get(e.get("partido"))
+    return dict(zip(("tipo", "nome", "composicao", "situacao"), local["coligacoes"][i])) if i is not None else None
 
 
 def eleitos_por_nome(cargo_tse: str) -> dict:
@@ -184,9 +185,9 @@ def gerar(deputados: dict, estaduais: dict | None = None) -> dict:
     # --- deputados federais em exercício (Câmara)
     for d in deputados.values():
         indice[d["uf"]].append({
-            "i": d["id"], "n": d["nome"], "c": "Deputado federal", "k": 4,
-            "p": d["partido"], "e": "atual", "fo": d.get("foto"),
-            "h": f"deputado.html?id={d['id']}", "a": f"dep:{d['id']}",
+            "id": d["id"], "nome": d["nome"], "cargo": "Deputado federal", "ordemCargo": 4,
+            "partido": d["partido"], "estado": "atual", "foto": d.get("foto"),
+            "pagina": f"deputado.html?id={d['id']}", "codigoFeed": f"dep:{d['id']}",
         })
 
     # --- senadores em exercício (Senado)
@@ -200,8 +201,8 @@ def gerar(deputados: dict, estaduais: dict | None = None) -> dict:
         paginas_atuais[chave_nome(s.get("nomeCivil"), s["uf"])] = f"politico.html?f=senado&i={sid}"
         paginas_atuais[chave_nome(s.get("nome"), s["uf"])] = f"politico.html?f=senado&i={sid}"
         indice[s["uf"]].append({
-            "i": sid, "f": "senado", "n": s["nome"], "c": cargo, "k": ordem,
-            "p": s.get("partido"), "e": "atual", "fo": s.get("foto"),
+            "id": sid, "arquivoFicha": "senado", "nome": s["nome"], "cargo": cargo, "ordemCargo": ordem,
+            "partido": s.get("partido"), "estado": "atual", "foto": s.get("foto"),
         })
 
     # --- TSE: mandatos atuais e eleitos de 2026
@@ -218,7 +219,7 @@ def gerar(deputados: dict, estaduais: dict | None = None) -> dict:
                     continue
                 cargo, ordem = rotulo(cargo_tse, e.get("genero"))
                 uf = "BR" if e["uf"] in ("BR", "BRASIL") else e["uf"]
-                arquivo = f"t/{ano}/{e['ue']}" if cargo_tse in MUNICIPAIS else f"t/{ano}/{uf}"
+                arquivo = f"t/{ano}/{e['unidadeEleitoral']}" if cargo_tse in MUNICIPAIS else f"t/{ano}/{uf}"
                 atual_href = None
                 if estado != "atual":
                     atual_href = paginas_atuais.get(chave_nome(e.get("nome"), uf)) or \
@@ -227,7 +228,7 @@ def gerar(deputados: dict, estaduais: dict | None = None) -> dict:
                 if estado == "atual" and cargo_tse in ("DEPUTADO ESTADUAL", "DEPUTADO DISTRITAL"):
                     achado = estaduais.get(chave_nome(e.get("urna"), uf)) or estaduais.get(chave_nome(e.get("nome"), uf))
                     estadual = {"uf": achado[0], "id": achado[1]} if achado else None
-                fichas[arquivo][e["sq"]] = {
+                fichas[arquivo][e["sequencial"]] = {
                     **e, "cargo": cargo, "cargoTse": cargo_tse, "ano": ano, "fonte": "tse",
                     "estado": estado, "inicioMandato": periodo(ano, cargo_tse)[0], "fimMandato": periodo(ano, cargo_tse)[1],
                     "paginaAtual": atual_href,
@@ -246,22 +247,22 @@ def gerar(deputados: dict, estaduais: dict | None = None) -> dict:
                         alvo = f"gov:{uf}"
                     elif estadual:
                         alvo = f"est:{estadual['uf']}:{estadual['id']}"
-                    elif cargo_tse == "PREFEITO" and CAPITAIS_COM_DADOS.get(uf, ("",))[0] == e["ue"]:
+                    elif cargo_tse == "PREFEITO" and CAPITAIS_COM_DADOS.get(uf, ("",))[0] == e["unidadeEleitoral"]:
                         alvo = f"pref:{uf}"
                 indice[uf].append({
-                    "a": alvo, "i": e["sq"], "f": arquivo, "n": e["urna"], "c": cargo, "k": ordem,
-                    "p": e.get("partido"), "m": e.get("municipio"),
-                    "g": e["ue"] if cargo_tse in MUNICIPAIS else None,
-                    "e": estado, "b": e.get("totalBens") or None,
-                    "fo": e.get("foto"),
+                    "codigoFeed": alvo, "id": e["sequencial"], "arquivoFicha": arquivo, "nome": e["urna"], "cargo": cargo, "ordemCargo": ordem,
+                    "partido": e.get("partido"), "municipio": e.get("municipio"),
+                    "codigoMunicipio": e["unidadeEleitoral"] if cargo_tse in MUNICIPAIS else None,
+                    "estado": estado, "totalBens": e.get("totalBens") or None,
+                    "foto": e.get("foto"),
                 })
 
-    # cargos federais do Brasil todo, para a visão nacional da página inicial (u = estado)
-    indice["BR"] += [{**x, "u": uf} for uf, lista in indice.items() if uf != "BR" for x in lista if x["k"] in (3, 4)]
+    # cargos federais do Brasil todo, para a visão nacional da página inicial (uf = estado de quem aparece)
+    indice["BR"] += [{**x, "uf": uf} for uf, lista in indice.items() if uf != "BR" for x in lista if x["ordemCargo"] in (3, 4)]
 
     # --- grava
     for uf, lista in indice.items():
-        lista.sort(key=lambda x: (x["k"], x.get("m") or "", x["n"] or ""))
+        lista.sort(key=lambda x: (x["ordemCargo"], x.get("municipio") or "", x["nome"] or ""))
         salvar(SAIDA / "indice" / f"{uf}.json", [{k: v for k, v in x.items() if v is not None} for x in lista])
     for arquivo, mapa in fichas.items():
         salvar(SAIDA / "p" / f"{arquivo}.json", mapa)
@@ -270,15 +271,15 @@ def gerar(deputados: dict, estaduais: dict | None = None) -> dict:
     for uf, lista in indice.items():
         cont = defaultdict(int)
         for x in lista:
-            cont[x["e"]] += 1
+            cont[x["estado"]] += 1
         resumo[uf] = dict(cont)
     salvar(SAIDA / "indice" / "_resumo.json", resumo)
     # o que a página Fique informado oferece: estados com Assembleia coletada e capitais com a Câmara Municipal coletada
     capitais = {}
     for uf, lista in indice.items():
         for x in lista:
-            if x.get("a") == f"pref:{uf}":
-                capitais[uf] = x.get("m") or uf
+            if x.get("codigoFeed") == f"pref:{uf}":
+                capitais[uf] = x.get("municipio") or uf
     salvar(SAIDA / "cobertura.json", {
         "estados": sorted(p.parent.name for p in (BRUTO / "estaduais").glob("*/deputados.json")),
         "capitais": dict(sorted(capitais.items())),

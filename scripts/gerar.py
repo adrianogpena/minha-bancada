@@ -40,13 +40,12 @@ def tipo_voto(v: str | None) -> str:
 
 def juntar_detalhe(p: dict, det: dict | None) -> dict:
     """Acrescenta à proposição a situação atual, quando já foi consultada.
-    Nomes curtos para o JSON do site ficar leve."""
+    Mesmos nomes do dados/proposicoes_detalhe.json, exceto `inteiroTeor` (linkTexto no site)."""
     if not det:
         return p
-    campos = {"apres": "ap", "sit": "sit", "desp": "desp", "org": "org", "data": "dt",
-              "inteiroTeor": "pdf", "detalhada": "det", "palavras": "kw",
-              "tram": "tram", "regime": "reg"}
-    return {**p, **{curto: det[longo] for longo, curto in campos.items() if det.get(longo)}}
+    campos = ("dataApresentacao", "situacao", "despacho", "orgao", "dataSituacao", "ementaDetalhada", "palavrasChave",
+              "tramitacao", "regime")
+    return {**p, **{c: det[c] for c in campos if det.get(c)}, **({"linkTexto": det["inteiroTeor"]} if det.get("inteiroTeor") else {})}
 
 
 MAX_COAUTORES = 15
@@ -54,31 +53,31 @@ MAX_COAUTORES = 15
 
 def juntar_autoria(p: dict, aut: dict | None, did: str, partidos: dict | None = None) -> dict:
     """Acrescenta, quando a autoria do projeto já foi coletada: `principal` (o deputado foi o primeiro
-    a assinar), `co` (outros autores, com o partido entre parênteses quando é deputado em exercício;
-    até MAX_COAUTORES), `n` (total de autores), `pp` (partidos distintos entre os autores que são
-    deputados em exercício, quando há mais de um) e `ini` (tipo do autor principal, quando não é
+    a assinar), `coautores` (outros autores, com o partido entre parênteses quando é deputado em exercício;
+    até MAX_COAUTORES), `totalAutores` (total de autores), `partidosDistintos` (partidos distintos entre os autores que são
+    deputados em exercício, quando há mais de um) e `iniciativa` (tipo do autor principal, quando não é
     deputado: Poder Executivo, Senado, comissão...)."""
-    if not aut or not aut.get("a"):
+    if not aut or not aut.get("autores"):
         return p
     partidos = partidos or {}
     outros = []
-    for i, nome, *resto in aut["a"]:
+    for i, nome, *resto in aut["autores"]:
         if str(i) == did:
             continue
         sigla = partidos.get(str(i))
         outros.append(f"{nome} ({sigla})" if sigla else nome)
     if len(outros) > MAX_COAUTORES:
         outros = outros[:MAX_COAUTORES] + [f"e mais {len(outros) - MAX_COAUTORES}"]
-    siglas = {partidos[str(i)] for i, *_ in aut["a"] if str(i) in partidos}
-    primeiro = aut["a"][0]
-    extra = {"principal": str(aut.get("p")) == did}
+    siglas = {partidos[str(i)] for i, *_ in aut["autores"] if str(i) in partidos}
+    primeiro = aut["autores"][0]
+    extra = {"principal": str(aut.get("idPrincipal")) == did}
     if outros:
-        extra["co"] = outros
-        extra["n"] = len(aut["a"])
+        extra["coautores"] = outros
+        extra["totalAutores"] = len(aut["autores"])
     if len(siglas) > 1:
-        extra["pp"] = len(siglas)
-    if aut.get("p") is None and len(primeiro) > 2 and primeiro[2]:
-        extra["ini"] = primeiro[2]
+        extra["partidosDistintos"] = len(siglas)
+    if aut.get("idPrincipal") is None and len(primeiro) > 2 and primeiro[2]:
+        extra["iniciativa"] = primeiro[2]
     return {**p, **extra}
 
 
@@ -178,7 +177,7 @@ def gerar_eleitorado() -> None:
         for ano in (2024, 2022):
             dados = ler(BRUTO / "tse" / "eleitorado" / str(ano) / arq.name)
             if dados:
-                salvar(SAIDA / "eleitorado" / arq.name, {"ano": ano, "d": dados})
+                salvar(SAIDA / "eleitorado" / arq.name, {"ano": ano, "locais": dados})
                 break
 
 

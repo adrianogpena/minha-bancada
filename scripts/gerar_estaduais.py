@@ -42,11 +42,12 @@ def gerar_governo(uf: str, pasta: Path, host: str) -> None:
     itens = []
     for arq in sorted(pasta.glob("governo_[0-9]*.json")):
         for mid, m in ler(arq, {}).get("materias", {}).items():
-            itens.append({"id": mid, "tipo": "VET" if re.search(r"veto", m["td"], re.I) else m["t"], "td": m["td"], "numero": m["n"], "ano": m["a"], "ap": m.get("ap"),
-                          "ementa": re.sub(r"\s+", " ", m["e"]).strip(), "sit": m["sit"], "pdf": m.get("pdf")})
+            itens.append({"id": mid, "tipo": "VET" if re.search(r"veto", m["tipoDescricao"], re.I) else m["tipo"],
+                          "tipoDescricao": m["tipoDescricao"], "numero": m["numero"], "ano": m["ano"], "dataApresentacao": m.get("dataApresentacao"),
+                          "ementa": re.sub(r"\s+", " ", m["ementa"]).strip(), "situacao": m["situacao"], "linkTexto": m.get("linkTexto")})
     if not itens:
         return
-    itens.sort(key=lambda x: (x["ap"] or "", x["id"]), reverse=True)
+    itens.sort(key=lambda x: (x["dataApresentacao"] or "", x["id"]), reverse=True)
     salvar(SAIDA / "governo" / f"{uf}.json", {"host": host, "materias": itens})
 
 
@@ -61,13 +62,13 @@ def gerar_assembleia(uf: str, pasta: Path) -> list[dict]:
 
     lista = []
     for vid, v in votacoes.items():
-        mat = materias_votadas.get(str(v["m"])) or {}
-        votos = [(p, tipo_voto(t)) for p, t in v["v"]]
-        placar = {"sim": v["sim"] or 0, "nao": v["nao"] or 0, "abstencao": v["abs"] or 0}
+        mat = materias_votadas.get(str(v["idMateria"])) or {}
+        votos = [(p, tipo_voto(t)) for p, t in v["votos"]]
+        placar = {"sim": v["sim"] or 0, "nao": v["nao"] or 0, "abstencao": v["abstencoes"] or 0}
         lista.append({
-            "id": vid, "data": v["d"], "descricao": mat.get("td") or "Votação",
-            "proposicao": f"{mat['t']} {mat['n']}/{mat['a']}" if mat else None,
-            "ementa": mat.get("e") or None, "aprovada": v["ok"], "resultadoTexto": v.get("res"),
+            "id": vid, "data": v["data"], "descricao": mat.get("tipoDescricao") or "Votação",
+            "proposicao": f"{mat['tipo']} {mat['numero']}/{mat['ano']}" if mat else None,
+            "ementa": mat.get("ementa") or None, "aprovada": v["aprovada"], "resultadoTexto": v.get("resultado"),
             "placar": placar, "_votos": votos,
         })
     lista.sort(key=lambda v: (v["data"], v["id"]), reverse=True)
@@ -84,15 +85,16 @@ def gerar_assembleia(uf: str, pasta: Path) -> list[dict]:
     projetos = defaultdict(list)
     for arq in sorted(pasta.glob("materias_[0-9]*.json")):
         for mid, m in ler(arq, {}).get("materias", {}).items():
-            for pid in m["dep"]:
-                coautores = [deputados[o]["nome"] for o in m["dep"] if o != pid and o in deputados and deputados[o].get("nome")]
-                projetos[pid].append({"id": mid, "tipo": m["t"], "td": m.get("td"), "numero": m["n"], "ano": m["a"],
-                                      "ap": m.get("ap"), "ementa": m["e"], "sit": m["sit"], "tr": m.get("tr"),
-                                      "pdf": m.get("pdf"), **({"co": coautores} if coautores else {})})
+            for pid in m["idsDeputados"]:
+                coautores = [deputados[o]["nome"] for o in m["idsDeputados"] if o != pid and o in deputados and deputados[o].get("nome")]
+                projetos[pid].append({"id": mid, "tipo": m["tipo"], "tipoDescricao": m.get("tipoDescricao"), "numero": m["numero"], "ano": m["ano"],
+                                      "dataApresentacao": m.get("dataApresentacao"), "ementa": m["ementa"], "situacao": m["situacao"],
+                                      "emTramitacao": m.get("emTramitacao"), "linkTexto": m.get("linkTexto"),
+                                      **({"coautores": coautores} if coautores else {})})
 
     for pid in deputados:
         desde = primeira.get(pid)  # antes do primeiro voto o deputado pode nem estar em exercício
-        meus = sorted(projetos.get(pid, []), key=lambda p: (p["ap"] or "", p["id"]), reverse=True)
+        meus = sorted(projetos.get(pid, []), key=lambda p: (p["dataApresentacao"] or "", p["id"]), reverse=True)
         salvar(SAIDA / "estadual" / uf / f"{pid}.json", {
             "id": pid, "host": host, "foto": deputados[pid].get("foto"), "email": deputados[pid].get("email"),
             "titular": deputados[pid].get("titular"),

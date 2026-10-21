@@ -61,7 +61,7 @@ def eleitos_do_ano(ano: int) -> dict:
     alvo = {}
     for arq in sorted((TSE / str(ano)).glob("[A-Z][A-Z].json")):
         for e in json.loads(arq.read_text(encoding="utf-8")):
-            alvo[e.get("chapaSq") or e["sq"]] = e["uf"]
+            alvo[e.get("sequencialChapa") or e["sequencial"]] = e["uf"]
     return alvo
 
 
@@ -129,11 +129,11 @@ def coletar_ano(ano: int) -> None:
         orig = sorted(originarios[sq].values(), key=lambda d: -d[1])[:TOP_ORIGINARIOS]
         gastos = sorted(por_gasto[sq].items(), key=lambda g: -g[1])[:TOP_GASTOS]
         por_uf[uf][sq] = {
-            "r": round(receita[sq], 2), "d": round(despesa[sq], 2), "p": round(pago[sq], 2),
-            "o": sorted(([k, round(v, 2)] for k, v in por_origem[sq].items() if v), key=lambda x: -x[1]),
-            "dn": [[n, o, round(v, 2)] for n, o, v in top if v > 0],
-            "do": [[n, round(v, 2)] for n, v in orig if v > 0],
-            "g": [[k, round(v, 2)] for k, v in gastos if v > 0],
+            "receitas": round(receita[sq], 2), "despesasContratadas": round(despesa[sq], 2), "despesasPagas": round(pago[sq], 2),
+            "origensReceita": sorted(([k, round(v, 2)] for k, v in por_origem[sq].items() if v), key=lambda x: -x[1]),
+            "principaisDoadores": [[n, o, round(v, 2)] for n, o, v in top if v > 0],
+            "doadoresOriginarios": [[n, round(v, 2)] for n, v in orig if v > 0],
+            "gastosPorCategoria": [[k, round(v, 2)] for k, v in gastos if v > 0],
         }
     pasta = TSE / "contas" / str(ano)
     pasta.mkdir(parents=True, exist_ok=True)

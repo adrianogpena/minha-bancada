@@ -39,7 +39,7 @@ def deputados_por_uf() -> dict[str, set[int]]:
         if arq.stem == "BR":
             continue
         itens = json.loads(arq.read_text(encoding="utf-8"))
-        mapa[arq.stem] = {int(x["i"]) for x in itens if str(x.get("h", "")).startswith("deputado.html")}
+        mapa[arq.stem] = {int(x["id"]) for x in itens if str(x.get("pagina", "")).startswith("deputado.html")}
     return mapa
 
 
@@ -67,13 +67,13 @@ def selecionar(d: dict, regras: set[str], deps_uf: dict[str, set[int]]) -> dict:
     pres = br or "pres" in regras
     return {
         **d,
-        "camara": [i for i in d["camara"] if br or deps & set(i["deps"])],
+        "camara": [i for i in d["camara"] if br or deps & set(i["idsDeputados"])],
         "senado": d["senado"] if br else (0, 0),
         "detalhe": (0, 0),
         "executivo": d["executivo"] if pres else [],
-        "executivo_sit": d["executivo_sit"] if pres else [],
+        "executivo_situacao": d["executivo_situacao"] if pres else [],
         "estaduais": por_uf("estaduais", lambda uf: uf in ufs,
-                            lambda uf, m: any(f"est:{uf}:{p}" in regras for p in m.get("dep", []))),
+                            lambda uf, m: any(f"est:{uf}:{p}" in regras for p in m.get("idsDeputados", []))),
         "governo": por_uf("governo", lambda uf: uf in ufs or f"gov:{uf}" in regras),
         "municipais": por_uf("municipais", lambda uf: uf in ufs or f"MUN:{uf}" in regras or f"pref:{uf}" in regras),
         "votacoes": [uf for uf in d["votacoes"] if uf in ufs],
@@ -97,8 +97,8 @@ def rotulos() -> dict[str, str]:
     mapa |= {f"MUN:{u}": f"Capital: {m} ({u})" for u, m in cob["capitais"].items()}
     for arq in sorted(INDICE.glob("[A-Z][A-Z].json")):
         for x in json.loads(arq.read_text(encoding="utf-8")):
-            if x.get("a"):
-                mapa.setdefault(x["a"], f"{x['c']}: {x['n']}")
+            if x.get("codigoFeed"):
+                mapa.setdefault(x["codigoFeed"], f"{x['cargo']}: {x['nome']}")
     return mapa
 
 

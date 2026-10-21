@@ -90,10 +90,11 @@ def coletar() -> None:
                 ano_p = int(m.group(3)) + (2000 if len(m.group(3)) == 2 else 0)
                 mid = f"{t}-{int(m.group(2))}-{ano_p}"
                 criado = dt.datetime.strptime(x["criado"][:10], "%d/%m/%Y").date().isoformat()
-                if mid in itens and itens[mid]["ap"] <= criado:
+                if mid in itens and itens[mid]["dataApresentacao"] <= criado:
                     continue
-                itens[mid] = {"t": t, "td": td, "n": int(m.group(2)), "a": ano_p, "ap": criado, "e": m.group(4).strip(),
-                              "sit": situacao(x["situacao"]), "tr": x["situacao"] != "Finalizado", "pdf": PROCESSO + x["uuid"] + "/"}
+                itens[mid] = {"tipo": t, "tipoDescricao": td, "numero": int(m.group(2)), "ano": ano_p, "dataApresentacao": criado,
+                              "ementa": m.group(4).strip(), "situacao": situacao(x["situacao"]),
+                              "emTramitacao": x["situacao"] != "Finalizado", "linkTexto": PROCESSO + x["uuid"] + "/"}
             if not pg or lidos >= total:
                 break
             n += 1

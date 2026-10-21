@@ -232,7 +232,7 @@ def test_detalhe_da_proposicao_real_gera_os_campos_curtos(monkeypatch, tmp_path)
     coletar.coletar_detalhes_proposicoes()
     info = json.loads((tmp_path / "proposicoes_detalhe.json").read_text())[str(prop["dados"]["id"])]
     # proposição recém-apresentada ainda não tem situação (descricaoSituacao nula): o coletor tem de aceitar isso
-    assert info["apres"] and info["data"] and info["org"] and "sit" in info and info["fim"] is False
+    assert info["dataApresentacao"] and info["dataSituacao"] and info["orgao"] and "situacao" in info and info["finalizada"] is False
 
 
 def test_executivo_com_respostas_reais(monkeypatch):
@@ -240,7 +240,7 @@ def test_executivo_com_respostas_reais(monkeypatch):
     prop, tram = amostra("camara_proposicao"), amostra("camara_tramitacoes")
     monkeypatch.setattr(ex, "get", lambda caminho, **p: tram if caminho.endswith("/tramitacoes") else prop)
     d = ex.detalhar({"id": prop["dados"]["id"]})
-    assert d["tipo"] and d["numero"] and d["ano"] and d["apres"] and d["data"] and "sit" in d
+    assert d["tipo"] and d["numero"] and d["ano"] and d["dataApresentacao"] and d["dataSituacao"] and "situacao" in d
     assert isinstance(ex.desfecho(1), dict)
 
 
@@ -292,7 +292,7 @@ def test_processos_reais_do_senado_viram_autorias(monkeypatch, tmp_path):
     monkeypatch.setattr(coletar, "get_senado", lambda caminho, **p: amostra("senado_processos"))
     coletar.coletar_autorias_senado()
     aut = json.loads((tmp_path / "senado_autorias.json").read_text())["5672"]
-    assert aut and all(a["id"] and a["proc"] and a["tipo"] and a["numero"].isdigit() and a["ano"] >= 2019 and a["sit"] and a["ap"] for a in aut)
+    assert aut and all(a["id"] and a["processo"] and a["tipo"] and a["numero"].isdigit() and a["ano"] >= 2019 and a["situacao"] and a["dataApresentacao"] for a in aut)
 
 
 def test_ceaps_real(monkeypatch, tmp_path):
@@ -314,10 +314,10 @@ def test_ceaps_real(monkeypatch, tmp_path):
 
 def test_materia_real_do_sapl_e_compactada():
     import coletar_estaduais as est
-    tipos = {t["id"]: {"s": t["sigla"], "d": t["descricao"]} for t in amostra("sapl_tipomateria")["results"]}
+    tipos = {t["id"]: {"sigla": t["sigla"], "descricao": t["descricao"]} for t in amostra("sapl_tipomateria")["results"]}
     for m in amostra("sapl_materia")["results"]:
-        r = est.compactar_materia(m, {**tipos, m["tipo"]: tipos.get(m["tipo"], {"s": "?", "d": "?"})})
-        assert r["n"] == m["numero"] and r["a"] == m["ano"] and r["sit"] and isinstance(r["au"], list)
+        r = est.compactar_materia(m, {**tipos, m["tipo"]: tipos.get(m["tipo"], {"sigla": "?", "descricao": "?"})})
+        assert r["numero"] == m["numero"] and r["ano"] == m["ano"] and r["situacao"] and isinstance(r["idsAutores"], list)
 
 
 def test_resultados_e_votos_reais_do_sapl():

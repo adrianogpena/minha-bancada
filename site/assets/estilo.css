@@ -120,7 +120,9 @@ input:focus, select:focus { border-color: var(--marca); outline: none; box-shado
 .faixa a:hover { transform: scaleY(1.2); }
 .v-sim { background: var(--sim) !important; }
 .v-nao { background: var(--nao) !important; }
-.v-abstencao { background: var(--abstencao) !important; }
+.v-abstencao, .v-outro { background: var(--abstencao) !important; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .voto.v-outro { color: #1a1a1a; } }
+:root[data-theme="dark"] .voto.v-outro { color: #1a1a1a; }
 .v-obstrucao { background: var(--obstrucao) !important; }
 .v-secreto { background: var(--secreto) !important; }
 .v-art17 { background: var(--tinta-suave) !important; }

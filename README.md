@@ -51,7 +51,7 @@ python -m http.server 8000 -d site                # abra http://localhost:8000
 
 ### Testes
 
-Os testes não acessam a internet (HTTP simulado) e rodam em poucos segundos:
+Os testes não acessam a internet: as respostas das APIs (Câmara, Senado, TSE, SAPL das Assembleias e Câmaras, SPLegis, Scriptcase e SUAP) são simuladas com o formato real de cada uma, e verificam a leitura, a normalização e o tratamento de falhas. Rodam em poucos segundos:
 
 ```bash
 pip install -r requirements-dev.txt

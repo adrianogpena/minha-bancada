@@ -345,3 +345,12 @@ select:disabled { opacity: .55; }
 .hist-lista summary { cursor: pointer; }
 .hist-sem ul { margin: 6px 0 0; padding-left: 20px; color: var(--tinta-suave); }
 @media (max-width: 720px) { .hist-filtros { grid-template-columns: 1fr; } }
+
+.fonte-par { white-space: nowrap; }
+.ver-legivel { font-weight: 700; color: var(--marca) !important; }
+.fontes .ver-legivel::before { content: "· "; color: var(--tinta-suave); font-weight: 400; }
+.tabela-fonte th, .tabela-fonte td { text-align: left; vertical-align: top; }
+.painel details { margin: 6px 0; }
+.painel details > summary { cursor: pointer; font-weight: 700; }
+.painel .ficha .ficha { margin: 4px 0 4px 8px; }
+.painel a.mais { display: inline-block; text-decoration: none; }

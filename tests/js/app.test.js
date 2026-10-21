@@ -44,3 +44,20 @@ test("semAcento normaliza para busca", () => {
   assert.equal(semAcento("São José"), "sao jose");
   assert.equal(semAcento(null), "");
 });
+
+test("urlLegivel reaproveita páginas do site e usa fonte.html nas demais APIs", () => {
+  const src = fonte.slice(fonte.indexOf("const HOST_API"), fonte.indexOf("function fontes("));
+  const c = vm.createContext({ URL, encodeURIComponent });
+  vm.runInContext(src + "\nthis.f = urlLegivel;", c);
+  const f = c.f, api = "https://dadosabertos.camara.leg.br/api/v2";
+  assert.equal(f(`${api}/votacoes/2270800-69/votos`), "votacao.html?id=2270800-69");
+  assert.equal(f(`${api}/votacoes/2270800-69`), "votacao.html?id=2270800-69");
+  assert.equal(f(`${api}/deputados/204379`), "deputado.html?id=204379");
+  assert.equal(f(`${api}/proposicoes/1`), `fonte.html?u=${encodeURIComponent(`${api}/proposicoes/1`)}`);
+  assert.match(f("https://legis.senado.leg.br/dadosabertos/processo/1"), /^fonte\.html\?u=/);
+  assert.equal(f("https://cdn.tse.jus.br/estatistica/sead/odsele/x.zip"), null);
+  assert.equal(f("https://www.camara.leg.br/deputados/1"), null);
+  assert.equal(f("http://dadosabertos.camara.leg.br/api/v2/x"), null);
+  assert.equal(f("https://exemplo.com/api/x"), null);
+  assert.equal(f("lixo"), null);
+});

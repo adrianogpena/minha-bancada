@@ -1,0 +1,136 @@
+{
+ "fonte": "https://dadosabertos.camara.leg.br/api/v2/votacoes/{id}/votos",
+ "capturadoEm": "2026-10-21",
+ "amostra": {
+  "dados": [
+   {
+    "tipoVoto": "Sim",
+    "dataRegistroVoto": "2026-10-14T20:52:43",
+    "deputado_": {
+     "id": 220588,
+     "uri": "https://dadosabertos.camara.leg.br/api/v2/deputados/220588",
+     "nome": "Roberto Duarte",
+     "siglaPartido": "REPUBLICANOS",
+     "uriPartido": "https://dadosabertos.camara.leg.br/api/v2/partidos/37908",
+     "siglaUf": "AC",
+     "idLegislatura": 57,
+     "urlFoto": "https://www.camara.leg.br/internet/deputado/bandep/220588.jpg",
+     "email": "dep.robertoduarte@camara.leg.br"
+    }
+   },
+   {
+    "tipoVoto": "Sim",
+    "dataRegistroVoto": "2026-10-14T20:52:35",
+    "deputado_": {
+     "id": 160527,
+     "uri": "https://dadosabertos.camara.leg.br/api/v2/deputados/160527",
+     "nome": "Aguinaldo Ribeiro",
+     "siglaPartido": "PP",
+     "uriPartido": "https://dadosabertos.camara.leg.br/api/v2/partidos/37903",
+     "siglaUf": "PB",
+     "idLegislatura": 57,
+     "urlFoto": "https://www.camara.leg.br/internet/deputado/bandep/160527.jpg",
+     "email": "dep.aguinaldoribeiro@camara.leg.br"
+    }
+   }
+  ],
+  "links": [
+   {
+    "rel": "self",
+    "href": "https://dadosabertos.camara.leg.br/api/v2/votacoes/2236186-60/votos"
+   }
+  ]
+ },
+ "forma": {
+  "dados": {
+   "tipos": [
+    "list"
+   ]
+  },
+  "dados[]": {
+   "tipos": [
+    "dict"
+   ]
+  },
+  "dados[].dataRegistroVoto": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "dados[].deputado_": {
+   "tipos": [
+    "dict"
+   ]
+  },
+  "dados[].deputado_.email": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "dados[].deputado_.id": {
+   "tipos": [
+    "int"
+   ]
+  },
+  "dados[].deputado_.idLegislatura": {
+   "tipos": [
+    "int"
+   ]
+  },
+  "dados[].deputado_.nome": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "dados[].deputado_.siglaPartido": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "dados[].deputado_.siglaUf": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "dados[].deputado_.uri": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "dados[].deputado_.uriPartido": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "dados[].deputado_.urlFoto": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "dados[].tipoVoto": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "links": {
+   "tipos": [
+    "list"
+   ]
+  },
+  "links[]": {
+   "tipos": [
+    "dict"
+   ]
+  },
+  "links[].href": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "links[].rel": {
+   "tipos": [
+    "str"
+   ]
+  }
+ }
+}

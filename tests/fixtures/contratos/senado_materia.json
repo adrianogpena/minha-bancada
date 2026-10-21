@@ -1,0 +1,366 @@
+{
+ "fonte": "https://legis.senado.leg.br/dadosabertos/materia/{codigo}",
+ "capturadoEm": "2026-10-21",
+ "amostra": {
+  "DetalheMateria": {
+   "noNamespaceSchemaLocation": "https://legis.senado.leg.br/dadosabertos/dados/DetalheMateriav7.xsd",
+   "Metadados": {
+    "Versao": "21/10/2026 15:46:56",
+    "VersaoServico": "7",
+    "DataVersaoServico": "2021-09-14",
+    "DescricaoDataSet": "Detalhes da matéria.",
+    "Descontinuacao": {
+     "DataDepreciacao": "2025-03-18",
+     "DataDesativacaoCompleta": "2026-02-01",
+     "UrlServicoSubstituto": "https://legis.senado.leg.br/dadosabertos/processo/{idProcesso}"
+    }
+   },
+   "Materia": {
+    "IdentificacaoMateria": {
+     "CodigoMateria": "5672",
+     "SiglaCasaIdentificacaoMateria": "SF",
+     "SiglaSubtipoMateria": "MSF",
+     "DescricaoSubtipoMateria": "Mensagem (SF)",
+     "NumeroMateria": "00182",
+     "AnoMateria": "1996",
+     "DescricaoIdentificacaoMateria": "MSF 182/1996",
+     "IndicadorTramitando": "Não",
+     "IdentificacaoProcesso": "2850535"
+    },
+    "DadosBasicosMateria": {
+     "EmentaMateria": "SUBMETE A APRECIAÇÃO DO SENADO FEDERAL, O NOME DO SR. JOSE CARLOS     \nPERRET SCHULTE, PARA COMPOR O TRIBUNAL SUPERIOR DO TRABALHO, NO       \nCARGO DE SUPLENTE DE MINISTRO CLASSISTA TEMPORARIO, REPRESENTANTE     \nDOS TRABALHADORES, NO TRIENIO DE 1996 A 1999.                         \n",
+     "IndexacaoMateria": "INDICAÇÃO, SENADO, AUTORIDADE, SUPLENTE, MINISTRO, (TST), MINISTRO    \nCLASSISTA, REPRESENTANTE, TRABALHADOR, TRIENIO.                       \n",
+     "Autor": "Presidência da República",
+     "CasaIniciadoraNoLegislativo": "SF",
+     "IndicadorComplementar": "Não",
+     "DataApresentacao": "1996-06-10",
+     "DataLeitura": "1996-06-10",
+     "NaturezaMateria": {
+      "CodigoNatureza": "2020",
+      "NomeNatureza": "AUSENCIA_PRES_REP",
+      "DescricaoNatureza": "Comunicação de ausência de Presidente ou Vice-presidente da República"
+     }
+    },
+    "OrigemMateria": {
+     "SiglaCasaOrigem": "PR"
+    },
+    "OutrosNumerosDaMateria": {
+     "OutroNumeroDaMateria": [
+      {
+       "IdentificacaoMateria": {
+        "SiglaCasaIdentificacaoMateria": "PR",
+        "SiglaSubtipoMateria": "MSG",
+        "NumeroMateria": "536",
+        "AnoMateria": "1996"
+       },
+       "DescricaoTipoNumeracao": "OutroNúmero"
+      }
+     ]
+    },
+    "DecisaoEDestino": {
+     "Decisao": {
+      "Data": "1996-07-11",
+      "Sigla": "APROVADA_NO_PLENARIO",
+      "Descricao": "Aprovada pelo Plenário"
+     }
+    },
+    "OutrasInformacoes": {
+     "Servico": [
+      {
+       "NomeServico": "AtualizacaoMateria",
+       "DescricaoServico": "Mostra as atualizações mais recentes da matéria.",
+       "UrlServico": "https://legis.senado.leg.br/dadosabertos/materia/atualizacoes/5672"
+      },
+      {
+       "NomeServico": "AutoriaMateria",
+       "DescricaoServico": "Lista o(s) autor(es) da matéria.",
+       "UrlServico": "https://legis.senado.leg.br/dadosabertos/materia/autoria/5672"
+      }
+     ]
+    }
+   }
+  }
+ },
+ "forma": {
+  "DetalheMateria": {
+   "tipos": [
+    "dict"
+   ]
+  },
+  "DetalheMateria.Materia": {
+   "tipos": [
+    "dict"
+   ]
+  },
+  "DetalheMateria.Materia.DadosBasicosMateria": {
+   "tipos": [
+    "dict"
+   ]
+  },
+  "DetalheMateria.Materia.DadosBasicosMateria.Autor": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "DetalheMateria.Materia.DadosBasicosMateria.CasaIniciadoraNoLegislativo": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "DetalheMateria.Materia.DadosBasicosMateria.DataApresentacao": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "DetalheMateria.Materia.DadosBasicosMateria.DataLeitura": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "DetalheMateria.Materia.DadosBasicosMateria.EmentaMateria": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "DetalheMateria.Materia.DadosBasicosMateria.IndexacaoMateria": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "DetalheMateria.Materia.DadosBasicosMateria.IndicadorComplementar": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "DetalheMateria.Materia.DadosBasicosMateria.NaturezaMateria": {
+   "tipos": [
+    "dict"
+   ]
+  },
+  "DetalheMateria.Materia.DadosBasicosMateria.NaturezaMateria.CodigoNatureza": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "DetalheMateria.Materia.DadosBasicosMateria.NaturezaMateria.DescricaoNatureza": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "DetalheMateria.Materia.DadosBasicosMateria.NaturezaMateria.NomeNatureza": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "DetalheMateria.Materia.DecisaoEDestino": {
+   "tipos": [
+    "dict"
+   ]
+  },
+  "DetalheMateria.Materia.DecisaoEDestino.Decisao": {
+   "tipos": [
+    "dict"
+   ]
+  },
+  "DetalheMateria.Materia.DecisaoEDestino.Decisao.Data": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "DetalheMateria.Materia.DecisaoEDestino.Decisao.Descricao": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "DetalheMateria.Materia.DecisaoEDestino.Decisao.Sigla": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "DetalheMateria.Materia.IdentificacaoMateria": {
+   "tipos": [
+    "dict"
+   ]
+  },
+  "DetalheMateria.Materia.IdentificacaoMateria.AnoMateria": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "DetalheMateria.Materia.IdentificacaoMateria.CodigoMateria": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "DetalheMateria.Materia.IdentificacaoMateria.DescricaoIdentificacaoMateria": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "DetalheMateria.Materia.IdentificacaoMateria.DescricaoSubtipoMateria": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "DetalheMateria.Materia.IdentificacaoMateria.IdentificacaoProcesso": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "DetalheMateria.Materia.IdentificacaoMateria.IndicadorTramitando": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "DetalheMateria.Materia.IdentificacaoMateria.NumeroMateria": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "DetalheMateria.Materia.IdentificacaoMateria.SiglaCasaIdentificacaoMateria": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "DetalheMateria.Materia.IdentificacaoMateria.SiglaSubtipoMateria": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "DetalheMateria.Materia.OrigemMateria": {
+   "tipos": [
+    "dict"
+   ]
+  },
+  "DetalheMateria.Materia.OrigemMateria.SiglaCasaOrigem": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "DetalheMateria.Materia.OutrasInformacoes": {
+   "tipos": [
+    "dict"
+   ]
+  },
+  "DetalheMateria.Materia.OutrasInformacoes.Servico": {
+   "tipos": [
+    "list"
+   ]
+  },
+  "DetalheMateria.Materia.OutrasInformacoes.Servico[]": {
+   "tipos": [
+    "dict"
+   ]
+  },
+  "DetalheMateria.Materia.OutrasInformacoes.Servico[].DescricaoServico": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "DetalheMateria.Materia.OutrasInformacoes.Servico[].NomeServico": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "DetalheMateria.Materia.OutrasInformacoes.Servico[].UrlServico": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "DetalheMateria.Materia.OutrosNumerosDaMateria": {
+   "tipos": [
+    "dict"
+   ]
+  },
+  "DetalheMateria.Materia.OutrosNumerosDaMateria.OutroNumeroDaMateria": {
+   "tipos": [
+    "list"
+   ]
+  },
+  "DetalheMateria.Materia.OutrosNumerosDaMateria.OutroNumeroDaMateria[]": {
+   "tipos": [
+    "dict"
+   ]
+  },
+  "DetalheMateria.Materia.OutrosNumerosDaMateria.OutroNumeroDaMateria[].DescricaoTipoNumeracao": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "DetalheMateria.Materia.OutrosNumerosDaMateria.OutroNumeroDaMateria[].IdentificacaoMateria": {
+   "tipos": [
+    "dict"
+   ]
+  },
+  "DetalheMateria.Materia.OutrosNumerosDaMateria.OutroNumeroDaMateria[].IdentificacaoMateria.AnoMateria": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "DetalheMateria.Materia.OutrosNumerosDaMateria.OutroNumeroDaMateria[].IdentificacaoMateria.NumeroMateria": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "DetalheMateria.Materia.OutrosNumerosDaMateria.OutroNumeroDaMateria[].IdentificacaoMateria.SiglaCasaIdentificacaoMateria": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "DetalheMateria.Materia.OutrosNumerosDaMateria.OutroNumeroDaMateria[].IdentificacaoMateria.SiglaSubtipoMateria": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "DetalheMateria.Metadados": {
+   "tipos": [
+    "dict"
+   ]
+  },
+  "DetalheMateria.Metadados.DataVersaoServico": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "DetalheMateria.Metadados.Descontinuacao": {
+   "tipos": [
+    "dict"
+   ]
+  },
+  "DetalheMateria.Metadados.Descontinuacao.DataDepreciacao": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "DetalheMateria.Metadados.Descontinuacao.DataDesativacaoCompleta": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "DetalheMateria.Metadados.Descontinuacao.UrlServicoSubstituto": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "DetalheMateria.Metadados.DescricaoDataSet": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "DetalheMateria.Metadados.Versao": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "DetalheMateria.Metadados.VersaoServico": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "DetalheMateria.noNamespaceSchemaLocation": {
+   "tipos": [
+    "str"
+   ]
+  }
+ }
+}

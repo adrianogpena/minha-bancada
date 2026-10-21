@@ -1,0 +1,76 @@
+{
+ "fonte": "https://splegisws.saopaulo.sp.leg.br/ws/ws2.asmx/ProjetoResumoJSON",
+ "capturadoEm": "2026-10-21",
+ "amostra": {
+  "Chave": null,
+  "Tipo": "PL",
+  "_tipo": 1,
+  "Numero": 1,
+  "Ano": 2026,
+  "Ementa": "Institui a gratuidade no sistema de transporte público municipal para mães, pais ou responsáveis legais que comprovem exercer cuidados diretos e permanentes a pessoas com deficiência (PCD) ou com transtornos do neurodesenvolvimento, inclusive o Transtorno do Espectro Autista (TEA), e dá outras provi",
+  "Leitura": "2026-02-03T00:00:00",
+  "Autores": [
+   {
+    "Chave": 2278,
+    "Nome": "KEIT LIMA"
+   }
+  ]
+ },
+ "forma": {
+  "Ano": {
+   "tipos": [
+    "int"
+   ]
+  },
+  "Autores": {
+   "tipos": [
+    "list"
+   ]
+  },
+  "Autores[]": {
+   "tipos": [
+    "dict"
+   ]
+  },
+  "Autores[].Chave": {
+   "tipos": [
+    "int"
+   ]
+  },
+  "Autores[].Nome": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "Chave": {
+   "tipos": [
+    "null"
+   ]
+  },
+  "Ementa": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "Leitura": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "Numero": {
+   "tipos": [
+    "int"
+   ]
+  },
+  "Tipo": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "_tipo": {
+   "tipos": [
+    "int"
+   ]
+  }
+ }
+}

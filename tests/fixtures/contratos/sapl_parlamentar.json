@@ -1,0 +1,116 @@
+{
+ "fonte": "https://sapl.al.pb.leg.br/api/parlamentares/parlamentar/{id}/",
+ "capturadoEm": "2026-10-21",
+ "amostra": {
+  "id": 89,
+  "__str__": "Adriano Galdino",
+  "metadata": {},
+  "nome_completo": "Adriano Cézar Galdino de Araújo",
+  "nome_parlamentar": "Adriano Galdino",
+  "sexo": "M",
+  "numero_gab_parlamentar": "",
+  "telefone": "3214-4638",
+  "telefone_celular": "",
+  "endereco_web": "",
+  "profissao": "Engenheiro Civil e Advogado",
+  "email": "presidencia@al.pb.leg.br",
+  "locais_atuacao": "",
+  "ativo": true,
+  "biografia": "<p><span style=\"color: #444444; font-family: Arial, Verdana, Helvetica, sans-serif;\"><span style=\"font-size: 12px;\">Nascido em Campina Grande, Adriano Galdino &eacute; graduado em Engenharia Civil e Direito. Foi vereador por dois mandatos e prefeito por outros tr&ecirc;s do munic&iacute;pio de Pocin",
+  "fotografia": "http://sapl.al.pb.leg.br/media/sapl/public/parlamentar/89/89_foto_parlamentar_Jq2avFH.jpg",
+  "cropping": "0,3,206,209",
+  "nivel_instrucao": 7
+ },
+ "forma": {
+  "__str__": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "ativo": {
+   "tipos": [
+    "bool"
+   ]
+  },
+  "biografia": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "cropping": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "email": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "endereco_web": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "fotografia": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "id": {
+   "tipos": [
+    "int"
+   ]
+  },
+  "locais_atuacao": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "metadata": {
+   "tipos": [
+    "dict"
+   ]
+  },
+  "nivel_instrucao": {
+   "tipos": [
+    "int"
+   ]
+  },
+  "nome_completo": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "nome_parlamentar": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "numero_gab_parlamentar": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "profissao": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "sexo": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "telefone": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "telefone_celular": {
+   "tipos": [
+    "str"
+   ]
+  }
+ }
+}

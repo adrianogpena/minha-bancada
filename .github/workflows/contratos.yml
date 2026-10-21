@@ -1,0 +1,45 @@
+name: Contrato das APIs externas
+
+# Toda segunda-feira confere se Câmara, Senado, TSE, SAPL, SPLegis e SUAP ainda devolvem os campos de que os
+# coletores dependem (scripts/contrato_apis.py). Se algo mudou, a execução falha e abre (ou atualiza) uma issue.
+on:
+  schedule:
+    - cron: "23 9 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  contrato:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install -r requirements.txt
+      - name: Verificar contrato
+        run: python scripts/contrato_apis.py --verificar
+        env:
+          RESUMO_ARQUIVO: ${{ runner.temp }}/contrato.md
+      - name: Abrir ou atualizar issue
+        if: failure()
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RESUMO: ${{ runner.temp }}/contrato.md
+        run: |
+          titulo="Contrato de API externa quebrou"
+          corpo="$(cat "$RESUMO" 2>/dev/null || echo 'A verificação falhou antes de gerar o resumo; veja o log da execução.')
+
+          Execução: ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}
+
+          Se a mudança for esperada, ajuste o coletor e regrave as amostras: \`python scripts/contrato_apis.py --gravar\`."
+          existente="$(gh issue list --state open --search "\"$titulo\" in:title" --json number --jq '.[0].number')"
+          if [ -n "$existente" ]; then
+            gh issue comment "$existente" --body "$corpo"
+          else
+            gh issue create --title "$titulo" --body "$corpo"
+          fi

@@ -1,0 +1,82 @@
+{
+ "fonte": "https://splegisws.saopaulo.sp.leg.br/ws/ws2.asmx/ProjetosEmTramitacaoPorPromoventeJSON",
+ "capturadoEm": "2026-10-21",
+ "amostra": [
+  {
+   "chave": null,
+   "tipo": "PL",
+   "_tipo": 1,
+   "numero": 391,
+   "ano": 2021,
+   "promovente": {
+    "chave": 2229,
+    "nome": "RICARDO NUNES",
+    "tipo": null
+   }
+  },
+  {
+   "chave": null,
+   "tipo": "PL",
+   "_tipo": 1,
+   "numero": 436,
+   "ano": 2021,
+   "promovente": {
+    "chave": 2229,
+    "nome": "RICARDO NUNES",
+    "tipo": null
+   }
+  }
+ ],
+ "forma": {
+  "[]": {
+   "tipos": [
+    "dict"
+   ]
+  },
+  "[]._tipo": {
+   "tipos": [
+    "int"
+   ]
+  },
+  "[].ano": {
+   "tipos": [
+    "int"
+   ]
+  },
+  "[].chave": {
+   "tipos": [
+    "null"
+   ]
+  },
+  "[].numero": {
+   "tipos": [
+    "int"
+   ]
+  },
+  "[].promovente": {
+   "tipos": [
+    "dict"
+   ]
+  },
+  "[].promovente.chave": {
+   "tipos": [
+    "int"
+   ]
+  },
+  "[].promovente.nome": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "[].promovente.tipo": {
+   "tipos": [
+    "null"
+   ]
+  },
+  "[].tipo": {
+   "tipos": [
+    "str"
+   ]
+  }
+ }
+}

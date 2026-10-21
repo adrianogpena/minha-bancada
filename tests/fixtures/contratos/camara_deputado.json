@@ -1,0 +1,255 @@
+{
+ "fonte": "https://dadosabertos.camara.leg.br/api/v2/deputados/{id}",
+ "capturadoEm": "2026-10-21",
+ "amostra": {
+  "dados": {
+   "id": 204379,
+   "uri": "https://dadosabertos.camara.leg.br/api/v2/deputados/204379",
+   "nomeCivil": "ACÁCIO DA SILVA FAVACHO NETO",
+   "ultimoStatus": {
+    "id": 204379,
+    "uri": "https://dadosabertos.camara.leg.br/api/v2/deputados/204379",
+    "nome": "Acácio Favacho",
+    "siglaPartido": "MDB",
+    "uriPartido": null,
+    "siglaUf": "AP",
+    "idLegislatura": 57,
+    "urlFoto": "https://www.camara.leg.br/internet/deputado/bandep/204379.jpg",
+    "email": null,
+    "data": "2023-02-01",
+    "nomeEleitoral": "Acácio Favacho",
+    "gabinete": {
+     "nome": "414",
+     "predio": "4",
+     "sala": "414",
+     "andar": "4",
+     "telefone": "3215-5414",
+     "email": "dep.acaciofavacho@camara.leg.br"
+    },
+    "situacao": "Exercício",
+    "condicaoEleitoral": "Titular",
+    "descricaoStatus": null
+   },
+   "cpf": "74287028287",
+   "sexo": "M",
+   "urlWebsite": null,
+   "redeSocial": [
+    "https://twitter.com/acaciofavacho",
+    "https://www.facebook.com/deputadofederalacaciofavacho"
+   ],
+   "dataNascimento": "1983-09-28",
+   "dataFalecimento": null,
+   "ufNascimento": "AP",
+   "municipioNascimento": "Macapá",
+   "escolaridade": "Superior"
+  },
+  "links": [
+   {
+    "rel": "self",
+    "href": "https://dadosabertos.camara.leg.br/api/v2/deputados/204379"
+   }
+  ]
+ },
+ "forma": {
+  "dados": {
+   "tipos": [
+    "dict"
+   ]
+  },
+  "dados.cpf": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "dados.dataFalecimento": {
+   "tipos": [
+    "null"
+   ]
+  },
+  "dados.dataNascimento": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "dados.escolaridade": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "dados.id": {
+   "tipos": [
+    "int"
+   ]
+  },
+  "dados.municipioNascimento": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "dados.nomeCivil": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "dados.redeSocial": {
+   "tipos": [
+    "list"
+   ]
+  },
+  "dados.redeSocial[]": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "dados.sexo": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "dados.ufNascimento": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "dados.ultimoStatus": {
+   "tipos": [
+    "dict"
+   ]
+  },
+  "dados.ultimoStatus.condicaoEleitoral": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "dados.ultimoStatus.data": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "dados.ultimoStatus.descricaoStatus": {
+   "tipos": [
+    "null"
+   ]
+  },
+  "dados.ultimoStatus.email": {
+   "tipos": [
+    "null"
+   ]
+  },
+  "dados.ultimoStatus.gabinete": {
+   "tipos": [
+    "dict"
+   ]
+  },
+  "dados.ultimoStatus.gabinete.andar": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "dados.ultimoStatus.gabinete.email": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "dados.ultimoStatus.gabinete.nome": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "dados.ultimoStatus.gabinete.predio": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "dados.ultimoStatus.gabinete.sala": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "dados.ultimoStatus.gabinete.telefone": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "dados.ultimoStatus.id": {
+   "tipos": [
+    "int"
+   ]
+  },
+  "dados.ultimoStatus.idLegislatura": {
+   "tipos": [
+    "int"
+   ]
+  },
+  "dados.ultimoStatus.nome": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "dados.ultimoStatus.nomeEleitoral": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "dados.ultimoStatus.siglaPartido": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "dados.ultimoStatus.siglaUf": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "dados.ultimoStatus.situacao": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "dados.ultimoStatus.uri": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "dados.ultimoStatus.uriPartido": {
+   "tipos": [
+    "null"
+   ]
+  },
+  "dados.ultimoStatus.urlFoto": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "dados.uri": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "dados.urlWebsite": {
+   "tipos": [
+    "null"
+   ]
+  },
+  "links": {
+   "tipos": [
+    "list"
+   ]
+  },
+  "links[]": {
+   "tipos": [
+    "dict"
+   ]
+  },
+  "links[].href": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "links[].rel": {
+   "tipos": [
+    "str"
+   ]
+  }
+ }
+}

@@ -1,0 +1,185 @@
+{
+ "fonte": "https://sapl.al.pb.leg.br/api/base/autor/",
+ "capturadoEm": "2026-10-21",
+ "amostra": {
+  "pagination": {
+   "links": {
+    "next": "http://sapl.al.pb.leg.br/api/base/autor/?page=2&page_size=3",
+    "previous": null
+   },
+   "previous_page": null,
+   "next_page": 2,
+   "start_index": 1,
+   "end_index": 3,
+   "total_entries": 239,
+   "total_pages": 80,
+   "page": 1
+  },
+  "results": [
+   {
+    "id": 28,
+    "__str__": "Ademir Morais",
+    "metadata": {},
+    "autor_related": {
+     "value": 18,
+     "text": "Ademir Morais"
+    },
+    "object_id": 18,
+    "nome": "Ademir Morais",
+    "cargo": "",
+    "tipo": 2,
+    "content_type": 2,
+    "operadores": []
+   },
+   {
+    "id": 183,
+    "__str__": "Adriano Galdino",
+    "metadata": {},
+    "autor_related": {
+     "value": 89,
+     "text": "Adriano Galdino"
+    },
+    "object_id": 89,
+    "nome": "Adriano Galdino",
+    "cargo": "",
+    "tipo": 2,
+    "content_type": 2,
+    "operadores": [
+     14
+    ]
+   }
+  ]
+ },
+ "forma": {
+  "pagination": {
+   "tipos": [
+    "dict"
+   ]
+  },
+  "pagination.end_index": {
+   "tipos": [
+    "int"
+   ]
+  },
+  "pagination.links": {
+   "tipos": [
+    "dict"
+   ]
+  },
+  "pagination.links.next": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "pagination.links.previous": {
+   "tipos": [
+    "null"
+   ]
+  },
+  "pagination.next_page": {
+   "tipos": [
+    "int"
+   ]
+  },
+  "pagination.page": {
+   "tipos": [
+    "int"
+   ]
+  },
+  "pagination.previous_page": {
+   "tipos": [
+    "null"
+   ]
+  },
+  "pagination.start_index": {
+   "tipos": [
+    "int"
+   ]
+  },
+  "pagination.total_entries": {
+   "tipos": [
+    "int"
+   ]
+  },
+  "pagination.total_pages": {
+   "tipos": [
+    "int"
+   ]
+  },
+  "results": {
+   "tipos": [
+    "list"
+   ]
+  },
+  "results[]": {
+   "tipos": [
+    "dict"
+   ]
+  },
+  "results[].__str__": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "results[].autor_related": {
+   "tipos": [
+    "dict"
+   ]
+  },
+  "results[].autor_related.text": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "results[].autor_related.value": {
+   "tipos": [
+    "int"
+   ]
+  },
+  "results[].cargo": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "results[].content_type": {
+   "tipos": [
+    "int"
+   ]
+  },
+  "results[].id": {
+   "tipos": [
+    "int"
+   ]
+  },
+  "results[].metadata": {
+   "tipos": [
+    "dict"
+   ]
+  },
+  "results[].nome": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "results[].object_id": {
+   "tipos": [
+    "int"
+   ]
+  },
+  "results[].operadores": {
+   "tipos": [
+    "list"
+   ]
+  },
+  "results[].operadores[]": {
+   "tipos": [
+    "int"
+   ]
+  },
+  "results[].tipo": {
+   "tipos": [
+    "int"
+   ]
+  }
+ }
+}

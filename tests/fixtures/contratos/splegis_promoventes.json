@@ -1,0 +1,54 @@
+{
+ "fonte": "https://splegisws.saopaulo.sp.leg.br/ws/ws2.asmx/PromoventesCMSPJSON",
+ "capturadoEm": "2026-10-21",
+ "amostra": [
+  {
+   "chave": 2229,
+   "nome": "RICARDO NUNES",
+   "tipo": {
+    "chave": 2,
+    "nome": "EXECUTIVO"
+   }
+  },
+  {
+   "chave": 2231,
+   "nome": "CCI-1",
+   "tipo": {
+    "chave": 8,
+    "nome": "CAMARA"
+   }
+  }
+ ],
+ "forma": {
+  "[]": {
+   "tipos": [
+    "dict"
+   ]
+  },
+  "[].chave": {
+   "tipos": [
+    "int"
+   ]
+  },
+  "[].nome": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "[].tipo": {
+   "tipos": [
+    "dict"
+   ]
+  },
+  "[].tipo.chave": {
+   "tipos": [
+    "int"
+   ]
+  },
+  "[].tipo.nome": {
+   "tipos": [
+    "str"
+   ]
+  }
+ }
+}

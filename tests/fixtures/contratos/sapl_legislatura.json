@@ -1,0 +1,148 @@
+{
+ "fonte": "https://sapl.al.pb.leg.br/api/parlamentares/legislatura/",
+ "capturadoEm": "2026-10-21",
+ "amostra": {
+  "pagination": {
+   "links": {
+    "next": "http://sapl.al.pb.leg.br/api/parlamentares/legislatura/?page=2&page_size=3",
+    "previous": null
+   },
+   "previous_page": null,
+   "next_page": 2,
+   "start_index": 1,
+   "end_index": 3,
+   "total_entries": 20,
+   "total_pages": 7,
+   "page": 1
+  },
+  "results": [
+   {
+    "id": 20,
+    "__str__": "20ª (2023 - 2027) (Atual)",
+    "metadata": {},
+    "numero": 20,
+    "data_inicio": "2023-02-01",
+    "data_fim": "2027-01-31",
+    "data_eleicao": "2022-10-02",
+    "observacao": ""
+   },
+   {
+    "id": 19,
+    "__str__": "19ª (2019 - 2023) ",
+    "metadata": {},
+    "numero": 19,
+    "data_inicio": "2019-02-01",
+    "data_fim": "2023-02-01",
+    "data_eleicao": "2018-10-08",
+    "observacao": ""
+   }
+  ]
+ },
+ "forma": {
+  "pagination": {
+   "tipos": [
+    "dict"
+   ]
+  },
+  "pagination.end_index": {
+   "tipos": [
+    "int"
+   ]
+  },
+  "pagination.links": {
+   "tipos": [
+    "dict"
+   ]
+  },
+  "pagination.links.next": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "pagination.links.previous": {
+   "tipos": [
+    "null"
+   ]
+  },
+  "pagination.next_page": {
+   "tipos": [
+    "int"
+   ]
+  },
+  "pagination.page": {
+   "tipos": [
+    "int"
+   ]
+  },
+  "pagination.previous_page": {
+   "tipos": [
+    "null"
+   ]
+  },
+  "pagination.start_index": {
+   "tipos": [
+    "int"
+   ]
+  },
+  "pagination.total_entries": {
+   "tipos": [
+    "int"
+   ]
+  },
+  "pagination.total_pages": {
+   "tipos": [
+    "int"
+   ]
+  },
+  "results": {
+   "tipos": [
+    "list"
+   ]
+  },
+  "results[]": {
+   "tipos": [
+    "dict"
+   ]
+  },
+  "results[].__str__": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "results[].data_eleicao": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "results[].data_fim": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "results[].data_inicio": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "results[].id": {
+   "tipos": [
+    "int"
+   ]
+  },
+  "results[].metadata": {
+   "tipos": [
+    "dict"
+   ]
+  },
+  "results[].numero": {
+   "tipos": [
+    "int"
+   ]
+  },
+  "results[].observacao": {
+   "tipos": [
+    "str"
+   ]
+  }
+ }
+}

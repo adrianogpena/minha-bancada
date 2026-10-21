@@ -1,0 +1,66 @@
+{
+ "fonte": "https://splegisws.saopaulo.sp.leg.br/ws/ws2.asmx/ProjetosPorAnoJSON",
+ "capturadoEm": "2026-10-21",
+ "amostra": [
+  {
+   "chave": "540560",
+   "tipo": "RDS",
+   "_tipo": 13,
+   "numero": 1,
+   "ano": 2026,
+   "data": "2026-01-05T00:00:00",
+   "ementa": " Requer coautoria no PL 865/2025"
+  },
+  {
+   "chave": "540561",
+   "tipo": "DSP",
+   "_tipo": 40,
+   "numero": 1,
+   "ano": 2026,
+   "data": "2026-01-05T11:08:51",
+   "ementa": " A ser informada por SGP."
+  }
+ ],
+ "forma": {
+  "[]": {
+   "tipos": [
+    "dict"
+   ]
+  },
+  "[]._tipo": {
+   "tipos": [
+    "int"
+   ]
+  },
+  "[].ano": {
+   "tipos": [
+    "int"
+   ]
+  },
+  "[].chave": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "[].data": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "[].ementa": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "[].numero": {
+   "tipos": [
+    "int"
+   ]
+  },
+  "[].tipo": {
+   "tipos": [
+    "str"
+   ]
+  }
+ }
+}

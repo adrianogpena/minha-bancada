@@ -1,0 +1,360 @@
+{
+ "fonte": "https://legis.senado.leg.br/dadosabertos/plenario/votacao/nominal/{ano}",
+ "capturadoEm": "2026-10-21",
+ "amostra": {
+  "ListaVotacoes": {
+   "noNamespaceSchemaLocation": "https://legis.senado.leg.br/dadosabertos/dados/ListaVotacoesv2.xsd",
+   "Metadados": {
+    "Versao": "21/10/2026 14:22:02",
+    "VersaoServico": "2",
+    "DataVersaoServico": "2017-02-01",
+    "DescricaoDataSet": "Lista de Votações Nominais por ano das Sessões.",
+    "Descontinuacao": {
+     "DataDepreciacao": "2025-03-18",
+     "DataDesativacaoCompleta": "2026-02-01",
+     "UrlServicoSubstituto": "https://legis.senado.leg.br/dadosabertos/votacao"
+    }
+   },
+   "Votacoes": {
+    "Votacao": [
+     {
+      "CodigoSessao": "550469",
+      "SiglaCasa": "SF",
+      "CodigoSessaoLegislativa": "874",
+      "TipoSessao": "DOR",
+      "NumeroSessao": "4",
+      "DataSessao": "2026-02-24",
+      "HoraInicio": "14:00",
+      "CodigoVotacaoSve": "4360",
+      "CodigoSessaoVotacao": "7047",
+      "SequencialSessao": "1",
+      "Secreta": "N",
+      "DescricaoVotacao": "Votação nominal da Emenda nº 5 (Substitutivo) à Proposta de Emenda à Constituição nº 22, de 2025, nos termos do parecer de Plenário (1º Turno).",
+      "Resultado": "A",
+      "CodigoMateria": "168484",
+      "SiglaMateria": "PEC",
+      "NumeroMateria": "22",
+      "AnoMateria": "2025",
+      "SiglaCasaMateria": "SF",
+      "DescricaoObjetivoProcesso": "Iniciadora",
+      "DescricaoIdentificacaoMateria": "PEC 22/2025",
+      "Votos": {
+       "VotoParlamentar": [
+        {
+         "CodigoParlamentar": "22",
+         "NomeParlamentar": "Esperidião Amin",
+         "SexoParlamentar": "M",
+         "SiglaPartido": "PP",
+         "SiglaUF": "SC",
+         "Url": "http://www25.senado.leg.br/web/senadores/senador/-/perfil/22",
+         "Foto": "http://www.senado.leg.br/senadores/img/fotos-oficiais/senador22.jpg",
+         "Tratamento": "Senador",
+         "Voto": "Sim"
+        },
+        {
+         "CodigoParlamentar": "70",
+         "NomeParlamentar": "Renan Calheiros",
+         "SexoParlamentar": "M",
+         "SiglaPartido": "MDB",
+         "SiglaUF": "AL",
+         "Url": "http://www25.senado.leg.br/web/senadores/senador/-/perfil/70",
+         "UrlPaginaParticular": "https://www.renancalheiros.com.br/",
+         "Foto": "http://www.senado.leg.br/senadores/img/fotos-oficiais/senador70.jpg",
+         "Tratamento": "Senador",
+         "Voto": "Sim"
+        }
+       ]
+      }
+     },
+     {
+      "CodigoSessao": "550469",
+      "SiglaCasa": "SF",
+      "CodigoSessaoLegislativa": "874",
+      "TipoSessao": "DOR",
+      "NumeroSessao": "4",
+      "DataSessao": "2026-02-24",
+      "HoraInicio": "14:00",
+      "CodigoVotacaoSve": "4361",
+      "CodigoSessaoVotacao": "7048",
+      "SequencialSessao": "2",
+      "Secreta": "N",
+      "DescricaoVotacao": "Votação nominal da Proposta de Emenda à Constituição nº 22, de 2025, nos termos do parecer da Comissão Diretora (2º Turno).",
+      "Resultado": "A",
+      "CodigoMateria": "168484",
+      "SiglaMateria": "PEC",
+      "NumeroMateria": "22",
+      "AnoMateria": "2025",
+      "SiglaCasaMateria": "SF",
+      "DescricaoObjetivoProcesso": "Iniciadora",
+      "DescricaoIdentificacaoMateria": "PEC 22/2025",
+      "Votos": {
+       "VotoParlamentar": [
+        {
+         "CodigoParlamentar": "22",
+         "NomeParlamentar": "Esperidião Amin",
+         "SexoParlamentar": "M",
+         "SiglaPartido": "PP",
+         "SiglaUF": "SC",
+         "Url": "http://www25.senado.leg.br/web/senadores/senador/-/perfil/22",
+         "Foto": "http://www.senado.leg.br/senadores/img/fotos-oficiais/senador22.jpg",
+         "Tratamento": "Senador",
+         "Voto": "Sim"
+        },
+        {
+         "CodigoParlamentar": "70",
+         "NomeParlamentar": "Renan Calheiros",
+         "SexoParlamentar": "M",
+         "SiglaPartido": "MDB",
+         "SiglaUF": "AL",
+         "Url": "http://www25.senado.leg.br/web/senadores/senador/-/perfil/70",
+         "UrlPaginaParticular": "https://www.renancalheiros.com.br/",
+         "Foto": "http://www.senado.leg.br/senadores/img/fotos-oficiais/senador70.jpg",
+         "Tratamento": "Senador",
+         "Voto": "Sim"
+        }
+       ]
+      }
+     }
+    ]
+   }
+  }
+ },
+ "forma": {
+  "ListaVotacoes": {
+   "tipos": [
+    "dict"
+   ]
+  },
+  "ListaVotacoes.Metadados": {
+   "tipos": [
+    "dict"
+   ]
+  },
+  "ListaVotacoes.Metadados.DataVersaoServico": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "ListaVotacoes.Metadados.Descontinuacao": {
+   "tipos": [
+    "dict"
+   ]
+  },
+  "ListaVotacoes.Metadados.Descontinuacao.DataDepreciacao": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "ListaVotacoes.Metadados.Descontinuacao.DataDesativacaoCompleta": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "ListaVotacoes.Metadados.Descontinuacao.UrlServicoSubstituto": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "ListaVotacoes.Metadados.DescricaoDataSet": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "ListaVotacoes.Metadados.Versao": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "ListaVotacoes.Metadados.VersaoServico": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "ListaVotacoes.Votacoes": {
+   "tipos": [
+    "dict"
+   ]
+  },
+  "ListaVotacoes.Votacoes.Votacao": {
+   "tipos": [
+    "list"
+   ]
+  },
+  "ListaVotacoes.Votacoes.Votacao[]": {
+   "tipos": [
+    "dict"
+   ]
+  },
+  "ListaVotacoes.Votacoes.Votacao[].AnoMateria": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "ListaVotacoes.Votacoes.Votacao[].CodigoMateria": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "ListaVotacoes.Votacoes.Votacao[].CodigoSessao": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "ListaVotacoes.Votacoes.Votacao[].CodigoSessaoLegislativa": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "ListaVotacoes.Votacoes.Votacao[].CodigoSessaoVotacao": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "ListaVotacoes.Votacoes.Votacao[].CodigoVotacaoSve": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "ListaVotacoes.Votacoes.Votacao[].DataSessao": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "ListaVotacoes.Votacoes.Votacao[].DescricaoIdentificacaoMateria": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "ListaVotacoes.Votacoes.Votacao[].DescricaoObjetivoProcesso": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "ListaVotacoes.Votacoes.Votacao[].DescricaoVotacao": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "ListaVotacoes.Votacoes.Votacao[].HoraInicio": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "ListaVotacoes.Votacoes.Votacao[].NumeroMateria": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "ListaVotacoes.Votacoes.Votacao[].NumeroSessao": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "ListaVotacoes.Votacoes.Votacao[].Resultado": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "ListaVotacoes.Votacoes.Votacao[].Secreta": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "ListaVotacoes.Votacoes.Votacao[].SequencialSessao": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "ListaVotacoes.Votacoes.Votacao[].SiglaCasa": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "ListaVotacoes.Votacoes.Votacao[].SiglaCasaMateria": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "ListaVotacoes.Votacoes.Votacao[].SiglaMateria": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "ListaVotacoes.Votacoes.Votacao[].TipoSessao": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "ListaVotacoes.Votacoes.Votacao[].Votos": {
+   "tipos": [
+    "dict"
+   ]
+  },
+  "ListaVotacoes.Votacoes.Votacao[].Votos.VotoParlamentar": {
+   "tipos": [
+    "list"
+   ]
+  },
+  "ListaVotacoes.Votacoes.Votacao[].Votos.VotoParlamentar[]": {
+   "tipos": [
+    "dict"
+   ]
+  },
+  "ListaVotacoes.Votacoes.Votacao[].Votos.VotoParlamentar[].CodigoParlamentar": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "ListaVotacoes.Votacoes.Votacao[].Votos.VotoParlamentar[].Foto": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "ListaVotacoes.Votacoes.Votacao[].Votos.VotoParlamentar[].NomeParlamentar": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "ListaVotacoes.Votacoes.Votacao[].Votos.VotoParlamentar[].SexoParlamentar": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "ListaVotacoes.Votacoes.Votacao[].Votos.VotoParlamentar[].SiglaPartido": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "ListaVotacoes.Votacoes.Votacao[].Votos.VotoParlamentar[].SiglaUF": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "ListaVotacoes.Votacoes.Votacao[].Votos.VotoParlamentar[].Tratamento": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "ListaVotacoes.Votacoes.Votacao[].Votos.VotoParlamentar[].Url": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "ListaVotacoes.Votacoes.Votacao[].Votos.VotoParlamentar[].UrlPaginaParticular": {
+   "tipos": [
+    "str"
+   ],
+   "opcional": true
+  },
+  "ListaVotacoes.Votacoes.Votacao[].Votos.VotoParlamentar[].Voto": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "ListaVotacoes.noNamespaceSchemaLocation": {
+   "tipos": [
+    "str"
+   ]
+  }
+ }
+}

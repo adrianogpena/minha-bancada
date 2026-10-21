@@ -1,0 +1,198 @@
+{
+ "fonte": "https://legis.senado.leg.br/dadosabertos/senador/{id}/autorias",
+ "capturadoEm": "2026-10-21",
+ "amostra": {
+  "MateriasAutoriaParlamentar": {
+   "noNamespaceSchemaLocation": "https://legis.senado.leg.br/dadosabertos/dados/MateriasAutoriaParlamentarv7.xsd",
+   "Metadados": {
+    "Versao": "21/10/2026 15:12:17",
+    "VersaoServico": "7",
+    "DataVersaoServico": "2021-09-09",
+    "DescricaoDataSet": "Retorna as matérias de Autoria do Senador informado no parâmetro.",
+    "Descontinuacao": {
+     "DataDepreciacao": "2025-03-18",
+     "DataDesativacaoCompleta": "2026-02-01",
+     "UrlServicoSubstituto": "https://legis.senado.leg.br/dadosabertos/processo"
+    }
+   },
+   "Parlamentar": {
+    "Codigo": "5672",
+    "Nome": "Alan Rick",
+    "Autorias": {
+     "Autoria": [
+      {
+       "Materia": {
+        "Codigo": "155842",
+        "IdentificacaoProcesso": "8363388",
+        "DescricaoIdentificacao": "RQS 48/2023",
+        "Sigla": "RQS",
+        "Numero": "48",
+        "Ano": "2023",
+        "Ementa": "Desarquivamento das seguintes proposições: PEC 1/2015, PEC 39/2015, PRS 17/2015, PEC 57/2015, PEC 81/2015, PLS 507/2015, PLS 668/2015, PLS 768/2015, PLS 66/2016, PLS 288/2016, PLS 350/2016, PLS 362/2016, PLS 437/2016, PLS 278/2018.",
+        "Data": "2023-02-06"
+       },
+       "IndicadorAutorPrincipal": "Não"
+      },
+      {
+       "Materia": {
+        "Codigo": "156810",
+        "IdentificacaoProcesso": "8412320",
+        "DescricaoIdentificacao": "PEC 17/2023",
+        "Sigla": "PEC",
+        "Numero": "17",
+        "Ano": "2023",
+        "Ementa": "Altera o art. 6º da Constituição Federal para dispor sobre o direito à segurança alimentar como direito fundamental.",
+        "Data": "2023-04-11"
+       },
+       "IndicadorAutorPrincipal": "Sim",
+       "IndicadorOutrosAutores": "Não"
+      }
+     ]
+    }
+   }
+  }
+ },
+ "forma": {
+  "MateriasAutoriaParlamentar": {
+   "tipos": [
+    "dict"
+   ]
+  },
+  "MateriasAutoriaParlamentar.Metadados": {
+   "tipos": [
+    "dict"
+   ]
+  },
+  "MateriasAutoriaParlamentar.Metadados.DataVersaoServico": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "MateriasAutoriaParlamentar.Metadados.Descontinuacao": {
+   "tipos": [
+    "dict"
+   ]
+  },
+  "MateriasAutoriaParlamentar.Metadados.Descontinuacao.DataDepreciacao": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "MateriasAutoriaParlamentar.Metadados.Descontinuacao.DataDesativacaoCompleta": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "MateriasAutoriaParlamentar.Metadados.Descontinuacao.UrlServicoSubstituto": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "MateriasAutoriaParlamentar.Metadados.DescricaoDataSet": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "MateriasAutoriaParlamentar.Metadados.Versao": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "MateriasAutoriaParlamentar.Metadados.VersaoServico": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "MateriasAutoriaParlamentar.Parlamentar": {
+   "tipos": [
+    "dict"
+   ]
+  },
+  "MateriasAutoriaParlamentar.Parlamentar.Autorias": {
+   "tipos": [
+    "dict"
+   ]
+  },
+  "MateriasAutoriaParlamentar.Parlamentar.Autorias.Autoria": {
+   "tipos": [
+    "list"
+   ]
+  },
+  "MateriasAutoriaParlamentar.Parlamentar.Autorias.Autoria[]": {
+   "tipos": [
+    "dict"
+   ]
+  },
+  "MateriasAutoriaParlamentar.Parlamentar.Autorias.Autoria[].IndicadorAutorPrincipal": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "MateriasAutoriaParlamentar.Parlamentar.Autorias.Autoria[].IndicadorOutrosAutores": {
+   "tipos": [
+    "str"
+   ],
+   "opcional": true
+  },
+  "MateriasAutoriaParlamentar.Parlamentar.Autorias.Autoria[].Materia": {
+   "tipos": [
+    "dict"
+   ]
+  },
+  "MateriasAutoriaParlamentar.Parlamentar.Autorias.Autoria[].Materia.Ano": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "MateriasAutoriaParlamentar.Parlamentar.Autorias.Autoria[].Materia.Codigo": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "MateriasAutoriaParlamentar.Parlamentar.Autorias.Autoria[].Materia.Data": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "MateriasAutoriaParlamentar.Parlamentar.Autorias.Autoria[].Materia.DescricaoIdentificacao": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "MateriasAutoriaParlamentar.Parlamentar.Autorias.Autoria[].Materia.Ementa": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "MateriasAutoriaParlamentar.Parlamentar.Autorias.Autoria[].Materia.IdentificacaoProcesso": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "MateriasAutoriaParlamentar.Parlamentar.Autorias.Autoria[].Materia.Numero": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "MateriasAutoriaParlamentar.Parlamentar.Autorias.Autoria[].Materia.Sigla": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "MateriasAutoriaParlamentar.Parlamentar.Codigo": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "MateriasAutoriaParlamentar.Parlamentar.Nome": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "MateriasAutoriaParlamentar.noNamespaceSchemaLocation": {
+   "tipos": [
+    "str"
+   ]
+  }
+ }
+}

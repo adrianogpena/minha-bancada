@@ -59,6 +59,19 @@ python -m pytest                       # scripts de coleta/geração + sanidade 
 node --test tests/js/app.test.js       # utilidades do site/assets/app.js
 ```
 
+### Contrato das APIs externas
+
+`tests/fixtures/contratos/` guarda respostas **reais** (reduzidas) da Câmara, Senado, TSE, SAPL e SPLegis, e os testes
+rodam os coletores contra elas. O workflow `Contrato das APIs externas` (`.github/workflows/contratos.yml`) roda toda
+segunda-feira, consulta as APIs de novo e compara com as amostras: se sumir ou mudar de tipo um campo que o código usa,
+a execução falha e abre uma issue. Campos novos, respostas vazias e fontes fora do ar viram só avisos no resumo da execução.
+
+```bash
+python scripts/contrato_apis.py --verificar            # confere agora (usa a internet)
+python scripts/contrato_apis.py --gravar [nome ...]    # regrava as amostras depois de ajustar um coletor
+python scripts/contrato_apis.py --listar
+```
+
 Sem `--limite` a coleta pega todos os deputados em exercício. `--dias` só vale na primeira coleta; depois o script continua de onde parou.
 
 ## Estrutura

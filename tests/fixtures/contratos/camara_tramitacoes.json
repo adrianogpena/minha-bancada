@@ -1,0 +1,148 @@
+{
+ "fonte": "https://dadosabertos.camara.leg.br/api/v2/proposicoes/{id}/tramitacoes",
+ "capturadoEm": "2026-10-21",
+ "amostra": {
+  "dados": [
+   {
+    "dataHora": "2026-01-02T00:00",
+    "sequencia": 2,
+    "siglaOrgao": "MESA",
+    "uriOrgao": "https://dadosabertos.camara.leg.br/api/v2/orgaos/4",
+    "uriUltimoRelator": null,
+    "regime": "Urgência (Art. 64, CF)",
+    "descricaoTramitacao": "Recebimento",
+    "codTipoTramitacao": "500",
+    "descricaoSituacao": "Arquivada",
+    "codSituacao": 923,
+    "despacho": "Recebido Ofício n.º 2223/2025/CC/PR, que encaminha Mensagem n.º 1907/2025 com o texto do projeto de lei que \"Altera a Lei nº 11.892, de 29 de dezembro de 2008, que institui a Rede Federal de Educação Profissional, Científica e Tecnológica, para criar o Instituto Federal do Sertão Paraibano.\".",
+    "url": "https://www.camara.leg.br/proposicoesWeb/prop_mostrarintegra?codteor=3073108",
+    "ambito": "Regimental",
+    "apreciacao": "Proposição Sujeita à Apreciação do Plenário"
+   },
+   {
+    "dataHora": "2026-01-02T00:00",
+    "sequencia": 3,
+    "siglaOrgao": "MESA",
+    "uriOrgao": "https://dadosabertos.camara.leg.br/api/v2/orgaos/4",
+    "uriUltimoRelator": null,
+    "regime": "Urgência (Art. 64, CF)",
+    "descricaoTramitacao": "Apresentação de Proposição",
+    "codTipoTramitacao": "100",
+    "descricaoSituacao": "Arquivada",
+    "codSituacao": 923,
+    "despacho": "Recebida MSC n. 1907/2025 (Mensagem), pelo Poder Executivo, que \"Submete à apreciação do Congresso Nacional o texto do projeto de lei que \"Altera a Lei nº 11.892, de 29 de dezembro de 2008, que institui a Rede Federal de Educação Profissional, Científica e Tecnológica, para criar oInstituto Federal ",
+    "url": "https://www.camara.leg.br/proposicoesWeb/prop_mostrarintegra?codteor=3073420",
+    "ambito": "Regimental",
+    "apreciacao": "Proposição Sujeita à Apreciação do Plenário"
+   }
+  ],
+  "links": [
+   {
+    "rel": "self",
+    "href": "https://dadosabertos.camara.leg.br/api/v2/proposicoes/2599885/tramitacoes"
+   }
+  ]
+ },
+ "forma": {
+  "dados": {
+   "tipos": [
+    "list"
+   ]
+  },
+  "dados[]": {
+   "tipos": [
+    "dict"
+   ]
+  },
+  "dados[].ambito": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "dados[].apreciacao": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "dados[].codSituacao": {
+   "tipos": [
+    "int"
+   ]
+  },
+  "dados[].codTipoTramitacao": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "dados[].dataHora": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "dados[].descricaoSituacao": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "dados[].descricaoTramitacao": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "dados[].despacho": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "dados[].regime": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "dados[].sequencia": {
+   "tipos": [
+    "int"
+   ]
+  },
+  "dados[].siglaOrgao": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "dados[].uriOrgao": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "dados[].uriUltimoRelator": {
+   "tipos": [
+    "null"
+   ]
+  },
+  "dados[].url": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "links": {
+   "tipos": [
+    "list"
+   ]
+  },
+  "links[]": {
+   "tipos": [
+    "dict"
+   ]
+  },
+  "links[].href": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "links[].rel": {
+   "tipos": [
+    "str"
+   ]
+  }
+ }
+}

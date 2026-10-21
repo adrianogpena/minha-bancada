@@ -1,0 +1,17 @@
+{
+ "fonte": "https://cdn.tse.jus.br/estatistica/sead/odsele/consulta_cand/rede_social_candidato_2024.zip",
+ "capturadoEm": "2026-10-21",
+ "colunas": [
+  "DT_GERACAO",
+  "HH_GERACAO",
+  "AA_ELEICAO",
+  "SG_UF",
+  "CD_TIPO_ELEICAO",
+  "NM_TIPO_ELEICAO",
+  "CD_ELEICAO",
+  "DS_ELEICAO",
+  "SQ_CANDIDATO",
+  "NR_ORDEM_REDE_SOCIAL",
+  "DS_URL"
+ ]
+}

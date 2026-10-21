@@ -1,0 +1,108 @@
+{
+ "fonte": "https://adm.senado.gov.br/adm-dadosabertos/api/v1/senadores/despesas_ceaps/{ano}",
+ "capturadoEm": "2026-10-21",
+ "amostra": [
+  {
+   "id": 2280463,
+   "tipoDocumento": "Boleto",
+   "ano": 2026,
+   "mes": 1,
+   "codSenador": 6372,
+   "nomeSenador": "BRUNO BONETTI",
+   "tipoDespesa": "Aquisição de material de consumo para uso no escritório político, inclusive aquisição ou locação de software, despesas postais, aquisição de publicações, locação de móveis e de equipamentos. ",
+   "cpfCnpj": "02.964.380/0001-00",
+   "fornecedor": "JONH RICHARD LOCACAO DE MOVEIS.",
+   "documento": "7084",
+   "data": "2026-01-07",
+   "detalhamento": null,
+   "valorReembolsado": 1745.84
+  },
+  {
+   "id": 2296912,
+   "tipoDocumento": "Fatura",
+   "ano": 2026,
+   "mes": 1,
+   "codSenador": 6372,
+   "nomeSenador": "BRUNO BONETTI",
+   "tipoDespesa": "Contratação de consultorias, assessorias, pesquisas, trabalhos técnicos e outros serviços de apoio ao exercício do mandato parlamentar",
+   "cpfCnpj": "05.120.923/0001-09",
+   "fornecedor": "Aerotur Serviços",
+   "documento": "2268501910",
+   "data": "2026-01-12",
+   "detalhamento": null,
+   "valorReembolsado": 2156.75
+  }
+ ],
+ "forma": {
+  "[]": {
+   "tipos": [
+    "dict"
+   ]
+  },
+  "[].ano": {
+   "tipos": [
+    "int"
+   ]
+  },
+  "[].codSenador": {
+   "tipos": [
+    "int"
+   ]
+  },
+  "[].cpfCnpj": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "[].data": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "[].detalhamento": {
+   "tipos": [
+    "null"
+   ]
+  },
+  "[].documento": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "[].fornecedor": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "[].id": {
+   "tipos": [
+    "int"
+   ]
+  },
+  "[].mes": {
+   "tipos": [
+    "int"
+   ]
+  },
+  "[].nomeSenador": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "[].tipoDespesa": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "[].tipoDocumento": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "[].valorReembolsado": {
+   "tipos": [
+    "float"
+   ]
+  }
+ }
+}

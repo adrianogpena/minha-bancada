@@ -1,0 +1,614 @@
+"""
+Contrato das APIs externas: grava respostas reais (pequenas) como fixtures e, toda semana, confere se as APIs
+ainda devolvem os campos de que os coletores dependem.
+
+  - `--gravar` consulta cada API, guarda uma amostra reduzida e a "forma" da resposta (caminhos e tipos dos
+    campos) em tests/fixtures/contratos/<nome>.json. Os testes usam essas amostras no lugar de respostas inventadas.
+  - `--verificar` consulta de novo e compara com a forma gravada. Falha (código 1) se sumir ou mudar de tipo um
+    campo que o código usa (listado em `usados`); o resto vira aviso. Fonte fora do ar é aviso, não falha.
+    O resumo vai para o log e para $GITHUB_STEP_SUMMARY.
+
+Uso:
+    python scripts/contrato_apis.py --listar
+    python scripts/contrato_apis.py --gravar [nome ...]
+    python scripts/contrato_apis.py --verificar [nome ...]
+
+Caminhos: "a.b" é o campo b dentro de a; "a[]" são os itens de uma lista; "**chave" é a chave em qualquer nível
+(sem diferenciar maiúsculas, como o coletor do Senado lê). Arquivos do TSE são conferidos pelas colunas do CSV.
+"""
+
+import argparse
+import datetime as dt
+import io
+import json
+import os
+import sys
+import tempfile
+import zipfile
+from collections import Counter, defaultdict
+from pathlib import Path
+
+import requests
+
+RAIZ = Path(__file__).resolve().parent.parent
+FIXTURES = RAIZ / "tests" / "fixtures" / "contratos"
+UA = "minha-bancada (projeto de transparencia; verificacao semanal de contrato)"
+AMOSTRA = 2          # itens guardados por lista
+TEXTO_MAX = 300      # caracteres guardados por texto
+
+CAMARA = "https://dadosabertos.camara.leg.br/api/v2"
+SENADO = "https://legis.senado.leg.br/dadosabertos"
+SENADO_ADM = "https://adm.senado.gov.br/adm-dadosabertos/api/v1"
+TSE = "https://cdn.tse.jus.br/estatistica/sead/odsele"
+SAPL = "sapl.al.pb.leg.br"
+SPLEGIS = "https://splegisws.saopaulo.sp.leg.br/ws/ws2.asmx"
+HOJE = dt.date.today()
+ANO = HOJE.year if HOJE.month > 2 else HOJE.year - 1   # logo no início do ano ainda há pouco o que listar
+
+
+# ---------------------------------------------------------------- forma da resposta
+
+def tipo_de(v) -> str:
+    return ("null" if v is None else "bool" if isinstance(v, bool) else "int" if isinstance(v, int)
+            else "float" if isinstance(v, float) else "str" if isinstance(v, str) else "list" if isinstance(v, list) else "dict")
+
+
+def forma(obj) -> dict[str, dict]:
+    """caminho -> {"tipos": [...], "opcional": True se faltou em algum objeto da amostra}."""
+    tipos: dict[str, set] = defaultdict(set)
+    pai: dict[str, str] = {}
+    presentes, ocorrencias = Counter(), Counter()
+
+    def visita(v, caminho):
+        tipos[caminho].add(tipo_de(v))
+        if isinstance(v, dict):
+            ocorrencias[caminho] += 1
+            for k, x in v.items():
+                c = f"{caminho}.{k}" if caminho else k
+                pai[c] = caminho
+                presentes[c] += 1
+                visita(x, c)
+        elif isinstance(v, list):
+            for x in v:
+                visita(x, caminho + "[]")
+
+    visita(obj, "")
+    saida = {}
+    for c, t in sorted(tipos.items()):
+        if not c:
+            continue
+        info = {"tipos": sorted(t)}
+        if c in pai and presentes[c] < ocorrencias[pai[c]]:
+            info["opcional"] = True
+        saida[c] = info
+    return saida
+
+
+def reduzir(obj, n: int = AMOSTRA):
+    """Mantém só os n primeiros itens de cada lista e corta textos longos."""
+    if isinstance(obj, list):
+        return [reduzir(x, n) for x in obj[:n]]
+    if isinstance(obj, dict):
+        return {k: reduzir(v, n) for k, v in obj.items()}
+    if isinstance(obj, str) and len(obj) > TEXTO_MAX:
+        return obj[:TEXTO_MAX]
+    return obj
+
+
+def casa(caminho: str, f: dict) -> list[str]:
+    """Caminhos de `f` que correspondem a `caminho` (exato, ou **chave em qualquer nível)."""
+    if caminho.startswith("**"):
+        chave = caminho[2:].lower()
+        return [c for c in f if c.replace("[]", ".").rstrip(".").rsplit(".", 1)[-1].lower() == chave]
+    return [caminho] if caminho in f else []
+
+
+def sem_amostra(caminho: str, f: dict) -> bool:
+    """True se algum ancestral do caminho é uma lista vazia na resposta (não há o que conferir)."""
+    partes = caminho.split("[]")
+    acumulado = ""
+    for p in partes[:-1]:
+        acumulado += p
+        if acumulado in f and "list" in f[acumulado]["tipos"] and acumulado + "[]" not in f:
+            return True
+        acumulado += "[]"
+    return False
+
+
+def comparar(gravada: dict, viva: dict, usados: list[str]) -> tuple[list[str], list[str]]:
+    """(falhas, avisos): falha só para campo usado que sumiu ou mudou de tipo."""
+    falhas, avisos = [], []
+    for u in usados:
+        achados_g, achados_v = casa(u, gravada), casa(u, viva)
+        if not achados_g:
+            avisos.append(f"{u}: campo usado não aparecia na amostra gravada")
+        if not achados_v:
+            if sem_amostra(u, viva):
+                avisos.append(f"{u}: resposta atual sem itens para conferir")
+            elif not achados_g:
+                continue   # já avisado acima: nunca apareceu, então não dá para dizer que sumiu
+            elif all(gravada[c].get("opcional") for c in achados_g):
+                avisos.append(f"{u}: campo opcional ausente na amostra atual")
+            else:
+                falhas.append(f"{u}: campo sumiu da resposta")
+            continue
+        for c in achados_v:
+            if c in gravada:
+                antes, agora = set(gravada[c]["tipos"]), set(viva[c]["tipos"])
+                if antes != {"null"} and not agora <= antes | {"null"}:
+                    falhas.append(f"{c}: tipo mudou de {sorted(antes)} para {sorted(agora)}")
+    for c in sorted(set(gravada) - set(viva)):
+        if not gravada[c].get("opcional") and not sem_amostra(c, viva) and not any(c == u or u.startswith("**") for u in usados):
+            avisos.append(f"{c}: campo da amostra gravada não veio agora")
+    novos = sorted(set(viva) - set(gravada))
+    if novos:
+        avisos.append(f"campos novos: {', '.join(novos[:8])}{' …' if len(novos) > 8 else ''}")
+    return falhas, avisos
+
+
+def descontinuacao(resp) -> list[str]:
+    """Avisos de endpoints que a própria API marca como descontinuados (Metadados.Descontinuacao do Senado)."""
+    saida = []
+    achado = lambda o, k: next(iter(iterar(o, k)), None)
+    if achado(resp, "DataDesativacaoCompleta"):
+        saida.append(f"endpoint descontinuado: desativação completa em {achado(resp, 'DataDesativacaoCompleta')}"
+                     f"{', substituto: ' + achado(resp, 'UrlServicoSubstituto') if achado(resp, 'UrlServicoSubstituto') else ''}")
+    return saida
+
+
+def comparar_colunas(gravadas: list[str], vivas: list[str], criticas: list[str], esperadas: list[str]) -> tuple[list[str], list[str]]:
+    falhas = [f"coluna {c} sumiu do CSV" for c in criticas if c not in vivas]
+    avisos = [f"coluna {c} não veio (o coletor tolera)" for c in esperadas if c not in vivas and c not in criticas]
+    novas = sorted(set(vivas) - set(gravadas))
+    if novas:
+        avisos.append(f"colunas novas: {', '.join(novas[:8])}{' …' if len(novas) > 8 else ''}")
+    return falhas, avisos
+
+
+# ---------------------------------------------------------------- busca
+
+def http_json(url: str, **params):
+    r = requests.get(url, params=params or None, headers={"Accept": "application/json", "User-Agent": UA}, timeout=120)
+    r.raise_for_status()
+    return r.json()
+
+
+def cabecalho_csv(url: str) -> list[str]:
+    """Baixa o ZIP do TSE e devolve só as colunas do CSV (nacional, se houver)."""
+    with tempfile.NamedTemporaryFile(suffix=".zip") as tmp:
+        with requests.get(url, stream=True, timeout=300, headers={"User-Agent": UA}) as r:
+            r.raise_for_status()
+            for bloco in r.iter_content(1 << 20):
+                tmp.write(bloco)
+        tmp.flush()
+        with zipfile.ZipFile(tmp.name) as z:
+            nomes = [n for n in z.namelist() if n.lower().endswith(".csv")]
+            nome = next((n for n in nomes if n.upper().endswith("_BRASIL.CSV")), nomes[0])
+            with z.open(nome) as f:
+                linha = io.TextIOWrapper(f, encoding="latin-1").readline()
+    return [c.strip('"') for c in linha.strip().split(";")]
+
+
+class Endpoint:
+    def __init__(self, nome, fonte, buscar, usados=(), colunas_criticas=(), colunas_esperadas=(), html=None):
+        self.nome, self.fonte, self.buscar, self.usados = nome, fonte, buscar, list(usados)
+        self.colunas_criticas, self.colunas_esperadas, self.html = list(colunas_criticas), list(colunas_esperadas), html
+
+
+ENDPOINTS: list[Endpoint] = []
+
+
+def ep(nome, fonte, usados=(), **kw):
+    def deco(f):
+        ENDPOINTS.append(Endpoint(nome, fonte, f, usados, **kw))
+        return f
+    return deco
+
+
+def campos(base: str, *nomes: str) -> list[str]:
+    return [f"{base}.{n}" if base else n for n in nomes]
+
+
+# ---------------------------------------------------------------- Câmara
+
+@ep("camara_deputados", f"{CAMARA}/deputados", campos("dados[]", "id", "nome", "siglaPartido", "siglaUf", "urlFoto", "email") + ["links[].rel", "links[].href"])
+def _(ctx):
+    r = http_json(f"{CAMARA}/deputados", itens=15, ordem="ASC", ordenarPor="nome")
+    ctx["deps"] = [d["id"] for d in r["dados"]]
+    ctx["dep"] = ctx["deps"][0]
+    return r
+
+
+@ep("camara_deputado", f"{CAMARA}/deputados/{{id}}",
+    campos("dados", "nomeCivil", "dataNascimento", "municipioNascimento", "ufNascimento", "escolaridade", "redeSocial", "ultimoStatus")
+    + campos("dados.ultimoStatus", "nomeEleitoral", "siglaPartido", "siglaUf", "urlFoto", "email", "situacao", "condicaoEleitoral", "gabinete"))
+def _(ctx):
+    return http_json(f"{CAMARA}/deputados/{ctx['dep']}")
+
+
+@ep("camara_despesas", f"{CAMARA}/deputados/{{id}}/despesas", campos("dados[]", "mes", "tipoDespesa", "valorLiquido", "nomeFornecedor", "dataDocumento", "urlDocumento"))
+def _(ctx):
+    # um deputado com despesas no ano: procura nos primeiros da lista
+    for ano in (ANO, ANO - 1):
+        for did in ctx["deps"]:
+            r = http_json(f"{CAMARA}/deputados/{did}/despesas", ano=ano, itens=3)
+            if r["dados"]:
+                return r
+    return r
+
+
+@ep("camara_proposicoes", f"{CAMARA}/proposicoes", campos("dados[]", "id", "siglaTipo", "numero", "ano", "ementa"))
+def _(ctx):
+    r = http_json(f"{CAMARA}/proposicoes", siglaTipo="PL", ano=ANO, itens=3, ordem="DESC", ordenarPor="id")
+    ctx["prop"] = r["dados"][0]["id"]
+    return r
+
+
+@ep("camara_proposicao", f"{CAMARA}/proposicoes/{{id}}",
+    campos("dados", "dataApresentacao", "siglaTipo", "numero", "ano", "ementa", "urlInteiroTeor", "statusProposicao")
+    + campos("dados.statusProposicao", "descricaoSituacao", "descricaoTramitacao", "despacho", "siglaOrgao", "dataHora", "regime"))
+def _(ctx):
+    return http_json(f"{CAMARA}/proposicoes/{ctx['prop']}")
+
+
+@ep("camara_executivo", f"{CAMARA}/proposicoes?autor=Poder Executivo", campos("dados[]", "id") + ["links[].rel", "links[].href"])
+def _(ctx):
+    r = http_json(f"{CAMARA}/proposicoes", autor="Poder Executivo", siglaTipo="PL", ano=ANO, itens=3)
+    if r["dados"]:
+        ctx["exec"] = r["dados"][0]["id"]
+    return r
+
+
+@ep("camara_tramitacoes", f"{CAMARA}/proposicoes/{{id}}/tramitacoes", campos("dados[]", "despacho", "descricaoSituacao", "dataHora"))
+def _(ctx):
+    return http_json(f"{CAMARA}/proposicoes/{ctx.get('exec') or ctx['prop']}/tramitacoes")
+
+
+@ep("camara_votacoes", f"{CAMARA}/votacoes", campos("dados[]", "id", "data", "dataHoraRegistro", "siglaOrgao", "descricao", "aprovacao"))
+def _(ctx):
+    ini = (HOJE - dt.timedelta(days=29)).isoformat()
+    r = http_json(f"{CAMARA}/votacoes", dataInicio=ini, dataFim=HOJE.isoformat(), ordem="DESC", ordenarPor="dataHoraRegistro", itens=60)
+    for v in r["dados"]:
+        if v.get("siglaOrgao") == "PLEN" and http_json(f"{CAMARA}/votacoes/{v['id']}/votos")["dados"]:
+            ctx["votacao"] = v["id"]
+            break
+    r["dados"] = r["dados"][:AMOSTRA + 1]
+    return r
+
+
+@ep("camara_votos", f"{CAMARA}/votacoes/{{id}}/votos", ["dados[].deputado_.id", "dados[].tipoVoto"])
+def _(ctx):
+    return http_json(f"{CAMARA}/votacoes/{ctx['votacao']}/votos")
+
+
+@ep("camara_votacao", f"{CAMARA}/votacoes/{{id}}", campos("dados", "proposicoesAfetadas"))
+def _(ctx):
+    return http_json(f"{CAMARA}/votacoes/{ctx['votacao']}")
+
+
+# ---------------------------------------------------------------- Senado
+
+@ep("senado_lista", f"{SENADO}/senador/lista/atual.json",
+    campos("ListaParlamentarEmExercicio.Parlamentares.Parlamentar[]", "IdentificacaoParlamentar", "Mandato")
+    + campos("ListaParlamentarEmExercicio.Parlamentares.Parlamentar[].Mandato", "DescricaoParticipacao", "UfParlamentar", "Titular.NomeParlamentar",
+             "PrimeiraLegislaturaDoMandato.DataFim", "SegundaLegislaturaDoMandato.DataFim", "Exercicios.Exercicio[].DataInicio", "Exercicios.Exercicio[].DataFim")
+    + campos("ListaParlamentarEmExercicio.Parlamentares.Parlamentar[].IdentificacaoParlamentar", "CodigoParlamentar", "NomeParlamentar", "NomeCompletoParlamentar",
+             "SiglaPartidoParlamentar", "UfParlamentar", "UrlFotoParlamentar", "UrlPaginaParlamentar", "EmailParlamentar", "SexoParlamentar"))
+def _(ctx):
+    r = http_json(f"{SENADO}/senador/lista/atual.json")
+    ctx["senador"] = r["ListaParlamentarEmExercicio"]["Parlamentares"]["Parlamentar"][0]["IdentificacaoParlamentar"]["CodigoParlamentar"]
+    return r
+
+
+@ep("senado_votacoes", f"{SENADO}/plenario/votacao/nominal/{{ano}}", ["**votos", "**codigoParlamentar", "**voto", "**dataSessao", "**horaInicio", "**siglaMateria", "**numeroMateria", "**anoMateria",
+                                                                                        "**codigoMateria", "**codigoSessaoVotacao", "**descricaoVotacao", "**resultado"])
+def _(ctx):
+    return http_json(f"{SENADO}/plenario/votacao/nominal/{ANO}")
+
+
+@ep("senado_autorias", f"{SENADO}/senador/{{id}}/autorias", ["**Autoria", "**Codigo", "**Sigla", "**Numero", "**Ano", "**Ementa", "**Data", "**IndicadorAutorPrincipal"])
+def _(ctx):
+    r = http_json(f"{SENADO}/senador/{ctx['senador']}/autorias")
+    ctx["materia"] = next((x for x in iterar(r, "Codigo")), None)
+    return r
+
+
+@ep("senado_materia", f"{SENADO}/materia/{{codigo}}", ["**DescricaoSituacao", "**SiglaLocal", "**DataSituacao", "**DataApresentacao", "**ExplicacaoEmentaMateria", "**IndexacaoMateria"])
+def _(ctx):
+    return http_json(f"{SENADO}/materia/{ctx['materia']}")
+
+
+@ep("senado_ceaps", f"{SENADO_ADM}/senadores/despesas_ceaps/{{ano}}",
+    campos("[]", "codSenador", "mes", "tipoDespesa", "valorReembolsado", "fornecedor", "data"))
+def _(ctx):
+    return http_json(f"{SENADO_ADM}/senadores/despesas_ceaps/{HOJE.year}")
+
+
+def iterar(obj, chave):
+    """Todos os valores da chave em qualquer nível."""
+    if isinstance(obj, dict):
+        for k, v in obj.items():
+            if k == chave:
+                yield v
+            yield from iterar(v, chave)
+    elif isinstance(obj, list):
+        for v in obj:
+            yield from iterar(v, chave)
+
+
+# ---------------------------------------------------------------- SAPL (Assembleias e Câmaras)
+
+def sapl(caminho, **params):
+    return http_json(f"https://{SAPL}/api/{caminho.strip('/')}/", page_size=3, **params)
+
+
+@ep("sapl_legislatura", f"https://{SAPL}/api/parlamentares/legislatura/", campos("results[]", "id", "numero", "data_inicio", "data_fim") + ["pagination.next_page"])
+def _(ctx):
+    r = sapl("parlamentares/legislatura")
+    ctx["leg"] = r["results"][0]["id"]
+    return r
+
+
+@ep("sapl_mandato", f"https://{SAPL}/api/parlamentares/mandato/", campos("results[]", "parlamentar", "data_inicio_mandato", "data_fim_mandato", "titular"))
+def _(ctx):
+    r = sapl("parlamentares/mandato", legislatura=ctx["leg"])
+    ctx["parl"] = r["results"][0]["parlamentar"]
+    return r
+
+
+@ep("sapl_parlamentar", f"https://{SAPL}/api/parlamentares/parlamentar/{{id}}/", ["nome_parlamentar", "nome_completo", "fotografia", "email"])
+def _(ctx):
+    return http_json(f"https://{SAPL}/api/parlamentares/parlamentar/{ctx['parl']}/")
+
+
+@ep("sapl_tipoautor", f"https://{SAPL}/api/base/tipoautor/", campos("results[]", "id", "descricao"))
+def _(ctx):
+    return sapl("base/tipoautor")
+
+
+@ep("sapl_autor", f"https://{SAPL}/api/base/autor/", campos("results[]", "id", "tipo", "object_id", "nome"))
+def _(ctx):
+    return sapl("base/autor")
+
+
+@ep("sapl_tipomateria", f"https://{SAPL}/api/materia/tipomaterialegislativa/", campos("results[]", "id", "sigla", "descricao"))
+def _(ctx):
+    return sapl("materia/tipomaterialegislativa")
+
+
+@ep("sapl_materia", f"https://{SAPL}/api/materia/materialegislativa/",
+    campos("results[]", "id", "tipo", "numero", "ano", "data_apresentacao", "ementa", "em_tramitacao", "resultado", "texto_original", "autores"))
+def _(ctx):
+    return sapl("materia/materialegislativa", ano=ANO)
+
+
+@ep("sapl_tiporesultado", f"https://{SAPL}/api/sessao/tiporesultadovotacao/", campos("results[]", "id", "nome", "natureza"))
+def _(ctx):
+    return sapl("sessao/tiporesultadovotacao")
+
+
+@ep("sapl_votoparlamentar", f"https://{SAPL}/api/sessao/votoparlamentar/", campos("results[]", "votacao", "parlamentar", "voto"))
+def _(ctx):
+    r = sapl("sessao/votoparlamentar", data_hora__gte=f"{ANO}-01-01")
+    if r["results"]:
+        ctx["registro"] = r["results"][0]["votacao"]
+    return r
+
+
+@ep("sapl_registrovotacao", f"https://{SAPL}/api/sessao/registrovotacao/{{id}}/",
+    ["data_hora", "materia", "tipo_resultado_votacao", "numero_votos_sim", "numero_votos_nao", "numero_abstencoes"])
+def _(ctx):
+    return http_json(f"https://{SAPL}/api/sessao/registrovotacao/{ctx['registro']}/")
+
+
+# ---------------------------------------------------------------- SPLegis (São Paulo)
+
+@ep("splegis_promoventes", f"{SPLEGIS}/PromoventesCMSPJSON", ["[].chave", "[].nome", "[].tipo.nome"])
+def _(ctx):
+    r = http_json(f"{SPLEGIS}/PromoventesCMSPJSON")
+    import coletar_prefeitura_sp as sp
+    prefeito = [p for p in r if (p.get("tipo") or {}).get("nome") == "EXECUTIVO" and p["nome"].lower() == sp.PREFEITO]
+    ctx["promovente"] = prefeito[0]["chave"] if prefeito else None
+    return prefeito + r[:1]
+
+
+@ep("splegis_projetos", f"{SPLEGIS}/ProjetosPorAnoJSON", ["[].tipo", "[].numero", "[].ano", "[].data", "[].ementa"])
+def _(ctx):
+    r = http_json(f"{SPLEGIS}/ProjetosPorAnoJSON", Ano=ANO)
+    ctx["projeto"] = next((p for p in r if p["tipo"] == "PL"), r[0])
+    return r[:AMOSTRA + 1]
+
+
+@ep("splegis_resumo", f"{SPLEGIS}/ProjetoResumoJSON", ["Autores[].Chave"])
+def _(ctx):
+    p = ctx["projeto"]
+    return http_json(f"{SPLEGIS}/ProjetoResumoJSON", Tipo=p["tipo"], Numero=p["numero"], Ano=p["ano"])
+
+
+@ep("splegis_tramitacao", f"{SPLEGIS}/ProjetosEmTramitacaoPorPromoventeJSON", ["[].tipo", "[].numero", "[].ano"])
+def _(ctx):
+    return http_json(f"{SPLEGIS}/ProjetosEmTramitacaoPorPromoventeJSON", Codigo=ctx["promovente"])[:AMOSTRA + 1]
+
+
+@ep("splegis_vetos", f"{SPLEGIS}/ProjetosVetadosPorPromoventeJSON", ["[].tipo", "[].numero", "[].ano", "[].veto.nome"])
+def _(ctx):
+    return http_json(f"{SPLEGIS}/ProjetosVetadosPorPromoventeJSON", Codigo=ctx["promovente"])[:AMOSTRA + 1]
+
+
+@ep("splegis_leis", f"{SPLEGIS}/LeisAprovadasPorPromoventeJSON", ["[].projeto.tipo", "[].projeto.numero", "[].projeto.ano", "[].numero", "[].publicacao"])
+def _(ctx):
+    return http_json(f"{SPLEGIS}/LeisAprovadasPorPromoventeJSON", Codigo=ctx["promovente"])[:AMOSTRA + 1]
+
+
+# ---------------------------------------------------------------- TSE (colunas dos CSV)
+
+def _colunas_cand():
+    import coletar_tse
+    return coletar_tse.COLUNAS
+
+
+@ep("tse_consulta_cand", f"{TSE}/consulta_cand/consulta_cand_2024.zip", colunas_criticas=["SQ_CANDIDATO", "DS_CARGO", "DS_SIT_TOT_TURNO", "SG_UF", "SG_UE", "NM_UE", "NR_CANDIDATO"],
+    colunas_esperadas=_colunas_cand())
+def _(ctx):
+    return {"colunas": cabecalho_csv(f"{TSE}/consulta_cand/consulta_cand_2024.zip")}
+
+
+@ep("tse_bem_candidato", f"{TSE}/bem_candidato/bem_candidato_2024.zip",
+    colunas_criticas=["SQ_CANDIDATO", "DS_TIPO_BEM_CANDIDATO", "DS_BEM_CANDIDATO", "VR_BEM_CANDIDATO"])
+def _(ctx):
+    return {"colunas": cabecalho_csv(f"{TSE}/bem_candidato/bem_candidato_2024.zip")}
+
+
+@ep("tse_votacao_munzona", f"{TSE}/votacao_candidato_munzona/votacao_candidato_munzona_2024.zip",
+    colunas_criticas=["DS_CARGO", "NR_TURNO", "SG_UE", "SQ_CANDIDATO", "QT_VOTOS_NOMINAIS", "DT_ELEICAO"])
+def _(ctx):
+    return {"colunas": cabecalho_csv(f"{TSE}/votacao_candidato_munzona/votacao_candidato_munzona_2024.zip")}
+
+
+@ep("tse_redes_sociais", f"{TSE}/consulta_cand/rede_social_candidato_2024.zip", colunas_criticas=["SQ_CANDIDATO", "DS_URL"])
+def _(ctx):
+    return {"colunas": cabecalho_csv(f"{TSE}/consulta_cand/rede_social_candidato_2024.zip")}
+
+
+# ---------------------------------------------------------------- Câmara de Goiânia (HTML)
+
+def _go_pagina(ctx):
+    import coletar_prefeitura_go as go
+    go.confiar()
+    total, itens = go.pagina(ANO, 1)
+    return {"total": total, "itens": itens[:AMOSTRA]}
+
+
+def _go_conferir(registro):
+    falhas, avisos = [], []
+    if not registro["total"]:
+        falhas.append("página do SUAP sem 'Total de N itens'")
+    if not registro["itens"]:
+        falhas.append("nenhum processo reconhecido na página do SUAP")
+    for i in registro["itens"]:
+        for c in ("uuid", "assunto", "interessados", "criado", "situacao"):
+            if not i.get(c):
+                avisos.append(f"processo sem {c}")
+    return falhas, avisos
+
+
+ENDPOINTS.append(Endpoint("go_suap", "https://suap.camaragyn.go.gov.br/camara/consulta_publica/", _go_pagina, html=_go_conferir))
+
+
+# ---------------------------------------------------------------- gravar e verificar
+
+def caminho(nome: str) -> Path:
+    return FIXTURES / f"{nome}.json"
+
+
+def executar(selecionados: list[str], acao):
+    ctx: dict = {}
+    nomes = set(selecionados)
+    saida = {}
+    for e in ENDPOINTS:
+        independente = bool(e.colunas_criticas or e.colunas_esperadas or e.html)   # não usam o que os anteriores devolveram
+        if nomes and e.nome not in nomes and independente:
+            continue
+        try:
+            resp = e.buscar(ctx)
+        except Exception as ex:
+            saida[e.nome] = (e, None, f"{type(ex).__name__}: {str(ex)[:160]}")
+            continue
+        if not nomes or e.nome in nomes:
+            saida[e.nome] = (e, resp, None)
+    return saida
+
+
+def montar_registro(e: Endpoint, resp) -> dict:
+    base = {"fonte": e.fonte, "capturadoEm": HOJE.isoformat()}
+    if e.colunas_criticas or e.colunas_esperadas:
+        return {**base, "colunas": resp["colunas"]}
+    if e.html:
+        return {**base, "amostra": resp}
+    amostra = reduzir(resp)
+    return {**base, "amostra": amostra, "forma": forma(amostra)}
+
+
+def gravar(selecionados: list[str]) -> int:
+    FIXTURES.mkdir(parents=True, exist_ok=True)
+    problemas = 0
+    for nome, (e, resp, erro) in executar(selecionados, "gravar").items():
+        if erro:
+            print(f"✗ {nome}: não gravado ({erro})")
+            problemas += 1
+            continue
+        reg = montar_registro(e, resp)
+        if "forma" in reg:
+            for u in e.usados:
+                if not casa(u, reg["forma"]) and not sem_amostra(u, reg["forma"]) and not u.startswith("**"):
+                    print(f"  ! {nome}: campo usado {u} não aparece na amostra")
+        caminho(nome).write_text(json.dumps(reg, ensure_ascii=False, indent=1) + "\n", encoding="utf-8")
+        print(f"✓ {nome}")
+    return 1 if problemas else 0
+
+
+def verificar(selecionados: list[str]) -> int:
+    linhas, falhou = [], False
+    for nome, (e, resp, erro) in executar(selecionados, "verificar").items():
+        arq = caminho(nome)
+        if erro and e.html:
+            linhas.append((nome, "aviso", [f"fonte indisponível: {erro}"]))
+            continue
+        if erro:
+            linhas.append((nome, "aviso", [f"fonte indisponível ou resposta inesperada: {erro}"]))
+            continue
+        if e.html:
+            falhas, avisos = e.html(resp)
+            if falhas:
+                falhou = True
+            linhas.append((nome, "falha" if falhas else "ok" if not avisos else "aviso", falhas + avisos))
+            continue
+        if not arq.exists():
+            linhas.append((nome, "aviso", ["sem fixture gravada (rode --gravar)"]))
+            continue
+        gravado = json.loads(arq.read_text(encoding="utf-8"))
+        if "colunas" in gravado:
+            falhas, avisos = comparar_colunas(gravado["colunas"], resp["colunas"], e.colunas_criticas, e.colunas_esperadas)
+        else:
+            falhas, avisos = comparar(gravado["forma"], forma(reduzir(resp)), e.usados)
+            avisos = descontinuacao(resp) + avisos
+        if falhas:
+            falhou = True
+            linhas.append((nome, "falha", falhas + avisos))
+        else:
+            linhas.append((nome, "ok" if not avisos else "aviso", avisos))
+    resumo = ["## Contrato das APIs externas", ""]
+    for nome, estado, itens in linhas:
+        icone = {"ok": "✅", "aviso": "⚠️", "falha": "❌"}[estado]
+        resumo.append(f"- {icone} **{nome}**" + ("" if not itens else ":"))
+        resumo += [f"  - {i}" for i in itens]
+    texto = "\n".join(resumo)
+    print(texto)
+    if os.environ.get("GITHUB_STEP_SUMMARY"):
+        with open(os.environ["GITHUB_STEP_SUMMARY"], "a", encoding="utf-8") as f:
+            f.write(texto + "\n")
+    if os.environ.get("RESUMO_ARQUIVO"):
+        Path(os.environ["RESUMO_ARQUIVO"]).write_text(texto + "\n", encoding="utf-8")
+    return 1 if falhou else 0
+
+
+def main() -> int:
+    p = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
+    g = p.add_mutually_exclusive_group(required=True)
+    g.add_argument("--gravar", action="store_true")
+    g.add_argument("--verificar", action="store_true")
+    g.add_argument("--listar", action="store_true")
+    p.add_argument("nomes", nargs="*")
+    a = p.parse_args()
+    desconhecidos = set(a.nomes) - {e.nome for e in ENDPOINTS}
+    if desconhecidos:
+        sys.exit(f"Desconhecidos: {sorted(desconhecidos)}")
+    if a.listar:
+        for e in ENDPOINTS:
+            print(f"{e.nome:24} {e.fonte}")
+        return 0
+    return gravar(a.nomes) if a.gravar else verificar(a.nomes)
+
+
+if __name__ == "__main__":
+    sys.exit(main())

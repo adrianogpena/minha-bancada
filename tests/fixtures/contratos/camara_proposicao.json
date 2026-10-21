@@ -1,0 +1,252 @@
+{
+ "fonte": "https://dadosabertos.camara.leg.br/api/v2/proposicoes/{id}",
+ "capturadoEm": "2026-10-21",
+ "amostra": {
+  "dados": {
+   "id": 2648645,
+   "uri": "https://dadosabertos.camara.leg.br/api/v2/proposicoes/2648645",
+   "siglaTipo": "PL",
+   "codTipo": 139,
+   "numero": 5637,
+   "ano": 2026,
+   "ementa": "Altera a Lei nº 9.250, de 26 de dezembro de 1995, para assegurar prioridade na restituição do Imposto sobre a Renda das Pessoas Físicas aos contribuintes que tenham como dependentes crianças ou adolescentes com transtorno do espectro autista, deficiência ou doença grave.",
+   "dataApresentacao": "2026-10-21T15:21",
+   "uriOrgaoNumerador": null,
+   "statusProposicao": {
+    "dataHora": "2026-10-21T15:21",
+    "sequencia": 1,
+    "siglaOrgao": "MESA",
+    "uriOrgao": "https://dadosabertos.camara.leg.br/api/v2/orgaos/4",
+    "uriUltimoRelator": null,
+    "regime": ".",
+    "descricaoTramitacao": "Apresentação de Proposição",
+    "codTipoTramitacao": "100",
+    "descricaoSituacao": null,
+    "codSituacao": null,
+    "despacho": "Apresentação do PL n. 5637/2026 (Projeto de Lei), pelo Deputado Fred Costa (PRD/MG), que \"Altera a Lei nº 9.250, de 26 de dezembro de 1995, para assegurar prioridade na restituição do Imposto sobre a Renda das Pessoas Físicas aos contribuintes que tenham como dependentes crianças ou adolescentes com",
+    "url": null,
+    "ambito": "Regimental",
+    "apreciacao": "Indefinida"
+   },
+   "uriAutores": "https://dadosabertos.camara.leg.br/api/v2/proposicoes/2648645/autores",
+   "descricaoTipo": "Projeto de Lei",
+   "ementaDetalhada": null,
+   "keywords": null,
+   "uriPropPrincipal": null,
+   "uriPropAnterior": null,
+   "uriPropPosterior": null,
+   "urlInteiroTeor": "https://www.camara.leg.br/proposicoesWeb/prop_mostrarintegra?codteor=3185473",
+   "urnFinal": null,
+   "texto": null,
+   "justificativa": null
+  },
+  "links": [
+   {
+    "rel": "self",
+    "href": "https://dadosabertos.camara.leg.br/api/v2/proposicoes/2648645"
+   }
+  ]
+ },
+ "forma": {
+  "dados": {
+   "tipos": [
+    "dict"
+   ]
+  },
+  "dados.ano": {
+   "tipos": [
+    "int"
+   ]
+  },
+  "dados.codTipo": {
+   "tipos": [
+    "int"
+   ]
+  },
+  "dados.dataApresentacao": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "dados.descricaoTipo": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "dados.ementa": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "dados.ementaDetalhada": {
+   "tipos": [
+    "null"
+   ]
+  },
+  "dados.id": {
+   "tipos": [
+    "int"
+   ]
+  },
+  "dados.justificativa": {
+   "tipos": [
+    "null"
+   ]
+  },
+  "dados.keywords": {
+   "tipos": [
+    "null"
+   ]
+  },
+  "dados.numero": {
+   "tipos": [
+    "int"
+   ]
+  },
+  "dados.siglaTipo": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "dados.statusProposicao": {
+   "tipos": [
+    "dict"
+   ]
+  },
+  "dados.statusProposicao.ambito": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "dados.statusProposicao.apreciacao": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "dados.statusProposicao.codSituacao": {
+   "tipos": [
+    "null"
+   ]
+  },
+  "dados.statusProposicao.codTipoTramitacao": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "dados.statusProposicao.dataHora": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "dados.statusProposicao.descricaoSituacao": {
+   "tipos": [
+    "null"
+   ]
+  },
+  "dados.statusProposicao.descricaoTramitacao": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "dados.statusProposicao.despacho": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "dados.statusProposicao.regime": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "dados.statusProposicao.sequencia": {
+   "tipos": [
+    "int"
+   ]
+  },
+  "dados.statusProposicao.siglaOrgao": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "dados.statusProposicao.uriOrgao": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "dados.statusProposicao.uriUltimoRelator": {
+   "tipos": [
+    "null"
+   ]
+  },
+  "dados.statusProposicao.url": {
+   "tipos": [
+    "null"
+   ]
+  },
+  "dados.texto": {
+   "tipos": [
+    "null"
+   ]
+  },
+  "dados.uri": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "dados.uriAutores": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "dados.uriOrgaoNumerador": {
+   "tipos": [
+    "null"
+   ]
+  },
+  "dados.uriPropAnterior": {
+   "tipos": [
+    "null"
+   ]
+  },
+  "dados.uriPropPosterior": {
+   "tipos": [
+    "null"
+   ]
+  },
+  "dados.uriPropPrincipal": {
+   "tipos": [
+    "null"
+   ]
+  },
+  "dados.urlInteiroTeor": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "dados.urnFinal": {
+   "tipos": [
+    "null"
+   ]
+  },
+  "links": {
+   "tipos": [
+    "list"
+   ]
+  },
+  "links[]": {
+   "tipos": [
+    "dict"
+   ]
+  },
+  "links[].href": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "links[].rel": {
+   "tipos": [
+    "str"
+   ]
+  }
+ }
+}

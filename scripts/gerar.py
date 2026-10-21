@@ -255,6 +255,8 @@ def main():
     if (BRUTO / "executivo.json").exists():
         shutil.copy(BRUTO / "executivo.json", SAIDA / "executivo.json")
     shutil.copy(BRUTO / "municipios_ibge.json", SAIDA / "municipios_ibge.json")
+    if (BRUTO / "historico").is_dir():   # histórico diário (scripts/historico.py): fica no git e a página historico.html lê daqui
+        shutil.copytree(BRUTO / "historico", SAIDA / "historico")
     meta = ler(BRUTO / "meta.json", {}) or {}
     meta["ano"] = next(iter(deputados.values()))["despesas"]["ano"] if deputados else None
     meta["periodoVotacoes"] = [votacoes[-1]["data"], votacoes[0]["data"]] if votacoes else None

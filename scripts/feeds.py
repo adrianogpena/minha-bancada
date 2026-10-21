@@ -116,8 +116,9 @@ def dias(n: int) -> list[tuple[str, str]]:
 
 
 def item(titulo: str, data: str, codigo: str, corpo: str) -> str:
+    """Um dia do feed; o link leva à página do histórico daquele dia, já filtrada pelo local ou político do feed."""
     quando = datetime.fromisoformat(data).replace(hour=12, tzinfo=timezone.utc)
-    return (f"<item><title>{html.escape(titulo)}</title><link>{r.SITE}informado.html</link>"
+    return (f"<item><title>{html.escape(titulo)}</title><link>{html.escape(r.link_historico(data, [codigo]))}</link>"
             f"<guid isPermaLink=\"false\">minha-bancada-{html.escape(codigo)}-{data}</guid>"
             f"<pubDate>{format_datetime(quando)}</pubDate><description>{html.escape(corpo)}</description></item>")
 
@@ -142,7 +143,7 @@ def main() -> None:
             parte = selecionar(d, {codigo}, deps_uf)
             if vazio(parte):
                 continue
-            h, _ = r.montar(parte, f"{nomes[codigo]}, {data[8:]}/{data[5:7]}/{data[:4]}")
+            h, _ = r.montar(parte, f"{nomes[codigo]}, {data[8:]}/{data[5:7]}/{data[:4]}", detalhes=r.link_historico(data, [codigo]))
             itens[codigo].append(item(f"{nomes[codigo]} em {data[8:]}/{data[5:7]}/{data[:4]}", data, codigo, h))
     SAIDA.mkdir(parents=True, exist_ok=True)
     for antigo in SAIDA.glob("*.xml"):

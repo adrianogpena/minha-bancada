@@ -140,7 +140,7 @@ def main() -> None:
         for ass in ativos:
             parte = feeds.selecionar(completo, ass["regras"], deps_uf)
             if not feeds.vazio(parte):
-                h, t = r.montar(parte, titulo, rodape(ass))
+                h, t = r.montar(parte, titulo, rodape(ass), detalhes=r.link_historico(data, ass["regras"]))
                 envios.append((ass, titulo, h, t, {"List-Unsubscribe": f"<{link('cancelar', ass['token'])}>"}))
     for ass in pendentes:
         h, t = confirmacao(ass)

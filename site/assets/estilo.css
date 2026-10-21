@@ -319,3 +319,22 @@ select:disabled { opacity: .55; }
 .informado details { margin: 10px 0; }
 .sem-ementa { font-style: italic; }
 .aviso-ementa { font-size: 15px; color: var(--tinta-suave); }
+
+/* histórico diário */
+.hist-filtros { grid-template-columns: 1.4fr 1.4fr 1fr 1.6fr; }
+.hist-local h2 { margin: 0 0 8px; font: 700 20px var(--display); }
+.hist-local h2 small, .hist-pol summary small { font: 400 14px var(--texto); color: var(--tinta-suave); }
+.hist-pol { border-top: 1px solid var(--linha); padding: 8px 0; }
+.hist-pol summary { cursor: pointer; font-weight: 700; }
+.hist-pol summary a { color: inherit; }
+.hist-itens { list-style: none; margin: 8px 0 0; padding: 0; }
+.hist-item { padding: 10px 0 10px 12px; border-left: 3px solid var(--linha); margin: 0 0 10px; }
+.hist-cab { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 10px; }
+.hist-item .quando { font-size: 14px; color: var(--tinta-suave); }
+.hist-item .texto { margin: 4px 0; max-width: 75ch; }
+.hist-mudanca, .hist-resumo { margin: 2px 0; font-size: 15px; color: var(--tinta-suave); }
+.hist-mudanca b { color: var(--tinta); }
+.hist-tag { font: 700 12px var(--texto); text-transform: uppercase; letter-spacing: .03em; padding: 2px 8px; border-radius: 999px; background: var(--marca-clara); color: var(--marca); }
+.hist-tag.k-situacao { background: color-mix(in srgb, #c13b1d 14%, var(--superficie)); color: #c13b1d; }
+.hist-tag.k-votacao { background: color-mix(in srgb, #2456c9 14%, var(--superficie)); color: #2456c9; }
+@media (max-width: 720px) { .hist-filtros { grid-template-columns: 1fr; } }

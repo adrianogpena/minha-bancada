@@ -54,9 +54,9 @@ MAX_COAUTORES = 15
 
 def juntar_autoria(p: dict, aut: dict | None, did: str, partidos: dict | None = None) -> dict:
     """Acrescenta, quando a autoria do projeto já foi coletada: `principal` (o deputado foi o primeiro
-    a assinar), `co` (outros autores, com o partido entre parênteses quando é deputado em exercício;
-    até MAX_COAUTORES), `n` (total de autores), `pp` (partidos distintos entre os autores que são
-    deputados em exercício, quando há mais de um) e `ini` (tipo do autor principal, quando não é
+    a assinar), `coautores` (outros autores, com o partido entre parênteses quando é deputado em exercício;
+    até MAX_COAUTORES), `totalAutores` (total de autores), `partidosDistintos` (partidos distintos entre os autores que são
+    deputados em exercício, quando há mais de um) e `iniciativa` (tipo do autor principal, quando não é
     deputado: Poder Executivo, Senado, comissão...)."""
     if not aut or not aut.get("a"):
         return p
@@ -73,12 +73,12 @@ def juntar_autoria(p: dict, aut: dict | None, did: str, partidos: dict | None = 
     primeiro = aut["a"][0]
     extra = {"principal": str(aut.get("p")) == did}
     if outros:
-        extra["co"] = outros
-        extra["n"] = len(aut["a"])
+        extra["coautores"] = outros
+        extra["totalAutores"] = len(aut["a"])
     if len(siglas) > 1:
-        extra["pp"] = len(siglas)
+        extra["partidosDistintos"] = len(siglas)
     if aut.get("p") is None and len(primeiro) > 2 and primeiro[2]:
-        extra["ini"] = primeiro[2]
+        extra["iniciativa"] = primeiro[2]
     return {**p, **extra}
 
 

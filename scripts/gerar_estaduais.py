@@ -88,7 +88,7 @@ def gerar_assembleia(uf: str, pasta: Path) -> list[dict]:
                 coautores = [deputados[o]["nome"] for o in m["dep"] if o != pid and o in deputados and deputados[o].get("nome")]
                 projetos[pid].append({"id": mid, "tipo": m["t"], "td": m.get("td"), "numero": m["n"], "ano": m["a"],
                                       "ap": m.get("ap"), "ementa": m["e"], "sit": m["sit"], "tr": m.get("tr"),
-                                      "pdf": m.get("pdf"), **({"co": coautores} if coautores else {})})
+                                      "pdf": m.get("pdf"), **({"coautores": coautores} if coautores else {})})
 
     for pid in deputados:
         desde = primeira.get(pid)  # antes do primeiro voto o deputado pode nem estar em exercício

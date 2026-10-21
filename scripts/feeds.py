@@ -67,13 +67,13 @@ def selecionar(d: dict, regras: set[str], deps_uf: dict[str, set[int]]) -> dict:
     pres = br or "pres" in regras
     return {
         **d,
-        "camara": [i for i in d["camara"] if br or deps & set(i["deps"])],
+        "camara": [i for i in d["camara"] if br or deps & set(i["idsDeputados"])],
         "senado": d["senado"] if br else (0, 0),
         "detalhe": (0, 0),
         "executivo": d["executivo"] if pres else [],
-        "executivo_sit": d["executivo_sit"] if pres else [],
+        "executivo_situacao": d["executivo_situacao"] if pres else [],
         "estaduais": por_uf("estaduais", lambda uf: uf in ufs,
-                            lambda uf, m: any(f"est:{uf}:{p}" in regras for p in m.get("dep", []))),
+                            lambda uf, m: any(f"est:{uf}:{p}" in regras for p in m.get("idsDeputados", []))),
         "governo": por_uf("governo", lambda uf: uf in ufs or f"gov:{uf}" in regras),
         "municipais": por_uf("municipais", lambda uf: uf in ufs or f"MUN:{uf}" in regras or f"pref:{uf}" in regras),
         "votacoes": [uf for uf in d["votacoes"] if uf in ufs],

@@ -232,8 +232,8 @@ def processo(**extra):
 
 def test_autoria_senado():
     a = coletar.autoria_senado(processo(), "Alan Rick")
-    assert a == {"id": "174386", "proc": 9056435, "tipo": "PEC", "numero": "221", "ano": 2019, "ementa": "Altera o art. 7º", "principal": True,
-                 "ap": "2026-05-28", "sit": "AGUARDANDO DESPACHO", "dt": "2026-06-01"}
+    assert a == {"id": "174386", "processo": 9056435, "tipo": "PEC", "numero": "221", "ano": 2019, "ementa": "Altera o art. 7º", "principal": True,
+                 "dataApresentacao": "2026-05-28", "situacao": "AGUARDANDO DESPACHO", "dataSituacao": "2026-06-01"}
 
 
 def test_autoria_senado_numero_com_ponto_e_tipo_com_ponto():

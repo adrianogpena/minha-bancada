@@ -212,8 +212,8 @@ const TIPOS_PROJETO = { PL: "Projeto de lei", PLP: "Projeto de lei complementar"
 
 // resume a situação da Câmara em um destino compreensível
 function desfecho(p) {
-  const s = semAcento(p.sit || "");
-  if (!p.sit) return ["Situação ainda não consultada", "sem"];
+  const s = semAcento(p.situacao || "");
+  if (!p.situacao) return ["Situação ainda não consultada", "sem"];
   if (/tramitacao encerrada/.test(s)) return ["Tramitação encerrada", "sem"];
   if (/^(sancionad|promulgad)/.test(s)) return ["Aprovada", "aprovada"];
   if (/^aprovad/.test(s)) return ["Aprovada", "aprovada", "andamento"];
@@ -459,14 +459,14 @@ function montarParlamentar(alvo, c) {
   const renderProj = (p) => {
     const [texto, destino, cor] = desfecho(p), classe = cor || destino;
     return `<li class="cartao-item">
-      <span class="quando"><b>${esc(p.tipo)} ${esc(p.numero)}/${esc(p.ano)}</b>${p.ap ? `, apresentado em ${data(p.ap)}` : ""}${p.principal ? ", autor principal" : ""}</span>
+      <span class="quando"><b>${esc(p.tipo)} ${esc(p.numero)}/${esc(p.ano)}</b>${p.dataApresentacao ? `, apresentado em ${data(p.dataApresentacao)}` : ""}${p.principal ? ", autor principal" : ""}</span>
       <span class="resultado r-${classe}">${esc(texto)}</span>
       <span class="texto">${esc(p.ementa || "Sem ementa")}</span>
       ${c.papel ? `<span class="texto"><b>Papel de ${esc(nome)}:</b> ${c.papel(p)}</span>` : ""}
-      ${p.sit ? `<span class="texto"><b>Situação:</b> ${esc(p.sit)}${p.org ? ` (${esc(p.org)})` : ""}${p.dt ? `, em ${data(p.dt)}` : ""}.${p.desp ? ` <span class="quando">Despacho: ${esc(p.desp.slice(0, 300))}</span>` : ""}</span>` : ""}
-      ${p.td || p.tram || p.reg || p.coautores || p.iniciativa ? `<span class="texto quando">${[p.td && `Tipo: ${esc(p.td)}`, p.iniciativa && `Iniciativa: ${esc(p.iniciativa)}`, p.totalAutores && `Assinado por ${p.totalAutores} autores${p.partidosDistintos ? ` de ${p.partidosDistintos} partidos` : ""}`, p.reg && `Regime: ${esc(p.reg)}`, p.tram && `Tramitação: ${esc(p.tram)}`, p.coautores && `Coautores: ${esc(p.coautores.join(", "))}`].filter(Boolean).join(" · ")}</span>` : ""}
-      ${p.kw ? `<span class="texto quando">Temas: ${esc(p.kw)}</span>` : ""}
-      <span class="texto">${fontes([[c.fonteTramitacao, c.linkTramitacao(p)], p.pdf ? ["Texto integral", p.pdf] : null, ["Dados na API", c.linkApi(p)]])}</span>
+      ${p.situacao ? `<span class="texto"><b>Situação:</b> ${esc(p.situacao)}${p.orgao ? ` (${esc(p.orgao)})` : ""}${p.dataSituacao ? `, em ${data(p.dataSituacao)}` : ""}.${p.despacho ? ` <span class="quando">Despacho: ${esc(p.despacho.slice(0, 300))}</span>` : ""}</span>` : ""}
+      ${p.tipoDescricao || p.tramitacao || p.regime || p.coautores || p.iniciativa ? `<span class="texto quando">${[p.tipoDescricao && `Tipo: ${esc(p.tipoDescricao)}`, p.iniciativa && `Iniciativa: ${esc(p.iniciativa)}`, p.totalAutores && `Assinado por ${p.totalAutores} autores${p.partidosDistintos ? ` de ${p.partidosDistintos} partidos` : ""}`, p.regime && `Regime: ${esc(p.regime)}`, p.tramitacao && `Tramitação: ${esc(p.tramitacao)}`, p.coautores && `Coautores: ${esc(p.coautores.join(", "))}`].filter(Boolean).join(" · ")}</span>` : ""}
+      ${p.palavrasChave ? `<span class="texto quando">Temas: ${esc(p.palavrasChave)}</span>` : ""}
+      <span class="texto">${fontes([[c.fonteTramitacao, c.linkTramitacao(p)], p.linkTexto ? ["Texto integral", p.linkTexto] : null, ["Dados na API", c.linkApi(p)]])}</span>
     </li>`;
   };
   const tiposProj = [...new Set(projetos.map((p) => p.tipo))].sort();
@@ -829,39 +829,39 @@ function casaLegislativa(p) {
 /* Presidente em exercício: projetos e medidas provisórias que enviou ao Congresso e o que aconteceu com cada um. */
 const TIPOS_EXECUTIVO = { PL: "Projeto de lei", PLP: "Projeto de lei complementar", PEC: "Proposta de emenda à Constituição", MPV: "Medida provisória" };
 function desfechoExecutivo(x) {
-  const s = (x.sit || "").toLowerCase();
+  const s = (x.situacao || "").toLowerCase();
   if (x.veto === "total" || s.startsWith("vetad")) return { rotulo: "Vetou", classe: "v-nao" };
   if (s.startsWith("transformad")) return { rotulo: x.veto === "parcial" ? "Virou lei, com vetos" : "Virou lei", classe: "v-sim" };
   if (s.includes("aguardando sanção")) return { rotulo: "Decide se sanciona", classe: "v-outro" };
-  if (!x.sit && x.tipo === "MPV") return { rotulo: "MP em vigor", classe: "v-outro" };
+  if (!x.situacao && x.tipo === "MPV") return { rotulo: "MP em vigor", classe: "v-outro" };
   if (s.startsWith("perdeu a efic")) return { rotulo: "MP deixou de valer", classe: "v-nao" };
   if (/^(arquivad|retirad|rejeitad|prejudicad)/.test(s)) return { rotulo: "Não virou lei", classe: "v-nao" };
   return { rotulo: "No Congresso", classe: "v-outro" };
 }
 /* Frases curtas, uma por etapa, dizendo quem fez o quê: o presidente (enviou, sancionou, vetou) ou o Congresso (aprovou, deixou caducar). */
 function etapasExecutivo(x) {
-  const mp = x.tipo === "MPV", s = (x.sit || "").toLowerCase();
-  const e = [mp ? `<b>O presidente editou</b> a medida provisória em ${data(x.apres)}; ela vale como lei desde então, mas o Congresso precisa aprová-la em até 120 dias.`
-    : `<b>O presidente enviou</b> o projeto ao Congresso em ${data(x.apres)}.`];
+  const mp = x.tipo === "MPV", s = (x.situacao || "").toLowerCase();
+  const e = [mp ? `<b>O presidente editou</b> a medida provisória em ${data(x.dataApresentacao)}; ela vale como lei desde então, mas o Congresso precisa aprová-la em até 120 dias.`
+    : `<b>O presidente enviou</b> o projeto ao Congresso em ${data(x.dataApresentacao)}.`];
   if (x.remessa) e.push(`<b>O Congresso aprovou</b> e mandou à sanção em ${data(x.remessa)}.`);
-  if (x.veto === "total" || s.startsWith("vetad")) e.push(`<b>O presidente vetou o texto inteiro</b>${x.dataNorma ? ` em ${data(x.dataNorma)}` : ""}.${x.razoes ? ` Razões do veto: ${esc(x.razoes)}.` : ""}`);
+  if (x.veto === "total" || s.startsWith("vetad")) e.push(`<b>O presidente vetou o texto inteiro</b>${x.dataNorma ? ` em ${data(x.dataNorma)}` : ""}.${x.razoesVeto ? ` Razões do veto: ${esc(x.razoesVeto)}.` : ""}`);
   else if (s.startsWith("transformad")) {
     const lei = x.norma ? ` (<b>${esc(x.norma)}</b>)` : "";
     if (mp && !x.remessa) e.push(`<b>O Congresso aprovou</b> a medida provisória sem mudanças e ela virou lei${lei}${x.dataNorma ? ` em ${data(x.dataNorma)}` : ""}. Nesse caso não há sanção: quem promulga é o Congresso.`);
-    else if (x.veto === "parcial") e.push(`<b>O presidente sancionou</b> o texto${x.dataNorma ? ` em ${data(x.dataNorma)}` : ""}${lei}, mas <b>vetou trechos</b>.${x.razoes ? ` Razões do veto: ${esc(x.razoes)}.` : ""} O Congresso ainda pode derrubar os vetos.`);
+    else if (x.veto === "parcial") e.push(`<b>O presidente sancionou</b> o texto${x.dataNorma ? ` em ${data(x.dataNorma)}` : ""}${lei}, mas <b>vetou trechos</b>.${x.razoesVeto ? ` Razões do veto: ${esc(x.razoesVeto)}.` : ""} O Congresso ainda pode derrubar os vetos.`);
     else e.push(`<b>O presidente sancionou</b> o texto sem vetos${x.dataNorma ? ` em ${data(x.dataNorma)}` : ""}${lei}.`);
   } else if (s.includes("aguardando sanção")) e.push("<b>O presidente ainda não decidiu:</b> tem 15 dias úteis para sancionar ou vetar.");
-  else if (s.startsWith("perdeu a efic")) e.push(`<b>O Congresso não votou a tempo</b> e a medida provisória perdeu a eficácia${x.data ? ` em ${data(x.data)}` : ""}.`);
-  else if (/^(arquivad|retirad|rejeitad|prejudicad)/.test(s)) e.push(`<b>Não virou lei:</b> ${esc(x.sit.toLowerCase())}${x.data ? ` em ${data(x.data)}` : ""}. Não houve sanção nem veto.`);
-  else if (x.sit) e.push(`<b>Ainda no Congresso:</b> ${esc(x.sit.toLowerCase())}. Ainda não chegou à sanção.`);
+  else if (s.startsWith("perdeu a efic")) e.push(`<b>O Congresso não votou a tempo</b> e a medida provisória perdeu a eficácia${x.dataSituacao ? ` em ${data(x.dataSituacao)}` : ""}.`);
+  else if (/^(arquivad|retirad|rejeitad|prejudicad)/.test(s)) e.push(`<b>Não virou lei:</b> ${esc(x.situacao.toLowerCase())}${x.dataSituacao ? ` em ${data(x.dataSituacao)}` : ""}. Não houve sanção nem veto.`);
+  else if (x.situacao) e.push(`<b>Ainda no Congresso:</b> ${esc(x.situacao.toLowerCase())}. Ainda não chegou à sanção.`);
   return e;
 }
 /* Governador e prefeito: o sistema de cada Casa só informa tipo, situação e ementa, então os desfechos são mais genéricos que os do presidente. */
 function etapasGoverno(x, prefeito) {
   const chefe = prefeito ? "O prefeito" : "O governador", casa = prefeito ? "A Câmara" : "A Assembleia";
-  const sit = (x.sit || "").trim(), s = sit.toLowerCase(), td = (x.td || "").toLowerCase();
-  const quando = x.ap ? ` em ${data(x.ap)}` : "";
-  const alcance = /total|integral/i.test(`${x.td} ${x.ementa}`) ? "total" : /parcial/i.test(`${x.td} ${x.ementa}`) ? "parcial" : null;
+  const sit = (x.situacao || "").trim(), s = sit.toLowerCase(), td = (x.tipoDescricao || "").toLowerCase();
+  const quando = x.dataApresentacao ? ` em ${data(x.dataApresentacao)}` : "";
+  const alcance = /total|integral/i.test(`${x.tipoDescricao} ${x.ementa}`) ? "total" : /parcial/i.test(`${x.tipoDescricao} ${x.ementa}`) ? "parcial" : null;
   if (x.tipo === "VET") {
     const e = [`<b>${chefe} vetou</b> ${alcance === "total" ? "o texto inteiro" : alcance === "parcial" ? "trechos do texto" : "o texto (o sistema não informa se inteiro ou em parte)"}; a mensagem de veto chegou${prefeito ? "" : " à Assembleia"}${quando}.`];
     if (/^em tr(amita|âmite)/.test(s)) e.push(`<b>${casa} ainda vai decidir</b> se mantém o veto ou o derruba.`);
@@ -890,11 +890,11 @@ function etapasGoverno(x, prefeito) {
 }
 const itemGoverno = (prefeito) => (x) => {
   const d = etapasGoverno(x, prefeito);
-  return `<li><span class="quando">${esc(x.td)} ${esc(x.numero)}/${esc(x.ano)}</span>
+  return `<li><span class="quando">${esc(x.tipoDescricao)} ${esc(x.numero)}/${esc(x.ano)}</span>
   <span class="voto ${d.classe}">${esc(d.rotulo)}</span>
   <span class="texto">${esc(x.ementa)}</span>
   <div class="texto"><ul class="etapas">${d.etapas.map((t) => `<li>${t}</li>`).join("")}</ul>
-    ${x.pdf ? `<a href="${esc(x.pdf)}" rel="noopener">${/\.pdf$/i.test(x.pdf) ? "Texto" : "Tramitação"}</a>` : ""}</div></li>`;
+    ${x.linkTexto ? `<a href="${esc(x.linkTexto)}" rel="noopener">${/\.pdf$/i.test(x.linkTexto) ? "Texto" : "Tramitação"}</a>` : ""}</div></li>`;
 };
 
 /* Legenda recolhida com o significado de cada selo, e aviso do que a fonte não informa. */
@@ -1256,7 +1256,7 @@ async function paginaPolitico() {
   const vetosGov = governo ? governo.materias.filter((x) => x.tipo === "VET") : [];
   const enviadosGov = governo ? governo.materias.filter((x) => x.tipo !== "VET") : [];
   const comGoverno = enviadosGov.length + vetosGov.length > 0;
-  const aprovados = enviados.filter((x) => /^(transformad|vetad|aguardando sanção)/i.test(x.sit || "") || x.veto);
+  const aprovados = enviados.filter((x) => /^(transformad|vetad|aguardando sanção)/i.test(x.situacao || "") || x.veto);
   const painelVotacoes = comGoverno
     ? `<section class="painel"><div class="painel-titulo"><h2>Vetos</h2></div>
         <p>${esc(p.cargo)} não vota em plenário. O que faz é propor leis, sancionar ou vetar o que ${prefeito ? "a Câmara" : "a Assembleia"} aprova, e editar decretos. Aqui estão os vetos enviados ${orgao} desde ${prefeito ? 2025 : 2023}: <b>${vetosGov.length}</b>. A situação é a que ${prefeito ? "a Câmara" : "a Assembleia"} registra no sistema dela, e nem sempre é atualizada.</p>

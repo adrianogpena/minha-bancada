@@ -234,8 +234,8 @@ def coletar_detalhes_proposicoes() -> None:
     limite_velho = (hoje - dt.timedelta(days=RENOVAR_APOS_DIAS)).isoformat()
     novos = sorted(todos - cache.keys(), reverse=True)
     velhos = sorted((i for i in todos & cache.keys()
-                     if not cache[i].get("fim") and cache[i].get("em", "") < limite_velho),
-                    key=lambda i: cache[i].get("em", ""))
+                     if not cache[i].get("finalizada") and cache[i].get("consultadoEm", "") < limite_velho),
+                    key=lambda i: cache[i].get("consultadoEm", ""))
     fila = (novos + velhos)[:ORCAMENTO_DETALHES]
     print(f"Detalhes de proposições: {len(todos)} projetos, {len(novos)} novos, {len(velhos)} a renovar; consultando {len(fila)}")
 
@@ -244,18 +244,18 @@ def coletar_detalhes_proposicoes() -> None:
         st = d.get("statusProposicao") or d.get("ultimoStatus") or {}
         situacao = st.get("descricaoSituacao") or ""
         return pid, {
-            "apres": (d.get("dataApresentacao") or "")[:10] or None,
-            "sit": situacao or None,
-            "tram": st.get("descricaoTramitacao"),
-            "desp": (st.get("despacho") or "").strip() or None,
-            "org": st.get("siglaOrgao"),
-            "data": (st.get("dataHora") or "")[:10] or None,
+            "dataApresentacao": (d.get("dataApresentacao") or "")[:10] or None,
+            "situacao": situacao or None,
+            "tramitacao": st.get("descricaoTramitacao"),
+            "despacho": (st.get("despacho") or "").strip() or None,
+            "orgao": st.get("siglaOrgao"),
+            "dataSituacao": (st.get("dataHora") or "")[:10] or None,
             "regime": st.get("regime"),
             "inteiroTeor": d.get("urlInteiroTeor"),
-            "detalhada": (d.get("ementaDetalhada") or "").strip() or None,
-            "palavras": (d.get("keywords") or "").strip() or None,
-            "em": hoje.isoformat(),
-            "fim": situacao_final(situacao),
+            "ementaDetalhada": (d.get("ementaDetalhada") or "").strip() or None,
+            "palavrasChave": (d.get("keywords") or "").strip() or None,
+            "consultadoEm": hoje.isoformat(),
+            "finalizada": situacao_final(situacao),
         }
 
     feitos = falhas = 0
@@ -281,10 +281,10 @@ ORCAMENTO_AUTORES = int(os.environ.get("AUTORES_POR_EXECUCAO", "6000"))
 
 
 def autores_da_resposta(autores: list) -> dict:
-    """De /proposicoes/{id}/autores para {"p": idDeputadoPrincipal, "a": [[idDeputado, nome, tipo], ...]},
+    """De /proposicoes/{id}/autores para {"idPrincipal": idDeputadoPrincipal, "autores": [[idDeputado, nome, tipo], ...]},
     na ordem de assinatura. Quem não é deputado (Executivo, Senado, comissões) entra com id nulo e o
     `tipo` da Câmara ("Órgão do Poder Executivo"...); para deputados o tipo é omitido.
-    O principal é quem assinou primeiro (proponente 1, senão ordemAssinatura 1); se não for deputado, p fica nulo."""
+    O principal é quem assinou primeiro (proponente 1, senão ordemAssinatura 1); se não for deputado, idPrincipal fica nulo."""
     lista = sorted((a for a in autores if a.get("nome")), key=lambda a: a.get("ordemAssinatura") or 10**6)
     saida = []
     for a in lista:
@@ -294,9 +294,9 @@ def autores_da_resposta(autores: list) -> dict:
         else:
             saida.append([None, a["nome"].strip(), (a.get("tipo") or "").strip() or None])
     if not lista:
-        return {"p": None, "a": []}
+        return {"idPrincipal": None, "autores": []}
     i = next((k for k, a in enumerate(lista) if a.get("proponente") == 1), 0)
-    return {"p": saida[i][0], "a": saida}
+    return {"idPrincipal": saida[i][0], "autores": saida}
 
 
 def coletar_autores_proposicoes() -> None:
@@ -568,10 +568,10 @@ def autoria_senado(p: dict, nome: str | None) -> dict | None:
     m = IDENTIFICACAO_SENADO.match(p.get("identificacao") or "")
     if not m or not p.get("codigoMateria") or int(m["ano"]) < 2019:  # mandato mais antigo em exercício começou em 2019
         return None
-    return {"id": str(p["codigoMateria"]), "proc": p["id"], "tipo": m["tipo"], "numero": m["numero"].replace(".", ""), "ano": int(m["ano"]),
+    return {"id": str(p["codigoMateria"]), "processo": p["id"], "tipo": m["tipo"], "numero": m["numero"].replace(".", ""), "ano": int(m["ano"]),
             "ementa": (p.get("ementa") or "").strip(), "principal": primeiro_autor_senado(p.get("autoria"), nome),
-            "ap": (p.get("dataApresentacao") or "")[:10] or None,
-            "sit": p.get("situacaoAtual"), "dt": (p.get("dataSituacaoAtual") or "")[:10] or None}
+            "dataApresentacao": (p.get("dataApresentacao") or "")[:10] or None,
+            "situacao": p.get("situacaoAtual"), "dataSituacao": (p.get("dataSituacaoAtual") or "")[:10] or None}
 
 
 def coletar_autorias_senado() -> None:
@@ -601,7 +601,7 @@ def coletar_autorias_senado() -> None:
 
     # situação dos projetos, uma vez por matéria (coautorias repetem a mesma)
     arquivo = DADOS / "senado_materias.json"
-    materias = {i["id"]: {"sit": i["sit"], "data": i["dt"], "ap": i["ap"], "proc": i["proc"]}
+    materias = {i["id"]: {"situacao": i["situacao"], "dataSituacao": i["dataSituacao"], "dataApresentacao": i["dataApresentacao"], "processo": i["processo"]}
                 for itens in autorias.values() for i in itens if i["tipo"] in TIPOS_PROJETO_SENADO}
     if falhas:  # senador que falhou não pode apagar do cache o que já se sabia sobre ele
         materias = {**ler(arquivo, {}), **materias}

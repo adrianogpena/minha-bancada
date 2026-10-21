@@ -16,9 +16,10 @@ def test_juntar_detalhe_sem_detalhe_devolve_igual():
     assert gerar.juntar_detalhe(p, None) is p
 
 
-def test_juntar_detalhe_abrevia_campos_e_ignora_vazios():
-    r = gerar.juntar_detalhe({"id": 1}, {"sit": "Arquivada", "apres": "2024-01-01", "org": "", "regime": None, "tram": [1]})
-    assert r == {"id": 1, "sit": "Arquivada", "ap": "2024-01-01", "tram": [1]}
+def test_juntar_detalhe_copia_campos_e_ignora_vazios():
+    r = gerar.juntar_detalhe({"id": 1}, {"situacao": "Arquivada", "dataApresentacao": "2024-01-01", "orgao": "", "regime": None, "tramitacao": [1],
+                                                "inteiroTeor": "http://pdf"})
+    assert r == {"id": 1, "situacao": "Arquivada", "dataApresentacao": "2024-01-01", "tramitacao": [1], "linkTexto": "http://pdf"}
 
 
 def test_resumir_despesas():
@@ -73,7 +74,7 @@ def test_gerar_senadores_cria_detalhe_de_cada_votacao(tmp_path, monkeypatch):
 
 def test_juntar_autoria_principal_coautores_partido_e_contagens():
     import gerar
-    aut = {"p": 10, "a": [[10, "Ana"], [20, "Bia"], [None, "Comissão X", "Comissão"]]}
+    aut = {"idPrincipal": 10, "autores": [[10, "Ana"], [20, "Bia"], [None, "Comissão X", "Comissão"]]}
     partidos = {"10": "PT", "20": "PL"}
     assert gerar.juntar_autoria({"id": 1}, aut, "10", partidos) == {
         "id": 1, "principal": True, "coautores": ["Bia (PL)", "Comissão X"], "totalAutores": 3, "partidosDistintos": 2}
@@ -85,13 +86,13 @@ def test_juntar_autoria_principal_coautores_partido_e_contagens():
 
 def test_juntar_autoria_iniciativa_nao_deputado():
     import gerar
-    aut = {"p": None, "a": [[None, "Poder Executivo", "Órgão do Poder Executivo"], [20, "Bia"]]}
+    aut = {"idPrincipal": None, "autores": [[None, "Poder Executivo", "Órgão do Poder Executivo"], [20, "Bia"]]}
     r = gerar.juntar_autoria({}, aut, "20", {"20": "PL"})
     assert r["iniciativa"] == "Órgão do Poder Executivo" and r["principal"] is False and r["totalAutores"] == 2 and "partidosDistintos" not in r
 
 
 def test_juntar_autoria_limita_coautores():
     import gerar
-    aut = {"p": 1, "a": [[1, "A"]] + [[100 + i, f"N{i}"] for i in range(20)]}
+    aut = {"idPrincipal": 1, "autores": [[1, "A"]] + [[100 + i, f"N{i}"] for i in range(20)]}
     co = gerar.juntar_autoria({}, aut, "1")["coautores"]
     assert len(co) == 16 and co[-1] == "e mais 5"

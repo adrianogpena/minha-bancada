@@ -25,22 +25,22 @@ def repo(tmp_path, monkeypatch):
     git("config", "user.email", "t@t")
     git("config", "user.name", "t")
     salvar("dados/proposicoes/1.json", {"itens": [{"id": 10, "siglaTipo": "PL", "numero": 1, "ano": 2026, "ementa": "Antiga"}]})
-    salvar("dados/proposicoes_detalhe.json", {"10": {"sit": "Aguardando", "tram": "Apresentação", "data": "2026-01-01"}})
+    salvar("dados/proposicoes_detalhe.json", {"10": {"situacao": "Aguardando", "tramitacao": "Apresentação", "dataSituacao": "2026-01-01"}})
     salvar("dados/estaduais/AC/deputados.json", {"host": "sapl.al.ac.leg.br", "deputados": [{"id": 28, "nome": "ANTONIA SALES"}]})
-    salvar("dados/estaduais/AC/materias_2026.json", {"materias": {"5": {"a": 2026, "n": 1, "t": "PL", "td": "Projeto de Lei", "e": "Antigo", "sit": "Em tramitação", "dep": [28], "ap": "2026-01-02"}}})
-    salvar("dados/senado_materias.json", {"7": {"sit": "", "data": "2026-01-01"}, "8": {"sit": "A", "data": "2026-01-01"}})
-    salvar("dados/executivo.json", [{"id": 3, "tipo": "PL", "numero": 9, "ano": 2026, "ementa": "Do Executivo", "sit": "Aguardando", "data": "2026-01-01"}])
+    salvar("dados/estaduais/AC/materias_2026.json", {"materias": {"5": {"ano": 2026, "numero": 1, "tipo": "PL", "tipoDescricao": "Projeto de Lei", "ementa": "Antigo", "situacao": "Em tramitação", "idsDeputados": [28], "dataApresentacao": "2026-01-02"}}})
+    salvar("dados/senado_materias.json", {"7": {"situacao": "", "dataSituacao": "2026-01-01"}, "8": {"situacao": "A", "dataSituacao": "2026-01-01"}})
+    salvar("dados/executivo.json", [{"id": 3, "tipo": "PL", "numero": 9, "ano": 2026, "ementa": "Do Executivo", "situacao": "Aguardando", "dataSituacao": "2026-01-01"}])
     salvar("dados/tse/2026/AC.json", [{"sq": "1", "nome": "Fulano", "urna": "Fu", "cargo": "DEPUTADO ESTADUAL", "partido": "X", "uf": "AC", "situacao": "eleito", "resultado": "Eleito"}])
     git("add", "-A")
     git("commit", "-qm", "Dados atualizados em 2026-01-01", data="2026-01-01")
     salvar("dados/proposicoes/1.json", {"itens": [{"id": 10, "siglaTipo": "PL", "numero": 1, "ano": 2026, "ementa": "Antiga"},
                                                    {"id": 11, "siglaTipo": "REQ", "numero": 2, "ano": 2026, "ementa": "Requerimento novo"}]})
-    salvar("dados/proposicoes_detalhe.json", {"10": {"sit": "Aprovada", "tram": "Aprovação", "data": "2026-01-02", "desp": "Aprovado em Plenário"}})
+    salvar("dados/proposicoes_detalhe.json", {"10": {"situacao": "Aprovada", "tramitacao": "Aprovação", "dataSituacao": "2026-01-02", "despacho": "Aprovado em Plenário"}})
     salvar("dados/estaduais/AC/materias_2026.json", {"materias": {
-        "5": {"a": 2026, "n": 1, "t": "PL", "td": "Projeto de Lei", "e": "Antigo", "sit": "Aprovado", "dep": [28], "ap": "2026-01-02"},
-        "6": {"a": 2026, "n": 2, "t": "PL", "td": "Projeto de Lei", "e": "Novo", "sit": "Em tramitação", "dep": [28], "ap": "2026-01-02", "pdf": "https://x/y.pdf"}}})
-    salvar("dados/senado_materias.json", {"7": {"sit": "Aprovada", "data": "2026-01-02"}, "8": {"sit": "B", "data": "2026-01-02"}, "9": {"sit": "N", "ap": "2026-01-02", "proc": 99}})
-    salvar("dados/executivo.json", [{"id": 3, "tipo": "PL", "numero": 9, "ano": 2026, "ementa": "Do Executivo", "sit": "Sancionada", "data": "2026-01-02"}])
+        "5": {"ano": 2026, "numero": 1, "tipo": "PL", "tipoDescricao": "Projeto de Lei", "ementa": "Antigo", "situacao": "Aprovado", "idsDeputados": [28], "dataApresentacao": "2026-01-02"},
+        "6": {"ano": 2026, "numero": 2, "tipo": "PL", "tipoDescricao": "Projeto de Lei", "ementa": "Novo", "situacao": "Em tramitação", "idsDeputados": [28], "dataApresentacao": "2026-01-02", "linkTexto": "https://x/y.pdf"}}})
+    salvar("dados/senado_materias.json", {"7": {"situacao": "Aprovada", "dataSituacao": "2026-01-02"}, "8": {"situacao": "B", "dataSituacao": "2026-01-02"}, "9": {"situacao": "N", "dataApresentacao": "2026-01-02", "processo": 99}})
+    salvar("dados/executivo.json", [{"id": 3, "tipo": "PL", "numero": 9, "ano": 2026, "ementa": "Do Executivo", "situacao": "Sancionada", "dataSituacao": "2026-01-02"}])
     salvar("dados/tse/2026/AC.json", [{"sq": "1", "nome": "Fulano", "urna": "Fu", "cargo": "DEPUTADO ESTADUAL", "partido": "Y", "uf": "AC", "situacao": "eleito", "resultado": "Eleito"}])
     git("add", "-A")
     git("commit", "-qm", "Dados atualizados em 2026-01-02", data="2026-01-02")
@@ -135,8 +135,8 @@ def test_link_historico_filtra_por_codigos():
 
 
 def test_montar_inclui_link_para_o_historico():
-    d = {"camara": [{"siglaTipo": "PL", "numero": 1, "ano": 2026, "ementa": "x", "deps": []}], "senado": (0, 0), "detalhe": (0, 0), "executivo": [],
-         "executivo_sit": [], "estaduais": ({}, {}), "governo": ({}, {}), "municipais": ({}, {}), "votacoes": [], "tse": []}
+    d = {"camara": [{"siglaTipo": "PL", "numero": 1, "ano": 2026, "ementa": "x", "idsDeputados": []}], "senado": (0, 0), "detalhe": (0, 0), "executivo": [],
+         "executivo_situacao": [], "estaduais": ({}, {}), "governo": ({}, {}), "municipais": ({}, {}), "votacoes": [], "tse": []}
     link = r.link_historico("2026-01-02")
     html_, txt = r.montar(d, "Título", detalhes=link)
     assert link in html_ and link in txt and "fonte oficial" in txt

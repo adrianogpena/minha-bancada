@@ -184,17 +184,17 @@ def test_detalhes_proposicoes_prioriza_novas_e_marca_situacao_final(dados, monke
     coletar.coletar_detalhes_proposicoes()
     assert sorted(c[0] for c in chamadas) == ["/proposicoes/10", "/proposicoes/12"]  # REQ não é projeto principal
     cache = json.loads((dados / "proposicoes_detalhe.json").read_text())
-    assert cache["10"]["fim"] is True and cache["10"]["sit"] == "Arquivada"
-    assert cache["10"]["apres"] == "2025-01-02" and cache["10"]["data"] == "2025-02-03"
-    assert cache["10"]["desp"] == "Arquive-se" and cache["10"]["detalhada"] == "det"
-    assert cache["12"]["fim"] is False and cache["12"]["desp"] is None
+    assert cache["10"]["finalizada"] is True and cache["10"]["situacao"] == "Arquivada"
+    assert cache["10"]["dataApresentacao"] == "2025-01-02" and cache["10"]["dataSituacao"] == "2025-02-03"
+    assert cache["10"]["despacho"] == "Arquive-se" and cache["10"]["ementaDetalhada"] == "det"
+    assert cache["12"]["finalizada"] is False and cache["12"]["despacho"] is None
 
 
 def test_detalhes_proposicoes_respeita_orcamento_e_renova_so_o_que_tramita(dados, monkeypatch):
     hoje = dt.date.today()
     velho = (hoje - dt.timedelta(days=30)).isoformat()
     coletar.salvar(dados / "proposicoes" / "1.json", {"itens": [{"id": i, "siglaTipo": "PL"} for i in (1, 2, 3)]})
-    coletar.salvar(dados / "proposicoes_detalhe.json", {"1": {"em": velho, "fim": True}, "2": {"em": velho, "fim": False}, "3": {"em": hoje.isoformat(), "fim": False}})
+    coletar.salvar(dados / "proposicoes_detalhe.json", {"1": {"consultadoEm": velho, "finalizada": True}, "2": {"consultadoEm": velho, "finalizada": False}, "3": {"consultadoEm": hoje.isoformat(), "finalizada": False}})
     chamadas = roteador(monkeypatch, {"/proposicoes/2": {"dados": {"statusProposicao": {"descricaoSituacao": "Em tramitação"}}}})
     coletar.coletar_detalhes_proposicoes()
     assert [c[0] for c in chamadas] == ["/proposicoes/2"]  # 1 é final, 3 é recente
@@ -395,12 +395,12 @@ def test_autorias_senado_com_situacao_das_materias(dados, monkeypatch):
     aut = json.loads((dados / "senado_autorias.json").read_text())["5001"]
     assert [a["id"] for a in aut] == ["112", "114", "111"]   # 2025 (nº 5 antes do 3) e depois 2024
     pl = next(a for a in aut if a["id"] == "111")
-    assert pl["principal"] is True and pl["ementa"] == "Ementa 111" and pl["ap"] == "2024-03-04" and pl["sit"] == "ARQUIVADA" and pl["dt"] == "2025-01-02"
+    assert pl["principal"] is True and pl["ementa"] == "Ementa 111" and pl["dataApresentacao"] == "2024-03-04" and pl["situacao"] == "ARQUIVADA" and pl["dataSituacao"] == "2025-01-02"
     assert next(a for a in aut if a["id"] == "112")["principal"] is False   # o primeiro autor é outro
     cache = json.loads((dados / "senado_materias.json").read_text())
     assert sorted(cache) == ["111", "114"]   # REQ não é projeto
-    assert cache["111"] == {"sit": "ARQUIVADA", "data": "2025-01-02", "ap": "2024-03-04", "proc": 1110}
-    assert cache["114"]["sit"] == "AGUARDANDO DESPACHO"
+    assert cache["111"] == {"situacao": "ARQUIVADA", "dataSituacao": "2025-01-02", "dataApresentacao": "2024-03-04", "processo": 1110}
+    assert cache["114"]["situacao"] == "AGUARDANDO DESPACHO"
 
 
 def test_autorias_senado_coautoria_vira_uma_materia_so(dados, monkeypatch):
@@ -412,7 +412,7 @@ def test_autorias_senado_coautoria_vira_uma_materia_so(dados, monkeypatch):
 
 def test_autorias_senado_falha_individual_nao_derruba_nem_apaga_o_cache(dados, monkeypatch):
     coletar.salvar(dados / "senado.json", [{"id": "1", "nome": "A"}, {"id": "2", "nome": "B"}])
-    coletar.salvar(dados / "senado_materias.json", {"999": {"sit": "APROVADA", "data": None, "ap": None, "proc": 1}})
+    coletar.salvar(dados / "senado_materias.json", {"999": {"situacao": "APROVADA", "dataSituacao": None, "dataApresentacao": None, "processo": 1}})
 
     def get_senado(caminho, **p):
         if p["codigoParlamentarAutor"] == "1":
@@ -427,10 +427,10 @@ def test_autorias_senado_falha_individual_nao_derruba_nem_apaga_o_cache(dados, m
 
 
 def test_autorias_senado_sem_lista_de_senadores_nao_apaga_nada(dados):
-    coletar.salvar(dados / "senado_materias.json", {"1": {"sit": "X"}})
+    coletar.salvar(dados / "senado_materias.json", {"1": {"situacao": "X"}})
     with pytest.raises(RuntimeError, match="senadores vazia"):
         coletar.coletar_autorias_senado()
-    assert json.loads((dados / "senado_materias.json").read_text()) == {"1": {"sit": "X"}}
+    assert json.loads((dados / "senado_materias.json").read_text()) == {"1": {"situacao": "X"}}
 
 
 # ---------------------------------------------------------------- main
@@ -470,31 +470,31 @@ def _autor(nome, ordem, dep=None, proponente=0):
 
 def test_autores_da_resposta_acha_principal_e_ordena():
     r = coletar.autores_da_resposta([_autor("Bia", 2, 20), _autor("Ana", 1, 10, proponente=1), _autor("Poder Executivo", 3)])
-    assert r == {"p": 10, "a": [[10, "Ana"], [20, "Bia"], [None, "Poder Executivo", "Órgão do Poder Executivo"]]}
+    assert r == {"idPrincipal": 10, "autores": [[10, "Ana"], [20, "Bia"], [None, "Poder Executivo", "Órgão do Poder Executivo"]]}
 
 
 def test_autores_da_resposta_principal_que_nao_e_deputado():
     r = coletar.autores_da_resposta([_autor("Comissão X", 1, proponente=1), _autor("Bia", 2, 20)])
-    assert r["p"] is None and r["a"][0] == [None, "Comissão X", "Órgão do Poder Executivo"] and r["a"][1] == [20, "Bia"]
-    assert coletar.autores_da_resposta([]) == {"p": None, "a": []}
+    assert r["idPrincipal"] is None and r["autores"][0] == [None, "Comissão X", "Órgão do Poder Executivo"] and r["autores"][1] == [20, "Bia"]
+    assert coletar.autores_da_resposta([]) == {"idPrincipal": None, "autores": []}
 
 
 def test_autores_proposicoes_so_projetos_e_nao_reconsulta(dados, monkeypatch):
     coletar.salvar(dados / "proposicoes" / "1.json", {"itens": [
         {"id": 10, "siglaTipo": "PL"}, {"id": 11, "siglaTipo": "REQ"}, {"id": 12, "siglaTipo": "PEC"}]})
     coletar.salvar(dados / "proposicoes" / "2.json", {"itens": [{"id": 10, "siglaTipo": "PL"}]})  # compartilhada
-    coletar.salvar(dados / "proposicoes_autores.json", {"12": {"p": 5, "a": [[5, "Cia"]]}})
+    coletar.salvar(dados / "proposicoes_autores.json", {"12": {"idPrincipal": 5, "autores": [[5, "Cia"]]}})
     chamadas = roteador(monkeypatch, {"/proposicoes/10/autores": {"dados": [_autor("Ana", 1, 10, 1)]}})
     coletar.coletar_autores_proposicoes()
     assert [c[0] for c in chamadas] == ["/proposicoes/10/autores"]  # REQ fora, 12 já coletada, 10 uma vez só
     cache = json.loads((dados / "proposicoes_autores.json").read_text())
-    assert cache == {"10": {"p": 10, "a": [[10, "Ana"]]}, "12": {"p": 5, "a": [[5, "Cia"]]}}
+    assert cache == {"10": {"idPrincipal": 10, "autores": [[10, "Ana"]]}, "12": {"idPrincipal": 5, "autores": [[5, "Cia"]]}}
 
 
 def test_autores_proposicoes_falha_da_api_mantem_arquivo_anterior(dados, monkeypatch):
     coletar.salvar(dados / "proposicoes" / "1.json", {"itens": [{"id": 10, "siglaTipo": "PL"}, {"id": 12, "siglaTipo": "PL"}]})
-    coletar.salvar(dados / "proposicoes_autores.json", {"12": {"p": 5, "a": [[5, "Cia"]]}})
+    coletar.salvar(dados / "proposicoes_autores.json", {"12": {"idPrincipal": 5, "autores": [[5, "Cia"]]}})
     roteador(monkeypatch, {"/proposicoes/10/autores": RuntimeError("HTTP 500")})
     coletar.coletar_autores_proposicoes()
-    assert json.loads((dados / "proposicoes_autores.json").read_text()) == {"12": {"p": 5, "a": [[5, "Cia"]]}}
+    assert json.loads((dados / "proposicoes_autores.json").read_text()) == {"12": {"idPrincipal": 5, "autores": [[5, "Cia"]]}}
     assert coletar.AVISOS

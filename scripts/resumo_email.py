@@ -21,6 +21,8 @@ from email.message import EmailMessage
 from pathlib import Path
 from urllib.parse import quote
 
+import nomes_legados
+
 RAIZ = Path(__file__).resolve().parent.parent
 SITE = "https://adrianogpena.github.io/minha-bancada/"
 LIMITE = 12  # itens listados por seção; o resto vira "e mais N"
@@ -38,7 +40,7 @@ def git(*args: str) -> str:
 
 def carregar(rev: str, caminho: str):
     try:
-        return json.loads(git("show", f"{rev}:{caminho}"))
+        return nomes_legados.atualizar(caminho, json.loads(git("show", f"{rev}:{caminho}")))
     except (subprocess.CalledProcessError, ValueError):
         return None
 
@@ -66,20 +68,20 @@ def materias(antes: str, depois: str, prefixo: str, nome_arquivo: str):
         for k, m in my.items():
             if k not in mx:
                 novas[uf].append(m)
-            elif m.get("sit") != mx[k].get("sit"):
-                mudou[uf].append((m, mx[k].get("sit")))
+            elif m.get("situacao") != mx[k].get("situacao"):
+                mudou[uf].append((m, mx[k].get("situacao")))
     return novas, mudou
 
 
 def camara(antes: str, depois: str):
-    """Proposições novas, sem repetir as de vários autores; "deps" lista os deputados (ids da Câmara) que constam como autores."""
+    """Proposições novas, sem repetir as de vários autores; "idsDeputados" lista os deputados (ids da Câmara) que constam como autores."""
     novas = {}
     for f in arquivos(antes, depois, "dados/proposicoes"):
         x, y = carregar(antes, f), carregar(depois, f)
         ids = {i["id"] for i in (x or {}).get("itens", [])}
         for i in (y or {}).get("itens", []):
             if i["id"] not in ids:
-                novas.setdefault(i["id"], {**i, "deps": []})["deps"].append(int(Path(f).stem))
+                novas.setdefault(i["id"], {**i, "idsDeputados": []})["idsDeputados"].append(int(Path(f).stem))
     return list(novas.values())
 
 
@@ -96,8 +98,8 @@ def coletar(antes: str, depois: str) -> dict:
     x, y = carregar(antes, "dados/executivo.json") or [], carregar(depois, "dados/executivo.json") or []
     ids = {i["id"] for i in x}
     d["executivo"] = [i for i in y if i["id"] not in ids]
-    sit = {i["id"]: i.get("sit") for i in x}
-    d["executivo_sit"] = [(i, sit[i["id"]]) for i in y if i["id"] in sit and i.get("sit") != sit[i["id"]]]
+    situacao = {i["id"]: i.get("situacao") for i in x}
+    d["executivo_situacao"] = [(i, situacao[i["id"]]) for i in y if i["id"] in situacao and i.get("situacao") != situacao[i["id"]]]
     d["estaduais"] = materias(antes, depois, "dados/estaduais", "materias_2026.json")
     d["governo"] = materias(antes, depois, "dados/estaduais", "governo_2026.json")
     d["municipais"] = materias(antes, depois, "dados/municipais", "prefeitura_2026.json")
@@ -123,17 +125,17 @@ def linhas(d: dict) -> list[tuple[str, list[str]]]:
     ntot = d["senado"][1] - d["senado"][0]
     if ntot:
         s.append((f"Senado — {ntot} matérias novas", []))
-    if d["executivo"] or d["executivo_sit"]:
+    if d["executivo"] or d["executivo_situacao"]:
         itens = [f"{i['tipo']} {i['numero']}/{i['ano']} — {cortar(i.get('ementa'))}" for i in d["executivo"]]
-        itens += [f"{i['tipo']} {i['numero']}/{i['ano']}: {a or '—'} → {i.get('sit') or '—'}" for i, a in d["executivo_sit"]]
-        s.append((f"Executivo — {len(d['executivo'])} novos, {len(d['executivo_sit'])} com nova situação", itens))
+        itens += [f"{i['tipo']} {i['numero']}/{i['ano']}: {a or '—'} → {i.get('situacao') or '—'}" for i, a in d["executivo_situacao"]]
+        s.append((f"Executivo — {len(d['executivo'])} novos, {len(d['executivo_situacao'])} com nova situação", itens))
     for chave, titulo in (("estaduais", "Assembleia"), ("governo", "Governo do estado, projetos enviados à Assembleia"), ("municipais", "Câmara da capital")):
         novas, mudou = d[chave]
         for uf in sorted(set(novas) | set(mudou)):
-            itens = [f"{m.get('t', '')} {m.get('n', '')}/{m.get('a', '')} ({m.get('ap', '')}) — {cortar(m.get('e'))}".strip() for m in novas[uf][:LIMITE]]
+            itens = [f"{m.get('tipo', '')} {m.get('numero', '')}/{m.get('ano', '')} ({m.get('dataApresentacao', '')}) — {cortar(m.get('ementa'))}".strip() for m in novas[uf][:LIMITE]]
             if len(novas[uf]) > LIMITE:
                 itens.append(f"…e mais {len(novas[uf]) - LIMITE}")
-            itens += [f"{m.get('t', '')} {m.get('n', '')}/{m.get('a', '')}: {a or '—'} → {m.get('sit') or '—'}" for m, a in mudou[uf][:LIMITE]]
+            itens += [f"{m.get('tipo', '')} {m.get('numero', '')}/{m.get('ano', '')}: {a or '—'} → {m.get('situacao') or '—'}" for m, a in mudou[uf][:LIMITE]]
             s.append((f"{titulo} {uf} — {len(novas[uf])} novas, {len(mudou[uf])} com nova situação", itens))
     if d["votacoes"]:
         s.append(("Votações estaduais atualizadas", [", ".join(d["votacoes"])]))

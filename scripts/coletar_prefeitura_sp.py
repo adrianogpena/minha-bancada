@@ -76,7 +76,7 @@ def coletar() -> None:
             vistos.add(chave(p))
             if sim:
                 itens_ant[f"{p['tipo']}-{p['numero']}-{p['ano']}"] = {"tipo": p["tipo"], "numero": p["numero"], "ano": p["ano"],
-                                                                      "ap": p["data"][:10], "ementa": p["ementa"].strip()}
+                                                                      "dataApresentacao": p["data"][:10], "ementa": p["ementa"].strip()}
         itens = {}
         for mid, m in itens_ant.items():
             k = (m["tipo"], m["numero"], m["ano"])
@@ -90,10 +90,11 @@ def coletar() -> None:
                 sit = vetos[k]
             else:
                 sit = "Fora de tramitação (arquivado, retirado ou rejeitado)"
-            itens[mid] = {"t": m["tipo"], "td": td, "n": m["numero"], "a": m["ano"], "ap": m["ap"], "e": m["ementa"],
-                          "sit": sit, "tr": k in tramitando, "pdf": link(m["tipo"], m["numero"], m["ano"], cod)}
+            itens[mid] = {"tipo": m["tipo"], "tipoDescricao": td, "numero": m["numero"], "ano": m["ano"],
+                          "dataApresentacao": m["dataApresentacao"], "ementa": m["ementa"], "situacao": sit,
+                          "emTramitacao": k in tramitando, "linkTexto": link(m["tipo"], m["numero"], m["ano"], cod)}
             if k in vetos:
-                itens[f"VET-{mid}"] = {**itens[mid], "t": "VET", "td": vetos[k], "sit": f"{vetos[k]} do prefeito"}
+                itens[f"VET-{mid}"] = {**itens[mid], "tipo": "VET", "tipoDescricao": vetos[k], "situacao": f"{vetos[k]} do prefeito"}
         salvar(arq, {"coletadoEm": hoje.isoformat(), "host": HOST, "materias": itens, "vistos": sorted(vistos), "enviados": itens_ant})
         print(f"  SP prefeitura {ano}: {len(itens)}")
 

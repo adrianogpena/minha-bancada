@@ -32,7 +32,7 @@ def autor_governo(host: str) -> int:
 def coletar(uf: str, host: str) -> None:
     print(f"{uf} ({host})")
     autor = autor_governo(host)
-    tipos = {i: t for i, t in tipos_materia(host).items() if TIPO_GOVERNO.match(t["d"].strip())}
+    tipos = {i: t for i, t in tipos_materia(host).items() if TIPO_GOVERNO.match(t["descricao"].strip())}
     hoje = dt.date.today()
     for ano in range(ANO_INICIAL, hoje.year + 1):
         arq = DADOS / uf / f"governo_{ano}.json"
@@ -43,7 +43,7 @@ def coletar(uf: str, host: str) -> None:
         for tid, t in tipos.items():
             for m in paginar(host, "materia/materialegislativa", ano=ano, tipo=tid):
                 if autor in (m.get("autores") or []):
-                    itens[str(m["id"])] = compactar_materia(m, {tid: {"s": t["s"], "d": t["d"]}})
+                    itens[str(m["id"])] = compactar_materia(m, {tid: t})
         salvar(arq, {"coletadoEm": hoje.isoformat(), "materias": itens})
         print(f"  {uf} governo {ano}: {len(itens)}")
 

@@ -45,15 +45,15 @@ def desfecho(id_: int) -> dict:
 
     norma/dataNorma/veto: ex. 'Transformado na Lei Ordinária 15421/2026. ... Vetado parcialmente.'
     remessa: data em que a matéria foi enviada à sanção do presidente.
-    razoes/msc: onde estão publicadas as razões do veto (DOU) e a mensagem do veto.
-    edicao: data de publicação da medida provisória (vale desde então).
+    razoesVeto/mensagemVeto: onde estão publicadas as razões do veto (DOU) e a mensagem do veto.
+    dataEdicao: data de publicação da medida provisória (vale desde então).
     """
     tram = get(f"/proposicoes/{id_}/tramitacoes")["dados"]
-    saida = {"t": 1}
+    saida = {"tramitacaoLida": True}
     for t in tram:
         desp = t.get("despacho") or ""
-        if "Publicação da Medida Provisória" in desp and "edicao" not in saida:
-            saida["edicao"] = (t.get("dataHora") or "")[:10]
+        if "Publicação da Medida Provisória" in desp and "dataEdicao" not in saida:
+            saida["dataEdicao"] = (t.get("dataHora") or "")[:10]
         m = NORMA.search(desp)
         sit = t.get("descricaoSituacao") or ""
         if m or "veto" in (t.get("descricaoSituacao") or "").lower():
@@ -63,9 +63,9 @@ def desfecho(id_: int) -> dict:
                           else "parcial" if re.search(r"veto parcial|vetad[oa] parcial", texto, re.I) else None})
             r, c = RAZOES.search(desp), MSC_VETO.search(desp)
             if r:
-                saida["razoes"] = re.sub(r"\s+", " ", r.group(1)).strip()
+                saida["razoesVeto"] = re.sub(r"\s+", " ", r.group(1)).strip()
             if c:
-                saida["msc"] = c.group(1)
+                saida["mensagemVeto"] = c.group(1)
             break
     fim = saida.get("dataNorma") or "9999"
     for t in tram:
@@ -77,7 +77,7 @@ def desfecho(id_: int) -> dict:
 
 def tramitacao_lida(p: dict) -> bool:
     """Itens que viraram lei ou foram vetados só estão completos depois de lida a tramitação."""
-    return not (p.get("sit") or "").lower().startswith(("transformad", "vetad")) or p.get("t") == 1
+    return not (p.get("situacao") or "").lower().startswith(("transformad", "vetad")) or p.get("tramitacaoLida")
 
 
 def detalhar(prop: dict) -> dict:
@@ -88,9 +88,9 @@ def detalhar(prop: dict) -> dict:
     return {**extra,
         "id": prop["id"], "tipo": d["siglaTipo"], "numero": d["numero"], "ano": d["ano"],
         "ementa": (d.get("ementa") or "").strip(),
-        "apres": (d.get("dataApresentacao") or "")[:10],
-        "sit": st.get("descricaoSituacao"),
-        "data": (st.get("dataHora") or "")[:10],
+        "dataApresentacao": (d.get("dataApresentacao") or "")[:10],
+        "situacao": st.get("descricaoSituacao"),
+        "dataSituacao": (st.get("dataHora") or "")[:10],
         "inteiroTeor": d.get("urlInteiroTeor"),
     }
 
@@ -112,7 +112,7 @@ def main() -> None:
     novos = {}
     pendentes = []
     for p in achados:
-        if p["id"] in antigo and final(antigo[p["id"]].get("sit")) and tramitacao_lida(antigo[p["id"]]):
+        if p["id"] in antigo and final(antigo[p["id"]].get("situacao")) and tramitacao_lida(antigo[p["id"]]):
             novos[p["id"]] = antigo[p["id"]]
         else:
             pendentes.append(p)
@@ -129,7 +129,7 @@ def main() -> None:
     if not novos:
         print("Nada coletado; mantendo o arquivo anterior.", file=sys.stderr)
         return
-    lista = sorted(novos.values(), key=lambda p: (p["apres"], p["id"]), reverse=True)
+    lista = sorted(novos.values(), key=lambda p: (p["dataApresentacao"], p["id"]), reverse=True)
     ARQUIVO.write_text(json.dumps(lista, ensure_ascii=False, indent=0), encoding="utf-8")
     print(f"Salvo: {len(lista)} proposições ({len(pendentes)} consultadas) -> {ARQUIVO}")
 

@@ -137,7 +137,7 @@ def mapa_autores(host: str, deputados: dict) -> dict:
 
 
 def tipos_materia(host: str) -> dict:
-    return {t["id"]: {"s": t["sigla"], "d": t["descricao"]} for t in paginar(host, "materia/tipomaterialegislativa")}
+    return {t["id"]: {"sigla": t["sigla"], "descricao": t["descricao"]} for t in paginar(host, "materia/tipomaterialegislativa")}
 
 
 def situacao(m: dict) -> str:
@@ -147,10 +147,11 @@ def situacao(m: dict) -> str:
 
 
 def compactar_materia(m: dict, tipos: dict) -> dict:
-    t = tipos.get(m["tipo"], {"s": "?", "d": "?"})
-    return {"t": t["s"], "td": t["d"], "n": m["numero"], "a": m["ano"], "ap": m.get("data_apresentacao"),
-            "e": (m.get("ementa") or "").strip(), "sit": situacao(m), "tr": bool(m.get("em_tramitacao")),
-            "pdf": https(m.get("texto_original")) or None, "au": m.get("autores") or []}
+    t = tipos.get(m["tipo"], {"sigla": "?", "descricao": "?"})
+    return {"tipo": t["sigla"], "tipoDescricao": t["descricao"], "numero": m["numero"], "ano": m["ano"],
+            "dataApresentacao": m.get("data_apresentacao"), "ementa": (m.get("ementa") or "").strip(),
+            "situacao": situacao(m), "emTramitacao": bool(m.get("em_tramitacao")),
+            "linkTexto": https(m.get("texto_original")) or None, "idsAutores": m.get("autores") or []}
 
 
 def coletar_materias(host: str, uf: str, leg: dict, autores: dict, tipos: dict) -> None:
@@ -164,12 +165,12 @@ def coletar_materias(host: str, uf: str, leg: dict, autores: dict, tipos: dict) 
             continue
         itens = {}
         for tid, t in tipos.items():
-            if not TIPO_PROJETO.match(t["d"]):
+            if not TIPO_PROJETO.match(t["descricao"]):
                 continue
             for m in paginar(host, "materia/materialegislativa", ano=ano, tipo=tid):
                 deps = sorted({autores[a] for a in (m.get("autores") or []) if a in autores})
                 if deps:
-                    itens[str(m["id"])] = {**compactar_materia(m, tipos), "dep": deps}
+                    itens[str(m["id"])] = {**compactar_materia(m, tipos), "idsDeputados": deps}
         salvar(arq, {"coletadoEm": hoje.isoformat(), "materias": itens})
         print(f"  {uf} projetos {ano}: {len(itens)}")
 
@@ -188,7 +189,7 @@ def coletar_votacoes(host: str, uf: str, leg: dict, deputados: dict) -> None:
     cache = ler(pasta / "votacoes.json", {"votacoes": {}})["votacoes"]
     desde = leg["data_inicio"]
     if cache:
-        ultima = max(v["d"] for v in cache.values())
+        ultima = max(v["data"] for v in cache.values())
         desde = max(desde, (dt.date.fromisoformat(ultima) - dt.timedelta(days=14)).isoformat())
 
     votos = {}
@@ -203,10 +204,10 @@ def coletar_votacoes(host: str, uf: str, leg: dict, deputados: dict) -> None:
             avisar(f"{uf}: votação {vid}: {e}")
             continue
         nome, nat = resultados.get(r["tipo_resultado_votacao"], ("", ""))
-        novas[str(vid)] = {"d": data_curta(r["data_hora"]), "m": r["materia"], "ok": resultado_aprovado(nome, nat),
-                           "res": nome, "sim": r["numero_votos_sim"], "nao": r["numero_votos_nao"],
-                           "abs": r["numero_abstencoes"], "v": lista}
-    cache.update({k: v for k, v in novas.items() if v["d"]})
+        novas[str(vid)] = {"data": data_curta(r["data_hora"]), "idMateria": r["materia"], "aprovada": resultado_aprovado(nome, nat),
+                           "resultado": nome, "sim": r["numero_votos_sim"], "nao": r["numero_votos_nao"],
+                           "abstencoes": r["numero_abstencoes"], "votos": lista}
+    cache.update({k: v for k, v in novas.items() if v["data"]})
     salvar(pasta / "votacoes.json", {"votacoes": cache})
     print(f"  {uf} votações nominais: {len(cache)} ({len(novas)} atualizadas)")
 
@@ -216,7 +217,7 @@ def coletar_materias_votadas(host: str, uf: str, tipos: dict) -> None:
     pasta = DADOS / uf
     votacoes = ler(pasta / "votacoes.json", {"votacoes": {}})["votacoes"]
     cache = ler(pasta / "materias_votadas.json", {})
-    faltam = sorted({str(v["m"]) for v in votacoes.values() if v["m"]} - set(cache))
+    faltam = sorted({str(v["idMateria"]) for v in votacoes.values() if v["idMateria"]} - set(cache))
 
     def buscar(mid):
         return mid, compactar_materia(get(host, f"materia/materialegislativa/{mid}"), tipos)
@@ -225,7 +226,7 @@ def coletar_materias_votadas(host: str, uf: str, tipos: dict) -> None:
         for f in as_completed([ex.submit(buscar, m) for m in faltam]):
             try:
                 mid, m = f.result()
-                cache[mid] = {k: m[k] for k in ("t", "td", "n", "a", "e")}
+                cache[mid] = {k: m[k] for k in ("tipo", "tipoDescricao", "numero", "ano", "ementa")}
             except Exception as e:
                 avisar(f"{uf}: matéria votada: {e}")
     salvar(pasta / "materias_votadas.json", cache)

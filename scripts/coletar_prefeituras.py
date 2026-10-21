@@ -56,7 +56,7 @@ def coletar(uf: str, host: str) -> None:
     print(f"{uf} ({host})")
     autores = autores_prefeitura(host)
     tipos = {i: t for i, t in tipos_materia(host).items()
-             if TIPO_PREFEITO.match(t["d"].strip()) and not NAO_PREFEITO.search(t["d"])}
+             if TIPO_PREFEITO.match(t["descricao"].strip()) and not NAO_PREFEITO.search(t["descricao"])}
     hoje = dt.date.today()
     for ano in range(ANO_INICIAL, hoje.year + 1):
         arq = DADOS / uf / f"prefeitura_{ano}.json"
@@ -67,7 +67,7 @@ def coletar(uf: str, host: str) -> None:
         for tid, t in tipos.items():
             for m in paginar(host, "materia/materialegislativa", ano=ano, tipo=tid):
                 if autores & set(m.get("autores") or []):
-                    itens[str(m["id"])] = compactar_materia(m, {tid: {"s": t["s"], "d": t["d"]}})
+                    itens[str(m["id"])] = compactar_materia(m, {tid: t})
         salvar(arq, {"coletadoEm": hoje.isoformat(), "host": host, "materias": itens})
         print(f"  {uf} prefeitura {ano}: {len(itens)}")
 

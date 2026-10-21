@@ -74,14 +74,14 @@ def test_sp_coletar_classifica_situacao(saida, monkeypatch):
     sp.coletar()
     r = json.loads((saida / "SP" / f"prefeitura_{a}.json").read_text())
     m = r["materias"]
-    assert m[f"PL-1-{a}"]["sit"] == "Virou lei (Lei 18.000, publicada em 2026-03-04)"
-    assert m[f"PL-2-{a}"]["sit"] == "Em tramitação" and m[f"PL-2-{a}"]["tr"] is True
-    assert m[f"PL-3-{a}"]["sit"] == "Veto parcial"
-    assert m[f"VET-PL-3-{a}"]["t"] == "VET" and m[f"VET-PL-3-{a}"]["sit"] == "Veto parcial do prefeito"
-    assert m[f"PL-4-{a}"]["sit"].startswith("Fora de tramitação")
+    assert m[f"PL-1-{a}"]["situacao"] == "Virou lei (Lei 18.000, publicada em 2026-03-04)"
+    assert m[f"PL-2-{a}"]["situacao"] == "Em tramitação" and m[f"PL-2-{a}"]["emTramitacao"] is True
+    assert m[f"PL-3-{a}"]["situacao"] == "Veto parcial"
+    assert m[f"VET-PL-3-{a}"]["tipo"] == "VET" and m[f"VET-PL-3-{a}"]["situacao"] == "Veto parcial do prefeito"
+    assert m[f"PL-4-{a}"]["situacao"].startswith("Fora de tramitação")
     assert f"PL-5-{a}" not in m and f"PLO-1-{a}" not in m          # autoria de outro promovente
     assert not any("REQ" in k for k in m)                         # tipo não monitorado
-    assert m[f"PL-1-{a}"]["e"] == "Ementa 1" and m[f"PL-1-{a}"]["ap"] == f"{a}-02-01"
+    assert m[f"PL-1-{a}"]["ementa"] == "Ementa 1" and m[f"PL-1-{a}"]["dataApresentacao"] == f"{a}-02-01"
     assert len(r["vistos"]) == 6  # PL 1-5 e PLO 1 já consultados; REQ nunca
 
 
@@ -123,8 +123,8 @@ def test_ba_limpar_e_campo():
 
 def test_ba_linhas():
     r = ba.linhas(resp_grade(linha_html("PLE-12/2025", "Dispõe &amp; tal", "Em tramitação"), linha_html("VTO-1/2025", "Veto", "Armazenado", par="P2")))
-    assert r == [{"prop": "PLE-12/2025", "ementa": "Dispõe & tal", "sit": "Em tramitação", "par": "PARM123"},
-                 {"prop": "VTO-1/2025", "ementa": "Veto", "sit": "Armazenado", "par": "P2"}]
+    assert r == [{"prop": "PLE-12/2025", "ementa": "Dispõe & tal", "situacao": "Em tramitação", "parametros": "PARM123"},
+                 {"prop": "VTO-1/2025", "ementa": "Veto", "situacao": "Armazenado", "parametros": "P2"}]
 
 
 def test_ba_iso():
@@ -132,7 +132,7 @@ def test_ba_iso():
 
 
 def movs(*itens):
-    return [{"d": "01/01/2025", "s": s, "o": o, "pdf": None} for s, o in itens]
+    return [{"data": "01/01/2025", "situacao": s, "observacao": o, "link": None} for s, o in itens]
 
 
 def test_ba_situacao_sancionado_com_numero_da_lei():
@@ -160,13 +160,13 @@ def test_ba_coletar_ponta_a_ponta(saida, monkeypatch):
     monkeypatch.setattr(ba, "ajax", lambda url, sci, opc, parm: grade)
     chamados = []
     monkeypatch.setattr(ba, "historico", lambda par: chamados.append(par) or [
-        {"d": "03/02/2025", "s": "Anexado integra", "o": "", "pdf": "http://pdf"}, {"d": "01/02/2025", "s": "Protocolado", "o": "", "pdf": None},
-        {"d": "01/02/2025", "s": "Sancionado", "o": "LEI Nº 100/2025 PUBLICADO", "pdf": None}][::-1])
+        {"data": "03/02/2025", "situacao": "Anexado integra", "observacao": "", "link": "http://pdf"}, {"data": "01/02/2025", "situacao": "Protocolado", "observacao": "", "link": None},
+        {"data": "01/02/2025", "situacao": "Sancionado", "observacao": "LEI Nº 100/2025 PUBLICADO", "link": None}][::-1])
     ba.coletar()
     assert chamados == ["A"]   # só projetos de ANO_INICIAL em diante e de tipos conhecidos
     m = json.loads((saida / "BA" / f"prefeitura_{a}.json").read_text())["materias"][f"PLE-10/{a}"]
-    assert m["t"] == "PL" and m["n"] == 10 and m["ap"] == "2025-02-01" and m["pdf"] == "http://pdf"
-    assert m["sit"] == "Sancionado (Lei 100/2025)" and m["tr"] is False
+    assert m["tipo"] == "PL" and m["numero"] == 10 and m["dataApresentacao"] == "2025-02-01" and m["linkTexto"] == "http://pdf"
+    assert m["situacao"] == "Sancionado (Lei 100/2025)" and m["emTramitacao"] is False
 
 
 def test_ba_coletar_total_divergente_levanta(saida, monkeypatch):
@@ -239,8 +239,8 @@ def test_go_coletar(saida, monkeypatch):
     go.coletar()
     m = json.loads((saida / "GO" / f"prefeitura_{a}.json").read_text())["materias"]
     assert sorted(m) == [f"PL-10-{a}", f"PLC-2-{a}"]
-    assert m[f"PL-10-{a}"]["ap"] == "2026-03-01" and m[f"PL-10-{a}"]["sit"] == "Anexado a outro processo"   # fica o mais antigo
-    assert m[f"PLC-2-{a}"]["tr"] is True and m[f"PLC-2-{a}"]["pdf"].endswith("/a3/")
+    assert m[f"PL-10-{a}"]["dataApresentacao"] == "2026-03-01" and m[f"PL-10-{a}"]["situacao"] == "Anexado a outro processo"   # fica o mais antigo
+    assert m[f"PLC-2-{a}"]["emTramitacao"] is True and m[f"PLC-2-{a}"]["linkTexto"].endswith("/a3/")
 
 
 def test_go_coletar_leitura_incompleta_levanta(saida, monkeypatch):
@@ -277,4 +277,4 @@ def test_governo_coletar(tmp_path, monkeypatch):
     monkeypatch.setattr(est, "get", s.get)
     gov.coletar("PB", "h")
     r = json.loads((tmp_path / "PB" / f"governo_{a}.json").read_text())["materias"]
-    assert list(r) == ["1"] and r["1"]["sit"] == "Aprovado"
+    assert list(r) == ["1"] and r["1"]["situacao"] == "Aprovado"

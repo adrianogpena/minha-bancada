@@ -8,7 +8,7 @@ import resumo_email as r
 
 
 def vazio_d(**extra):
-    d = {"camara": [], "senado": (0, 0), "detalhe": (0, 0), "executivo": [], "executivo_sit": [],
+    d = {"camara": [], "senado": (0, 0), "detalhe": (0, 0), "executivo": [], "executivo_situacao": [],
          "estaduais": (defaultdict(list), defaultdict(list)), "governo": (defaultdict(list), defaultdict(list)),
          "municipais": (defaultdict(list), defaultdict(list)), "votacoes": [], "tse": []}
     d.update(extra)
@@ -16,7 +16,7 @@ def vazio_d(**extra):
 
 
 def prop(tipo="PL", n=1, deps=()):
-    return {"siglaTipo": tipo, "numero": n, "ano": 2025, "ementa": "Dispõe sobre algo", "deps": list(deps)}
+    return {"siglaTipo": tipo, "numero": n, "ano": 2025, "ementa": "Dispõe sobre algo", "idsDeputados": list(deps)}
 
 
 # ---------------------------------------------------------------- resumo_email
@@ -49,7 +49,7 @@ def test_linhas_limita_itens_listados():
 
 def test_linhas_senado_executivo_e_votacoes():
     d = vazio_d(senado=(10, 13), executivo=[{"tipo": "MPV", "numero": 1, "ano": 2025, "ementa": "x"}],
-                executivo_sit=[({"tipo": "PL", "numero": 2, "ano": 2025, "sit": "Sancionada"}, "Aguardando")],
+                executivo_situacao=[({"tipo": "PL", "numero": 2, "ano": 2025, "situacao": "Sancionada"}, "Aguardando")],
                 votacoes=["SP", "RJ"], tse=["dados/tse/2026/SP.json"])
     titulos = [t for t, _ in r.linhas(d)]
     assert "Senado — 3 matérias novas" in titulos
@@ -86,8 +86,8 @@ def test_mensagem(monkeypatch):
 # ---------------------------------------------------------------- feeds
 
 def dados_estaduais():
-    novas = defaultdict(list, {"SP": [{"t": "PL", "n": 1, "a": 2026, "ap": "Dep. X", "e": "e", "dep": [77]}],
-                               "RJ": [{"t": "PL", "n": 2, "a": 2026, "ap": "Dep. Y", "e": "e"}]})
+    novas = defaultdict(list, {"SP": [{"tipo": "PL", "numero": 1, "ano": 2026, "dataApresentacao": "2026-01-01", "ementa": "e", "idsDeputados": [77]}],
+                               "RJ": [{"tipo": "PL", "numero": 2, "ano": 2026, "dataApresentacao": "2026-01-02", "ementa": "e"}]})
     return novas, defaultdict(list)
 
 

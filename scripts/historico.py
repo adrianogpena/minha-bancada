@@ -32,6 +32,7 @@ from datetime import date, datetime, timezone
 from pathlib import Path
 
 import feeds
+import nomes_legados
 import resumo_email as r
 
 PASTA = r.RAIZ / "dados" / "historico"
@@ -71,7 +72,7 @@ def ler_lote(rev: str, caminhos: list[str]) -> dict:
             continue
         n = int(cab[2])
         try:
-            saida[c] = json.loads(buf[pos:pos + n])
+            saida[c] = nomes_legados.atualizar(c, json.loads(buf[pos:pos + n]))
         except ValueError:
             pass
         pos += n + 1
@@ -202,7 +203,7 @@ def camara(ctx: Contexto, antes: str, depois: str) -> list:
         ids = {i["id"] for i in (a.get(f) or {}).get("itens", [])}
         for i in (b.get(f) or {}).get("itens", []):
             if i["id"] not in ids:
-                novas.setdefault(i["id"], {**i, "deps": []})["deps"].append(int(Path(f).stem))
+                novas.setdefault(i["id"], {**i, "idsDeputados": []})["idsDeputados"].append(int(Path(f).stem))
     det_a = ler_lote(antes, ["dados/proposicoes_detalhe.json"]).get("dados/proposicoes_detalhe.json") or {}
     det_b = ler_lote(depois, ["dados/proposicoes_detalhe.json"]).get("dados/proposicoes_detalhe.json") or {}
     saida = []
@@ -212,27 +213,27 @@ def camara(ctx: Contexto, antes: str, depois: str) -> list:
         return ps, next((p["uf"] for p in ps if p.get("uf")), None)
 
     for i in novas.values():
-        ps, uf = autores(i["deps"])
+        ps, uf = autores(i["idsDeputados"])
         det = det_b.get(str(i["id"])) or {}
         saida.append(evento("BR", "nova", f"{i['siglaTipo']} {i['numero']}/{i['ano']}", uf=uf, p=ps, x=i.get("ementa"),
-                            d=det.get("apres"), f=fontes_camara(i["id"], det.get("inteiroTeor"))))
-    mudancas = [pid for pid, y in det_b.items() if pid in det_a and (mudou(det_a[pid].get("sit"), y.get("sit")) or mudou(det_a[pid].get("tram"), y.get("tram")))]
+                            d=det.get("dataApresentacao"), f=fontes_camara(i["id"], det.get("inteiroTeor"))))
+    mudancas = [pid for pid, y in det_b.items() if pid in det_a and (mudou(det_a[pid].get("situacao"), y.get("situacao")) or mudou(det_a[pid].get("tramitacao"), y.get("tramitacao")))]
     if mudancas:
         meta = {}
         todos = ler_lote(depois, listar(depois, "dados/proposicoes"))
         for f, d in todos.items():
             for i in d.get("itens", []):
-                m = meta.setdefault(str(i["id"]), {**i, "deps": []})
-                m["deps"].append(int(Path(f).stem))
+                m = meta.setdefault(str(i["id"]), {**i, "idsDeputados": []})
+                m["idsDeputados"].append(int(Path(f).stem))
         for pid in mudancas:
             i, y, x = meta.get(pid), det_b[pid], det_a[pid]
             if not i or i["siglaTipo"] not in PROJETOS:
                 continue
-            ps, uf = autores(i["deps"])
-            sit = mudou(x.get("sit"), y.get("sit"))
-            antes_, depois_ = (x.get("sit"), y.get("sit")) if sit else (x.get("tram"), y.get("tram"))
-            saida.append(evento("BR", "situacao", f"{i['siglaTipo']} {i['numero']}/{i['ano']}", uf=uf, p=ps, x=y.get("desp") or i.get("ementa"),
-                                m=[antes_ or "—", depois_ or "—"], s=None if sit else "Nova tramitação", d=y.get("data"),
+            ps, uf = autores(i["idsDeputados"])
+            sit = mudou(x.get("situacao"), y.get("situacao"))
+            antes_, depois_ = (x.get("situacao"), y.get("situacao")) if sit else (x.get("tramitacao"), y.get("tramitacao"))
+            saida.append(evento("BR", "situacao", f"{i['siglaTipo']} {i['numero']}/{i['ano']}", uf=uf, p=ps, x=y.get("despacho") or i.get("ementa"),
+                                m=[antes_ or "—", depois_ or "—"], s=None if sit else "Nova tramitação", d=y.get("dataSituacao"),
                                 f=fontes_camara(pid, y.get("inteiroTeor"))))
     return saida
 
@@ -276,17 +277,17 @@ def senado(ctx: Contexto, antes: str, depois: str) -> list:
         pass
     saida = []
     for mid, m in b.items():
-        if mid in a and (not a[mid].get("sit") or not mudou(a[mid].get("sit"), m.get("sit"))):
+        if mid in a and (not a[mid].get("situacao") or not mudou(a[mid].get("situacao"), m.get("situacao"))):
             continue   # sem situação anterior é a coleta preenchendo o campo, não uma mudança
         sid, i = autoria.get(mid, (None, None))
         nome = ctx.senadores.get(sid)
         ps = [{"c": None, "n": nome, "h": f"politico.html?f=senado&i={sid}"}] if nome else None
         titulo = f"{i['tipo']} {i['numero']}/{i['ano']}" if i else f"Matéria {mid} do Senado"
-        fontes_ = [("Matéria no Senado", SENADO_MATERIA + mid), ("Dados abertos do Senado", "https://legis.senado.leg.br/dadosabertos/processo/" + str(m["proc"]) if m.get("proc") else None)]
+        fontes_ = [("Matéria no Senado", SENADO_MATERIA + mid), ("Dados abertos do Senado", "https://legis.senado.leg.br/dadosabertos/processo/" + str(m["processo"]) if m.get("processo") else None)]
         if mid in a:
-            saida.append(evento("BR", "situacao", titulo, p=ps, x=i and i["ementa"], m=[a[mid].get("sit") or "—", m.get("sit") or "—"], d=m.get("data"), f=fontes_))
+            saida.append(evento("BR", "situacao", titulo, p=ps, x=i and i["ementa"], m=[a[mid].get("situacao") or "—", m.get("situacao") or "—"], d=m.get("dataSituacao"), f=fontes_))
         else:
-            saida.append(evento("BR", "nova", titulo, p=ps, x=i and i["ementa"], s=m.get("sit"), d=m.get("ap") or m.get("data"), f=fontes_))
+            saida.append(evento("BR", "nova", titulo, p=ps, x=i and i["ementa"], s=m.get("situacao"), d=m.get("dataApresentacao") or m.get("dataSituacao"), f=fontes_))
     return saida
 
 
@@ -321,10 +322,10 @@ def executivo(ctx: Contexto, antes: str, depois: str) -> list:
     saida = []
     for i in b:
         x = ant.get(i["id"])
-        if x and not mudou(x.get("sit"), i.get("sit")):
+        if x and not mudou(x.get("situacao"), i.get("situacao")):
             continue
         saida.append(evento("BR", "situacao" if x else "nova", f"{i['tipo']} {i['numero']}/{i['ano']}", p=pres, x=i.get("ementa"),
-                            m=[x.get("sit") or "—", i.get("sit") or "—"] if x else None, s=None if x else i.get("sit"), d=i.get("data") or i.get("apres"),
+                            m=[x.get("situacao") or "—", i.get("situacao") or "—"] if x else None, s=None if x else i.get("situacao"), d=i.get("dataSituacao") or i.get("dataApresentacao"),
                             f=fontes_camara(i["id"], i.get("inteiroTeor"))))
     return saida
 
@@ -340,13 +341,13 @@ def sapl(ctx: Contexto, antes: str, depois: str, uf: str, arquivo: str, local: s
         ant = (a.get(f) or {}).get("materias", {})
         for mid, m in ((b.get(f) or {}).get("materias") or {}).items():
             novo = mid not in ant
-            if not novo and not mudou(ant[mid].get("sit"), m.get("sit")):
+            if not novo and not mudou(ant[mid].get("situacao"), m.get("situacao")):
                 continue
             host = host_de(b.get(f))
-            titulo = f"{m.get('td') or m.get('t', '')} {m.get('n', '')}/{m.get('a', '')}".strip()
-            saida.append(evento(local, "nova" if novo else "situacao", titulo, uf=uf, p=politicos(m), x=m.get("e"),
-                                m=None if novo else [ant[mid].get("sit") or "—", m.get("sit") or "—"], s=m.get("sit") if novo else None, d=m.get("ap"),
-                                f=[("Matéria no sistema legislativo", f"https://{host}/materia/{mid}" if host and str(mid).isdigit() else None), ("Texto", m.get("pdf"))]))
+            titulo = f"{m.get('tipoDescricao') or m.get('tipo', '')} {m.get('numero', '')}/{m.get('ano', '')}".strip()
+            saida.append(evento(local, "nova" if novo else "situacao", titulo, uf=uf, p=politicos(m), x=m.get("ementa"),
+                                m=None if novo else [ant[mid].get("situacao") or "—", m.get("situacao") or "—"], s=m.get("situacao") if novo else None, d=m.get("dataApresentacao"),
+                                f=[("Matéria no sistema legislativo", f"https://{host}/materia/{mid}" if host and str(mid).isdigit() else None), ("Texto", m.get("linkTexto"))]))
     return saida
 
 
@@ -358,7 +359,7 @@ def estados(ctx: Contexto, antes: str, depois: str) -> list:
             continue
         ass = ctx.assembleia(uf)
         saida += sapl(ctx, antes, depois, uf, "estaduais", f"UF:{uf}",
-                      lambda m, uf=uf, ass=ass: [ctx.politico(f"est:{uf}:{d}", ass["nomes"].get(d) or f"Deputado(a) estadual {d}") for d in m.get("dep", [])] or None,
+                      lambda m, uf=uf, ass=ass: [ctx.politico(f"est:{uf}:{d}", ass["nomes"].get(d) or f"Deputado(a) estadual {d}") for d in m.get("idsDeputados", [])] or None,
                       lambda _, ass=ass: ass["host"])
         gov = [ctx.politico(f"gov:{uf}", f"Governo estadual ({uf})")]
         saida += sapl(ctx, antes, depois, uf, "estaduais", f"UF:{uf}", lambda m, gov=gov: gov, lambda _, ass=ass: ass["host"], r"governo_\d{4}")
@@ -382,11 +383,11 @@ def votacoes_estaduais(ctx: Contexto, antes: str, depois: str, uf: str, ass: dic
         materias.update(d.get("materias", d) if isinstance(d, dict) else {})
     saida = []
     for vid, v in novas.items():
-        m = materias.get(str(v.get("m"))) or {}
-        titulo = f"{m.get('t', '')} {m.get('n', '')}/{m.get('a', '')}".strip() if m else f"Matéria {v.get('m')}"
-        placar = f"{v.get('sim', 0)} sim, {v.get('nao', 0)} não, {v.get('abs', 0)} abstenções"
-        saida.append(evento(f"UF:{uf}", "votacao", f"{titulo} (votação nominal)", uf=uf, x=m.get("e"), s=f"{v.get('res') or 'Sem resultado informado'}, {placar}", d=v.get("d"),
-                            f=[("Matéria no sistema legislativo", f"https://{ass['host']}/materia/{v['m']}" if ass.get("host") and v.get("m") else None)]))
+        m = materias.get(str(v.get("idMateria"))) or {}
+        titulo = f"{m.get('tipo', '')} {m.get('numero', '')}/{m.get('ano', '')}".strip() if m else f"Matéria {v.get('idMateria')}"
+        placar = f"{v.get('sim', 0)} sim, {v.get('nao', 0)} não, {v.get('abstencoes', 0)} abstenções"
+        saida.append(evento(f"UF:{uf}", "votacao", f"{titulo} (votação nominal)", uf=uf, x=m.get("ementa"), s=f"{v.get('resultado') or 'Sem resultado informado'}, {placar}", d=v.get("data"),
+                            f=[("Matéria no sistema legislativo", f"https://{ass['host']}/materia/{v['idMateria']}" if ass.get("host") and v.get("idMateria") else None)]))
     return saida
 
 

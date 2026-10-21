@@ -15,6 +15,7 @@ Todas as coletas rodam sozinhas no GitHub Actions (`.github/workflows/atualizar.
   - `votacao_candidato_munzona/votacao_candidato_munzona_<ano>.zip` (votos)
   - `consulta_cand/rede_social_candidato_<ano>.zip` (redes sociais; 2022 é um ZIP por UF: `_<UF>.zip`)
   - `https://cdn.tse.jus.br/estatistica/sead/eleicoes/eleicoes<ano>/fotos/foto_cand<ano>_<UF>_div.zip` (fotos, só cargos estaduais e federais; salvas em `site/fotos/<ano>/`)
+- **2026-10-21:** removido o campo `reeleicao`: a coluna `ST_REELEICAO` não existe nos arquivos do TSE (2018 a 2026), e o campo ficava sempre falso.
 - **Como:** `python scripts/coletar_tse.py` baixa o ZIP por HTTP (requests, streaming) para um arquivo temporário, lê o CSV de dentro, guarda só os eleitos e as colunas usadas e grava um JSON por UF. Anos encerrados são baixados uma vez só; 2026 (em andamento) é refeito a cada 2 dias.
 
 ### Câmara dos Deputados: deputados, votações, proposições, despesas (`dados/votacoes/`, `dados/proposicoes/`, `dados/proposicoes_detalhe.json`)
@@ -24,8 +25,9 @@ Todas as coletas rodam sozinhas no GitHub Actions (`.github/workflows/atualizar.
 
 ### Senado: votações, matérias e gastos CEAPS (`dados/senado_votacoes/`, `dados/senado_materias.json`)
 - **Entrada:** 2026-10-17 (votações e matérias). CEAPS e autorias (`dados/senado_ceaps.json`, `dados/senado_autorias.json`) entraram na versão de 2026-10-18 e não vão para o git (baixados de novo a cada execução).
-- **De onde:** `https://legis.senado.leg.br/dadosabertos` (senadores, votações, autorias, matérias) e `https://adm.senado.gov.br/adm-dadosabertos/api/v1/senadores/despesas_ceaps/<ano>` (CEAPS).
+- **De onde:** `https://legis.senado.leg.br/dadosabertos` (senadores: `/senador/lista/atual`; votações: `/votacao`; autorias e situação das matérias: `/processo?codigoParlamentarAutor=`) e `https://adm.senado.gov.br/adm-dadosabertos/api/v1/senadores/despesas_ceaps/<ano>` (CEAPS).
 - **Como:** `python scripts/coletar.py` (mesmo script da Câmara, etapas do Senado), API JSON.
+- **2026-10-21, migração:** os endpoints `/plenario/votacao/nominal/{ano}`, `/senador/{codigo}/autorias` e `/materia/{codigo}`, desativados pelo Senado em 2026-02-01, foram trocados por `/votacao` e `/processo` (histórico no README, seção "Endpoints desativados"). `dados/senado_materias.json` passa a ter `sit`, `data`, `ap` e `proc` vindos do `/processo` (antes `sit` ficava sempre vazio); os votos já salvos foram reclassificados pelo rótulo original ("Presente – Não registrou voto", "Atividade parlamentar" e "Dispositivo não citado" deixam de contar como voto).
 
 ### Presidente: projetos e MPs enviados ao Congresso (`dados/executivo.json`)
 - **Entrada:** 2026-10-17.

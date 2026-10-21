@@ -1,0 +1,454 @@
+{
+ "fonte": "https://legis.senado.leg.br/dadosabertos/senador/lista/atual.json",
+ "capturadoEm": "2026-10-21",
+ "amostra": {
+  "ListaParlamentarEmExercicio": {
+   "noNamespaceSchemaLocation": "https://legis.senado.leg.br/dadosabertos/dados/ListaParlamentarEmExerciciov4.xsd",
+   "Metadados": {
+    "Versao": "21/10/2026 15:33:49",
+    "VersaoServico": "4",
+    "DataVersaoServico": "2020-07-15",
+    "DescricaoDataSet": "Lista dos Parlamentares que estão atualmente em Exercício. Informações atuais sobre o Parlamentar."
+   },
+   "Parlamentares": {
+    "Parlamentar": [
+     {
+      "IdentificacaoParlamentar": {
+       "CodigoParlamentar": "5672",
+       "CodigoPublicoNaLegAtual": "800",
+       "NomeParlamentar": "Alan Rick",
+       "NomeCompletoParlamentar": "Alan Rick Miranda",
+       "SexoParlamentar": "Masculino",
+       "FormaTratamento": "Senador ",
+       "UrlFotoParlamentar": "http://www.senado.leg.br/senadores/img/fotos-oficiais/senador5672.jpg",
+       "UrlPaginaParlamentar": "http://www25.senado.leg.br/web/senadores/senador/-/perfil/5672",
+       "EmailParlamentar": "sen.alanrick@senado.leg.br",
+       "Telefones": {
+        "Telefone": [
+         {
+          "NumeroTelefone": "33036333",
+          "OrdemPublicacao": "1",
+          "IndicadorFax": "Não"
+         }
+        ]
+       },
+       "SiglaPartidoParlamentar": "REPUBLICANOS",
+       "UfParlamentar": "AC",
+       "Bloco": {
+        "CodigoBloco": "346",
+        "NomeBloco": "Bloco Parlamentar Aliança",
+        "NomeApelido": "BLALIANÇA",
+        "DataCriacao": "2023-03-20"
+       },
+       "MembroMesa": "Não",
+       "MembroLideranca": "Sim"
+      },
+      "Mandato": {
+       "CodigoMandato": "596",
+       "UfParlamentar": "AC",
+       "PrimeiraLegislaturaDoMandato": {
+        "NumeroLegislatura": "57",
+        "DataInicio": "2023-02-01",
+        "DataFim": "2027-01-31"
+       },
+       "SegundaLegislaturaDoMandato": {
+        "NumeroLegislatura": "58",
+        "DataInicio": "2027-02-01",
+        "DataFim": "2031-01-31"
+       },
+       "DescricaoParticipacao": "Titular",
+       "Suplentes": {
+        "Suplente": [
+         {
+          "DescricaoParticipacao": "1º Suplente",
+          "CodigoParlamentar": "6343",
+          "NomeParlamentar": "Gemil Junior"
+         },
+         {
+          "DescricaoParticipacao": "2º Suplente",
+          "CodigoParlamentar": "6344",
+          "NomeParlamentar": "Coronel Casagrande"
+         }
+        ]
+       },
+       "Exercicios": {
+        "Exercicio": [
+         {
+          "CodigoExercicio": "3028",
+          "DataInicio": "2023-02-01"
+         }
+        ]
+       }
+      }
+     },
+     {
+      "IdentificacaoParlamentar": {
+       "CodigoParlamentar": "5982",
+       "CodigoPublicoNaLegAtual": "829",
+       "NomeParlamentar": "Alessandro Vieira",
+       "NomeCompletoParlamentar": "Alessandro Vieira",
+       "SexoParlamentar": "Masculino",
+       "FormaTratamento": "Senador ",
+       "UrlFotoParlamentar": "http://www.senado.leg.br/senadores/img/fotos-oficiais/senador5982.jpg",
+       "UrlPaginaParlamentar": "http://www25.senado.leg.br/web/senadores/senador/-/perfil/5982",
+       "EmailParlamentar": "sen.alessandrovieira@senado.leg.br",
+       "Telefones": {
+        "Telefone": [
+         {
+          "NumeroTelefone": "33039011",
+          "OrdemPublicacao": "1",
+          "IndicadorFax": "Não"
+         },
+         {
+          "NumeroTelefone": "33039014",
+          "OrdemPublicacao": "2",
+          "IndicadorFax": "Não"
+         }
+        ]
+       },
+       "SiglaPartidoParlamentar": "MDB",
+       "UfParlamentar": "SE",
+       "Bloco": {
+        "CodigoBloco": "358",
+        "NomeBloco": "Bloco Parlamentar Democracia",
+        "NomeApelido": "BLDEM",
+        "DataCriacao": "2025-02-18"
+       },
+       "MembroMesa": "Não",
+       "MembroLideranca": "Não"
+      },
+      "Mandato": {
+       "CodigoMandato": "559",
+       "UfParlamentar": "SE",
+       "PrimeiraLegislaturaDoMandato": {
+        "NumeroLegislatura": "56",
+        "DataInicio": "2019-02-01",
+        "DataFim": "2023-01-31"
+       },
+       "SegundaLegislaturaDoMandato": {
+        "NumeroLegislatura": "57",
+        "DataInicio": "2023-02-01",
+        "DataFim": "2027-01-31"
+       },
+       "DescricaoParticipacao": "Titular",
+       "Suplentes": {
+        "Suplente": [
+         {
+          "DescricaoParticipacao": "1º Suplente",
+          "CodigoParlamentar": "5980",
+          "NomeParlamentar": "Fernando Carvalho"
+         },
+         {
+          "DescricaoParticipacao": "2º Suplente",
+          "CodigoParlamentar": "5981",
+          "NomeParlamentar": "Major Ildomario"
+         }
+        ]
+       },
+       "Exercicios": {
+        "Exercicio": [
+         {
+          "CodigoExercicio": "2888",
+          "DataInicio": "2019-02-01"
+         }
+        ]
+       }
+      }
+     }
+    ]
+   }
+  }
+ },
+ "forma": {
+  "ListaParlamentarEmExercicio": {
+   "tipos": [
+    "dict"
+   ]
+  },
+  "ListaParlamentarEmExercicio.Metadados": {
+   "tipos": [
+    "dict"
+   ]
+  },
+  "ListaParlamentarEmExercicio.Metadados.DataVersaoServico": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "ListaParlamentarEmExercicio.Metadados.DescricaoDataSet": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "ListaParlamentarEmExercicio.Metadados.Versao": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "ListaParlamentarEmExercicio.Metadados.VersaoServico": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "ListaParlamentarEmExercicio.Parlamentares": {
+   "tipos": [
+    "dict"
+   ]
+  },
+  "ListaParlamentarEmExercicio.Parlamentares.Parlamentar": {
+   "tipos": [
+    "list"
+   ]
+  },
+  "ListaParlamentarEmExercicio.Parlamentares.Parlamentar[]": {
+   "tipos": [
+    "dict"
+   ]
+  },
+  "ListaParlamentarEmExercicio.Parlamentares.Parlamentar[].IdentificacaoParlamentar": {
+   "tipos": [
+    "dict"
+   ]
+  },
+  "ListaParlamentarEmExercicio.Parlamentares.Parlamentar[].IdentificacaoParlamentar.Bloco": {
+   "tipos": [
+    "dict"
+   ]
+  },
+  "ListaParlamentarEmExercicio.Parlamentares.Parlamentar[].IdentificacaoParlamentar.Bloco.CodigoBloco": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "ListaParlamentarEmExercicio.Parlamentares.Parlamentar[].IdentificacaoParlamentar.Bloco.DataCriacao": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "ListaParlamentarEmExercicio.Parlamentares.Parlamentar[].IdentificacaoParlamentar.Bloco.NomeApelido": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "ListaParlamentarEmExercicio.Parlamentares.Parlamentar[].IdentificacaoParlamentar.Bloco.NomeBloco": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "ListaParlamentarEmExercicio.Parlamentares.Parlamentar[].IdentificacaoParlamentar.CodigoParlamentar": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "ListaParlamentarEmExercicio.Parlamentares.Parlamentar[].IdentificacaoParlamentar.CodigoPublicoNaLegAtual": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "ListaParlamentarEmExercicio.Parlamentares.Parlamentar[].IdentificacaoParlamentar.EmailParlamentar": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "ListaParlamentarEmExercicio.Parlamentares.Parlamentar[].IdentificacaoParlamentar.FormaTratamento": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "ListaParlamentarEmExercicio.Parlamentares.Parlamentar[].IdentificacaoParlamentar.MembroLideranca": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "ListaParlamentarEmExercicio.Parlamentares.Parlamentar[].IdentificacaoParlamentar.MembroMesa": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "ListaParlamentarEmExercicio.Parlamentares.Parlamentar[].IdentificacaoParlamentar.NomeCompletoParlamentar": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "ListaParlamentarEmExercicio.Parlamentares.Parlamentar[].IdentificacaoParlamentar.NomeParlamentar": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "ListaParlamentarEmExercicio.Parlamentares.Parlamentar[].IdentificacaoParlamentar.SexoParlamentar": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "ListaParlamentarEmExercicio.Parlamentares.Parlamentar[].IdentificacaoParlamentar.SiglaPartidoParlamentar": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "ListaParlamentarEmExercicio.Parlamentares.Parlamentar[].IdentificacaoParlamentar.Telefones": {
+   "tipos": [
+    "dict"
+   ]
+  },
+  "ListaParlamentarEmExercicio.Parlamentares.Parlamentar[].IdentificacaoParlamentar.Telefones.Telefone": {
+   "tipos": [
+    "list"
+   ]
+  },
+  "ListaParlamentarEmExercicio.Parlamentares.Parlamentar[].IdentificacaoParlamentar.Telefones.Telefone[]": {
+   "tipos": [
+    "dict"
+   ]
+  },
+  "ListaParlamentarEmExercicio.Parlamentares.Parlamentar[].IdentificacaoParlamentar.Telefones.Telefone[].IndicadorFax": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "ListaParlamentarEmExercicio.Parlamentares.Parlamentar[].IdentificacaoParlamentar.Telefones.Telefone[].NumeroTelefone": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "ListaParlamentarEmExercicio.Parlamentares.Parlamentar[].IdentificacaoParlamentar.Telefones.Telefone[].OrdemPublicacao": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "ListaParlamentarEmExercicio.Parlamentares.Parlamentar[].IdentificacaoParlamentar.UfParlamentar": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "ListaParlamentarEmExercicio.Parlamentares.Parlamentar[].IdentificacaoParlamentar.UrlFotoParlamentar": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "ListaParlamentarEmExercicio.Parlamentares.Parlamentar[].IdentificacaoParlamentar.UrlPaginaParlamentar": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "ListaParlamentarEmExercicio.Parlamentares.Parlamentar[].Mandato": {
+   "tipos": [
+    "dict"
+   ]
+  },
+  "ListaParlamentarEmExercicio.Parlamentares.Parlamentar[].Mandato.CodigoMandato": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "ListaParlamentarEmExercicio.Parlamentares.Parlamentar[].Mandato.DescricaoParticipacao": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "ListaParlamentarEmExercicio.Parlamentares.Parlamentar[].Mandato.Exercicios": {
+   "tipos": [
+    "dict"
+   ]
+  },
+  "ListaParlamentarEmExercicio.Parlamentares.Parlamentar[].Mandato.Exercicios.Exercicio": {
+   "tipos": [
+    "list"
+   ]
+  },
+  "ListaParlamentarEmExercicio.Parlamentares.Parlamentar[].Mandato.Exercicios.Exercicio[]": {
+   "tipos": [
+    "dict"
+   ]
+  },
+  "ListaParlamentarEmExercicio.Parlamentares.Parlamentar[].Mandato.Exercicios.Exercicio[].CodigoExercicio": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "ListaParlamentarEmExercicio.Parlamentares.Parlamentar[].Mandato.Exercicios.Exercicio[].DataInicio": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "ListaParlamentarEmExercicio.Parlamentares.Parlamentar[].Mandato.PrimeiraLegislaturaDoMandato": {
+   "tipos": [
+    "dict"
+   ]
+  },
+  "ListaParlamentarEmExercicio.Parlamentares.Parlamentar[].Mandato.PrimeiraLegislaturaDoMandato.DataFim": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "ListaParlamentarEmExercicio.Parlamentares.Parlamentar[].Mandato.PrimeiraLegislaturaDoMandato.DataInicio": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "ListaParlamentarEmExercicio.Parlamentares.Parlamentar[].Mandato.PrimeiraLegislaturaDoMandato.NumeroLegislatura": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "ListaParlamentarEmExercicio.Parlamentares.Parlamentar[].Mandato.SegundaLegislaturaDoMandato": {
+   "tipos": [
+    "dict"
+   ]
+  },
+  "ListaParlamentarEmExercicio.Parlamentares.Parlamentar[].Mandato.SegundaLegislaturaDoMandato.DataFim": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "ListaParlamentarEmExercicio.Parlamentares.Parlamentar[].Mandato.SegundaLegislaturaDoMandato.DataInicio": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "ListaParlamentarEmExercicio.Parlamentares.Parlamentar[].Mandato.SegundaLegislaturaDoMandato.NumeroLegislatura": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "ListaParlamentarEmExercicio.Parlamentares.Parlamentar[].Mandato.Suplentes": {
+   "tipos": [
+    "dict"
+   ]
+  },
+  "ListaParlamentarEmExercicio.Parlamentares.Parlamentar[].Mandato.Suplentes.Suplente": {
+   "tipos": [
+    "list"
+   ]
+  },
+  "ListaParlamentarEmExercicio.Parlamentares.Parlamentar[].Mandato.Suplentes.Suplente[]": {
+   "tipos": [
+    "dict"
+   ]
+  },
+  "ListaParlamentarEmExercicio.Parlamentares.Parlamentar[].Mandato.Suplentes.Suplente[].CodigoParlamentar": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "ListaParlamentarEmExercicio.Parlamentares.Parlamentar[].Mandato.Suplentes.Suplente[].DescricaoParticipacao": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "ListaParlamentarEmExercicio.Parlamentares.Parlamentar[].Mandato.Suplentes.Suplente[].NomeParlamentar": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "ListaParlamentarEmExercicio.Parlamentares.Parlamentar[].Mandato.UfParlamentar": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "ListaParlamentarEmExercicio.noNamespaceSchemaLocation": {
+   "tipos": [
+    "str"
+   ]
+  }
+ }
+}

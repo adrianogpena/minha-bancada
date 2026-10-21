@@ -1,0 +1,284 @@
+{
+ "fonte": "https://dadosabertos.camara.leg.br/api/v2/votacoes/{id}",
+ "capturadoEm": "2026-10-21",
+ "amostra": {
+  "dados": {
+   "id": "2236186-60",
+   "uri": "https://dadosabertos.camara.leg.br/api/v2/votacoes/2236186-60",
+   "data": "2026-10-14",
+   "dataHoraRegistro": "2026-10-14T20:56:14",
+   "siglaOrgao": "PLEN",
+   "uriOrgao": "https://dadosabertos.camara.leg.br/api/v2/orgaos/180",
+   "idOrgao": 180,
+   "uriEvento": "https://dadosabertos.camara.leg.br/api/v2/eventos/83057",
+   "idEvento": 83057,
+   "descricao": "Rejeitada a Subemenda Substitutiva ao Projeto de Lei Complementar nº 281, de 2019, adotada pelo relator da Comissão Especial. Sim: 252; Não: 176; Total: 428.",
+   "aprovacao": 0,
+   "descUltimaAberturaVotacao": "Votação em turno único.",
+   "dataHoraUltimaAberturaVotacao": "2026-10-14T20:23:27",
+   "ultimaApresentacaoProposicao": {
+    "dataHoraRegistro": "2026-10-14T20:22:22",
+    "descricao": "Parecer às Emendas de Plenário proferido pelo Relator Dep. Marcelo Queiroz (PSDB/RJ) pela:\r\n• Comissão Especial, que conclui pela adequação financeira e orçamentária, constitucionalidade, juridicidade e boa técnica legislativa de todas as Emendas de Plenário; e, no mérito, pela aprovação da Emenda n",
+    "uriProposicaoCitada": "https://dadosabertos.camara.leg.br/api/v2/proposicoes/2647737"
+   },
+   "efeitosRegistrados": [],
+   "objetosPossiveis": [
+    {
+     "id": 2647740,
+     "uri": "https://dadosabertos.camara.leg.br/api/v2/proposicoes/2647740",
+     "siglaTipo": "SSP",
+     "codTipo": 509,
+     "numero": 1,
+     "ano": 0,
+     "ementa": "Dispõe sobre os regimes de resolução das instituições autorizadas a funcionar pelo Banco Central do Brasil, pela Superintendência de Seguros Privados e pela Comissão de Valores Mobiliários.",
+     "dataApresentacao": "2026-10-14T20:25"
+    },
+    {
+     "id": 2647736,
+     "uri": "https://dadosabertos.camara.leg.br/api/v2/proposicoes/2647736",
+     "siglaTipo": "RPD",
+     "codTipo": 1053,
+     "numero": 20,
+     "ano": 0,
+     "ementa": "Votação Nominal do Destaque para Votação em Separado - PLP 281/2019-Destaque para Votação em Separado - PLP 281/2019",
+     "dataApresentacao": "2026-10-14T20:03"
+    }
+   ],
+   "proposicoesAfetadas": [
+    {
+     "id": 2236186,
+     "uri": "https://dadosabertos.camara.leg.br/api/v2/proposicoes/2236186",
+     "siglaTipo": "PLP",
+     "codTipo": 140,
+     "numero": 281,
+     "ano": 2019,
+     "ementa": "Dispõe sobre os regimes de resolução das instituições autorizadas a funcionar pelo Banco Central do Brasil, pela Superintendência de Seguros Privados e pela Comissão de Valores Mobiliários.",
+     "dataApresentacao": "2019-12-23T17:10"
+    }
+   ]
+  },
+  "links": [
+   {
+    "rel": "self",
+    "href": "https://dadosabertos.camara.leg.br/api/v2/votacoes/2236186-60"
+   }
+  ]
+ },
+ "forma": {
+  "dados": {
+   "tipos": [
+    "dict"
+   ]
+  },
+  "dados.aprovacao": {
+   "tipos": [
+    "int"
+   ]
+  },
+  "dados.data": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "dados.dataHoraRegistro": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "dados.dataHoraUltimaAberturaVotacao": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "dados.descUltimaAberturaVotacao": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "dados.descricao": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "dados.efeitosRegistrados": {
+   "tipos": [
+    "list"
+   ]
+  },
+  "dados.id": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "dados.idEvento": {
+   "tipos": [
+    "int"
+   ]
+  },
+  "dados.idOrgao": {
+   "tipos": [
+    "int"
+   ]
+  },
+  "dados.objetosPossiveis": {
+   "tipos": [
+    "list"
+   ]
+  },
+  "dados.objetosPossiveis[]": {
+   "tipos": [
+    "dict"
+   ]
+  },
+  "dados.objetosPossiveis[].ano": {
+   "tipos": [
+    "int"
+   ]
+  },
+  "dados.objetosPossiveis[].codTipo": {
+   "tipos": [
+    "int"
+   ]
+  },
+  "dados.objetosPossiveis[].dataApresentacao": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "dados.objetosPossiveis[].ementa": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "dados.objetosPossiveis[].id": {
+   "tipos": [
+    "int"
+   ]
+  },
+  "dados.objetosPossiveis[].numero": {
+   "tipos": [
+    "int"
+   ]
+  },
+  "dados.objetosPossiveis[].siglaTipo": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "dados.objetosPossiveis[].uri": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "dados.proposicoesAfetadas": {
+   "tipos": [
+    "list"
+   ]
+  },
+  "dados.proposicoesAfetadas[]": {
+   "tipos": [
+    "dict"
+   ]
+  },
+  "dados.proposicoesAfetadas[].ano": {
+   "tipos": [
+    "int"
+   ]
+  },
+  "dados.proposicoesAfetadas[].codTipo": {
+   "tipos": [
+    "int"
+   ]
+  },
+  "dados.proposicoesAfetadas[].dataApresentacao": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "dados.proposicoesAfetadas[].ementa": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "dados.proposicoesAfetadas[].id": {
+   "tipos": [
+    "int"
+   ]
+  },
+  "dados.proposicoesAfetadas[].numero": {
+   "tipos": [
+    "int"
+   ]
+  },
+  "dados.proposicoesAfetadas[].siglaTipo": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "dados.proposicoesAfetadas[].uri": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "dados.siglaOrgao": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "dados.ultimaApresentacaoProposicao": {
+   "tipos": [
+    "dict"
+   ]
+  },
+  "dados.ultimaApresentacaoProposicao.dataHoraRegistro": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "dados.ultimaApresentacaoProposicao.descricao": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "dados.ultimaApresentacaoProposicao.uriProposicaoCitada": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "dados.uri": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "dados.uriEvento": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "dados.uriOrgao": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "links": {
+   "tipos": [
+    "list"
+   ]
+  },
+  "links[]": {
+   "tipos": [
+    "dict"
+   ]
+  },
+  "links[].href": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "links[].rel": {
+   "tipos": [
+    "str"
+   ]
+  }
+ }
+}

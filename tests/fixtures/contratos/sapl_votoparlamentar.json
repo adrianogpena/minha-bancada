@@ -1,0 +1,169 @@
+{
+ "fonte": "https://sapl.al.pb.leg.br/api/sessao/votoparlamentar/",
+ "capturadoEm": "2026-10-21",
+ "amostra": {
+  "pagination": {
+   "links": {
+    "next": "http://sapl.al.pb.leg.br/api/sessao/votoparlamentar/?data_hora__gte=2026-01-01&page=2&page_size=3",
+    "previous": null
+   },
+   "previous_page": null,
+   "next_page": 2,
+   "start_index": 1,
+   "end_index": 3,
+   "total_entries": 891,
+   "total_pages": 297,
+   "page": 1
+  },
+  "results": [
+   {
+    "id": 16417,
+    "__str__": "Votação: Ordem: Ordem do Dia/Expediente: 7 - Veto nº 356 de 2022 em 12ª Sessão Itinerante da 3ª Sessão Legislativa da 20ª Legislatura - Votação: Rejeitada - Matéria: Veto nº 356 de 2022 - Parlamentar: Adriano Galdino",
+    "metadata": {},
+    "voto": "Sim",
+    "ip": "179.211.76.103",
+    "data_hora": "2026-02-09T12:22:41.321817-03:00",
+    "votacao": 52586,
+    "parlamentar": 89,
+    "user": 137,
+    "ordem": 92759,
+    "expediente": null
+   },
+   {
+    "id": 16418,
+    "__str__": "Votação: Ordem: Ordem do Dia/Expediente: 7 - Veto nº 356 de 2022 em 12ª Sessão Itinerante da 3ª Sessão Legislativa da 20ª Legislatura - Votação: Rejeitada - Matéria: Veto nº 356 de 2022 - Parlamentar: Anderson Monteiro",
+    "metadata": {},
+    "voto": "Sim",
+    "ip": "179.211.76.103",
+    "data_hora": "2026-02-09T12:22:41.351764-03:00",
+    "votacao": 52586,
+    "parlamentar": 157,
+    "user": 137,
+    "ordem": 92759,
+    "expediente": null
+   }
+  ]
+ },
+ "forma": {
+  "pagination": {
+   "tipos": [
+    "dict"
+   ]
+  },
+  "pagination.end_index": {
+   "tipos": [
+    "int"
+   ]
+  },
+  "pagination.links": {
+   "tipos": [
+    "dict"
+   ]
+  },
+  "pagination.links.next": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "pagination.links.previous": {
+   "tipos": [
+    "null"
+   ]
+  },
+  "pagination.next_page": {
+   "tipos": [
+    "int"
+   ]
+  },
+  "pagination.page": {
+   "tipos": [
+    "int"
+   ]
+  },
+  "pagination.previous_page": {
+   "tipos": [
+    "null"
+   ]
+  },
+  "pagination.start_index": {
+   "tipos": [
+    "int"
+   ]
+  },
+  "pagination.total_entries": {
+   "tipos": [
+    "int"
+   ]
+  },
+  "pagination.total_pages": {
+   "tipos": [
+    "int"
+   ]
+  },
+  "results": {
+   "tipos": [
+    "list"
+   ]
+  },
+  "results[]": {
+   "tipos": [
+    "dict"
+   ]
+  },
+  "results[].__str__": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "results[].data_hora": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "results[].expediente": {
+   "tipos": [
+    "null"
+   ]
+  },
+  "results[].id": {
+   "tipos": [
+    "int"
+   ]
+  },
+  "results[].ip": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "results[].metadata": {
+   "tipos": [
+    "dict"
+   ]
+  },
+  "results[].ordem": {
+   "tipos": [
+    "int"
+   ]
+  },
+  "results[].parlamentar": {
+   "tipos": [
+    "int"
+   ]
+  },
+  "results[].user": {
+   "tipos": [
+    "int"
+   ]
+  },
+  "results[].votacao": {
+   "tipos": [
+    "int"
+   ]
+  },
+  "results[].voto": {
+   "tipos": [
+    "str"
+   ]
+  }
+ }
+}

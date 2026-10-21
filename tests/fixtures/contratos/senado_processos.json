@@ -1,0 +1,129 @@
+{
+ "fonte": "https://legis.senado.leg.br/dadosabertos/processo?codigoParlamentarAutor={id}",
+ "capturadoEm": "2026-10-21",
+ "amostra": [
+  {
+   "autoria": "Senador Romário (PL/RJ), Senador Flávio Bolsonaro (PL/RJ), Senador Eduardo Gomes (PL/TO), Senador Paulo Paim (PT/RS), Senador Esperidião Amin (PP/SC), Senador Jorge Kajuru (PSB/GO), Senador Wellington Fagundes (PL/MT), Senador Angelo Coronel (PSD/BA), Senadora Damares Alves (REPUBLICANOS/DF), Senado",
+   "casaIdentificadora": "SF",
+   "codigoMateria": 155808,
+   "dataApresentacao": "2023-02-02",
+   "dataDeliberacao": "2023-03-15",
+   "dataSituacaoAtual": "2023-03-15",
+   "ementa": "Desarquivamento das seguintes proposições: PRS 10/2016, PLS 183/2016, PLS 277/2016, PLS 275/2016, PLS 279/2016, PEC 34/2016, PLS 316/2016, PLS 444/2016, PLS 29/2017, PLS 170/2017, PLS 171/2017, PLS 187/2017, PLS 211/2017, PLS 266/2017, PLS 265/2017, PLS 262/2017, PLS 263/2017, PLS 300/2017, PLS 338/",
+   "enteIdentificador": "PLEN",
+   "id": 8360649,
+   "identificacao": "RQS 41/2023",
+   "siglaTipoDeliberacao": "APROVADA_NO_PLENARIO",
+   "situacaoAtual": "APROVADA",
+   "tipoConteudo": "Desarquivamento de matéria ",
+   "tipoDocumento": "Requerimento",
+   "tramitando": "Não",
+   "urlDocumento": "https://legis.senado.gov.br/sdleg-getter/dadosabertos/documento/171558c8-d283-4440-974d-b9e3e98809e5"
+  },
+  {
+   "autoria": "Senador Wellington Fagundes (PL/MT), Senador Flávio Bolsonaro (PL/RJ), Senador Romário (PL/RJ), Senador Alan Rick (UNIÃO/AC), Senador Paulo Paim (PT/RS), Senador Jayme Campos (UNIÃO/MT), Senadora Tereza Cristina (PP/MS), Senador Zequinha Marinho (PL/PA), Senador Esperidião Amin (PP/SC), Senador Serg",
+   "casaIdentificadora": "SF",
+   "codigoMateria": 155842,
+   "dataApresentacao": "2023-02-06",
+   "dataDeliberacao": "2023-03-30",
+   "dataSituacaoAtual": "2023-03-30",
+   "ementa": "Desarquivamento das seguintes proposições: PEC 1/2015, PEC 39/2015, PRS 17/2015, PEC 57/2015, PEC 81/2015, PLS 507/2015, PLS 668/2015, PLS 768/2015, PLS 66/2016, PLS 288/2016, PLS 350/2016, PLS 362/2016, PLS 437/2016, PLS 278/2018.",
+   "enteIdentificador": "PLEN",
+   "id": 8363388,
+   "identificacao": "RQS 48/2023",
+   "siglaTipoDeliberacao": "APROVADA_NO_PLENARIO",
+   "situacaoAtual": "APROVADA",
+   "tipoConteudo": "Desarquivamento de matéria ",
+   "tipoDocumento": "Requerimento",
+   "tramitando": "Não",
+   "urlDocumento": "https://legis.senado.gov.br/sdleg-getter/dadosabertos/documento/de5d30cf-43bd-402f-b7c8-cb65605be517"
+  }
+ ],
+ "forma": {
+  "[]": {
+   "tipos": [
+    "dict"
+   ]
+  },
+  "[].autoria": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "[].casaIdentificadora": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "[].codigoMateria": {
+   "tipos": [
+    "int"
+   ]
+  },
+  "[].dataApresentacao": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "[].dataDeliberacao": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "[].dataSituacaoAtual": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "[].ementa": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "[].enteIdentificador": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "[].id": {
+   "tipos": [
+    "int"
+   ]
+  },
+  "[].identificacao": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "[].siglaTipoDeliberacao": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "[].situacaoAtual": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "[].tipoConteudo": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "[].tipoDocumento": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "[].tramitando": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "[].urlDocumento": {
+   "tipos": [
+    "str"
+   ]
+  }
+ }
+}

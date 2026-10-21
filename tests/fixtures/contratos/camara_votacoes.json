@@ -1,0 +1,131 @@
+{
+ "fonte": "https://dadosabertos.camara.leg.br/api/v2/votacoes",
+ "capturadoEm": "2026-10-21",
+ "amostra": {
+  "dados": [
+   {
+    "id": "2487836-52",
+    "uri": "https://dadosabertos.camara.leg.br/api/v2/votacoes/2487836-52",
+    "data": "2026-10-15",
+    "dataHoraRegistro": "2026-10-15T15:45:39",
+    "siglaOrgao": "PLEN",
+    "uriOrgao": "https://dadosabertos.camara.leg.br/api/v2/orgaos/180",
+    "uriEvento": "https://dadosabertos.camara.leg.br/api/v2/eventos/83066",
+    "proposicaoObjeto": null,
+    "uriProposicaoObjeto": null,
+    "descricao": "Aprovada a Redação Final assinada pelo relator, Dep. Rodrigo Valadares (PL/SE).",
+    "aprovacao": 1
+   },
+   {
+    "id": "2487836-50",
+    "uri": "https://dadosabertos.camara.leg.br/api/v2/votacoes/2487836-50",
+    "data": "2026-10-15",
+    "dataHoraRegistro": "2026-10-15T15:44:17",
+    "siglaOrgao": "PLEN",
+    "uriOrgao": "https://dadosabertos.camara.leg.br/api/v2/orgaos/180",
+    "uriEvento": "https://dadosabertos.camara.leg.br/api/v2/eventos/83066",
+    "proposicaoObjeto": null,
+    "uriProposicaoObjeto": null,
+    "descricao": "Aprovada a Subemenda Substitutiva ao Projeto de Lei nº 1.123, de 2025, adotada pelo relator da Comissão de Saúde.",
+    "aprovacao": 1
+   }
+  ],
+  "links": [
+   {
+    "rel": "self",
+    "href": "https://dadosabertos.camara.leg.br/api/v2/votacoes?dataInicio=2026-09-22&dataFim=2026-10-21&ordem=DESC&ordenarPor=dataHoraRegistro&itens=60"
+   },
+   {
+    "rel": "next",
+    "href": "https://dadosabertos.camara.leg.br/api/v2/votacoes?dataInicio=2026-09-22&dataFim=2026-10-21&ordem=DESC&ordenarPor=dataHoraRegistro&pagina=2&itens=60"
+   }
+  ]
+ },
+ "forma": {
+  "dados": {
+   "tipos": [
+    "list"
+   ]
+  },
+  "dados[]": {
+   "tipos": [
+    "dict"
+   ]
+  },
+  "dados[].aprovacao": {
+   "tipos": [
+    "int"
+   ]
+  },
+  "dados[].data": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "dados[].dataHoraRegistro": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "dados[].descricao": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "dados[].id": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "dados[].proposicaoObjeto": {
+   "tipos": [
+    "null"
+   ]
+  },
+  "dados[].siglaOrgao": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "dados[].uri": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "dados[].uriEvento": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "dados[].uriOrgao": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "dados[].uriProposicaoObjeto": {
+   "tipos": [
+    "null"
+   ]
+  },
+  "links": {
+   "tipos": [
+    "list"
+   ]
+  },
+  "links[]": {
+   "tipos": [
+    "dict"
+   ]
+  },
+  "links[].href": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "links[].rel": {
+   "tipos": [
+    "str"
+   ]
+  }
+ }
+}

@@ -1,0 +1,190 @@
+{
+ "fonte": "https://sapl.al.pb.leg.br/api/parlamentares/mandato/",
+ "capturadoEm": "2026-10-21",
+ "amostra": {
+  "pagination": {
+   "links": {
+    "next": "http://sapl.al.pb.leg.br/api/parlamentares/mandato/?legislatura=20&page=2&page_size=3",
+    "previous": null
+   },
+   "previous_page": null,
+   "next_page": 2,
+   "start_index": 1,
+   "end_index": 3,
+   "total_entries": 57,
+   "total_pages": 19,
+   "page": 1
+  },
+  "results": [
+   {
+    "id": 317,
+    "__str__": "Adriano Galdino 20ª (2023 - 2027) (Atual)",
+    "metadata": {},
+    "tipo_causa_fim_mandato": null,
+    "data_inicio_mandato": "2023-02-01",
+    "data_fim_mandato": "2027-01-31",
+    "votos_recebidos": 58329,
+    "data_expedicao_diploma": null,
+    "titular": true,
+    "observacao": "",
+    "parlamentar": 89,
+    "tipo_afastamento": null,
+    "legislatura": 20,
+    "coligacao": null
+   },
+   {
+    "id": 357,
+    "__str__": "Airton Pires 20ª (2023 - 2027) (Atual)",
+    "metadata": {},
+    "tipo_causa_fim_mandato": null,
+    "data_inicio_mandato": "2023-12-12",
+    "data_fim_mandato": "2024-02-26",
+    "votos_recebidos": 0,
+    "data_expedicao_diploma": null,
+    "titular": false,
+    "observacao": "",
+    "parlamentar": 192,
+    "tipo_afastamento": null,
+    "legislatura": 20,
+    "coligacao": null
+   }
+  ]
+ },
+ "forma": {
+  "pagination": {
+   "tipos": [
+    "dict"
+   ]
+  },
+  "pagination.end_index": {
+   "tipos": [
+    "int"
+   ]
+  },
+  "pagination.links": {
+   "tipos": [
+    "dict"
+   ]
+  },
+  "pagination.links.next": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "pagination.links.previous": {
+   "tipos": [
+    "null"
+   ]
+  },
+  "pagination.next_page": {
+   "tipos": [
+    "int"
+   ]
+  },
+  "pagination.page": {
+   "tipos": [
+    "int"
+   ]
+  },
+  "pagination.previous_page": {
+   "tipos": [
+    "null"
+   ]
+  },
+  "pagination.start_index": {
+   "tipos": [
+    "int"
+   ]
+  },
+  "pagination.total_entries": {
+   "tipos": [
+    "int"
+   ]
+  },
+  "pagination.total_pages": {
+   "tipos": [
+    "int"
+   ]
+  },
+  "results": {
+   "tipos": [
+    "list"
+   ]
+  },
+  "results[]": {
+   "tipos": [
+    "dict"
+   ]
+  },
+  "results[].__str__": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "results[].coligacao": {
+   "tipos": [
+    "null"
+   ]
+  },
+  "results[].data_expedicao_diploma": {
+   "tipos": [
+    "null"
+   ]
+  },
+  "results[].data_fim_mandato": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "results[].data_inicio_mandato": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "results[].id": {
+   "tipos": [
+    "int"
+   ]
+  },
+  "results[].legislatura": {
+   "tipos": [
+    "int"
+   ]
+  },
+  "results[].metadata": {
+   "tipos": [
+    "dict"
+   ]
+  },
+  "results[].observacao": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "results[].parlamentar": {
+   "tipos": [
+    "int"
+   ]
+  },
+  "results[].tipo_afastamento": {
+   "tipos": [
+    "null"
+   ]
+  },
+  "results[].tipo_causa_fim_mandato": {
+   "tipos": [
+    "null"
+   ]
+  },
+  "results[].titular": {
+   "tipos": [
+    "bool"
+   ]
+  },
+  "results[].votos_recebidos": {
+   "tipos": [
+    "int"
+   ]
+  }
+ }
+}

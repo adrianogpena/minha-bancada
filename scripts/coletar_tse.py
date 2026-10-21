@@ -43,7 +43,7 @@ DIAS_ENTRE_ATUALIZACOES = 2
 COLUNAS = ["SQ_CANDIDATO", "NR_TURNO", "DS_CARGO", "DS_SIT_TOT_TURNO", "SG_UF", "SG_UE", "NM_UE",
            "NR_CANDIDATO", "NM_CANDIDATO", "NM_URNA_CANDIDATO", "SG_PARTIDO", "SG_FEDERACAO",
            "NM_FEDERACAO", "DT_NASCIMENTO", "DS_GENERO", "DS_GRAU_INSTRUCAO", "DS_OCUPACAO",
-           "DS_COR_RACA", "ST_REELEICAO", "NM_COLIGACAO", "CD_ELEICAO", "DS_SITUACAO_CANDIDATURA",
+           "DS_COR_RACA", "NM_COLIGACAO", "CD_ELEICAO", "DS_SITUACAO_CANDIDATURA",
            "DS_ESTADO_CIVIL", "SG_UF_NASCIMENTO", "DS_EMAIL", "NM_SOCIAL_CANDIDATO",
            "DS_COMPOSICAO_COLIGACAO"]
 VERSAO = 9  # aumente quando mudar o processamento, para refazer os anos em cache
@@ -345,7 +345,6 @@ def coletar_ano(ano: int) -> None:
             "instrucao": frase(limpo(l.get("DS_GRAU_INSTRUCAO"))),
             "ocupacao": frase(limpo(l.get("DS_OCUPACAO"))),
             "corRaca": frase(limpo(l.get("DS_COR_RACA"))),
-            "reeleicao": (l.get("ST_REELEICAO") or "").strip().upper() == "S",
             "coligacao": titulo(limpo(l.get("NM_COLIGACAO"))),
             "composicaoColigacao": limpo(l.get("DS_COMPOSICAO_COLIGACAO")),
             "estadoCivil": frase(limpo(l.get("DS_ESTADO_CIVIL"))),

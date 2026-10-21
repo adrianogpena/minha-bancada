@@ -1,0 +1,112 @@
+{
+ "fonte": "https://splegisws.saopaulo.sp.leg.br/ws/ws2.asmx/LeisAprovadasPorPromoventeJSON",
+ "capturadoEm": "2026-10-21",
+ "amostra": [
+  {
+   "projeto": {
+    "chave": null,
+    "tipo": "PL",
+    "_tipo": 1,
+    "numero": 282,
+    "ano": 2021,
+    "promovente": {
+     "chave": 2229,
+     "nome": "RICARDO NUNES",
+     "tipo": null
+    },
+    "ementa": "Desincorpora da classe de bens de uso comum do povo e transfere para a classe de bens dominiais o imóvel municipal correspondente à Passagem PS 127- altura do nº 3.407 da Rua Consolação, Distrito de Pinheiros, bem como autoriza a sua alienação, independentemente de licitação, ao único proprietário d"
+   },
+   "numero": 17813,
+   "publicacao": "2022-06-10T00:00:00"
+  },
+  {
+   "projeto": {
+    "chave": null,
+    "tipo": "PL",
+    "_tipo": 1,
+    "numero": 347,
+    "ano": 2021,
+    "promovente": {
+     "chave": 2229,
+     "nome": "RICARDO NUNES",
+     "tipo": null
+    },
+    "ementa": "Dispõe sobre o licenciamento de estação rádio-base, estação rádio-base móvel e estação rádio-base de pequeno porte destinados à operação de serviços de telecomunicações no Município de São Paulo."
+   },
+   "numero": 17733,
+   "publicacao": "2022-01-11T00:00:00"
+  }
+ ],
+ "forma": {
+  "[]": {
+   "tipos": [
+    "dict"
+   ]
+  },
+  "[].numero": {
+   "tipos": [
+    "int"
+   ]
+  },
+  "[].projeto": {
+   "tipos": [
+    "dict"
+   ]
+  },
+  "[].projeto._tipo": {
+   "tipos": [
+    "int"
+   ]
+  },
+  "[].projeto.ano": {
+   "tipos": [
+    "int"
+   ]
+  },
+  "[].projeto.chave": {
+   "tipos": [
+    "null"
+   ]
+  },
+  "[].projeto.ementa": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "[].projeto.numero": {
+   "tipos": [
+    "int"
+   ]
+  },
+  "[].projeto.promovente": {
+   "tipos": [
+    "dict"
+   ]
+  },
+  "[].projeto.promovente.chave": {
+   "tipos": [
+    "int"
+   ]
+  },
+  "[].projeto.promovente.nome": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "[].projeto.promovente.tipo": {
+   "tipos": [
+    "null"
+   ]
+  },
+  "[].projeto.tipo": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "[].publicacao": {
+   "tipos": [
+    "str"
+   ]
+  }
+ }
+}

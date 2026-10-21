@@ -1039,7 +1039,6 @@ async function paginaPolitico() {
     ["Cor ou raça", p.corRaca],
     ["Escolaridade", p.instrucao],
     ["Ocupação declarada", p.ocupacao],
-    ["Buscava reeleição", p.fonte === "tse" ? (p.reeleicao ? "Sim" : "Não") : null],
     ["E-mail", p.email ? `<a href="mailto:${esc(p.email)}">${esc(p.email)}</a>` : null, true],
     linhaNoCargoAte(p),
     ["Redes e sites declarados na candidatura", linksRedes(p.redes, { ...p, fonteRedes: fonteRedesTse(p) }), true, true],
@@ -1209,7 +1208,7 @@ async function montarSenador(alvo, p, nome, ficha) {
     aviso: "A situação vem da tramitação no Senado e é atualizada aos poucos todo dia.",
     fonteTramitacao: "Tramitação (Senado)",
     linkTramitacao: (x) => linkMateriaSenado(x.id),
-    linkApi: (x) => `${SENADO_API}/materia/${encodeURIComponent(x.id)}`,
+    linkApi: (x) => `${SENADO_API}/processo/${encodeURIComponent(x.proc)}`,
     hrefVotacao: null,
     fontesVotacao: (v) => [["Votos de cada senador (API do Senado)", apiVotacao(v)], v.propId ? ["Tramitação da matéria", linkMateriaSenado(v.propId)] : null],
   });

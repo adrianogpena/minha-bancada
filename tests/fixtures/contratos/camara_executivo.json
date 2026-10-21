@@ -1,0 +1,110 @@
+{
+ "fonte": "https://dadosabertos.camara.leg.br/api/v2/proposicoes?autor=Poder Executivo",
+ "capturadoEm": "2026-10-21",
+ "amostra": {
+  "dados": [
+   {
+    "id": 2599885,
+    "uri": "https://dadosabertos.camara.leg.br/api/v2/proposicoes/2599885",
+    "siglaTipo": "PL",
+    "codTipo": 139,
+    "numero": 1,
+    "ano": 2026,
+    "ementa": "Altera a Lei nº 11.892, de 29 de dezembro de 2008, que institui a Rede Federal de Educação Profissional, Científica e Tecnológica, para criar o Instituto Federal do Sertão Paraibano.",
+    "dataApresentacao": "2026-01-02T10:11"
+   },
+   {
+    "id": 2608922,
+    "uri": "https://dadosabertos.camara.leg.br/api/v2/proposicoes/2608922",
+    "siglaTipo": "PL",
+    "codTipo": 139,
+    "numero": 1160,
+    "ano": 2026,
+    "ementa": "Autoriza o Poder Executivo federal a doar vinte Viaturas Blindadas de Transporte de Pessoal Urutu, do Exército Brasileiro, à República do Paraguai.",
+    "dataApresentacao": "2026-03-13T09:50"
+   }
+  ],
+  "links": [
+   {
+    "rel": "self",
+    "href": "https://dadosabertos.camara.leg.br/api/v2/proposicoes?autor=Poder+Executivo&siglaTipo=PL&ano=2026&itens=3"
+   },
+   {
+    "rel": "next",
+    "href": "https://dadosabertos.camara.leg.br/api/v2/proposicoes?autor=Poder+Executivo&siglaTipo=PL&ano=2026&pagina=2&itens=3"
+   }
+  ]
+ },
+ "forma": {
+  "dados": {
+   "tipos": [
+    "list"
+   ]
+  },
+  "dados[]": {
+   "tipos": [
+    "dict"
+   ]
+  },
+  "dados[].ano": {
+   "tipos": [
+    "int"
+   ]
+  },
+  "dados[].codTipo": {
+   "tipos": [
+    "int"
+   ]
+  },
+  "dados[].dataApresentacao": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "dados[].ementa": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "dados[].id": {
+   "tipos": [
+    "int"
+   ]
+  },
+  "dados[].numero": {
+   "tipos": [
+    "int"
+   ]
+  },
+  "dados[].siglaTipo": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "dados[].uri": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "links": {
+   "tipos": [
+    "list"
+   ]
+  },
+  "links[]": {
+   "tipos": [
+    "dict"
+   ]
+  },
+  "links[].href": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "links[].rel": {
+   "tipos": [
+    "str"
+   ]
+  }
+ }
+}

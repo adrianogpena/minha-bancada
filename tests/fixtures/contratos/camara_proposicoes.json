@@ -1,0 +1,110 @@
+{
+ "fonte": "https://dadosabertos.camara.leg.br/api/v2/proposicoes",
+ "capturadoEm": "2026-10-21",
+ "amostra": {
+  "dados": [
+   {
+    "id": 2648645,
+    "uri": "https://dadosabertos.camara.leg.br/api/v2/proposicoes/2648645",
+    "siglaTipo": "PL",
+    "codTipo": 139,
+    "numero": 5637,
+    "ano": 2026,
+    "ementa": "Altera a Lei nº 9.250, de 26 de dezembro de 1995, para assegurar prioridade na restituição do Imposto sobre a Renda das Pessoas Físicas aos contribuintes que tenham como dependentes crianças ou adolescentes com transtorno do espectro autista, deficiência ou doença grave.",
+    "dataApresentacao": "2026-10-21T15:21"
+   },
+   {
+    "id": 2648636,
+    "uri": "https://dadosabertos.camara.leg.br/api/v2/proposicoes/2648636",
+    "siglaTipo": "PL",
+    "codTipo": 139,
+    "numero": 5636,
+    "ano": 2026,
+    "ementa": "Altera a Lei nº 9.605, de 12 de fevereiro de 1998, para proibir, em todo o território nacional, a fabricação, a importação, a comercialização e o uso de fantasias, alegorias, adereços e ornamentos confeccionados com partes de origem animal, estabelecer mecanismos de fiscalização e responsabilização ",
+    "dataApresentacao": "2026-10-21T13:31"
+   }
+  ],
+  "links": [
+   {
+    "rel": "self",
+    "href": "https://dadosabertos.camara.leg.br/api/v2/proposicoes?siglaTipo=PL&ano=2026&itens=3&ordem=DESC&ordenarPor=id"
+   },
+   {
+    "rel": "next",
+    "href": "https://dadosabertos.camara.leg.br/api/v2/proposicoes?siglaTipo=PL&ano=2026&ordem=DESC&ordenarPor=id&pagina=2&itens=3"
+   }
+  ]
+ },
+ "forma": {
+  "dados": {
+   "tipos": [
+    "list"
+   ]
+  },
+  "dados[]": {
+   "tipos": [
+    "dict"
+   ]
+  },
+  "dados[].ano": {
+   "tipos": [
+    "int"
+   ]
+  },
+  "dados[].codTipo": {
+   "tipos": [
+    "int"
+   ]
+  },
+  "dados[].dataApresentacao": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "dados[].ementa": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "dados[].id": {
+   "tipos": [
+    "int"
+   ]
+  },
+  "dados[].numero": {
+   "tipos": [
+    "int"
+   ]
+  },
+  "dados[].siglaTipo": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "dados[].uri": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "links": {
+   "tipos": [
+    "list"
+   ]
+  },
+  "links[]": {
+   "tipos": [
+    "dict"
+   ]
+  },
+  "links[].href": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "links[].rel": {
+   "tipos": [
+    "str"
+   ]
+  }
+ }
+}

@@ -49,6 +49,29 @@ python scripts/gerar.py
 python -m http.server 8000 -d site                # abra http://localhost:8000
 ```
 
+### Testes
+
+Os testes não acessam a internet: as respostas das APIs (Câmara, Senado, TSE, SAPL das Assembleias e Câmaras, SPLegis, Scriptcase e SUAP) são simuladas com o formato real de cada uma, e verificam a leitura, a normalização e o tratamento de falhas. Rodam em poucos segundos:
+
+```bash
+pip install -r requirements-dev.txt
+python -m pytest                       # scripts de coleta/geração + sanidade dos arquivos em dados/
+node --test tests/js/app.test.js       # utilidades do site/assets/app.js
+```
+
+### Contrato das APIs externas
+
+`tests/fixtures/contratos/` guarda respostas **reais** (reduzidas) da Câmara, Senado, TSE, SAPL e SPLegis, e os testes
+rodam os coletores contra elas. O workflow `Contrato das APIs externas` (`.github/workflows/contratos.yml`) roda toda
+segunda-feira, consulta as APIs de novo e compara com as amostras: se sumir ou mudar de tipo um campo que o código usa,
+a execução falha e abre uma issue. Campos novos, respostas vazias e fontes fora do ar viram só avisos no resumo da execução.
+
+```bash
+python scripts/contrato_apis.py --verificar            # confere agora (usa a internet)
+python scripts/contrato_apis.py --gravar [nome ...]    # regrava as amostras depois de ajustar um coletor
+python scripts/contrato_apis.py --listar
+```
+
 Sem `--limite` a coleta pega todos os deputados em exercício. `--dias` só vale na primeira coleta; depois o script continua de onde parou.
 
 ## Estrutura
@@ -71,9 +94,9 @@ Sem `--limite` a coleta pega todos os deputados em exercício. `--dias` só vale
 | `scripts/gerar.py` | Monta os JSONs enxutos que o site lê. Não acessa a internet. |
 | `scripts/gerar_politicos.py` | Junta TSE, Câmara e Senado no índice de todos os políticos (chamado pelo `gerar.py`). |
 | `dados/proposicoes_detalhe.json` | Situação atual de cada projeto (aprovado, arquivado, em tramitação), da API da Câmara. Cada execução consulta até 4000 projetos (`DETALHES_POR_EXECUCAO`), então o cache se completa em alguns dias. |
-| `dados/senado_votacoes/` | Votações nominais do Plenário do Senado, com o voto de cada senador. |
+| `dados/senado_votacoes/` | Votações nominais do Plenário do Senado, com o voto de cada senador (endpoint `/votacao`). |
 | `dados/senado_ceaps.json` | Gastos da cota (CEAPS) do ano corrente, de todos os senadores, da API administrativa do Senado. Fica fora do git: é baixado de novo a cada execução. |
-| `dados/senado_materias.json` | Situação atual dos projetos de senadores, da API do Senado (até 1500 por execução, `MATERIAS_POR_EXECUCAO`). |
+| `dados/senado_materias.json` | Situação atual dos projetos de senadores, do endpoint `/processo` do Senado (uma consulta por senador, refeita a cada execução). |
 | `dados/votacoes/` | Histórico de votações, um arquivo por ano. Vai crescendo a cada execução. |
 | `scripts/coletar_prefeituras.py` | Baixa o que os prefeitos de capitais enviaram às Câmaras Municipais que usam o SAPL (Rio Branco, Boa Vista, Natal e João Pessoa), incluindo vetos. As outras capitais mostram só o link oficial da Câmara. |
 | `scripts/coletar_prefeitura_sp.py` | O mesmo para São Paulo, que não usa SAPL: lê o webservice do SPLegis. Nova capital com sistema próprio entra em `OUTRAS`, em `coletar_prefeituras.py`, com um coletor assim. |
@@ -84,6 +107,26 @@ Sem `--limite` a coleta pega todos os deputados em exercício. `--dias` só vale
 | `dados/proposicoes/` | Proposições já coletadas de cada deputado. A API só aceita 3 meses por consulta, então a primeira coleta é longa e as seguintes buscam só o período novo. |
 | `site/` | O site: HTML, CSS e um único `assets/app.js`, sem framework nem etapa de build. |
 | `.github/workflows/atualizar.yml` | Agenda diária, coleta, salva o histórico e publica. |
+
+## Endpoints desativados
+
+Histórico de endpoints que o projeto usava e que saíram do ar (o Senado marcou a desativação completa de todos em 2026-02-01,
+embora alguns ainda respondessem em outubro de 2026). Já não são usados no código.
+
+| Endpoint | Para que servia aqui | Desativado | Substituto adotado | Migração |
+|---|---|---|---|---|
+| `legis.senado.leg.br/dadosabertos/plenario/votacao/nominal/{ano}` | Votações nominais do Plenário do Senado | 2026-02-01 (descontinuado em 2025-03-18) | `/votacao?dataInicio=&dataFim=` | 2026-10-21 |
+| `legis.senado.leg.br/dadosabertos/senador/{codigo}/autorias` | Matérias de autoria de cada senador | 2026-02-01 (descontinuado em 2025-03-18) | `/processo?codigoParlamentarAutor=` | 2026-10-21 |
+| `legis.senado.leg.br/dadosabertos/materia/{codigo}` | Situação atual de cada matéria do Senado | 2026-02-01 (descontinuado em 2025-03-18) | `/processo` (a situação já vem na lista de autorias) | 2026-10-21 |
+
+Observações da migração: a resposta antiga de `/materia/{codigo}` já não trazia a situação (`DescricaoSituacao`), então a
+situação dos projetos do Senado ficou vazia até a migração. O "autor principal" passou a ser o primeiro autor listado no
+processo, porque o endpoint novo não tem o indicador antigo. O Senado também publica rótulos de voto que o coletor antigo
+classificava mal (por exemplo "Presente – Não registrou voto", que virava voto contra); agora vão para "sem voto registrado"
+e os arquivos já salvos são reclassificados a partir do rótulo original.
+
+Para saber se algum endpoint em uso foi marcado como descontinuado, rode `python scripts/contrato_apis.py --verificar`
+(o aviso aparece como "endpoint descontinuado").
 
 ## Limites gratuitos para acompanhar
 

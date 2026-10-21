@@ -1,0 +1,92 @@
+{
+ "fonte": "https://sapl.al.pb.leg.br/api/sessao/registrovotacao/{id}/",
+ "capturadoEm": "2026-10-21",
+ "amostra": {
+  "id": 52586,
+  "__str__": "Ordem: Ordem do Dia/Expediente: 7 - Veto nº 356 de 2022 em 12ª Sessão Itinerante da 3ª Sessão Legislativa da 20ª Legislatura - Votação: Rejeitada - Matéria: Veto nº 356 de 2022",
+  "metadata": {},
+  "numero_votos_sim": 34,
+  "numero_votos_nao": 1,
+  "numero_abstencoes": 0,
+  "observacao": "",
+  "ip": "179.211.76.103",
+  "data_hora": "2026-02-09T12:22:41.243771-03:00",
+  "tipo_resultado_votacao": 6,
+  "materia": 97394,
+  "ordem": 92759,
+  "expediente": null,
+  "user": 137
+ },
+ "forma": {
+  "__str__": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "data_hora": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "expediente": {
+   "tipos": [
+    "null"
+   ]
+  },
+  "id": {
+   "tipos": [
+    "int"
+   ]
+  },
+  "ip": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "materia": {
+   "tipos": [
+    "int"
+   ]
+  },
+  "metadata": {
+   "tipos": [
+    "dict"
+   ]
+  },
+  "numero_abstencoes": {
+   "tipos": [
+    "int"
+   ]
+  },
+  "numero_votos_nao": {
+   "tipos": [
+    "int"
+   ]
+  },
+  "numero_votos_sim": {
+   "tipos": [
+    "int"
+   ]
+  },
+  "observacao": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "ordem": {
+   "tipos": [
+    "int"
+   ]
+  },
+  "tipo_resultado_votacao": {
+   "tipos": [
+    "int"
+   ]
+  },
+  "user": {
+   "tipos": [
+    "int"
+   ]
+  }
+ }
+}

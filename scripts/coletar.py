@@ -281,14 +281,18 @@ ORCAMENTO_AUTORES = int(os.environ.get("AUTORES_POR_EXECUCAO", "6000"))
 
 
 def autores_da_resposta(autores: list) -> dict:
-    """De /proposicoes/{id}/autores para {"p": idDeputadoPrincipal, "a": [[idDeputado, nome], ...]},
-    na ordem de assinatura. Quem não é deputado (Executivo, Senado, comissões) entra com id nulo.
+    """De /proposicoes/{id}/autores para {"p": idDeputadoPrincipal, "a": [[idDeputado, nome, tipo], ...]},
+    na ordem de assinatura. Quem não é deputado (Executivo, Senado, comissões) entra com id nulo e o
+    `tipo` da Câmara ("Órgão do Poder Executivo"...); para deputados o tipo é omitido.
     O principal é quem assinou primeiro (proponente 1, senão ordemAssinatura 1); se não for deputado, p fica nulo."""
     lista = sorted((a for a in autores if a.get("nome")), key=lambda a: a.get("ordemAssinatura") or 10**6)
     saida = []
     for a in lista:
         m = re.search(r"/deputados/(\d+)$", a.get("uri") or "")
-        saida.append([int(m.group(1)) if m else None, a["nome"].strip()])
+        if m:
+            saida.append([int(m.group(1)), a["nome"].strip()])
+        else:
+            saida.append([None, a["nome"].strip(), (a.get("tipo") or "").strip() or None])
     if not lista:
         return {"p": None, "a": []}
     i = next((k for k, a in enumerate(lista) if a.get("proponente") == 1), 0)

@@ -464,17 +464,18 @@ def test_votacoes_senado_consulta_de_novo_arquivos_sem_voto_secreto_e_placar(dad
 
 def _autor(nome, ordem, dep=None, proponente=0):
     uri = f"https://dadosabertos.camara.leg.br/api/v2/deputados/{dep}" if dep else None
-    return {"uri": uri, "nome": nome, "ordemAssinatura": ordem, "proponente": proponente}
+    return {"uri": uri, "nome": nome, "ordemAssinatura": ordem, "proponente": proponente,
+            "tipo": "Deputado(a)" if dep else "Órgão do Poder Executivo"}
 
 
 def test_autores_da_resposta_acha_principal_e_ordena():
     r = coletar.autores_da_resposta([_autor("Bia", 2, 20), _autor("Ana", 1, 10, proponente=1), _autor("Poder Executivo", 3)])
-    assert r == {"p": 10, "a": [[10, "Ana"], [20, "Bia"], [None, "Poder Executivo"]]}
+    assert r == {"p": 10, "a": [[10, "Ana"], [20, "Bia"], [None, "Poder Executivo", "Órgão do Poder Executivo"]]}
 
 
 def test_autores_da_resposta_principal_que_nao_e_deputado():
     r = coletar.autores_da_resposta([_autor("Comissão X", 1, proponente=1), _autor("Bia", 2, 20)])
-    assert r["p"] is None and r["a"][1] == [20, "Bia"]
+    assert r["p"] is None and r["a"][0] == [None, "Comissão X", "Órgão do Poder Executivo"] and r["a"][1] == [20, "Bia"]
     assert coletar.autores_da_resposta([]) == {"p": None, "a": []}
 
 

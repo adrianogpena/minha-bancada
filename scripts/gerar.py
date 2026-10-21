@@ -52,15 +52,34 @@ def juntar_detalhe(p: dict, det: dict | None) -> dict:
 MAX_COAUTORES = 15
 
 
-def juntar_autoria(p: dict, aut: dict | None, did: str) -> dict:
-    """Acrescenta `principal` (o deputado foi o primeiro a assinar) e `co` (nomes dos outros
-    autores, até MAX_COAUTORES) quando a autoria do projeto já foi coletada."""
+def juntar_autoria(p: dict, aut: dict | None, did: str, partidos: dict | None = None) -> dict:
+    """Acrescenta, quando a autoria do projeto já foi coletada: `principal` (o deputado foi o primeiro
+    a assinar), `co` (outros autores, com o partido entre parênteses quando é deputado em exercício;
+    até MAX_COAUTORES), `n` (total de autores), `pp` (partidos distintos entre os autores que são
+    deputados em exercício, quando há mais de um) e `ini` (tipo do autor principal, quando não é
+    deputado: Poder Executivo, Senado, comissão...)."""
     if not aut or not aut.get("a"):
         return p
-    outros = [nome for i, nome in aut["a"] if str(i) != did]
+    partidos = partidos or {}
+    outros = []
+    for i, nome, *resto in aut["a"]:
+        if str(i) == did:
+            continue
+        sigla = partidos.get(str(i))
+        outros.append(f"{nome} ({sigla})" if sigla else nome)
     if len(outros) > MAX_COAUTORES:
         outros = outros[:MAX_COAUTORES] + [f"e mais {len(outros) - MAX_COAUTORES}"]
-    return {**p, "principal": str(aut.get("p")) == did, **({"co": outros} if outros else {})}
+    siglas = {partidos[str(i)] for i, *_ in aut["a"] if str(i) in partidos}
+    primeiro = aut["a"][0]
+    extra = {"principal": str(aut.get("p")) == did}
+    if outros:
+        extra["co"] = outros
+        extra["n"] = len(aut["a"])
+    if len(siglas) > 1:
+        extra["pp"] = len(siglas)
+    if aut.get("p") is None and len(primeiro) > 2 and primeiro[2]:
+        extra["ini"] = primeiro[2]
+    return {**p, **extra}
 
 
 def resumir_despesas(ano: int, itens: list) -> dict:
@@ -182,6 +201,7 @@ def main():
 
     detalhes = ler(BRUTO / "proposicoes_detalhe.json", {}) or {}
     autorias = ler(BRUTO / "proposicoes_autores.json", {}) or {}
+    partidos = {str(i): d["partido"] for i, d in deputados.items() if d.get("partido")}
 
     if SAIDA.exists():
         shutil.rmtree(SAIDA)
@@ -243,7 +263,7 @@ def main():
             "nascimento": d.get("nascimento"),
             "naturalidade": ", ".join(x for x in (d.get("municipioNascimento"), d.get("ufNascimento")) if x),
             "escolaridade": d.get("escolaridade"), "redesSociais": d.get("redesSociais", []),
-            "proposicoes": [juntar_autoria(juntar_detalhe(p, detalhes.get(str(p["id"]))), autorias.get(str(p["id"])), str(did))
+            "proposicoes": [juntar_autoria(juntar_detalhe(p, detalhes.get(str(p["id"]))), autorias.get(str(p["id"])), str(did), partidos)
                               for p in d["proposicoes"]],
             "votos": votos,
             "totalVotacoes": total_nominais, "eleicao": eleicoes_deps.get(did), "condicao": d.get("condicaoEleitoral"),

@@ -71,12 +71,23 @@ def test_gerar_senadores_cria_detalhe_de_cada_votacao(tmp_path, monkeypatch):
     assert por_id["3"]["nome"] == "Senador 3"
 
 
-def test_juntar_autoria_principal_e_coautores():
+def test_juntar_autoria_principal_coautores_partido_e_contagens():
     import gerar
-    aut = {"p": 10, "a": [[10, "Ana"], [20, "Bia"], [None, "Comissão X"]]}
-    assert gerar.juntar_autoria({"id": 1}, aut, "10") == {"id": 1, "principal": True, "co": ["Bia", "Comissão X"]}
-    assert gerar.juntar_autoria({"id": 1}, aut, "20") == {"id": 1, "principal": False, "co": ["Ana", "Comissão X"]}
-    assert gerar.juntar_autoria({"id": 1}, None, "10") == {"id": 1}  # ainda não coletada
+    aut = {"p": 10, "a": [[10, "Ana"], [20, "Bia"], [None, "Comissão X", "Comissão"]]}
+    partidos = {"10": "PT", "20": "PL"}
+    assert gerar.juntar_autoria({"id": 1}, aut, "10", partidos) == {
+        "id": 1, "principal": True, "co": ["Bia (PL)", "Comissão X"], "n": 3, "pp": 2}
+    r = gerar.juntar_autoria({"id": 1}, aut, "20", partidos)
+    assert r["principal"] is False and r["co"] == ["Ana (PT)", "Comissão X"]
+    assert gerar.juntar_autoria({"id": 1}, aut, "10") == {"id": 1, "principal": True, "co": ["Bia", "Comissão X"], "n": 3}  # sem partidos conhecidos
+    assert gerar.juntar_autoria({"id": 1}, None, "10", partidos) == {"id": 1}  # ainda não coletada
+
+
+def test_juntar_autoria_iniciativa_nao_deputado():
+    import gerar
+    aut = {"p": None, "a": [[None, "Poder Executivo", "Órgão do Poder Executivo"], [20, "Bia"]]}
+    r = gerar.juntar_autoria({}, aut, "20", {"20": "PL"})
+    assert r["ini"] == "Órgão do Poder Executivo" and r["principal"] is False and r["n"] == 2 and "pp" not in r
 
 
 def test_juntar_autoria_limita_coautores():

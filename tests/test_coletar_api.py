@@ -458,3 +458,42 @@ def test_votacoes_senado_consulta_de_novo_arquivos_sem_voto_secreto_e_placar(dad
     monkeypatch.setattr(coletar, "get_senado", lambda c, **p: chamadas.append(p["dataInicio"]) or [])
     coletar.coletar_votacoes_senado()
     assert chamadas[0] == f"{ano - 1}-01-01"
+
+
+# ---------------------------------------------------------------- Câmara: autores das proposições
+
+def _autor(nome, ordem, dep=None, proponente=0):
+    uri = f"https://dadosabertos.camara.leg.br/api/v2/deputados/{dep}" if dep else None
+    return {"uri": uri, "nome": nome, "ordemAssinatura": ordem, "proponente": proponente}
+
+
+def test_autores_da_resposta_acha_principal_e_ordena():
+    r = coletar.autores_da_resposta([_autor("Bia", 2, 20), _autor("Ana", 1, 10, proponente=1), _autor("Poder Executivo", 3)])
+    assert r == {"p": 10, "a": [[10, "Ana"], [20, "Bia"], [None, "Poder Executivo"]]}
+
+
+def test_autores_da_resposta_principal_que_nao_e_deputado():
+    r = coletar.autores_da_resposta([_autor("Comissão X", 1, proponente=1), _autor("Bia", 2, 20)])
+    assert r["p"] is None and r["a"][1] == [20, "Bia"]
+    assert coletar.autores_da_resposta([]) == {"p": None, "a": []}
+
+
+def test_autores_proposicoes_so_projetos_e_nao_reconsulta(dados, monkeypatch):
+    coletar.salvar(dados / "proposicoes" / "1.json", {"itens": [
+        {"id": 10, "siglaTipo": "PL"}, {"id": 11, "siglaTipo": "REQ"}, {"id": 12, "siglaTipo": "PEC"}]})
+    coletar.salvar(dados / "proposicoes" / "2.json", {"itens": [{"id": 10, "siglaTipo": "PL"}]})  # compartilhada
+    coletar.salvar(dados / "proposicoes_autores.json", {"12": {"p": 5, "a": [[5, "Cia"]]}})
+    chamadas = roteador(monkeypatch, {"/proposicoes/10/autores": {"dados": [_autor("Ana", 1, 10, 1)]}})
+    coletar.coletar_autores_proposicoes()
+    assert [c[0] for c in chamadas] == ["/proposicoes/10/autores"]  # REQ fora, 12 já coletada, 10 uma vez só
+    cache = json.loads((dados / "proposicoes_autores.json").read_text())
+    assert cache == {"10": {"p": 10, "a": [[10, "Ana"]]}, "12": {"p": 5, "a": [[5, "Cia"]]}}
+
+
+def test_autores_proposicoes_falha_da_api_mantem_arquivo_anterior(dados, monkeypatch):
+    coletar.salvar(dados / "proposicoes" / "1.json", {"itens": [{"id": 10, "siglaTipo": "PL"}, {"id": 12, "siglaTipo": "PL"}]})
+    coletar.salvar(dados / "proposicoes_autores.json", {"12": {"p": 5, "a": [[5, "Cia"]]}})
+    roteador(monkeypatch, {"/proposicoes/10/autores": RuntimeError("HTTP 500")})
+    coletar.coletar_autores_proposicoes()
+    assert json.loads((dados / "proposicoes_autores.json").read_text()) == {"12": {"p": 5, "a": [[5, "Cia"]]}}
+    assert coletar.AVISOS

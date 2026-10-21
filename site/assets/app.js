@@ -316,7 +316,8 @@ async function paginaDeputado() {
     linhaDoTempo: votacoes.map((v) => ({ ...v, voto: meus.get(v.id) || "ausente" })), // mais recente primeiro
     proposicoes: dep.proposicoes, tipoProjeto: (p) => !!TIPOS_PROJETO[p.tipo],
     textoLegislatura: "como autor ou coautor nesta legislatura (desde fev. de 2023)",
-    papel: () => "autor ou coautor. A Câmara lista os dois juntos e este site ainda não separa quem assinou primeiro.",
+    papel: (p) => p.principal === undefined ? "autor ou coautor. A Câmara lista os dois juntos e a ordem de assinatura desta proposição ainda não foi coletada."
+      : p.principal ? "<b>autor principal</b> (o primeiro a assinar)." : "<b>coautor</b> (assinou depois do autor principal).",
     aviso: "A situação vem da ficha de tramitação da Câmara e é atualizada aos poucos todo dia.",
     fonteTramitacao: "Ficha de tramitação (Câmara)",
     linkTramitacao: (p) => linkTramitacao(p.id),

@@ -49,6 +49,20 @@ def juntar_detalhe(p: dict, det: dict | None) -> dict:
     return {**p, **{curto: det[longo] for longo, curto in campos.items() if det.get(longo)}}
 
 
+MAX_COAUTORES = 15
+
+
+def juntar_autoria(p: dict, aut: dict | None, did: str) -> dict:
+    """Acrescenta `principal` (o deputado foi o primeiro a assinar) e `co` (nomes dos outros
+    autores, até MAX_COAUTORES) quando a autoria do projeto já foi coletada."""
+    if not aut or not aut.get("a"):
+        return p
+    outros = [nome for i, nome in aut["a"] if str(i) != did]
+    if len(outros) > MAX_COAUTORES:
+        outros = outros[:MAX_COAUTORES] + [f"e mais {len(outros) - MAX_COAUTORES}"]
+    return {**p, "principal": str(aut.get("p")) == did, **({"co": outros} if outros else {})}
+
+
 def resumir_despesas(ano: int, itens: list) -> dict:
     """Totais por tipo, mês e fornecedor, no formato que o site usa para deputados e senadores."""
     por_tipo, por_mes, fornecedores = Counter(), Counter(), Counter()
@@ -167,6 +181,7 @@ def main():
     votacoes.sort(key=lambda v: (v["data"], v.get("hora") or ""), reverse=True)
 
     detalhes = ler(BRUTO / "proposicoes_detalhe.json", {}) or {}
+    autorias = ler(BRUTO / "proposicoes_autores.json", {}) or {}
 
     if SAIDA.exists():
         shutil.rmtree(SAIDA)
@@ -228,7 +243,8 @@ def main():
             "nascimento": d.get("nascimento"),
             "naturalidade": ", ".join(x for x in (d.get("municipioNascimento"), d.get("ufNascimento")) if x),
             "escolaridade": d.get("escolaridade"), "redesSociais": d.get("redesSociais", []),
-            "proposicoes": [juntar_detalhe(p, detalhes.get(str(p["id"]))) for p in d["proposicoes"]],
+            "proposicoes": [juntar_autoria(juntar_detalhe(p, detalhes.get(str(p["id"]))), autorias.get(str(p["id"])), str(did))
+                              for p in d["proposicoes"]],
             "votos": votos,
             "totalVotacoes": total_nominais, "eleicao": eleicoes_deps.get(did), "condicao": d.get("condicaoEleitoral"),
             "despesas": {

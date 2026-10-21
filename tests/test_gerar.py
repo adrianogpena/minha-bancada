@@ -69,3 +69,18 @@ def test_gerar_senadores_cria_detalhe_de_cada_votacao(tmp_path, monkeypatch):
     assert por_id["1"]["nome"] == "Ana" and por_id["1"]["uf"] == "SP" and "anterior" not in por_id["1"]
     assert por_id["2"]["motivo"] == "Atividade parlamentar" and por_id["2"]["anterior"] is True
     assert por_id["3"]["nome"] == "Senador 3"
+
+
+def test_juntar_autoria_principal_e_coautores():
+    import gerar
+    aut = {"p": 10, "a": [[10, "Ana"], [20, "Bia"], [None, "Comissão X"]]}
+    assert gerar.juntar_autoria({"id": 1}, aut, "10") == {"id": 1, "principal": True, "co": ["Bia", "Comissão X"]}
+    assert gerar.juntar_autoria({"id": 1}, aut, "20") == {"id": 1, "principal": False, "co": ["Ana", "Comissão X"]}
+    assert gerar.juntar_autoria({"id": 1}, None, "10") == {"id": 1}  # ainda não coletada
+
+
+def test_juntar_autoria_limita_coautores():
+    import gerar
+    aut = {"p": 1, "a": [[1, "A"]] + [[100 + i, f"N{i}"] for i in range(20)]}
+    co = gerar.juntar_autoria({}, aut, "1")["co"]
+    assert len(co) == 16 and co[-1] == "e mais 5"

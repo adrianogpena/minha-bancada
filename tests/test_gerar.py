@@ -51,3 +51,21 @@ def test_salvar_e_ler(tmp_path):
     assert gerar.ler(destino) == {"a": "ç"}
     assert json.loads(destino.read_text(encoding="utf-8")) == {"a": "ç"}
     assert gerar.ler(tmp_path / "nada.json", 5) == 5
+
+
+def test_gerar_senadores_cria_detalhe_de_cada_votacao(tmp_path, monkeypatch):
+    bruto, saida = tmp_path / "dados", tmp_path / "site"
+    gerar.salvar(bruto / "senado.json", [{"id": "1", "nome": "Ana", "partido": "AAA", "uf": "SP"}])
+    gerar.salvar(bruto / "senado_votacoes" / "2026.json", {"9": {
+        "id": "9", "data": "2026-02-24", "descricao": "Votação X", "aprovada": 1,
+        "votos": [["1", "sim", "Sim|"], ["2", "ausente", "AP|Atividade parlamentar"], ["3", "nao", "Não|"]]}})
+    monkeypatch.setattr(gerar, "BRUTO", bruto)
+    monkeypatch.setattr(gerar, "SAIDA", saida)
+    gerar.gerar_senadores()
+    d = json.loads((saida / "votacao_senado" / "9.json").read_text())
+    assert d["placar"] == {"sim": 1, "nao": 1} and d["ausentes"] == 1
+    assert d["porPartido"] == {"AAA": {"sim": 1}, "?": {"ausente": 1, "nao": 1}}
+    por_id = {x["id"]: x for x in d["votos"]}
+    assert por_id["1"]["nome"] == "Ana" and por_id["1"]["uf"] == "SP" and "anterior" not in por_id["1"]
+    assert por_id["2"]["motivo"] == "Atividade parlamentar" and por_id["2"]["anterior"] is True
+    assert por_id["3"]["nome"] == "Senador 3"

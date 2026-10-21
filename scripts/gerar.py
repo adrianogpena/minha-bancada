@@ -66,8 +66,9 @@ def resumir_despesas(ano: int, itens: list) -> dict:
 
 
 def gerar_senadores() -> None:
-    """Votos e projetos dos senadores em exercício -> site/dados/senador/<id>.json
-    e site/dados/votacoes_senado.json (lista de votações, sem o voto de cada um)."""
+    """Votos e projetos dos senadores em exercício -> site/dados/senador/<id>.json,
+    site/dados/votacoes_senado.json (lista, sem o voto de cada um) e
+    site/dados/votacao_senado/<id>.json (uma votação com o voto de cada senador)."""
     senadores = ler(BRUTO / "senado.json", []) or []
     if not senadores:
         return
@@ -78,6 +79,7 @@ def gerar_senadores() -> None:
     autorias = ler(BRUTO / "senado_autorias.json", {}) or {}
     ceaps = ler(BRUTO / "senado_ceaps.json", {}) or {}
 
+    por_id = {str(s["id"]): s for s in senadores}
     resumo, votos_por_sen, primeira = [], defaultdict(dict), {}
     for v in votacoes:
         contagem = Counter(x[1] for x in v["votos"])
@@ -88,18 +90,38 @@ def gerar_senadores() -> None:
             placar.update(totais)
         # votação em que ninguém tem voto com direção só pode ser secreta, mesmo em dados salvos antes do campo existir
         secreta = bool(v.get("secreta")) or (contagem["secreto"] > 0 and not any(contagem[k] for k in ("sim", "nao", "abstencao", "obstrucao")))
-        resumo.append({
+        item = {
             "id": v["id"], "data": v["data"], "hora": v.get("hora"), "descricao": v["descricao"],
             "proposicao": v.get("proposicao"), "propId": v.get("propId"), "ementa": v.get("ementa"),
             "aprovada": v.get("aprovada"), "resultadoTexto": v.get("resultadoTexto"),
             "placar": placar, "placarOficial": bool(totais), "ausentes": contagem["ausente"],
             **({"secreta": True} if secreta else {}),
             **({"sessao": v["sessao"]} if v.get("sessao") else {}),
-        })
-        for sid, t, *_ in v["votos"]:
+        }
+        resumo.append(item)
+        por_partido = defaultdict(Counter)
+        detalhados = []
+        for sid, t, *resto in v["votos"]:
             votos_por_sen[sid][v["id"]] = t
+            sen = por_id.get(str(sid))
+            partido = (sen or {}).get("partido") or "?"
+            por_partido[partido][t] += 1
+            # rótulo oficial ("AP|Atividade parlamentar"): a parte depois de "|" explica a ausência
+            motivo = resto[0].partition("|")[2] if t == "ausente" and resto and resto[0] else ""
+            detalhados.append({
+                "id": str(sid), "nome": sen["nome"] if sen else f"Senador {sid}",
+                "partido": partido, "uf": (sen or {}).get("uf") or "", "voto": t,
+                **({"motivo": motivo} if motivo else {}),
+                # fora do exercício hoje: sem ficha no site para ligar
+                **({} if sen else {"anterior": True}),
+            })
             if sid not in primeira or v["data"] < primeira[sid]:
                 primeira[sid] = v["data"]
+        salvar(SAIDA / "votacao_senado" / f"{v['id']}.json", {
+            **item,
+            "porPartido": {p: dict(c) for p, c in sorted(por_partido.items())},
+            "votos": sorted(detalhados, key=lambda x: x["nome"]),
+        })
     salvar(SAIDA / "votacoes_senado.json", resumo)
 
     for s in senadores:

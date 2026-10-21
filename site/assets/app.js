@@ -824,7 +824,7 @@ const TIPOS_EXECUTIVO = { PL: "Projeto de lei", PLP: "Projeto de lei complementa
 function desfechoExecutivo(x) {
   const s = (x.sit || "").toLowerCase();
   if (x.veto === "total" || s.startsWith("vetad")) return { rotulo: "Vetou", classe: "v-nao" };
-  if (s.startsWith("transformad")) return x.veto === "parcial" ? { rotulo: "Sancionou, com vetos", classe: "v-sim" } : { rotulo: x.tipo === "MPV" && !x.remessa ? "Virou lei" : "Sancionou", classe: "v-sim" };
+  if (s.startsWith("transformad")) return { rotulo: x.veto === "parcial" ? "Virou lei, com vetos" : "Virou lei", classe: "v-sim" };
   if (s.includes("aguardando sanção")) return { rotulo: "Decide se sanciona", classe: "v-outro" };
   if (!x.sit && x.tipo === "MPV") return { rotulo: "MP em vigor", classe: "v-outro" };
   if (s.startsWith("perdeu a efic")) return { rotulo: "MP deixou de valer", classe: "v-nao" };

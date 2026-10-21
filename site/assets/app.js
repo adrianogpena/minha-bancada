@@ -1468,12 +1468,15 @@ function noEscopo(e, codigos) {
   });
 }
 
-/* Cargo exibido ao lado do nome; Presidência, governos e prefeituras já trazem o cargo no próprio nome. */
+/* Cargo exibido ao lado do nome do político. */
 function cargoHist(p) {
   const c = p.c || "";
   if (c.startsWith("dep:")) return "Deputado(a) federal";
   if (c.startsWith("est:")) return "Deputado(a) estadual";
   if ((p.h || "").includes("f=senado")) return "Senador(a)";
+  if (c === "pres") return "Presidente da República";
+  if (c.startsWith("gov:")) return "Governador(a)";
+  if (c.startsWith("pref:")) return "Prefeito(a)";
   return "";
 }
 

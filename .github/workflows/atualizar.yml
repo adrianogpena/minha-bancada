@@ -72,7 +72,8 @@ jobs:
           git push
 
       - name: Enviar resumo do que mudou por e-mail
-        # só roda se os segredos SMTP_* e EMAIL_PARA existirem; falha aqui não derruba a publicação
+        # só na execução agendada (pushes e execuções manuais não enviam); exige os segredos SMTP_* e EMAIL_PARA; falha aqui não derruba a publicação
+        if: github.event_name == 'schedule'
         continue-on-error: true
         env:
           SMTP_HOST: ${{ secrets.SMTP_HOST }}

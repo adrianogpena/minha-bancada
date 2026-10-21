@@ -39,7 +39,7 @@ def deputados_por_uf() -> dict[str, set[int]]:
         if arq.stem == "BR":
             continue
         itens = json.loads(arq.read_text(encoding="utf-8"))
-        mapa[arq.stem] = {int(x["i"]) for x in itens if str(x.get("h", "")).startswith("deputado.html")}
+        mapa[arq.stem] = {int(x["id"]) for x in itens if str(x.get("pagina", "")).startswith("deputado.html")}
     return mapa
 
 
@@ -97,8 +97,8 @@ def rotulos() -> dict[str, str]:
     mapa |= {f"MUN:{u}": f"Capital: {m} ({u})" for u, m in cob["capitais"].items()}
     for arq in sorted(INDICE.glob("[A-Z][A-Z].json")):
         for x in json.loads(arq.read_text(encoding="utf-8")):
-            if x.get("a"):
-                mapa.setdefault(x["a"], f"{x['c']}: {x['n']}")
+            if x.get("codigoFeed"):
+                mapa.setdefault(x["codigoFeed"], f"{x['cargo']}: {x['nome']}")
     return mapa
 
 

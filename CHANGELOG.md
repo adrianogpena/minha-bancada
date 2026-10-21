@@ -5,6 +5,14 @@ Regra: toda fonte nova ou mudança de coleta ganha uma entrada aqui, no mesmo co
 Datas dos conjuntos que já existiam vêm do primeiro commit que os trouxe (`git log --diff-filter=A`).
 Todas as coletas rodam sozinhas no GitHub Actions (`.github/workflows/atualizar.yml`, todo dia às 06:17 de Brasília), salvo onde indicado.
 
+## Nomes dos campos (2026-10-21)
+Todos os campos dos JSON de `dados/` e `site/dados/` passaram a ter nome por extenso (antes eram siglas de uma ou duas letras, como `sit`, `ap`, `td`, `dep`, `sq`, `ue`).
+Os arquivos já commitados foram convertidos de uma vez; o conteúdo não mudou. Exemplos: `sit` → `situacao`, `ap` → `dataApresentacao`, `td` → `tipoDescricao`,
+`pdf` → `linkTexto`, `dep` → `idsDeputados`, `sq` → `sequencial`, `ue` → `unidadeEleitoral`, `r`/`d`/`p` da prestação de contas → `receitas`/`despesasContratadas`/`despesasPagas`.
+Regra daqui para frente: nenhum campo novo com sigla ou letra solta. `scripts/nomes_legados.py` converte os nomes antigos quando o histórico e o resumo por e-mail
+comparam um commit anterior a esta mudança; pode ser apagado depois do primeiro dia comparado só com os nomes novos.
+Ficam como estavam, por serem padrão de fora ou protocolo: `uf`, `id`, os campos `n` e `e` da chave pública (JWK, RFC 7517) e as colunas do fluxo de assinaturas.
+
 ## Conjuntos já no projeto
 
 ### TSE: eleitos, bens, votos, fotos e redes (`dados/tse/<ano>/<UF>.json`)

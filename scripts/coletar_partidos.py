@@ -4,7 +4,7 @@ a partir dos ZIPs do TSE baixados por scripts/baixar_tse.py. Guarda
 dados/tse/partidos/<ano>/<UF>.json (vai para o git), chaveado por "CARGO|código do local"
 (município para vereador; UF para deputados). Só cargos proporcionais.
 
-Cada local: {"t": votos válidos dos partidos, "p": {sigla: [legenda, nominais, federação]}}.
+Cada local: {"totalVotos": votos válidos dos partidos, "partidos": {sigla: [legenda, nominais, federação]}}.
 Legenda = QT_TOTAL_VOTOS_LEG_VALIDOS; nominais = QT_VOTOS_NOMINAIS_VALIDOS.
 
 Uso:
@@ -51,7 +51,7 @@ def coletar_ano(ano: int) -> None:
         for nome in sorted(z.namelist()):
             if not nome.lower().endswith(".csv") or nome.upper().endswith("_BRASIL.CSV"):
                 continue
-            mapa = defaultdict(lambda: {"t": 0, "p": {}})
+            mapa = defaultdict(lambda: {"totalVotos": 0, "partidos": {}})
             with z.open(nome) as f:
                 for l in csv.DictReader(io.TextIOWrapper(f, encoding="latin-1", newline=""), delimiter=";"):
                     cargo = l["DS_CARGO"].upper()
@@ -59,8 +59,8 @@ def coletar_ano(ano: int) -> None:
                         continue
                     leg, nom = inteiro(l["QT_TOTAL_VOTOS_LEG_VALIDOS"]), inteiro(l["QT_VOTOS_NOMINAIS_VALIDOS"])
                     d = mapa[f"{cargo}|{l['SG_UE']}"]
-                    d["t"] += leg + nom
-                    p = d["p"].setdefault(l["SG_PARTIDO"], [0, 0, "" if l["SG_FEDERACAO"] == "#NULO" else l["SG_FEDERACAO"]])
+                    d["totalVotos"] += leg + nom
+                    p = d["partidos"].setdefault(l["SG_PARTIDO"], [0, 0, "" if l["SG_FEDERACAO"] == "#NULO" else l["SG_FEDERACAO"]])
                     p[0] += leg
                     p[1] += nom
             if mapa:

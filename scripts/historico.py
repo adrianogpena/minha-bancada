@@ -6,15 +6,17 @@ A execução diária faz um commit "Dados atualizados em AAAA-MM-DD". Este scrip
 Depois espelha tudo em site/dados/historico/ (com indice.json), que a página historico.html lê.
 
 Cada evento do dia:
-    l     local: "BR", "UF:SP" ou "MUN:SP" (capital)         uf   estado de quem aparece (filtro por estado)
-    k     categoria: nova, situacao, votacao, eleicao         t    título curto (ex.: "PL 123/2026")
-    p     políticos: [{c: código do "Fique informado" ou null, n: nome, h: página no site ou null}]
-    x     texto (ementa, despacho)     m  [antes, depois] de uma mudança     s  resumo (placar, resultado)
-    d     data do ato (AAAA-MM-DD)     f  fontes: [[rótulo, URL], ...]
-    r     relevância: 3 marco (votação, projeto aprovado/sancionado/vetado, eleito), 2 projeto de verdade, 1 o resto (requerimento, parecer, carga antiga)
-    n     só no evento "lote": quantos registros de baixa relevância ele resume (acima de LIMITE_LOTE por local)
-    i     só no evento "lote": os títulos resumidos (ex.: "REQ 12/2026"), em ordem
-O dia também traz "cobertura": para cada local monitorado, se os dados mudaram, quantos itens saíram e, se não mudaram, a última vez que mudaram.
+    local         "BR", "UF:SP" ou "MUN:SP" (capital)                 uf          estado de quem aparece (filtro por estado)
+    categoria     nova, situacao, votacao, eleicao                    titulo      título curto (ex.: "PL 123/2026")
+    politicos     [{codigo: código do "Fique informado" ou null, nome, pagina: página no site ou null}]
+    texto         ementa, despacho                                    mudanca     [antes, depois] de uma mudança
+    resumo        placar, resultado                                   dataDoAto   data do ato (AAAA-MM-DD)
+    fontes        [[rótulo, URL], ...]
+    relevancia    3 marco (votação, projeto aprovado/sancionado/vetado, eleito), 2 projeto de verdade, 1 o resto (requerimento, parecer, carga antiga)
+    quantidade    só no evento "lote": quantos registros de baixa relevância ele resume (acima de LIMITE_LOTE por local)
+    titulos       só no evento "lote": os títulos resumidos (ex.: "REQ 12/2026"), em ordem
+O dia também traz "cobertura": para cada local monitorado, o nome, se os dados mudaram, quantos itens saíram (itens) e, se não mudaram,
+a última vez que mudaram (ultimaMudanca).
 Os códigos de local e de político são os mesmos do feeds.py.
 
 Uso:
@@ -121,8 +123,8 @@ class Contexto:
             if not arq.stem.isalpha():
                 continue
             for x in json.loads(arq.read_text(encoding="utf-8")):
-                if x.get("a"):
-                    self.codigos.setdefault(x["a"], (x["n"], x.get("h")))
+                if x.get("codigoFeed"):
+                    self.codigos.setdefault(x["codigoFeed"], (x["nome"], x.get("pagina")))
         try:
             self.capitais = json.loads((SITE_DADOS / "cobertura.json").read_text(encoding="utf-8"))["capitais"]
         except (OSError, ValueError, KeyError):
@@ -148,7 +150,7 @@ class Contexto:
 
     def politico(self, codigo: str, padrao: str) -> dict:
         nome, pagina = self.codigos.get(codigo, (padrao, None))
-        return {"c": codigo, "n": nome, **({"h": pagina} if pagina else {})}
+        return {"codigo": codigo, "nome": nome, **({"pagina": pagina} if pagina else {})}
 
     def deputado(self, did: int) -> dict:
         nome, uf = self.deputados.get(did, (None, None))
@@ -159,7 +161,7 @@ class Contexto:
                 nome, uf = f["nome"], f.get("uf")
             except (OSError, ValueError, KeyError):
                 pass
-        return {"c": f"dep:{did}", "n": nome or f"Deputado(a) {did}", "h": f"deputado.html?id={did}", "uf": uf}
+        return {"codigo": f"dep:{did}", "nome": nome or f"Deputado(a) {did}", "pagina": f"deputado.html?id={did}", "uf": uf}
 
     def nome_local(self, codigo: str) -> str:
         if codigo == "BR":
@@ -175,10 +177,12 @@ def cortar(texto, n: int = LIMITE_TEXTO) -> str:
     return texto if len(texto) <= n else texto[: n - 1] + "…"
 
 
-def evento(local: str, k: str, t: str, *, uf=None, p=None, x=None, m=None, s=None, d=None, f=None, r=None, n=None, i=None) -> dict:
-    e = {"l": local, "k": k, "t": t, "uf": uf, "p": p or None, "x": cortar(x) or None, "m": m, "s": s, "d": d,
-         "f": [list(a) for a in (f or []) if a and a[1]], "r": r, "n": n, "i": i}
-    return {k_: v for k_, v in e.items() if v not in (None, [], "")}
+def evento(local: str, categoria: str, titulo: str, *, uf=None, politicos=None, texto=None, mudanca=None, resumo=None,
+           data_do_ato=None, fontes=None, relevancia=None, quantidade=None, titulos=None) -> dict:
+    e = {"local": local, "categoria": categoria, "titulo": titulo, "uf": uf, "politicos": politicos or None, "texto": cortar(texto) or None,
+         "mudanca": mudanca, "resumo": resumo, "dataDoAto": data_do_ato,
+         "fontes": [list(a) for a in (fontes or []) if a and a[1]], "relevancia": relevancia, "quantidade": quantidade, "titulos": titulos}
+    return {k: v for k, v in e.items() if v not in (None, [], "")}
 
 
 def mudou(a, b) -> bool:
@@ -215,8 +219,8 @@ def camara(ctx: Contexto, antes: str, depois: str) -> list:
     for i in novas.values():
         ps, uf = autores(i["idsDeputados"])
         det = det_b.get(str(i["id"])) or {}
-        saida.append(evento("BR", "nova", f"{i['siglaTipo']} {i['numero']}/{i['ano']}", uf=uf, p=ps, x=i.get("ementa"),
-                            d=det.get("dataApresentacao"), f=fontes_camara(i["id"], det.get("inteiroTeor"))))
+        saida.append(evento("BR", "nova", f"{i['siglaTipo']} {i['numero']}/{i['ano']}", uf=uf, politicos=ps, texto=i.get("ementa"),
+                            data_do_ato=det.get("dataApresentacao"), fontes=fontes_camara(i["id"], det.get("inteiroTeor"))))
     mudancas = [pid for pid, y in det_b.items() if pid in det_a and (mudou(det_a[pid].get("situacao"), y.get("situacao")) or mudou(det_a[pid].get("tramitacao"), y.get("tramitacao")))]
     if mudancas:
         meta = {}
@@ -232,9 +236,9 @@ def camara(ctx: Contexto, antes: str, depois: str) -> list:
             ps, uf = autores(i["idsDeputados"])
             sit = mudou(x.get("situacao"), y.get("situacao"))
             antes_, depois_ = (x.get("situacao"), y.get("situacao")) if sit else (x.get("tramitacao"), y.get("tramitacao"))
-            saida.append(evento("BR", "situacao", f"{i['siglaTipo']} {i['numero']}/{i['ano']}", uf=uf, p=ps, x=y.get("despacho") or i.get("ementa"),
-                                m=[antes_ or "—", depois_ or "—"], s=None if sit else "Nova tramitação", d=y.get("dataSituacao"),
-                                f=fontes_camara(pid, y.get("inteiroTeor"))))
+            saida.append(evento("BR", "situacao", f"{i['siglaTipo']} {i['numero']}/{i['ano']}", uf=uf, politicos=ps, texto=y.get("despacho") or i.get("ementa"),
+                                mudanca=[antes_ or "—", depois_ or "—"], resumo=None if sit else "Nova tramitação", data_do_ato=y.get("dataSituacao"),
+                                fontes=fontes_camara(pid, y.get("inteiroTeor"))))
     return saida
 
 
@@ -255,9 +259,9 @@ def votacoes_camara(ctx: Contexto, antes: str, depois: str) -> list:
                 continue
             res = {1: "Aprovada", 0: "Rejeitada"}.get(v.get("aprovada"), "Sem resultado informado")
             placar = votos_camara(v.get("votos") or [])
-            saida.append(evento("BR", "votacao", v.get("proposicao") or "Votação no Plenário da Câmara", x=v.get("ementa") or v.get("descricao"),
-                                s=f"{res}{', ' + placar if placar else ''}", d=v.get("data"),
-                                f=[("Votação no site", f"votacao.html?id={vid}"), ("API da Câmara", f"{CAMARA_API}/votacoes/{vid}"),
+            saida.append(evento("BR", "votacao", v.get("proposicao") or "Votação no Plenário da Câmara", texto=v.get("ementa") or v.get("descricao"),
+                                resumo=f"{res}{', ' + placar if placar else ''}", data_do_ato=v.get("data"),
+                                fontes=[("Votação no site", f"votacao.html?id={vid}"), ("API da Câmara", f"{CAMARA_API}/votacoes/{vid}"),
                                    ("Ficha de tramitação (Câmara)", f"https://www.camara.leg.br/proposicoesWeb/fichadetramitacao?idProposicao={v['propId']}") if v.get("propId") else None]))
     return saida
 
@@ -281,13 +285,13 @@ def senado(ctx: Contexto, antes: str, depois: str) -> list:
             continue   # sem situação anterior é a coleta preenchendo o campo, não uma mudança
         sid, i = autoria.get(mid, (None, None))
         nome = ctx.senadores.get(sid)
-        ps = [{"c": None, "n": nome, "h": f"politico.html?f=senado&i={sid}"}] if nome else None
+        ps = [{"codigo": None, "nome": nome, "pagina": f"politico.html?f=senado&i={sid}"}] if nome else None
         titulo = f"{i['tipo']} {i['numero']}/{i['ano']}" if i else f"Matéria {mid} do Senado"
         fontes_ = [("Matéria no Senado", SENADO_MATERIA + mid), ("Dados abertos do Senado", "https://legis.senado.leg.br/dadosabertos/processo/" + str(m["processo"]) if m.get("processo") else None)]
         if mid in a:
-            saida.append(evento("BR", "situacao", titulo, p=ps, x=i and i["ementa"], m=[a[mid].get("situacao") or "—", m.get("situacao") or "—"], d=m.get("dataSituacao"), f=fontes_))
+            saida.append(evento("BR", "situacao", titulo, politicos=ps, texto=i and i["ementa"], mudanca=[a[mid].get("situacao") or "—", m.get("situacao") or "—"], data_do_ato=m.get("dataSituacao"), fontes=fontes_))
         else:
-            saida.append(evento("BR", "nova", titulo, p=ps, x=i and i["ementa"], s=m.get("situacao"), d=m.get("dataApresentacao") or m.get("dataSituacao"), f=fontes_))
+            saida.append(evento("BR", "nova", titulo, politicos=ps, texto=i and i["ementa"], resumo=m.get("situacao"), data_do_ato=m.get("dataApresentacao") or m.get("dataSituacao"), fontes=fontes_))
     return saida
 
 
@@ -304,9 +308,9 @@ def votacoes_senado(ctx: Contexto, antes: str, depois: str) -> list:
             tot = v.get("totais") or {}
             placar = ", ".join(f"{tot[k]} {n}" for k, n in (("totalVotosSim", "sim"), ("totalVotosNao", "não"), ("totalVotosAbstencao", "abstenções")) if tot.get(k) is not None)
             res = "Votação secreta" if v.get("secreta") else {1: "Aprovada", 0: "Rejeitada"}.get(v.get("aprovada"), v.get("resultadoTexto") or "Sem resultado informado")
-            saida.append(evento("BR", "votacao", f"{v['proposicao']} (Senado)" if v.get("proposicao") else "Votação no Plenário do Senado", x=v.get("ementa") or v.get("descricao"),
-                                s=f"{res}{', ' + placar if placar else ''}", d=v.get("data"),
-                                f=[("Votação no site", f"votacao.html?casa=senado&id={vid}"),
+            saida.append(evento("BR", "votacao", f"{v['proposicao']} (Senado)" if v.get("proposicao") else "Votação no Plenário do Senado", texto=v.get("ementa") or v.get("descricao"),
+                                resumo=f"{res}{', ' + placar if placar else ''}", data_do_ato=v.get("data"),
+                                fontes=[("Votação no site", f"votacao.html?casa=senado&id={vid}"),
                                    ("Matéria no Senado", SENADO_MATERIA + str(v["propId"])) if v.get("propId") else None,
                                    ("Dados abertos do Senado", "https://legis.senado.leg.br/dadosabertos/votacao")]))
     return saida
@@ -324,9 +328,9 @@ def executivo(ctx: Contexto, antes: str, depois: str) -> list:
         x = ant.get(i["id"])
         if x and not mudou(x.get("situacao"), i.get("situacao")):
             continue
-        saida.append(evento("BR", "situacao" if x else "nova", f"{i['tipo']} {i['numero']}/{i['ano']}", p=pres, x=i.get("ementa"),
-                            m=[x.get("situacao") or "—", i.get("situacao") or "—"] if x else None, s=None if x else i.get("situacao"), d=i.get("dataSituacao") or i.get("dataApresentacao"),
-                            f=fontes_camara(i["id"], i.get("inteiroTeor"))))
+        saida.append(evento("BR", "situacao" if x else "nova", f"{i['tipo']} {i['numero']}/{i['ano']}", politicos=pres, texto=i.get("ementa"),
+                            mudanca=[x.get("situacao") or "—", i.get("situacao") or "—"] if x else None, resumo=None if x else i.get("situacao"), data_do_ato=i.get("dataSituacao") or i.get("dataApresentacao"),
+                            fontes=fontes_camara(i["id"], i.get("inteiroTeor"))))
     return saida
 
 
@@ -345,9 +349,9 @@ def sapl(ctx: Contexto, antes: str, depois: str, uf: str, arquivo: str, local: s
                 continue
             host = host_de(b.get(f))
             titulo = f"{m.get('tipoDescricao') or m.get('tipo', '')} {m.get('numero', '')}/{m.get('ano', '')}".strip()
-            saida.append(evento(local, "nova" if novo else "situacao", titulo, uf=uf, p=politicos(m), x=m.get("ementa"),
-                                m=None if novo else [ant[mid].get("situacao") or "—", m.get("situacao") or "—"], s=m.get("situacao") if novo else None, d=m.get("dataApresentacao"),
-                                f=[("Matéria no sistema legislativo", f"https://{host}/materia/{mid}" if host and str(mid).isdigit() else None), ("Texto", m.get("linkTexto"))]))
+            saida.append(evento(local, "nova" if novo else "situacao", titulo, uf=uf, politicos=politicos(m), texto=m.get("ementa"),
+                                mudanca=None if novo else [ant[mid].get("situacao") or "—", m.get("situacao") or "—"], resumo=m.get("situacao") if novo else None, data_do_ato=m.get("dataApresentacao"),
+                                fontes=[("Matéria no sistema legislativo", f"https://{host}/materia/{mid}" if host and str(mid).isdigit() else None), ("Texto", m.get("linkTexto"))]))
     return saida
 
 
@@ -386,8 +390,8 @@ def votacoes_estaduais(ctx: Contexto, antes: str, depois: str, uf: str, ass: dic
         m = materias.get(str(v.get("idMateria"))) or {}
         titulo = f"{m.get('tipo', '')} {m.get('numero', '')}/{m.get('ano', '')}".strip() if m else f"Matéria {v.get('idMateria')}"
         placar = f"{v.get('sim', 0)} sim, {v.get('nao', 0)} não, {v.get('abstencoes', 0)} abstenções"
-        saida.append(evento(f"UF:{uf}", "votacao", f"{titulo} (votação nominal)", uf=uf, x=m.get("ementa"), s=f"{v.get('resultado') or 'Sem resultado informado'}, {placar}", d=v.get("data"),
-                            f=[("Matéria no sistema legislativo", f"https://{ass['host']}/materia/{v['idMateria']}" if ass.get("host") and v.get("idMateria") else None)]))
+        saida.append(evento(f"UF:{uf}", "votacao", f"{titulo} (votação nominal)", uf=uf, texto=m.get("ementa"), resumo=f"{v.get('resultado') or 'Sem resultado informado'}, {placar}", data_do_ato=v.get("data"),
+                            fontes=[("Matéria no sistema legislativo", f"https://{ass['host']}/materia/{v['idMateria']}" if ass.get("host") and v.get("idMateria") else None)]))
     return saida
 
 
@@ -410,8 +414,8 @@ def eleitos(ctx: Contexto, antes: str, depois: str) -> list:
         if f not in a:
             continue
         ano, uf = f.split("/")[2], f.split("/")[3][:2]
-        ant = {c["sq"]: c for c in a[f]}
-        atual = {c["sq"]: c for c in b.get(f, [])}
+        ant = {c["sequencial"]: c for c in a[f]}
+        atual = {c["sequencial"]: c for c in b.get(f, [])}
         fontes_ = [("Candidatos e eleitos (TSE, dados abertos)", TSE_DADOS), ("Arquivo usado", TSE_CDN.format(ano=ano))]
         antes_n = len(saida)
         for sq in sorted(set(ant) | set(atual)):
@@ -420,18 +424,18 @@ def eleitos(ctx: Contexto, antes: str, depois: str) -> list:
             titulo = f"{c.get('urna') or c['nome']}, {c['cargo'].title()} ({c['partido']}), eleição de {ano}"
             local = "BR" if uf == "BR" else f"UF:{c['uf']}"
             if not x:
-                saida.append(evento(local, "eleicao", titulo, uf=None if uf == "BR" else c["uf"], s=f"Passou a constar como {c.get('situacao')}", f=fontes_))
+                saida.append(evento(local, "eleicao", titulo, uf=None if uf == "BR" else c["uf"], resumo=f"Passou a constar como {c.get('situacao')}", fontes=fontes_))
             elif not y:
-                saida.append(evento(local, "eleicao", titulo, uf=None if uf == "BR" else c["uf"], s="Deixou de constar entre os eleitos", f=fontes_))
+                saida.append(evento(local, "eleicao", titulo, uf=None if uf == "BR" else c["uf"], resumo="Deixou de constar entre os eleitos", fontes=fontes_))
             else:
                 for campo, rotulo in (("situacao", "Situação"), ("resultado", "Resultado"), ("partido", "Partido")):
                     if mudou(x.get(campo), y.get(campo)):
-                        saida.append(evento(local, "eleicao", titulo, uf=None if uf == "BR" else c["uf"], m=[x.get(campo) or "—", y.get(campo) or "—"], s=rotulo, f=fontes_))
+                        saida.append(evento(local, "eleicao", titulo, uf=None if uf == "BR" else c["uf"], mudanca=[x.get(campo) or "—", y.get(campo) or "—"], resumo=rotulo, fontes=fontes_))
         if len(saida) - antes_n > LIMITE_ELEICAO:
             n = len(saida) - antes_n
             del saida[antes_n:]
             saida.append(evento("BR" if uf == "BR" else f"UF:{uf}", "eleicao", f"Eleitos de {ano}: {n} registros novos ou alterados", uf=None if uf == "BR" else uf,
-                                s="Carga em lote; a lista completa está nos dados abertos do TSE", f=fontes_, r=2))
+                                resumo="Carga em lote; a lista completa está nos dados abertos do TSE", fontes=fontes_, relevancia=2))
     return saida
 
 
@@ -444,19 +448,19 @@ def projeto_de_verdade(titulo: str) -> bool:
 
 def relevancia(e: dict, data: str) -> int:
     """3 marco, 2 projeto de verdade, 1 o resto. Só ordena e filtra na página: nada deixa de ser registrado (exceto o excesso de lote)."""
-    if e.get("r"):
-        return e["r"]
-    if e["k"] in ("votacao", "eleicao"):
+    if e.get("relevancia"):
+        return e["relevancia"]
+    if e["categoria"] in ("votacao", "eleicao"):
         return 3
-    desconhecido = e["t"].startswith("Matéria ")   # matéria do Senado sem o tipo: na dúvida, não esconde
-    if not (projeto_de_verdade(e["t"]) or desconhecido):
+    desconhecido = e["titulo"].startswith("Matéria ")   # matéria do Senado sem o tipo: na dúvida, não esconde
+    if not (projeto_de_verdade(e["titulo"]) or desconhecido):
         return 1
-    if e["k"] == "situacao":
-        if e.get("s") == "Nova tramitação":   # só andou de lugar; a situação é a mesma
+    if e["categoria"] == "situacao":
+        if e.get("resumo") == "Nova tramitação":   # só andou de lugar; a situação é a mesma
             return 1
-        return 3 if MARCO_SITUACAO.search((e.get("m") or ["", ""])[1]) else 2
+        return 3 if MARCO_SITUACAO.search((e.get("mudanca") or ["", ""])[1]) else 2
     try:
-        if (date.fromisoformat(data) - date.fromisoformat(e["d"][:10])).days > LIMITE_ANTIGO_DIAS:
+        if (date.fromisoformat(data) - date.fromisoformat(e["dataDoAto"][:10])).days > LIMITE_ANTIGO_DIAS:
             return 1
     except (KeyError, TypeError, ValueError):
         pass
@@ -473,26 +477,26 @@ def agrupar_lotes(eventos: list) -> list:
     vira um evento só, com a conta por tipo; projetos de verdade e marcos nunca entram no lote."""
     baixos = defaultdict(list)
     for e in eventos:
-        if e["r"] == 1 and e["k"] in ("nova", "situacao"):
-            baixos[e["l"]].append(e)
+        if e["relevancia"] == 1 and e["categoria"] in ("nova", "situacao"):
+            baixos[e["local"]].append(e)
     saida = eventos
     for local, lista in baixos.items():
         if len(lista) <= LIMITE_LOTE:
             continue
         ids = {id(e) for e in lista}
         saida = [e for e in saida if id(e) not in ids]
-        tipos = Counter(tipo_do_titulo(e["t"]) for e in lista).most_common(8)
+        tipos = Counter(tipo_do_titulo(e["titulo"]) for e in lista).most_common(8)
         resto = len(lista) - sum(n for _, n in tipos)
         conta = ", ".join(f"{n} {t}" for t, n in tipos) + (f" e mais {resto} de outros tipos" if resto else "")
         ufs = {e.get("uf") for e in lista if e.get("uf")}
         saida.append(evento(local, "lote", f"{len(lista)} registros de baixa relevância (requerimentos, pareceres e afins)", uf=ufs.pop() if len(ufs) == 1 else None,
-                            s=f"Novos ou com nova situação: {conta}. Títulos na lista abaixo.", r=1, n=len(lista),
-                            i=sorted(e["t"] for e in lista)))
+                            resumo=f"Novos ou com nova situação: {conta}. Títulos na lista abaixo.", relevancia=1, quantidade=len(lista),
+                            titulos=sorted(e["titulo"] for e in lista)))
     return saida
 
 
 def cobertura(ctx: Contexto, antes: str, depois: str, contagem: dict) -> dict:
-    """Todo local monitorado no dia, com ou sem novidade: {código: {n nome, m dados mudaram, e itens, u última mudança quando não mudaram}}.
+    """Todo local monitorado no dia, com ou sem novidade: {código: {nome, mudou, itens, ultimaMudanca (quando não mudaram)}}.
     Assim "nada aconteceu" se distingue de "o local não foi acompanhado" e uma coleta parada há dias aparece."""
     prefixos = {"BR": list(PREFIXOS_BR)}
     for tipo, pasta in (("UF", "estaduais"), ("MUN", "municipais")):
@@ -503,12 +507,12 @@ def cobertura(ctx: Contexto, antes: str, depois: str, contagem: dict) -> dict:
     for local in sorted(prefixos, key=ORDEM_LOCAL):
         itens = sum(contagem.get(local, {}).values())
         mudou_ = bool(itens) or any(r.arquivos(antes, depois, p) for p in prefixos[local])   # o TSE tem arquivos próprios, fora dos prefixos
-        item = {"n": ctx.nome_local(local), "m": mudou_, "e": itens}
+        item = {"nome": ctx.nome_local(local), "mudou": mudou_, "itens": itens}
         if not mudou_:
             try:
-                item["u"] = r.git("log", "-1", "--format=%cs", depois, "--", *prefixos[local]).strip() or None
+                item["ultimaMudanca"] = r.git("log", "-1", "--format=%cs", depois, "--", *prefixos[local]).strip() or None
             except subprocess.CalledProcessError:
-                item["u"] = None
+                item["ultimaMudanca"] = None
         saida[local] = {k: v for k, v in item.items() if v is not None}
     return saida
 
@@ -527,13 +531,13 @@ def dia(data: str, antes: str, depois: str) -> dict:
     for coletor in COLETORES:
         eventos += coletor(ctx, antes, depois)
     for e in eventos:
-        e["r"] = relevancia(e, data)
+        e["relevancia"] = relevancia(e, data)
     eventos = agrupar_lotes(eventos)
-    eventos.sort(key=lambda e: (ORDEM_LOCAL(e["l"]), -e["r"]))   # a ordem do arquivo já põe o que importa primeiro
-    locais = sorted({e["l"] for e in eventos}, key=ORDEM_LOCAL)
+    eventos.sort(key=lambda e: (ORDEM_LOCAL(e["local"]), -e["relevancia"]))   # a ordem do arquivo já põe o que importa primeiro
+    locais = sorted({e["local"] for e in eventos}, key=ORDEM_LOCAL)
     contagem = {c: {} for c in locais}
     for e in eventos:
-        contagem[e["l"]][e["k"]] = contagem[e["l"]].get(e["k"], 0) + e.get("n", 1)
+        contagem[e["local"]][e["categoria"]] = contagem[e["local"]].get(e["categoria"], 0) + e.get("quantidade", 1)
     return {"data": data, "antes": r.git("rev-parse", antes).strip(), "depois": r.git("rev-parse", depois).strip(),
             "locais": {c: ctx.nome_local(c) for c in locais}, "contagem": contagem, "cobertura": cobertura(ctx, antes, depois, contagem),
             "eventos": eventos}
@@ -542,8 +546,9 @@ def dia(data: str, antes: str, depois: str) -> dict:
 def resumo_indice(d: dict) -> dict:
     r_ = Counter()
     for e in d["eventos"]:
-        r_[str(e["r"])] += e.get("n", 1)
-    return {"d": d["data"], "n": sum(sum(v.values()) for v in d["contagem"].values()), "l": {c: sum(v.values()) for c, v in d["contagem"].items()}, "r": dict(r_)}
+        r_[str(e["relevancia"])] += e.get("quantidade", 1)
+    return {"data": d["data"], "total": sum(sum(v.values()) for v in d["contagem"].values()),
+            "locais": {c: sum(v.values()) for c, v in d["contagem"].items()}, "relevancias": dict(r_)}
 
 
 def gravar(d: dict, pasta: Path) -> None:
@@ -551,11 +556,11 @@ def gravar(d: dict, pasta: Path) -> None:
     (pasta / f"{d['data']}.json").write_text(json.dumps(d, ensure_ascii=False, separators=(",", ":")), encoding="utf-8")
     caminho = pasta / "indice.json"
     try:
-        indice = {x["d"]: x for x in json.loads(caminho.read_text(encoding="utf-8"))}
+        indice = {x["data"]: x for x in json.loads(caminho.read_text(encoding="utf-8"))}
     except (OSError, ValueError):
         indice = {}
     indice[d["data"]] = resumo_indice(d)
-    caminho.write_text(json.dumps(sorted(indice.values(), key=lambda x: x["d"], reverse=True), ensure_ascii=False, separators=(",", ":")), encoding="utf-8")
+    caminho.write_text(json.dumps(sorted(indice.values(), key=lambda x: x["data"], reverse=True), ensure_ascii=False, separators=(",", ":")), encoding="utf-8")
 
 
 def espelhar(origem: Path, destino: Path) -> None:

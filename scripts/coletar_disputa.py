@@ -47,9 +47,9 @@ def inteiro(v: str) -> int:
 
 
 def coletar_ano(ano: int) -> None:
-    dados = defaultdict(lambda: {"t": {}, "v": None})   # (uf, cargo, ue) -> dados
+    dados = defaultdict(lambda: {"turnos": {}, "vagas": None})   # (uf, cargo, ue) -> dados
     for l in linhas(BRUTO / "detalhe_votacao_munzona" / f"detalhe_votacao_munzona_{ano}.zip"):
-        t = dados[(l["SG_UF"], l["DS_CARGO"].upper(), l["SG_UE"])]["t"].setdefault(
+        t = dados[(l["SG_UF"], l["DS_CARGO"].upper(), l["SG_UE"])]["turnos"].setdefault(
             l["NR_TURNO"], dict.fromkeys(("aptos", "comparecimento", "abstencoes", "brancos", "nulos", "validos"), 0))
         t["aptos"] += inteiro(l["QT_APTOS"])
         t["comparecimento"] += inteiro(l["QT_COMPARECIMENTO"])
@@ -58,7 +58,7 @@ def coletar_ano(ano: int) -> None:
         t["nulos"] += inteiro(l["QT_TOTAL_VOTOS_NULOS"])
         t["validos"] += inteiro(l["QT_TOTAL_VOTOS_VALIDOS"])
     for l in linhas(BRUTO / "consulta_vagas" / f"consulta_vagas_{ano}.zip"):
-        dados[(l["SG_UF"], l["DS_CARGO"].upper(), l["SG_UE"])]["v"] = inteiro(l["QT_VAGA"])
+        dados[(l["SG_UF"], l["DS_CARGO"].upper(), l["SG_UE"])]["vagas"] = inteiro(l["QT_VAGA"])
 
     por_uf = defaultdict(dict)
     for (uf, cargo, ue), d in dados.items():

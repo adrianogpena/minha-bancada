@@ -182,17 +182,17 @@ def coletar_fotos(ano: int, eleitos: dict) -> None:
         with zipfile.ZipFile(z) as arq:
             nomes = {n.rsplit("/", 1)[-1]: n for n in arq.namelist() if n.lower().endswith(".jpg")}
             for e in lista:
-                nome = nomes.get(f"F{uf}{e['sq']}_div.jpg") or nomes.get(f"FBR{e['sq']}_div.jpg")
+                nome = nomes.get(f"F{uf}{e['sequencial']}_div.jpg") or nomes.get(f"FBR{e['sequencial']}_div.jpg")
                 if not nome:
                     continue
                 try:
                     with arq.open(nome) as f:
                         img = Image.open(f).convert("RGB")
                     img.thumbnail((LADO_FOTO, LADO_FOTO))
-                    img.save(pasta / f"{e['sq']}.jpg", quality=80, optimize=True)
-                    e["foto"] = f"fotos/{ano}/{e['sq']}.jpg"
+                    img.save(pasta / f"{e['sequencial']}.jpg", quality=80, optimize=True)
+                    e["foto"] = f"fotos/{ano}/{e['sequencial']}.jpg"
                 except Exception as ex:
-                    avisar(f"foto {e['sq']}: {ex}")
+                    avisar(f"foto {e['sequencial']}: {ex}")
         z.unlink()
     print(f"  com foto: {sum(1 for e in eleitos.values() if e['foto'])}")
 
@@ -202,8 +202,8 @@ def coletar_votos(ano: int, eleitos: dict) -> None:
     Nos cargos majoritários calcula também a porcentagem dos votos válidos."""
     ids = set(eleitos)
     for e in eleitos.values():
-        if e.get("chapaSq"):
-            ids.add(e["chapaSq"])
+        if e.get("sequencialChapa"):
+            ids.add(e["sequencialChapa"])
     votos = defaultdict(dict)        # sq -> {turno: [data, votos]}
     totais = defaultdict(float)      # (cargo, ue, turno) -> votos válidos
     zip_votos = baixar(f"{CDN}/votacao_candidato_munzona/votacao_candidato_munzona_{ano}.zip")
@@ -227,12 +227,12 @@ def coletar_votos(ano: int, eleitos: dict) -> None:
         return v
 
     for e in eleitos.values():
-        fonte_sq = e.get("chapaSq") or e["sq"]
+        fonte_sq = e.get("sequencialChapa") or e["sequencial"]
         turnos = []
         for turno, (data, qt) in sorted(votos.get(fonte_sq, {}).items()):
-            total = totais.get((e["cargo"].replace("VICE-", ""), e["ue"], turno))
+            total = totais.get((e["cargo"].replace("VICE-", ""), e["unidadeEleitoral"], turno))
             turnos.append({"turno": turno, "data": data_iso(data), "votos": int(qt),
-                           "pct": round(100 * qt / total, 2) if total else None})
+                           "percentual": round(100 * qt / total, 2) if total else None})
         e["votos"] = turnos
     print(f"  com votos: {sum(1 for e in eleitos.values() if e['votos'])}")
 
@@ -329,7 +329,7 @@ def coletar_ano(ano: int) -> None:
             d, m, a = nascimento.split("/")
             nascimento = f"{a}-{m}-{d}"
         eleitos[sq] = {
-            "sq": sq,
+            "sequencial": sq,
             "nome": titulo(limpo(l.get("NM_CANDIDATO"))),
             "urna": titulo(limpo(l.get("NM_URNA_CANDIDATO"))) or titulo(limpo(l.get("NM_CANDIDATO"))),
             "cargo": cargo,
@@ -338,7 +338,7 @@ def coletar_ano(ano: int) -> None:
             "federacao": limpo(l.get("SG_FEDERACAO")) or limpo(l.get("NM_FEDERACAO")),
             "numero": limpo(l.get("NR_CANDIDATO")),
             "uf": uf,
-            "ue": l["SG_UE"].strip(),
+            "unidadeEleitoral": l["SG_UE"].strip(),
             "municipio": titulo(limpo(l.get("NM_UE"))) if cargo in ("VEREADOR", "PREFEITO", "VICE-PREFEITO") else None,
             "nascimento": nascimento,
             "genero": limpo(l.get("DS_GENERO")),
@@ -353,7 +353,7 @@ def coletar_ano(ano: int) -> None:
             "email": (limpo(l.get("DS_EMAIL")) or "").lower() if "@" in (l.get("DS_EMAIL") or "") else None,
             "eleicao": limpo(l.get("CD_ELEICAO")),
             "resultado": frase(limpo(l.get("DS_SIT_TOT_TURNO"))),
-            "chapaSq": chapa_sq,
+            "sequencialChapa": chapa_sq,
             "titular": titular_nome,
             "votos": [],
             "bens": [],

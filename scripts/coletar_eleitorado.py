@@ -9,7 +9,7 @@ Uso:
     python scripts/coletar_eleitorado.py              # 2022 e 2024
     python scripts/coletar_eleitorado.py --anos 2024
 
-Cada resumo: {"t": total, "g": [masculino, feminino], "f": [8 faixas etárias], "e": [8 graus de escolaridade]}.
+Cada resumo: {"total": total, "porGenero": [masculino, feminino], "porFaixaEtaria": [8 faixas etárias], "porEscolaridade": [8 graus de escolaridade]}.
 Faixas e graus: FAIXAS e ESCOLARIDADE, em app.js. "Inválida" (idade) e "não informado" (gênero) só entram no total.
 
 Fonte: https://dadosabertos.tse.jus.br (Eleitorado: perfil do eleitorado)
@@ -44,20 +44,20 @@ def faixa(cd: int) -> int | None:
 
 
 def novo() -> dict:
-    return {"t": 0, "g": [0, 0], "f": [0] * 8, "e": [0] * 8}
+    return {"total": 0, "porGenero": [0, 0], "porFaixaEtaria": [0] * 8, "porEscolaridade": [0] * 8}
 
 
 def somar(r: dict, l: dict) -> None:
     n = int(l["QT_ELEITORES"])
-    r["t"] += n
+    r["total"] += n
     if l["CD_GENERO"] in ("2", "4"):
-        r["g"][0 if l["CD_GENERO"] == "2" else 1] += n
+        r["porGenero"][0 if l["CD_GENERO"] == "2" else 1] += n
     f = faixa(int(l["CD_FAIXA_ETARIA"]))
     if f is not None:
-        r["f"][f] += n
+        r["porFaixaEtaria"][f] += n
     e = int(l["CD_GRAU_ESCOLARIDADE"])
     if 1 <= e <= 8:
-        r["e"][e - 1] += n
+        r["porEscolaridade"][e - 1] += n
 
 
 def coletar_ano(ano: int) -> None:

@@ -177,7 +177,7 @@ def gerar_eleitorado() -> None:
         for ano in (2024, 2022):
             dados = ler(BRUTO / "tse" / "eleitorado" / str(ano) / arq.name)
             if dados:
-                salvar(SAIDA / "eleitorado" / arq.name, {"ano": ano, "d": dados})
+                salvar(SAIDA / "eleitorado" / arq.name, {"ano": ano, "locais": dados})
                 break
 
 

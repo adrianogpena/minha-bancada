@@ -296,3 +296,19 @@ select:disabled { opacity: .55; }
 .mapa-mun path, .mapa-mun path:hover { cursor: default; }
 .legenda-mapa { display: flex; align-items: center; gap: 8px; font-size: .85rem; color: var(--tinta-suave); margin: 0 0 12px; }
 .legenda-mapa i { flex: 0 1 160px; height: 10px; border-radius: 5px; background: linear-gradient(90deg, color-mix(in srgb, var(--marca) 12%, var(--superficie)), var(--marca)); }
+
+/* fique informado */
+.informado fieldset { border: 1.5px solid var(--linha); border-radius: var(--raio); background: var(--superficie); margin: 0 0 18px; padding: 16px 18px; }
+.informado legend { font: 700 18px var(--display); padding: 0 6px; }
+.informado legend small { font: 400 14px var(--texto); color: var(--tinta-suave); }
+.informado .filtros { margin-top: 4px; }
+.informado .itens, .informado .escolhas { list-style: none; margin: 8px 0; padding: 0; }
+.informado li { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 8px 0; border-bottom: 1px solid var(--linha); }
+.informado li button { font: 700 14px var(--texto); border: 1.5px solid var(--linha); background: none; color: var(--tinta); border-radius: var(--raio); padding: 4px 10px; cursor: pointer; white-space: nowrap; }
+.informado li button:hover:not(:disabled) { border-color: var(--marca); }
+.informado li button:disabled { opacity: .55; cursor: default; }
+.informado .botao { font: 700 16px var(--texto); background: var(--marca); color: var(--superficie); border: 0; border-radius: var(--raio); padding: 12px 20px; cursor: pointer; }
+.informado .botao:disabled { opacity: .6; cursor: wait; }
+.informado .mais { margin-top: 0; font-weight: 700; }
+.dica-form { color: var(--tinta-suave); font-size: 14px; margin: 8px 0 0; }
+.aviso-form { font-weight: 700; min-height: 1.4em; }

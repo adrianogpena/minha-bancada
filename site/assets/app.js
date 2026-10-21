@@ -120,7 +120,7 @@ function abas(alvo, opcoes, aoMudar) {
 
 /* ---------- moldura comum ---------- */
 function moldura(pagina) {
-  const links = [["index.html", "Políticos", "inicio"], ["camara.html", "Câmara", "camara"], ["votacoes.html", "Votações", "votacoes"], ["sobre.html", "Sobre os dados", "sobre"]];
+  const links = [["index.html", "Políticos", "inicio"], ["camara.html", "Câmara", "camara"], ["votacoes.html", "Votações", "votacoes"], ["informado.html", "Fique informado", "informado"], ["sobre.html", "Sobre os dados", "sobre"]];
   const atual = { deputado: "camara", votacao: "votacoes", politico: "inicio" }[pagina] || pagina;
   document.body.insertAdjacentHTML("afterbegin", `
     <header class="topo"><div class="recipiente">
@@ -1257,7 +1257,108 @@ async function montarEstadual(alvo, p, nome, ficha, situacao) {
   return true;
 }
 
+/* ---------- Fique informado ---------- */
+/* Endereço do Apps Script que guarda os assinantes (assinaturas/LEIAME.md). Vazio = recurso ainda não ligado. */
+const URL_ASSINATURAS = "";
+
+async function paginaInformado() {
+  const alvo = $("#informado");
+  if (!URL_ASSINATURAS) { alvo.innerHTML = `<p class="vazio">Os avisos por e-mail estarão disponíveis em breve.</p>`; return; }
+  const cobertura = await carregar("dados/cobertura.json").catch(() => ({ estados: [], capitais: {} }));
+  const locais = new Map();       // código -> rótulo
+  const politicos = new Map();    // código -> rótulo
+  const nomeUf = (uf) => UFS[uf] || uf;
+  alvo.innerHTML = `
+    <form class="informado" id="form-informado" novalidate>
+      <fieldset>
+        <legend>1. O que você quer acompanhar?</legend>
+        <p class="dica-form">Cada escolha vira uma seção no e-mail. Você pode misturar.</p>
+        <div class="filtros dois">
+          <label class="campo">Brasil
+            <button type="button" class="mais" id="add-br">Câmara, Senado e Presidência</button></label>
+          <label class="campo">Estado
+            <select id="inf-uf"><option value="">Escolha…</option>${cobertura.estados.map((u) => `<option value="${u}">${esc(nomeUf(u))}</option>`).join("")}</select></label>
+          <label class="campo">Capital
+            <select id="inf-capital"><option value="">Escolha…</option>${Object.entries(cobertura.capitais).map(([u, m]) => `<option value="${u}">${esc(m)} (${u})</option>`).join("")}</select></label>
+        </div>
+        <p class="dica-form">Estado: Assembleia, governo, deputados federais do estado e a capital. Hoje só entram estados e capitais cujos dados já coletamos (${cobertura.estados.length} Assembleias, ${Object.keys(cobertura.capitais).length} capitais); outros locais entram conforme novas fontes forem conectadas.</p>
+      </fieldset>
+      <fieldset>
+        <legend>2. Ou políticos específicos <small>(opcional)</small></legend>
+        <div class="filtros dois">
+          <label class="campo">Onde atua
+            <select id="pol-uf"><option value="BR">Presidente e deputados federais (Brasil)</option>${Object.entries(UFS).map(([u, n]) => `<option value="${u}">${esc(n)}</option>`).join("")}</select></label>
+          <label class="campo">Nome<input id="pol-busca" type="search" placeholder="Ex.: Presidente, Maria, PT" autocomplete="off"></label>
+        </div>
+        <ul class="itens" id="pol-achados" aria-live="polite"></ul>
+        <p class="dica-form">Aparecem só políticos de quem já acompanhamos propostas: Presidente, governadores, deputados federais, deputados estaduais (Assembleias coletadas) e prefeitos de capitais com dados.</p>
+      </fieldset>
+      <fieldset>
+        <legend>3. Seu e-mail</legend>
+        <ul class="escolhas" id="escolhas" aria-live="polite"></ul>
+        <label class="campo">E-mail<input id="inf-email" type="email" required autocomplete="email" placeholder="voce@exemplo.com"></label>
+        <p><button type="submit" class="botao" id="inf-enviar">Quero receber os avisos</button></p>
+        <p class="aviso-form" id="inf-msg" role="status" aria-live="polite"></p>
+        <p class="dica-form">Enviamos um e-mail para você confirmar. Seu endereço serve só para os avisos e todo e-mail traz o link para cancelar.</p>
+      </fieldset>
+    </form>`;
+
+  const desenhar = () => {
+    const todos = [...[...locais].map(([c, r]) => [c, r, locais]), ...[...politicos].map(([c, r]) => [c, r, politicos])];
+    $("#escolhas").innerHTML = todos.length
+      ? todos.map(([c, r], i) => `<li><span>${esc(r)}</span><button type="button" data-i="${i}" aria-label="Remover ${esc(r)}">remover</button></li>`).join("")
+      : `<li class="vazio">Nada escolhido ainda.</li>`;
+    $("#escolhas").onclick = (e) => { const b = e.target.closest("button"); if (b) { const [c,, mapa] = todos[b.dataset.i]; mapa.delete(c); desenhar(); mostrarAchados(); } };
+  };
+  const adicionar = (mapa, codigo, rotulo) => { if (codigo) { mapa.set(codigo, rotulo); desenhar(); mostrarAchados(); } };
+  $("#add-br").onclick = () => adicionar(locais, "BR", "Brasil: Câmara, Senado e Presidência");
+  $("#inf-uf").onchange = (e) => { const u = e.target.value; adicionar(locais, u && `UF:${u}`, `Estado: ${nomeUf(u)}`); e.target.value = ""; };
+  $("#inf-capital").onchange = (e) => { const u = e.target.value; adicionar(locais, u && `MUN:${u}`, `Capital: ${cobertura.capitais[u]} (${u})`); e.target.value = ""; };
+
+  /* políticos: lista do índice do estado (ou do Brasil), só quem tem código "a" */
+  let indice = [];
+  const mostrarAchados = () => {
+    const q = semAcento($("#pol-busca").value.trim());
+    const achados = indice.filter((x) => x.a && (!q || semAcento(`${x.n} ${x.c} ${x.p || ""} ${x.m || ""}`).includes(q))).slice(0, 12);
+    $("#pol-achados").innerHTML = achados.length
+      ? achados.map((x, i) => `<li><span><b>${esc(x.n)}</b> <small>${esc(x.c)}${x.p ? ` · ${esc(x.p)}` : ""}${x.m ? ` · ${esc(x.m)}` : ""}</small></span>
+          <button type="button" data-i="${i}"${politicos.has(x.a) ? " disabled" : ""}>${politicos.has(x.a) ? "adicionado" : "acompanhar"}</button></li>`).join("")
+      : `<li class="vazio">Ninguém encontrado com dados acompanháveis.</li>`;
+    $("#pol-achados").onclick = (e) => {
+      const b = e.target.closest("button"); if (!b) return;
+      const x = achados[b.dataset.i];
+      adicionar(politicos, x.a, `${x.c}: ${x.n}`);
+    };
+  };
+  const carregarIndice = async () => {
+    indice = await carregar(`dados/indice/${$("#pol-uf").value}.json`).catch(() => []);
+    mostrarAchados();
+  };
+  $("#pol-uf").onchange = carregarIndice;
+  $("#pol-busca").oninput = mostrarAchados;
+  desenhar();
+  carregarIndice();
+
+  $("#form-informado").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const msg = $("#inf-msg"), email = $("#inf-email").value.trim();
+    if (!locais.size && !politicos.size) { msg.textContent = "Escolha pelo menos um local ou político."; return; }
+    if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) { msg.textContent = "Digite um e-mail válido."; return; }
+    $("#inf-enviar").disabled = true;
+    msg.textContent = "Enviando…";
+    try {
+      /* text/plain evita o pedido de verificação do navegador; o Apps Script não responde com CORS, então a resposta é opaca */
+      await fetch(URL_ASSINATURAS, { method: "POST", mode: "no-cors", headers: { "Content-Type": "text/plain;charset=utf-8" },
+        body: JSON.stringify({ email, locais: [...locais.keys()], politicos: [...politicos.keys()], rotulos: [...locais.values(), ...politicos.values()] }) });
+      msg.textContent = "Pronto! Enviamos um e-mail para confirmar. Se não chegar em alguns minutos, olhe o spam.";
+    } catch {
+      msg.textContent = "Não foi possível enviar agora. Tente de novo em instantes.";
+    }
+    $("#inf-enviar").disabled = false;
+  });
+}
+
 /* ---------- início ---------- */
 const pagina = document.body.dataset.pagina;
 moldura(pagina);
-({ inicio: paginaPoliticos, politico: paginaPolitico, camara: paginaCamara, deputado: paginaDeputado, votacoes: paginaVotacoes, votacao: paginaVotacao }[pagina] || (() => {}))();
+({ inicio: paginaPoliticos, politico: paginaPolitico, camara: paginaCamara, deputado: paginaDeputado, votacoes: paginaVotacoes, votacao: paginaVotacao, informado: paginaInformado }[pagina] || (() => {}))();

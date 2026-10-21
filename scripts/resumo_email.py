@@ -66,12 +66,15 @@ def materias(antes: str, depois: str, prefixo: str, nome_arquivo: str):
 
 
 def camara(antes: str, depois: str):
-    novas = []
+    """Proposições novas, sem repetir as de vários autores; "deps" lista os deputados (ids da Câmara) que constam como autores."""
+    novas = {}
     for f in arquivos(antes, depois, "dados/proposicoes"):
         x, y = carregar(antes, f), carregar(depois, f)
         ids = {i["id"] for i in (x or {}).get("itens", [])}
-        novas += [i for i in (y or {}).get("itens", []) if i["id"] not in ids]
-    return novas
+        for i in (y or {}).get("itens", []):
+            if i["id"] not in ids:
+                novas.setdefault(i["id"], {**i, "deps": []})["deps"].append(int(Path(f).stem))
+    return list(novas.values())
 
 
 def contar(antes: str, depois: str, caminho: str):
@@ -90,6 +93,7 @@ def coletar(antes: str, depois: str) -> dict:
     sit = {i["id"]: i.get("sit") for i in x}
     d["executivo_sit"] = [(i, sit[i["id"]]) for i in y if i["id"] in sit and i.get("sit") != sit[i["id"]]]
     d["estaduais"] = materias(antes, depois, "dados/estaduais", "materias_2026.json")
+    d["governo"] = materias(antes, depois, "dados/estaduais", "governo_2026.json")
     d["municipais"] = materias(antes, depois, "dados/municipais", "prefeitura_2026.json")
     d["votacoes"] = sorted({f.split("/")[2] for f in arquivos(antes, depois, "dados/estaduais") if f.endswith("votacoes.json")})
     d["tse"] = [f for f in arquivos(antes, depois, "dados/tse") if "_coleta" not in f]
@@ -117,7 +121,7 @@ def linhas(d: dict) -> list[tuple[str, list[str]]]:
         itens = [f"{i['tipo']} {i['numero']}/{i['ano']} — {cortar(i.get('ementa'))}" for i in d["executivo"]]
         itens += [f"{i['tipo']} {i['numero']}/{i['ano']}: {a or '—'} → {i.get('sit') or '—'}" for i, a in d["executivo_sit"]]
         s.append((f"Executivo — {len(d['executivo'])} novos, {len(d['executivo_sit'])} com nova situação", itens))
-    for chave, titulo in (("estaduais", "Assembleia"), ("municipais", "Câmara da capital")):
+    for chave, titulo in (("estaduais", "Assembleia"), ("governo", "Governo do estado, projetos enviados à Assembleia"), ("municipais", "Câmara da capital")):
         novas, mudou = d[chave]
         for uf in sorted(set(novas) | set(mudou)):
             itens = [f"{m.get('t', '')} {m.get('n', '')}/{m.get('a', '')} ({m.get('ap', '')}) — {cortar(m.get('e'))}".strip() for m in novas[uf][:LIMITE]]
@@ -132,7 +136,7 @@ def linhas(d: dict) -> list[tuple[str, list[str]]]:
     return s
 
 
-def montar(d: dict, titulo: str) -> tuple[str, str]:
+def montar(d: dict, titulo: str, rodape: tuple[str, str] = ("", "")) -> tuple[str, str]:
     secoes = linhas(d)
     if not secoes:
         txt = "Nenhum dado novo nesta execução."
@@ -145,19 +149,30 @@ def montar(d: dict, titulo: str) -> tuple[str, str]:
         if itens:
             h.append("<ul style='font:13px Arial;color:#333;padding-left:18px'>" + "".join(f"<li style='margin:3px 0'>{html.escape(i)}</li>" for i in itens) + "</ul>")
         t += ["", a] + [f"  - {i}" for i in itens]
-    h.append(f"<p style='font:12px Arial;color:#666'>Ver no site: <a href='{SITE}'>{SITE}</a></p>")
-    t += ["", f"Ver no site: {SITE}"]
+    h.append(f"<p style='font:12px Arial;color:#666'>Ver no site: <a href='{SITE}'>{SITE}</a></p>{rodape[0]}")
+    t += ["", f"Ver no site: {SITE}"] + ([rodape[1]] if rodape[1] else [])
     return "<div style='max-width:680px;margin:auto'>" + "".join(h) + "</div>", "\n".join(t)
 
 
-def enviar(assunto: str, corpo_html: str, corpo_txt: str) -> None:
+def mensagem(assunto: str, destino: str, corpo_html: str, corpo_txt: str, extra: dict | None = None) -> EmailMessage:
     msg = EmailMessage()
-    msg["Subject"], msg["From"], msg["To"] = assunto, os.environ["SMTP_USUARIO"], os.environ["EMAIL_PARA"]
+    msg["Subject"], msg["From"], msg["To"] = assunto, os.environ["SMTP_USUARIO"], destino
+    for k, v in (extra or {}).items():
+        msg[k] = v
     msg.set_content(corpo_txt)
     msg.add_alternative(corpo_html, subtype="html")
-    with smtplib.SMTP_SSL(os.environ["SMTP_HOST"], int(os.environ.get("SMTP_PORT", "465"))) as s:
-        s.login(os.environ["SMTP_USUARIO"], os.environ["SMTP_SENHA"])
-        s.send_message(msg)
+    return msg
+
+
+def smtp():
+    s = smtplib.SMTP_SSL(os.environ["SMTP_HOST"], int(os.environ.get("SMTP_PORT", "465")))
+    s.login(os.environ["SMTP_USUARIO"], os.environ["SMTP_SENHA"])
+    return s
+
+
+def enviar(assunto: str, corpo_html: str, corpo_txt: str) -> None:
+    with smtp() as s:
+        s.send_message(mensagem(assunto, os.environ["EMAIL_PARA"], corpo_html, corpo_txt))
 
 
 def main() -> None:

@@ -85,7 +85,26 @@ jobs:
           if [ -z "$SMTP_HOST" ]; then echo "Segredos de e-mail não configurados; pulando."; exit 0; fi
           git fetch --deepen=50 -q || true
           DEPOIS=$(git log -1 --grep='^Dados atualizados em' --format=%H)
-          [ -n "$DEPOIS" ] && python scripts/resumo_email.py "$DEPOIS~1" "$DEPOIS" --enviar
+          # sem commit de hoje (nada mudou), não reenvia o de ontem
+          [ -n "$DEPOIS" ] && [ "$(git log -1 --format=%cs "$DEPOIS")" = "$(date -u +%F)" ] && python scripts/resumo_email.py "$DEPOIS~1" "$DEPOIS" --enviar
+
+      - name: Enviar avisos aos assinantes de "Fique informado"
+        # só na execução agendada; lista de assinantes vem do Apps Script (assinaturas/LEIAME.md); falha aqui não derruba a publicação
+        if: github.event_name == 'schedule'
+        continue-on-error: true
+        env:
+          SMTP_HOST: ${{ secrets.SMTP_HOST }}
+          SMTP_PORT: ${{ secrets.SMTP_PORT }}
+          SMTP_USUARIO: ${{ secrets.SMTP_USUARIO }}
+          SMTP_SENHA: ${{ secrets.SMTP_SENHA }}
+          ASSINANTES_URL: ${{ secrets.ASSINANTES_URL }}
+          ASSINANTES_CHAVE: ${{ secrets.ASSINANTES_CHAVE }}
+        run: |
+          if [ -z "$SMTP_HOST" ] || [ -z "$ASSINANTES_URL" ]; then echo "Segredos de assinantes não configurados; pulando."; exit 0; fi
+          git fetch --deepen=50 -q || true
+          DEPOIS=$(git log -1 --grep='^Dados atualizados em' --format=%H)
+          # sem commit de hoje (nada mudou), não reenvia o de ontem
+          [ -n "$DEPOIS" ] && [ "$(git log -1 --format=%cs "$DEPOIS")" = "$(date -u +%F)" ] && python scripts/assinaturas.py "$DEPOIS~1" "$DEPOIS" --enviar
 
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v4

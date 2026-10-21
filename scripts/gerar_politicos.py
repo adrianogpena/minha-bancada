@@ -14,6 +14,8 @@ import unicodedata
 from collections import defaultdict
 from pathlib import Path
 
+from coletar_prefeituras import TODAS as CAPITAIS_COM_DADOS
+
 RAIZ = Path(__file__).resolve().parent.parent
 BRUTO = RAIZ / "dados"
 SAIDA = RAIZ / "site" / "dados"
@@ -184,7 +186,7 @@ def gerar(deputados: dict, estaduais: dict | None = None) -> dict:
         indice[d["uf"]].append({
             "i": d["id"], "n": d["nome"], "c": "Deputado federal", "k": 4,
             "p": d["partido"], "e": "atual", "fo": d.get("foto"),
-            "h": f"deputado.html?id={d['id']}",
+            "h": f"deputado.html?id={d['id']}", "a": f"dep:{d['id']}",
         })
 
     # --- senadores em exercício (Senado)
@@ -236,8 +238,18 @@ def gerar(deputados: dict, estaduais: dict | None = None) -> dict:
                     "alianca": alianca_de(ano, e),
                     **({"estadual": estadual} if estadual else {}),
                 }
+                alvo = None   # código que a página Fique informado grava; só para quem tem dados acompanháveis (ver scripts/assinaturas.py)
+                if estado == "atual":
+                    if cargo_tse == "PRESIDENTE":
+                        alvo = "pres"
+                    elif cargo_tse == "GOVERNADOR":
+                        alvo = f"gov:{uf}"
+                    elif estadual:
+                        alvo = f"est:{estadual['uf']}:{estadual['id']}"
+                    elif cargo_tse == "PREFEITO" and CAPITAIS_COM_DADOS.get(uf, ("",))[0] == e["ue"]:
+                        alvo = f"pref:{uf}"
                 indice[uf].append({
-                    "i": e["sq"], "f": arquivo, "n": e["urna"], "c": cargo, "k": ordem,
+                    "a": alvo, "i": e["sq"], "f": arquivo, "n": e["urna"], "c": cargo, "k": ordem,
                     "p": e.get("partido"), "m": e.get("municipio"),
                     "g": e["ue"] if cargo_tse in MUNICIPAIS else None,
                     "e": estado, "b": e.get("totalBens") or None,
@@ -261,6 +273,16 @@ def gerar(deputados: dict, estaduais: dict | None = None) -> dict:
             cont[x["e"]] += 1
         resumo[uf] = dict(cont)
     salvar(SAIDA / "indice" / "_resumo.json", resumo)
+    # o que a página Fique informado oferece: estados com Assembleia coletada e capitais com a Câmara Municipal coletada
+    capitais = {}
+    for uf, lista in indice.items():
+        for x in lista:
+            if x.get("a") == f"pref:{uf}":
+                capitais[uf] = x.get("m") or uf
+    salvar(SAIDA / "cobertura.json", {
+        "estados": sorted(p.parent.name for p in (BRUTO / "estaduais").glob("*/deputados.json")),
+        "capitais": dict(sorted(capitais.items())),
+    })
     total = sum(len(v) for v in indice.values())
     print(f"Políticos no índice: {total} em {len(indice)} UFs; {len(fichas)} arquivos de fichas")
     return resumo

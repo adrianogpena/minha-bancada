@@ -13,6 +13,7 @@ Cada evento do dia:
     d     data do ato (AAAA-MM-DD)     f  fontes: [[rótulo, URL], ...]
     r     relevância: 3 marco (votação, projeto aprovado/sancionado/vetado, eleito), 2 projeto de verdade, 1 o resto (requerimento, parecer, carga antiga)
     n     só no evento "lote": quantos registros de baixa relevância ele resume (acima de LIMITE_LOTE por local)
+    i     só no evento "lote": os títulos resumidos (ex.: "REQ 12/2026"), em ordem
 O dia também traz "cobertura": para cada local monitorado, se os dados mudaram, quantos itens saíram e, se não mudaram, a última vez que mudaram.
 Os códigos de local e de político são os mesmos do feeds.py.
 
@@ -173,9 +174,9 @@ def cortar(texto, n: int = LIMITE_TEXTO) -> str:
     return texto if len(texto) <= n else texto[: n - 1] + "…"
 
 
-def evento(local: str, k: str, t: str, *, uf=None, p=None, x=None, m=None, s=None, d=None, f=None, r=None, n=None) -> dict:
+def evento(local: str, k: str, t: str, *, uf=None, p=None, x=None, m=None, s=None, d=None, f=None, r=None, n=None, i=None) -> dict:
     e = {"l": local, "k": k, "t": t, "uf": uf, "p": p or None, "x": cortar(x) or None, "m": m, "s": s, "d": d,
-         "f": [list(a) for a in (f or []) if a and a[1]], "r": r, "n": n}
+         "f": [list(a) for a in (f or []) if a and a[1]], "r": r, "n": n, "i": i}
     return {k_: v for k_, v in e.items() if v not in (None, [], "")}
 
 
@@ -484,7 +485,8 @@ def agrupar_lotes(eventos: list) -> list:
         conta = ", ".join(f"{n} {t}" for t, n in tipos) + (f" e mais {resto} de outros tipos" if resto else "")
         ufs = {e.get("uf") for e in lista if e.get("uf")}
         saida.append(evento(local, "lote", f"{len(lista)} registros de baixa relevância (requerimentos, pareceres e afins)", uf=ufs.pop() if len(ufs) == 1 else None,
-                            s=f"Novos ou com nova situação: {conta}. Os dados completos estão no repositório do projeto.", r=1, n=len(lista)))
+                            s=f"Novos ou com nova situação: {conta}. Títulos na lista abaixo.", r=1, n=len(lista),
+                            i=sorted(e["t"] for e in lista)))
     return saida
 
 

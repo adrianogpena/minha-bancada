@@ -169,6 +169,7 @@ def test_lote_de_baixa_relevancia_vira_um_evento_e_poupa_projetos(repo, tmp_path
     d = h.dia("2026-01-03", "HEAD~1", "HEAD")
     lote, = [e for e in d["eventos"] if e["k"] == "lote"]
     assert lote["l"] == "BR" and lote["n"] == 5 and "5 REQ" in lote["s"] and lote["r"] == 1
+    assert lote["i"] == ["REQ 0/2026", "REQ 1/2026", "REQ 2/2026", "REQ 3/2026", "REQ 4/2026"]
     assert not [e for e in d["eventos"] if e["t"].startswith("REQ")]
     assert [e for e in d["eventos"] if e["t"] == "PL 7/2026"]                      # projeto de verdade segue individual
     assert d["contagem"]["BR"]["lote"] == 5                                         # a contagem reflete o que foi resumido

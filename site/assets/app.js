@@ -1456,7 +1456,7 @@ function itemHistorico(e) {
   const mudanca = e.m ? `<p class="hist-mudanca"><span>${esc(e.m[0])}</span> → <b>${esc(e.m[1])}</b></p>` : "";
   return `<li class="hist-item r-${e.r || 2}">
     <div class="hist-cab"><span class="hist-tag k-${esc(e.k)}">${esc(CATEGORIAS_HIST[e.k] || e.k)}</span> <b>${esc(e.t)}</b>${e.d ? ` <span class="quando">${esc(data(e.d))}</span>` : ""}</div>
-    ${e.x ? `<p class="texto">${esc(e.x)}</p>` : ""}${mudanca}${e.s ? `<p class="hist-resumo">${esc(e.s)}</p>` : ""}
+    ${e.x ? `<p class="texto">${esc(e.x)}</p>` : ""}${mudanca}${e.s ? `<p class="hist-resumo">${esc(e.s)}</p>` : ""}${e.i ? `<details class="hist-lista"><summary>Ver os ${e.i.length} títulos</summary><p>${e.i.map(esc).join(" · ")}</p></details>` : ""}
     ${fontes(e.f || [])}</li>`;
 }
 

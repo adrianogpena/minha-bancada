@@ -321,7 +321,7 @@ select:disabled { opacity: .55; }
 .aviso-ementa { font-size: 15px; color: var(--tinta-suave); }
 
 /* histórico diário */
-.hist-filtros { grid-template-columns: 1.4fr 1.4fr 1fr 1.6fr; }
+.hist-filtros { grid-template-columns: 1.4fr 1.4fr 1fr 1.2fr 1.4fr; }
 .hist-local h2 { margin: 0 0 8px; font: 700 20px var(--display); }
 .hist-local h2 small, .hist-pol summary small { font: 400 14px var(--texto); color: var(--tinta-suave); }
 .hist-pol { border-top: 1px solid var(--linha); padding: 8px 0; }
@@ -337,4 +337,11 @@ select:disabled { opacity: .55; }
 .hist-tag { font: 700 12px var(--texto); text-transform: uppercase; letter-spacing: .03em; padding: 2px 8px; border-radius: 999px; background: var(--marca-clara); color: var(--marca); }
 .hist-tag.k-situacao { background: color-mix(in srgb, #c13b1d 14%, var(--superficie)); color: #c13b1d; }
 .hist-tag.k-votacao { background: color-mix(in srgb, #2456c9 14%, var(--superficie)); color: #2456c9; }
+.hist-item.r-3 { border-left-color: var(--marca); }
+.hist-item.r-1 { opacity: .8; }
+.hist-item.r-1 .hist-cab b { font-weight: 400; }
+.hist-tag.k-lote { background: var(--linha); color: var(--tinta-suave); }
+.hist-lista { margin: 4px 0; font-size: 14px; color: var(--tinta-suave); }
+.hist-lista summary { cursor: pointer; }
+.hist-sem ul { margin: 6px 0 0; padding-left: 20px; color: var(--tinta-suave); }
 @media (max-width: 720px) { .hist-filtros { grid-template-columns: 1fr; } }

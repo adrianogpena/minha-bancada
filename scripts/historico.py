@@ -11,6 +11,10 @@ Cada evento do dia:
     p     políticos: [{c: código do "Fique informado" ou null, n: nome, h: página no site ou null}]
     x     texto (ementa, despacho)     m  [antes, depois] de uma mudança     s  resumo (placar, resultado)
     d     data do ato (AAAA-MM-DD)     f  fontes: [[rótulo, URL], ...]
+    r     relevância: 3 marco (votação, projeto aprovado/sancionado/vetado, eleito), 2 projeto de verdade, 1 o resto (requerimento, parecer, carga antiga)
+    n     só no evento "lote": quantos registros de baixa relevância ele resume (acima de LIMITE_LOTE por local)
+    i     só no evento "lote": os títulos resumidos (ex.: "REQ 12/2026"), em ordem
+O dia também traz "cobertura": para cada local monitorado, se os dados mudaram, quantos itens saíram e, se não mudaram, a última vez que mudaram.
 Os códigos de local e de político são os mesmos do feeds.py.
 
 Uso:
@@ -24,7 +28,7 @@ import re
 import shutil
 import subprocess
 from collections import Counter, defaultdict
-from datetime import datetime, timezone
+from datetime import date, datetime, timezone
 from pathlib import Path
 
 import feeds
@@ -40,6 +44,13 @@ TSE_CDN = "https://cdn.tse.jus.br/estatistica/sead/odsele/consulta_cand/consulta
 # a situação só vira evento para projetos de verdade; requerimentos, emendas e pareceres entram só quando são apresentados
 PROJETOS = {"PL", "PLP", "PEC", "PDL", "MPV", "PRC", "PLN", "PLV", "PFC", "PLC", "PLS", "PRS", "PDS"}
 LIMITE_TEXTO = 1200
+# "projeto de verdade": sigla acima ou, nas Assembleias e prefeituras, o nome do tipo por extenso
+DESCRICAO_PROJETO = ("projeto de", "proposta de emenda", "medida provisória")
+MARCO_SITUACAO = re.compile(r"aprovad|sancionad|vetad|promulgad|arquivad|rejeitad|retirad|transformad|prejudicad", re.I)
+LIMITE_ANTIGO_DIAS = 30   # projeto "novo" com data do ato mais antiga que isso é carga de backlog, não novidade
+LIMITE_LOTE = 40          # por local: acima disso, os eventos de baixa relevância viram um evento só
+PREFIXOS_BR = ("dados/proposicoes", "dados/proposicoes_detalhe.json", "dados/votacoes", "dados/senado_materias.json",
+               "dados/senado_votacoes", "dados/executivo.json")
 LIMITE_ELEICAO = 200   # por arquivo do TSE; acima disso é carga em lote (eleição nova, recoleta), resumida em um evento só
 
 
@@ -163,9 +174,9 @@ def cortar(texto, n: int = LIMITE_TEXTO) -> str:
     return texto if len(texto) <= n else texto[: n - 1] + "…"
 
 
-def evento(local: str, k: str, t: str, *, uf=None, p=None, x=None, m=None, s=None, d=None, f=None) -> dict:
+def evento(local: str, k: str, t: str, *, uf=None, p=None, x=None, m=None, s=None, d=None, f=None, r=None, n=None, i=None) -> dict:
     e = {"l": local, "k": k, "t": t, "uf": uf, "p": p or None, "x": cortar(x) or None, "m": m, "s": s, "d": d,
-         "f": [list(a) for a in (f or []) if a and a[1]]}
+         "f": [list(a) for a in (f or []) if a and a[1]], "r": r, "n": n, "i": i}
     return {k_: v for k_, v in e.items() if v not in (None, [], "")}
 
 
@@ -419,7 +430,85 @@ def eleitos(ctx: Contexto, antes: str, depois: str) -> list:
             n = len(saida) - antes_n
             del saida[antes_n:]
             saida.append(evento("BR" if uf == "BR" else f"UF:{uf}", "eleicao", f"Eleitos de {ano}: {n} registros novos ou alterados", uf=None if uf == "BR" else uf,
-                                s="Carga em lote; a lista completa está nos dados abertos do TSE", f=fontes_))
+                                s="Carga em lote; a lista completa está nos dados abertos do TSE", f=fontes_, r=2))
+    return saida
+
+
+# ---------------------------------------------------------------- relevância, lotes e cobertura
+
+def projeto_de_verdade(titulo: str) -> bool:
+    sigla = titulo.split(" ", 1)[0]
+    return sigla in PROJETOS or titulo.lower().startswith(DESCRICAO_PROJETO)
+
+
+def relevancia(e: dict, data: str) -> int:
+    """3 marco, 2 projeto de verdade, 1 o resto. Só ordena e filtra na página: nada deixa de ser registrado (exceto o excesso de lote)."""
+    if e.get("r"):
+        return e["r"]
+    if e["k"] in ("votacao", "eleicao"):
+        return 3
+    desconhecido = e["t"].startswith("Matéria ")   # matéria do Senado sem o tipo: na dúvida, não esconde
+    if not (projeto_de_verdade(e["t"]) or desconhecido):
+        return 1
+    if e["k"] == "situacao":
+        if e.get("s") == "Nova tramitação":   # só andou de lugar; a situação é a mesma
+            return 1
+        return 3 if MARCO_SITUACAO.search((e.get("m") or ["", ""])[1]) else 2
+    try:
+        if (date.fromisoformat(data) - date.fromisoformat(e["d"][:10])).days > LIMITE_ANTIGO_DIAS:
+            return 1
+    except (KeyError, TypeError, ValueError):
+        pass
+    return 2
+
+
+def tipo_do_titulo(titulo: str) -> str:
+    m = re.match(r"(.+?)\s+\d+(?:/\d+)?\b", titulo)
+    return m.group(1) if m else titulo
+
+
+def agrupar_lotes(eventos: list) -> list:
+    """Por local, o que passa de LIMITE_LOTE entre novidades de baixa relevância (requerimentos, pareceres, carga antiga)
+    vira um evento só, com a conta por tipo; projetos de verdade e marcos nunca entram no lote."""
+    baixos = defaultdict(list)
+    for e in eventos:
+        if e["r"] == 1 and e["k"] in ("nova", "situacao"):
+            baixos[e["l"]].append(e)
+    saida = eventos
+    for local, lista in baixos.items():
+        if len(lista) <= LIMITE_LOTE:
+            continue
+        ids = {id(e) for e in lista}
+        saida = [e for e in saida if id(e) not in ids]
+        tipos = Counter(tipo_do_titulo(e["t"]) for e in lista).most_common(8)
+        resto = len(lista) - sum(n for _, n in tipos)
+        conta = ", ".join(f"{n} {t}" for t, n in tipos) + (f" e mais {resto} de outros tipos" if resto else "")
+        ufs = {e.get("uf") for e in lista if e.get("uf")}
+        saida.append(evento(local, "lote", f"{len(lista)} registros de baixa relevância (requerimentos, pareceres e afins)", uf=ufs.pop() if len(ufs) == 1 else None,
+                            s=f"Novos ou com nova situação: {conta}. Títulos na lista abaixo.", r=1, n=len(lista),
+                            i=sorted(e["t"] for e in lista)))
+    return saida
+
+
+def cobertura(ctx: Contexto, antes: str, depois: str, contagem: dict) -> dict:
+    """Todo local monitorado no dia, com ou sem novidade: {código: {n nome, m dados mudaram, e itens, u última mudança quando não mudaram}}.
+    Assim "nada aconteceu" se distingue de "o local não foi acompanhado" e uma coleta parada há dias aparece."""
+    prefixos = {"BR": list(PREFIXOS_BR)}
+    for tipo, pasta in (("UF", "estaduais"), ("MUN", "municipais")):
+        for uf in sorted({f.split("/")[2] for f in listar(depois, f"dados/{pasta}")}):
+            if re.fullmatch(r"[A-Z]{2}", uf):
+                prefixos[f"{tipo}:{uf}"] = [f"dados/{pasta}/{uf}"]
+    saida = {}
+    for local in sorted(prefixos, key=ORDEM_LOCAL):
+        itens = sum(contagem.get(local, {}).values())
+        mudou_ = bool(itens) or any(r.arquivos(antes, depois, p) for p in prefixos[local])   # o TSE tem arquivos próprios, fora dos prefixos
+        item = {"n": ctx.nome_local(local), "m": mudou_, "e": itens}
+        if not mudou_:
+            try:
+                item["u"] = r.git("log", "-1", "--format=%cs", depois, "--", *prefixos[local]).strip() or None
+            except subprocess.CalledProcessError:
+                item["u"] = None
+        saida[local] = {k: v for k, v in item.items() if v is not None}
     return saida
 
 
@@ -436,14 +525,24 @@ def dia(data: str, antes: str, depois: str) -> dict:
     eventos = []
     for coletor in COLETORES:
         eventos += coletor(ctx, antes, depois)
+    for e in eventos:
+        e["r"] = relevancia(e, data)
+    eventos = agrupar_lotes(eventos)
+    eventos.sort(key=lambda e: (ORDEM_LOCAL(e["l"]), -e["r"]))   # a ordem do arquivo já põe o que importa primeiro
     locais = sorted({e["l"] for e in eventos}, key=ORDEM_LOCAL)
-    contagem = {c: dict(Counter(e["k"] for e in eventos if e["l"] == c)) for c in locais}
+    contagem = {c: {} for c in locais}
+    for e in eventos:
+        contagem[e["l"]][e["k"]] = contagem[e["l"]].get(e["k"], 0) + e.get("n", 1)
     return {"data": data, "antes": r.git("rev-parse", antes).strip(), "depois": r.git("rev-parse", depois).strip(),
-            "locais": {c: ctx.nome_local(c) for c in locais}, "contagem": contagem, "eventos": eventos}
+            "locais": {c: ctx.nome_local(c) for c in locais}, "contagem": contagem, "cobertura": cobertura(ctx, antes, depois, contagem),
+            "eventos": eventos}
 
 
 def resumo_indice(d: dict) -> dict:
-    return {"d": d["data"], "n": len(d["eventos"]), "l": {c: sum(v.values()) for c, v in d["contagem"].items()}}
+    r_ = Counter()
+    for e in d["eventos"]:
+        r_[str(e["r"])] += e.get("n", 1)
+    return {"d": d["data"], "n": sum(sum(v.values()) for v in d["contagem"].values()), "l": {c: sum(v.values()) for c, v in d["contagem"].items()}, "r": dict(r_)}
 
 
 def gravar(d: dict, pasta: Path) -> None:

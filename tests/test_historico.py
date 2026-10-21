@@ -145,3 +145,45 @@ def test_montar_inclui_link_para_o_historico():
 def test_item_do_feed_aponta_para_o_historico_do_dia_e_do_local():
     it = feeds.item("T", "2026-01-02", "UF:SP", "corpo")
     assert f"<link>{r.SITE}historico.html?dia=2026-01-02&amp;locais=UF:SP</link>" in it
+
+
+def test_relevancia_separa_projeto_de_verdade_do_resto(repo):
+    ev = h.dia("2026-01-02", "HEAD~1", "HEAD")["eventos"]
+    assert por(ev, t="REQ 2/2026")[0]["r"] == 1                                       # requerimento
+    assert por(ev, t="PL 1/2026", k="situacao")[0]["r"] == 3                          # projeto aprovado
+    assert por(ev, l="UF:AC", k="nova")[0]["r"] == 2                                  # projeto novo, por extenso ("Projeto de Lei")
+    assert por(ev, k="eleicao")[0]["r"] == 3
+    assert h.relevancia({"k": "nova", "t": "PL 3/2026", "d": "2025-01-01"}, "2026-01-02") == 1   # backlog
+    assert h.relevancia({"k": "nova", "t": "PL 3/2026"}, "2026-01-02") == 2                       # sem data do ato: não penaliza
+    assert h.relevancia({"k": "situacao", "t": "PL 3/2026", "s": "Nova tramitação"}, "2026-01-02") == 1
+    assert h.relevancia({"k": "situacao", "t": "PL 3/2026", "m": ["A", "Em análise"]}, "2026-01-02") == 2
+    assert h.relevancia({"k": "votacao", "t": "x"}, "2026-01-02") == 3
+
+
+def test_lote_de_baixa_relevancia_vira_um_evento_e_poupa_projetos(repo, tmp_path, monkeypatch):
+    monkeypatch.setattr(h, "LIMITE_LOTE", 3)
+    itens = [{"id": 100 + i, "siglaTipo": "REQ", "numero": i, "ano": 2026, "ementa": "x"} for i in range(5)] + [{"id": 200, "siglaTipo": "PL", "numero": 7, "ano": 2026, "ementa": "Projeto"}]
+    (tmp_path / "dados" / "proposicoes" / "2.json").write_text(json.dumps({"itens": itens}))
+    subprocess.run(["git", "add", "-A"], cwd=tmp_path, check=True)
+    subprocess.run(["git", "commit", "-qm", "lote"], cwd=tmp_path, check=True)
+    d = h.dia("2026-01-03", "HEAD~1", "HEAD")
+    lote, = [e for e in d["eventos"] if e["k"] == "lote"]
+    assert lote["l"] == "BR" and lote["n"] == 5 and "5 REQ" in lote["s"] and lote["r"] == 1
+    assert lote["i"] == ["REQ 0/2026", "REQ 1/2026", "REQ 2/2026", "REQ 3/2026", "REQ 4/2026"]
+    assert not [e for e in d["eventos"] if e["t"].startswith("REQ")]
+    assert [e for e in d["eventos"] if e["t"] == "PL 7/2026"]                      # projeto de verdade segue individual
+    assert d["contagem"]["BR"]["lote"] == 5                                         # a contagem reflete o que foi resumido
+    assert h.resumo_indice(d)["r"]["1"] >= 5
+
+
+def test_cobertura_mostra_local_sem_novidade_e_desde_quando(repo, tmp_path):
+    d = h.dia("2026-01-02", "HEAD~1", "HEAD")
+    cob = d["cobertura"]
+    assert cob["UF:AC"]["m"] is True and cob["UF:AC"]["e"] == 3 and cob["BR"]["m"] is True
+    # novo commit que não mexe em nada monitorado: BR e Acre ficam sem alteração, com a data da última mudança
+    (tmp_path / "dados" / "outro.json").write_text("{}")
+    subprocess.run(["git", "add", "-A"], cwd=tmp_path, check=True)
+    subprocess.run(["git", "commit", "-qm", "so tse"], cwd=tmp_path, check=True)
+    cob = h.dia("2026-01-03", "HEAD~1", "HEAD")["cobertura"]
+    assert cob["UF:AC"] == {"n": "Estado: Acre", "m": False, "e": 0, "u": "2026-01-02"}
+    assert cob["BR"]["m"] is False and cob["BR"]["u"] == "2026-01-02"

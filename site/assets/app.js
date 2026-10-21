@@ -121,7 +121,7 @@ function abas(alvo, opcoes, aoMudar) {
 
 /* ---------- moldura comum ---------- */
 function moldura(pagina) {
-  const links = [["index.html", "Políticos", "inicio"], ["camara.html", "Câmara", "camara"], ["votacoes.html", "Votações", "votacoes"], ["informado.html", "Fique informado", "informado"], ["sobre.html", "Sobre os dados", "sobre"]];
+  const links = [["index.html", "Políticos", "inicio"], ["camara.html", "Câmara", "camara"], ["votacoes.html", "Votações", "votacoes"], ["historico.html", "Histórico", "historico"], ["informado.html", "Fique informado", "informado"], ["sobre.html", "Sobre os dados", "sobre"]];
   const atual = { deputado: "camara", votacao: "votacoes", politico: "inicio" }[pagina] || pagina;
   document.body.insertAdjacentHTML("afterbegin", `
     <header class="topo"><div class="recipiente">
@@ -1423,7 +1423,105 @@ async function paginaInformado() {
   }
 }
 
+/* ---------- Histórico diário ---------- */
+/* Lê dados/historico/<dia>.json (scripts/historico.py): eventos do dia com local, políticos e fontes. */
+const CATEGORIAS_HIST = { nova: "Novo", situacao: "Mudou de situação", votacao: "Votação", eleicao: "Eleitos (TSE)" };
+const SEM_POLITICO = "Sem político específico (votações e matérias gerais)";
+
+/* Mesma regra dos feeds e e-mails: um estado traz a Assembleia, o governo, a bancada federal e a capital; BR traz Câmara, Senado e Presidência. */
+function noEscopo(e, codigos) {
+  if (!codigos.length) return true;
+  return codigos.some((c) => {
+    if (c === "BR") return e.l === "BR";
+    if (c.startsWith("UF:")) { const uf = c.slice(3); return e.l === c || e.l === `MUN:${uf}` || e.uf === uf; }
+    if (c.startsWith("MUN:")) return e.l === c;
+    return (e.p || []).some((p) => p.c === c);
+  });
+}
+
+function itemHistorico(e) {
+  const mudanca = e.m ? `<p class="hist-mudanca"><span>${esc(e.m[0])}</span> → <b>${esc(e.m[1])}</b></p>` : "";
+  return `<li class="hist-item">
+    <div class="hist-cab"><span class="hist-tag k-${esc(e.k)}">${esc(CATEGORIAS_HIST[e.k] || e.k)}</span> <b>${esc(e.t)}</b>${e.d ? ` <span class="quando">${esc(data(e.d))}</span>` : ""}</div>
+    ${e.x ? `<p class="texto">${esc(e.x)}</p>` : ""}${mudanca}${e.s ? `<p class="hist-resumo">${esc(e.s)}</p>` : ""}
+    ${fontes(e.f || [])}</li>`;
+}
+
+async function paginaHistorico() {
+  const alvo = $("#historico");
+  let indice;
+  try { indice = await carregar("dados/historico/indice.json"); } catch { indice = []; }
+  if (!indice.length) { alvo.innerHTML = `<p class="vazio">O histórico começa no próximo dia com novidades nos dados.</p>`; return; }
+  const q = new URLSearchParams(location.search);
+  let codigos = (q.get("locais") || "").split(",").filter(Boolean);
+  const dias = indice.map((x) => x.d);
+  const diaInicial = dias.includes(q.get("dia")) ? q.get("dia") : dias[0];
+
+  alvo.innerHTML = `
+    <div class="filtros hist-filtros">
+      <label class="campo">Dia<select id="h-dia">${indice.map((x) => `<option value="${esc(x.d)}">${esc(data(x.d))} (${x.n})</option>`).join("")}</select></label>
+      <label class="campo">Local<select id="h-local"></select></label>
+      <label class="campo">Tipo<select id="h-tipo"><option value="">Todos</option>${Object.entries(CATEGORIAS_HIST).map(([k, v]) => `<option value="${k}">${esc(v)}</option>`).join("")}</select></label>
+      <label class="campo">Buscar<input id="h-busca" type="search" placeholder="Político, projeto ou assunto" autocomplete="off" value="${esc(q.get("busca") || "")}"></label>
+    </div>
+    <p class="contagem" id="h-contagem" aria-live="polite"></p>
+    <div id="h-lista"></div>`;
+  $("#h-dia").value = diaInicial;
+  $("#h-tipo").value = q.get("tipo") || "";
+
+  let dia = null;
+  async function abrirDia() {
+    $("#h-lista").innerHTML = `<p class="vazio">Carregando…</p>`;
+    try { dia = await carregar(`dados/historico/${$("#h-dia").value}.json`); } catch (e) { return erro($("#h-lista"), e); }
+    const opcoes = [`<option value="">Todos os locais</option>`];
+    const unico = codigos.length === 1 && dia.locais[codigos[0]];
+    if (codigos.length && !unico) opcoes.push(`<option value="__avisos">Seus avisos (${codigos.length})</option>`);
+    for (const [c, nome] of Object.entries(dia.locais)) opcoes.push(`<option value="${esc(c)}">${esc(nome)} (${Object.values(dia.contagem[c]).reduce((a, b) => a + b, 0)})</option>`);
+    $("#h-local").innerHTML = opcoes.join("");
+    $("#h-local").value = unico ? codigos[0] : codigos.length ? "__avisos" : "";
+    desenhar();
+  }
+
+  function desenhar() {
+    const tipo = $("#h-tipo").value, busca = semAcento($("#h-busca").value.trim());
+    const filtrados = dia.eventos.filter((e) => noEscopo(e, codigos) && (!tipo || e.k === tipo)
+      && (!busca || semAcento([e.t, e.x, e.s, ...(e.p || []).map((p) => p.n)].join(" ")).includes(busca)));
+    const novo = new URLSearchParams();
+    novo.set("dia", dia.data);
+    if (codigos.length) novo.set("locais", codigos.join(","));
+    if (tipo) novo.set("tipo", tipo);
+    if (busca) novo.set("busca", $("#h-busca").value.trim());
+    history.replaceState(null, "", "?" + novo);
+
+    const locais = [...new Set(filtrados.map((e) => e.l))];
+    $("#h-contagem").textContent = `${filtrados.length} de ${dia.eventos.length} mudanças em ${data(dia.data, true)}, em ${locais.length} ${locais.length === 1 ? "local" : "locais"}.`;
+    if (!filtrados.length) { $("#h-lista").innerHTML = `<p class="vazio">Nada com esses filtros neste dia. Tente outro dia ou limpe os filtros.</p>`; return; }
+    const abrir = filtrados.length <= 60;
+    $("#h-lista").innerHTML = locais.map((l) => {
+      const doLocal = filtrados.filter((e) => e.l === l);
+      const grupos = new Map();   // nome do político -> {p, eventos}
+      for (const e of doLocal) for (const p of (e.p?.length ? e.p : [{ n: SEM_POLITICO }])) {
+        if (!grupos.has(p.n)) grupos.set(p.n, { p, eventos: [] });
+        grupos.get(p.n).eventos.push(e);
+      }
+      const ordenados = [...grupos.values()].sort((a, b) => (a.p.c ? 0 : 1) - (b.p.c ? 0 : 1) || b.eventos.length - a.eventos.length || a.p.n.localeCompare(b.p.n, "pt-BR"));
+      return `<section class="painel hist-local">
+        <h2>${esc(dia.locais[l])} <small>${doLocal.length} ${doLocal.length === 1 ? "mudança" : "mudanças"}</small></h2>
+        ${ordenados.map(({ p, eventos }) => `<details class="hist-pol"${abrir ? " open" : ""}>
+          <summary>${p.h ? `<a href="${esc(p.h)}">${esc(p.n)}</a>` : esc(p.n)} <small>${eventos.length}</small></summary>
+          <ul class="hist-itens">${eventos.map(itemHistorico).join("")}</ul></details>`).join("")}
+      </section>`;
+    }).join("");
+  }
+
+  $("#h-dia").addEventListener("change", abrirDia);
+  $("#h-local").addEventListener("change", () => { codigos = $("#h-local").value === "__avisos" ? codigos : $("#h-local").value ? [$("#h-local").value] : []; desenhar(); });
+  $("#h-tipo").addEventListener("change", desenhar);
+  $("#h-busca").addEventListener("input", desenhar);
+  abrirDia();
+}
+
 /* ---------- início ---------- */
 const pagina = document.body.dataset.pagina;
 moldura(pagina);
-({ inicio: paginaPoliticos, politico: paginaPolitico, camara: paginaCamara, deputado: paginaDeputado, votacoes: paginaVotacoes, votacao: paginaVotacao, informado: paginaInformado }[pagina] || (() => {}))();
+({ inicio: paginaPoliticos, politico: paginaPolitico, camara: paginaCamara, deputado: paginaDeputado, votacoes: paginaVotacoes, votacao: paginaVotacao, informado: paginaInformado, historico: paginaHistorico }[pagina] || (() => {}))();

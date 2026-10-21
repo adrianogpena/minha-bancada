@@ -19,11 +19,17 @@ import subprocess
 from collections import Counter, defaultdict
 from email.message import EmailMessage
 from pathlib import Path
+from urllib.parse import quote
 
 RAIZ = Path(__file__).resolve().parent.parent
 SITE = "https://adrianogpena.github.io/minha-bancada/"
 LIMITE = 12  # itens listados por seção; o resto vira "e mais N"
 TIPOS_DESTAQUE = ("PL", "PLP", "PEC", "PDL", "MPV")
+
+
+def link_historico(data: str, locais=None) -> str:
+    """Página do histórico diário (detalhes e fontes) para um dia AAAA-MM-DD, filtrada por códigos de local ou político quando houver."""
+    return f"{SITE}historico.html?dia={data}" + (f"&locais={quote(','.join(sorted(locais)), safe=',:')}" if locais else "")
 
 
 def git(*args: str) -> str:
@@ -136,7 +142,8 @@ def linhas(d: dict) -> list[tuple[str, list[str]]]:
     return s
 
 
-def montar(d: dict, titulo: str, rodape: tuple[str, str] = ("", "")) -> tuple[str, str]:
+def montar(d: dict, titulo: str, rodape: tuple[str, str] = ("", ""), detalhes: str | None = None) -> tuple[str, str]:
+    """`detalhes`: link da página do histórico diário, com todos os itens e as fontes."""
     secoes = linhas(d)
     if not secoes:
         txt = "Nenhum dado novo nesta execução."
@@ -149,6 +156,9 @@ def montar(d: dict, titulo: str, rodape: tuple[str, str] = ("", "")) -> tuple[st
         if itens:
             h.append("<ul style='font:13px Arial;color:#333;padding-left:18px'>" + "".join(f"<li style='margin:3px 0'>{html.escape(i)}</li>" for i in itens) + "</ul>")
         t += ["", a] + [f"  - {i}" for i in itens]
+    if detalhes:
+        h.append(f"<p style='font:14px Arial'><b>Quer mais detalhes?</b> Veja cada item, com a fonte oficial, em <a href='{html.escape(detalhes)}'>{html.escape(detalhes)}</a></p>")
+        t += ["", f"Quer mais detalhes? Veja cada item, com a fonte oficial: {detalhes}"]
     h.append(f"<p style='font:12px Arial;color:#666'>Ver no site: <a href='{SITE}'>{SITE}</a></p>{rodape[0]}")
     t += ["", f"Ver no site: {SITE}"] + ([rodape[1]] if rodape[1] else [])
     return "<div style='max-width:680px;margin:auto'>" + "".join(h) + "</div>", "\n".join(t)
@@ -184,7 +194,7 @@ def main() -> None:
     a = p.parse_args()
     data = git("log", "-1", "--format=%cs", a.depois).strip()
     titulo = f"Minha Bancada — o que mudou em {data[8:]}/{data[5:7]}/{data[:4]}"
-    h, t = montar(coletar(a.antes, a.depois), titulo)
+    h, t = montar(coletar(a.antes, a.depois), titulo, detalhes=link_historico(data))
     saida = Path(a.saida)
     saida.mkdir(parents=True, exist_ok=True)
     (saida / "resumo.html").write_text(f"<!doctype html><meta charset=utf-8><title>{titulo}</title>{h}", encoding="utf-8")

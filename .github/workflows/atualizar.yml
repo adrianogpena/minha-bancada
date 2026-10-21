@@ -71,14 +71,31 @@ jobs:
           git diff --cached --quiet || git commit -m "Dados atualizados em $(date -u +%Y-%m-%d)"
           git push
 
-      - name: Gerar feeds RSS do Fique informado (últimos 14 dias, a partir do histórico git)
+      - name: Registrar o histórico diário (todos os detalhes do dia, com fontes, em dados/historico)
+        # compara os dados antes e depois do commit do dia; a página historico.html lê o resultado. Roda antes dos e-mails e do RSS, que apontam para ela
+        continue-on-error: true   # sem histórico o site ainda publica
+        run: |
+          git fetch --deepen=50 -q || true
+          python scripts/historico.py
+          git add dados/historico
+          git diff --cached --quiet || git commit -m "Histórico diário de $(date -u +%Y-%m-%d)"
+          git push
+
+      - name: Atualizar os feeds RSS do Fique informado (últimos 14 dias, a partir do histórico git)
         continue-on-error: true   # sem feeds o site ainda publica
         run: |
           git fetch --shallow-since="20 days ago" -q origin master
           python scripts/feeds.py --dias 14
 
-      - name: Enviar resumo do que mudou por e-mail
-        # só na execução agendada (pushes e execuções manuais não enviam); exige os segredos SMTP_* e EMAIL_PARA; falha aqui não derruba a publicação
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v4
+        with:
+          path: site
+      - id: deploy
+        uses: actions/deploy-pages@v4
+
+      - name: Enviar resumo do que mudou por e-mail (com link para o histórico diário)
+        # depois do deploy, para o link do histórico já estar no ar; só na execução agendada (pushes e execuções manuais não enviam); exige os segredos SMTP_* e EMAIL_PARA; falha aqui não derruba a publicação
         if: github.event_name == 'schedule'
         continue-on-error: true
         env:
@@ -112,10 +129,3 @@ jobs:
           DEPOIS=$(git log -1 --grep='^Dados atualizados em' --format=%H)
           # sem commit de hoje (nada mudou), não manda aviso; confirmações pendentes esperam o próximo dia com dados
           [ -n "$DEPOIS" ] && [ "$(git log -1 --format=%cs "$DEPOIS")" = "$(date -u +%F)" ] && python scripts/assinaturas.py "$DEPOIS~1" "$DEPOIS" --enviar
-
-      - uses: actions/configure-pages@v5
-      - uses: actions/upload-pages-artifact@v4
-        with:
-          path: site
-      - id: deploy
-        uses: actions/deploy-pages@v4

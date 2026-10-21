@@ -316,6 +316,7 @@ async function paginaDeputado() {
     linhaDoTempo: votacoes.map((v) => ({ ...v, voto: meus.get(v.id) || "ausente" })), // mais recente primeiro
     proposicoes: dep.proposicoes, tipoProjeto: (p) => !!TIPOS_PROJETO[p.tipo],
     textoLegislatura: "como autor ou coautor nesta legislatura (desde fev. de 2023)",
+    papel: () => "autor ou coautor. A Câmara lista os dois juntos e este site ainda não separa quem assinou primeiro.",
     aviso: "A situação vem da ficha de tramitação da Câmara e é atualizada aos poucos todo dia.",
     fonteTramitacao: "Ficha de tramitação (Câmara)",
     linkTramitacao: (p) => linkTramitacao(p.id),
@@ -379,8 +380,11 @@ function montarParlamentar(alvo, c) {
     </section>
     <h2 id="proposicoes">Projetos <small class="sub">(${projetos.length})</small></h2>
     <p>Projetos de lei, emendas à Constituição e similares. ${esc(c.aviso)}</p>
+    ${LEGENDA_PROJETOS}
     <div class="abas" id="abas-proj"></div>
     <div id="lista-proj"></div>
+    ${avisoDados(["O voto de cada parlamentar nesses projetos (só aparece na aba de votações, e apenas nas votações nominais).", "O texto exato de cada emenda ou substitutivo aprovado, e quem foi o relator.",
+      "Se foi o próprio parlamentar quem pediu a retirada ou o arquivamento. \"Tramitação encerrada\" não diz se o projeto virou lei.", "A situação vem do sistema da Casa e pode estar atrasada."])}
     ${c.semOutros ? `<p class="aviso">${esc(c.semOutros)}</p>` : `
     <h2>Outros documentos <small class="sub">(${outros.length})</small></h2>
     <p>Requerimentos, indicações, emendas a outros projetos, pareceres e afins. Cada um tem a tramitação como fonte.</p>
@@ -456,6 +460,7 @@ function montarParlamentar(alvo, c) {
       <span class="quando"><b>${esc(p.tipo)} ${esc(p.numero)}/${esc(p.ano)}</b>${p.ap ? `, apresentado em ${data(p.ap)}` : ""}${p.principal ? ", autor principal" : ""}</span>
       <span class="resultado r-${classe}">${esc(texto)}</span>
       <span class="texto">${esc(p.ementa || "Sem ementa")}</span>
+      ${c.papel ? `<span class="texto"><b>Papel de ${esc(nome)}:</b> ${c.papel(p)}</span>` : ""}
       ${p.sit ? `<span class="texto"><b>Situação:</b> ${esc(p.sit)}${p.org ? ` (${esc(p.org)})` : ""}${p.dt ? `, em ${data(p.dt)}` : ""}.${p.desp ? ` <span class="quando">Despacho: ${esc(p.desp.slice(0, 300))}</span>` : ""}</span>` : ""}
       ${p.td || p.tram || p.reg || p.co ? `<span class="texto quando">${[p.td && `Tipo: ${esc(p.td)}`, p.reg && `Regime: ${esc(p.reg)}`, p.tram && `Tramitação: ${esc(p.tram)}`, p.co && `Coautores: ${esc(p.co.join(", "))}`].filter(Boolean).join(" · ")}</span>` : ""}
       ${p.kw ? `<span class="texto quando">Temas: ${esc(p.kw)}</span>` : ""}
@@ -823,22 +828,115 @@ function casaLegislativa(p) {
 const TIPOS_EXECUTIVO = { PL: "Projeto de lei", PLP: "Projeto de lei complementar", PEC: "Proposta de emenda à Constituição", MPV: "Medida provisória" };
 function desfechoExecutivo(x) {
   const s = (x.sit || "").toLowerCase();
-  if (x.veto === "total" || s.startsWith("vetad")) return { rotulo: "Vetado", classe: "v-nao" };
-  if (s.startsWith("transformad")) return x.veto === "parcial" ? { rotulo: "Sancionado, com vetos", classe: "v-sim" } : { rotulo: "Virou lei", classe: "v-sim" };
-  if (s.includes("aguardando sanção")) return { rotulo: "Aguardando sanção", classe: "v-outro" };
-  if (!x.sit && x.tipo === "MPV") return { rotulo: "Em vigor, no prazo do Congresso", classe: "v-outro" };
-  if (s.startsWith("perdeu a efic")) return { rotulo: "Perdeu a eficácia", classe: "v-nao" };
-  return { rotulo: x.sit || "Em tramitação", classe: "v-outro" };
+  if (x.veto === "total" || s.startsWith("vetad")) return { rotulo: "Vetou", classe: "v-nao" };
+  if (s.startsWith("transformad")) return { rotulo: x.veto === "parcial" ? "Virou lei, com vetos" : "Virou lei", classe: "v-sim" };
+  if (s.includes("aguardando sanção")) return { rotulo: "Decide se sanciona", classe: "v-outro" };
+  if (!x.sit && x.tipo === "MPV") return { rotulo: "MP em vigor", classe: "v-outro" };
+  if (s.startsWith("perdeu a efic")) return { rotulo: "MP deixou de valer", classe: "v-nao" };
+  if (/^(arquivad|retirad|rejeitad|prejudicad)/.test(s)) return { rotulo: "Não virou lei", classe: "v-nao" };
+  return { rotulo: "No Congresso", classe: "v-outro" };
 }
-const itemGoverno = (x) => `<li><span class="quando">${esc(x.td)} ${esc(x.numero)}/${esc(x.ano)}${x.ap ? ` · enviado em ${esc(data(x.ap))}` : ""}</span>
-  <span class="voto v-outro">${esc(x.sit)}</span>
-  <span class="texto">${esc(x.ementa)} ${x.pdf ? `<a href="${esc(x.pdf)}" rel="noopener">${/\.pdf$/i.test(x.pdf) ? "Texto" : "Tramitação"}</a>` : ""}</span></li>`;
+/* Frases curtas, uma por etapa, dizendo quem fez o quê: o presidente (enviou, sancionou, vetou) ou o Congresso (aprovou, deixou caducar). */
+function etapasExecutivo(x) {
+  const mp = x.tipo === "MPV", s = (x.sit || "").toLowerCase();
+  const e = [mp ? `<b>O presidente editou</b> a medida provisória em ${data(x.apres)}; ela vale como lei desde então, mas o Congresso precisa aprová-la em até 120 dias.`
+    : `<b>O presidente enviou</b> o projeto ao Congresso em ${data(x.apres)}.`];
+  if (x.remessa) e.push(`<b>O Congresso aprovou</b> e mandou à sanção em ${data(x.remessa)}.`);
+  if (x.veto === "total" || s.startsWith("vetad")) e.push(`<b>O presidente vetou o texto inteiro</b>${x.dataNorma ? ` em ${data(x.dataNorma)}` : ""}.${x.razoes ? ` Razões do veto: ${esc(x.razoes)}.` : ""}`);
+  else if (s.startsWith("transformad")) {
+    const lei = x.norma ? ` (<b>${esc(x.norma)}</b>)` : "";
+    if (mp && !x.remessa) e.push(`<b>O Congresso aprovou</b> a medida provisória sem mudanças e ela virou lei${lei}${x.dataNorma ? ` em ${data(x.dataNorma)}` : ""}. Nesse caso não há sanção: quem promulga é o Congresso.`);
+    else if (x.veto === "parcial") e.push(`<b>O presidente sancionou</b> o texto${x.dataNorma ? ` em ${data(x.dataNorma)}` : ""}${lei}, mas <b>vetou trechos</b>.${x.razoes ? ` Razões do veto: ${esc(x.razoes)}.` : ""} O Congresso ainda pode derrubar os vetos.`);
+    else e.push(`<b>O presidente sancionou</b> o texto sem vetos${x.dataNorma ? ` em ${data(x.dataNorma)}` : ""}${lei}.`);
+  } else if (s.includes("aguardando sanção")) e.push("<b>O presidente ainda não decidiu:</b> tem 15 dias úteis para sancionar ou vetar.");
+  else if (s.startsWith("perdeu a efic")) e.push(`<b>O Congresso não votou a tempo</b> e a medida provisória perdeu a eficácia${x.data ? ` em ${data(x.data)}` : ""}.`);
+  else if (/^(arquivad|retirad|rejeitad|prejudicad)/.test(s)) e.push(`<b>Não virou lei:</b> ${esc(x.sit.toLowerCase())}${x.data ? ` em ${data(x.data)}` : ""}. Não houve sanção nem veto.`);
+  else if (x.sit) e.push(`<b>Ainda no Congresso:</b> ${esc(x.sit.toLowerCase())}. Ainda não chegou à sanção.`);
+  return e;
+}
+/* Governador e prefeito: o sistema de cada Casa só informa tipo, situação e ementa, então os desfechos são mais genéricos que os do presidente. */
+function etapasGoverno(x, prefeito) {
+  const chefe = prefeito ? "O prefeito" : "O governador", casa = prefeito ? "A Câmara" : "A Assembleia";
+  const sit = (x.sit || "").trim(), s = sit.toLowerCase(), td = (x.td || "").toLowerCase();
+  const quando = x.ap ? ` em ${data(x.ap)}` : "";
+  const alcance = /total|integral/i.test(`${x.td} ${x.ementa}`) ? "total" : /parcial/i.test(`${x.td} ${x.ementa}`) ? "parcial" : null;
+  if (x.tipo === "VET") {
+    const e = [`<b>${chefe} vetou</b> ${alcance === "total" ? "o texto inteiro" : alcance === "parcial" ? "trechos do texto" : "o texto (o sistema não informa se inteiro ou em parte)"}; a mensagem de veto chegou${prefeito ? "" : " à Assembleia"}${quando}.`];
+    if (/^em tr(amita|âmite)/.test(s)) e.push(`<b>${casa} ainda vai decidir</b> se mantém o veto ou o derruba.`);
+    else if (/encerrad|finalizad|arquivad|armazenad/.test(s)) e.push(`<b>${casa} já concluiu</b> a análise do veto. O sistema não informa se o veto foi mantido ou derrubado.`);
+    else if (sit) e.push(`Situação no sistema da Casa: ${esc(sit.toLowerCase())}.`);
+    return { rotulo: alcance === "total" ? "Vetou tudo" : alcance === "parcial" ? "Vetou em parte" : "Vetou", classe: "v-nao", etapas: e };
+  }
+  const mp = /medida provis/.test(td), msg = /^mensagem/.test(td);
+  const enviou = mp ? `<b>${chefe} editou</b> a medida provisória${quando}; ela vale como lei até ${casa.toLowerCase()} votar.`
+    : msg ? `<b>${chefe} enviou</b> uma mensagem${prefeito ? " à Câmara" : " à Assembleia"}${quando}.`
+    : `<b>${chefe} enviou</b> o projeto${prefeito ? " à Câmara" : " à Assembleia"}${quando}.`;
+  const e = [enviou];
+  if (/^(sancionad|virou lei)/.test(s)) {
+    const detalhe = (sit.match(/\((.*)\)/) || [])[1];
+    e.push(`<b>Virou lei${/^sancionad/.test(s) ? ": o chefe do Executivo sancionou" : ""}</b>${detalhe ? ` (${esc(detalhe.replace(/\d{4}-\d{2}-\d{2}/g, (d) => data(d)))})` : ""}.`);
+    return { rotulo: "Virou lei", classe: "v-sim", etapas: e };
+  }
+  if (/retirad/.test(s)) { e.push(`<b>${chefe} retirou</b> a proposta antes da votação final.`); return { rotulo: "Retirou", classe: "v-nao", etapas: e }; }
+  if (/^em tr(amita|âmite)|aguardando/.test(s)) { e.push(`<b>Ainda em análise</b> ${prefeito ? "na Câmara" : "na Assembleia"}: sem decisão final.`); return { rotulo: prefeito ? "Na Câmara" : "Na Assembleia", classe: "v-outro", etapas: e }; }
+  if (/encerrad|finalizad|arquivad|armazenad|anexad|encaminhad/.test(s)) {
+    e.push(`<b>${casa} encerrou</b> a tramitação. O sistema não informa se virou lei, foi arquivada ou rejeitada.`);
+    return { rotulo: "Encerrado", classe: "v-outro", etapas: e };
+  }
+  e.push(`Situação no sistema da Casa: ${esc(sit.toLowerCase() || "não informada")}.`);
+  return { rotulo: sit || "Sem situação", classe: "v-outro", etapas: e };
+}
+const itemGoverno = (prefeito) => (x) => {
+  const d = etapasGoverno(x, prefeito);
+  return `<li><span class="quando">${esc(x.td)} ${esc(x.numero)}/${esc(x.ano)}</span>
+  <span class="voto ${d.classe}">${esc(d.rotulo)}</span>
+  <span class="texto">${esc(x.ementa)}</span>
+  <div class="texto"><ul class="etapas">${d.etapas.map((t) => `<li>${t}</li>`).join("")}</ul>
+    ${x.pdf ? `<a href="${esc(x.pdf)}" rel="noopener">${/\.pdf$/i.test(x.pdf) ? "Texto" : "Tramitação"}</a>` : ""}</div></li>`;
+};
+
+/* Legenda recolhida com o significado de cada selo, e aviso do que a fonte não informa. */
+const legendaStatus = (itens) => `<details class="legenda-status"><summary>O que significa cada status</summary>
+  <dl>${itens.map(([nome, texto]) => `<dt>${esc(nome)}</dt><dd>${texto}</dd>`).join("")}</dl></details>`;
+const LEGENDA_PROJETOS = legendaStatus([
+  ["Em tramitação", "Ainda em análise na Casa. Ainda não foi votado até o fim."],
+  ["Aprovada / Aprovada na Câmara / Aprovada no Senado", "Passou por uma Casa e segue para a próxima etapa (outra Casa ou sanção)."],
+  ["Virou lei", "Foi sancionado ou promulgado e virou norma jurídica."],
+  ["Arquivada / Retirada pelo autor / Rejeitada / Vetada / Prejudicada", "Não seguiu adiante: arquivado, retirado pelo próprio autor, rejeitado, vetado ou perdeu o sentido por outra decisão."],
+  ["Tramitação encerrada", "A Casa encerrou o processo, mas a fonte não diz como (aprovado, arquivado ou rejeitado)."],
+  ["Situação ainda não consultada", "O site ainda não leu a situação deste projeto; veja a tramitação."]]);
+const LEGENDA_PRESIDENTE = legendaStatus([
+  ["Virou lei", "O Congresso aprovou e o presidente sancionou o texto sem vetos. Medida provisória aprovada sem mudanças também vira lei, sem sanção."],
+  ["Virou lei, com vetos", "O presidente sancionou, mas vetou trechos. O Congresso ainda pode derrubar esses vetos."],
+  ["Vetou", "O presidente vetou o texto inteiro."],
+  ["Decide se sanciona", "O Congresso já aprovou. O presidente tem 15 dias úteis para sancionar ou vetar."],
+  ["MP em vigor", "Medida provisória editada pelo presidente. Vale como lei, mas o Congresso precisa votá-la em até 120 dias."],
+  ["MP deixou de valer", "O Congresso não votou a tempo e a medida provisória perdeu a eficácia."],
+  ["Não virou lei", "Arquivado, retirado, rejeitado ou prejudicado no Congresso. Não houve sanção nem veto."],
+  ["No Congresso", "Ainda em análise na Câmara ou no Senado."]]);
+const legendaGoverno = (prefeito) => legendaStatus([
+  ["Vetou tudo / Vetou em parte", `Veto ${prefeito ? "do prefeito" : "do governador"} a um projeto aprovado ${prefeito ? "pela Câmara" : "pela Assembleia"}. Cada item é a mensagem de veto.`],
+  ["Virou lei", "O sistema da Casa informa que o projeto foi sancionado ou virou lei."],
+  [prefeito ? "Na Câmara" : "Na Assembleia", "Ainda em análise, sem decisão final. Num veto, significa que ainda não se decidiu se ele fica ou cai."],
+  ["Encerrado", "A Casa encerrou a tramitação. O sistema não diz se foi aprovado, arquivado ou rejeitado."],
+  ["Retirou", `${prefeito ? "O prefeito" : "O governador"} retirou a proposta antes da votação final.`]]);
+const avisoDados = (itens) => `<p class="aviso-dados"><b>O que ainda não temos:</b> ${itens.join(" ")}</p>`;
+const AVISO_PRESIDENTE = avisoDados(["O trecho exato que foi vetado (só a referência ao Diário Oficial com as razões do veto).",
+  "Se o Congresso manteve ou derrubou cada veto.", "Decretos.", "Os votos de cada parlamentar nesses projetos: veja a aba do parlamentar na Câmara ou no Senado."]);
+const AVISO_PROPOSTAS_PRESIDENTE = avisoDados(["Propostas feitas antes de 2023 e as que o presidente apoiou sem ser o autor.", "O texto de cada emenda que o Congresso aprovou e quem foi o relator.",
+  "O trecho exato que foi vetado (só a referência ao Diário Oficial com as razões do veto).", "O voto de cada parlamentar: veja a página do parlamentar na Câmara ou no Senado."]);
+const avisoGovernoPropostas = (prefeito) => avisoDados(["Propostas anteriores ao início da coleta e as que não são do Executivo.", `O texto das emendas aprovadas e quem foi o relator ${prefeito ? "na Câmara" : "na Assembleia"}.`,
+  "Se o projeto virou lei, quando não há \"Virou lei\" na situação: \"Encerrado\" não diz como terminou.", "A situação vem do sistema de cada Casa e pode estar desatualizada."]);
+const avisoGoverno = (prefeito) => avisoDados(["O trecho exato que foi vetado: o arquivo ligado em \"Texto\" é a mensagem de veto, quando a Casa o publica.",
+  `Se ${prefeito ? "a Câmara" : "a Assembleia"} manteve ou derrubou cada veto.`, "A data da sanção e o número da lei, salvo quando o sistema da Casa informa.",
+  "Decretos.", "A situação vem do sistema de cada Casa e pode estar desatualizada ou incompleta."]);
 const itemExecutivo = (x) => {
   const d = desfechoExecutivo(x);
-  return `<li><span class="quando">${esc(TIPOS_EXECUTIVO[x.tipo] || x.tipo)} ${esc(x.numero)}/${esc(x.ano)} · enviado em ${esc(data(x.apres))}</span>
+  return `<li><span class="quando">${esc(TIPOS_EXECUTIVO[x.tipo] || x.tipo)} ${esc(x.numero)}/${esc(x.ano)}</span>
     <span class="voto ${d.classe}">${esc(d.rotulo)}</span>
-    <span class="texto">${esc(x.ementa)}${x.norma ? ` <b>${esc(x.norma)}</b>${x.dataNorma ? `, ${esc(data(x.dataNorma))}` : ""}.` : ""}
-      <a href="${esc(linkTramitacao(x.id))}" rel="noopener">Tramitação</a></span></li>`;
+    <span class="texto">${esc(x.ementa)}</span>
+    <div class="texto"><ul class="etapas">${etapasExecutivo(x).map((t) => `<li>${t}</li>`).join("")}</ul>
+      <a href="${esc(linkTramitacao(x.id))}" rel="noopener">Tramitação</a>${x.inteiroTeor ? ` · <a href="${esc(x.inteiroTeor)}" rel="noopener">Texto original</a>` : ""}</div></li>`;
 };
 
 const fonteRedesTse = (p) => {
@@ -1156,12 +1254,12 @@ async function paginaPolitico() {
   const vetosGov = governo ? governo.materias.filter((x) => x.tipo === "VET") : [];
   const enviadosGov = governo ? governo.materias.filter((x) => x.tipo !== "VET") : [];
   const comGoverno = enviadosGov.length + vetosGov.length > 0;
-  const aprovados = enviados.filter((x) => /^(transformad|vetad)/i.test(x.sit || "") || x.veto);
+  const aprovados = enviados.filter((x) => /^(transformad|vetad|aguardando sanção)/i.test(x.sit || "") || x.veto);
   const painelVotacoes = comGoverno
     ? `<section class="painel"><div class="painel-titulo"><h2>Vetos</h2></div>
         <p>${esc(p.cargo)} não vota em plenário. O que faz é propor leis, sancionar ou vetar o que ${prefeito ? "a Câmara" : "a Assembleia"} aprova, e editar decretos. Aqui estão os vetos enviados ${orgao} desde ${prefeito ? 2025 : 2023}: <b>${vetosGov.length}</b>. A situação é a que ${prefeito ? "a Câmara" : "a Assembleia"} registra no sistema dela, e nem sempre é atualizada.</p>
-        <div id="lista-vetos"></div>
-        <p>Sanções e decretos ainda não estão no site. Quem vota é ${esc(casa.quem)}.</p>
+        ${legendaGoverno(prefeito)}<div id="lista-vetos"></div>
+        ${avisoGoverno(prefeito)}<p>Quem vota é ${esc(casa.quem)}.</p>
         ${fontes([casa.link, ["Sistema de processo legislativo", `https://${governo.host}`]])}</section>`
     : doVice
     ? `<section class="painel"><div class="painel-titulo"><h2>Votações</h2></div>
@@ -1170,9 +1268,9 @@ async function paginaPolitico() {
         ${fontes([casa.link, ["Sistema de processo legislativo", `https://${doVice.host}`]])}</section>`
     : comDados
     ? `<section class="painel"><div class="painel-titulo"><h2>Sanções e vetos</h2></div>
-        <p>${esc(p.cargo)} não vota em plenário. O que faz é propor leis, sancionar ou vetar o que o Congresso aprova, e editar decretos. Aqui estão os projetos e medidas provisórias que enviou e que viraram lei ou foram vetados: <b>${aprovados.length}</b>, sendo <b>${aprovados.filter((x) => x.veto === "parcial").length}</b> com vetos parciais.</p>
-        <div id="lista-sancoes"></div>
-        <p>Decretos ainda não estão no site. Quem vota o que ${esc(p.cargo.toLowerCase())} envia é ${esc(casa.quem)}.</p>
+        <p>${esc(p.cargo)} não vota em plenário. O que faz é propor leis, sancionar ou vetar o que o Congresso aprova, e editar decretos. Aqui estão os projetos e medidas provisórias que enviou e que o Congresso aprovou: <b>${aprovados.length}</b>, sendo <b>${aprovados.filter((x) => x.veto === "parcial").length}</b> sancionados com vetos parciais. Cada item mostra, passo a passo, o que o presidente fez (enviou, editou, sancionou ou vetou) e o que o Congresso fez.</p>
+        ${LEGENDA_PRESIDENTE}<div id="lista-sancoes"></div>
+        ${AVISO_PRESIDENTE}<p>Quem vota o que ${esc(p.cargo.toLowerCase())} envia é ${esc(casa.quem)}.</p>
         ${fontes([["Planalto: decretos e leis", "https://www.planalto.gov.br/ccivil_03/"], casa.link, ["Dados abertos da Câmara", "https://dadosabertos.camara.leg.br"]])}</section>`
     : executivo
     ? `<section class="painel"><div class="painel-titulo"><h2>Votações</h2></div>
@@ -1185,8 +1283,8 @@ async function paginaPolitico() {
         ${fontes([casa.link].filter(Boolean))}</section>`;
 
   const painelPropostas = `<section class="painel"><div class="painel-titulo"><h2>Propostas</h2></div>
-      ${comDados ? `<p>Projetos de lei, leis complementares, emendas à Constituição e medidas provisórias enviados por ${esc(nome)} ao Congresso desde 2023: <b>${enviados.length}</b>. As propostas de campanha ficam no plano de governo da candidatura no TSE.</p><div id="lista-enviados"></div>` : ""}
-      ${comGoverno ? `<p>Projetos de lei, leis complementares, ${prefeito ? "emendas à Lei Orgânica" : "emendas à Constituição"}, medidas provisórias e mensagens enviados por ${esc(nome)} ${orgao} desde ${prefeito ? 2025 : 2023}: <b>${enviadosGov.length}</b>. As propostas de campanha ficam no plano de governo da candidatura no TSE.</p><div id="lista-enviados-gov"></div>` : ""}
+      ${comDados ? `<p>Projetos de lei, leis complementares, emendas à Constituição e medidas provisórias enviados por ${esc(nome)} ao Congresso desde 2023: <b>${enviados.length}</b>. As propostas de campanha ficam no plano de governo da candidatura no TSE.</p><p>${esc(nome)} é o <b>autor</b> de todos: são propostas do Poder Executivo. Cada item mostra o que ele fez e o que o Congresso fez depois.</p>${LEGENDA_PRESIDENTE}<div id="lista-enviados"></div>${AVISO_PROPOSTAS_PRESIDENTE}` : ""}
+      ${comGoverno ? `<p>Projetos de lei, leis complementares, ${prefeito ? "emendas à Lei Orgânica" : "emendas à Constituição"}, medidas provisórias e mensagens enviados por ${esc(nome)} ${orgao} desde ${prefeito ? 2025 : 2023}: <b>${enviadosGov.length}</b>. As propostas de campanha ficam no plano de governo da candidatura no TSE.</p><p>${esc(nome)} é o <b>autor</b> de todos: são propostas do Executivo. Cada item mostra o que ${prefeito ? "o prefeito" : "o governador"} fez e o que ${prefeito ? "a Câmara" : "a Assembleia"} fez depois.</p>${legendaGoverno(prefeito)}<div id="lista-enviados-gov"></div>${avisoGovernoPropostas(prefeito)}` : ""}
       ${doVice ? `<p>${esc(p.cargo)} não apresenta projetos à Assembleia. Os projetos enviados pelo governo, e os vetos, estão na página de <a href="${esc(linkPolitico(doVice.gov))}">${esc(doVice.gov.n)}</a>.</p>` : ""}
       ${comDados || comGoverno || doVice ? "" : executivo
         ? `<p>As propostas de ${esc(nome)} estão no plano de governo registrado na candidatura, quando o candidato o apresentou ao TSE. Ele fica na página da candidatura, junto com as certidões e a prestação de contas.</p>`
@@ -1214,8 +1312,8 @@ async function paginaPolitico() {
     <div role="tabpanel" id="painel-propostas" aria-labelledby="aba-propostas" hidden>${painelPropostas}</div>`;
   ligarAbas(alvo);
   if (comGoverno) {
-    listaPaginada($("#lista-vetos"), vetosGov, itemGoverno, 15, "Nenhum veto registrado.");
-    listaPaginada($("#lista-enviados-gov"), enviadosGov, itemGoverno, 15);
+    listaPaginada($("#lista-vetos"), vetosGov, itemGoverno(prefeito), 15, "Nenhum veto registrado.");
+    listaPaginada($("#lista-enviados-gov"), enviadosGov, itemGoverno(prefeito), 15);
   }
   if (comDados) {
     listaPaginada($("#lista-sancoes"), aprovados, itemExecutivo, 15, "Nenhum projeto virou lei ainda.");
@@ -1256,6 +1354,7 @@ async function montarSenador(alvo, p, nome, ficha) {
     rotuloPerfil: sen.despesas ? "Perfil e gastos" : "Perfil",
     linhaDoTempo, proposicoes: sen.proposicoes, tipoProjeto: (x) => !!TIPOS_PROJETO[x.tipo],
     textoLegislatura: "como autor ou coautor desde 2019",
+    papel: (x) => x.principal ? "<b>autor principal</b> (o primeiro a assinar)." : "<b>coautor</b> (assinou depois do autor principal).",
     aviso: "A situação vem da tramitação no Senado e é atualizada aos poucos todo dia.",
     fonteTramitacao: "Tramitação (Senado)",
     fonteEmenta: "Senado",
@@ -1293,6 +1392,7 @@ async function montarEstadual(alvo, p, nome, ficha, situacao) {
     rotuloPerfil: "Perfil e bens",
     linhaDoTempo, proposicoes: dep.proposicoes, tipoProjeto: () => true,
     textoLegislatura: "como autor ou coautor nesta legislatura",
+    papel: (x) => x.co && x.co.length ? `<b>autor ou coautor</b>, junto com ${esc(x.co.join(", "))}.` : "<b>autor ou coautor</b>. A Assembleia não lista outros deputados nesta proposta.",
     aviso: "Só entram projetos (de lei, resolução, decreto legislativo, emendas à Constituição e afins). A situação vem do sistema da Assembleia.",
     rotuloSem: "tramitação encerrada, sem resultado informado",
     semOutros: "Requerimentos, indicações e outros documentos da Assembleia não estão no site. Veja no sistema de tramitação da Assembleia.",

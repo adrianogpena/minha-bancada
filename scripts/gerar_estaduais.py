@@ -42,7 +42,7 @@ def gerar_governo(uf: str, pasta: Path, host: str) -> None:
     itens = []
     for arq in sorted(pasta.glob("governo_[0-9]*.json")):
         for mid, m in ler(arq, {}).get("materias", {}).items():
-            itens.append({"id": mid, "tipo": m["t"], "td": m["td"], "numero": m["n"], "ano": m["a"], "ap": m.get("ap"),
+            itens.append({"id": mid, "tipo": "VET" if re.search(r"veto", m["td"], re.I) else m["t"], "td": m["td"], "numero": m["n"], "ano": m["a"], "ap": m.get("ap"),
                           "ementa": re.sub(r"\s+", " ", m["e"]).strip(), "sit": m["sit"], "pdf": m.get("pdf")})
     if not itens:
         return

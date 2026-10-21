@@ -1468,6 +1468,15 @@ function noEscopo(e, codigos) {
   });
 }
 
+/* Cargo exibido ao lado do nome; Presidência, governos e prefeituras já trazem o cargo no próprio nome. */
+function cargoHist(p) {
+  const c = p.c || "";
+  if (c.startsWith("dep:")) return "Deputado(a) federal";
+  if (c.startsWith("est:")) return "Deputado(a) estadual";
+  if ((p.h || "").includes("f=senado")) return "Senador(a)";
+  return "";
+}
+
 const somar = (eventos) => eventos.reduce((t, e) => t + (e.n || 1), 0);   // um evento "lote" resume vários registros
 
 /* Locais acompanhados no dia que não tiveram item: distingue "nada aconteceu" de "não foi acompanhado" e mostra coleta parada. */
@@ -1555,7 +1564,7 @@ async function paginaHistorico() {
       return `<section class="painel hist-local">
         <h2>${esc(dia.locais[l])} <small>${somar(doLocal)} ${somar(doLocal) === 1 ? "mudança" : "mudanças"}</small></h2>
         ${ordenados.map(({ p, eventos }) => `<details class="hist-pol"${abrir ? " open" : ""}>
-          <summary>${p.h ? `<a href="${esc(p.h)}">${esc(p.n)}</a>` : esc(p.n)} <small>${eventos.length}</small></summary>
+          <summary>${p.h ? `<a href="${esc(p.h)}">${esc(p.n)}</a>` : esc(p.n)}${cargoHist(p) ? ` <span class="quando">${esc(cargoHist(p))}</span>` : ""} <small>${eventos.length}</small></summary>
           <ul class="hist-itens">${eventos.map(itemHistorico).join("")}</ul></details>`).join("")}
       </section>`;
     }).join("") + semNovidade;

@@ -49,6 +49,16 @@ python scripts/gerar.py
 python -m http.server 8000 -d site                # abra http://localhost:8000
 ```
 
+### Testes
+
+Os testes não acessam a internet (HTTP simulado) e rodam em poucos segundos:
+
+```bash
+pip install -r requirements-dev.txt
+python -m pytest                       # scripts de coleta/geração + sanidade dos arquivos em dados/
+node --test tests/js/app.test.js       # utilidades do site/assets/app.js
+```
+
 Sem `--limite` a coleta pega todos os deputados em exercício. `--dias` só vale na primeira coleta; depois o script continua de onde parou.
 
 ## Estrutura

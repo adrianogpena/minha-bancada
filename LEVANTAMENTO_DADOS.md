@@ -391,5 +391,20 @@ Próximos passos:
 3. Fonte de link por dado: gabinetes → `https://transparencia.alesc.sc.gov.br/` (URL exata da página a confirmar).
 4. Se seguir: `scripts/coletar_sc.py`, amostras em `tests/fixtures/contratos/`, `ENDPOINTS.md` e `CHANGELOG.md`.
 
-### SE: Sergipe
+### SE: Sergipe (Assembleia Legislativa, Alese; apurado em 2026-10-22)
+
+**Portal da Transparência: `https://al.se.leg.br/portal-da-transparencia/`.** Só li o texto do índice (formato de exportação e API não confirmados; o caminho `/wp-content/` sugere WordPress).
+- Seções (todas sob o portal): despesas, receitas, recursos humanos (folha por cargo/função e nome, efetivos e comissionados), licitações e contratos, obras, orçamentos (LOA, LDO, PPA), relatórios (gestão fiscal, prestação de contas, RREO), emendas parlamentares, estrutura organizacional, diversos (convênios e parcerias), ouvidoria/SIC, IPLESE, LGPD.
+- Espaço do Servidor: contracheque, ficha financeira, informe de rendimentos (acesso restrito).
+- Legislativo: deputados, Mesa, comissões e Diário do Legislativo ficam no sistema Alese Legis (`https://aleselegis.al.se.leg.br`); proposições e votações provavelmente estão lá (a confirmar).
+- Não há seção de verba indenizatória/cota parlamentar, gabinetes, presença nem votações no índice. Formato (CSV, API, PDF), período e atualização não aparecem.
+
+**ITGP** (`https://transparenciainternacional.org.br/itgp/assembleia-legislativa/sergipe`, ano da avaliação não informado): nota **32/100 ("Ruim")**, 21º de 27. Por dimensão: Comunicação 90,9; Governança 47; Plataformas 45; Transparência Administrativa 27,8; Transparência Legislativa 22,9; Participação e Engajamento 12,5; Transformação Digital 10; Marcos Legais 0. Ponto fraco citado: não publica pautas (presidente, plenário, CCJ e orçamento), listas de presença nem resultado nominal de votações.
+
+Próximos passos:
+1. No Firefox, abrir Despesas e Recursos Humanos com a aba Rede aberta, para ver formato, URL de dados, período e exportação.
+2. Abrir o Alese Legis para presença, votações, projetos e verba por deputado.
+3. Fonte de link por dado: folha → `https://al.se.leg.br/portal-da-transparencia/recursos-humanos`.
+4. Se seguir: `scripts/coletar_se.py`, amostras em `tests/fixtures/contratos/`, `ENDPOINTS.md` e `CHANGELOG.md`.
+
 ### SP: São Paulo

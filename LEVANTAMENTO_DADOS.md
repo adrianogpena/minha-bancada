@@ -148,6 +148,35 @@ Próximos passos:
 3. Se funcionar: `scripts/coletar_es.py`, amostras em `tests/fixtures/contratos/`, `ENDPOINTS.md` e `CHANGELOG.md`.
 
 ### GO: Goiás
+
+Apuração de 2026-10-22 em `https://transparencia.al.go.leg.br/` (Transparência Alego). A página inicial é uma SPA (AngularJS) que só mostra o aviso de cookies no HTML; **os dados saem de uma API JSON pública, sem autenticação nem captcha**, descoberta no bundle `/assets/application.transparencia-*.js`. Qualquer caminho do site devolve o mesmo HTML (roteamento no cliente), então só os `/api/...` valem. `robots.txt` bloqueia apenas as páginas HTML `/prestacao-de-contas/gestao-de-pessoas/quadro-de-remuneracao` (a API não é citada).
+
+Base: `https://transparencia.al.go.leg.br/api/transparencia/`. Testado com curl (HTTP 200, `application/json`):
+
+| Endpoint | Parâmetros | O que traz | Anos disponíveis |
+|---|---|---|---|
+| `verbas_indenizatorias` | `ano`, `mes` | por deputado: `valor_apresentado`, `valor_indenizado`, `deputado{id,nome}` | 2013 a 2026 (`/periodos` lista) |
+| `verbas_indenizatorias/deputados` | `ano`, `mes` | lista dos deputados com `id` e nome (nome parlamentar) | idem |
+| `verbas_indenizatorias/resumo-anual` | `deputado_id`, `ano` | resumo anual por deputado (não testado com id) | idem |
+| `remuneracoes` | `ano`, `mes`, `categoria` (7 = Deputados) | matrícula, nome completo, cargo, `status` (ex.: licença saúde), vencimento, indenizações, auxílios, descontos, líquido | por `ano`/`mes` |
+| `remuneracoes/categorias`, `/vinculos` | — | domínios (categoria 7 = "Deputados"; vínculo `DEPUTADOS`) | — |
+| `diarias` | `ano`, `mes` | beneficiário (matrícula, cargo), trecho, motivo, datas, qtd. e valor das diárias, passagens, total; inclui assessores | 2014 a 2026 (`/meses-e-anos`) |
+| `requerimentos` | `ano` | número, autor (`deputado.nome`), tipo, etapa, `url_download` do PDF | 1999 a 2023 listados em `/anos` |
+| `sessoes-plenarias/datas-do-ano`, `/:data/pauta` | — | datas de sessões e pauta | 2013 em diante |
+| `processos/busca-simples`, `/busca-avancada`, `/recentes`, `/proposicoes-mais-votadas` | — | proposições (não testado) | — |
+| `votacoes.json?tipo=` | `tipo` | `{"error":"Tipo inválido"}` com `tipo=1`; valores válidos não descobertos | — |
+| `despesas-com-pessoal`, `gestao-fiscal-anual`, `licitacoes`, `contratos-e-convenios`, `frotas`, `uso-aeronaves`, `orcamentos`, `execucao_orcamentaria` | — | dados institucionais da Casa, sem uso por político | — |
+
+Pontos de atenção:
+- A API de remuneração identifica o deputado por **nome civil** (ex.: "ALESSANDRO MOREIRA DOS SANTOS") e a de verbas por **nome parlamentar** ("Alessandro Moreira") com `id` interno da Alego. Cruzar por nome exige normalização ou um mapa nome civil ↔ parlamentar (o `portal.al.go.leg.br/deputados` lista os deputados).
+- Valores vêm como string (`"31310.41"`). Mês sem publicação devolve `[]` (ex.: verbas 2026-09 vazio; 2026 só tem meses 1 a 8 publicados).
+- `remuneracao_bruta` aparece `0.0` para deputados mesmo com líquido preenchido: usar `vencimento`, `indenizacoes`, `auxilios`.
+- Outros hosts citados no bundle: `portal.al.go.leg.br/deputados` (perfil, mesa diretora, contatos), `alegodigital.al.go.leg.br/spl/` (consulta de produção legislativa e sessões, ASP.NET), `opine.al.go.leg.br`, `publicacoes.al.go.leg.br` (PCA em PDF), `saba.al.go.leg.br` (arquivos). Não verificados.
+
+Próximos passos:
+1. Fonte de link por dado: verbas e remuneração → `https://transparencia.al.go.leg.br/` (seção correspondente); confirmar as URLs das telas no Firefox.
+2. Investigar `portal.al.go.leg.br/deputados` (lista oficial, partido, foto, contato) e `alegodigital.al.go.leg.br/spl/` (proposições e votações nominais, valores de `votacoes.json?tipo=`).
+3. Se seguir: `scripts/coletar_go.py`, amostras em `tests/fixtures/contratos/`, `ENDPOINTS.md` e `CHANGELOG.md`.
 ### MA: Maranhão
 ### MG: Minas Gerais
 ### MS: Mato Grosso do Sul

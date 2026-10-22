@@ -5,6 +5,10 @@ Regra: toda fonte nova ou mudança de coleta ganha uma entrada aqui, no mesmo co
 Datas dos conjuntos que já existiam vêm do primeiro commit que os trouxe (`git log --diff-filter=A`).
 Todas as coletas rodam sozinhas no GitHub Actions (`.github/workflows/atualizar.yml`, todo dia às 06:17 de Brasília), salvo onde indicado.
 
+## Cache de detalhes das proposições da BA (2026-10-22)
+- **De onde:** as mesmas páginas da ALBA (`.../atividade-legislativa-nova/proposicao/<slug>`), sem endpoint novo.
+- **Como:** cada `materias_<ano>.json` da BA ganhou `vistas` ({proposição: dia em que o detalhe foi lido}), inclusive das que não são de deputado, que antes eram baixadas de novo todo dia. Anos encerrados leem cada detalhe uma vez; o ano corrente relê cada proposição a cada 7 a 20 dias (escalonado por proposição). A primeira execução depois da mudança relê o que não é de deputado, uma vez.
+
 ## Coleta incremental das proposições de MG e RN (2026-10-22)
 - **De onde:** a mesma API da ALMG (`.../api/v2/proposicoes/pesquisa/direcionada`), agora com `ord=3` (lista da última ação mais recente para a mais antiga, campo `dataUltimaAcao`); no RN, a lista de processos por iniciativa, que já vem da mais nova para a mais antiga.
 - **Como:** o job de MG levava mais de 25 min porque refazia 2025 e 2026 inteiros (centenas de páginas, 1 s de pausa cada) todo dia. Agora a coleta diária lê só as páginas até a data da coleta anterior (MG) ou só os projetos entrados desde então (RN) e junta com o que já está em `materias_<ano>.json`. Os arquivos ganharam o campo `completaEm`; a releitura completa se repete a cada 14 dias (`RENOVAR_COMPLETA_DIAS`), e também quando falta algum arquivo de ano. No RN, arquivamentos de projetos antigos só aparecem nessa releitura completa.

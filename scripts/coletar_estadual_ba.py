@@ -18,6 +18,7 @@ import json
 import re
 import sys
 import zipfile
+import zlib
 from concurrent.futures import ThreadPoolExecutor
 from datetime import date, datetime, timedelta
 from html import unescape
@@ -47,6 +48,7 @@ ANO_PROPOSICOES = 2023
 TIMEOUT = 30
 TIMEOUT_ARQUIVO = 120
 EM_PARALELO = 2
+RENOVAR_DETALHE_DIAS = 7   # o detalhe de proposição do ano corrente é relido a cada 7 a 20 dias (escalonado por proposição); anos encerrados só uma vez
 NS = {"m": "http://schemas.openxmlformats.org/spreadsheetml/2006/main"}
 
 TIPOS = {  # valor do filtro `tipo` -> (sigla, descrição)
@@ -286,13 +288,26 @@ def listar_proposicoes(s) -> dict:
     return achados
 
 
+def precisa_detalhe(chave: str, ano: int, vistas: dict, hoje: date) -> bool:
+    """Detalhe nunca lido, ou do ano corrente e lido há tempo demais (prazo diferente por proposição, para não renovar tudo no mesmo dia)."""
+    if chave not in vistas:
+        return True
+    prazo = RENOVAR_DETALHE_DIAS + zlib.crc32(chave.encode()) % 14
+    return ano >= hoje.year and (hoje - date.fromisoformat(vistas[chave])).days >= prazo
+
+
 def coletar_proposicoes(s, deputados: list[dict]) -> None:
     hoje = date.today()
     lista = listar_proposicoes(s)
-    antigas = {}
-    for ano in range(ANO_PROPOSICOES, hoje.year):
-        antigas.update(comum.ler(PASTA / f"materias_{ano}.json", {}).get("materias", {}))
-    sem_cache = {slug: p for slug, p in lista.items() if f"{p['sigla']}-{p['numero']}-{p['ano']}" not in antigas or p["ano"] >= hoje.year}
+    antigas: dict[str, dict] = {}   # matérias de deputados já guardadas, de todos os anos
+    vistas: dict[str, str] = {}     # chave -> dia em que o detalhe foi lido (também das que não são de deputado)
+    for ano in range(ANO_PROPOSICOES, hoje.year + 1):
+        guardado = comum.ler(PASTA / f"materias_{ano}.json", {})
+        antigas.update(guardado.get("materias", {}))
+        vistas.update({c: guardado.get("coletadoEm") for c in guardado.get("materias", {})})   # arquivos antigos, sem `vistas`
+        vistas.update(guardado.get("vistas", {}))
+    chaves = {slug: f"{p['sigla']}-{p['numero']}-{p['ano']}" for slug, p in lista.items()}
+    sem_cache = {slug: p for slug, p in lista.items() if precisa_detalhe(chaves[slug], p["ano"], vistas, hoje)}
 
     def detalhe(item):
         slug, p = item
@@ -306,15 +321,18 @@ def coletar_proposicoes(s, deputados: list[dict]) -> None:
         detalhes = dict(ex.map(detalhe, sem_cache.items()))
     ligacao = comum.ligar_nomes({a for d in detalhes.values() if d for a in autores(d["autor"])}, deputados)
     por_ano: dict[int, dict] = {}
+    vistas_ano: dict[int, dict] = {}
     sem_par = set()
     for slug, p in lista.items():
-        chave = f"{p['sigla']}-{p['numero']}-{p['ano']}"
-        if chave in antigas and slug not in sem_cache:
-            por_ano.setdefault(p["ano"], {})[chave] = antigas[chave]
-            continue
+        chave = chaves[slug]
         d = detalhes.get(slug)
-        if not d:
+        if slug not in sem_cache or not d:   # não precisava ler, ou a leitura falhou: fica o que já havia
+            if chave in antigas:
+                por_ano.setdefault(p["ano"], {})[chave] = antigas[chave]
+            if chave in vistas:
+                vistas_ano.setdefault(p["ano"], {})[chave] = vistas[chave]
             continue
+        vistas_ano.setdefault(p["ano"], {})[chave] = hoje.isoformat()
         ids = sorted({ligacao[a] for a in autores(d["autor"]) if a in ligacao})
         if not ids:
             sem_par.add(d["autor"])
@@ -323,9 +341,10 @@ def coletar_proposicoes(s, deputados: list[dict]) -> None:
             "tipo": p["sigla"], "tipoDescricao": next(desc for sg, desc in TIPOS.values() if sg == p["sigla"]), "numero": p["numero"],
             "ano": p["ano"], "dataApresentacao": d["dataApresentacao"], "ementa": d["ementa"] or p["ementa"], "situacao": d["situacao"],
             "emTramitacao": None, "linkTexto": p["linkTexto"], "idsAutores": ids, "idsDeputados": ids, "fonte": f"{PROPOSICAO}/{slug}"}
-    for ano, materias in por_ano.items():
-        comum.salvar(PASTA / f"materias_{ano}.json", {"coletadoEm": hoje.isoformat(), "fonte": PROPOSICOES, "materias": materias})
-    print(f"BA: {sum(len(m) for m in por_ano.values())} projetos de deputados em {len(por_ano)} anos ({len(lista)} lidos)")
+    for ano in sorted(set(por_ano) | set(vistas_ano)):
+        comum.salvar(PASTA / f"materias_{ano}.json", {"coletadoEm": hoje.isoformat(), "fonte": PROPOSICOES, "materias": por_ano.get(ano, {}),
+                                                      "vistas": vistas_ano.get(ano, {})})
+    print(f"BA: {sum(len(m) for m in por_ano.values())} projetos de deputados em {len(por_ano)} anos ({len(lista)} lidos, {len(detalhes)} detalhes)")
     if sem_par:
         comum.avisar(f"BA: autores sem deputado da lista ({len(sem_par)}): {sorted(sem_par)[:12]}")
 

@@ -132,7 +132,38 @@ def test_coletar_emendas_grava_por_ano(tmp_path, monkeypatch):
     mini = io.BytesIO()
     with zipfile.ZipFile(mini, "w") as z:
         z.writestr(ba.EMENDAS_CSV, csv_texto)
-    monkeypatch.setattr(ba, "baixar", lambda s, url, *a, **k: pacote if url == ba.EMENDAS_API else mini.getvalue())
+    monkeypatch.setattr(ba, "baixar_ckan", lambda s, url, *a, **k: pacote if url == ba.EMENDAS_API else mini.getvalue())
     ba.coletar_emendas(None, [{"id": "9", "nome": nome, "nomeCivil": None}])
     arquivos = sorted(p.name for p in tmp_path.glob("emendas_*.json"))
     assert arquivos and comum.ler(tmp_path / arquivos[0])["itens"][0]["idDeputado"] == "9"
+
+
+def test_precisa_detalhe_ano_corrente_renova_escalonado_e_ano_encerrado_nao():
+    from datetime import date, timedelta
+
+    hoje = date(2026, 10, 22)
+    velha = (hoje - timedelta(days=40)).isoformat()
+    assert ba.precisa_detalhe("PL-1-2026", 2026, {}, hoje)                                  # nunca lida
+    assert not ba.precisa_detalhe("PL-1-2026", 2026, {"PL-1-2026": hoje.isoformat()}, hoje)   # lida hoje
+    assert ba.precisa_detalhe("PL-1-2026", 2026, {"PL-1-2026": velha}, hoje)                # lida há mais que o prazo máximo (20 dias)
+    assert not ba.precisa_detalhe("PL-1-2025", 2025, {"PL-1-2025": velha}, hoje)            # ano encerrado: uma leitura só
+
+
+def test_coletar_proposicoes_nao_rele_o_que_ja_viu(tmp_path, monkeypatch):
+    from datetime import date
+
+    hoje = date.today()
+    a = amostra("estadual_ba_proposicoes")
+    item = lambda n, ano: {"slug": f"PL.-{n}-{ano}", "sigla": "PL", "numero": n, "ano": ano, "ementa": "e", "linkTexto": None}
+    lista = {i["slug"]: i for i in (item(1, 2025), item(2, 2025), item(3, hoje.year))}
+    lidos = []
+    monkeypatch.setattr(ba, "PASTA", tmp_path)
+    monkeypatch.setattr(ba, "listar_proposicoes", lambda s: lista)
+    monkeypatch.setattr(ba, "baixar", lambda s, url, *a, **k: lidos.append(url) or a_detalhe)
+    a_detalhe = a["detalhe"].encode()
+    ba.coletar_proposicoes(None, [])
+    assert len(lidos) == 3                      # primeira vez: lê tudo (ninguém é deputado da lista vazia)
+    assert comum.ler(tmp_path / "materias_2025.json")["vistas"].keys() == {"PL-1-2025", "PL-2-2025"}
+    lidos.clear()
+    ba.coletar_proposicoes(None, [])
+    assert lidos == []                          # segunda vez, no mesmo dia: nada a reler, nem o que não é de deputado

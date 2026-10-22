@@ -147,6 +147,26 @@ def test_gravar_cria_fixture(monkeypatch, tmp_path):
     assert reg["amostra"] == {"l": [0, 1]} and "l[]" in reg["forma"]
 
 
+def test_registrar_estaduais_acrescenta_contratos_do_modulo(monkeypatch, tmp_path):
+    modulo = ["UF = 'ZZ'", "def coletar(): pass",
+              "CONTRATOS = [dict(nome='estadual_zz_lista', fonte='http://zz', buscar=lambda ctx: {'a': 1}, usados=['a'], html=None)]"]
+    (tmp_path / "coletar_estadual_zz.py").write_text(chr(10).join(modulo), encoding="utf-8")
+    (tmp_path / "coletar_estadual_quebrado.py").write_text("raise RuntimeError('x')", encoding="utf-8")
+    monkeypatch.syspath_prepend(str(tmp_path))
+    monkeypatch.setattr(c, "ENDPOINTS", [])
+    c.registrar_estaduais(tmp_path)
+    assert [e.nome for e in c.ENDPOINTS] == ["estadual_zz_lista"]
+    assert c.ENDPOINTS[0].independente and c.ENDPOINTS[0].usados == ["a"]
+
+
+def test_executar_endpoint_estadual_independente_so_roda_se_selecionado(monkeypatch):
+    chamados = []
+    ENDPOINTS = [c.Endpoint("a", "x", lambda ctx: chamados.append("a") or {"a": 1}, independente=True),
+                 c.Endpoint("b", "x", lambda ctx: chamados.append("b") or {"b": 1}, independente=True)]
+    monkeypatch.setattr(c, "ENDPOINTS", ENDPOINTS)
+    assert list(c.executar(["b"], "verificar")) == ["b"] and chamados == ["b"]
+
+
 # ================================================================ as fixtures reais
 
 NOMES = [e.nome for e in c.ENDPOINTS if not e.html]

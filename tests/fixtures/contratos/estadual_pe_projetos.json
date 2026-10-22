@@ -1,0 +1,7 @@
+{
+ "fonte": "https://dadosabertos.alepe.pe.gov.br/api/v1/proposicoes/projetos/",
+ "capturadoEm": "2026-10-22",
+ "amostra": {
+  "xml": "<?xml version='1.0' encoding='utf-8'?>\n<projetos><projeto docid=\"16370\" numero=\"33\" ano=\"2026\" legislatura=\"VIGÉSIMA \" tipo=\"PROPOSTA DE EMENDA A CONSTITUIÇÃO\" subtipo=\"\" ementa=\"Altera a Constituição do Estado de Pernambuco, a fim de instituir o Orçamento de Promoção dos Direitos da População LGBTQIAPN+.\" dataPublicacao=\"31/03/2026\"><autores><autor nome=\"João Paulo do PT\" tipo=\"DEPUTADO\"/></autores></projeto><projeto docid=\"16580\" numero=\"34\" ano=\"2026\" legislatura=\"VIGÉSIMA \" tipo=\"PROPOSTA DE EMENDA A CONSTITUIÇÃO\" subtipo=\"\" ementa=\"Altera a redação do art. 101 da Constituição do Estado de Pernambuco.\" dataPublicacao=\"28/04/2026\"><autores><autor nome=\"Junior Matuto\" tipo=\"DEPUTADO\"/></autores></projeto></projetos>"
+ }
+}

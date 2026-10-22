@@ -1,0 +1,14 @@
+{
+ "fonte": "https://dados.ba.gov.br/dataset/emendas-parlamentares",
+ "capturadoEm": "2026-10-22",
+ "amostra": {
+  "csv": "\"Ano Exercício\";\"Órgão\";\"sgl_orgao_orcamento\";\"Unidade Orçamentária\";\"nom_res_unidade_orcamentaria\";\"Ação do Programa de Governo\";\"cod_subfonte_recurso\";\"Deputado\";\"Nome do Deputado\";\"num_codigo\";\"Valor Orçado Inicial.\";\"Valor Orçado Atual.\";\"Valor Empenhado.\";\"Valor Liquidado.\";\"Valor Pago.\"\n\"2020\";\"Secretaria da Saúde\";\"SESAB\";\"Fundo Estadual de Saúde\";\"FESBA\";\"Prevenção e Tratamento do Coronavírus\";\"500068\";\"  Alex Lima\";\"  Alex Lima\";\"2020.3.19.19601.313.5370.500068.5\";\"0,00\";\"409542,00\";\"409445,50\";\"340133,30\";\"340133,30\"\n\"2025\";\"Secretaria da Saúde\";\"SESAB\";\"Fundo Estadual de Saúde\";\"FESBA\";\"Ampliação e Renovação Frota de Veículos\";\"500072\";\"  Eduardo Salles\";\"  Eduardo Salles\";\"2025.3.19.19601.436.7850.500072.5\";\"3520000,00\";\"3520000,00\";\"3520000,00\";\"3520000,00\";\"3520000,00\"\n\"2017\";\"Secretaria de Desenvolvimento Rural\";\"SDR\";\"Companhia de Desenvolvimento e Ação Regional\";\"CAR\";\"Distribuição de Equipamento de Apoio\";\"500049\";\"  Pedro Tavares\";\"  Pedro Tavares\";\"2017.3.18.18401.206.1399.500049.5\";\"238000,00\";\"238000,00\";\"237829,62\";\"237829,62\";\"237829,62\"",
+  "arquivos": [
+   "VW_PAINEL_EMENDAS_PARLAMENTARES_CENTRALIZACAO_DESCENTRALIZACAO.csv",
+   "VW_PAINEL_EMENDAS_PARLAMENTARES_DESPESAS.csv",
+   "VW_PAINEL_EMENDAS_PARLAMENTARES_LIQUIDACAO_ORCAMENTO.csv",
+   "VW_PAINEL_EMENDAS_PARLAMENTARES_PAGAMENTOS.csv",
+   "VW_PROCESSO_SEI.csv"
+  ]
+ }
+}

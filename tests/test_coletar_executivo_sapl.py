@@ -328,6 +328,30 @@ def test_main_estaduais_erro_em_uma_uf_nao_para_as_outras(monkeypatch):
     assert feitos == ["AM"]
 
 
+def test_main_estaduais_roda_modulo_de_uf_e_isola_falha(monkeypatch):
+    class Modulo:
+        def __init__(self, uf, falha=False):
+            self.UF, self.falha, self.rodou = uf, falha, False
+
+        def coletar(self):
+            self.rodou = True
+            if self.falha:
+                raise RuntimeError("fora")
+
+    go, mt = Modulo("GO"), Modulo("MT", falha=True)
+    feitos = []
+    monkeypatch.setattr(est, "modulos_uf", lambda: {"GO": go, "MT": mt})
+    monkeypatch.setattr(est, "coletar_assembleia", lambda uf, host: feitos.append(uf))
+    monkeypatch.setattr("sys.argv", ["x", "go", "mt", "pb"])
+    est.main()
+    assert go.rodou and mt.rodou and feitos == ["PB"]
+
+    go.rodou = mt.rodou = False
+    monkeypatch.setattr("sys.argv", ["x", "go"])
+    est.main()
+    assert go.rodou and not mt.rodou
+
+
 # ================================================================ Prefeituras (SAPL)
 
 def test_autores_prefeitura_reconhece_executivo(sapl):

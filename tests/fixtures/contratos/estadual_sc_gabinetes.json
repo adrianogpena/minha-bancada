@@ -1,0 +1,7 @@
+{
+ "fonte": "https://transparencia.alesc.sc.gov.br/gabinetes-parlamentares/dados-abertos",
+ "capturadoEm": "2026-10-22",
+ "amostra": {
+  "csv": "Verba;Descrição;Conta;Favorecido;Trecho;\"Data de Referência\";Valor\nALMOXARIFADO;\"Jornais e Revistas\";\"Ana Caroline Campagnolo\";;;30/06/2026;1.018,80\nALMOXARIFADO;\"Jornais e Revistas\";\"Ana Paula da Silva (Paulinha)\";;;26/06/2026;733,00\nALMOXARIFADO;\"Jornais e Revistas\";\"Ana Paula da Silva (Paulinha)\";;;30/06/2026;924,00"
+ }
+}

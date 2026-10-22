@@ -7,9 +7,13 @@ histórico cresce aos poucos).
 Uso:
     python scripts/coletar_estaduais.py              # todas as Assembleias configuradas
     python scripts/coletar_estaduais.py PB AM        # só algumas
+
+Também roda os módulos scripts/coletar_estadual_<uf>.py (Assembleias fora do SAPL), que expõem
+`UF` e `coletar()`; ver o contrato em estaduais_comum.py.
 """
 
 import datetime as dt
+import importlib
 import json
 import re
 import sys
@@ -266,9 +270,32 @@ def em_paralelo(ufs: list[str], coletar, rotulo: str = "") -> None:
         list(ex.map(uma, ufs))
 
 
+def modulos_uf() -> dict:
+    """UF -> módulo de scripts/coletar_estadual_<uf>.py. Módulo que não importa vira aviso."""
+    modulos = {}
+    for arq in sorted(Path(__file__).resolve().parent.glob("coletar_estadual_*.py")):
+        try:
+            m = importlib.import_module(arq.stem)
+            modulos[m.UF.upper()] = m
+        except Exception as e:
+            avisar(f"{arq.stem}: não foi possível carregar: {e}")
+    return modulos
+
+
 def main() -> None:
-    alvo = [a.upper() for a in sys.argv[1:]] or list(ASSEMBLEIAS)
-    em_paralelo(alvo, lambda uf: coletar_assembleia(uf, ASSEMBLEIAS[uf]))
+    modulos = modulos_uf()
+    alvo = [a.upper() for a in sys.argv[1:]] or list(ASSEMBLEIAS) + [u for u in modulos if u not in ASSEMBLEIAS]
+    for uf in alvo:
+        if uf not in ASSEMBLEIAS and uf not in modulos:
+            avisar(f"{uf}: sem coletor")
+
+    def uma(uf):
+        if uf in modulos:
+            modulos[uf].coletar()
+        elif uf in ASSEMBLEIAS:
+            coletar_assembleia(uf, ASSEMBLEIAS[uf])
+
+    em_paralelo(alvo, uma)
 
 
 if __name__ == "__main__":

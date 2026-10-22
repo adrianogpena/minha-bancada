@@ -1,0 +1,44 @@
+{
+ "fonte": "https://alepa.pa.gov.br/Transparencia/Page/VerbaIndenizatoria",
+ "capturadoEm": "2026-10-22",
+ "amostra": {
+  "DataStorageDTO": {
+   "EncodeMaps": {
+    "DataItem1": [
+     "2026-10-21T00:00:00.0000000"
+    ],
+    "DataItem0": [
+     "Ana Cunha"
+    ],
+    "DataItem5": [
+     "INDENIZACAO DE TRANSPORTE"
+    ],
+    "DataItem2": [
+     "AUXILIO TRANSPORTE/OUT/26",
+     "REGISTRA OS VALORES REFERENTES AS RETENCOES N"
+    ]
+   },
+   "Slices": [
+    {
+     "KeyIds": [
+      "DataItem1",
+      "DataItem0",
+      "DataItem5",
+      "DataItem2"
+     ],
+     "ValueIds": {
+      "DataItem3": 0
+     },
+     "Data": {
+      "[0,0,0,0]": {
+       "0": 4238.89
+      },
+      "[0,0,0,1]": {
+       "0": 1607.86
+      }
+     }
+    }
+   ]
+  }
+ }
+}

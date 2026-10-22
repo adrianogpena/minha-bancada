@@ -1,0 +1,63 @@
+{
+ "fonte": "https://almt.eloweb.net/portaltransparencia/1/servidores",
+ "capturadoEm": "2026-10-22",
+ "amostra": {
+  "content": [
+   {
+    "entidade": 1,
+    "matricula": 100176,
+    "nome": "ALBERTO MACHADO",
+    "horasSemanais": 40.0,
+    "codigoCargo": 500,
+    "descricaoCargo": "DEPUTADO ESTADUAL",
+    "codigoLotacao": "021666",
+    "descricaoLotacao": "GAB DEP BETO DOIS A UM",
+    "codigoClasse": 10,
+    "descricaoClasse": "PARLAMENTAR",
+    "codigoNatureza": 3,
+    "descricaoNatureza": "Comissionado",
+    "faixa": "A-01",
+    "situacao": "ATIVO",
+    "dataAdmissao": "2023-02-01",
+    "dadosFinanceiros": [],
+    "anotacoes": [],
+    "horarioFlexivel": [],
+    "remuneracao": 41729.57,
+    "horarioSaidaFormated": "--:--",
+    "horarioEntradaFormated": "--:--",
+    "horarioEntradaIntervaloFormated": "--:--",
+    "horarioSaidaIntervaloFormated": "--:--"
+   },
+   {
+    "entidade": 1,
+    "matricula": 10091,
+    "nome": "CARLOS AVALONE JUNIOR",
+    "horasSemanais": 40.0,
+    "codigoCargo": 500,
+    "descricaoCargo": "DEPUTADO ESTADUAL",
+    "codigoLotacao": "021595",
+    "descricaoLotacao": "CARLOS AVALONE",
+    "codigoClasse": 10,
+    "descricaoClasse": "PARLAMENTAR",
+    "codigoNatureza": 3,
+    "descricaoNatureza": "Comissionado",
+    "faixa": "A-01",
+    "situacao": "ATIVO",
+    "dataAdmissao": "2019-10-03",
+    "horarioEntrada": "2000-01-01T13:00:00",
+    "horarioSaidaIntervalo": "2000-01-01T19:00:00",
+    "horarioEspecial": "S",
+    "horarioTrabalho": "13:00 às 19:00",
+    "dadosFinanceiros": [],
+    "anotacoes": [],
+    "horarioFlexivel": [],
+    "remuneracao": 41729.57,
+    "horarioSaidaFormated": "--:--",
+    "horarioEntradaFormated": "13:00",
+    "horarioEntradaIntervaloFormated": "--:--",
+    "horarioSaidaIntervaloFormated": "19:00"
+   }
+  ],
+  "totalElements": 36
+ }
+}

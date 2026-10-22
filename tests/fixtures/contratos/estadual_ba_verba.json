@@ -1,0 +1,55 @@
+{
+ "fonte": "https://www.al.ba.gov.br/transparencia/verbas-idenizatorias",
+ "capturadoEm": "2026-10-22",
+ "amostra": {
+  "linhas": [
+   {
+    "B": "Transparência Alba  -  Verbas Indenizatórias"
+   },
+   {
+    "B": "Impressão:",
+    "C": "46317.45003924752"
+   },
+   {
+    "B": "N° PROCESSO",
+    "C": "N° NF",
+    "E": "DATA",
+    "F": "DEPUTADO (A)",
+    "G": "CATEGORIA",
+    "H": "VALOR (R$)"
+   },
+   {
+    "B": "215437",
+    "C": "63",
+    "E": "46235.0",
+    "F": "Jurailton Santos",
+    "G": "Consultorias",
+    "H": "10500.0"
+   },
+   {
+    "B": "215412",
+    "C": "383",
+    "E": "46266.0",
+    "F": "Jurailton Santos",
+    "G": "Locação de veículo terrestre",
+    "H": "12000.0"
+   },
+   {
+    "B": "215435",
+    "C": "225",
+    "E": "46296.0",
+    "F": "Jurailton Santos",
+    "G": "Divulgação da  atividade parlamentar",
+    "H": "9700.0"
+   },
+   {
+    "B": "215432",
+    "C": "226",
+    "E": "46296.0",
+    "F": "Jurailton Santos",
+    "G": "Divulgação da  atividade parlamentar",
+    "H": "3000.0"
+   }
+  ]
+ }
+}

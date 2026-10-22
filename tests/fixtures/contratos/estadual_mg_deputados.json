@@ -1,0 +1,236 @@
+{
+ "fonte": "https://dadosabertos.almg.gov.br/api/v2/deputados/em_exercicio?formato=json",
+ "capturadoEm": "2026-10-22",
+ "amostra": {
+  "em_exercicio": {
+   "list": [
+    {
+     "id": 12193,
+     "nome": "Adalclever Lopes",
+     "partido": "PV",
+     "tagLocalizacao": 640
+    },
+    {
+     "id": 28859,
+     "nome": "Adriano Alvarenga",
+     "partido": "PP",
+     "tagLocalizacao": 5951
+    }
+   ]
+  },
+  "lista_telefonica": {
+   "list": [
+    {
+     "id": 12193,
+     "nome": "Adalclever Lopes",
+     "nomeServidor": "ADALCLEVER RIBEIRO LOPES",
+     "partido": "PV",
+     "endereco": "Rua Rodrigues Caldas, 30 Palácio da Inconfidência - 2º andar - conjunto 230",
+     "telefone": "(31) 2108-5877",
+     "fax": "(31) 2108-5875",
+     "email": "dep.adalclever.lopes@almg.gov.br",
+     "atividadeProfissional": "Empresário",
+     "naturalidadeMunicipio": "Belo Horizonte",
+     "naturalidadeUf": "MG",
+     "dataNascimento": "24/11/1966",
+     "redesSociais": [
+      {
+       "redeSocial": {
+        "id": 19,
+        "nome": "Instagram",
+        "url": "http://instagram.com"
+       },
+       "url": "https://www.instagram.com/adalcleverlopes/"
+      }
+     ]
+    },
+    {
+     "id": 28859,
+     "nome": "Adriano Alvarenga",
+     "nomeServidor": "ADRIANO DE ALMEIDA ALVARENGA",
+     "partido": "PP",
+     "endereco": "Rua Rodrigues Caldas, 30 Palácio da Inconfidência - 2º andar - conjunto 240",
+     "telefone": "(31) 2108-5945",
+     "fax": "(31) 2108-5946",
+     "email": "dep.adriano.alvarenga@almg.gov.br",
+     "sitePessoal": "https://adrianoalvarenga.com/",
+     "atividadeProfissional": "Produtor agropecuário",
+     "naturalidadeMunicipio": "Rio Casca",
+     "naturalidadeUf": "MG",
+     "dataNascimento": "05/11/1988",
+     "redesSociais": [
+      {
+       "redeSocial": {
+        "id": 0,
+        "nome": "Facebook",
+        "url": "http://www.facebook.com"
+       },
+       "url": "https://www.facebook.com/adriano.alvarenga.50"
+      },
+      {
+       "redeSocial": {
+        "id": 19,
+        "nome": "Instagram",
+        "url": "http://instagram.com"
+       },
+       "url": "https://www.instagram.com/adriano_aalvarenga/"
+      }
+     ]
+    }
+   ]
+  }
+ },
+ "forma": {
+  "em_exercicio": {
+   "tipos": [
+    "dict"
+   ]
+  },
+  "em_exercicio.list": {
+   "tipos": [
+    "list"
+   ]
+  },
+  "em_exercicio.list[]": {
+   "tipos": [
+    "dict"
+   ]
+  },
+  "em_exercicio.list[].id": {
+   "tipos": [
+    "int"
+   ]
+  },
+  "em_exercicio.list[].nome": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "em_exercicio.list[].partido": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "em_exercicio.list[].tagLocalizacao": {
+   "tipos": [
+    "int"
+   ]
+  },
+  "lista_telefonica": {
+   "tipos": [
+    "dict"
+   ]
+  },
+  "lista_telefonica.list": {
+   "tipos": [
+    "list"
+   ]
+  },
+  "lista_telefonica.list[]": {
+   "tipos": [
+    "dict"
+   ]
+  },
+  "lista_telefonica.list[].atividadeProfissional": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "lista_telefonica.list[].dataNascimento": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "lista_telefonica.list[].email": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "lista_telefonica.list[].endereco": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "lista_telefonica.list[].fax": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "lista_telefonica.list[].id": {
+   "tipos": [
+    "int"
+   ]
+  },
+  "lista_telefonica.list[].naturalidadeMunicipio": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "lista_telefonica.list[].naturalidadeUf": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "lista_telefonica.list[].nome": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "lista_telefonica.list[].nomeServidor": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "lista_telefonica.list[].partido": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "lista_telefonica.list[].redesSociais": {
+   "tipos": [
+    "list"
+   ]
+  },
+  "lista_telefonica.list[].redesSociais[]": {
+   "tipos": [
+    "dict"
+   ]
+  },
+  "lista_telefonica.list[].redesSociais[].redeSocial": {
+   "tipos": [
+    "dict"
+   ]
+  },
+  "lista_telefonica.list[].redesSociais[].redeSocial.id": {
+   "tipos": [
+    "int"
+   ]
+  },
+  "lista_telefonica.list[].redesSociais[].redeSocial.nome": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "lista_telefonica.list[].redesSociais[].redeSocial.url": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "lista_telefonica.list[].redesSociais[].url": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "lista_telefonica.list[].sitePessoal": {
+   "tipos": [
+    "str"
+   ],
+   "opcional": true
+  },
+  "lista_telefonica.list[].telefone": {
+   "tipos": [
+    "str"
+   ]
+  }
+ }
+}

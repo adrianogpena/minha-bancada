@@ -1,0 +1,88 @@
+{
+ "fonte": "https://transparencia.alepe.pe.gov.br/financas/verbas-indenizatorias",
+ "capturadoEm": "2026-10-22",
+ "amostra": {
+  "ano": 2025,
+  "meses": [
+   {
+    "mes": 1
+   },
+   {
+    "mes": 2
+   }
+  ],
+  "lancamentos": [
+   {
+    "docid": "6616",
+    "numero": "77",
+    "tipo": "P",
+    "ano": 2025,
+    "deputado": "Abimael Santos",
+    "mes": "Janeiro",
+    "total": "59880"
+   }
+  ],
+  "notas": [
+   {
+    "rubrica": 3,
+    "sequencial": 1,
+    "data": "31/01/2025",
+    "cnpj": "47006999000140",
+    "empresa": "alysson matheus silva de santana sociedade individual de advocacia",
+    "valor": "21880"
+   },
+   {
+    "rubrica": 4,
+    "sequencial": 1,
+    "data": "31/01/2025",
+    "cnpj": "43683859000155",
+    "empresa": "amss consultoria em serviços e informações ltda",
+    "valor": "26000"
+   }
+  ],
+  "rubricas": [
+   {
+    "id": 115,
+    "nome_categoria": "IMÓVEIS",
+    "data_criacao": {
+     "date": "2024-07-02 09:58:16.260000",
+     "timezone_type": 3,
+     "timezone": "America/Recife"
+    },
+    "id_usuario": 2992,
+    "ativo": 1,
+    "numero_categoria": 1,
+    "numero_romano": "I",
+    "valor_categoria": "25326.00"
+   },
+   {
+    "id": 116,
+    "nome_categoria": "LOCAÇÃO DE VEÍCULOS",
+    "data_criacao": {
+     "date": "2024-07-02 09:58:16.260000",
+     "timezone_type": 3,
+     "timezone": "America/Recife"
+    },
+    "id_usuario": 2992,
+    "ativo": 1,
+    "numero_categoria": 2,
+    "numero_romano": "II",
+    "valor_categoria": "33025.10"
+   },
+   {
+    "id": 117,
+    "nome_categoria": "ASSESSORIA JURÍDICA",
+    "data_criacao": {
+     "date": "2024-07-02 09:58:16.260000",
+     "timezone_type": 3,
+     "timezone": "America/Recife"
+    },
+    "id_usuario": 2992,
+    "ativo": 1,
+    "numero_categoria": 3,
+    "numero_romano": "III",
+    "valor_categoria": "21881.66"
+   }
+  ]
+ }
+}

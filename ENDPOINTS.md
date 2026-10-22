@@ -72,6 +72,8 @@ Status: ✅ OK · ❌ ERRO (resposta com falha ou fora do ar) · ❔ não testad
 | ba_salvador_tram | Câmara de Salvador | https://cmsalvador.sys.inf.br/cl/prop_interna_tram/ | scripts/coletar_prefeitura_ba.py | ✅ OK | 2026-10-21 | HTTP 200, text/html, 0 KB |
 | camara_portal | Links e recursos do site | https://www.camara.leg.br/deputados/204379 | site/assets/app.js | ✅ OK | 2026-10-21 | HTTP 200, text/html |
 | camara_ficha_tramitacao | Links e recursos do site | https://www.camara.leg.br/proposicoesWeb/fichadetramitacao?idProposicao=2270800 | site/assets/app.js | ✅ OK | 2026-10-21 | HTTP 200, text/html |
+| camara_cota_limites | Links e recursos do site | https://www2.camara.leg.br/comunicacao/assessoria-de-imprensa/guia-para-jornalistas/cota-parlamentar | scripts/gerar.py, site/assets/app.js | ✅ OK | 2026-10-22 | HTTP 200, text/html |
+| camara_decreto_legislativo_172 | Links e recursos do site | https://www2.camara.leg.br/legin/fed/decleg/2022/decretolegislativo-172-21-dezembro-2022-793529-republicacao-166629-pl.html | site/assets/app.js | ✅ OK | 2026-10-22 | HTTP 200, text/html |
 | senado_materia_portal | Links e recursos do site | https://www25.senado.leg.br/web/atividade/materias/-/materia/99175 | site/assets/app.js | ✅ OK | 2026-10-21 | HTTP 200, text/html, 66 KB |
 | senado_transparencia | Links e recursos do site | https://www12.senado.leg.br/transparencia/sen/5012 | site/assets/app.js | ❌ ERRO | 2026-10-21 | HTTP 404 |
 | planalto_constituicao | Links e recursos do site | https://www.planalto.gov.br/ccivil_03/constituicao/constituicao.htm | site/assets/app.js | ✅ OK | 2026-10-21 | HTTP 200, text/html, 1.8 MB |

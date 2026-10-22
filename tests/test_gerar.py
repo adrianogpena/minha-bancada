@@ -96,3 +96,46 @@ def test_juntar_autoria_limita_coautores():
     aut = {"idPrincipal": 1, "autores": [[1, "A"]] + [[100 + i, f"N{i}"] for i in range(20)]}
     co = gerar.juntar_autoria({}, aut, "1")["coautores"]
     assert len(co) == 16 and co[-1] == "e mais 5"
+
+
+def test_destino_projeto_segue_o_desfecho_do_site():
+    import gerar
+    casos = {"Transformado em Norma Jurídica": "aprovada", "Aprovada pela CCJC": "aprovada", "Arquivada": "rejeitada",
+             "Rejeitada": "rejeitada", "Tramitação encerrada": "sem", None: "sem", "Aguardando Parecer": "tramitando",
+             "Aguardando Sanção": "aprovada", "Retirado pelo Autor": "rejeitada"}
+    for situacao, esperado in casos.items():
+        assert gerar.destino_projeto(situacao) == esperado, situacao
+
+
+def test_resumir_autoria_conta_so_projetos():
+    import gerar
+    props = [
+        {"tipo": "PL", "principal": True, "situacao": "Transformado em Norma Jurídica", "partidosDistintos": 3},
+        {"tipo": "PL", "principal": True, "situacao": "Arquivada"},
+        {"tipo": "PEC", "principal": False, "partidosDistintos": 2},
+        {"tipo": "PL"},
+        {"tipo": "REQ", "principal": True},
+    ]
+    assert gerar.resumir_autoria(props) == {"projetos": 4, "autoriaColetada": 3, "proprias": 2, "aprovadasProprias": 1, "suprapartidarios": 2}
+
+
+def test_limite_cota_e_maiores_notas():
+    import gerar
+    itens = [{"mes": 1, "valor": 10, "documento": "a"}, {"mes": 3, "valor": 50, "documento": "b", "fornecedor": "X"}, {"mes": 2, "valor": 99, "documento": None}]
+    assert gerar.limite_cota("SP", itens) == {"mensal": gerar.LIMITE_COTA_UF["SP"], "meses": 3}
+    assert gerar.limite_cota("SP", []) is None
+    assert [n["documento"] for n in gerar.maiores_notas(itens)] == ["b", "a"]
+    assert len(gerar.LIMITE_COTA_UF) == 27
+
+
+def test_presenca_do_senador():
+    import gerar
+    from collections import Counter
+    assert gerar.categoria_presenca("sim", "S|Sim") == "compareceu"
+    assert gerar.categoria_presenca("ausente", "P-NRV|Presente (não registrou voto)") == "compareceu"
+    assert gerar.categoria_presenca("ausente", "NCOM|Não compareceu") == "naoCompareceu"
+    assert gerar.categoria_presenca("ausente", "LS|Licença saúde") == "licenca"
+    assert gerar.categoria_presenca("ausente", "MIS|Missão") == "missao"
+    assert gerar.categoria_presenca("ausente", "NA|Dispositivo não citado") == "ignorar"
+    c = Counter(compareceu=8, naoCompareceu=1, licenca=1, ignorar=5)
+    assert gerar.resumir_presenca(c) == {"votacoes": 10, "compareceu": 8, "naoCompareceu": 1, "licenca": 1}

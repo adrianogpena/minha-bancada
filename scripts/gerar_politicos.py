@@ -10,8 +10,9 @@ Chamado pelo scripts/gerar.py; não acessa a internet.
 """
 
 import json
+import statistics
 import unicodedata
-from collections import defaultdict
+from collections import Counter, defaultdict
 from pathlib import Path
 
 from coletar_prefeituras import TODAS as CAPITAIS_COM_DADOS
@@ -76,9 +77,85 @@ def resumo_tse(pasta: str, ano: int, uf: str) -> dict:
     return _RESUMOS[chave]
 
 
-def contas_de(ano: int, e: dict):
-    """Resumo da prestação de contas de campanha (dados/tse/contas/<ano>/<UF>.json), ou None."""
+MIN_COMPARACAO = 5   # eleitos mínimos no mesmo cargo (ou cargo e partido) para comparar o custo do voto
+
+
+def _contas_brutas(ano: int, e: dict):
     return resumo_tse("contas", ano, e["uf"]).get(e.get("sequencialChapa") or e["sequencial"])
+
+
+def custo_do_voto(e: dict, contas: dict | None) -> float | None:
+    """Receita de campanha por voto recebido (soma dos turnos), ou None sem receita ou sem votos."""
+    votos = sum(v.get("votos") or 0 for v in e.get("votos") or [])
+    if not contas or not contas.get("receitas") or votos <= 0:
+        return None
+    return contas["receitas"] / votos
+
+
+_CUSTOS = {}
+
+
+def medianas_custo_voto() -> dict:
+    """Mediana do custo do voto dos eleitos, por (ano, cargo) e por (ano, cargo, partido), em todo o país.
+    Vice não entra: a prestação de contas é a da chapa."""
+    if not _CUSTOS:
+        grupos = defaultdict(list)
+        for pasta in sorted((BRUTO / "tse").glob("[0-9]*")):
+            if not pasta.is_dir():
+                continue
+            ano = int(pasta.name)
+            for arq in sorted(pasta.glob("[A-Z][A-Z].json")):
+                for e in ler(arq, []):
+                    if e["cargo"].startswith("VICE-") or e.get("situacao") != "eleito":
+                        continue
+                    c = custo_do_voto(e, _contas_brutas(ano, e))
+                    if c is not None:
+                        grupos[(ano, e["cargo"])].append(c)
+                        grupos[(ano, e["cargo"], e.get("partido"))].append(c)
+        _CUSTOS["m"] = {k: (statistics.median(v), len(v)) for k, v in grupos.items() if len(v) >= MIN_COMPARACAO}
+    return _CUSTOS["m"]
+
+
+def contas_de(ano: int, e: dict):
+    """Resumo da prestação de contas de campanha (dados/tse/contas/<ano>/<UF>.json), ou None.
+    Acrescenta `custoVoto`: reais de receita por voto do eleito e a mediana dos eleitos do mesmo cargo e do mesmo cargo e partido."""
+    contas = _contas_brutas(ano, e)
+    custo = custo_do_voto(e, contas)
+    if custo is None:
+        return contas
+    medianas = medianas_custo_voto()
+    extra = {"valor": round(custo, 2)}
+    for nome, chave in (("cargo", (ano, e["cargo"])), ("partido", (ano, e["cargo"], e.get("partido")))):
+        if chave in medianas and not e["cargo"].startswith("VICE-"):
+            extra[nome] = {"mediana": round(medianas[chave][0], 2), "n": medianas[chave][1]}
+    return {**contas, "custoVoto": extra}
+
+
+def historico_patrimonio() -> dict:
+    """(nome, nascimento) -> {ano: [cargoTse, totalBens]} de todas as eleições coletadas. O TSE não publica mais o CPF,
+    então a ligação entre eleições é por nome e data de nascimento."""
+    if "p" not in _CUSTOS:
+        achados = defaultdict(dict)
+        for pasta in sorted((BRUTO / "tse").glob("[0-9]*")):
+            if not pasta.is_dir():
+                continue
+            ano = int(pasta.name)
+            for arq in sorted(pasta.glob("[A-Z][A-Z].json")):
+                for e in ler(arq, []):
+                    if e.get("totalBens") is None or not e.get("nascimento"):
+                        continue
+                    achados[(chave_nome(e.get("nome"), None), e["nascimento"])].setdefault(ano, [e["cargo"], e["totalBens"]])
+        _CUSTOS["p"] = achados
+    return _CUSTOS["p"]
+
+
+def patrimonio_de(e: dict) -> list | None:
+    """Total de bens declarado em cada eleição do mesmo político, do mais antigo ao mais recente: [[ano, cargoTse, total]].
+    None se só há uma eleição (nada a comparar)."""
+    if not e.get("nascimento"):
+        return None
+    por_ano = historico_patrimonio().get((chave_nome(e.get("nome"), None), e["nascimento"]), {})
+    return [[ano, *por_ano[ano]] for ano in sorted(por_ano)] if len(por_ano) > 1 else None
 
 
 def secoes_de(ano: int, e: dict):
@@ -170,6 +247,68 @@ def rotulo(cargo: str, genero: str | None) -> tuple[str, int]:
     return (f if (genero or "").upper().startswith("F") else m), ordem
 
 
+FAIXAS_IDADE = [(16, 17), (18, 24), (25, 34), (35, 44), (45, 54), (55, 64), (65, 74), (75, 200)]   # mesmas faixas do perfil do eleitorado
+NIVEIS_INSTRUCAO = ["analfabeto", "le e escreve", "fundamental incompleto", "fundamental completo", "medio incompleto", "medio completo",
+                    "superior incompleto", "superior completo"]   # mesma ordem do perfil do eleitorado
+OCUPACOES_POR_CASA = 5
+
+
+def nivel_instrucao(texto: str | None) -> int | None:
+    t = unicodedata.normalize("NFD", (texto or "").lower())
+    t = "".join(c for c in t if unicodedata.category(c) != "Mn").replace("ensino ", "").replace("-", " ")
+    t = " ".join(t.split())
+    for i, nivel in enumerate(NIVEIS_INSTRUCAO):
+        if t == nivel:
+            return i
+    return None
+
+
+def perfil_eleitos(eleitos: list, ano: int) -> dict:
+    """Perfil de quem foi eleito para uma Casa (dados do TSE no registro da candidatura), no formato do perfil do eleitorado:
+    `genero` [homens, mulheres], `faixas` e `instrucao` (8 posições), mais `raca` e `ocupacoes`. Idade na eleição (`ano`)."""
+    genero, faixas, instrucao = [0, 0], [0] * len(FAIXAS_IDADE), [0] * len(NIVEIS_INSTRUCAO)
+    raca, ocupacoes = Counter(), Counter()
+    for e in eleitos:
+        g = (e.get("genero") or "").upper()
+        if g:
+            genero[1 if g.startswith("F") else 0] += 1
+        if e.get("nascimento"):
+            idade = ano - int(e["nascimento"][:4])
+            for i, (de, ate) in enumerate(FAIXAS_IDADE):
+                if de <= idade <= ate:
+                    faixas[i] += 1
+        n = nivel_instrucao(e.get("instrucao"))
+        if n is not None:
+            instrucao[n] += 1
+        if e.get("corRaca"):
+            raca[e["corRaca"]] += 1
+        if e.get("ocupacao"):
+            ocupacoes[e["ocupacao"].strip().capitalize()] += 1
+    return {"ano": ano, "total": len(eleitos), "genero": genero, "faixas": faixas, "instrucao": instrucao,
+            "raca": raca.most_common(), "ocupacoes": ocupacoes.most_common(OCUPACOES_POR_CASA)}
+
+
+def gerar_perfil_casas() -> None:
+    """site/dados/perfil_casas/<UF>.json: perfil dos eleitos de cada Casa, para comparar com o eleitorado.
+    Chaves: estadual (Assembleia ou Câmara Legislativa, 2022), federal (bancada do estado na Câmara, 2022),
+    senado (senadores eleitos em 2018 e 2022) e municipal (<código TSE do município> -> vereadores de 2024)."""
+    for arq in sorted((BRUTO / "tse" / "2022").glob("[A-Z][A-Z].json")):
+        uf = arq.stem
+        if uf == "BR":
+            continue
+        eleitos = lambda ano, cargos: [e for e in ler(BRUTO / "tse" / str(ano) / f"{uf}.json", []) if e["cargo"] in cargos and e.get("situacao") == "eleito"]
+        vereadores = defaultdict(list)
+        for e in eleitos(2024, {"VEREADOR"}):
+            vereadores[e["unidadeEleitoral"]].append(e)
+        casas = {
+            "estadual": perfil_eleitos(eleitos(2022, {"DEPUTADO ESTADUAL", "DEPUTADO DISTRITAL"}), 2022),
+            "federal": perfil_eleitos(eleitos(2022, {"DEPUTADO FEDERAL"}), 2022),
+            "senado": perfil_eleitos(eleitos(2018, {"SENADOR"}) + eleitos(2022, {"SENADOR"}), 2022),
+            "municipal": {cod: perfil_eleitos(lista, 2024) for cod, lista in vereadores.items()},
+        }
+        salvar(SAIDA / "perfil_casas" / f"{uf}.json", {k: v for k, v in casas.items() if v})
+
+
 def gerar(deputados: dict, estaduais: dict | None = None) -> dict:
     estaduais = estaduais or {}
     indice = defaultdict(list)       # UF -> entradas
@@ -237,6 +376,7 @@ def gerar(deputados: dict, estaduais: dict | None = None) -> dict:
                     "disputa": disputa_de(ano, e),
                     "partidoVotos": partido_de(ano, e),
                     "alianca": alianca_de(ano, e),
+                    **({"patrimonio": patrimonio_de(e)} if patrimonio_de(e) else {}),
                     **({"estadual": estadual} if estadual else {}),
                 }
                 alvo = None   # código dos feeds da página Fique informado; só para quem tem dados acompanháveis (ver scripts/feeds.py)
@@ -284,6 +424,7 @@ def gerar(deputados: dict, estaduais: dict | None = None) -> dict:
         "estados": sorted(p.parent.name for p in (BRUTO / "estaduais").glob("*/deputados.json")),
         "capitais": dict(sorted(capitais.items())),
     })
+    gerar_perfil_casas()
     total = sum(len(v) for v in indice.values())
     print(f"Políticos no índice: {total} em {len(indice)} UFs; {len(fichas)} arquivos de fichas")
     return resumo

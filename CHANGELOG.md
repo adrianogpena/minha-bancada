@@ -5,6 +5,13 @@ Regra: toda fonte nova ou mudança de coleta ganha uma entrada aqui, no mesmo co
 Datas dos conjuntos que já existiam vêm do primeiro commit que os trouxe (`git log --diff-filter=A`).
 Todas as coletas rodam sozinhas no GitHub Actions (`.github/workflows/atualizar.yml`, todo dia às 06:17 de Brasília), salvo onde indicado.
 
+## Nível 1 das futuras implementações (2026-10-22)
+Só reaproveita dados que já eram coletados, mais três fontes de consulta e um campo novo:
+- **Limite mensal da cota por UF:** tabela fixa em `scripts/gerar.py` (`LIMITE_COTA_UF`), copiada de https://www2.camara.leg.br/comunicacao/assessoria-de-imprensa/guia-para-jornalistas/cota-parlamentar (a página não data a tabela; conferida em 2026-10-22). Se a Câmara mudar o limite, atualize a tabela.
+- **Subsídio:** constante no `app.js` (R$ 46.366,19, 4ª etapa em 1/2/2025 do Decreto Legislativo 172/2022: https://www2.camara.leg.br/legin/fed/decleg/2022/decretolegislativo-172-21-dezembro-2022-793529-republicacao-166629-pl.html) e tetos de deputado estadual e vereador pela Constituição (arts. 27 e 29).
+- **Apensados e substitutos:** `coletar_detalhes_proposicoes` passou a guardar também `apensadoA`, `anterior` e `posterior` (ids tirados de `uriPropPrincipal`, `uriPropAnterior` e `uriPropPosterior` da mesma chamada a `/proposicoes/{id}`; nenhuma chamada nova). Projetos já finalizados no cache só ganham o campo se forem consultados de novo.
+- **Gerados sem coleta nova:** autoria por deputado, maiores notas da cota, média do estado, comparação do custo do voto, evolução do patrimônio (eleições ligadas por nome e data de nascimento), perfil dos eleitos de cada Casa (`site/dados/perfil_casas/<UF>.json`) e presença dos senadores.
+
 ## Coletas em paralelo (2026-10-22)
 O `atualizar.yml` passou de um job sequencial (~20 min) para jobs paralelos: Câmara, Senado, TSE, Executivo, Assembleias, governadores e prefeituras coletam ao mesmo tempo; o job `publicar` junta os pacotes (`scripts/empacotar.sh`), gera o site, salva no git e publica.
 Câmara, Senado e TSE são indispensáveis; as outras coletas falham sem impedir a publicação.

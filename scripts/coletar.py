@@ -217,6 +217,12 @@ ORCAMENTO_DETALHES = int(os.environ.get("DETALHES_POR_EXECUCAO", "4000"))
 RENOVAR_APOS_DIAS = 7  # proposição ainda em tramitação é consultada de novo depois disso
 
 
+def id_da_uri(uri: str | None) -> str | None:
+    """Id da proposição no fim de uma URI da API (.../proposicoes/2270800), ou None."""
+    m = re.search(r"/proposicoes/(\d+)/?$", uri or "")
+    return m.group(1) if m else None
+
+
 def coletar_detalhes_proposicoes() -> None:
     """Situação atual de cada projeto (aprovado, arquivado, em tramitação...).
     Guardado em dados/proposicoes_detalhe.json (vai para o git). Há muitos
@@ -254,6 +260,9 @@ def coletar_detalhes_proposicoes() -> None:
             "inteiroTeor": d.get("urlInteiroTeor"),
             "ementaDetalhada": (d.get("ementaDetalhada") or "").strip() or None,
             "palavrasChave": (d.get("keywords") or "").strip() or None,
+            "apensadoA": id_da_uri(d.get("uriPropPrincipal")),
+            "anterior": id_da_uri(d.get("uriPropAnterior")),
+            "posterior": id_da_uri(d.get("uriPropPosterior")),
             "consultadoEm": hoje.isoformat(),
             "finalizada": situacao_final(situacao),
         }

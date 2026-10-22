@@ -217,7 +217,29 @@ Próximos passos:
 3. Fonte de link por dado: página da verba indenizatória acima; confirmar as demais URLs no Firefox.
 4. Se seguir: `scripts/coletar_mg.py`, amostras em `tests/fixtures/contratos/`, `ENDPOINTS.md` e `CHANGELOG.md`.
 
-### MS: Mato Grosso do Sul
+### MS: Mato Grosso do Sul (Assembleia Legislativa, ALEMS; apurado em 2026-10-22)
+
+**Acesso livre; sem captcha nem login.** `https://al.ms.gov.br/Transparencia` é o menu do portal (sem dados). Os links apontam para `www.transparencia.al.ms.gov.br/pages/index.php/...` (portal antigo, em redirecionamento) e para o portal novo `https://transparencia2.al.ms.gov.br/`. Seções do menu: Verbas Indenizatórias (CEAP), Relação Nominal de Servidores (`.../consultaservidores`), Diárias (`.../consultadiarias`), Remuneração Parlamentares (`.../gerdocumento/1200`, categoria 1201), Atividade Legislativa (`.../atividadelegislativa`, hoje `transparencia2.../home/atividadelegislativa`), Licitações e Contratos, Execução Orçamentária, LRF, Estagiários. Não há API JSON/XML anunciada.
+
+**CEAP (verba indenizatória): CSV público, fonte principal.** Página: `https://transparencia2.al.ms.gov.br/ceap` (filtros ano 2012 a 2026, mês, categoria; a tabela carrega por JS). Exportação testada com curl (HTTP 200, `text/csv`, UTF-8 com BOM, separador `;`): `https://transparencia2.al.ms.gov.br/ceap/notas/exportar-csv?ano=2026` (~1,4 MB, ~5,2 mil linhas; `ano=2012` devolve ~4,7 mil linhas). Quatro linhas de cabeçalho/metadados, depois uma linha em branco e as colunas: `Deputado;Ano;Mês;Categoria;CPF/CNPJ;Fornecedor;Documento;Emissão;Valor (R$);Comprovante`. O `Comprovante` é link para o PDF da nota (`http://www.transparencia.al.ms.gov.br/arquivo/...pdf`): dá a fonte por lançamento. Parâmetros de mês/deputado/categoria existem no formulário (nomes não confirmados). 14 categorias (combustíveis, locomoção, divulgação, imóvel de apoio, consultorias, software/internet, segurança, material de expediente, diárias, material de consumo, auxílios alimentação e transporte, equipamentos). Total de 2026 na página: R$ 11.692.887,03.
+
+Pontos de atenção:
+- `Deputado` vem como nome de urna com prefixo (`"DEP. HASHIOKA"`): normalizar para cruzar com TSE/Câmara.
+- `Mês` por extenso em português; valor como string `"R$ 99,90"`; data `dd/mm/aaaa`.
+- Ano corrente vem parcial (publicação por mês).
+
+**Remuneração dos parlamentares e servidores:** `gerdocumento/1200` só lista categorias ("Leis", "Remuneração", "Regulamentação da Cota Parlamentar"; atualizado até 10/10/2026), sem arquivos visíveis; não expandi a categoria 1201 nem `consultaservidores`/`consultadiarias` (JS). Formato dos arquivos desconhecido.
+
+**Atividade legislativa:** a página é só um menu para Projetos e Proposições (sistema "sgpl"), Ordem do Dia, Novos Projetos, Matérias Apreciadas, Atas, Plenário, Comissões, Reuniões CCJR, Atos Administrativos, Relatório de Atividades. Presença e votações nominais: não confirmadas.
+
+**ITGP** (`https://transparenciainternacional.org.br/itgp/assembleia-legislativa/mato-grosso-do-sul`, ano da avaliação não informado): nota **36/100 ("Ruim")**, 18º de 27 assembleias. Por dimensão: Comunicação 81,8; Governança 47; Transparência Legislativa 43,7; Marcos Legais 28,6; Participação e Engajamento 25; Transparência Administrativa 22,2; Plataformas 20; Transformação Digital 20. A página diz que a ALEMS não publica receitas, despesas e licitações básicas (a nota pode estar defasada frente ao portal novo). Critérios individuais: `https://comunidade.transparenciainternacional.org.br/itgp-legislativo-estadual-banco-de-dados`.
+
+Próximos passos:
+1. Baixar o CSV do CEAP por ano (2012 a 2026) e ver se há filtro por mês/deputado nos parâmetros (inspecionar `resumo_ceap.js`).
+2. Abrir `consultaservidores`, `consultadiarias`, categoria 1201 e o sistema de proposições (sgpl) no Firefox para achar a fonte de remuneração, presença e votações.
+3. Fonte de link por dado: CEAP → `https://transparencia2.al.ms.gov.br/ceap` (e o PDF do comprovante).
+4. Se seguir: `scripts/coletar_ms.py`, amostras em `tests/fixtures/contratos/`, `ENDPOINTS.md` e `CHANGELOG.md`.
+
 ### MT: Mato Grosso
 ### PA: Pará
 ### PE: Pernambuco

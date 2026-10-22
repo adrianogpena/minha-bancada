@@ -1,0 +1,264 @@
+{
+ "fonte": "https://api-transparencialegislativa.al.rn.leg.br/elegis-api-transp-legislativa/parlamentar",
+ "capturadoEm": "2026-10-22",
+ "amostra": {
+  "parlamentar": [
+   {
+    "id": 8,
+    "nomeParlamentar": "DEPUTADA CRISTIANE DANTAS",
+    "vigencia": {
+     "inicio": "2019-02-01T02:00:00.000Z",
+     "fim": null
+    },
+    "pessoa": {
+     "id": 17,
+     "nome": "CRISTIANE BEZERRA DE SOUZA DANTAS",
+     "dataNascimento": "1972-12-04T00:00:00.000Z",
+     "iniciativaGALEGIS": null,
+     "inclusao": {
+      "data": "2019-04-11T14:18:53.193Z"
+     },
+     "exclusao": {
+      "data": null
+     }
+    },
+    "filiacoes": [
+     {
+      "id": 5,
+      "vigencia": {
+       "inicio": "2020-01-01T01:00:00.000Z",
+       "fim": "2026-04-01T00:00:00.000Z"
+      },
+      "inclusao": {
+       "data": "2020-04-07T10:27:13.000Z"
+      },
+      "exclusao": {
+       "data": null
+      },
+      "partido": {
+       "id": 2,
+       "sigla": null,
+       "nome": "SDD",
+       "nomeOriginal": "Solidariedade",
+       "dataCriacao": "2012-10-25T03:00:00.000Z",
+       "inclusao": {
+        "data": "2019-04-11T10:48:37.383Z"
+       },
+       "exclusao": {
+        "data": null
+       }
+      }
+     },
+     {
+      "id": 58,
+      "vigencia": {
+       "inicio": "2026-04-08T00:00:00.000Z",
+       "fim": null
+      },
+      "inclusao": {
+       "data": "2026-04-08T10:45:29.000Z"
+      },
+      "exclusao": {
+       "data": null
+      },
+      "partido": {
+       "id": 7,
+       "sigla": null,
+       "nome": "PSDB",
+       "nomeOriginal": "Partido da Social Democracia Brasileira",
+       "dataCriacao": "1988-08-24T03:00:00.000Z",
+       "inclusao": {
+        "data": "2019-04-11T15:28:59.820Z"
+       },
+       "exclusao": {
+        "data": null
+       }
+      }
+     }
+    ],
+    "iniciativas": [
+     {
+      "id": 3,
+      "tipo": "PARLAMENTAR",
+      "descricao": "DEP. CRISTIANE DANTAS",
+      "descricaoGALEGIS": "DEP. CRISTIANE DANTAS",
+      "abreviacaoGALEGIS": "",
+      "iniciativaGALEGIS": 10,
+      "vigencia": {
+       "inicio": "2015-02-01T00:00:00.000Z",
+       "fim": null
+      },
+      "inclusao": {
+       "data": "2019-07-30T08:37:46.627Z"
+      },
+      "exclusao": {
+       "data": null
+      }
+     }
+    ]
+   },
+   {
+    "id": 56,
+    "nomeParlamentar": "DEPUTADA DIVANEIDE BASÍLIO",
+    "vigencia": {
+     "inicio": "2023-02-01T00:00:00.000Z",
+     "fim": "2027-01-31T00:00:00.000Z"
+    },
+    "pessoa": {
+     "id": 84,
+     "nome": "MARIA DIVANEIDE BASILIO",
+     "dataNascimento": "1978-05-30T00:00:00.000Z",
+     "iniciativaGALEGIS": null,
+     "inclusao": {
+      "data": "2023-01-23T09:31:45.000Z"
+     },
+     "exclusao": {
+      "data": null
+     }
+    },
+    "filiacoes": [
+     {
+      "id": 42,
+      "vigencia": {
+       "inicio": "2023-02-01T00:00:00.000Z",
+       "fim": null
+      },
+      "inclusao": {
+       "data": "2023-01-30T10:51:59.000Z"
+      },
+      "exclusao": {
+       "data": null
+      },
+      "partido": {
+       "id": 1,
+       "sigla": null,
+       "nome": "PT",
+       "nomeOriginal": "Partido dos Trabalhadores",
+       "dataCriacao": "1980-02-01T03:00:00.000Z",
+       "inclusao": {
+        "data": "2019-04-09T13:07:02.710Z"
+       },
+       "exclusao": {
+        "data": null
+       }
+      }
+     }
+    ],
+    "iniciativas": [
+     {
+      "id": 1314,
+      "tipo": "PARLAMENTAR",
+      "descricao": "DEP. DIVANEIDE BASILIO",
+      "descricaoGALEGIS": null,
+      "abreviacaoGALEGIS": null,
+      "iniciativaGALEGIS": null,
+      "vigencia": {
+       "inicio": "2023-01-31T15:13:02.000Z",
+       "fim": null
+      },
+      "inclusao": {
+       "data": "2023-01-31T15:13:02.000Z"
+      },
+      "exclusao": {
+       "data": null
+      }
+     }
+    ]
+   },
+   {
+    "id": 10,
+    "nomeParlamentar": "DEPUTADA EUDIANE MACEDO",
+    "vigencia": {
+     "inicio": "2019-02-01T02:00:00.000Z",
+     "fim": null
+    },
+    "pessoa": {
+     "id": 25,
+     "nome": "EUDIANE JANAINA DE MACEDO SILVA",
+     "dataNascimento": "1980-05-06T00:00:00.000Z",
+     "iniciativaGALEGIS": null,
+     "inclusao": {
+      "data": "2019-04-11T14:18:53.193Z"
+     },
+     "exclusao": {
+      "data": null
+     }
+    },
+    "filiacoes": [
+     {
+      "id": 6,
+      "vigencia": {
+       "inicio": "2020-01-01T01:00:00.000Z",
+       "fim": "2022-03-30T00:00:00.000Z"
+      },
+      "inclusao": {
+       "data": "2020-04-07T10:28:51.000Z"
+      },
+      "exclusao": {
+       "data": null
+      },
+      "partido": {
+       "id": 16,
+       "sigla": null,
+       "nome": "REPUBLICANOS",
+       "nomeOriginal": "Partido Republicano",
+       "dataCriacao": "2020-01-01T01:00:00.000Z",
+       "inclusao": {
+        "data": "2020-04-07T10:29:01.037Z"
+       },
+       "exclusao": {
+        "data": null
+       }
+      }
+     },
+     {
+      "id": 33,
+      "vigencia": {
+       "inicio": "2022-03-31T00:00:00.000Z",
+       "fim": null
+      },
+      "inclusao": {
+       "data": "2022-04-07T10:31:38.000Z"
+      },
+      "exclusao": {
+       "data": null
+      },
+      "partido": {
+       "id": 20,
+       "sigla": null,
+       "nome": "PV",
+       "nomeOriginal": "Partido Verde",
+       "dataCriacao": "2022-01-01T00:00:00.000Z",
+       "inclusao": {
+        "data": "2022-04-05T09:57:52.000Z"
+       },
+       "exclusao": {
+        "data": null
+       }
+      }
+     }
+    ],
+    "iniciativas": [
+     {
+      "id": 42,
+      "tipo": "PARLAMENTAR",
+      "descricao": "DEP. EUDIANE MACEDO",
+      "descricaoGALEGIS": "DEP. EUDIANE MACEDO",
+      "abreviacaoGALEGIS": "",
+      "iniciativaGALEGIS": 87,
+      "vigencia": {
+       "inicio": "2015-02-01T00:00:00.000Z",
+       "fim": null
+      },
+      "inclusao": {
+       "data": "2019-07-30T08:37:46.627Z"
+      },
+      "exclusao": {
+       "data": null
+      }
+     }
+    ]
+   }
+  ]
+ }
+}

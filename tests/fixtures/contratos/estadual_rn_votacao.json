@@ -1,0 +1,237 @@
+{
+ "fonte": "https://api-transparencialegislativa.al.rn.leg.br/elegis-api-transp-legislativa/processo/ultimas-votacoes",
+ "capturadoEm": "2026-10-22",
+ "amostra": {
+  "processo": {
+   "id": 63791,
+   "numero": 2852,
+   "ano": 2026,
+   "numeroExterno": null,
+   "anoExterno": null,
+   "ementa": "Reconhece como de utilidade pública estadual a ASSOCIACAO DE DESENVOLVIMENTO COMUNITRIO RURAL DE VILA RUZARIO",
+   "informacaoLei": null,
+   "dataEntrada": "2026-09-08T09:27:24.673Z",
+   "dataArquivamento": null,
+   "propositura": {
+    "tipo": {
+     "id": 1,
+     "sigla": "PL",
+     "descricao": "PROJETO DE LEI"
+    },
+    "numero": 394,
+    "ano": 2026
+   },
+   "inclusao": {
+    "data": "2026-09-08T09:27:24.673Z"
+   },
+   "exclusao": {
+    "data": null
+   },
+   "iniciativa": {
+    "id": 43,
+    "tipo": "PARLAMENTAR",
+    "descricao": "DEP. FRANCISCO DO PT",
+    "parlamentar": {
+     "id": 12,
+     "nomeParlamentar": "DEPUTADO FRANCISCO DO PT",
+     "partido": {
+      "id": 1,
+      "nome": "PT",
+      "nomeOriginal": "Partido dos Trabalhadores"
+     }
+    }
+   },
+   "apensamentos": [],
+   "apensamento": null,
+   "documento": {
+    "id": 304574,
+    "ementa": "Reconhece como de utilidade pública estadual a ASSOCIACAO DE DESENVOLVIMENTO COMUNITRIO RURAL DE VILA RUZARIO",
+    "tipoDocumento": {
+     "id": 9,
+     "descricao": "Projeto de Lei"
+    }
+   },
+   "reuniaoProcesso": [
+    {
+     "id": 60083,
+     "dataSituacaoAbertura": "2026-10-20T10:41:30.000Z",
+     "dataSituacaoFechamento": "2026-10-20T10:41:48.000Z",
+     "resultadoVotacao": "A",
+     "reuniao": {
+      "id": 3029
+     }
+    }
+   ],
+   "tipoVotacao": "A",
+   "resultadoVotacao": {
+    "id": 60083,
+    "dataSituacaoAbertura": "2026-10-20T10:41:30.000Z",
+    "dataSituacaoFechamento": "2026-10-20T10:41:48.000Z",
+    "resultadoVotacao": "A",
+    "reuniao": {
+     "id": 3029
+    }
+   },
+   "publicacao": [
+    {
+     "id": 525575,
+     "observacao": "Publicado no DLE do dia 09/09/2026.",
+     "linkDOE": "https://dle.al.rn.leg.br/abrearquivo/77994366-97FE-4E18-B0B7-773D855493C4-N/",
+     "origem": {
+      "setor": {
+       "id": 22,
+       "nome": "DIÁRIO OFICIAL ELETRÔNICO DA ALRN",
+       "sigla": "DOE AL/RN",
+       "comissao": null
+      },
+      "data": "2026-09-09T07:22:19.000Z"
+     },
+     "situacaoProcesso": {
+      "id": 13,
+      "nome": "Publicado no Diário Oficial Eletrônico da ALRN"
+     }
+    }
+   ],
+   "emenda": [
+    {
+     "id": 305980,
+     "documento": {
+      "id": 307610,
+      "ementa": "Altera a redação da ementa e do art. 1º do\nProjeto de Lei nº 394/2026.",
+      "sigiloso": false,
+      "publico": false,
+      "tipoDocumento": {
+       "id": 43,
+       "descricao": "Emenda"
+      },
+      "emenda": {
+       "id": 5198,
+       "numero": 1,
+       "ano": 2026,
+       "tipoEmenda": {
+        "id": 6,
+        "descricao": "Redacional"
+       },
+       "iniciativa": {
+        "id": 1269,
+        "tipo": "ORGAO",
+        "descricao": "COMISSÃO DE CONSTITUIÇÃO, JUSTIÇA E REDAÇÃO",
+        "parlamentar": null
+       }
+      }
+     }
+    }
+   ],
+   "comissao": [
+    {
+     "sigla": "CCJR",
+     "descricao": "Comissão de Constituição, Justiça e Redação",
+     "assessor": "Victor Augusto Gonçalves Soares",
+     "relator": "DEPUTADO KLEBER RODRIGUES"
+    }
+   ]
+  },
+  "detalhe": {
+   "tipoVotacao": "A",
+   "reuniao": {
+    "id": 3029,
+    "dataInicio": "2026-10-20T09:00:00.000Z",
+    "tipoReuniao": {
+     "id": 3,
+     "sigla": "Comissão Ordinária",
+     "nome": "Reunião de Comissão Ordinária",
+     "sessao": false,
+     "inclusao": {
+      "data": "2019-12-18T11:17:31.650Z"
+     },
+     "exclusao": {
+      "data": null
+     }
+    }
+   },
+   "votacao": {
+    "dados": [
+     {
+      "id": 44610,
+      "voto": 1,
+      "parlamentar": {
+       "id": 7,
+       "nomeParlamentar": "DEPUTADO CORONEL AZEVEDO",
+       "partido": {
+        "id": 17,
+        "nome": "PL",
+        "nomeOriginal": "Partido Liberal"
+       }
+      }
+     },
+     {
+      "id": 44611,
+      "voto": 1,
+      "parlamentar": {
+       "id": 10,
+       "nomeParlamentar": "DEPUTADA EUDIANE MACEDO",
+       "partido": {
+        "id": 20,
+        "nome": "PV",
+        "nomeOriginal": "Partido Verde"
+       }
+      }
+     },
+     {
+      "id": 44612,
+      "voto": 1,
+      "parlamentar": {
+       "id": 12,
+       "nomeParlamentar": "DEPUTADO FRANCISCO DO PT",
+       "partido": {
+        "id": 1,
+        "nome": "PT",
+        "nomeOriginal": "Partido dos Trabalhadores"
+       }
+      }
+     },
+     {
+      "id": 44609,
+      "voto": 1,
+      "parlamentar": {
+       "id": 27,
+       "nomeParlamentar": "DEPUTADO UBALDO FERNANDES",
+       "partido": {
+        "id": 20,
+        "nome": "PV",
+        "nomeOriginal": "Partido Verde"
+       }
+      }
+     },
+     {
+      "id": 44613,
+      "voto": 1,
+      "parlamentar": {
+       "id": 28,
+       "nomeParlamentar": "DEPUTADO VIVALDO COSTA",
+       "partido": {
+        "id": 20,
+        "nome": "PV",
+        "nomeOriginal": "Partido Verde"
+       }
+      }
+     }
+    ],
+    "total": 5,
+    "resumo": {
+     "sim": 5,
+     "nao": 0,
+     "abstencao": 0
+    }
+   },
+   "obstrucao": {
+    "dados": [],
+    "total": 0
+   },
+   "presenca": {
+    "dados": [],
+    "total": 0
+   }
+  }
+ }
+}

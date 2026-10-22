@@ -1,0 +1,34 @@
+{
+ "fonte": "https://www.alepe.pe.gov.br/servicos/transparencia/dep/deputados.php?leg=-16",
+ "capturadoEm": "2026-10-22",
+ "amostra": {
+  "lista": [
+   {
+    "id": "4508",
+    "nome": "Abimael Santos",
+    "partido": "PL",
+    "email": "abimael.santos@alepe.pe.gov.br",
+    "foto": "",
+    "to_ascii": "Abimael Santos"
+   },
+   {
+    "id": "4432",
+    "nome": "Adalberto Cavalcanti",
+    "partido": "PTB",
+    "email": "adalberto_cavalcanti@alepe.pe.gov.br",
+    "foto": "/imagens/deputados/adalbertocavalcanti.jpg",
+    "to_ascii": "Adalberto Cavalcanti"
+   }
+  ],
+  "parlamentares": [
+   {
+    "nomeParlamentar": "Abimael Santos",
+    "partido": "PL"
+   },
+   {
+    "nomeParlamentar": "Adalto Santos",
+    "partido": "PP"
+   }
+  ]
+ }
+}

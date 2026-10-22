@@ -1,0 +1,7 @@
+{
+ "fonte": "https://dadosabertos.alepe.pe.gov.br/api/v1/proposicoes/requerimentos/",
+ "capturadoEm": "2026-10-22",
+ "amostra": {
+  "xml": "<?xml version='1.0' encoding='utf-8'?>\n<requerimentos><requerimento docid=\"14059\" numero=\"4661\" ano=\"2026\" legislatura=\"VIGÉSIMA\" tipo=\"requerimento\" subtipo=\"Reunião solene\" ementa=\"&lt;p style=&quot;text-align:justify&quot;&gt;Requeremos &amp;agrave; Mesa, ouvido o Plen&amp;aacute;rio e cumpridas as formalidades regimentais, nos termos do Art. 205, &amp;sect; 2&amp;ordm;, do Regimento Interno desta Casa Legislativa, que seja realizada Reuni&amp;atilde;o Solene no dia 26&amp;nbsp;de agosto&amp;nbsp;do corrente ano, &amp;agrave;s 18:30 horas, com finalidade de comemorar os 350 anos da Arquidiocese de Olinda e Recife. &amp;nbsp;&lt;/p&gt;\" dataPublicacao=\"03/02/2026\"><autores><autor nome=\"Joaquim Lira\" tipo=\"DEPUTADO\"/></autores></requerimento><requerimento docid=\"14061\" numero=\"4662\" ano=\"2026\" legislatura=\"VIGÉSIMA\" tipo=\"requerimento\" subtipo=\"Pesar\" ementa=\"&lt;p&gt;Requeremos &amp;agrave; Mesa, ouvido o Plen&amp;aacute;rio e cumpridas as formalidades regimentais, que seja enviado um Voto de Pesar aos amigos e familiares de Maria Vani de Ara&amp;uacute;jo Cruz, m&amp;atilde;e do vereador Mael do Divino.&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&lt;/p&gt;\" dataPublicacao=\"03/02/2026\"><autores><autor nome=\"Débora Almeida\" tipo=\"DEPUTADO\"/></autores></requerimento></requerimentos>"
+ }
+}

@@ -14,6 +14,7 @@ Status: ✅ OK · ❌ ERRO (resposta com falha ou fora do ar) · ❔ não testad
 | camara_deputados | Câmara | https://dadosabertos.camara.leg.br/api/v2/deputados?itens=1 | scripts/coletar.py, site/assets/app.js | ✅ OK | 2026-10-21 | HTTP 200, application/json |
 | camara_deputado | Câmara | https://dadosabertos.camara.leg.br/api/v2/deputados/204379 | scripts/coletar.py, site/assets/app.js | ✅ OK | 2026-10-21 | HTTP 200, application/json |
 | camara_despesas | Câmara | https://dadosabertos.camara.leg.br/api/v2/deputados/204379/despesas?ano=2025&itens=1 | scripts/coletar.py, site/assets/app.js | ✅ OK | 2026-10-21 | HTTP 200, application/json |
+| camara_cota_csv | Câmara | https://www.camara.leg.br/cotas/Ano-2026.csv.zip | scripts/coletar.py | ✅ OK | 2026-10-22 | baixado à mão (4.2 MB); ainda fora do `testar_endpoints.py` |
 | camara_proposicoes | Câmara | https://dadosabertos.camara.leg.br/api/v2/proposicoes?siglaTipo=PL&ano=2025&itens=1 | scripts/coletar.py | ✅ OK | 2026-10-21 | HTTP 200, application/json |
 | camara_proposicao | Câmara | https://dadosabertos.camara.leg.br/api/v2/proposicoes/2270800 | scripts/coletar.py, scripts/coletar_executivo.py, site/assets/app.js | ✅ OK | 2026-10-21 | HTTP 200, application/json |
 | camara_executivo | Câmara | https://dadosabertos.camara.leg.br/api/v2/proposicoes?autor=Poder%20Executivo&siglaTipo=PL&ano=2025&itens=1 | scripts/coletar_executivo.py | ✅ OK | 2026-10-21 | HTTP 200, application/json |

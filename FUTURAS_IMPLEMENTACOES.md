@@ -17,7 +17,7 @@ por mês e os 10 maiores fornecedores, os bens declarados e a prestação de con
 | Nível | O que exige | Pacotes |
 |---|---|---|
 | 1 | Feito (ver abaixo) | 1.1 a 1.6 |
-| 2 | Coleta leve (um arquivo por ano ou ~81 chamadas), exibida em blocos que já existem | 2.1 Recursos do senador · 2.2 Cota pelo CSV anual · 2.3 Perfil temático · 2.4 Comportamento nas votações |
+| 2 | Coleta leve (um arquivo por ano ou ~81 chamadas), exibida em blocos que já existem | 2.1 Recursos do senador · 2.3 Perfil temático · 2.4 Comportamento nas votações |
 | 3 | Uma chamada por deputado ou por projeto, ou visualização nova | 3.1 Carreira e histórico partidário · 3.2 Vida do projeto · 3.3 Discursos e agenda · 3.4 Rede de coautoria |
 | 4 | Raspagem de HTML ou chave de API | 4.1 Recursos do deputado (portal da Câmara) · 4.2 Emendas e Portal da Transparência |
 | 5 | Fontes grandes, sem padrão ou cruzamentos sensíveis | 5.1 Fornecedores e doadores · 5.2 Assembleias e Câmaras Municipais · 5.3 Órgãos de controle |
@@ -47,13 +47,9 @@ Três endpoints do mesmo serviço da CEAPS (`adm.senado.gov.br/adm-dadosabertos/
 | `/senadores/escritorios-apoio` | 1 chamada para todos | endereço e telefone do escritório no estado |
 | `/senadores/aposentados`, `aposentados-ipc`, `aposentados-pssc` | 1 chamada cada | ex-senadores com aposentadoria parlamentar e o regime (útil para os perfis de ex-parlamentares) |
 
-### 2.2 Cota da Câmara pelo CSV anual
+### 2.2 Cota da Câmara pelo CSV anual: feito (2026-10-22)
 
-- `www.camara.leg.br/cotas/Ano-{ano}.csv.zip` (~7 MB, todos os deputados de uma vez) substitui uma chamada a
-  `/deputados/{id}/despesas` por deputado e traz `cnpjCpfFornecedor`, que identifica o fornecedor sem depender
-  do nome.
-- No site: ranking dos fornecedores que mais recebem da Câmara inteira e quantos deputados usam cada um.
-- Abre caminho para o pacote 5.1 (dados da empresa e cruzamento com doadores).
+Coleta pelo CSV anual (com `cnpj` em cada despesa) e ranking de fornecedores em `fornecedores.html`; registrado no `CHANGELOG.md`. Falta o cruzamento com a empresa e os doadores (pacote 5.1).
 
 ### 2.3 Perfil temático do deputado
 

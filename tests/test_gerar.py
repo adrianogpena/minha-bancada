@@ -139,3 +139,17 @@ def test_presenca_do_senador():
     assert gerar.categoria_presenca("ausente", "NA|Dispositivo não citado") == "ignorar"
     c = Counter(compareceu=8, naoCompareceu=1, licenca=1, ignorar=5)
     assert gerar.resumir_presenca(c) == {"votacoes": 10, "compareceu": 8, "naoCompareceu": 1, "licenca": 1}
+
+
+def test_ranking_fornecedores_liga_pelo_cnpj_e_ignora_sem_cnpj():
+    deps = {
+        1: {"nome": "A", "partido": "X", "uf": "SP", "despesas": {"itens": [
+            {"cnpj": "111", "fornecedor": "Cia", "valor": 100}, {"cnpj": "111", "fornecedor": "CIA LTDA", "valor": 50},
+            {"cnpj": "", "fornecedor": "Sem", "valor": 999}, {"cnpj": "0000000000001", "fornecedor": "Zero", "valor": 999}]}},
+        2: {"nome": "B", "partido": "Y", "uf": "RJ", "despesas": {"itens": [
+            {"cnpj": "111", "fornecedor": "Cia", "valor": 20}, {"cnpj": "222", "fornecedor": "Outra", "valor": 500}]}},
+    }
+    r = gerar.ranking_fornecedores(deps)
+    assert [f["cnpj"] for f in r] == ["222", "111"]
+    assert r[1]["total"] == 170 and r[1]["notas"] == 3 and r[1]["deputados"] == 2 and r[1]["nome"] == "Cia"
+    assert r[1]["maioresDeputados"][0] == {"id": 1, "nome": "A", "partido": "X", "uf": "SP", "valor": 150}

@@ -24,6 +24,7 @@ class Resp:
 def dados(tmp_path, monkeypatch):
     monkeypatch.setattr(coletar, "DADOS", tmp_path)
     monkeypatch.setattr(coletar, "AVISOS", [])
+    monkeypatch.setattr(coletar, "coletar_cota_csv", lambda ano: {})
     monkeypatch.delenv("GITHUB_ACTIONS", raising=False)
     return tmp_path
 
@@ -67,7 +68,7 @@ def test_coletar_deputado_normaliza_campos(dados, monkeypatch):
     assert d["gabinete"] == {"predio": "4", "andar": "2", "email": "g@x"}  # só chaves conhecidas e não vazias
     assert d["proposicoes"] == [{"id": 9, "tipo": "PL", "numero": 1, "ano": 2024, "ementa": "e"}]
     assert d["despesas"]["ano"] == 2025
-    assert d["despesas"]["itens"][0] == {"mes": 3, "tipo": "Passagens", "valor": 120.5, "fornecedor": "Cia", "data": "2025-03-01", "documento": "http://nf"}
+    assert d["despesas"]["itens"][0] == {"mes": 3, "tipo": "Passagens", "valor": 120.5, "fornecedor": "Cia", "cnpj": "", "data": "2025-03-01", "documento": "http://nf"}
     assert d["despesas"]["itens"][1]["valor"] == 0  # valor nulo vira 0
     assert d["redesSociais"] == ["https://x.com/fulano"]
 
@@ -88,9 +89,44 @@ def test_coletar_deputado_despesas_falham_sem_derrubar(dados, monkeypatch):
     assert any("despesas de F" in a for a in coletar.AVISOS)
 
 
+CSV_COTA = '''﻿"txtFornecedor";"txtCNPJCPF";"txtDescricao";"datEmissao";"vlrLiquido";"numMes";"numAno";"nuDeputadoId";"urlDocumento"
+"Cia A";"12.345.678/0001-90";"Passagens";"2026-01-05T00:00:00";"100.5";"1";"2026";"7";"http://nf1"
+"Cia B";"";"Combustíveis";"2026-02-05T00:00:00";"20";"2";"2026";"7";""
+"Cia C";"1";"Outros";"2025-12-05T00:00:00";"5";"12";"2025";"7";""
+"Cia D";"1";"Outros";"2026-01-05T00:00:00";"5";"1";"2026";"";""
+'''
+
+
+def test_coletar_cota_csv_agrupa_por_deputado(monkeypatch):
+    import io, zipfile
+    csv_ = CSV_COTA
+    buf = io.BytesIO()
+    with zipfile.ZipFile(buf, "w") as z:
+        z.writestr("Ano-2026.csv", csv_.encode("utf-8"))
+
+    class Resp:
+        content = buf.getvalue()
+        def raise_for_status(self): pass
+    monkeypatch.setattr(coletar.S, "get", lambda url, **k: Resp())
+    cota = coletar.coletar_cota_csv(2026)
+    assert list(cota) == [7]
+    assert [i["fornecedor"] for i in cota[7]] == ["Cia B", "Cia A"]
+    assert cota[7][1] == {"mes": 1, "tipo": "Passagens", "valor": 100.5, "fornecedor": "Cia A", "cnpj": "12345678000190",
+                          "data": "2026-01-05", "documento": "http://nf1"}
+    assert cota[7][0]["documento"] is None
+
+
+def test_coletar_deputado_usa_a_cota_do_csv(dados, monkeypatch):
+    monkeypatch.setattr(coletar, "coletar_proposicoes", lambda dep: [])
+    roteador(monkeypatch, {"/deputados/7": DETALHE_DEP})
+    d = coletar.coletar_deputado({"id": 7, "nome": "F"}, 2025, {7: [{"mes": 1, "valor": 3}]})
+    assert d["despesas"]["itens"] == [{"mes": 1, "valor": 3}]
+
+
 def test_coletar_deputados_salva_arquivos_e_resume(dados, monkeypatch):
     monkeypatch.setattr(coletar, "get_todos", lambda c, **p: [{"id": 1, "nome": "A"}, {"id": 2, "nome": "B"}, {"id": 3, "nome": "C"}])
-    monkeypatch.setattr(coletar, "coletar_deputado", lambda dep, ano: {"id": dep["id"], "nome": dep["nome"]})
+    monkeypatch.setattr(coletar, "coletar_cota_csv", lambda ano: {})
+    monkeypatch.setattr(coletar, "coletar_deputado", lambda dep, ano, cota=None: {"id": dep["id"], "nome": dep["nome"]})
     assert sorted(coletar.coletar_deputados(2)) == [1, 2]
     assert json.loads((dados / "deputados.json").read_text()) == [1, 2]
     assert json.loads((dados / "deputados" / "1.json").read_text())["nome"] == "A"
@@ -99,7 +135,7 @@ def test_coletar_deputados_salva_arquivos_e_resume(dados, monkeypatch):
 def test_coletar_deputados_aborta_com_muitas_falhas(dados, monkeypatch):
     monkeypatch.setattr(coletar, "get_todos", lambda c, **p: [{"id": i, "nome": str(i)} for i in range(10)])
 
-    def quebra(dep, ano):
+    def quebra(dep, ano, cota=None):
         if dep["id"] < 5:
             raise RuntimeError("API fora")
         return {"id": dep["id"]}
@@ -112,7 +148,7 @@ def test_coletar_deputados_aborta_com_muitas_falhas(dados, monkeypatch):
 def test_coletar_deputados_tolera_poucas_falhas(dados, monkeypatch):
     monkeypatch.setattr(coletar, "get_todos", lambda c, **p: [{"id": i, "nome": str(i)} for i in range(10)])
 
-    def quebra(dep, ano):
+    def quebra(dep, ano, cota=None):
         if dep["id"] == 0:
             raise RuntimeError("API fora")
         return {"id": dep["id"]}

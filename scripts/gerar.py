@@ -144,6 +144,36 @@ def limite_cota(uf: str, itens: list) -> dict | None:
     return {"mensal": mensal, "meses": meses} if mensal and meses else None
 
 
+FORNECEDORES_NO_RANKING = 200
+DEPUTADOS_POR_FORNECEDOR = 5
+
+
+def ranking_fornecedores(deputados: dict) -> list:
+    """Fornecedores que mais receberam da cota da Câmara inteira, ligados pelo CNPJ/CPF (não pelo nome), com os
+    deputados que mais os usaram. Despesas sem CNPJ/CPF válido ficam de fora."""
+    por_cnpj: dict[str, dict] = {}
+    for did, d in deputados.items():
+        for i in d["despesas"]["itens"]:
+            cnpj = i.get("cnpj") or ""
+            if not i.get("valor") or cnpj.strip("0") in ("", "1"):
+                continue
+            f = por_cnpj.setdefault(cnpj, {"cnpj": cnpj, "nomes": Counter(), "total": 0.0, "notas": 0, "deps": Counter()})
+            f["nomes"][i.get("fornecedor") or "Não informado"] += i["valor"]
+            f["total"] += i["valor"]
+            f["notas"] += 1
+            f["deps"][did] += i["valor"]
+    ranking = []
+    for f in sorted(por_cnpj.values(), key=lambda f: -f["total"])[:FORNECEDORES_NO_RANKING]:
+        ranking.append({
+            "cnpj": f["cnpj"], "nome": f["nomes"].most_common(1)[0][0], "total": round(f["total"], 2), "notas": f["notas"],
+            "deputados": len(f["deps"]),
+            "maioresDeputados": [{"id": did, "nome": deputados[did]["nome"], "partido": deputados[did]["partido"],
+                                  "uf": deputados[did]["uf"], "valor": round(v, 2)}
+                                 for did, v in f["deps"].most_common(DEPUTADOS_POR_FORNECEDOR)],
+        })
+    return ranking
+
+
 def resumir_despesas(ano: int, itens: list) -> dict:
     """Totais por tipo, mês e fornecedor, no formato que o site usa para deputados e senadores."""
     por_tipo, por_mes, fornecedores = Counter(), Counter(), Counter()
@@ -389,6 +419,8 @@ def main():
             "suprapartidarios": autoria["suprapartidarios"], "autoriaColetada": autoria["autoriaColetada"],
         })
 
+    salvar(SAIDA / "fornecedores_cota.json", {"ano": next(iter(deputados.values()))["despesas"]["ano"] if deputados else None,
+                                              "fornecedores": ranking_fornecedores(deputados)})
     resumo_deps.sort(key=lambda x: x["nome"])
     salvar(SAIDA / "deputados.json", resumo_deps)
     gerar_senadores()

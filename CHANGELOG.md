@@ -5,6 +5,11 @@ Regra: toda fonte nova ou mudança de coleta ganha uma entrada aqui, no mesmo co
 Datas dos conjuntos que já existiam vêm do primeiro commit que os trouxe (`git log --diff-filter=A`).
 Todas as coletas rodam sozinhas no GitHub Actions (`.github/workflows/atualizar.yml`, todo dia às 06:17 de Brasília), salvo onde indicado.
 
+## Cota da Câmara pelo CSV anual (2026-10-22)
+- **De onde:** `https://www.camara.leg.br/cotas/Ano-<ano>.csv.zip` (~4 MB, todos os deputados do ano, UTF-8, separador `;`).
+- **Como:** `coletar_cota_csv` (`scripts/coletar.py`) baixa o arquivo uma vez por execução e `coletar_deputado` usa as despesas dele no lugar de `/deputados/{id}/despesas` (1 chamada a menos por deputado). Se o download falhar, volta para a API. Cada despesa ganhou o campo `cnpj` (só dígitos; a API também o traz, em `cnpjCpfFornecedor`).
+- **No site:** página `fornecedores.html` (`site/dados/fornecedores_cota.json`, gerado por `ranking_fornecedores` em `scripts/gerar.py`): os 200 fornecedores que mais receberam, ligados pelo CNPJ/CPF, com quantos deputados os usam e os que mais gastaram com cada um.
+
 ## Nível 1 das futuras implementações (2026-10-22)
 Só reaproveita dados que já eram coletados, mais três fontes de consulta e um campo novo:
 - **Limite mensal da cota por UF:** tabela fixa em `scripts/gerar.py` (`LIMITE_COTA_UF`), copiada de https://www2.camara.leg.br/comunicacao/assessoria-de-imprensa/guia-para-jornalistas/cota-parlamentar (a página não data a tabela; conferida em 2026-10-22). Se a Câmara mudar o limite, atualize a tabela.

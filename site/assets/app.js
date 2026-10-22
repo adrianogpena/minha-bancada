@@ -122,7 +122,7 @@ function abas(alvo, opcoes, aoMudar) {
 /* ---------- moldura comum ---------- */
 function moldura(pagina) {
   const links = [["index.html", "Políticos", "inicio"], ["camara.html", "Câmara", "camara"], ["votacoes.html", "Votações", "votacoes"], ["historico.html", "Histórico", "historico"], ["informado.html", "Fique informado", "informado"], ["sobre.html", "Sobre os dados", "sobre"]];
-  const atual = { deputado: "camara", votacao: "votacoes", politico: "inicio", fonte: "sobre" }[pagina] || pagina;
+  const atual = { fornecedores: "camara", deputado: "camara", votacao: "votacoes", politico: "inicio", fonte: "sobre" }[pagina] || pagina;
   document.body.insertAdjacentHTML("afterbegin", `
     <header class="topo"><div class="recipiente">
       <a class="marca" href="index.html"><span class="marca-icone" aria-hidden="true">${"<i></i>".repeat(9)}</span>Minha Bancada</a>
@@ -1931,7 +1931,28 @@ async function paginaFonte() {
     <section class="painel">${typeof conteudo === "object" && conteudo !== null ? valorFonte(conteudo) : esc(String(conteudo))}${nav ? `<p>${nav}</p>` : ""}</section>`;
 }
 
+async function paginaFornecedores() {
+  const alvo = $("#resultado");
+  let j;
+  try { j = await carregar("dados/fornecedores_cota.json"); } catch (e) { return erro(alvo, e); }
+  if (j.ano) $("#fonte-csv").href = `https://www.camara.leg.br/cotas/Ano-${j.ano}.csv.zip`;
+  const cnpj = (c) => c.length === 14 ? c.replace(/^(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})$/, "$1.$2.$3/$4-$5") : c.length === 11 ? c.replace(/^(\d{3})(\d{3})(\d{3})(\d{2})$/, "$1.$2.$3-$4") : c;
+  const render = (f) => `<li>
+    <span class="quando">${reais(f.total)}</span>
+    <span class="texto"><b>${esc(f.nome)}</b> <span class="quando">${esc(cnpj(f.cnpj))}</span></span>
+    <span class="texto"><span class="quando">${f.deputados} ${f.deputados === 1 ? "deputado" : "deputados"}, ${f.notas} ${f.notas === 1 ? "nota" : "notas"}</span>
+      <br>Mais usado por ${f.maioresDeputados.map((d) => `<a href="deputado.html?id=${d.id}">${esc(d.nome)}</a> (${esc(d.partido)}-${esc(d.uf)}, ${reais(d.valor)})`).join(", ")}</span></li>`;
+  const desenhar = () => {
+    const b = semAcento($("#busca").value.trim());
+    const f = j.fornecedores.filter((x) => !b || semAcento(`${x.nome} ${x.cnpj} ${cnpj(x.cnpj)}`).includes(b));
+    $("#contagem").textContent = `${f.length} fornecedores com mais gastos da cota em ${j.ano}`;
+    listaPaginada(alvo, f, render, 20, "Nenhum fornecedor encontrado com essa busca.");
+  };
+  $("#busca").addEventListener("input", desenhar);
+  desenhar();
+}
+
 /* ---------- início ---------- */
 const pagina = document.body.dataset.pagina;
 moldura(pagina);
-({ inicio: paginaPoliticos, politico: paginaPolitico, camara: paginaCamara, deputado: paginaDeputado, votacoes: paginaVotacoes, votacao: paginaVotacao, fonte: paginaFonte, informado: paginaInformado, historico: paginaHistorico }[pagina] || (() => {}))();
+({ inicio: paginaPoliticos, politico: paginaPolitico, camara: paginaCamara, fornecedores: paginaFornecedores, deputado: paginaDeputado, votacoes: paginaVotacoes, votacao: paginaVotacao, fonte: paginaFonte, informado: paginaInformado, historico: paginaHistorico }[pagina] || (() => {}))();

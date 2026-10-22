@@ -13,11 +13,14 @@ Documentação da API: https://dadosabertos.camara.leg.br/swagger/api.html
 
 import argparse
 import datetime as dt
+import csv
+import io
 import json
 import os
 import re
 import sys
 import unicodedata
+import zipfile
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
 
@@ -133,18 +136,47 @@ def coletar_proposicoes(dep: dict) -> list:
     return itens
 
 
-def coletar_deputado(dep: dict, ano: int) -> dict:
+def coletar_cota_csv(ano: int) -> dict[int, list]:
+    """Cota parlamentar do ano de todos os deputados num arquivo só (~4 MB zipado), com o CNPJ/CPF do fornecedor.
+    Devolve {id do deputado: despesas, da mais recente para a mais antiga}; vazio se o arquivo não puder ser lido."""
+    r = S.get(f"https://www.camara.leg.br/cotas/Ano-{ano}.csv.zip", timeout=180)
+    r.raise_for_status()
+    zf = zipfile.ZipFile(io.BytesIO(r.content))
+    texto = zf.read(zf.namelist()[0]).decode("utf-8-sig")
+    por_dep: dict[int, list] = {}
+    for l in csv.DictReader(io.StringIO(texto), delimiter=";"):
+        if not l.get("nuDeputadoId", "").isdigit() or l.get("numAno") != str(ano):
+            continue
+        por_dep.setdefault(int(l["nuDeputadoId"]), []).append({
+            "mes": int(l["numMes"]) if l.get("numMes", "").isdigit() else None,
+            "tipo": l.get("txtDescricao"), "valor": float(l["vlrLiquido"] or 0),
+            "fornecedor": l.get("txtFornecedor"), "cnpj": re.sub(r"\D", "", l.get("txtCNPJCPF") or ""),
+            "data": (l.get("datEmissao") or "")[:10] or None, "documento": l.get("urlDocumento") or None,
+        })
+    for lista in por_dep.values():
+        lista.sort(key=lambda i: i["data"] or "", reverse=True)
+    print(f"Cota {ano} (CSV): {sum(len(v) for v in por_dep.values())} despesas de {len(por_dep)} deputados")
+    return por_dep
+
+
+def coletar_deputado(dep: dict, ano: int, cota: dict[int, list] | None = None) -> dict:
     did = dep["id"]
     detalhe = get(f"/deputados/{did}").get("dados", {})
 
     proposicoes = coletar_proposicoes(dep)
 
-    try:
-        despesas = get_todos(f"/deputados/{did}/despesas", ano=ano,
-                             ordem="DESC", ordenarPor="dataDocumento")
-    except Exception as e:
-        avisar(f"despesas de {dep.get('nome')}: {e}")
-        despesas = []
+    if cota is not None:
+        itens_cota = cota.get(did, [])
+    else:
+        try:
+            despesas = get_todos(f"/deputados/{did}/despesas", ano=ano,
+                                 ordem="DESC", ordenarPor="dataDocumento")
+        except Exception as e:
+            avisar(f"despesas de {dep.get('nome')}: {e}")
+            despesas = []
+        itens_cota = [{"mes": d.get("mes"), "tipo": d.get("tipoDespesa"), "valor": d.get("valorLiquido") or 0,
+                       "fornecedor": d.get("nomeFornecedor"), "cnpj": re.sub(r"\D", "", d.get("cnpjCpfFornecedor") or ""),
+                       "data": d.get("dataDocumento"), "documento": d.get("urlDocumento")} for d in despesas]
 
     status = detalhe.get("ultimoStatus", {}) or {}
     return {
@@ -169,17 +201,7 @@ def coletar_deputado(dep: dict, ano: int) -> dict:
              "ano": p.get("ano"), "ementa": (p.get("ementa") or "").strip()}
             for p in proposicoes
         ],
-        "despesas": {
-            "ano": ano,
-            "itens": [
-                {"mes": d.get("mes"), "tipo": d.get("tipoDespesa"),
-                 "valor": d.get("valorLiquido") or 0,
-                 "fornecedor": d.get("nomeFornecedor"),
-                 "data": d.get("dataDocumento"),
-                 "documento": d.get("urlDocumento")}
-                for d in despesas
-            ],
-        },
+        "despesas": {"ano": ano, "itens": itens_cota},
         "coletadoEm": dt.datetime.now(dt.timezone.utc).isoformat(timespec="seconds"),
     }
 
@@ -190,9 +212,14 @@ def coletar_deputados(limite: int | None) -> list:
         lista = lista[:limite]
     print(f"Deputados em exercício: {len(lista)}")
     ano = dt.date.today().year
+    try:
+        cota = coletar_cota_csv(ano) or None
+    except Exception as e:  # sem o CSV, a cota vem da API, deputado a deputado
+        avisar(f"cota pelo CSV anual: {e}")
+        cota = None
     resumo, falhas = [], 0
     with ThreadPoolExecutor(TRABALHADORES) as ex:
-        futuros = {ex.submit(coletar_deputado, d, ano): d for d in lista}
+        futuros = {ex.submit(coletar_deputado, d, ano, cota): d for d in lista}
         for i, f in enumerate(as_completed(futuros), 1):
             dep = futuros[f]
             try:

@@ -130,3 +130,53 @@ def test_coletar_grava_deputados_materias_e_verbas(monkeypatch, tmp_path):
     verbas = json.loads((pasta / f"verbas_{hoje.year}.json").read_text(encoding="utf-8"))
     assert verbas["itens"] and all(i["fonte"] == mg.VERBA_PAGINA for i in verbas["itens"])
     assert (pasta / f"materias_{hoje.year}.json").exists()
+
+
+def test_proposicoes_alteradas_para_na_data_da_coleta_anterior(monkeypatch):
+    def item(n, ultima):
+        return {"numero": str(n), "dataUltimaAcao": ultima}
+
+    paginas = {1: [item(n, "2026-10-21") for n in range(100)], 2: [item(100, "2026-10-20"), item(101, "2026-10-19"), item(102, "2026-10-01")]}
+    chamadas = []
+
+    def falso_pegar(sessao, caminho, **params):
+        chamadas.append(params)
+        return {"resultado": {"erro": False, "noOcorrencias": 9999, "listaItem": paginas[params["p"]]}}
+
+    monkeypatch.setattr(mg, "pegar", falso_pegar)
+    itens = mg.proposicoes_alteradas(None, date(2026, 10, 20), date(2026, 10, 22))
+    assert [i["numero"] for i in itens][-2:] == ["100", "101"] and len(itens) == 102   # 19/10 ainda entra (folga de 1 dia); 01/10 não
+    assert len(chamadas) == 2 and chamadas[0]["ord"] == 3 and chamadas[0]["ini"] == "20230101" and chamadas[0]["fim"] == "20261022"
+
+
+def test_juntar_alteradas_troca_a_versao_antiga_de_ano():
+    por_ano = {2025: {"PL-1-2025": {"situacao": "velha"}}, 2026: {}}
+    nova = {"PL-1-2025": {"situacao": "nova", "dataApresentacao": "2026-01-05", "ano": 2025}, "PL-2-2022": {"dataApresentacao": "2022-01-01", "ano": 2022}}
+    mg.juntar_alteradas(por_ano, nova)
+    assert por_ano[2025] == {} and por_ano[2026]["PL-1-2025"]["situacao"] == "nova" and "PL-2-2022" not in por_ano[2025]
+
+
+def test_coletar_proposicoes_incremental_so_le_as_alteradas(monkeypatch, tmp_path):
+    a = amostra("estadual_mg_deputados")
+    p = amostra("estadual_mg_proposicoes")["resultado"]
+    hoje = date(2026, 10, 22)
+    deputados = mg.montar_deputados(a["em_exercicio"]["list"], a["lista_telefonica"]["list"])
+    for ano in range(mg.PRIMEIRO_ANO_PROPOSICOES, hoje.year + 1):
+        comum.salvar(tmp_path / f"materias_{ano}.json", {"coletadoEm": "2026-10-20", "completaEm": "2026-10-15", "fonte": "x", "materias": {}})
+    chamadas = []
+
+    def falso_pegar(sessao, caminho, **params):
+        chamadas.append(params)
+        itens = [{**i, "dataUltimaAcao": "2026-10-21"} for i in p["listaItem"]]
+        return {"resultado": {"erro": False, "noOcorrencias": len(itens), "listaItem": itens}}
+
+    monkeypatch.setattr(mg, "pegar", falso_pegar)
+    mg.coletar_proposicoes(None, deputados, hoje, tmp_path, "2026-10-22")
+    assert len(chamadas) == 1 and chamadas[0]["ord"] == 3
+    atual = comum.ler(tmp_path / "materias_2026.json")
+    assert atual["coletadoEm"] == "2026-10-22" and atual["completaEm"] == "2026-10-15"
+
+    chamadas.clear()
+    comum.salvar(tmp_path / "materias_2026.json", {**atual, "completaEm": "2026-10-01"})   # completa velha: refaz por janelas
+    mg.coletar_proposicoes(None, deputados, hoje, tmp_path, "2026-10-22")
+    assert all("ord" not in c for c in chamadas) and comum.ler(tmp_path / "materias_2026.json")["completaEm"] == "2026-10-22"

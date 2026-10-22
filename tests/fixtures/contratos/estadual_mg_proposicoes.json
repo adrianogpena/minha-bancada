@@ -1,0 +1,682 @@
+{
+ "fonte": "https://dadosabertos.almg.gov.br/api/v2/proposicoes/pesquisa/direcionada",
+ "capturadoEm": "2026-10-22",
+ "amostra": {
+  "resultado": {
+   "consulta": "BOOL(\nfilter:\n\tTERM(siglaTipoProjeto: PL)\n\tTERM(ano: 2026)\n)",
+   "noOcorrencias": 1079,
+   "noDocumentos": 1079,
+   "tamanhoPagina": 3,
+   "numPagina": 1,
+   "ordenacao": "siglaTipoProjeto_ASC_ano_DESC_numero_DESC",
+   "dataHora": {
+    "date": "2026-10-22"
+   },
+   "erro": false,
+   "listaItem": [
+    {
+     "dominio": "Tramitação",
+     "tipoProjeto": "PROJETO DE LEI",
+     "siglaTipoProjeto": "PL",
+     "numero": "6194",
+     "ano": "2026",
+     "autor": "Deputada Ana Paula Siqueira                PT\n",
+     "ementa": "Declara de utilidade pública a Associação SOS Preces Bezerra de Menezes, com sede no Município de Belo Horizonte.",
+     "indexacao": "/Tema/Administração Pública/Função do Estado/Gestão Pública/Utilidade Pública\n/Tema/Municípios e Desenvolvimento Regional/Política Urbana/Região de Planejamento/Central/Belo Horizonte (Microrregião)/Belo Horizonte\n",
+     "observacao": "Distribuído a 2 comissões: CCJ TPA.",
+     "situacao": "Aguardando designação de relator em comissão",
+     "siglaSituacao": "AGDRC",
+     "situacaoGeral": "Aguardando apreciação nas comissões",
+     "siglaSituacaoGeral": "MAPCO",
+     "dataPublicacao": "2026-10-16",
+     "proposicao": "PL 6194 2026 - PROJETO DE LEI",
+     "matricula": "19150\n",
+     "regime": "Deliberação em turno único nas comissões",
+     "local": "Comissão de Constituição e Justiça",
+     "atualizacao": "20261021",
+     "horario": "1225",
+     "usuario": "m20725",
+     "atualizacaoTexto": "20261021 12:25",
+     "usuarioTexto": "m20725",
+     "consultaPublica": "Consulta pública aberta",
+     "dataUltimaAcao": "2026-10-16",
+     "tipoTramitacao": {
+      "codigo": 3,
+      "nome": "Regime de tramitação de deliberação em turno único nas comissões",
+      "listaFaseTramitacao": [
+       {
+        "codTipoTramitacao": 3,
+        "codigo": 1,
+        "nome": "Apresentação",
+        "ordem": 1,
+        "descricao": "- O projeto foi recebido pela Mesa da Assembleia, numerado, publicado e encaminhado às Comissões para análise"
+       },
+       {
+        "codTipoTramitacao": 3,
+        "codigo": 2,
+        "nome": "Turno único nas Comissões",
+        "ordem": 2,
+        "descricao": "- Comissões discutem o projeto e dão pareceres, que podem sugerir emendas ao texto original\r\n- Comissão discute e vota conclusivamente o projeto"
+       }
+      ]
+     },
+     "faseAtual": {
+      "codTipoTramitacao": 3,
+      "codigo": 2,
+      "nome": "Turno único nas Comissões",
+      "ordem": 2,
+      "descricao": "- Comissões discutem o projeto e dão pareceres, que podem sugerir emendas ao texto original\r\n- Comissão discute e vota conclusivamente o projeto"
+     },
+     "listaHistoricoTramitacoes": [
+      {
+       "passo": 1,
+       "data": "2026-10-14",
+       "local": "Plenário",
+       "historico": "Proposição recebida em Plenário.\nPublicado no DL em 16 10 2026, pág 234.\nÀs Comissões de Constituição e Justiça e do Trabalho, da Previdência e da Assistência Social, para deliberação."
+      },
+      {
+       "passo": 2,
+       "data": "2026-10-16",
+       "local": "Comissão de Constituição e Justiça",
+       "historico": "Proposição recebida na Comissão de Constituição e Justiça."
+      }
+     ],
+     "linksTextos": [
+      {
+       "expressao": "(PL.20260619401[codi])[txmt]",
+       "banco": "mate",
+       "descricao": "Proposição",
+       "url": "/proposicoes/pesquisa/avancada?expr=%28PL.20260619401%5Bcodi%5D%29%5Btxmt%5D&pesqProp=true"
+      }
+     ],
+     "consultaPublicaProposicao": {
+      "idConsultaPublica": 75614,
+      "tipoProposicao": {
+       "id": 1,
+       "descricao": "Projeto de Lei",
+       "sigla": "PL.",
+       "acompanhamento": "S",
+       "pesquisaDirigida": "S",
+       "idGrupoTipoProposicao": 5
+      },
+      "numeroProposicao": 6194,
+      "anoProposicao": 2026,
+      "dataInicio": "2026-10-14",
+      "moderada": "N",
+      "votosFavoraveis": 0,
+      "votosContrarios": 0,
+      "qtdOpinioes": 0,
+      "totalRemovidoModerador": 0,
+      "totalRemovidoAutor": 0
+     },
+     "acompanhamento": "S",
+     "autoresEstruturados": [
+      {
+       "id": 19150,
+       "nome": "Deputada Ana Paula Siqueira",
+       "partido": "PT"
+      }
+     ]
+    },
+    {
+     "dominio": "Tramitação",
+     "tipoProjeto": "PROJETO DE LEI",
+     "siglaTipoProjeto": "PL",
+     "numero": "6193",
+     "ano": "2026",
+     "autor": "Deputado Rodrigo Lopes                     UNIÃO\n",
+     "ementa": "Autoriza o Poder Executivo a doar ao Município de Borda da Mata o imóvel que especifica.",
+     "indexacao": "/Tema/Administração Pública/Função do Estado/Gestão Pública/Patrimônio Público/Bens Imóveis/Doação de Imóvel\n/Tema/Municípios e Desenvolvimento Regional/Política Urbana/Região de Planejamento/Sul de Minas/Pouso Alegre (Microrregião)/Borda da Mata\n",
+     "observacao": "Distribuído a 2 comissões: CCJ APU.",
+     "situacao": "Aguardando designação de relator em comissão",
+     "siglaSituacao": "AGDRC",
+     "situacaoGeral": "Aguardando apreciação nas comissões",
+     "siglaSituacaoGeral": "MAPCO",
+     "dataPublicacao": "2026-10-16",
+     "proposicao": "PL 6193 2026 - PROJETO DE LEI",
+     "matricula": "28877\n",
+     "regime": "Deliberação em dois turnos no Plenário",
+     "local": "Comissão de Constituição e Justiça",
+     "atualizacao": "20261021",
+     "horario": "1225",
+     "usuario": "m20725",
+     "atualizacaoTexto": "20261021 12:25",
+     "usuarioTexto": "m20725",
+     "consultaPublica": "Consulta pública aberta",
+     "dataUltimaAcao": "2026-10-16",
+     "tipoTramitacao": {
+      "codigo": 1,
+      "nome": "Regime de tramitação de deliberação em dois turnos no Plenário",
+      "listaFaseTramitacao": [
+       {
+        "codTipoTramitacao": 1,
+        "codigo": 1,
+        "nome": "Apresentação",
+        "ordem": 1,
+        "descricao": "- O projeto foi recebido pela Mesa da Assembleia, numerado, publicado e encaminhado às Comissões para análise"
+       },
+       {
+        "codTipoTramitacao": 1,
+        "codigo": 2,
+        "nome": "Primeiro turno nas Comissões",
+        "ordem": 2,
+        "descricao": "- Comissões discutem o projeto e dão pareceres, com informações para orientar o Plenário\r\n- Os pareceres podem sugerir emendas ao projeto original\r\n- Comissão dará parecer sobre emendas que forem apresentadas no Plenário"
+       }
+      ]
+     },
+     "faseAtual": {
+      "codTipoTramitacao": 1,
+      "codigo": 2,
+      "nome": "Primeiro turno nas Comissões",
+      "ordem": 2,
+      "descricao": "- Comissões discutem o projeto e dão pareceres, com informações para orientar o Plenário\r\n- Os pareceres podem sugerir emendas ao projeto original\r\n- Comissão dará parecer sobre emendas que forem apresentadas no Plenário"
+     },
+     "listaHistoricoTramitacoes": [
+      {
+       "passo": 1,
+       "data": "2026-10-14",
+       "local": "Plenário",
+       "historico": "Proposição recebida em Plenário.\nPublicado no DL em 16 10 2026, pág 234.\nÀs Comissões de Constituição e Justiça e de Administração Pública, para parecer."
+      },
+      {
+       "passo": 2,
+       "data": "2026-10-16",
+       "local": "Comissão de Constituição e Justiça",
+       "historico": "Proposição recebida na Comissão de Constituição e Justiça."
+      }
+     ],
+     "linksTextos": [
+      {
+       "expressao": "(PL.20260619301[codi])[txmt]",
+       "banco": "mate",
+       "descricao": "Proposição",
+       "url": "/proposicoes/pesquisa/avancada?expr=%28PL.20260619301%5Bcodi%5D%29%5Btxmt%5D&pesqProp=true"
+      }
+     ],
+     "consultaPublicaProposicao": {
+      "idConsultaPublica": 75613,
+      "tipoProposicao": {
+       "id": 1,
+       "descricao": "Projeto de Lei",
+       "sigla": "PL.",
+       "acompanhamento": "S",
+       "pesquisaDirigida": "S",
+       "idGrupoTipoProposicao": 5
+      },
+      "numeroProposicao": 6193,
+      "anoProposicao": 2026,
+      "dataInicio": "2026-10-14",
+      "moderada": "N",
+      "votosFavoraveis": 0,
+      "votosContrarios": 0,
+      "qtdOpinioes": 0,
+      "totalRemovidoModerador": 0,
+      "totalRemovidoAutor": 0
+     },
+     "resumo": "O imóvel destina-se ao funcionamento de órgãos públicos municipais.",
+     "acompanhamento": "S",
+     "autoresEstruturados": [
+      {
+       "id": 28877,
+       "nome": "Deputado Rodrigo Lopes",
+       "partido": "UNIÃO"
+      }
+     ]
+    }
+   ]
+  }
+ },
+ "forma": {
+  "resultado": {
+   "tipos": [
+    "dict"
+   ]
+  },
+  "resultado.consulta": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "resultado.dataHora": {
+   "tipos": [
+    "dict"
+   ]
+  },
+  "resultado.dataHora.date": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "resultado.erro": {
+   "tipos": [
+    "bool"
+   ]
+  },
+  "resultado.listaItem": {
+   "tipos": [
+    "list"
+   ]
+  },
+  "resultado.listaItem[]": {
+   "tipos": [
+    "dict"
+   ]
+  },
+  "resultado.listaItem[].acompanhamento": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "resultado.listaItem[].ano": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "resultado.listaItem[].atualizacao": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "resultado.listaItem[].atualizacaoTexto": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "resultado.listaItem[].autor": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "resultado.listaItem[].autoresEstruturados": {
+   "tipos": [
+    "list"
+   ]
+  },
+  "resultado.listaItem[].autoresEstruturados[]": {
+   "tipos": [
+    "dict"
+   ]
+  },
+  "resultado.listaItem[].autoresEstruturados[].id": {
+   "tipos": [
+    "int"
+   ]
+  },
+  "resultado.listaItem[].autoresEstruturados[].nome": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "resultado.listaItem[].autoresEstruturados[].partido": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "resultado.listaItem[].consultaPublica": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "resultado.listaItem[].consultaPublicaProposicao": {
+   "tipos": [
+    "dict"
+   ]
+  },
+  "resultado.listaItem[].consultaPublicaProposicao.anoProposicao": {
+   "tipos": [
+    "int"
+   ]
+  },
+  "resultado.listaItem[].consultaPublicaProposicao.dataInicio": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "resultado.listaItem[].consultaPublicaProposicao.idConsultaPublica": {
+   "tipos": [
+    "int"
+   ]
+  },
+  "resultado.listaItem[].consultaPublicaProposicao.moderada": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "resultado.listaItem[].consultaPublicaProposicao.numeroProposicao": {
+   "tipos": [
+    "int"
+   ]
+  },
+  "resultado.listaItem[].consultaPublicaProposicao.qtdOpinioes": {
+   "tipos": [
+    "int"
+   ]
+  },
+  "resultado.listaItem[].consultaPublicaProposicao.tipoProposicao": {
+   "tipos": [
+    "dict"
+   ]
+  },
+  "resultado.listaItem[].consultaPublicaProposicao.tipoProposicao.acompanhamento": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "resultado.listaItem[].consultaPublicaProposicao.tipoProposicao.descricao": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "resultado.listaItem[].consultaPublicaProposicao.tipoProposicao.id": {
+   "tipos": [
+    "int"
+   ]
+  },
+  "resultado.listaItem[].consultaPublicaProposicao.tipoProposicao.idGrupoTipoProposicao": {
+   "tipos": [
+    "int"
+   ]
+  },
+  "resultado.listaItem[].consultaPublicaProposicao.tipoProposicao.pesquisaDirigida": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "resultado.listaItem[].consultaPublicaProposicao.tipoProposicao.sigla": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "resultado.listaItem[].consultaPublicaProposicao.totalRemovidoAutor": {
+   "tipos": [
+    "int"
+   ]
+  },
+  "resultado.listaItem[].consultaPublicaProposicao.totalRemovidoModerador": {
+   "tipos": [
+    "int"
+   ]
+  },
+  "resultado.listaItem[].consultaPublicaProposicao.votosContrarios": {
+   "tipos": [
+    "int"
+   ]
+  },
+  "resultado.listaItem[].consultaPublicaProposicao.votosFavoraveis": {
+   "tipos": [
+    "int"
+   ]
+  },
+  "resultado.listaItem[].dataPublicacao": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "resultado.listaItem[].dataUltimaAcao": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "resultado.listaItem[].dominio": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "resultado.listaItem[].ementa": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "resultado.listaItem[].faseAtual": {
+   "tipos": [
+    "dict"
+   ]
+  },
+  "resultado.listaItem[].faseAtual.codTipoTramitacao": {
+   "tipos": [
+    "int"
+   ]
+  },
+  "resultado.listaItem[].faseAtual.codigo": {
+   "tipos": [
+    "int"
+   ]
+  },
+  "resultado.listaItem[].faseAtual.descricao": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "resultado.listaItem[].faseAtual.nome": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "resultado.listaItem[].faseAtual.ordem": {
+   "tipos": [
+    "int"
+   ]
+  },
+  "resultado.listaItem[].horario": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "resultado.listaItem[].indexacao": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "resultado.listaItem[].linksTextos": {
+   "tipos": [
+    "list"
+   ]
+  },
+  "resultado.listaItem[].linksTextos[]": {
+   "tipos": [
+    "dict"
+   ]
+  },
+  "resultado.listaItem[].linksTextos[].banco": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "resultado.listaItem[].linksTextos[].descricao": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "resultado.listaItem[].linksTextos[].expressao": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "resultado.listaItem[].linksTextos[].url": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "resultado.listaItem[].listaHistoricoTramitacoes": {
+   "tipos": [
+    "list"
+   ]
+  },
+  "resultado.listaItem[].listaHistoricoTramitacoes[]": {
+   "tipos": [
+    "dict"
+   ]
+  },
+  "resultado.listaItem[].listaHistoricoTramitacoes[].data": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "resultado.listaItem[].listaHistoricoTramitacoes[].historico": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "resultado.listaItem[].listaHistoricoTramitacoes[].local": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "resultado.listaItem[].listaHistoricoTramitacoes[].passo": {
+   "tipos": [
+    "int"
+   ]
+  },
+  "resultado.listaItem[].local": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "resultado.listaItem[].matricula": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "resultado.listaItem[].numero": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "resultado.listaItem[].observacao": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "resultado.listaItem[].proposicao": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "resultado.listaItem[].regime": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "resultado.listaItem[].resumo": {
+   "tipos": [
+    "str"
+   ],
+   "opcional": true
+  },
+  "resultado.listaItem[].siglaSituacao": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "resultado.listaItem[].siglaSituacaoGeral": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "resultado.listaItem[].siglaTipoProjeto": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "resultado.listaItem[].situacao": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "resultado.listaItem[].situacaoGeral": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "resultado.listaItem[].tipoProjeto": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "resultado.listaItem[].tipoTramitacao": {
+   "tipos": [
+    "dict"
+   ]
+  },
+  "resultado.listaItem[].tipoTramitacao.codigo": {
+   "tipos": [
+    "int"
+   ]
+  },
+  "resultado.listaItem[].tipoTramitacao.listaFaseTramitacao": {
+   "tipos": [
+    "list"
+   ]
+  },
+  "resultado.listaItem[].tipoTramitacao.listaFaseTramitacao[]": {
+   "tipos": [
+    "dict"
+   ]
+  },
+  "resultado.listaItem[].tipoTramitacao.listaFaseTramitacao[].codTipoTramitacao": {
+   "tipos": [
+    "int"
+   ]
+  },
+  "resultado.listaItem[].tipoTramitacao.listaFaseTramitacao[].codigo": {
+   "tipos": [
+    "int"
+   ]
+  },
+  "resultado.listaItem[].tipoTramitacao.listaFaseTramitacao[].descricao": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "resultado.listaItem[].tipoTramitacao.listaFaseTramitacao[].nome": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "resultado.listaItem[].tipoTramitacao.listaFaseTramitacao[].ordem": {
+   "tipos": [
+    "int"
+   ]
+  },
+  "resultado.listaItem[].tipoTramitacao.nome": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "resultado.listaItem[].usuario": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "resultado.listaItem[].usuarioTexto": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "resultado.noDocumentos": {
+   "tipos": [
+    "int"
+   ]
+  },
+  "resultado.noOcorrencias": {
+   "tipos": [
+    "int"
+   ]
+  },
+  "resultado.numPagina": {
+   "tipos": [
+    "int"
+   ]
+  },
+  "resultado.ordenacao": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "resultado.tamanhoPagina": {
+   "tipos": [
+    "int"
+   ]
+  }
+ }
+}

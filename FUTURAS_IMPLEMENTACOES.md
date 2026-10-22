@@ -1,39 +1,216 @@
 # Futuras implementações
 
-Ideias levantadas e ainda não feitas. Cada item diz de onde vêm os dados e o custo de coleta.
+Ideias levantadas e ainda não feitas, em ordem de complexidade (coleta e exibição). Cada pacote junta o que faz
+sentido implantar de uma vez: mesma fonte, mesmo coletor ou mesmo bloco do site. Dentro de cada nível, os pacotes
+são independentes.
+
 Ao implementar um endpoint novo, registre-o no `ENDPOINTS.md` e o conjunto no `CHANGELOG.md`.
+Fontes externas verificadas em 2026-10-22.
 
 Já feito a partir de `/proposicoes/{id}/autores`: autor principal/coautor, nomes e partido dos coautores,
 total de autores e de partidos, iniciativa (Executivo, Senado, comissão) quando o principal não é deputado.
+Já mostramos também a cota parlamentar (Câmara: `/deputados/{id}/despesas`; Senado: CEAPS), com totais por tipo,
+por mês e os 10 maiores fornecedores, os bens declarados e a prestação de contas de campanha (TSE).
 
-## Novos endpoints da Câmara (API v2, `https://dadosabertos.camara.leg.br/api/v2`)
+**Resumo**
 
-| Ideia | Endpoint | Custo | O que daria no site |
-|---|---|---|---|
-| Temas oficiais | `/proposicoes/{id}/temas` | 1 chamada por projeto (como os autores) | filtrar e agregar propostas por tema (saúde, segurança, economia...) |
-| Proposições relacionadas | `/proposicoes/{id}/relacionadas` | 1 por projeto | ligar projetos apensados, substitutos e do mesmo assunto |
-| Votações do projeto | `/proposicoes/{id}/votacoes` | 1 por projeto | ligar o projeto às votações já guardadas em `dados/votacoes/` |
-| Tramitação completa | `/proposicoes/{id}/tramitacoes` | 1 por projeto; já usada só para o Executivo | linha do tempo, relator e comissões por onde passou |
-| Comissões do deputado | `/deputados/{id}/orgaos` | 1 por deputado | "projetos na área da comissão que ele integra" |
-| Frentes parlamentares | `/deputados/{id}/frentes` | 1 por deputado | perfil temático do deputado |
+| Nível | O que exige | Pacotes |
+|---|---|---|
+| 1 | Nada de coleta nova; só `gerar.py` e `app.js` | 1.1 Autoria · 1.2 Cota em detalhe · 1.3 Salário · 1.4 Campanha e patrimônio · 1.5 Perfil das Casas · 1.6 Presença no Senado |
+| 2 | Coleta leve (um arquivo por ano ou ~81 chamadas), exibida em blocos que já existem | 2.1 Recursos do senador · 2.2 Cota pelo CSV anual · 2.3 Perfil temático · 2.4 Comportamento nas votações |
+| 3 | Uma chamada por deputado ou por projeto, ou visualização nova | 3.1 Carreira e histórico partidário · 3.2 Vida do projeto · 3.3 Discursos e agenda · 3.4 Rede de coautoria |
+| 4 | Raspagem de HTML ou chave de API | 4.1 Recursos do deputado (portal da Câmara) · 4.2 Emendas e Portal da Transparência |
+| 5 | Fontes grandes, sem padrão ou cruzamentos sensíveis | 5.1 Fornecedores e doadores · 5.2 Assembleias e Câmaras Municipais · 5.3 Órgãos de controle |
 
-## Campos que já coletamos e o site ainda não usa
+## Nível 1: só com os dados que já temos
 
-- `/proposicoes/{id}`: `uriPropPrincipal`, `uriPropAnterior`, `uriPropPosterior` (apensados e substitutos).
-- Partido do coautor na data da assinatura: hoje usamos o partido atual e só de deputados em exercício;
-  ex-deputados e trocas de partido ficam sem sigla. Exigiria histórico (`/deputados/{id}/historico`).
+### 1.1 Autoria dos projetos
 
-## Indicadores derivados (só cruzamento dos dados que já temos)
+Tudo sai de `proposicoes_autores.json` e `proposicoes_detalhe.json`; entra no perfil do deputado e numa lista geral.
 
 - Proporção de projetos como autor principal versus coautor, por deputado.
-- Rede de coautoria: com quem cada deputado mais coassina e índice de colaboração entre partidos.
+- Ranking de deputados por iniciativas próprias (principal) em vez de coautorias.
 - Aprovados ou sancionados em que foi autor principal (situação em `proposicoes_detalhe.json`).
 - Projetos suprapartidários (`partidosDistintos` alto) versus de bancada única.
-- Ranking de deputados por iniciativas próprias (principal) em vez de coautorias.
+- Apensados e substitutos: `uriPropPrincipal`, `uriPropAnterior` e `uriPropPosterior` já vêm em `/proposicoes/{id}`;
+  basta ligar um projeto ao outro na lista.
 
-## Cobertura
+### 1.2 Cota parlamentar em detalhe
+
+Mesmo painel de gastos (`painelGastos` em `app.js`), com mais informação.
+
+- `urlDocumento` já é coletado em `despesas.itens[].documento`, mas `gerar.py` só publica totais: listar as maiores
+  notas com link para o documento fiscal.
+- Percentual do limite usado no ano (o limite mensal da cota varia por UF; tabela fixa no código, com a fonte).
+- Gasto do deputado contra a média da bancada do estado.
+
+### 1.3 Salário (subsídio)
+
+Constante no código com a data e o link do decreto legislativo; sem coleta.
+
+- O valor é igual para todos: hoje R$ 46.366,19 brutos por mês para deputados federais e senadores (o mesmo teto
+  do STF). O portal da Câmara mostra o mesmo valor em "Salário mensal bruto" (`www.camara.leg.br/deputados/{id}`).
+  Presidente, vice e ministros também têm valor fixo por decreto.
+- Deputados estaduais e vereadores: o subsídio é um percentual do federal (até 75% para estaduais; para vereadores,
+  de 20% a 75% do estadual, conforme a população do município, pela Constituição). Mostrar o teto legal calculado,
+  deixando claro que é o máximo, não o valor pago (o valor exato está no pacote 5.2).
+
+### 1.4 Campanha e patrimônio
+
+Bloco "Campanha" e "Bens" do perfil do político (`dados/tse/`).
+
+- Custo do voto: receitas de campanha divididas pelos votos recebidos, por cargo e partido.
+- Dependência do partido: participação de "Recursos de partido político" em `origensReceita`.
+- Evolução patrimonial: os bens declarados existem para cada eleição coletada, e `gerar_politicos.py` já liga as
+  eleições do mesmo político por nome e UF (`chave_nome`); falta mostrar a variação do total entre uma eleição e
+  outra (o TSE não publica mais o CPF, então a ligação continua sendo por nome).
+
+### 1.5 Perfil das Casas
+
+Página nova ou bloco na página de cada Casa, comparando eleitos e eleitorado.
+
+- Gênero, cor ou raça, instrução, idade e ocupação já são coletados por eleito (`coletar_tse.py`), mas só aparecem
+  no perfil individual. Mostrar "quem é a Câmara Municipal de X" ao lado do eleitorado (`perfil_eleitorado` já é
+  coletado).
+
+### 1.6 Presença no Senado
+
+- As votações em `dados/senado_votacoes/` já classificam "não compareceu", "licença", "missão" etc.
+  (`tipo_voto_senado`): taxa de comparecimento às votações nominais, no perfil do senador.
+
+## Nível 2: coleta leve, exibição em blocos que já existem
+
+### 2.1 Recursos e benefícios do senador
+
+Três endpoints do mesmo serviço da CEAPS (`adm.senado.gov.br/adm-dadosabertos/api/v1`), no mesmo passo de
+`coletar_ceaps_senado`; aparecem no bloco "Perfil e gastos" do senador.
+
+| Endpoint | Custo | O que daria no site |
+|---|---|---|
+| `/senadores/{cod}/recursos-utilizados` | 1 chamada por senador (81) | gastos fora da cota (correios, material, diárias e passagens de viagem oficial), benefícios e número de pessoas no gabinete e nos escritórios de apoio |
+| `/senadores/auxilio-moradia-imoveis-funcionais` | 1 chamada para todos | selo "usa imóvel funcional" / "recebe auxílio-moradia" |
+| `/senadores/escritorios-apoio` | 1 chamada para todos | endereço e telefone do escritório no estado |
+| `/senadores/aposentados`, `aposentados-ipc`, `aposentados-pssc` | 1 chamada cada | ex-senadores com aposentadoria parlamentar e o regime (útil para os perfis de ex-parlamentares) |
+
+### 2.2 Cota da Câmara pelo CSV anual
+
+- `www.camara.leg.br/cotas/Ano-{ano}.csv.zip` (~7 MB, todos os deputados de uma vez) substitui uma chamada a
+  `/deputados/{id}/despesas` por deputado e traz `cnpjCpfFornecedor`, que identifica o fornecedor sem depender
+  do nome.
+- No site: ranking dos fornecedores que mais recebem da Câmara inteira e quantos deputados usam cada um.
+- Abre caminho para o pacote 5.1 (dados da empresa e cruzamento com doadores).
+
+### 2.3 Perfil temático do deputado
+
+Arquivos em lote da Câmara (`https://dadosabertos.camara.leg.br/arquivos/...`), um download cada, em vez de uma
+chamada por projeto ou deputado. Juntos respondem "em que áreas ele atua".
+
+| Ideia | Fonte | O que daria no site |
+|---|---|---|
+| Temas oficiais dos projetos | `proposicoesTemas/json/proposicoesTemas-{ano}.json` (~10 MB; ou `/proposicoes/{id}/temas`) | filtrar e agregar propostas por tema (saúde, segurança, economia...) |
+| Comissões do deputado | `orgaosDeputados/json/orgaosDeputados-L57.json` (~8 MB; ou `/deputados/{id}/orgaos`) | "projetos na área da comissão que ele integra" |
+| Frentes parlamentares | `frentesDeputados/json/frentesDeputados.json` (~150 MB; ou `/deputados/{id}/frentes`) | frentes de que participa |
+
+O arquivo de frentes é grande: baixar uma vez por semana ou extrair só o necessário no próprio coletor.
+
+### 2.4 Comportamento nas votações
+
+Liga as votações já guardadas em `dados/votacoes/` ao partido, ao governo e à presença.
+
+| Ideia | Fonte | O que daria no site |
+|---|---|---|
+| Orientação de bancada | `votacoesOrientacoes/json/votacoesOrientacoes-{ano}.json` (~2 MB; ou `/votacoes/{id}/orientacoes`) | quanto o deputado segue o partido e o governo ("fidelidade partidária" e "governismo") |
+| Presença em eventos | `eventosPresencaDeputados/json/eventosPresencaDeputados-{ano}.json` (~30 MB) | presença em sessões e reuniões de comissão |
+| Votações do projeto | `/proposicoes/{id}/votacoes` (1 por projeto) | na página do projeto, link para as votações e como votou a bancada |
+
+## Nível 3: uma chamada por deputado ou projeto, ou visualização nova
+
+### 3.1 Carreira e histórico partidário
+
+Um passo no coletor de deputados, com chamadas por deputado (513 × 4).
+
+- `/deputados/{id}/ocupacoes`, `/profissoes` e `/mandatosExternos`: carreira antes da Câmara (vereador, prefeito,
+  deputado estadual), no perfil.
+- `/deputados/{id}/historico`: trocas de partido. Resolve também o partido do coautor na data da assinatura; hoje
+  usamos o partido atual e só de deputados em exercício, então ex-deputados e trocas de partido ficam sem sigla.
+
+### 3.2 Vida do projeto
+
+Página do projeto com linha do tempo; uma chamada por projeto, coletada de forma incremental como os autores.
+
+- `/proposicoes/{id}/tramitacoes` (hoje usado só para o Executivo): linha do tempo, relator e comissões por onde passou.
+- `/proposicoes/{id}/relacionadas`: projetos apensados, substitutos e do mesmo assunto (complementa o 1.1).
+
+### 3.3 Discursos e agenda
+
+- `/deputados/{id}/discursos`: número de discursos, temas e link para o texto.
+- `/deputados/{id}/eventos`: audiências e reuniões de que participou.
+- Uma chamada por deputado e por período; o volume cresce rápido, então guardar só contagens e os mais recentes.
+
+### 3.4 Rede de coautoria
+
+- Com quem cada deputado mais coassina e índice de colaboração entre partidos. Os dados já existem
+  (`proposicoes_autores.json`); o difícil é a exibição (grafo ou matriz entre partidos).
+
+## Nível 4: raspagem ou chave de API
+
+### 4.1 Recursos do deputado no portal da Câmara
+
+Não estão na API v2, só nas páginas do portal (HTML). Uma raspagem por deputado cobre tudo, e o bloco do site é o
+mesmo do pacote 2.1 do Senado.
+
+| Ideia | Página | O que daria no site |
+|---|---|---|
+| Benefícios | `www.camara.leg.br/deputados/{id}` (bloco "Recursos") | auxílio-moradia, imóvel funcional, viagens em missão oficial, passaporte diplomático |
+| Verba de gabinete | `www.camara.leg.br/deputados/{id}/verba-gabinete?ano={ano}` | quanto do limite mensal para pagar assessores foi usado (o limite passa de R$ 100 mil/mês) |
+| Pessoal de gabinete | `www.camara.leg.br/deputados/{id}/pessoal-gabinete` | quantos assessores e em que cargos; nomes são públicos, mas vale mostrar só a contagem |
+| Presença em plenário | `www.camara.leg.br/deputados/{id}/presenca-plenario/{ano}` | presenças, ausências justificadas e não justificadas (complementa o 2.4) |
+
+Raspagem é frágil: tratar como fonte opcional (avisar e seguir, como o TSE) e cobrir com um teste de contrato em
+`scripts/contrato_apis.py`.
+
+### 4.2 Emendas e Portal da Transparência
+
+Uma chave gratuita (cadastro com conta gov.br), enviada no cabeçalho `chave-api-dados` e guardada como secret do
+Actions, libera tudo abaixo.
+
+- `api.portaldatransparencia.gov.br/api-de-dados/emendas`: emendas individuais e de bancada por autor, com valor
+  empenhado e pago e o município que recebeu. No site: quanto cada deputado e senador mandou, para quais municípios
+  e áreas, e o mapa dos destinos (o mapa por município já existe para votos).
+- "Emendas Pix" (transferências especiais), no mesmo portal e no Transferegov: as de menor rastreio, vale um destaque.
+- Viagens a serviço e cargos de ministros e do Executivo federal.
+
+## Nível 5: fontes grandes, sem padrão ou cruzamentos sensíveis
+
+### 5.1 Fornecedores e doadores
+
+Depende do CNPJ do pacote 2.2.
+
+- Dados da empresa (atividade, data de abertura, sócios) pelo CNPJ aberto da Receita Federal
+  (`dadosabertos.rfb.gov.br`, arquivos de vários GB; rodar só localmente, como a prestação de contas).
+- Cruzamento com os doadores de campanha (`dados/tse/contas/`, pelo nome, já que não guardamos CPF de doador):
+  "empresa que doou e depois foi paga pela cota". Mostrar só correspondências exatas e com as duas fontes.
+
+### 5.2 Assembleias e Câmaras Municipais
+
+Sem padrão nacional; cada Casa publica do seu jeito.
+
+- Salário exato de deputados estaduais e vereadores: portal de transparência de cada Casa.
+- **SICONFI / Tesouro Nacional**: despesa total de cada Câmara Municipal e Assembleia; dividida pelo número de
+  cadeiras dá o "custo por parlamentar" de cada Casa, sem raspar portais locais.
+- **Querido Diário** (Open Knowledge Brasil, `queridodiario.ok.org.br/api`): diários oficiais municipais com busca
+  por texto; poderia trazer nomeações, leis sancionadas e o subsídio de vereadores em cidades sem SAPL.
+- Mesmo nível de detalhe de autoria (principal, coautores, partido, total) para as assembleias estaduais; hoje só
+  Câmara e Senado separam principal e coautor.
+
+### 5.3 Órgãos de controle
+
+- **TCU, contas julgadas irregulares** (dados abertos do TCU): lista oficial de responsáveis por contas irregulares,
+  usada pela Justiça Eleitoral na Ficha Limpa. O cruzamento é por nome e exige cuidado com homônimos; só mostrar
+  com correspondência exata e link para o processo.
+
+## Pendências de cobertura do que já existe
 
 - A primeira coleta de autores é limitada a 6.000 projetos por execução (`AUTORES_POR_EXECUCAO`),
   então proposições antigas ficam sem `principal` por alguns dias.
-- Senado e assembleias estaduais: só o Senado já separa principal e coautor; avaliar o mesmo nível de detalhe
-  (partido dos coautores, total) para senadores.
+- Senadores: avaliar o mesmo nível de detalhe de autoria dos deputados (partido dos coautores, total).

@@ -177,8 +177,46 @@ Próximos passos:
 1. Fonte de link por dado: verbas e remuneração → `https://transparencia.al.go.leg.br/` (seção correspondente); confirmar as URLs das telas no Firefox.
 2. Investigar `portal.al.go.leg.br/deputados` (lista oficial, partido, foto, contato) e `alegodigital.al.go.leg.br/spl/` (proposições e votações nominais, valores de `votacoes.json?tipo=`).
 3. Se seguir: `scripts/coletar_go.py`, amostras em `tests/fixtures/contratos/`, `ENDPOINTS.md` e `CHANGELOG.md`.
-### MA: Maranhão
-### MG: Minas Gerais
+### MA: Maranhão (Assembleia Legislativa, ALEMA; apurado em 2026-10-22)
+
+**Acesso bloqueado desta rede.** `www.al.ma.leg.br` e `sistemas.al.ma.leg.br` resolvem para 45.238.236.197, mas a porta 443 não responde (WebFetch: `ECONNREFUSED`; curl: timeout após 20 s). Nada foi lido de:
+- `https://sistemas.al.ma.leg.br/transparencia/index.html` (portal de transparência)
+- `https://www.al.ma.leg.br/sitealema/` (site institucional)
+
+**ITGP** (`https://transparenciainternacional.org.br/itgp/assembleia-legislativa/maranhao/`, ano da avaliação não informado na página): nota **43,5/100 ("Regular")**, 14º de 27 assembleias. Por dimensão: Plataformas 75; Comunicação 72,7; Governança 58,8; Transparência Legislativa 41,7; Transparência Administrativa 36,1; Marcos Legais 28,6; Participação e Engajamento 25; Transformação Digital 10. A página não lista critérios individuais; eles estão no banco de dados: `https://comunidade.transparenciainternacional.org.br/itgp-legislativo-estadual-banco-de-dados`.
+
+Próximos passos:
+1. Abrir os dois links da ALEMA no Firefox (outra rede, se o bloqueio persistir) e ver na aba Rede de onde saem os dados (CSV/JSON/API).
+2. Baixar o banco do ITGP para saber quais itens (remuneração, verba indenizatória, diárias, presença, votações) a ALEMA publica.
+3. Se acessível: `scripts/coletar_ma.py`, amostras em `tests/fixtures/contratos/`, `ENDPOINTS.md` e `CHANGELOG.md`.
+
+### MG: Minas Gerais (Assembleia Legislativa, ALMG; apurado em 2026-10-22)
+
+**Acesso livre: API JSON pública, sem autenticação nem captcha.** `https://www.almg.gov.br/transparencia/inicial/` é só o menu do portal (sem dados). Seções: Assembleia em números, Balanço das atividades, Diário do Legislativo, Licitações, Contratos e convênios, Prestação de contas (`/transparencia/prestacao-de-contas/`), Concursos, Dados abertos. Remuneração, verba indenizatória e gastos de deputados não aparecem no menu inicial; a verba tem página própria: `https://www.almg.gov.br/transparencia/prestacao-de-contas/deputados/verba-indenizatoria/` (não aberta). "Dados abertos" redireciona para `https://dadosabertos.almg.gov.br/`.
+
+Base: `https://dadosabertos.almg.gov.br/api/v2/` (JSON ou XML; `?formato=json`). O `/ws` antigo foi descontinuado. Limite do portal: no máximo 2 requisições simultâneas e 1 s entre elas, com bloqueio sem aviso se exceder. Documentação: Swagger em `https://dadosabertos.almg.gov.br/api/ajuda/swagger/view/lastest#/`; arquivos CSV em `https://dadosabertos.almg.gov.br/documentacao/arquivos` (`verbas-indenizatorias`, `deputados`, `deputados-da-atual-legislatura`, `proposicoes`, `tramitacao-de-proposicoes`, contratos, convênios, contratações, atas de registro de preços, legislação mineira, thesaurus). Testado com curl (HTTP 200):
+
+| Endpoint | O que traz |
+|---|---|
+| `deputados/em_exercicio` | lista: `id`, `nome`, `partido`, `tagLocalizacao` |
+| `deputados/{id}` | ficha: sexo, situação, início da situação, etc. |
+| `deputados/lista_telefonica` | `nomeServidor` (nome civil), partido, endereço, telefone |
+| `prestacao_contas/verbas_indenizatorias/deputados/{id}/{ano}/{mes}` | por tipo de despesa: `valor`, `descTipoDespesa`, `listaDetalheVerba` com `valorReembolsado` (detalhe por nota; campos não explorados). Mês sem dado devolve `{"list": []}` (2025/1 vazio, 2025/3 preenchido) |
+| `comissoes/...`, `pronunciamentos/...`, `contratos`/`contratacoes` | reuniões e composições, discursos, contratos (documentados, não testados) |
+
+Pontos de atenção:
+- `proposicoes/pesquisa/direcionada` devolve 400 "Parâmetro de paginação inválido" com `tp`, `ini`, `fim`; parâmetros de paginação corretos estão no Swagger (não consultado).
+- Salário/remuneração, presença e votações de deputados: não confirmados; não achei endpoint (ver Swagger). A ITGP diz que a ALMG **não publica base nominal de salários** de servidores efetivos e comissionados.
+- O `id` é interno da ALMG; `lista_telefonica` dá o nome civil, útil para cruzar com TSE/Câmara.
+
+**ITGP** (`https://transparenciainternacional.org.br/itgp/assembleia-legislativa/minas-gerais`, ano da avaliação não informado): nota **69,8/100 ("Bom")**, 3º de 27 assembleias. Por dimensão: Comunicação 100; Participação e Engajamento 93,7; Transparência Legislativa 77,1; Transformação Digital 70; Plataformas 60; Governança 58,8; Transparência Administrativa 55,6; Marcos Legais 42,9 (a página deixa o pareamento número-rótulo ambíguo; conferir no banco). Faltas apontadas: norma que regulamente a LAI, norma de registro de interações com grupos de interesse e base nominal de salários. Banco com os critérios: `https://comunidade.transparenciainternacional.org.br/itgp-legislativo-estadual-banco-de-dados`.
+
+Próximos passos:
+1. Ler o Swagger para achar remuneração, presença, votações nominais e a paginação das proposições.
+2. Baixar o CSV `verbas-indenizatorias` (histórico completo, evita uma chamada por deputado/mês).
+3. Fonte de link por dado: página da verba indenizatória acima; confirmar as demais URLs no Firefox.
+4. Se seguir: `scripts/coletar_mg.py`, amostras em `tests/fixtures/contratos/`, `ENDPOINTS.md` e `CHANGELOG.md`.
+
 ### MS: Mato Grosso do Sul
 ### MT: Mato Grosso
 ### PA: Pará

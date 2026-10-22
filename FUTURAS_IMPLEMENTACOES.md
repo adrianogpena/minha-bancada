@@ -17,7 +17,7 @@ por mês e os 10 maiores fornecedores, os bens declarados e a prestação de con
 | Nível | O que exige | Pacotes |
 |---|---|---|
 | 1 | Feito (ver abaixo) | 1.1 a 1.6 |
-| 2 | Coleta leve (um arquivo por ano ou ~81 chamadas), exibida em blocos que já existem | 2.1 Recursos do senador · 2.4 Comportamento nas votações |
+| 2 | Coleta leve (um arquivo por ano ou ~81 chamadas), exibida em blocos que já existem | 2.1 Recursos do senador · 2.4 Comportamento nas votações (resta presença e votações do projeto) |
 | 3 | Uma chamada por deputado ou por projeto, ou visualização nova | 3.1 Carreira e histórico partidário · 3.2 Vida do projeto · 3.3 Discursos e agenda · 3.4 Rede de coautoria |
 | 4 | Raspagem de HTML ou chave de API | 4.1 Recursos do deputado (portal da Câmara) · 4.2 Emendas e Portal da Transparência |
 | 5 | Fontes grandes, sem padrão ou cruzamentos sensíveis | 5.1 Fornecedores e doadores · 5.2 Assembleias e Câmaras Municipais · 5.3 Órgãos de controle |
@@ -55,13 +55,13 @@ Coleta pelo CSV anual (com `cnpj` em cada despesa) e ranking de fornecedores em 
 
 Temas oficiais dos projetos, comissões e frentes parlamentares, no bloco "Em que áreas atua" do perfil e no filtro por tema da aba Propostas; registrado no `CHANGELOG.md`. Falta "projetos na área da comissão que ele integra": a Câmara não publica o tema de cada comissão.
 
-### 2.4 Comportamento nas votações
+### 2.4 Comportamento nas votações: orientação feita (2026-10-22)
 
-Liga as votações já guardadas em `dados/votacoes/` ao partido, ao governo e à presença.
+Fidelidade ao partido e governismo pelas orientações de bancada, no perfil e na lista de deputados; registrado no `CHANGELOG.md`. Falta:
 
 | Ideia | Fonte | O que daria no site |
 |---|---|---|
-| Orientação de bancada | `votacoesOrientacoes/json/votacoesOrientacoes-{ano}.json` (~2 MB; ou `/votacoes/{id}/orientacoes`) | quanto o deputado segue o partido e o governo ("fidelidade partidária" e "governismo") |
+| Fidelidade dos partidos de bloco | nomes dos blocos vêm truncados em `votacoesOrientacoes` | ligar o bloco aos partidos (ex.: via `/blocos`) para o MDB, PSD, União etc. também terem fidelidade |
 | Presença em eventos | `eventosPresencaDeputados/json/eventosPresencaDeputados-{ano}.json` (~30 MB) | presença em sessões e reuniões de comissão |
 | Votações do projeto | `/proposicoes/{id}/votacoes` (1 por projeto) | na página do projeto, link para as votações e como votou a bancada |
 

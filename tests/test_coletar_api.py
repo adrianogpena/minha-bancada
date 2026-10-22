@@ -594,3 +594,17 @@ def test_coletar_orgaos_deputados_agrupa_por_deputado(dados, monkeypatch):
     coletar.coletar_orgaos_deputados()
     assert json.loads((dados / "orgaos_deputados.json").read_text(encoding="utf-8")) == {
         "7": [{"sigla": "CSAUDE", "nome": "Saúde", "cargo": "Titular", "inicio": "2025-03-01", "fim": None}]}
+
+
+def test_coletar_orientacoes_guarda_so_nominais_e_ignora_em_branco(dados, monkeypatch):
+    (dados / "votacoes").mkdir()
+    (dados / "votacoes" / "2026.json").write_text(json.dumps({
+        "1-1": {"id": "1-1", "data": "2026-03-01", "votos": [["7", "Sim"]]},
+        "2-2": {"id": "2-2", "data": "2026-03-02", "votos": []}}), encoding="utf-8")
+    monkeypatch.setattr(coletar, "baixar_arquivo_camara", lambda c: [
+        {"idVotacao": "1-1", "siglaBancada": "PL", "orientacao": "Sim"},
+        {"idVotacao": "1-1", "siglaBancada": "Governo", "orientacao": "Não"},
+        {"idVotacao": "1-1", "siglaBancada": "Oposição", "orientacao": ""},
+        {"idVotacao": "2-2", "siglaBancada": "PL", "orientacao": "Sim"}])
+    coletar.coletar_orientacoes()
+    assert json.loads((dados / "orientacoes.json").read_text(encoding="utf-8")) == {"1-1": {"PL": "Sim", "Governo": "Não"}}

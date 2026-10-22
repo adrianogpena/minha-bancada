@@ -432,6 +432,33 @@ def coletar_orgaos_deputados() -> None:
     print(f"Órgãos: {sum(len(v) for v in por_dep.values())} participações de {len(por_dep)} deputados")
 
 
+def coletar_orientacoes() -> None:
+    """Orientação de cada bancada (partido, federação, bloco, Governo...) nas votações nominais já guardadas, do arquivo
+    anual votacoesOrientacoes-{ano}.json. Guardado em dados/orientacoes.json como {id da votação: {bancada: orientação}}
+    (vai para o git), sem as orientações em branco. Um ano que falha mantém o que já estava guardado."""
+    arquivo = DADOS / "orientacoes.json"
+    cache = ler(arquivo, {})
+    nominais: dict[str, set] = {}
+    for arq in (DADOS / "votacoes").glob("*.json"):
+        for v in ler(arq, {}).values():
+            if v.get("votos"):
+                nominais.setdefault(v["data"][:4], set()).add(v["id"])
+    mudou = False
+    for ano, ids in sorted(nominais.items()):
+        try:
+            linhas = baixar_arquivo_camara(f"votacoesOrientacoes/json/votacoesOrientacoes-{ano}.json")
+        except Exception as e:
+            avisar(f"orientações das votações de {ano}: {e}")
+            continue
+        for l in linhas:
+            if l.get("idVotacao") in ids and l.get("siglaBancada") and (l.get("orientacao") or "").strip():
+                cache.setdefault(l["idVotacao"], {})[l["siglaBancada"].strip()] = l["orientacao"].strip()
+                mudou = True
+    if mudou:
+        salvar(arquivo, cache)
+    print(f"Orientações: {len(cache)} votações")
+
+
 def situacao_final(situacao: str) -> bool:
     """True quando a proposição não vai mais tramitar (não precisa ser reconsultada)."""
     s = (situacao or "").lower()
@@ -877,7 +904,7 @@ def main():
             coletar_autores_proposicoes()
         except Exception as e:
             avisar(f"autores das proposições: {e}")
-        for etapa in (coletar_temas_proposicoes, coletar_orgaos_deputados):  # complementos: cada um falha sozinho
+        for etapa in (coletar_temas_proposicoes, coletar_orgaos_deputados, coletar_orientacoes):  # complementos: cada um falha sozinho
             try:
                 etapa()
             except Exception as e:

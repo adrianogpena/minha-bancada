@@ -119,6 +119,50 @@ def resumir_autoria(proposicoes: list) -> dict:
     }
 
 
+ORIENTACOES = {"Sim": "sim", "Não": "nao", "Obstrução": "obstrucao"}
+VOTOU = ("sim", "nao", "abstencao", "obstrucao")
+DIVERGENCIAS = 10
+
+
+def bancada_do_partido(partido: str, bancadas) -> str | None:
+    """Nome da bancada que orientou pelo partido numa votação: a sigla do partido ou a federação ("Fdr PT-PCdoB-PV").
+    Blocos aparecem com o nome truncado na Câmara e não dá para saber os partidos: ficam sem correspondência."""
+    p = (partido or "").upper()
+    for b in bancadas:
+        if b.upper() == p:
+            return b
+    for b in bancadas:
+        if b.startswith("Fdr ") and p in b[4:].upper().split("-"):
+            return b
+    return None
+
+
+def resumir_comportamento(votos: list, orientacoes: dict, partido: str) -> dict | None:
+    """Quanto o deputado votou como o partido e como o Governo orientaram, só nas votações em que votou e a bancada deu
+    orientação Sim, Não ou Obstrução (Liberado não conta). Usa o partido atual do deputado. None sem nenhuma orientação."""
+    contas = {"partido": [0, 0], "governo": [0, 0]}
+    divergencias = []
+    for v in votos:
+        o = orientacoes.get(v["id"])
+        if not o or v["voto"] not in VOTOU:
+            continue
+        banc = bancada_do_partido(partido, [b for b in o if b != "Governo"])
+        for chave, bancada in (("partido", banc), ("governo", "Governo" if "Governo" in o else None)):
+            esperado = ORIENTACOES.get(o.get(bancada)) if bancada else None
+            if not esperado:
+                continue
+            contas[chave][0] += 1
+            if esperado == v["voto"]:
+                contas[chave][1] += 1
+            elif len(divergencias) < 3 * DIVERGENCIAS:
+                divergencias.append({"id": v["id"], "data": v["data"], "proposicao": v.get("proposicao"), "descricao": v["descricao"],
+                                     "contra": chave, "bancada": bancada, "orientacao": o[bancada], "voto": v["voto"]})
+    if not any(c[0] for c in contas.values()):
+        return None
+    divergencias.sort(key=lambda x: x["data"], reverse=True)
+    return {**{k: {"total": c[0], "seguiu": c[1]} for k, c in contas.items()}, "divergencias": divergencias[:DIVERGENCIAS]}
+
+
 def resumir_temas(proposicoes: list) -> list:
     """Temas oficiais dos projetos (já com `temas` e `principal` juntados): [[tema, projetos, aprovados, como autor principal]],
     do mais frequente para o menos. Projeto com vários temas conta em cada um."""
@@ -347,6 +391,7 @@ def main():
     autorias = ler(BRUTO / "proposicoes_autores.json", {}) or {}
     temas = ler(BRUTO / "proposicoes_temas.json", {}) or {}
     orgaos = ler(BRUTO / "orgaos_deputados.json", {}) or {}
+    orientacoes = ler(BRUTO / "orientacoes.json", {}) or {}
     partidos = {str(i): d["partido"] for i, d in deputados.items() if d.get("partido")}
 
     if SAIDA.exists():
@@ -411,6 +456,7 @@ def main():
             if p.get("tipo") in TIPOS_PROJETO and temas.get(str(p["id"])):
                 p["temas"] = temas[str(p["id"])]
         autoria = resumir_autoria(proposicoes)
+        comportamento = resumir_comportamento(votos, orientacoes, d["partido"])
         da_uf = gastos_por_uf[d["uf"]]
 
         salvar(SAIDA / "deputado" / f"{did}.json", {
@@ -423,7 +469,7 @@ def main():
             "proposicoes": proposicoes, "autoria": autoria,
             "temas": resumir_temas(proposicoes), "orgaos": ordenar_orgaos(orgaos.get(str(did), [])),
             "frentes": sorted(d["frentes"], key=lambda f: f["titulo"]) if d.get("frentes") is not None else None,
-            "votos": votos,
+            "votos": votos, "comportamento": comportamento,
             "totalVotacoes": total_nominais, "eleicao": eleicoes_deps.get(did), "condicao": d.get("condicaoEleitoral"),
             "despesas": {
                 "ano": d["despesas"]["ano"], "total": total_gasto,
@@ -443,6 +489,8 @@ def main():
             "gasto": total_gasto, "votou": votou, "votacoes": total_nominais,
             "proprias": autoria["proprias"], "aprovadasProprias": autoria["aprovadasProprias"],
             "suprapartidarios": autoria["suprapartidarios"], "autoriaColetada": autoria["autoriaColetada"],
+            "fidelidade": comportamento["partido"] if comportamento and comportamento["partido"]["total"] else None,
+            "governismo": comportamento["governo"] if comportamento and comportamento["governo"]["total"] else None,
         })
 
     salvar(SAIDA / "fornecedores_cota.json", {"ano": next(iter(deputados.values()))["despesas"]["ano"] if deputados else None,

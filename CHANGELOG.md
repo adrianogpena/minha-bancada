@@ -5,6 +5,11 @@ Regra: toda fonte nova ou mudança de coleta ganha uma entrada aqui, no mesmo co
 Datas dos conjuntos que já existiam vêm do primeiro commit que os trouxe (`git log --diff-filter=A`).
 Todas as coletas rodam sozinhas no GitHub Actions (`.github/workflows/atualizar.yml`, todo dia às 06:17 de Brasília), salvo onde indicado.
 
+## Orientação de bancada nas votações (2026-10-22)
+- **De onde:** `https://dadosabertos.camara.leg.br/arquivos/votacoesOrientacoes/json/votacoesOrientacoes-<ano>.json` (um por ano com votações nominais guardadas; ~0,7 MB em 2026).
+- **Como:** `coletar_orientacoes` (`scripts/coletar.py`, no passo das proposições) grava `dados/orientacoes.json` ({id da votação: {bancada: orientação}}), só das votações nominais já guardadas e sem orientações em branco; no git.
+- **No site:** bloco "Fidelidade ao partido e ao governo" no perfil do deputado (percentual de votos iguais à orientação, com as votações em que divergiu), colunas "Fiel ao partido" e "Pró-governo" e as duas ordenações na lista de deputados. Usa o partido atual do deputado; a bancada do partido é a sigla ou a federação ("Fdr ..."). Partidos de bloco ("Bl ...", nome truncado pela Câmara) ficam sem fidelidade, só com governismo. "Liberado" não conta.
+
 ## Perfil temático do deputado (2026-10-22)
 - **De onde:** `https://dadosabertos.camara.leg.br/arquivos/proposicoesTemas/json/proposicoesTemas-<ano>.json` (um por ano desde 2023, ~10 MB cada), `.../arquivos/orgaosDeputados/json/orgaosDeputados-L57.json` (~8 MB) e `https://dadosabertos.camara.leg.br/api/v2/deputados/{id}/frentes` (1 chamada por deputado, só a legislatura 57; o arquivo `frentesDeputados.json` tem ~150 MB).
 - **Como:** `coletar_temas_proposicoes` grava `dados/proposicoes_temas.json` ({id do projeto: temas}, só tipos de projeto) e `coletar_orgaos_deputados` grava `dados/orgaos_deputados.json`, ambos no passo das proposições de `scripts/coletar.py`, no git; `coletar_deputado` guarda `frentes` no cache do deputado.

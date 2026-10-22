@@ -168,3 +168,24 @@ def test_ordenar_orgaos_atuais_primeiro_e_mais_recentes_antes():
     orgaos = [{"sigla": "A", "inicio": "2023-02-01", "fim": "2024-01-01"}, {"sigla": "B", "inicio": "2023-03-01", "fim": None},
               {"sigla": "C", "inicio": "2025-03-01", "fim": None}]
     assert [o["sigla"] for o in gerar.ordenar_orgaos(orgaos)] == ["C", "B", "A"]
+
+
+def test_bancada_do_partido_acha_sigla_ou_federacao():
+    assert gerar.bancada_do_partido("pl", ["Governo", "PL"]) == "PL"
+    assert gerar.bancada_do_partido("PCdoB", ["Fdr PT-PCdoB-PV"]) == "Fdr PT-PCdoB-PV"
+    assert gerar.bancada_do_partido("MDB", ["Bl UniPpPsd...", "PL"]) is None
+
+
+def test_resumir_comportamento_conta_partido_governo_e_divergencias():
+    votos = [
+        {"id": "a", "data": "2026-01-01", "descricao": "d", "proposicao": "PL 1/2026", "voto": "sim"},
+        {"id": "b", "data": "2026-01-02", "descricao": "d", "proposicao": "PL 2/2026", "voto": "nao"},
+        {"id": "c", "data": "2026-01-03", "descricao": "d", "voto": "ausente"},
+        {"id": "d", "data": "2026-01-04", "descricao": "d", "voto": "sim"},
+    ]
+    orient = {"a": {"PL": "Sim", "Governo": "Não"}, "b": {"PL": "Não", "Governo": "Liberado"},
+              "c": {"PL": "Sim"}, "d": {"PL": "Liberado"}}
+    r = gerar.resumir_comportamento(votos, orient, "PL")
+    assert r["partido"] == {"total": 2, "seguiu": 2} and r["governo"] == {"total": 1, "seguiu": 0}
+    assert [(x["id"], x["contra"], x["orientacao"]) for x in r["divergencias"]] == [("a", "governo", "Não")]
+    assert gerar.resumir_comportamento(votos, {}, "PL") is None

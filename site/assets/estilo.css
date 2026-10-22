@@ -86,7 +86,7 @@ input:focus, select:focus { border-color: var(--marca); outline: none; box-shado
 .lista { list-style: none; margin: 0; padding: 0; border-top: 1px solid var(--linha); }
 .lista li { border-bottom: 1px solid var(--linha); }
 .linha-dep {
-  display: grid; grid-template-columns: 48px 1fr repeat(4, 110px); gap: 14px; align-items: center;
+  display: grid; grid-template-columns: 48px 1fr repeat(6, 100px); gap: 14px; align-items: center;
   padding: 10px 6px; color: inherit; text-decoration: none;
 }
 .linha-dep:hover { background: var(--marca-clara); }
@@ -95,7 +95,7 @@ input:focus, select:focus { border-color: var(--marca); outline: none; box-shado
 .metrica { text-align: right; font-variant-numeric: tabular-nums; }
 .metrica b { display: block; font-size: 17px; }
 .metrica span { font-size: 13px; color: var(--tinta-suave); }
-.cabecalho-lista { display: grid; grid-template-columns: 48px 1fr repeat(4, 110px); gap: 14px; padding: 0 6px 6px; font-size: 13px; color: var(--tinta-suave); }
+.cabecalho-lista { display: grid; grid-template-columns: 48px 1fr repeat(6, 100px); gap: 14px; padding: 0 6px 6px; font-size: 13px; color: var(--tinta-suave); }
 .cabecalho-lista span:nth-child(n+3) { text-align: right; }
 
 .foto {

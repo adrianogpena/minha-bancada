@@ -165,6 +165,7 @@ async function paginaCamara() {
   const q = new URLSearchParams(location.search);
   for (const k of ["busca", "uf", "partido", "ordem"]) if (q.get(k)) $("#" + k).value = q.get(k);
 
+  const taxa = (x) => (x ? x.seguiu / x.total : -1);
   const ordenadores = {
     nome: (a, b) => a.nome.localeCompare(b.nome, "pt-BR"),
     participacao: (a, b) => b.votou / (b.votacoes || 1) - a.votou / (a.votacoes || 1),
@@ -173,6 +174,8 @@ async function paginaCamara() {
     proprias: (a, b) => b.proprias - a.proprias || b.aprovadasProprias - a.aprovadasProprias,
     aprovadas: (a, b) => b.aprovadasProprias - a.aprovadasProprias || b.proprias - a.proprias,
     suprapartidarios: (a, b) => b.suprapartidarios - a.suprapartidarios,
+    fidelidade: (a, b) => taxa(b.fidelidade) - taxa(a.fidelidade),
+    governismo: (a, b) => taxa(b.governismo) - taxa(a.governismo),
   };
 
   function desenhar() {
@@ -191,7 +194,7 @@ async function paginaCamara() {
     $("#contagem").textContent = `${filtrados.length} de ${deps.length} deputados em exercício`;
     if (!filtrados.length) { alvo.innerHTML = `<p class="vazio">Nenhum deputado com esses filtros. Tente limpar a busca ou escolher outro estado.</p>`; return; }
     alvo.innerHTML = `
-      <div class="cabecalho-lista" aria-hidden="true"><span></span><span>Deputado</span><span>Votou</span><span class="so-largo">Proposições</span><span class="so-largo">Iniciativas próprias</span><span class="so-largo">Gastos no ano</span></div>
+      <div class="cabecalho-lista" aria-hidden="true"><span></span><span>Deputado</span><span>Votou</span><span class="so-largo">Proposições</span><span class="so-largo">Iniciativas próprias</span><span class="so-largo">Fiel ao partido</span><span class="so-largo">Pró-governo</span><span class="so-largo">Gastos no ano</span></div>
       <ul class="lista">${filtrados.map((d) => `
         <li><a class="linha-dep" href="deputado.html?id=${d.id}">
           ${foto(d)}
@@ -199,6 +202,8 @@ async function paginaCamara() {
           <span class="metrica"><b>${pct(d.votou, d.votacoes)}</b><span>das votações</span></span>
           <span class="metrica so-largo"><b>${d.proposicoes}</b><span>apresentadas</span></span>
           <span class="metrica so-largo" title="Projetos em que ${esc(d.nome)} é o primeiro a assinar, entre os ${d.autoriaColetada} com autoria já coletada"><b>${d.proprias}</b><span>${d.aprovadasProprias} aprovados</span></span>
+          <span class="metrica so-largo" title="Votações em que votou como o partido orientou, entre as que o partido orientou Sim, Não ou Obstrução"><b>${d.fidelidade ? pct(d.fidelidade.seguiu, d.fidelidade.total) : "—"}</b><span>${d.fidelidade ? `de ${d.fidelidade.total} votações` : "sem orientação"}</span></span>
+          <span class="metrica so-largo" title="Votações em que votou como o Governo orientou, entre as que o Governo orientou Sim, Não ou Obstrução"><b>${d.governismo ? pct(d.governismo.seguiu, d.governismo.total) : "—"}</b><span>${d.governismo ? `de ${d.governismo.total} votações` : "sem orientação"}</span></span>
           <span class="metrica so-largo"><b>${reais(d.gasto)}</b><span>cota parlamentar</span></span>
         </a></li>`).join("")}</ul>`;
   }
@@ -343,6 +348,26 @@ function painelTematico(dep) {
       ...anos.map((a) => [`Temas dos projetos de ${a} (arquivo da Câmara)`, `${ARQUIVOS_CAMARA}/proposicoesTemas/json/proposicoesTemas-${a}.json`])])}`;
 }
 
+/* Fidelidade ao partido e governismo do deputado, a partir das orientações de bancada nas votações nominais. */
+function painelComportamento(dep) {
+  const c = dep.comportamento;
+  if (!c) return "";
+  const caixa = (k, titulo, quem) => c[k].total
+    ? `<div><b>${pct(c[k].seguiu, c[k].total)}</b><span>${titulo}: votou como ${quem} orientou em ${c[k].seguiu} de ${c[k].total} votações</span></div>` : "";
+  const div = c.divergencias || [];
+  return `
+    <section class="painel" aria-labelledby="t-comportamento">
+      <div class="painel-titulo">
+        <h2 id="t-comportamento">Fidelidade ao partido e ao governo</h2>
+        <p>Compara o voto de ${esc(dep.nome)} com a orientação que a bancada do partido (${esc(dep.partido)}) e o Governo deram em cada votação. Só entram as votações em que votou e a orientação foi Sim, Não ou Obstrução; "Liberado" não conta. Usa o partido atual do deputado.</p>
+      </div>
+      <div class="numeros">${caixa("partido", "Fidelidade ao partido", "o partido")}${caixa("governo", "Governismo", "o Governo")}</div>
+      ${c.partido.total ? "" : `<p class="vazio">Sem orientação da bancada do ${esc(dep.partido)}: a Câmara registra partidos de bloco com o nome do bloco truncado, e não dá para ligá-los ao partido.</p>`}
+      ${div.length ? `<h3>Quando votou diferente</h3><ul class="lista-simples">${div.map((x) => `<li><span class="quando">${data(x.data)}</span> ${x.proposicao ? `<b>${esc(x.proposicao)}</b>: ` : ""}votou <b>${esc(VOTOS[x.voto]?.rotulo || x.voto)}</b>, a orientação ${x.contra === "governo" ? "do Governo" : `da bancada (${esc(x.bancada)})`} foi <b>${esc(x.orientacao)}</b>. <a href="votacao.html?id=${encodeURIComponent(x.id)}">Ver votação</a></li>`).join("")}</ul>` : ""}
+      ${fontes([["Orientações de bancada (arquivo da Câmara)", `${ARQUIVOS_CAMARA}/votacoesOrientacoes/json/votacoesOrientacoes-${(div[0]?.data || new Date().toISOString()).slice(0, 4)}.json`]])}
+    </section>`;
+}
+
 async function paginaDeputado() {
   const alvo = $("#conteudo");
   const id = param("id");
@@ -381,6 +406,7 @@ async function paginaDeputado() {
     subtitulo: `<span class="selo">${esc(dep.partido)}/${esc(dep.uf)}</span> ${dep.situacao ? esc(dep.situacao) : ""}`,
     painelPerfil, rotuloPerfil: "Perfil e gastos",
     linhaDoTempo: votacoes.map((v) => ({ ...v, voto: meus.get(v.id) || "ausente" })), // mais recente primeiro
+    painelComportamento: painelComportamento(dep),
     proposicoes: dep.proposicoes, tipoProjeto: (p) => !!TIPOS_PROJETO[p.tipo],
     textoLegislatura: "como autor ou coautor nesta legislatura (desde fev. de 2023)", suprapartidarios: true,
     papel: (p) => p.principal === undefined ? "autor ou coautor. A Câmara lista os dois juntos e a ordem de assinatura desta proposição ainda não foi coletada."
@@ -435,6 +461,7 @@ function montarParlamentar(alvo, c) {
         <div><b>${contagem.ausente || 0}</b><span>sem voto registrado</span></div>
       </div>
     </section>
+    ${c.painelComportamento || ""}
     <h2 id="votos">Como votou</h2>
     <p>Cada linha mostra o voto de ${esc(nome)}, o resultado final da votação e o placar geral.</p>
     <div class="abas" id="abas-votos"></div>

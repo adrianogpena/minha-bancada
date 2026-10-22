@@ -152,3 +152,13 @@ Sem padrão nacional; cada Casa publica do seu jeito.
 - A primeira coleta de autores é limitada a 6.000 projetos por execução (`AUTORES_POR_EXECUCAO`),
   então proposições antigas ficam sem `principal` por alguns dias.
 - Senadores: avaliar o mesmo nível de detalhe de autoria dos deputados (partido dos coautores, total).
+- Assembleias de AP, DF, ES e MA ainda sem coletor: em 2026-10-22 os sites não responderam desta rede
+  (timeout/DNS), provável bloqueio da rede local. Tentar de outra rede ou do Actions e, se responderem, criar
+  `scripts/coletar_estadual_<uf>.py` (ou, se usar SAPL, só o host em `ASSEMBLEIAS`). Endereços em
+  `LEVANTAMENTO_DADOS.md` (§ AP, DF, ES, MA):
+  - AP: `http://www.al.ap.leg.br`, `https://sapl.al.ap.leg.br/` (cópia no Wayback de 06/12/2024).
+  - DF: `https://www.cl.df.gov.br/web/portal-transparencia`; testar também
+    `https://sapl.cl.df.gov.br/api/parlamentares/legislatura/?page_size=1`.
+  - ES: `https://www.al.es.gov.br/Transparencia`, `/DadosAbertos/Remuneracao` (proposições, salário, viagens e
+    presença; sem votações nominais nem verba indenizatória).
+  - MA: `https://sistemas.al.ma.leg.br/transparencia/index.html`, `https://www.al.ma.leg.br/sitealema/`.

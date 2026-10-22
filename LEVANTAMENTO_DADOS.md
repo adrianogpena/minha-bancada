@@ -345,7 +345,22 @@ Próximos passos:
 4. Fonte de link por dado: cota → `https://transparencia.al.rn.leg.br/verbas`.
 5. Se seguir: `scripts/coletar_rn.py`, amostras em `tests/fixtures/contratos/`, `ENDPOINTS.md` e `CHANGELOG.md`.
 
-### RR: Roraima
+### RR: Roraima (Assembleia Legislativa, ALE-RR; apurado em 2026-10-22)
+
+**Portal de transparência: `https://transparencia.al.rr.leg.br/`.** Só li o texto do índice (provavelmente WordPress, feito pela Arcus Consultoria; login, formato de exportação e API não confirmados; não há menção a dados abertos).
+- Execução orçamentária e financeira (base `https://transparencia.al.rr.leg.br/execucao-orcamentaria-e-financeira/`): `repasses-ale-intro/`, `despesas/`, `diarias-passagens-intro/`, `contratos-intro/`, `licitacoes-intro/`, `verbas-indenizatorias-intro/`, `gestao-fiscal-intro/`, `gestao-de-pessoal-intro/` (subsídio, vencimento e remuneração). Emendas Parlamentares: link vazio (`#`).
+- Planejamento e prestação de contas: LOA, parcerias, prestação de contas; FUNESPLE (fundo do Legislativo): receitas, gestão fiscal, prestação de contas.
+- e-SIC: `http://grp.al.rr.leg.br/grp/acessoexterno/programaAcessoExterno.faces?codigo=68000` (sistema GRP externo).
+- Não há seção de parlamentares, presença, votações nem projetos. O item mais próximo de cota por deputado é Verbas Indenizatórias (conteúdo não aberto).
+
+**ITGP** (`https://transparenciainternacional.org.br/itgp/assembleia-legislativa/roraima`, ano da avaliação não informado): nota **41,3/100 ("Regular")**, 16º de 27. Por dimensão (pareamento pela ordem da página; conferir na fonte): Comunicação 90,9; Transformação Digital 50; Transparência Administrativa 47,2; Plataformas 45; Transparência Legislativa 33; Marcos Legais 28,6; Governança 23,5; Participação e Engajamento 12,5. Pontos fortes: transmissão de sessões, aplicativo cidadão. Fracos: organização da Casa e responsabilidade por setor pouco claras; faltam relatórios internos de gestão de recursos. Banco de dados da avaliação: `https://comunidade.transparenciainternacional.org.br/itgp-legislativo-estadual-banco-de-dados`.
+
+Próximos passos:
+1. No Firefox, abrir `verbas-indenizatorias-intro/`, `gestao-de-pessoal-intro/` e `diarias-passagens-intro/` com a aba Rede aberta, para ver formato (tabela, PDF, GRP), URL de dados e anos.
+2. Achar fonte de projetos, presença e votações (provavelmente `https://www.al.rr.leg.br`).
+3. Fonte de link por dado: verba → `https://transparencia.al.rr.leg.br/execucao-orcamentaria-e-financeira/verbas-indenizatorias-intro/`.
+4. Se seguir: `scripts/coletar_rr.py`, amostras em `tests/fixtures/contratos/`, `ENDPOINTS.md` e `CHANGELOG.md`.
+
 ### RS: Rio Grande do Sul
 ### SC: Santa Catarina
 ### SE: Sergipe

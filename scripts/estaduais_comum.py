@@ -34,8 +34,10 @@ Helpers: `sessao`, `ler`, `salvar`, `avisar`, `sem_acento`, `nome_limpo`, `valor
 """
 
 import json
+import os
 import re
 import sys
+import time
 import unicodedata
 from pathlib import Path
 
@@ -48,15 +50,36 @@ DADOS = RAIZ / "dados" / "estaduais"
 CONEXOES_POR_HOST = 2
 USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36"
 
+TIMEOUT_PADRAO = 30   # segundos por requisição quando o coletor não define o seu
+# Tempo total de coleta do processo, em minutos (variável ESTADUAIS_PRAZO_MIN; vazio = sem prazo). Esgotado, toda nova
+# requisição levanta PrazoEsgotado: cada etapa vira aviso, o que já foi gravado fica e o job termina no prazo, sem ser morto.
+PRAZO_FIM = time.monotonic() + float(os.environ["ESTADUAIS_PRAZO_MIN"]) * 60 if os.environ.get("ESTADUAIS_PRAZO_MIN") else None
+
 MESES = {"janeiro": 1, "fevereiro": 2, "marco": 3, "abril": 4, "maio": 5, "junho": 6, "julho": 7, "agosto": 8,
          "setembro": 9, "outubro": 10, "novembro": 11, "dezembro": 12}
 _PREFIXO_DEP = re.compile(r"^\s*(deputad[oa]\s*\(a\)|deputad[oa]|dep\.?)\s+", re.I)
 
 
+class PrazoEsgotado(RuntimeError):
+    pass
+
+
+def checar_prazo() -> None:
+    if PRAZO_FIM is not None and time.monotonic() > PRAZO_FIM:
+        raise PrazoEsgotado("prazo de coleta esgotado")
+
+
+class _Sessao(requests.Session):
+    def request(self, *args, **kwargs):
+        checar_prazo()
+        kwargs.setdefault("timeout", TIMEOUT_PADRAO)
+        return super().request(*args, **kwargs)
+
+
 def sessao() -> requests.Session:
-    s = requests.Session()
+    s = _Sessao()
     s.headers.update({"User-Agent": USER_AGENT, "Accept": "*/*"})
-    retry = Retry(total=5, backoff_factor=2, status_forcelist=(429, 500, 502, 503, 504), allowed_methods=("GET",))
+    retry = Retry(total=3, backoff_factor=2, status_forcelist=(429, 500, 502, 503, 504), allowed_methods=("GET",))
     adaptador = HTTPAdapter(max_retries=retry, pool_connections=CONEXOES_POR_HOST, pool_maxsize=CONEXOES_POR_HOST, pool_block=True)
     s.mount("https://", adaptador)
     s.mount("http://", adaptador)

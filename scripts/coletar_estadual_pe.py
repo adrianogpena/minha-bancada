@@ -219,6 +219,8 @@ def coletar() -> None:
         itens = verba_do_ano(s, deputados, ano, existentes, hoje)
         comum.salvar(arq, {"coletadoEm": agora, "fonte": VERBA_PAGINA, "itens": itens})
         print(f"PE: {ano} verba {len(itens)} notas")
+        if (pasta / f"materias_{ano}.json").exists() and ano < hoje.year - 1:  # ano fechado há mais de um ano: não muda
+            continue
         ids_deputados = {}
         achadas = {}
         for tipo in TIPOS_PROPOSICAO:

@@ -80,3 +80,29 @@ def test_votos_codificados_e_secretos():
     assert v["votos"] == [["1", "Sim"], ["2", "Não"], ["3", "Abstenção"]] and v["aprovada"] is False and v["resultado"] == "Rejeitado"
     detalhe["votacao"]["dados"] = [{"voto": "votou", "parlamentar": {"id": 1}}]
     assert rn.votacao(processo, detalhe, {"1"}) is None
+
+
+def test_presenca_guarda_sessoes_lidas_e_nao_repete(tmp_path, monkeypatch):
+    from datetime import date, timedelta
+    monkeypatch.setattr(rn, "PASTA", tmp_path)
+    hoje = date.today()
+    antiga, recente, quebrada = "2024-05-01", (hoje - timedelta(days=1)).isoformat(), "2024-06-01"
+    sessoes = [{"id": 1, "dataInicio": antiga}, {"id": 2, "dataInicio": recente}, {"id": 3, "dataInicio": quebrada}]
+    chamadas = []
+
+    def pegar(s, caminho, **kw):
+        chamadas.append(caminho)
+        if caminho.endswith("/3"):
+            raise RuntimeError("HTTP 500")
+        return {"dados": [{"id": 8, "evento": {"chave": "presenca"}}]}
+
+    monkeypatch.setattr(rn, "pegar", pegar)
+    deputados = [{"id": "8"}]
+    rn.coletar_presenca(None, deputados, sessoes)
+    assert sorted(chamadas) == ["reuniao/presenca/1", "reuniao/presenca/2", "reuniao/presenca/3"]
+    # segunda execução: a antiga fica no cache, a falha espera a renovação; só a sessão recente é lida de novo
+    chamadas.clear()
+    rn.coletar_presenca(None, deputados, sessoes)
+    assert chamadas == ["reuniao/presenca/2"]
+    itens = json.loads((tmp_path / "presenca.json").read_text(encoding="utf-8"))["itens"]
+    assert sum(i["presente"] for i in itens) == 2  # sessões 1 e 2; a 3 ficou de fora

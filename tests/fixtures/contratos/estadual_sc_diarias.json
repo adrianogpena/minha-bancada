@@ -1,0 +1,7 @@
+{
+ "fonte": "https://transparencia.alesc.sc.gov.br/diarias/dados-abertos",
+ "capturadoEm": "2026-10-22",
+ "amostra": {
+  "csv": "Nome;Conta;Vínculo;Data;Quantidade;Valor;Relatório\n\"SILVIO CARDOSO JUNIOR\";13089;Deputado;19/10/2026;1,0;1.078,00;https://diarias.alesc.sc.gov.br/prestacao-contas/163969\n\"NAPOLEAO BERNARDES NETO\";00260;Deputado;19/10/2026;1,0;1.078,00;https://diarias.alesc.sc.gov.br/prestacao-contas/164026"
+ }
+}

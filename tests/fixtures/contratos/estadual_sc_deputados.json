@@ -1,0 +1,7 @@
+{
+ "fonte": "https://transparencia.alesc.sc.gov.br/deputados",
+ "capturadoEm": "2026-10-22",
+ "amostra": {
+  "html": "<table><tr>\n                        <td class=\"fw-semibold\">ALEXANDER BRASIL ALVES PEREIRA</td>\n                        <td class=\"text-center\">10/2026</td>\n                        <td class=\"text-end\">\n                                                        <a href=\"/deputados/contracheque/10230?ano=2026&amp;mes=10\" class=\"btn btn-sm btn-outline-success\" title=\"Ver remuneração\" hx-get=\"/deputados/contracheque/10230?ano=2026&amp;mes=10\" hx-target=\"#modal-lg .modal-content\" hx-trigger=\"click\" data-bs-toggle=\"modal\" data-bs-target=\"#modal-lg\"><i class=\"fa-solid fa-brazilian-real-sign me-1\"></i>Remuneração</a>                        </td>\n                    </tr><tr>\n                        <td class=\"fw-semibold\">ALTAIR SILVA</td>\n                        <td class=\"text-center\">10/2026</td>\n                        <td class=\"text-end\">\n                                                        <a href=\"/deputados/contracheque/5712?ano=2026&amp;mes=10\" class=\"btn btn-sm btn-outline-success\" title=\"Ver remuneração\" hx-get=\"/deputados/contracheque/5712?ano=2026&amp;mes=10\" hx-target=\"#modal-lg .modal-content\" hx-trigger=\"click\" data-bs-toggle=\"modal\" data-bs-target=\"#modal-lg\"><i class=\"fa-solid fa-brazilian-real-sign me-1\"></i>Remuneração</a>                        </td>\n                    </tr></table>"
+ }
+}

@@ -64,6 +64,7 @@ Os testes não acessam a internet: as respostas das APIs (Câmara, Senado, TSE, 
 pip install -r requirements-dev.txt
 python -m pytest                       # scripts de coleta/geração + sanidade dos arquivos em dados/
 node --test tests/js/app.test.js       # utilidades do site/assets/app.js
+node --test tests/e2e/fumaca.test.js   # abre cada página no Chromium sobre dados mínimos (precisa de `npm i --no-save playwright`)
 ```
 
 ### Contrato das APIs externas

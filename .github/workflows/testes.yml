@@ -19,3 +19,29 @@ jobs:
         with:
           node-version: 22
       - run: node --test tests/js/app.test.js
+
+  # erro de sintaxe ou de expressão em um workflow só apareceria depois do merge (os testes não rodam na master)
+  workflows:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verificar os workflows com o actionlint
+        run: |
+          bash <(curl -sSfL https://raw.githubusercontent.com/rhysd/actionlint/v1.7.7/scripts/download-actionlint.bash) 1.7.7
+          ./actionlint -color
+
+  # abre cada página do site num Chromium sobre dados mínimos (tests/e2e/fumaca.test.js)
+  navegador:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install -r requirements.txt
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm install --no-save --no-package-lock playwright@1.56.1
+      - run: npx playwright install --with-deps chromium
+      - run: node --test tests/e2e/fumaca.test.js

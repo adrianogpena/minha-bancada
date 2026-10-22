@@ -14,7 +14,7 @@ import importlib
 import re
 import sys
 
-from coletar_estaduais import (RENOVAR_ANO_ANTIGO_DIAS, avisar, compactar_materia, ler, paginar, salvar,
+from coletar_estaduais import (RENOVAR_ANO_ANTIGO_DIAS, compactar_materia, em_paralelo, ler, paginar, salvar,
                                sem_acento, tipos_materia)
 from coletar_estaduais import DADOS as DADOS_ESTADUAIS
 
@@ -73,14 +73,13 @@ def coletar(uf: str, host: str) -> None:
 
 
 def main() -> None:
-    for uf in [a.upper() for a in sys.argv[1:]] or list(TODAS):
-        try:
-            if uf in OUTRAS:
-                importlib.import_module(f"coletar_prefeitura_{uf.lower()}").coletar()
-            else:
-                coletar(uf, CAMARAS[uf][1])
-        except Exception as e:
-            avisar(f"{uf}: prefeitura: {e}")
+    def uma(uf):
+        if uf in OUTRAS:
+            importlib.import_module(f"coletar_prefeitura_{uf.lower()}").coletar()
+        else:
+            coletar(uf, CAMARAS[uf][1])
+
+    em_paralelo([a.upper() for a in sys.argv[1:]] or list(TODAS), uma, "prefeitura")
 
 
 if __name__ == "__main__":

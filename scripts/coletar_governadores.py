@@ -13,7 +13,7 @@ import datetime as dt
 import re
 import sys
 
-from coletar_estaduais import (ASSEMBLEIAS, DADOS, RENOVAR_ANO_ANTIGO_DIAS, avisar, compactar_materia,
+from coletar_estaduais import (ASSEMBLEIAS, DADOS, RENOVAR_ANO_ANTIGO_DIAS, em_paralelo, compactar_materia,
                                ler, paginar, salvar, sem_acento, tipos_materia)
 
 ANO_INICIAL = 2023  # mandato atual começa em 1º de janeiro de 2023
@@ -49,11 +49,7 @@ def coletar(uf: str, host: str) -> None:
 
 
 def main() -> None:
-    for uf in [a.upper() for a in sys.argv[1:]] or list(ASSEMBLEIAS):
-        try:
-            coletar(uf, ASSEMBLEIAS[uf])
-        except Exception as e:
-            avisar(f"{uf}: governo: {e}")
+    em_paralelo([a.upper() for a in sys.argv[1:]] or list(ASSEMBLEIAS), lambda uf: coletar(uf, ASSEMBLEIAS[uf]), "governo")
 
 
 if __name__ == "__main__":

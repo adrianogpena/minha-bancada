@@ -35,6 +35,7 @@ ASSEMBLEIAS = {
     "TO": "sapl.al.to.leg.br",
 }
 TRABALHADORES = 4
+UFS_EM_PARALELO = 4  # Assembleias e Câmaras são servidores diferentes, então dá para coletar várias ao mesmo tempo
 RENOVAR_ANO_ANTIGO_DIAS = 7   # projetos de anos anteriores são consultados de novo só de vez em quando
 # só projetos de verdade; requerimentos e indicações são milhares por ano e pesariam no repositório
 TIPO_PROJETO = re.compile(r"^(projeto|proposta de emenda|medida provis)", re.I)
@@ -253,13 +254,21 @@ def coletar_assembleia(uf: str, host: str) -> None:
             avisar(f"{uf}: {e}")
 
 
+def em_paralelo(ufs: list[str], coletar, rotulo: str = "") -> None:
+    """Roda `coletar(uf)` para cada UF, várias ao mesmo tempo; a falha de uma UF vira aviso e não derruba as outras."""
+    def uma(uf):
+        try:
+            coletar(uf)
+        except Exception as e:
+            avisar(f"{uf}: {rotulo + ': ' if rotulo else ''}{e}")
+
+    with ThreadPoolExecutor(UFS_EM_PARALELO) as ex:
+        list(ex.map(uma, ufs))
+
+
 def main() -> None:
     alvo = [a.upper() for a in sys.argv[1:]] or list(ASSEMBLEIAS)
-    for uf in alvo:
-        try:
-            coletar_assembleia(uf, ASSEMBLEIAS[uf])
-        except Exception as e:
-            avisar(f"{uf}: {e}")
+    em_paralelo(alvo, lambda uf: coletar_assembleia(uf, ASSEMBLEIAS[uf]))
 
 
 if __name__ == "__main__":

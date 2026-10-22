@@ -5,6 +5,12 @@ Regra: toda fonte nova ou mudança de coleta ganha uma entrada aqui, no mesmo co
 Datas dos conjuntos que já existiam vêm do primeiro commit que os trouxe (`git log --diff-filter=A`).
 Todas as coletas rodam sozinhas no GitHub Actions (`.github/workflows/atualizar.yml`, todo dia às 06:17 de Brasília), salvo onde indicado.
 
+## Coletas em paralelo (2026-10-22)
+O `atualizar.yml` passou de um job sequencial (~20 min) para jobs paralelos: Câmara, Senado, TSE, Executivo, Assembleias/governadores e prefeituras coletam ao mesmo tempo; o job `publicar` junta os pacotes (`scripts/empacotar.sh`), gera o site, salva no git e publica.
+Câmara, Senado e TSE são indispensáveis; as outras coletas falham sem impedir a publicação.
+Assembleias, governadores e prefeituras (que já ficam no git) passaram a ser coletados por completo só às segundas-feiras (UTC) e nas execuções manuais ou por mudança de código; nos outros dias vale o que está no repositório.
+Concorrência: Câmara de 6 para 10 requisições em paralelo (`CAMARA_TRABALHADORES`; o Senado segue com 2), e as UFs de Assembleias, governadores e prefeituras são coletadas 4 de cada vez.
+
 ## Nomes dos campos (2026-10-21)
 Todos os campos dos JSON de `dados/` e `site/dados/` passaram a ter nome por extenso (antes eram siglas de uma ou duas letras, como `sit`, `ap`, `td`, `dep`, `sq`, `ue`).
 Os arquivos já commitados foram convertidos de uma vez; o conteúdo não mudou. Exemplos: `sit` → `situacao`, `ap` → `dataApresentacao`, `td` → `tipoDescricao`,

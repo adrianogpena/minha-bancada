@@ -29,7 +29,7 @@ RAIZ = Path(__file__).resolve().parent.parent
 DADOS = RAIZ / "dados"
 INICIO_LEGISLATURA = "2023-02-01"  # 57ª legislatura
 TRABALHADORES_SENADO = 2  # o Senado responde 503 quando apertado
-TRABALHADORES = 6  # requisições em paralelo; seja gentil com a API pública
+TRABALHADORES = int(os.environ.get("CAMARA_TRABALHADORES", 10))  # requisições em paralelo; seja gentil com a API pública (429 e 5xx são repetidos com espera)
 
 
 def sessao() -> requests.Session:

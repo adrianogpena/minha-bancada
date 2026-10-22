@@ -81,9 +81,72 @@ Próximos passos:
 3. Emendas: baixar o ZIP do CKAN, ligar `Nome do Deputado` ao deputado do TSE (nomes com espaços extras) e registrar em `ENDPOINTS.md`/`CHANGELOG.md`.
 4. Votos e presença: sem fonte aberta confirmada; verificar se `ordem-do-dia`/`sessoes-plenarias` trazem votação nominal.
 5. Verificar `portalrh.alba.ba.gov.br` (remuneração por deputado/gabinete).
-### CE: Ceará
+### CE: Ceará (apurado em 2026-10-22)
+
+Portal: `https://transparencia.al.ce.gov.br/` (dados desde 2021). Acessível por `curl` com User-Agent de navegador, `robots.txt` sem restrição. Não usa SAPL. Site institucional: `https://www.al.ce.gov.br/`.
+
+| Dado | Onde | Acesso |
+|---|---|---|
+| Deputados (46 em exercício/licenciados + 7 suplentes em exercício; nome, partido, foto) | `https://www.al.ce.gov.br/deputados`; ficha `/deputados/{slug}` (slug = nome minúsculo sem acento, hífens, ex.: `agenor-neto`); foto `https://www.al.ce.gov.br/image/{id}` | HTML estático. Ficha tem comissões, projetos e "Votos" (conteúdo a abrir) |
+| Verba de Desempenho Parlamentar (VDP, a cota) por deputado, 2021 até hoje | `/despesas/verba-desempenho-parlamentar?mes=10&ano=2026` (filtro mês, ano, nome; 30 por página, `&page=2`) | **CSV aberto por mês**: `/despesas/verba-desempenho-parlamentar/csv?mes=10&ano=2026`, separador `;`, colunas `DEPUTADO;PERIODO;EMPENHO;DESCRICAO;CNPJ;CREDOR;VALOR` (valor `4.000,00`), nome como `DEP AGENOR NETO`. Testado: outubro/2026 = 354 linhas; mês sem dados volta só o cabeçalho (jul e ago/2026 vazios). Fonte: S2GPR até 2021, SiafeCE desde 2022 |
+| Votações nominais | `/consultas-gerais/votacao-nominal` (filtros legislatura 31.ª e sessão legislativa 1.ª–4.ª; colunas legislatura, sessão legislativa, sessão, data, matéria, detalhe) | Por matéria: PDF `/uploads/votacao_nominal_materia/{id}.pdf` e **XLSX** `/uploads/votacao_nominal_materia_csv/{id}.xlsx` (HTTP 200). O XLSX é "RELATÓRIO DE VOTAÇÃO" com blocos SIM / NÃO / ABSTENÇÃO e, por deputado, o nome e o partido (codificação do arquivo em Latin-1). Os ids são aleatórios e só aparecem na página; o filtro é por JS (a URL com query não filtrou) e há exportação geral `/consultas-gerais/votacao-nominal/votacaoNominalcsv` ainda não testada |
+| Proposições (autoria, ementa, situação) | `/portal/proposicoes` leva a `https://www2.al.ce.gov.br/legislativo/proposicoes/numero.php?nome=31_legislatura&tabela={projeto_lei,projeto_indi,projeto_decre,projeto_compl,projeto_emen,projeto_reso,projeto_mens}&opcao={T,D}` (T tramitando, D deliberados). Legislaturas 26–30: páginas estáticas `.../proposicoes/30_legislatura.htm` | HTML paginado (20 por página; projetos de lei tramitando: 2.499 em 125 páginas). Cada item traz nº/ano, **Autor** (nome em maiúsculas), data de entrada, ementa, lei, situação. Http redireciona para https (301) |
+| API do portal (OpenAPI 3.0, Swagger) | UI em `/api`; especificação `https://transparencia.al.ce.gov.br/docs?api-docs.json`; GET sem autenticação, JSON `{success, message, data}`, 20 registros por requisição | Só 5 rotas: `/api/contratos`, `/api/empenhos`, `/api/licitacoes`, `/api/pagamentos`, `/api/termos-credenciamento`. **Não há deputados, votos, presença nem proposições.** Útil só para cruzar empenho/pagamento da VDP |
+| Remuneração de membros e servidores | `/gestao-de-pessoas/pessoal`, `/gestao-de-pessoas/estrutura-remuneratoria` | A descobrir (formato e se lista deputado) |
+| Diárias | `/despesas/despesas-diarias` | A descobrir |
+| Pagamentos, empenhos, FPP (Fundo de Previdência Parlamentar) | `/despesas/pagamentos`, `/despesas/despesas-notas-empenho`, `/despesas/fpp/...` | Sem relação direta com deputado individual |
+| Emendas parlamentares | `/pagina/transparencia-e-rastreabilidade-de-emendas` | A descobrir |
+| Comissões, frentes, oradores, atas, ordem do dia | `/portal/comissoes`, `/pagina/frentes-parlamentares`, `https://www.al.ce.gov.br/legislativo/oradores`, `/atas/legislaturas`, `/legislativo/ordem-do-dia/avulso-de-projeto` | A descobrir |
+| Presença em plenário | Sem seção própria no portal | Não encontrada |
+
+Próximos passos:
+1. VDP: baixar o CSV de cada mês (2021 até hoje) e somar por deputado; ligar `DEP {NOME}` ao deputado do TSE (nome de urna, remover o prefixo `DEP `). Fonte com link para o CSV do mês na página do político.
+2. Votações: abrir `/consultas-gerais/votacao-nominal` no Firefox (aba Rede) para ver como a lista de matérias é carregada e testar `votacaoNominalcsv`; ler o XLSX completo com openpyxl (estrutura SIM/NÃO/ABSTENÇÃO por partido e deputado) e conferir se há ausentes. Só há a 31.ª legislatura (2023–2026).
+3. Proposições: percorrer as páginas `numero.php` (tabelas × T/D × páginas), extrair nº/ano, autor, data, ementa, situação; autor vem como nome (sem id), então ligar por nome. Pode haver autoria coletiva ou por comissão.
+4. Abrir a ficha de um deputado e a página de remuneração/diárias para ver o que mais existe (votos, comissões, presença em sessões).
+5. Se os passos 1 a 3 forem estáveis: `scripts/coletar_ce.py` (cache em `dados/estaduais/CE/`), amostras em `tests/fixtures/contratos/`, e registrar em `ENDPOINTS.md` e `CHANGELOG.md`.
 ### DF: Distrito Federal (Câmara Legislativa)
-### ES: Espírito Santo
+
+Apuração de 2026-10-22: **nada obtido**, site da CLDF inacessível (teste manual do usuário no navegador também falhou). Repetir as tentativas abaixo no futuro.
+
+| URL tentada | Ferramenta | Resultado em 2026-10-22 |
+|---|---|---|
+| `https://www.cl.df.gov.br/web/portal-transparencia` | navegador (manual) | inacessível |
+| `https://www.cl.df.gov.br/web/portal-transparencia` | curl | timeout de 20 s ao conectar na porta 443 |
+| `http://www.cl.df.gov.br/web/portal-transparencia`, `https://www.cl.df.gov.br/` | curl | timeout de 20 s |
+| `www.cl.df.gov.br` | nslookup | DNS resolve (`189.84.137.29`, `179.124.14.95`), servidor não responde |
+
+### ES: Espírito Santo (Assembleia Legislativa, ALES)
+
+Apuração de 2026-10-22: **nenhum dado obtido**, o site da ALES não responde a partir desta rede. Repetir as tentativas no futuro (ou de outra rede/navegador).
+
+| URL tentada | Ferramenta | Resultado em 2026-10-22 |
+|---|---|---|
+| `https://www.al.es.gov.br/Transparencia` | curl | timeout de ~21 s ao conectar na porta 443 |
+| `https://www.al.es.gov.br/DadosAbertos/Remuneracao` | curl | timeout de ~21 s na porta 443 |
+| `http://www.al.es.gov.br/Transparencia` | curl | timeout na porta 80 |
+| `al.es.gov.br`, `transparencia.al.es.gov.br` | nslookup/curl | DNS resolve (`201.62.36.42`), servidor não responde; `dadosabertos.` e `sistemas.al.es.gov.br` não resolvem |
+| busca web por "al.es.gov.br DadosAbertos Remuneracao" | WebSearch | nada da ALES nos resultados |
+
+**O que a página da Transparência Internacional usa** (`https://transparenciainternacional.org.br/itgp/assembleia-legislativa/espirito-santo/`, acessível): é só a avaliação do ITGP (ALES em 2.º lugar, 71 pontos, "bom"). Não traz dados de deputados nem links para a ALES. A fonte é a planilha pública "banco de dados" (`https://comunidade.transparenciainternacional.org.br/itgp-legislativo-estadual-banco-de-dados`, XLSX com 0/0,5/1 por critério e sem URLs). Ela não serve como fonte de dados de político, mas indica o que a ALES diz publicar (ES, itens avaliados):
+
+| Item do ITGP | ES |
+|---|---|
+| TL11 base de proposições | sim (1) |
+| TL12 salário nominal dos parlamentares (base aberta) | sim (1) |
+| TL13 viagens oficiais | sim (1) |
+| TL14 (publicação mensal no portal) | sim (1) |
+| TL16 presença/ausência dos parlamentares | sim (1) |
+| TL15 votações nominais (base aberta, semanal) | **não (0)** |
+| TA02 verbas indenizatórias (diárias etc.) | **não (0)** |
+| TL04 comissões, TL01/TL02 contatos e biografia | sim (1) |
+| TL06 agenda do presidente | não (0) |
+
+Próximos passos:
+1. Abrir `https://www.al.es.gov.br/Transparencia` e `/DadosAbertos/Remuneracao` no Firefox (outra rede, se o bloqueio persistir) e ver na aba Rede de onde saem os dados (CSV/JSON/API).
+2. Se acessível: conferir remuneração, viagens, presença e proposições (itens com "sim" acima); votações nominais e verba indenizatória a ALES não publica em formato aberto.
+3. Se funcionar: `scripts/coletar_es.py`, amostras em `tests/fixtures/contratos/`, `ENDPOINTS.md` e `CHANGELOG.md`.
+
 ### GO: Goiás
 ### MA: Maranhão
 ### MG: Minas Gerais

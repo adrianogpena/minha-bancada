@@ -1,0 +1,284 @@
+{
+ "fonte": "https://www.almg.gov.br/transparencia/prestacao-de-contas/deputados/verba-indenizatoria/",
+ "capturadoEm": "2026-10-22",
+ "amostra": {
+  "datas": {
+   "listaFechamentoVerba": [
+    {
+     "idDeputado": 12193,
+     "dataReferencia": "2025-02-01"
+    },
+    {
+     "idDeputado": 12193,
+     "dataReferencia": "2025-03-01"
+    }
+   ]
+  },
+  "mes": {
+   "list": [
+    {
+     "idDeputado": 12193,
+     "dataReferencia": {
+      "@class": "sql-timestamp",
+      "$": "2026-08-01"
+     },
+     "codTipoDespesa": 32,
+     "valor": 3150.64,
+     "descTipoDespesa": "Combustível e lubrificante",
+     "listaDetalheVerba": [
+      {
+       "id": 14,
+       "idDeputado": 12193,
+       "dataReferencia": {
+        "@class": "sql-timestamp",
+        "$": "2026-08-01"
+       },
+       "valorReembolsado": 200.0,
+       "dataEmissao": {
+        "@class": "sql-timestamp",
+        "$": "2026-08-06"
+       },
+       "cpfCnpj": "02783114000180",
+       "valorDespesa": 200.0,
+       "nomeEmitente": "Auto Posto Capixaba Ltda.",
+       "descDocumento": "9706",
+       "codTipoDespesa": 32,
+       "descTipoDespesa": "Combustível e lubrificante"
+      },
+      {
+       "id": 13,
+       "idDeputado": 12193,
+       "dataReferencia": {
+        "@class": "sql-timestamp",
+        "$": "2026-08-01"
+       },
+       "valorReembolsado": 116.35,
+       "dataEmissao": {
+        "@class": "sql-timestamp",
+        "$": "2026-08-19"
+       },
+       "cpfCnpj": "42927464000198",
+       "valorDespesa": 116.35,
+       "nomeEmitente": "Auto Posto do Alemão Ltda.",
+       "descDocumento": "103359",
+       "codTipoDespesa": 32,
+       "descTipoDespesa": "Combustível e lubrificante"
+      }
+     ]
+    },
+    {
+     "idDeputado": 12193,
+     "dataReferencia": {
+      "@class": "sql-timestamp",
+      "$": "2026-08-01"
+     },
+     "codTipoDespesa": 34,
+     "valor": 14000.0,
+     "descTipoDespesa": "Locação e fretamento de veículos",
+     "listaDetalheVerba": [
+      {
+       "id": 12,
+       "idDeputado": 12193,
+       "dataReferencia": {
+        "@class": "sql-timestamp",
+        "$": "2026-08-01"
+       },
+       "valorReembolsado": 3500.0,
+       "dataEmissao": {
+        "@class": "sql-timestamp",
+        "$": "2026-08-31"
+       },
+       "cpfCnpj": "08659172000183",
+       "valorDespesa": 3500.0,
+       "nomeEmitente": "Locar New Veículos Ltda.",
+       "descDocumento": "005766",
+       "codTipoDespesa": 34,
+       "descTipoDespesa": "Locação e fretamento de veículos"
+      },
+      {
+       "id": 4,
+       "idDeputado": 12193,
+       "dataReferencia": {
+        "@class": "sql-timestamp",
+        "$": "2026-08-01"
+       },
+       "valorReembolsado": 10500.0,
+       "dataEmissao": {
+        "@class": "sql-timestamp",
+        "$": "2026-08-31"
+       },
+       "cpfCnpj": "12305622000107",
+       "valorDespesa": 10500.0,
+       "nomeEmitente": "Pontual Loc Car Ltda.",
+       "descDocumento": "034561",
+       "codTipoDespesa": 34,
+       "descTipoDespesa": "Locação e fretamento de veículos"
+      }
+     ]
+    }
+   ]
+  }
+ },
+ "forma": {
+  "datas": {
+   "tipos": [
+    "dict"
+   ]
+  },
+  "datas.listaFechamentoVerba": {
+   "tipos": [
+    "list"
+   ]
+  },
+  "datas.listaFechamentoVerba[]": {
+   "tipos": [
+    "dict"
+   ]
+  },
+  "datas.listaFechamentoVerba[].dataReferencia": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "datas.listaFechamentoVerba[].idDeputado": {
+   "tipos": [
+    "int"
+   ]
+  },
+  "mes": {
+   "tipos": [
+    "dict"
+   ]
+  },
+  "mes.list": {
+   "tipos": [
+    "list"
+   ]
+  },
+  "mes.list[]": {
+   "tipos": [
+    "dict"
+   ]
+  },
+  "mes.list[].codTipoDespesa": {
+   "tipos": [
+    "int"
+   ]
+  },
+  "mes.list[].dataReferencia": {
+   "tipos": [
+    "dict"
+   ]
+  },
+  "mes.list[].dataReferencia.$": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "mes.list[].dataReferencia.@class": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "mes.list[].descTipoDespesa": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "mes.list[].idDeputado": {
+   "tipos": [
+    "int"
+   ]
+  },
+  "mes.list[].listaDetalheVerba": {
+   "tipos": [
+    "list"
+   ]
+  },
+  "mes.list[].listaDetalheVerba[]": {
+   "tipos": [
+    "dict"
+   ]
+  },
+  "mes.list[].listaDetalheVerba[].codTipoDespesa": {
+   "tipos": [
+    "int"
+   ]
+  },
+  "mes.list[].listaDetalheVerba[].cpfCnpj": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "mes.list[].listaDetalheVerba[].dataEmissao": {
+   "tipos": [
+    "dict"
+   ]
+  },
+  "mes.list[].listaDetalheVerba[].dataEmissao.$": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "mes.list[].listaDetalheVerba[].dataEmissao.@class": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "mes.list[].listaDetalheVerba[].dataReferencia": {
+   "tipos": [
+    "dict"
+   ]
+  },
+  "mes.list[].listaDetalheVerba[].dataReferencia.$": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "mes.list[].listaDetalheVerba[].dataReferencia.@class": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "mes.list[].listaDetalheVerba[].descDocumento": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "mes.list[].listaDetalheVerba[].descTipoDespesa": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "mes.list[].listaDetalheVerba[].id": {
+   "tipos": [
+    "int"
+   ]
+  },
+  "mes.list[].listaDetalheVerba[].idDeputado": {
+   "tipos": [
+    "int"
+   ]
+  },
+  "mes.list[].listaDetalheVerba[].nomeEmitente": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "mes.list[].listaDetalheVerba[].valorDespesa": {
+   "tipos": [
+    "float"
+   ]
+  },
+  "mes.list[].listaDetalheVerba[].valorReembolsado": {
+   "tipos": [
+    "float"
+   ]
+  },
+  "mes.list[].valor": {
+   "tipos": [
+    "float"
+   ]
+  }
+ }
+}

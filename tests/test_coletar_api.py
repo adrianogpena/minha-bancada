@@ -548,3 +548,49 @@ def test_autores_proposicoes_falha_da_api_mantem_arquivo_anterior(dados, monkeyp
     coletar.coletar_autores_proposicoes()
     assert json.loads((dados / "proposicoes_autores.json").read_text()) == {"12": {"idPrincipal": 5, "autores": [[5, "Cia"]]}}
     assert coletar.AVISOS
+
+
+def test_coletar_deputado_guarda_so_frentes_da_legislatura(dados, monkeypatch):
+    monkeypatch.setattr(coletar, "coletar_proposicoes", lambda dep: [])
+    roteador(monkeypatch, {"/deputados/7": DETALHE_DEP, "/deputados/7/despesas": {"dados": []}, "/deputados/7/frentes": {"dados": [
+        {"id": 1, "titulo": " Frente A ", "idLegislatura": 57}, {"id": 2, "titulo": "Frente B", "idLegislatura": 56}]}})
+    assert coletar.coletar_deputado({"id": 7, "nome": "F"}, 2025)["frentes"] == [{"id": 1, "titulo": "Frente A"}]
+
+
+def test_coletar_deputado_frentes_falham_sem_derrubar(dados, monkeypatch):
+    monkeypatch.setattr(coletar, "coletar_proposicoes", lambda dep: [])
+    roteador(monkeypatch, {"/deputados/7": DETALHE_DEP, "/deputados/7/despesas": {"dados": []}, "/deputados/7/frentes": RuntimeError("fora")})
+    d = coletar.coletar_deputado({"id": 7, "nome": "F"}, 2025)
+    assert "frentes" not in d
+    assert any("frentes" in a for a in coletar.AVISOS)
+
+
+def test_coletar_temas_proposicoes_agrupa_por_projeto_e_ignora_requerimento(dados, monkeypatch):
+    uri = "https://dadosabertos.camara.leg.br/api/v2/proposicoes/"
+    linhas = [
+        {"uriProposicao": uri + "10", "siglaTipo": "PL", "tema": "Saúde", "relevancia": 0},
+        {"uriProposicao": uri + "10", "siglaTipo": "PL", "tema": "Educação", "relevancia": 5},
+        {"uriProposicao": uri + "10", "siglaTipo": "PL", "tema": "Educação", "relevancia": 1},
+        {"uriProposicao": uri + "11", "siglaTipo": "REQ", "tema": "Saúde", "relevancia": 0},
+    ]
+    anos = []
+    monkeypatch.setattr(coletar, "baixar_arquivo_camara", lambda c: anos.append(c) or (linhas if "2023" in c else (_ for _ in ()).throw(RuntimeError("x"))))
+    class Hoje(dt.date):
+        @classmethod
+        def today(cls):
+            return cls(2024, 5, 1)
+    monkeypatch.setattr(coletar.dt, "date", Hoje)
+    coletar.coletar_temas_proposicoes()
+    assert json.loads((dados / "proposicoes_temas.json").read_text(encoding="utf-8")) == {"10": ["Educação", "Saúde"]}
+    assert len(anos) == 2 and len(coletar.AVISOS) == 1
+
+
+def test_coletar_orgaos_deputados_agrupa_por_deputado(dados, monkeypatch):
+    dep = "https://dadosabertos.camara.leg.br/api/v2/deputados/"
+    monkeypatch.setattr(coletar, "baixar_arquivo_camara", lambda c: [
+        {"siglaOrgao": "CSAUDE", "nomeOrgao": "Comissão de Saúde", "nomePublicacaoOrgao": "Saúde", "uriDeputado": dep + "7",
+         "cargo": "Titular", "dataInicio": "2025-03-01", "dataFim": ""},
+        {"siglaOrgao": "", "uriDeputado": dep + "7"}, {"siglaOrgao": "X", "uriDeputado": "sem-id"}])
+    coletar.coletar_orgaos_deputados()
+    assert json.loads((dados / "orgaos_deputados.json").read_text(encoding="utf-8")) == {
+        "7": [{"sigla": "CSAUDE", "nome": "Saúde", "cargo": "Titular", "inicio": "2025-03-01", "fim": None}]}

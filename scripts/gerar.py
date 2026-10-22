@@ -119,6 +119,25 @@ def resumir_autoria(proposicoes: list) -> dict:
     }
 
 
+def resumir_temas(proposicoes: list) -> list:
+    """Temas oficiais dos projetos (já com `temas` e `principal` juntados): [[tema, projetos, aprovados, como autor principal]],
+    do mais frequente para o menos. Projeto com vários temas conta em cada um."""
+    por_tema: dict[str, list] = {}
+    for p in proposicoes:
+        for t in p.get("temas", []):
+            c = por_tema.setdefault(t, [0, 0, 0])
+            c[0] += 1
+            c[1] += destino_projeto(p.get("situacao")) == "aprovada"
+            c[2] += bool(p.get("principal"))
+    return sorted(([t, *c] for t, c in por_tema.items()), key=lambda x: (-x[1], x[0]))
+
+
+def ordenar_orgaos(orgaos: list) -> list:
+    """Órgãos em que o deputado está agora primeiro (sem data de fim), depois os que deixou, do mais recente para o mais antigo."""
+    recentes = sorted(orgaos, key=lambda o: o.get("inicio") or "", reverse=True)
+    return sorted(recentes, key=lambda o: bool(o.get("fim")))
+
+
 # cota parlamentar mensal (CEAP) de cada UF, em reais: tabela "valores atuais" do guia para jornalistas da Câmara (verificada em 2026-10-22, sem data de vigência na página)
 FONTE_LIMITE_COTA = "https://www2.camara.leg.br/comunicacao/assessoria-de-imprensa/guia-para-jornalistas/cota-parlamentar"
 LIMITE_COTA_UF = {
@@ -326,6 +345,8 @@ def main():
 
     detalhes = ler(BRUTO / "proposicoes_detalhe.json", {}) or {}
     autorias = ler(BRUTO / "proposicoes_autores.json", {}) or {}
+    temas = ler(BRUTO / "proposicoes_temas.json", {}) or {}
+    orgaos = ler(BRUTO / "orgaos_deputados.json", {}) or {}
     partidos = {str(i): d["partido"] for i, d in deputados.items() if d.get("partido")}
 
     if SAIDA.exists():
@@ -386,6 +407,9 @@ def main():
         votou = sum(1 for x in votos if x["voto"] in ("sim", "nao", "abstencao", "art17"))
         proposicoes = [juntar_autoria(juntar_detalhe(p, detalhes.get(str(p["id"]))), autorias.get(str(p["id"])), str(did), partidos)
                        for p in d["proposicoes"]]
+        for p in proposicoes:
+            if p.get("tipo") in TIPOS_PROJETO and temas.get(str(p["id"])):
+                p["temas"] = temas[str(p["id"])]
         autoria = resumir_autoria(proposicoes)
         da_uf = gastos_por_uf[d["uf"]]
 
@@ -397,6 +421,8 @@ def main():
             "naturalidade": ", ".join(x for x in (d.get("municipioNascimento"), d.get("ufNascimento")) if x),
             "escolaridade": d.get("escolaridade"), "redesSociais": d.get("redesSociais", []),
             "proposicoes": proposicoes, "autoria": autoria,
+            "temas": resumir_temas(proposicoes), "orgaos": ordenar_orgaos(orgaos.get(str(did), [])),
+            "frentes": sorted(d["frentes"], key=lambda f: f["titulo"]) if d.get("frentes") is not None else None,
             "votos": votos,
             "totalVotacoes": total_nominais, "eleicao": eleicoes_deps.get(did), "condicao": d.get("condicaoEleitoral"),
             "despesas": {

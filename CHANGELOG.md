@@ -5,6 +5,11 @@ Regra: toda fonte nova ou mudança de coleta ganha uma entrada aqui, no mesmo co
 Datas dos conjuntos que já existiam vêm do primeiro commit que os trouxe (`git log --diff-filter=A`).
 Todas as coletas rodam sozinhas no GitHub Actions (`.github/workflows/atualizar.yml`, todo dia às 06:17 de Brasília), salvo onde indicado.
 
+## Perfil temático do deputado (2026-10-22)
+- **De onde:** `https://dadosabertos.camara.leg.br/arquivos/proposicoesTemas/json/proposicoesTemas-<ano>.json` (um por ano desde 2023, ~10 MB cada), `.../arquivos/orgaosDeputados/json/orgaosDeputados-L57.json` (~8 MB) e `https://dadosabertos.camara.leg.br/api/v2/deputados/{id}/frentes` (1 chamada por deputado, só a legislatura 57; o arquivo `frentesDeputados.json` tem ~150 MB).
+- **Como:** `coletar_temas_proposicoes` grava `dados/proposicoes_temas.json` ({id do projeto: temas}, só tipos de projeto) e `coletar_orgaos_deputados` grava `dados/orgaos_deputados.json`, ambos no passo das proposições de `scripts/coletar.py`, no git; `coletar_deputado` guarda `frentes` no cache do deputado.
+- **No site:** bloco "Em que áreas atua" no perfil do deputado (temas dos projetos com aprovados e autoria, comissões e órgãos, frentes), tema oficial em cada projeto e filtro por tema na aba Propostas. A ligação "projetos na área da comissão" ficou de fora: a Câmara não publica qual tema corresponde a cada comissão.
+
 ## Cota da Câmara pelo CSV anual (2026-10-22)
 - **De onde:** `https://www.camara.leg.br/cotas/Ano-<ano>.csv.zip` (~4 MB, todos os deputados do ano, UTF-8, separador `;`).
 - **Como:** `coletar_cota_csv` (`scripts/coletar.py`) baixa o arquivo uma vez por execução e `coletar_deputado` usa as despesas dele no lugar de `/deputados/{id}/despesas` (1 chamada a menos por deputado). Se o download falhar, volta para a API. Cada despesa ganhou o campo `cnpj` (só dígitos; a API também o traz, em `cnpjCpfFornecedor`).

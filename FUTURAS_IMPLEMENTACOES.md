@@ -17,7 +17,7 @@ por mês e os 10 maiores fornecedores, os bens declarados e a prestação de con
 | Nível | O que exige | Pacotes |
 |---|---|---|
 | 1 | Feito (ver abaixo) | 1.1 a 1.6 |
-| 2 | Coleta leve (um arquivo por ano ou ~81 chamadas), exibida em blocos que já existem | 2.1 Recursos do senador · 2.3 Perfil temático · 2.4 Comportamento nas votações |
+| 2 | Coleta leve (um arquivo por ano ou ~81 chamadas), exibida em blocos que já existem | 2.1 Recursos do senador · 2.4 Comportamento nas votações |
 | 3 | Uma chamada por deputado ou por projeto, ou visualização nova | 3.1 Carreira e histórico partidário · 3.2 Vida do projeto · 3.3 Discursos e agenda · 3.4 Rede de coautoria |
 | 4 | Raspagem de HTML ou chave de API | 4.1 Recursos do deputado (portal da Câmara) · 4.2 Emendas e Portal da Transparência |
 | 5 | Fontes grandes, sem padrão ou cruzamentos sensíveis | 5.1 Fornecedores e doadores · 5.2 Assembleias e Câmaras Municipais · 5.3 Órgãos de controle |
@@ -51,18 +51,9 @@ Três endpoints do mesmo serviço da CEAPS (`adm.senado.gov.br/adm-dadosabertos/
 
 Coleta pelo CSV anual (com `cnpj` em cada despesa) e ranking de fornecedores em `fornecedores.html`; registrado no `CHANGELOG.md`. Falta o cruzamento com a empresa e os doadores (pacote 5.1).
 
-### 2.3 Perfil temático do deputado
+### 2.3 Perfil temático do deputado: feito (2026-10-22)
 
-Arquivos em lote da Câmara (`https://dadosabertos.camara.leg.br/arquivos/...`), um download cada, em vez de uma
-chamada por projeto ou deputado. Juntos respondem "em que áreas ele atua".
-
-| Ideia | Fonte | O que daria no site |
-|---|---|---|
-| Temas oficiais dos projetos | `proposicoesTemas/json/proposicoesTemas-{ano}.json` (~10 MB; ou `/proposicoes/{id}/temas`) | filtrar e agregar propostas por tema (saúde, segurança, economia...) |
-| Comissões do deputado | `orgaosDeputados/json/orgaosDeputados-L57.json` (~8 MB; ou `/deputados/{id}/orgaos`) | "projetos na área da comissão que ele integra" |
-| Frentes parlamentares | `frentesDeputados/json/frentesDeputados.json` (~150 MB; ou `/deputados/{id}/frentes`) | frentes de que participa |
-
-O arquivo de frentes é grande: baixar uma vez por semana ou extrair só o necessário no próprio coletor.
+Temas oficiais dos projetos, comissões e frentes parlamentares, no bloco "Em que áreas atua" do perfil e no filtro por tema da aba Propostas; registrado no `CHANGELOG.md`. Falta "projetos na área da comissão que ele integra": a Câmara não publica o tema de cada comissão.
 
 ### 2.4 Comportamento nas votações
 

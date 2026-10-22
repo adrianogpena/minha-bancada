@@ -32,6 +32,8 @@ API = os.environ.get("CAMARA_API", "https://dadosabertos.camara.leg.br/api/v2")
 RAIZ = Path(__file__).resolve().parent.parent
 DADOS = RAIZ / "dados"
 INICIO_LEGISLATURA = "2023-02-01"  # 57ª legislatura
+LEGISLATURA = 57
+ARQUIVOS_CAMARA = "https://dadosabertos.camara.leg.br/arquivos"
 TRABALHADORES_SENADO = 2  # o Senado responde 503 quando apertado
 TRABALHADORES = int(os.environ.get("CAMARA_TRABALHADORES", 10))  # requisições em paralelo; seja gentil com a API pública (429 e 5xx são repetidos com espera)
 
@@ -178,6 +180,13 @@ def coletar_deputado(dep: dict, ano: int, cota: dict[int, list] | None = None) -
                        "fornecedor": d.get("nomeFornecedor"), "cnpj": re.sub(r"\D", "", d.get("cnpjCpfFornecedor") or ""),
                        "data": d.get("dataDocumento"), "documento": d.get("urlDocumento")} for d in despesas]
 
+    frentes = None
+    try:
+        frentes = [{"id": f["id"], "titulo": (f.get("titulo") or "").strip()}
+                   for f in get(f"/deputados/{did}/frentes").get("dados", []) if f.get("idLegislatura") == LEGISLATURA]
+    except Exception as e:  # a frente é complemento: sem ela o perfil só não mostra o bloco
+        avisar(f"frentes de {dep.get('nome')}: {e}")
+
     status = detalhe.get("ultimoStatus", {}) or {}
     return {
         "id": did,
@@ -202,6 +211,7 @@ def coletar_deputado(dep: dict, ano: int, cota: dict[int, list] | None = None) -
             for p in proposicoes
         ],
         "despesas": {"ano": ano, "itens": itens_cota},
+        **({"frentes": frentes} if frentes is not None else {}),
         "coletadoEm": dt.datetime.now(dt.timezone.utc).isoformat(timespec="seconds"),
     }
 
@@ -371,6 +381,55 @@ def coletar_autores_proposicoes() -> None:
     if feitos:  # sem nada novo (ou com a API fora do ar) o arquivo anterior fica como está
         salvar(arquivo, cache)
     print(f"Autores salvos: {feitos}, falhas: {falhas}, no arquivo: {len(cache)}")
+
+
+def baixar_arquivo_camara(caminho: str) -> list:
+    """Arquivo em lote da Câmara (https://dadosabertos.camara.leg.br/arquivos/...): devolve a lista `dados` do JSON."""
+    r = S.get(f"{ARQUIVOS_CAMARA}/{caminho}", timeout=300)
+    r.raise_for_status()
+    return r.json().get("dados", [])
+
+
+def coletar_temas_proposicoes() -> None:
+    """Temas oficiais dos projetos, do arquivo anual proposicoesTemas-{ano}.json (um download por ano da legislatura).
+    Guardado em dados/proposicoes_temas.json como {id do projeto: [temas]} (vai para o git). Um ano que falha
+    mantém o que já estava guardado."""
+    arquivo = DADOS / "proposicoes_temas.json"
+    cache = ler(arquivo, {})
+    mudou = False
+    for ano in range(int(INICIO_LEGISLATURA[:4]), dt.date.today().year + 1):
+        try:
+            linhas = baixar_arquivo_camara(f"proposicoesTemas/json/proposicoesTemas-{ano}.json")
+        except Exception as e:
+            avisar(f"temas das proposições de {ano}: {e}")
+            continue
+        novos: dict[str, list] = {}
+        for l in sorted(linhas, key=lambda x: -(x.get("relevancia") or 0)):
+            pid = id_da_uri(l.get("uriProposicao"))
+            if pid and l.get("siglaTipo") in TIPOS_PROJETO and l.get("tema") and l["tema"] not in novos.setdefault(pid, []):
+                novos[pid].append(l["tema"])
+        cache.update(novos)
+        mudou = True
+        print(f"Temas {ano}: {len(novos)} projetos")
+    if mudou:
+        salvar(arquivo, cache)
+
+
+def coletar_orgaos_deputados() -> None:
+    """Comissões e outros órgãos de cada deputado na legislatura, do arquivo orgaosDeputados-L57.json.
+    Guardado em dados/orgaos_deputados.json como {id do deputado: [órgãos]} (vai para o git)."""
+    por_dep: dict[str, list] = {}
+    for l in baixar_arquivo_camara(f"orgaosDeputados/json/orgaosDeputados-L{LEGISLATURA}.json"):
+        m = re.search(r"/deputados/(\d+)$", l.get("uriDeputado") or "")
+        if not m or not l.get("siglaOrgao"):
+            continue
+        por_dep.setdefault(m.group(1), []).append({
+            "sigla": l["siglaOrgao"], "nome": (l.get("nomePublicacaoOrgao") or l.get("nomeOrgao") or "").strip(),
+            "cargo": l.get("cargo") or None, "inicio": l.get("dataInicio") or None, "fim": l.get("dataFim") or None,
+        })
+    if por_dep:
+        salvar(DADOS / "orgaos_deputados.json", por_dep)
+    print(f"Órgãos: {sum(len(v) for v in por_dep.values())} participações de {len(por_dep)} deputados")
 
 
 def situacao_final(situacao: str) -> bool:
@@ -818,6 +877,11 @@ def main():
             coletar_autores_proposicoes()
         except Exception as e:
             avisar(f"autores das proposições: {e}")
+        for etapa in (coletar_temas_proposicoes, coletar_orgaos_deputados):  # complementos: cada um falha sozinho
+            try:
+                etapa()
+            except Exception as e:
+                avisar(f"{etapa.__name__}: {e}")
     if a.so in (None, "senado"):
         try:
             coletar_senado()

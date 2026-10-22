@@ -153,3 +153,18 @@ def test_ranking_fornecedores_liga_pelo_cnpj_e_ignora_sem_cnpj():
     assert [f["cnpj"] for f in r] == ["222", "111"]
     assert r[1]["total"] == 170 and r[1]["notas"] == 3 and r[1]["deputados"] == 2 and r[1]["nome"] == "Cia"
     assert r[1]["maioresDeputados"][0] == {"id": 1, "nome": "A", "partido": "X", "uf": "SP", "valor": 150}
+
+
+def test_resumir_temas_conta_por_tema_com_aprovados_e_autoria():
+    ps = [
+        {"temas": ["Saúde", "Educação"], "situacao": "Transformado em Norma Jurídica", "principal": True},
+        {"temas": ["Saúde"], "situacao": "Aguardando Designação", "principal": False},
+        {"situacao": "Arquivada"},
+    ]
+    assert gerar.resumir_temas(ps) == [["Saúde", 2, 1, 1], ["Educação", 1, 1, 1]]
+
+
+def test_ordenar_orgaos_atuais_primeiro_e_mais_recentes_antes():
+    orgaos = [{"sigla": "A", "inicio": "2023-02-01", "fim": "2024-01-01"}, {"sigla": "B", "inicio": "2023-03-01", "fim": None},
+              {"sigla": "C", "inicio": "2025-03-01", "fim": None}]
+    assert [o["sigla"] for o in gerar.ordenar_orgaos(orgaos)] == ["C", "B", "A"]

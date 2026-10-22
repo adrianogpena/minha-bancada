@@ -372,3 +372,5 @@ select:disabled { opacity: .55; }
 .barra.ref { height: 5px; margin-top: 2px; }
 .barra.ref i { background: var(--tinta-suave); opacity: .55; }
 .legenda-barras { font-size: 14px; color: var(--tinta-suave); margin: 4px 0 0; }
+.lista-simples { list-style: none; padding: 0; margin: 0; display: grid; gap: 8px; }
+.lista-simples li { font-size: 15px; }

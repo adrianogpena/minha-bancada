@@ -311,6 +311,38 @@ function painelGastos(desp, explicacao) {
   `;
 }
 
+const ARQUIVOS_CAMARA = "https://dadosabertos.camara.leg.br/arquivos";
+function painelTematico(dep) {
+  const api = `${CAMARA_API}/deputados/${encodeURIComponent(dep.id)}`;
+  const temas = dep.temas || [], max = temas[0]?.[1] || 1;
+  const orgaos = dep.orgaos || [], frentes = dep.frentes;
+  const anos = [...new Set(dep.proposicoes.filter((p) => p.temas).map((p) => p.ano))].sort();
+  return `
+    <h2>Em que áreas atua</h2>
+    <p>Temas oficiais dos projetos que ${esc(dep.nome)} apresentou como autor ou coautor, as comissões de que participa e as frentes parlamentares de que faz parte.</p>
+    <div class="duas-colunas">
+      <div>
+        <h3>Temas dos projetos</h3>
+        ${temas.length ? `<div class="barras">${temas.map(([t, n, ap, pr]) => `
+          <div><div class="barra-rotulo"><span>${esc(t)}</span><b>${n} ${n === 1 ? "projeto" : "projetos"}</b></div><div class="barra"><i style="width:${(n / max) * 100}%"></i></div>
+          <span class="quando">${ap} aprovado${ap === 1 ? "" : "s"} · ${pr} como autor principal</span></div>`).join("")}</div>
+          <p class="quando">Um projeto pode ter mais de um tema e conta em cada um. Para ver os projetos de um tema, use o filtro na aba Propostas.</p>`
+          : `<p class="vazio">Nenhum projeto com tema classificado pela Câmara.</p>`}
+      </div>
+      <div>
+        <h3>Comissões e órgãos</h3>
+        ${orgaos.length ? `<ul class="lista-simples">${orgaos.map((o) => `<li><b>${esc(o.sigla)}</b> ${esc(o.nome)}<br><span class="quando">${esc(o.cargo || "Membro")}${o.inicio ? `, desde ${data(o.inicio)}` : ""}${o.fim ? ` até ${data(o.fim)}` : ""}</span></li>`).join("")}</ul>`
+          : `<p class="vazio">Nenhuma participação registrada nesta legislatura.</p>`}
+      </div>
+    </div>
+    <h3>Frentes parlamentares${frentes ? ` <small class="sub">(${frentes.length})</small>` : ""}</h3>
+    ${frentes === null || frentes === undefined ? `<p class="vazio">Frentes ainda não coletadas.</p>`
+      : frentes.length ? `<details><summary>Ver as ${frentes.length} frentes</summary><ul class="lista-simples">${frentes.map((f) => `<li><a href="https://www.camara.leg.br/internet/deputado/frenteDetalhe.asp?id=${encodeURIComponent(f.id)}" rel="noopener">${esc(f.titulo)}</a></li>`).join("")}</ul></details>`
+      : `<p class="vazio">Não consta em nenhuma frente nesta legislatura.</p>`}
+    ${fontes([["Órgãos do deputado (API da Câmara)", `${api}/orgaos`], ["Frentes do deputado (API da Câmara)", `${api}/frentes`],
+      ...anos.map((a) => [`Temas dos projetos de ${a} (arquivo da Câmara)`, `${ARQUIVOS_CAMARA}/proposicoesTemas/json/proposicoesTemas-${a}.json`])])}`;
+}
+
 async function paginaDeputado() {
   const alvo = $("#conteudo");
   const id = param("id");
@@ -325,6 +357,8 @@ async function paginaDeputado() {
   const painelPerfil = `
     ${painelGastos(desp, "A cota paga despesas do mandato, como passagens, aluguel de escritório e divulgação.")}
     ${fontes([["Cota parlamentar (API da Câmara)", `${CAMARA_API}/deputados/${encodeURIComponent(dep.id)}/despesas?ano=${desp.ano}`], desp.limite ? ["Limite mensal da cota por estado (Câmara)", LIMITE_COTA_URL] : null, ["Portal da Câmara", `https://www.camara.leg.br/deputados/${encodeURIComponent(dep.id)}`]])}
+
+    ${painelTematico(dep)}
 
     <h2>Ficha</h2>
     <dl class="ficha">
@@ -416,6 +450,7 @@ function montarParlamentar(alvo, c) {
     <p>Projetos de lei, emendas à Constituição e similares. ${esc(c.aviso)}</p>
     ${LEGENDA_PROJETOS}
     <div class="abas" id="abas-proj"></div>
+    <div id="filtro-tema"></div>
     <div id="lista-proj"></div>
     ${avisoDados(["O voto de cada parlamentar nesses projetos (só aparece na aba de votações, e apenas nas votações nominais).", "O texto exato de cada emenda ou substitutivo aprovado, e quem foi o relator.",
       "Se foi o próprio parlamentar quem pediu a retirada ou o arquivamento. \"Tramitação encerrada\" não diz se o projeto virou lei.", "A situação vem do sistema da Casa e pode estar atrasada."])}
@@ -512,14 +547,22 @@ function montarParlamentar(alvo, c) {
       ${p.situacao ? `<span class="texto"><b>Situação:</b> ${esc(p.situacao)}${p.orgao ? ` (${esc(p.orgao)})` : ""}${p.dataSituacao ? `, em ${data(p.dataSituacao)}` : ""}.${p.despacho ? ` <span class="quando">Despacho: ${esc(p.despacho.slice(0, 300))}</span>` : ""}</span>` : ""}
       ${p.tipoDescricao || p.tramitacao || p.regime || p.coautores || p.iniciativa ? `<span class="texto quando">${[p.tipoDescricao && `Tipo: ${esc(p.tipoDescricao)}`, p.iniciativa && `Iniciativa: ${esc(p.iniciativa)}`, p.totalAutores && `Assinado por ${p.totalAutores} autores${p.partidosDistintos ? ` de ${p.partidosDistintos} partidos` : ""}`, p.regime && `Regime: ${esc(p.regime)}`, p.tramitacao && `Tramitação: ${esc(p.tramitacao)}`, p.coautores && `Coautores: ${esc(p.coautores.join(", "))}`].filter(Boolean).join(" · ")}</span>` : ""}
       ${p.apensadoA || p.anterior || p.posterior ? `<span class="texto quando">${[p.apensadoA && ligacao("Apensado ao projeto principal", p.apensadoA), p.anterior && ligacao("Proposição anterior", p.anterior), p.posterior && ligacao("Proposição posterior", p.posterior)].filter(Boolean).join(" · ")}</span>` : ""}
+      ${p.temas ? `<span class="texto quando">Tema oficial: ${esc(p.temas.join(", "))}</span>` : ""}
       ${p.palavrasChave ? `<span class="texto quando">Temas: ${esc(p.palavrasChave)}</span>` : ""}
       <span class="texto">${fontes([[c.fonteTramitacao, c.linkTramitacao(p)], p.linkTexto ? ["Texto integral", p.linkTexto] : null, ["Dados na API", c.linkApi(p)]])}</span>
     </li>`;
   };
   const tiposProj = [...new Set(projetos.map((p) => p.tipo))].sort();
-  const filtroProj = (f) => projetos.filter((p) => f === "todos" ? true : ["tramitando", "aprovada", "rejeitada"].includes(f) ? desfecho(p)[1] === f : p.tipo === f);
+  let abaProj = "todos", temaProj = "";
+  const filtroProj = (f) => projetos.filter((p) => (!temaProj || (p.temas || []).includes(temaProj))
+    && (f === "todos" ? true : ["tramitando", "aprovada", "rejeitada"].includes(f) ? desfecho(p)[1] === f : p.tipo === f));
   const mostrarProj = (f) => listaPaginada($("#lista-proj"), filtroProj(f), renderProj, 10, "Nenhum projeto nesse filtro.");
-  abas($("#abas-proj"), [{ valor: "todos", rotulo: "Todos" }, { valor: "tramitando", rotulo: "Em tramitação" }, { valor: "aprovada", rotulo: "Aprovados" }, { valor: "rejeitada", rotulo: "Arquivados" }, ...tiposProj.map((t) => ({ valor: t, rotulo: t }))], mostrarProj);
+  abas($("#abas-proj"), [{ valor: "todos", rotulo: "Todos" }, { valor: "tramitando", rotulo: "Em tramitação" }, { valor: "aprovada", rotulo: "Aprovados" }, { valor: "rejeitada", rotulo: "Arquivados" }, ...tiposProj.map((t) => ({ valor: t, rotulo: t }))], (f) => mostrarProj((abaProj = f)));
+  const nomesTemas = [...new Set(projetos.flatMap((p) => p.temas || []))].sort((a, b) => a.localeCompare(b, "pt-BR"));
+  if (nomesTemas.length) {
+    $("#filtro-tema").innerHTML = `<label class="campo">Tema do projeto<select><option value="">Todos os temas</option>${nomesTemas.map((t) => `<option>${esc(t)}</option>`).join("")}</select></label>`;
+    $("#filtro-tema select").addEventListener("input", (e) => { temaProj = e.target.value; mostrarProj(abaProj); });
+  }
   mostrarProj("todos");
 
   const renderOutro = (p) => `<li>

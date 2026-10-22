@@ -12,3 +12,4 @@ dados/senado_ceaps.json
 dados/senado_recursos.json
 dados/tse_bruto/
 site/feeds/
+node_modules/

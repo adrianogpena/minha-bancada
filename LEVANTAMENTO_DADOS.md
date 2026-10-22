@@ -361,7 +361,19 @@ Próximos passos:
 3. Fonte de link por dado: verba → `https://transparencia.al.rr.leg.br/execucao-orcamentaria-e-financeira/verbas-indenizatorias-intro/`.
 4. Se seguir: `scripts/coletar_rr.py`, amostras em `tests/fixtures/contratos/`, `ENDPOINTS.md` e `CHANGELOG.md`.
 
-### RS: Rio Grande do Sul
+### RS: Rio Grande do Sul (Assembleia Legislativa, ALRS; apurado em 2026-10-22)
+
+**Portal do Estado: `https://www.transparencia.rs.gov.br/`** (mantido pela CAGE, não pela Assembleia). Só li o texto da página `https://www.transparencia.rs.gov.br/relatorios/externo/diarias-assembleia/dados/` ("Diárias Assembleia", Relatórios > Externo): a leitura devolveu só título e navegação, sem colunas, formato (CSV/JSON/API), período, atualização nem links de download (conteúdo provavelmente carregado por JavaScript; não confirmado). O portal tem seção "Dados abertos" no menu (não aberta).
+- Parlamentares: não vi cota, presença, votações nem projetos nessas páginas.
+
+**ITGP** (`https://transparenciainternacional.org.br/itgp/assembleia-legislativa/rio-grande-do-sul`, ano da avaliação não informado): nota **49,1/100 ("Regular")**, 7º de 27. Por dimensão: Comunicação 90,9; Transparência Legislativa 64,6; Plataformas 65; Transformação Digital 60; Participação e Engajamento 50; Transparência Administrativa 38,9; Governança 23,5; Marcos Legais 0 (pior: sem regulamento próprio da Lei de Acesso, sem proteção a denunciantes, sem regras de registro de lobby). Pontos fortes: agenda da presidência e pautas do plenário divulgadas com antecedência, ferramenta de enquete. A página não traz link do portal da ALRS. Banco de dados da avaliação: `https://comunidade.transparenciainternacional.org.br/itgp-legislativo-estadual-banco-de-dados`.
+
+Próximos passos:
+1. No Firefox, abrir a página de diárias com a aba Rede aberta, para ver a chamada de dados (URL, parâmetros), formato, período e exportação; abrir também "Dados abertos" do portal.
+2. Achar fonte de projetos, presença, votações e verba por deputado (provavelmente `https://www.al.rs.gov.br`).
+3. Fonte de link por dado: diárias → `https://www.transparencia.rs.gov.br/relatorios/externo/diarias-assembleia/dados/`.
+4. Se seguir: `scripts/coletar_rs.py`, amostras em `tests/fixtures/contratos/`, `ENDPOINTS.md` e `CHANGELOG.md`.
+
 ### SC: Santa Catarina
 ### SE: Sergipe
 ### SP: São Paulo

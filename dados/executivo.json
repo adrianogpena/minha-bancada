@@ -340,7 +340,7 @@
 "inteiroTeor": "https://www.camara.leg.br/proposicoesWeb/prop_mostrarintegra?codteor=3157335"
 },
 {
-"tramitacaoLida": 1,
+"tramitacaoLida": true,
 "remessa": "2026-10-16",
 "id": 2635476,
 "tipo": "PLP",

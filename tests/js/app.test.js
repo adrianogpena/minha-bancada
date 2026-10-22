@@ -61,3 +61,22 @@ test("urlLegivel reaproveita páginas do site e usa fonte.html nas demais APIs",
   assert.equal(f("https://exemplo.com/api/x"), null);
   assert.equal(f("lixo"), null);
 });
+
+test("resumosEstadual mostra cada seção com fonte e avisa quando falta", () => {
+  const src = fonte.slice(fonte.indexOf("const MESES_CURTOS"), fonte.indexOf("/* deputado estadual (Assembleias"));
+  const c = vm.createContext({ esc, reais, reaisCentavos, fontes: (l) => `[fonte ${l.map((x) => x[1]).join(",")}]`, semFonte: () => "[sem fonte]" });
+  vm.runInContext(src + "\nthis.f = resumosEstadual;", c);
+  assert.equal(c.f({}), "");
+  const html = c.f({
+    verba: { fonte: "https://v", anos: [{ ano: 2024, total: 30, meses: [{ mes: 1, total: 30 }], categorias: [{ categoria: "Aluguel", total: 30 }], fornecedores: [{ fornecedor: "F", cnpj: "1", total: 30 }] }] },
+    remuneracao: { fonte: "https://r", ano: 2024, mes: 3, bruto: 100, liquido: 80 },
+    diarias: { anos: [{ ano: 2024, total: 5, quantidade: 1 }] },
+  });
+  assert.match(html, /Verba\/cota/);
+  assert.match(html, /jan/);
+  assert.match(html, /\[fonte https:\/\/v\]/);
+  assert.match(html, /Remuneração/);
+  assert.match(html, /mar\/2024/);
+  assert.match(html, /Diárias[\s\S]*\[sem fonte\]/);
+  assert.doesNotMatch(html, /Presença|Emendas/);
+});

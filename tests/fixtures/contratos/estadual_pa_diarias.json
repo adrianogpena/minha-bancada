@@ -1,0 +1,46 @@
+{
+ "fonte": "https://alepa.pa.gov.br/Transparencia/Page/DiariasdosParlamentares",
+ "capturadoEm": "2026-10-22",
+ "amostra": {
+  "DataStorageDTO": {
+   "EncodeMaps": {
+    "DataItem1": [
+     "2026-10-20T00:00:00.0000000",
+     "2026-07-13T00:00:00.0000000"
+    ],
+    "DataItem0": [
+     "Dirceu Ten Caten",
+     "Martinho Carmona"
+    ],
+    "DataItem5": [
+     "DIARIAS NO PAIS"
+    ],
+    "DataItem2": [
+     "REFERENTE A CONCESSAO DE 03 DIARIAS AO DEPUTADO SUPRACITADO PARA A CIDADE DE BRASILIA/DF NO PERIODO DE 11 A 14/11/2026 PARA PARTICIPAR DO ENCONTRO NACIONAL DE PARLAMENTARES ESTADUAIS CONFORME PROCESSO 14505/2026",
+     "CONCESSAO DE DIARIAS AO DEPUTADO SUPRACITADO PARA OS MUNICIPIOS DE SALVATERRA NO PERIODO DE 06 A 07/06/2026 PARA CUMPRIR AGENDA PARLAMENTAR CONFORME PROCESSO 06859/2026"
+    ]
+   },
+   "Slices": [
+    {
+     "KeyIds": [
+      "DataItem1",
+      "DataItem0",
+      "DataItem5",
+      "DataItem2"
+     ],
+     "ValueIds": {
+      "DataItem3": 0
+     },
+     "Data": {
+      "[0,0,0,0]": {
+       "0": 5064.45
+      },
+      "[1,1,0,1]": {
+       "0": -1688.16
+      }
+     }
+    }
+   ]
+  }
+ }
+}

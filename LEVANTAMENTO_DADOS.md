@@ -262,7 +262,28 @@ Próximos passos:
 3. Fonte de link por dado: telas `https://almt.eloweb.net/portaltransparencia/1/verbas` e `.../cotas-parlamentares` (a confirmar).
 4. Se seguir: `scripts/coletar_mt.py`, amostras em `tests/fixtures/contratos/`, `ENDPOINTS.md` e `CHANGELOG.md`.
 
-### PA: Pará
+### PA: Pará (Assembleia Legislativa, ALEPA; apurado em 2026-10-22)
+
+**Portal de transparência: `https://alepa.pa.gov.br/Transparencia/Index`.** Livre, sem login (plataforma ASP.NET com DevExpress; fornecedor `alepa.quartertec.com.br` nas fotos). Menu relevante (todas sob `/Transparencia/Page/`):
+- `VerbaIndenizatoria` e `VerbadeGabinete` (não há "cota parlamentar" com esse nome);
+- `Frequencia`; `RemuneracaodePessoal`, `QuadrodePessoal`, `EstruturaRemuneratoriaDeputados`, `EstruturaRemuneratoriaServidores`;
+- diárias dos parlamentares e emendas parlamentares estaduais (links não abertos); `DadosAbertos`.
+Setor responsável: CPD. Páginas com "Última atualização em 22/10/2026".
+
+**Conteúdo carregado depois do HTML:** em `VerbaIndenizatoria`, `VerbadeGabinete` e `RemuneracaodePessoal` o WebFetch só recebeu menu e "Carregando…". Campos, filtros, período e formato (tabela, CSV, PDF) não confirmados; endpoint real só pela aba Rede do Firefox. Nenhum link de arquivo apareceu.
+
+**Frequência:** tabela HTML por deputado (foto, nome e partido, contagens Presente / Licenciado / Ausente; "Total de sessões: 4" no momento da leitura, período não informado). Exportação em PDF/Excel/Word, todas apontando para `/DXR.axd?r=1_89-QHOmx` (não distingui as chamadas). Link por deputado: `/Institucional/Deputado/{id}` (ex.: 1024). Dois deputados vieram sem perfil nem foto. Só presença em sessões; votações nominais não confirmadas.
+
+**Dados abertos:** `/Transparencia/Page/DadosAbertos` redireciona (302) para `https://bancodeleis.alepa.pa.gov.br/api.php`, que documenta só o Banco de Leis: `GET https://bancodeleis.alepa.pa.gov.br/api/leis.php` (JSON, até 50 registros ativos; filtros opcionais `numero`, `ano`, `q`, `tipo`; campos `id`, `numero`, `ano`, `tipo`, `ementa`, `arquivo`, `link_pdf`, `status`). Não traz verbas, remuneração nem presença. Útil no máximo para leis, não para dados de deputado.
+
+**ITGP** (`https://transparenciainternacional.org.br/itgp/assembleia-legislativa/para`, ano da avaliação não informado): nota **41,4/100 ("Regular")**, 15º de 27 assembleias. Por dimensão: Plataformas 65; Comunicação 63,6; Governança 58,8; Transparência Administrativa 41,7; Participação e Engajamento 37,5; Marcos Legais 28,6; Transformação Digital 20; Transparência Legislativa 16,7 (pior). A página diz que a ALEPA não divulga agenda e pautas do plenário e das comissões, o salário nominal dos deputados nem viagens oficiais (a nota pode estar defasada frente ao portal atual). Critérios individuais: `https://comunidade.transparenciainternacional.org.br/itgp-legislativo-estadual-banco-de-dados`.
+
+Próximos passos:
+1. No Firefox, abrir `VerbaIndenizatoria`, `VerbadeGabinete`, `RemuneracaodePessoal` e `EstruturaRemuneratoriaDeputados` com a aba Rede aberta para capturar a chamada de dados (URL, parâmetros) e ver se há exportação (Excel/CSV).
+2. Abrir as diárias dos parlamentares e as emendas estaduais; achar a fonte de projetos e votações (não há no menu de transparência).
+3. Fonte de link por dado: verba indenizatória → `https://alepa.pa.gov.br/Transparencia/Page/VerbaIndenizatoria`; frequência → `.../Frequencia`; remuneração → `.../RemuneracaodePessoal` (a confirmar).
+4. Se seguir: `scripts/coletar_pa.py`, amostras em `tests/fixtures/contratos/`, `ENDPOINTS.md` e `CHANGELOG.md`.
+
 ### PE: Pernambuco
 ### RJ: Rio de Janeiro
 ### RN: Rio Grande do Norte

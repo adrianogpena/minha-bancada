@@ -327,7 +327,24 @@ Próximos passos:
 3. Fonte de link por dado: presença → `https://transparencia.alerj.rj.gov.br/section/report/17`; diárias → `.../report/119`; emendas → `.../report/121` (a confirmar).
 4. Se seguir: `scripts/coletar_rj.py`, amostras em `tests/fixtures/contratos/`, `ENDPOINTS.md` e `CHANGELOG.md`.
 
-### RN: Rio Grande do Norte
+### RN: Rio Grande do Norte (Assembleia Legislativa, ALRN; apurado em 2026-10-22)
+
+**Portal de transparência: `https://transparencia.al.rn.leg.br/`.** Livre, sem login. Só li o texto das páginas (o conteúdo é montado por formulário; formato de exportação, API e tecnologia não confirmados).
+- Parlamentares: só **Cotas Parlamentares** `https://transparencia.al.rn.leg.br/verbas` (CEAP, 63ª Legislatura). Consulta por formulário com Legislatura, Ano (padrão 2026), Mês e Parlamentar; botão "PESQUISAR". Não vi valores, links de nota fiscal, exportação CSV/PDF nem os anos anteriores disponíveis.
+- Transparência Legislativa (presença, votações, projetos): portal externo `https://transparencialegislativa.al.rn.leg.br/`; a leitura devolveu só o título (página provavelmente carregada por JavaScript), conteúdo não confirmado.
+- Pessoal: diárias, estagiários, estrutura remuneratória, remunerações de servidores (`/servidores-pagamentos`); não vi remuneração de deputados.
+- Execução orçamentária: despesas `/despesas`, receitas `/receitas`, ordem cronológica de pagamentos; contratos `/contratos`, licitações `/licitacoes`, obras, registro de preço, sanções.
+- Orçamento e gestão fiscal: LDO, LOA, PPA, prestação de contas, relatório de gestão fiscal. Institucional: LGPD/Dados Abertos (seção não aberta), governança `https://www.al.rn.leg.br/governanca/`. Ouvidoria `/ouvidoria`, perguntas `/perguntas`.
+
+**ITGP** (`https://transparenciainternacional.org.br/itgp/assembleia-legislativa/rio-grande-do-norte`, ano da avaliação não informado): nota **38,2/100 ("Ruim")**, 17º de 27. Por critério (pareamento inferido da ordem da página; conferir na fonte): Comunicação 81,8; Plataformas 80; Transparência Administrativa 41,7; Marcos Legais 28,6; Participação e Engajamento 25; Transformação Digital 20; Transparência Legislativa 16,7; Governança 11,8. A página aponta falta de agenda, lista de presença e resultados de votações nominais. Banco de dados da avaliação: `https://comunidade.transparenciainternacional.org.br/itgp-legislativo-estadual-banco-de-dados`.
+
+Próximos passos:
+1. No Firefox, abrir `/verbas` e `https://transparencialegislativa.al.rn.leg.br/` com a aba Rede aberta, para ver a chamada de dados (URL, parâmetros), exportação e anos disponíveis.
+2. Abrir a seção LGPD/Dados Abertos do portal (pode ter CSV/API).
+3. Achar fonte de projetos, presença e votações (provavelmente o portal de Transparência Legislativa ou `https://www.al.rn.leg.br`).
+4. Fonte de link por dado: cota → `https://transparencia.al.rn.leg.br/verbas`.
+5. Se seguir: `scripts/coletar_rn.py`, amostras em `tests/fixtures/contratos/`, `ENDPOINTS.md` e `CHANGELOG.md`.
+
 ### RR: Roraima
 ### RS: Rio Grande do Sul
 ### SC: Santa Catarina

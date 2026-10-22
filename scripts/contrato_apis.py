@@ -320,6 +320,18 @@ def _(ctx):
     return http_json(f"{SENADO_ADM}/senadores/despesas_ceaps/{HOJE.year}")
 
 
+@ep("senado_recursos", f"{SENADO_ADM}/senadores/{{id}}/recursos-utilizados?ano={{ano}}",
+    campos("", "statusCode", "data[].gastosNaoInclusos.totalValor", "data[].gastosNaoInclusos.despesas[].recurso", "data[].gastosNaoInclusos.despesas[].valor", "data[].beneficios[].beneficio", "data[].beneficios[].utilizacao", "data[].pessoal[].local", "data[].pessoal[].quantidade"))
+def _(ctx):
+    return http_json(f"{SENADO_ADM}/senadores/{ctx['senador']}/recursos-utilizados", ano=HOJE.year)
+
+
+@ep("senado_escritorios", f"{SENADO_ADM}/senadores/escritorios-apoio",
+    campos("", "data[].parlamentar.nome", "data[].parlamentar.estado", "data[].setor.endereco", "data[].setor.telefone"))
+def _(ctx):
+    return http_json(f"{SENADO_ADM}/senadores/escritorios-apoio")
+
+
 def iterar(obj, chave):
     """Todos os valores da chave em qualquer nível."""
     if isinstance(obj, dict):

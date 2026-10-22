@@ -28,6 +28,8 @@ Status: ✅ OK · ❌ ERRO (resposta com falha ou fora do ar) · ❔ não testad
 | senado_processos | Senado | https://legis.senado.leg.br/dadosabertos/processo?codigoParlamentarAutor=5012 | scripts/coletar.py | ✅ OK | 2026-10-21 | HTTP 200, application/json, 400 KB |
 | senado_processo | Senado | https://legis.senado.leg.br/dadosabertos/processo/1582415 | site/assets/app.js (link de fonte) | ✅ OK | 2026-10-21 | HTTP 200, application/json, 2 KB |
 | senado_ceaps | Senado | https://adm.senado.gov.br/adm-dadosabertos/api/v1/senadores/despesas_ceaps/2025 | scripts/coletar.py, site/assets/app.js | ✅ OK | 2026-10-21 | HTTP 200, application/json, 10.1 MB |
+| senado_recursos | Senado | https://adm.senado.gov.br/adm-dadosabertos/api/v1/senadores/5012/recursos-utilizados?ano=2025 | scripts/coletar.py, site/assets/app.js (link de fonte) | ❔ não testado | 2026-10-22 | HTTP 200, application/json |
+| senado_escritorios | Senado | https://adm.senado.gov.br/adm-dadosabertos/api/v1/senadores/escritorios-apoio | scripts/coletar.py, site/assets/app.js (link de fonte) | ❔ não testado | 2026-10-22 | HTTP 200, application/json, 27 KB |
 | tse_consulta_cand | TSE | https://cdn.tse.jus.br/estatistica/sead/odsele/consulta_cand/consulta_cand_2024.zip | scripts/coletar_tse.py | ✅ OK | 2026-10-21 | HTTP 200, application/zip, 63.9 MB |
 | tse_bem_candidato | TSE | https://cdn.tse.jus.br/estatistica/sead/odsele/bem_candidato/bem_candidato_2024.zip | scripts/coletar_tse.py | ✅ OK | 2026-10-21 | HTTP 200, application/zip, 45.9 MB |
 | tse_votacao_candidato_munzona | TSE | https://cdn.tse.jus.br/estatistica/sead/odsele/votacao_candidato_munzona/votacao_candidato_munzona_2024.zip | scripts/coletar_tse.py | ✅ OK | 2026-10-21 | HTTP 200, application/zip, 48.0 MB |

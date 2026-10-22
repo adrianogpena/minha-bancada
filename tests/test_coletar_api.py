@@ -308,6 +308,20 @@ def test_ceaps_agrupa_por_senador_ordena_e_ignora_sem_codigo(dados, monkeypatch)
     assert r["itens"]["1"][0]["valor"] == 0
 
 
+def test_recursos_senado_liga_escritorio_por_nome_e_uf_e_ignora_zerados(dados, monkeypatch):
+    (dados / "senado.json").write_text(json.dumps([{"id": "7", "nome": "João Álvares", "uf": "AC"}]), encoding="utf-8")
+    recursos = {"data": [{"gastosNaoInclusos": {"despesas": [{"recurso": "Correios", "valor": 10}, {"recurso": "Material", "valor": 0}], "totalValor": 10},
+                          "beneficios": [{"beneficio": "Imóvel Funcional", "utilizacao": "Utilizou"}],
+                          "pessoal": [{"local": "Gabinete", "quantidade": 3}]}]}
+    escritorios = {"data": [{"parlamentar": {"nome": "JOAO ALVARES", "estado": "AC"}, "setor": {"nome": "Escritório 1", "endereco": "Rua A", "telefone": None}},
+                            {"parlamentar": {"nome": "JOAO ALVARES", "estado": "SP"}, "setor": {"endereco": "Rua B"}}]}
+    monkeypatch.setattr(coletar.S, "get", lambda url, **k: Resp(escritorios if "escritorios" in url else recursos))
+    coletar.coletar_recursos_senado()
+    r = json.loads((dados / "senado_recursos.json").read_text(encoding="utf-8"))
+    assert r["recursos"]["7"]["foraCota"] == [["Correios", 10]] and r["recursos"]["7"]["pessoal"] == [["Gabinete", 3]]
+    assert r["escritorios"] == {"7": [{"nome": "Escritório 1", "endereco": "Rua A"}]}
+
+
 def votacao_s(codigo, data, voto="Sim", **extra):
     """Votação no formato do endpoint /votacao."""
     return {"codigoSessaoVotacao": codigo, "dataSessao": data, "identificacao": "PL 1/2025", "codigoMateria": 10, "resultadoVotacao": "A",

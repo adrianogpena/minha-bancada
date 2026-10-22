@@ -12,6 +12,11 @@ Só reaproveita dados que já eram coletados, mais três fontes de consulta e um
 - **Apensados e substitutos:** `coletar_detalhes_proposicoes` passou a guardar também `apensadoA`, `anterior` e `posterior` (ids tirados de `uriPropPrincipal`, `uriPropAnterior` e `uriPropPosterior` da mesma chamada a `/proposicoes/{id}`; nenhuma chamada nova). Projetos já finalizados no cache só ganham o campo se forem consultados de novo.
 - **Gerados sem coleta nova:** autoria por deputado, maiores notas da cota, média do estado, comparação do custo do voto, evolução do patrimônio (eleições ligadas por nome e data de nascimento), perfil dos eleitos de cada Casa (`site/dados/perfil_casas/<UF>.json`) e presença dos senadores.
 
+## Recursos e benefícios do senador (2026-10-22)
+- **De onde:** `https://adm.senado.gov.br/adm-dadosabertos/api/v1/senadores/{cod}/recursos-utilizados?ano=<ano>` (1 chamada por senador em exercício) e `.../senadores/escritorios-apoio` (1 chamada).
+- **Como:** `coletar_recursos_senado` (`scripts/coletar.py`), no passo do Senado; grava `dados/senado_recursos.json`, fora do git como a CEAPS. Os escritórios são ligados ao senador por nome sem acento e UF.
+- **No site:** bloco "Recursos e benefícios" no perfil do senador (benefícios, pessoal, gastos fora da cota, escritórios). O auxílio-moradia e o imóvel funcional vêm do próprio `recursos-utilizados`, então `auxilio-moradia-imoveis-funcionais` não foi coletado. Aposentados do Senado (`aposentados*`) ficaram de fora: não há perfil de ex-senador.
+
 ## Coletas em paralelo (2026-10-22)
 O `atualizar.yml` passou de um job sequencial (~20 min) para jobs paralelos: Câmara, Senado, TSE, Executivo, Assembleias, governadores e prefeituras coletam ao mesmo tempo; o job `publicar` junta os pacotes (`scripts/empacotar.sh`), gera o site, salva no git e publica.
 Câmara, Senado e TSE são indispensáveis; as outras coletas falham sem impedir a publicação.

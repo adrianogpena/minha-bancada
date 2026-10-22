@@ -17,6 +17,7 @@ import json
 import os
 import re
 import sys
+import unicodedata
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
 
@@ -563,6 +564,66 @@ def coletar_ceaps_senado() -> None:
     print(f"CEAPS {ano}: {sum(len(v) for v in itens.values())} despesas de {len(itens)} senadores")
 
 
+def chave_nome(nome: str | None) -> str:
+    """Nome sem acento, maiúsculo e sem espaços repetidos, para ligar listas que escrevem o nome de formas diferentes."""
+    sem = unicodedata.normalize("NFD", nome or "")
+    return " ".join("".join(c for c in sem if not unicodedata.combining(c)).upper().split())
+
+
+def coletar_recursos_senado() -> None:
+    """Recursos e benefícios de cada senador em exercício (gastos fora da cota, auxílio-moradia, imóvel funcional,
+    pessoal) e os escritórios de apoio nos estados. Fica em dados/senado_recursos.json (não vai para o git)."""
+    senadores = ler(DADOS / "senado.json", [])
+    if not senadores:
+        raise RuntimeError("lista de senadores vazia; recursos não coletados")
+    ano = dt.date.today().year
+    cab = {"Accept": "application/json"}
+
+    def buscar(s: dict) -> tuple[str, dict | None]:
+        r = S.get(f"{SENADO_ADM}/senadores/{s['id']}/recursos-utilizados", params={"ano": ano}, headers=cab, timeout=60)
+        r.raise_for_status()
+        dados = r.json().get("data") or []
+        if not dados:
+            return str(s["id"]), None
+        d = dados[0]
+        fora = d.get("gastosNaoInclusos") or {}
+        return str(s["id"]), {
+            "foraCota": [[x["recurso"], x.get("valor") or 0] for x in fora.get("despesas") or [] if x.get("valor")],
+            "totalForaCota": fora.get("totalValor") or 0,
+            "beneficios": [[x["beneficio"], x.get("utilizacao")] for x in d.get("beneficios") or []],
+            "pessoal": [[x["local"], x.get("quantidade") or 0] for x in d.get("pessoal") or []],
+        }
+
+    recursos: dict[str, dict] = {}
+    falhas = 0
+    with ThreadPoolExecutor(TRABALHADORES_SENADO) as ex:
+        for f in as_completed([ex.submit(buscar, s) for s in senadores]):
+            try:
+                sid, item = f.result()
+                if item:
+                    recursos[sid] = item
+            except Exception as e:
+                falhas += 1
+                if falhas <= 5:
+                    avisar(f"recursos de senador: {e}")
+
+    escritorios: dict[str, list] = {}
+    try:
+        r = S.get(f"{SENADO_ADM}/senadores/escritorios-apoio", headers=cab, timeout=60)
+        r.raise_for_status()
+        por_nome = {(chave_nome(s.get("nome")), s.get("uf")): str(s["id"]) for s in senadores}
+        for e in r.json().get("data") or []:
+            sid = por_nome.get((chave_nome((e.get("parlamentar") or {}).get("nome")), (e.get("parlamentar") or {}).get("estado")))
+            setor = e.get("setor") or {}
+            if sid and (setor.get("endereco") or setor.get("telefone")):
+                escritorios.setdefault(sid, []).append({k: setor[k] for k in ("nome", "endereco", "telefone") if setor.get(k)})
+    except Exception as e:
+        avisar(f"escritórios de apoio: {e}")
+
+    salvar(DADOS / "senado_recursos.json", {"ano": ano, "recursos": recursos, "escritorios": escritorios})
+    print(f"Recursos de {len(recursos)} senadores, escritórios de {len(escritorios)}, falhas: {falhas}")
+
+
 IDENTIFICACAO_SENADO = re.compile(r"^(?P<tipo>\S+)\s+(?P<numero>[\d.]+)/(?P<ano>\d{4})$")
 
 
@@ -735,7 +796,7 @@ def main():
             coletar_senado()
         except Exception as e:
             avisar(f"senado: {e}")
-        for etapa in (coletar_votacoes_senado, coletar_autorias_senado, coletar_ceaps_senado):  # complementos: cada um falha sozinho
+        for etapa in (coletar_votacoes_senado, coletar_autorias_senado, coletar_ceaps_senado, coletar_recursos_senado):  # complementos: cada um falha sozinho
             try:
                 etapa()
             except Exception as e:

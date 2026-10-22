@@ -199,6 +199,7 @@ def gerar_senadores() -> None:
     votacoes.sort(key=lambda v: (v["data"], v.get("hora") or ""), reverse=True)
     autorias = ler(BRUTO / "senado_autorias.json", {}) or {}
     ceaps = ler(BRUTO / "senado_ceaps.json", {}) or {}
+    recursos = ler(BRUTO / "senado_recursos.json", {}) or {}
 
     por_id = {str(s["id"]): s for s in senadores}
     resumo, votos_por_sen, primeira = [], defaultdict(dict), {}
@@ -259,6 +260,9 @@ def gerar_senadores() -> None:
             **({"presenca": resumir_presenca(presenca[sid])} if presenca.get(sid) else {}),
             # sem o arquivo (coleta falhou) o site mostra só o link para o Portal da Transparência
             **({"despesas": resumir_despesas(ceaps["ano"], ceaps["itens"].get(sid, []))} if ceaps else {}),
+            **({"recursos": {"ano": recursos["ano"], **recursos["recursos"][sid],
+                             **({"escritorios": recursos["escritorios"][sid]} if sid in recursos.get("escritorios", {}) else {})}}
+               if sid in recursos.get("recursos", {}) else {}),
         })
     print(f"Gerado: {len(senadores)} senadores, {len(resumo)} votações nominais do Senado")
 

@@ -13,10 +13,14 @@ Documentação da API: https://dadosabertos.camara.leg.br/swagger/api.html
 
 import argparse
 import datetime as dt
+import csv
+import io
 import json
 import os
 import re
 import sys
+import unicodedata
+import zipfile
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
 
@@ -28,6 +32,8 @@ API = os.environ.get("CAMARA_API", "https://dadosabertos.camara.leg.br/api/v2")
 RAIZ = Path(__file__).resolve().parent.parent
 DADOS = RAIZ / "dados"
 INICIO_LEGISLATURA = "2023-02-01"  # 57ª legislatura
+LEGISLATURA = 57
+ARQUIVOS_CAMARA = "https://dadosabertos.camara.leg.br/arquivos"
 TRABALHADORES_SENADO = 2  # o Senado responde 503 quando apertado
 TRABALHADORES = int(os.environ.get("CAMARA_TRABALHADORES", 10))  # requisições em paralelo; seja gentil com a API pública (429 e 5xx são repetidos com espera)
 
@@ -132,18 +138,54 @@ def coletar_proposicoes(dep: dict) -> list:
     return itens
 
 
-def coletar_deputado(dep: dict, ano: int) -> dict:
+def coletar_cota_csv(ano: int) -> dict[int, list]:
+    """Cota parlamentar do ano de todos os deputados num arquivo só (~4 MB zipado), com o CNPJ/CPF do fornecedor.
+    Devolve {id do deputado: despesas, da mais recente para a mais antiga}; vazio se o arquivo não puder ser lido."""
+    r = S.get(f"https://www.camara.leg.br/cotas/Ano-{ano}.csv.zip", timeout=180)
+    r.raise_for_status()
+    zf = zipfile.ZipFile(io.BytesIO(r.content))
+    texto = zf.read(zf.namelist()[0]).decode("utf-8-sig")
+    por_dep: dict[int, list] = {}
+    for l in csv.DictReader(io.StringIO(texto), delimiter=";"):
+        if not l.get("nuDeputadoId", "").isdigit() or l.get("numAno") != str(ano):
+            continue
+        por_dep.setdefault(int(l["nuDeputadoId"]), []).append({
+            "mes": int(l["numMes"]) if l.get("numMes", "").isdigit() else None,
+            "tipo": l.get("txtDescricao"), "valor": float(l["vlrLiquido"] or 0),
+            "fornecedor": l.get("txtFornecedor"), "cnpj": re.sub(r"\D", "", l.get("txtCNPJCPF") or ""),
+            "data": (l.get("datEmissao") or "")[:10] or None, "documento": l.get("urlDocumento") or None,
+        })
+    for lista in por_dep.values():
+        lista.sort(key=lambda i: i["data"] or "", reverse=True)
+    print(f"Cota {ano} (CSV): {sum(len(v) for v in por_dep.values())} despesas de {len(por_dep)} deputados")
+    return por_dep
+
+
+def coletar_deputado(dep: dict, ano: int, cota: dict[int, list] | None = None) -> dict:
     did = dep["id"]
     detalhe = get(f"/deputados/{did}").get("dados", {})
 
     proposicoes = coletar_proposicoes(dep)
 
+    if cota is not None:
+        itens_cota = cota.get(did, [])
+    else:
+        try:
+            despesas = get_todos(f"/deputados/{did}/despesas", ano=ano,
+                                 ordem="DESC", ordenarPor="dataDocumento")
+        except Exception as e:
+            avisar(f"despesas de {dep.get('nome')}: {e}")
+            despesas = []
+        itens_cota = [{"mes": d.get("mes"), "tipo": d.get("tipoDespesa"), "valor": d.get("valorLiquido") or 0,
+                       "fornecedor": d.get("nomeFornecedor"), "cnpj": re.sub(r"\D", "", d.get("cnpjCpfFornecedor") or ""),
+                       "data": d.get("dataDocumento"), "documento": d.get("urlDocumento")} for d in despesas]
+
+    frentes = None
     try:
-        despesas = get_todos(f"/deputados/{did}/despesas", ano=ano,
-                             ordem="DESC", ordenarPor="dataDocumento")
-    except Exception as e:
-        avisar(f"despesas de {dep.get('nome')}: {e}")
-        despesas = []
+        frentes = [{"id": f["id"], "titulo": (f.get("titulo") or "").strip()}
+                   for f in get(f"/deputados/{did}/frentes").get("dados", []) if f.get("idLegislatura") == LEGISLATURA]
+    except Exception as e:  # a frente é complemento: sem ela o perfil só não mostra o bloco
+        avisar(f"frentes de {dep.get('nome')}: {e}")
 
     status = detalhe.get("ultimoStatus", {}) or {}
     return {
@@ -168,17 +210,8 @@ def coletar_deputado(dep: dict, ano: int) -> dict:
              "ano": p.get("ano"), "ementa": (p.get("ementa") or "").strip()}
             for p in proposicoes
         ],
-        "despesas": {
-            "ano": ano,
-            "itens": [
-                {"mes": d.get("mes"), "tipo": d.get("tipoDespesa"),
-                 "valor": d.get("valorLiquido") or 0,
-                 "fornecedor": d.get("nomeFornecedor"),
-                 "data": d.get("dataDocumento"),
-                 "documento": d.get("urlDocumento")}
-                for d in despesas
-            ],
-        },
+        "despesas": {"ano": ano, "itens": itens_cota},
+        **({"frentes": frentes} if frentes is not None else {}),
         "coletadoEm": dt.datetime.now(dt.timezone.utc).isoformat(timespec="seconds"),
     }
 
@@ -189,9 +222,14 @@ def coletar_deputados(limite: int | None) -> list:
         lista = lista[:limite]
     print(f"Deputados em exercício: {len(lista)}")
     ano = dt.date.today().year
+    try:
+        cota = coletar_cota_csv(ano) or None
+    except Exception as e:  # sem o CSV, a cota vem da API, deputado a deputado
+        avisar(f"cota pelo CSV anual: {e}")
+        cota = None
     resumo, falhas = [], 0
     with ThreadPoolExecutor(TRABALHADORES) as ex:
-        futuros = {ex.submit(coletar_deputado, d, ano): d for d in lista}
+        futuros = {ex.submit(coletar_deputado, d, ano, cota): d for d in lista}
         for i, f in enumerate(as_completed(futuros), 1):
             dep = futuros[f]
             try:
@@ -343,6 +381,174 @@ def coletar_autores_proposicoes() -> None:
     if feitos:  # sem nada novo (ou com a API fora do ar) o arquivo anterior fica como está
         salvar(arquivo, cache)
     print(f"Autores salvos: {feitos}, falhas: {falhas}, no arquivo: {len(cache)}")
+
+
+def baixar_arquivo_camara(caminho: str) -> list:
+    """Arquivo em lote da Câmara (https://dadosabertos.camara.leg.br/arquivos/...): devolve a lista `dados` do JSON."""
+    r = S.get(f"{ARQUIVOS_CAMARA}/{caminho}", timeout=300)
+    r.raise_for_status()
+    return r.json().get("dados", [])
+
+
+def coletar_temas_proposicoes() -> None:
+    """Temas oficiais dos projetos, do arquivo anual proposicoesTemas-{ano}.json (um download por ano da legislatura).
+    Guardado em dados/proposicoes_temas.json como {id do projeto: [temas]} (vai para o git). Um ano que falha
+    mantém o que já estava guardado."""
+    arquivo = DADOS / "proposicoes_temas.json"
+    cache = ler(arquivo, {})
+    mudou = False
+    for ano in range(int(INICIO_LEGISLATURA[:4]), dt.date.today().year + 1):
+        try:
+            linhas = baixar_arquivo_camara(f"proposicoesTemas/json/proposicoesTemas-{ano}.json")
+        except Exception as e:
+            avisar(f"temas das proposições de {ano}: {e}")
+            continue
+        novos: dict[str, list] = {}
+        for l in sorted(linhas, key=lambda x: -(x.get("relevancia") or 0)):
+            pid = id_da_uri(l.get("uriProposicao"))
+            if pid and l.get("siglaTipo") in TIPOS_PROJETO and l.get("tema") and l["tema"] not in novos.setdefault(pid, []):
+                novos[pid].append(l["tema"])
+        cache.update(novos)
+        mudou = True
+        print(f"Temas {ano}: {len(novos)} projetos")
+    if mudou:
+        salvar(arquivo, cache)
+
+
+def coletar_orgaos_deputados() -> None:
+    """Comissões e outros órgãos de cada deputado na legislatura, do arquivo orgaosDeputados-L57.json.
+    Guardado em dados/orgaos_deputados.json como {id do deputado: [órgãos]} (vai para o git)."""
+    por_dep: dict[str, list] = {}
+    for l in baixar_arquivo_camara(f"orgaosDeputados/json/orgaosDeputados-L{LEGISLATURA}.json"):
+        m = re.search(r"/deputados/(\d+)$", l.get("uriDeputado") or "")
+        if not m or not l.get("siglaOrgao"):
+            continue
+        por_dep.setdefault(m.group(1), []).append({
+            "sigla": l["siglaOrgao"], "nome": (l.get("nomePublicacaoOrgao") or l.get("nomeOrgao") or "").strip(),
+            "cargo": l.get("cargo") or None, "inicio": l.get("dataInicio") or None, "fim": l.get("dataFim") or None,
+        })
+    if por_dep:
+        salvar(DADOS / "orgaos_deputados.json", por_dep)
+    print(f"Órgãos: {sum(len(v) for v in por_dep.values())} participações de {len(por_dep)} deputados")
+
+
+def coletar_orientacoes() -> None:
+    """Orientação de cada bancada (partido, federação, bloco, Governo...) nas votações nominais já guardadas, do arquivo
+    anual votacoesOrientacoes-{ano}.json. Guardado em dados/orientacoes.json como {id da votação: {bancada: orientação}}
+    (vai para o git), sem as orientações em branco. Um ano que falha mantém o que já estava guardado."""
+    arquivo = DADOS / "orientacoes.json"
+    cache = ler(arquivo, {})
+    nominais: dict[str, set] = {}
+    for arq in (DADOS / "votacoes").glob("*.json"):
+        for v in ler(arq, {}).values():
+            if v.get("votos"):
+                nominais.setdefault(v["data"][:4], set()).add(v["id"])
+    mudou = False
+    for ano, ids in sorted(nominais.items()):
+        try:
+            linhas = baixar_arquivo_camara(f"votacoesOrientacoes/json/votacoesOrientacoes-{ano}.json")
+        except Exception as e:
+            avisar(f"orientações das votações de {ano}: {e}")
+            continue
+        for l in linhas:
+            if l.get("idVotacao") in ids and l.get("siglaBancada") and (l.get("orientacao") or "").strip():
+                cache.setdefault(l["idVotacao"], {})[l["siglaBancada"].strip()] = l["orientacao"].strip()
+                mudou = True
+    if mudou:
+        salvar(arquivo, cache)
+    print(f"Orientações: {len(cache)} votações")
+
+
+def coletar_blocos() -> None:
+    """Blocos partidários e federações da legislatura com os partidos de cada um (/blocos e /blocos/{id}/partidos).
+    Guardado em dados/blocos.json como [{nome, federacao, partidos}] (vai para o git): serve para ligar o nome truncado
+    do bloco em votacoesOrientacoes ("Bl UniPpPsd...") aos partidos. Se a API falhar, o arquivo anterior fica."""
+    blocos = []
+    for b in get_todos("/blocos", idLegislatura=LEGISLATURA):
+        partidos = get(f"/blocos/{b['id']}/partidos").get("dados", [])
+        blocos.append({"nome": b["nome"], "federacao": bool(b.get("federacao")), "partidos": [p["sigla"] for p in partidos]})
+    if blocos:
+        salvar(DADOS / "blocos.json", blocos)
+    print(f"Blocos: {len(blocos)}")
+
+
+def coletar_votacoes_proposicoes() -> None:
+    """Votações de cada projeto (nominais ou não), do arquivo anual votacoesProposicoes-{ano}.json: um download por ano da
+    legislatura no lugar de uma chamada a /proposicoes/{id}/votacoes por projeto. Guardado em dados/proposicoes_votacoes.json
+    como {id do projeto: [{id, data, descricao}]} (vai para o git), só dos projetos dos deputados. Um ano que falha mantém
+    o que já estava guardado."""
+    arquivo = DADOS / "proposicoes_votacoes.json"
+    cache = ler(arquivo, {})
+    meus = set()
+    for arq in (DADOS / "proposicoes").glob("*.json"):
+        for p in ler(arq, {"itens": []})["itens"]:
+            if p.get("siglaTipo") in TIPOS_PROJETO:
+                meus.add(str(p["id"]))
+    mudou = False
+    for ano in range(int(INICIO_LEGISLATURA[:4]), dt.date.today().year + 1):
+        try:
+            linhas = baixar_arquivo_camara(f"votacoesProposicoes/json/votacoesProposicoes-{ano}.json")
+        except Exception as e:
+            avisar(f"votações das proposições de {ano}: {e}")
+            continue
+        for l in linhas:
+            pid = str((l.get("proposicao_") or l.get("proposicao") or {}).get("id") or "")
+            if pid not in meus or not l.get("idVotacao"):
+                continue
+            lista = cache.setdefault(pid, [])
+            if not any(x["id"] == l["idVotacao"] for x in lista):
+                lista.append({"id": l["idVotacao"], "data": l.get("data"), "descricao": (l.get("descricao") or "").strip()[:300]})
+                mudou = True
+    if mudou:
+        for lista in cache.values():
+            lista.sort(key=lambda x: x["data"] or "")
+        salvar(arquivo, cache)
+    print(f"Votações de projetos: {sum(len(v) for v in cache.values())} votações em {len(cache)} projetos")
+
+
+def tipo_evento(descricao_tipo: str | None) -> str:
+    """Classe do evento da Câmara para a presença: sessoes (Sessão Deliberativa do Plenário), comissoes (reuniões e
+    audiências, que são das comissões) ou outros (sessões solenes, seminários, visitas...)."""
+    t = (descricao_tipo or "").strip()
+    if t == "Sessão Deliberativa":
+        return "sessoes"
+    if t.startswith(("Reunião", "Audiência")):
+        return "comissoes"
+    return "outros"
+
+
+def coletar_presenca_eventos() -> None:
+    """Presença dos deputados nos eventos da Câmara, de eventosPresencaDeputados-{ano}.json (~30 MB por ano) e da lista de
+    eventos do ano, que dá o tipo de cada um. Guardado em dados/presenca_eventos.json como
+    {ano: {sessoesDeliberativas, deputados: {id: {sessoes, comissoes, outros}}}} (vai para o git): `sessoesDeliberativas` é o
+    total de sessões deliberativas encerradas do ano. Anos encerrados já guardados não são baixados de novo; um ano que
+    falha mantém o que já estava guardado."""
+    arquivo = DADOS / "presenca_eventos.json"
+    cache = ler(arquivo, {})
+    hoje = dt.date.today()
+    for ano in range(int(INICIO_LEGISLATURA[:4]), hoje.year + 1):
+        if str(ano) in cache and ano < hoje.year:
+            continue
+        try:
+            eventos = {e["id"]: e for e in baixar_arquivo_camara(f"eventos/json/eventos-{ano}.json")}
+            presencas = baixar_arquivo_camara(f"eventosPresencaDeputados/json/eventosPresencaDeputados-{ano}.json")
+        except Exception as e:
+            avisar(f"presença em eventos de {ano}: {e}")
+            continue
+        vistos: set[tuple] = set()
+        deputados: dict[str, dict] = {}
+        for l in presencas:
+            chave = (l.get("idEvento"), l.get("idDeputado"))
+            if None in chave or chave in vistos:
+                continue
+            vistos.add(chave)
+            classe = tipo_evento((eventos.get(l["idEvento"]) or {}).get("descricaoTipo"))
+            d = deputados.setdefault(str(l["idDeputado"]), {"sessoes": 0, "comissoes": 0, "outros": 0})
+            d[classe] += 1
+        sessoes = sum(1 for e in eventos.values() if tipo_evento(e.get("descricaoTipo")) == "sessoes" and (e.get("situacao") or "").startswith("Encerrada"))
+        cache[str(ano)] = {"sessoesDeliberativas": sessoes, "deputados": deputados}
+        print(f"Presença {ano}: {len(deputados)} deputados, {sessoes} sessões deliberativas")
+        salvar(arquivo, cache)
 
 
 def situacao_final(situacao: str) -> bool:
@@ -563,6 +769,66 @@ def coletar_ceaps_senado() -> None:
     print(f"CEAPS {ano}: {sum(len(v) for v in itens.values())} despesas de {len(itens)} senadores")
 
 
+def chave_nome(nome: str | None) -> str:
+    """Nome sem acento, maiúsculo e sem espaços repetidos, para ligar listas que escrevem o nome de formas diferentes."""
+    sem = unicodedata.normalize("NFD", nome or "")
+    return " ".join("".join(c for c in sem if not unicodedata.combining(c)).upper().split())
+
+
+def coletar_recursos_senado() -> None:
+    """Recursos e benefícios de cada senador em exercício (gastos fora da cota, auxílio-moradia, imóvel funcional,
+    pessoal) e os escritórios de apoio nos estados. Fica em dados/senado_recursos.json (não vai para o git)."""
+    senadores = ler(DADOS / "senado.json", [])
+    if not senadores:
+        raise RuntimeError("lista de senadores vazia; recursos não coletados")
+    ano = dt.date.today().year
+    cab = {"Accept": "application/json"}
+
+    def buscar(s: dict) -> tuple[str, dict | None]:
+        r = S.get(f"{SENADO_ADM}/senadores/{s['id']}/recursos-utilizados", params={"ano": ano}, headers=cab, timeout=60)
+        r.raise_for_status()
+        dados = r.json().get("data") or []
+        if not dados:
+            return str(s["id"]), None
+        d = dados[0]
+        fora = d.get("gastosNaoInclusos") or {}
+        return str(s["id"]), {
+            "foraCota": [[x["recurso"], x.get("valor") or 0] for x in fora.get("despesas") or [] if x.get("valor")],
+            "totalForaCota": fora.get("totalValor") or 0,
+            "beneficios": [[x["beneficio"], x.get("utilizacao")] for x in d.get("beneficios") or []],
+            "pessoal": [[x["local"], x.get("quantidade") or 0] for x in d.get("pessoal") or []],
+        }
+
+    recursos: dict[str, dict] = {}
+    falhas = 0
+    with ThreadPoolExecutor(TRABALHADORES_SENADO) as ex:
+        for f in as_completed([ex.submit(buscar, s) for s in senadores]):
+            try:
+                sid, item = f.result()
+                if item:
+                    recursos[sid] = item
+            except Exception as e:
+                falhas += 1
+                if falhas <= 5:
+                    avisar(f"recursos de senador: {e}")
+
+    escritorios: dict[str, list] = {}
+    try:
+        r = S.get(f"{SENADO_ADM}/senadores/escritorios-apoio", headers=cab, timeout=60)
+        r.raise_for_status()
+        por_nome = {(chave_nome(s.get("nome")), s.get("uf")): str(s["id"]) for s in senadores}
+        for e in r.json().get("data") or []:
+            sid = por_nome.get((chave_nome((e.get("parlamentar") or {}).get("nome")), (e.get("parlamentar") or {}).get("estado")))
+            setor = e.get("setor") or {}
+            if sid and (setor.get("endereco") or setor.get("telefone")):
+                escritorios.setdefault(sid, []).append({k: setor[k] for k in ("nome", "endereco", "telefone") if setor.get(k)})
+    except Exception as e:
+        avisar(f"escritórios de apoio: {e}")
+
+    salvar(DADOS / "senado_recursos.json", {"ano": ano, "recursos": recursos, "escritorios": escritorios})
+    print(f"Recursos de {len(recursos)} senadores, escritórios de {len(escritorios)}, falhas: {falhas}")
+
+
 IDENTIFICACAO_SENADO = re.compile(r"^(?P<tipo>\S+)\s+(?P<numero>[\d.]+)/(?P<ano>\d{4})$")
 
 
@@ -730,12 +996,18 @@ def main():
             coletar_autores_proposicoes()
         except Exception as e:
             avisar(f"autores das proposições: {e}")
+        for etapa in (coletar_temas_proposicoes, coletar_orgaos_deputados, coletar_orientacoes,
+                      coletar_blocos, coletar_votacoes_proposicoes, coletar_presenca_eventos):  # complementos: cada um falha sozinho
+            try:
+                etapa()
+            except Exception as e:
+                avisar(f"{etapa.__name__}: {e}")
     if a.so in (None, "senado"):
         try:
             coletar_senado()
         except Exception as e:
             avisar(f"senado: {e}")
-        for etapa in (coletar_votacoes_senado, coletar_autorias_senado, coletar_ceaps_senado):  # complementos: cada um falha sozinho
+        for etapa in (coletar_votacoes_senado, coletar_autorias_senado, coletar_ceaps_senado, coletar_recursos_senado):  # complementos: cada um falha sozinho
             try:
                 etapa()
             except Exception as e:

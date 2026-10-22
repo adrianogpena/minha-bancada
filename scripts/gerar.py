@@ -119,6 +119,136 @@ def resumir_autoria(proposicoes: list) -> dict:
     }
 
 
+ORIENTACOES = {"Sim": "sim", "Não": "nao", "Obstrução": "obstrucao"}
+VOTOU = ("sim", "nao", "abstencao", "obstrucao")
+DIVERGENCIAS = 10
+
+
+def sem_acento(texto: str) -> str:
+    return unicodedata.normalize("NFD", texto).encode("ascii", "ignore").decode().lower()
+
+
+def partidos_do_bloco(rotulo: str, blocos: list) -> set:
+    """Partidos do bloco que a Câmara chama de "Bl UniPpPsd..." em votacoesOrientacoes: o nome vem truncado, com um pedaço
+    do nome de cada partido colado ao seguinte. Cada pedaço é o começo da sigla (UNIÃO vira "Uni"); só serve o bloco cujas
+    siglas, na ordem do nome, consomem o rótulo inteiro. Vazio quando nenhum bloco (ou mais de um) combina."""
+    alvo = sem_acento(rotulo.removeprefix("Bl ").removesuffix("..."))
+    achados = []
+    for b in blocos:
+        if b.get("federacao"):
+            continue
+        resto = alvo
+        for sigla in (sem_acento(x) for x in b["nome"].split(", ")):
+            k = next((k for k in range(len(sigla), 1, -1) if resto.startswith(sigla[:k])), 0)
+            if not k:
+                break
+            resto = resto[k:]
+        if not resto:
+            achados.append(b)
+    if len(achados) != 1:
+        return set()
+    return {x.upper() for x in achados[0]["partidos"] or achados[0]["nome"].split(", ")}  # blocos de um partido só vêm sem lista
+
+
+def bancada_do_partido(partido: str, bancadas, blocos: dict | None = None) -> str | None:
+    """Nome da bancada que orientou pelo partido numa votação: a sigla do partido, a federação ("Fdr PT-PCdoB-PV", às vezes
+    truncada, como "Fdr PSDB-CIDADAN") ou o bloco ("Bl UniPpPsd...", ligado aos partidos por `blocos`: {rótulo: partidos})."""
+    p = (partido or "").upper()
+    for b in bancadas:
+        if b.upper() == p:
+            return b
+    for b in bancadas:
+        if b.startswith("Fdr ") and any(m == p or (len(m) >= 5 and p.startswith(m)) for m in b[4:].upper().split("-")):
+            return b
+    for b in bancadas:
+        if p in (blocos or {}).get(b, ()):  # já em maiúsculas (partidos_do_bloco)
+            return b
+    return None
+
+
+def resumir_comportamento(votos: list, orientacoes: dict, partido: str, blocos: dict | None = None) -> dict | None:
+    """Quanto o deputado votou como o partido e como o Governo orientaram, só nas votações em que votou e a bancada deu
+    orientação Sim, Não ou Obstrução (Liberado não conta). Usa o partido atual do deputado. None sem nenhuma orientação."""
+    contas = {"partido": [0, 0], "governo": [0, 0]}
+    divergencias = []
+    for v in votos:
+        o = orientacoes.get(v["id"])
+        if not o or v["voto"] not in VOTOU:
+            continue
+        banc = bancada_do_partido(partido, [b for b in o if b != "Governo"], blocos)
+        for chave, bancada in (("partido", banc), ("governo", "Governo" if "Governo" in o else None)):
+            esperado = ORIENTACOES.get(o.get(bancada)) if bancada else None
+            if not esperado:
+                continue
+            contas[chave][0] += 1
+            if esperado == v["voto"]:
+                contas[chave][1] += 1
+            elif len(divergencias) < 3 * DIVERGENCIAS:
+                divergencias.append({"id": v["id"], "data": v["data"], "proposicao": v.get("proposicao"), "descricao": v["descricao"],
+                                     "contra": chave, "bancada": bancada, "orientacao": o[bancada], "voto": v["voto"]})
+    if not any(c[0] for c in contas.values()):
+        return None
+    divergencias.sort(key=lambda x: x["data"], reverse=True)
+    return {**{k: {"total": c[0], "seguiu": c[1]} for k, c in contas.items()}, "divergencias": divergencias[:DIVERGENCIAS]}
+
+
+def medianas_sessoes(presenca: dict) -> dict:
+    """Mediana de sessões deliberativas com presença, por ano, entre os deputados com alguma presença."""
+    medianas = {}
+    for ano, p in presenca.items():
+        todos = sorted(d["sessoes"] for d in p["deputados"].values() if d["sessoes"])
+        medianas[ano] = todos[len(todos) // 2] if todos else 0
+    return medianas
+
+
+def presenca_do_deputado(did: str, presenca: dict, medianas: dict) -> list:
+    """Presença do deputado nos eventos da Câmara, um item por ano (do mais recente): sessões deliberativas do Plenário
+    (presentes, total do ano e mediana dos deputados), reuniões de comissão e audiências, e outros eventos.
+    Anos em que o deputado não aparece ficam de fora."""
+    return [{"ano": int(ano), **presenca[ano]["deputados"][str(did)], "sessoesDeliberativas": presenca[ano]["sessoesDeliberativas"],
+             "medianaSessoes": medianas[ano]}
+            for ano in sorted(presenca, reverse=True) if str(did) in presenca[ano]["deputados"]]
+
+
+def juntar_votacoes(p: dict, votacoes_projeto: list | None, nominais: dict, orientacoes: dict) -> dict:
+    """Acrescenta ao projeto as votações dele (`votacoes`, as mais recentes primeiro, até MAX_VOTACOES_PROJETO). As nominais
+    levam placar, resultado e as orientações das bancadas; as simbólicas e as de outros órgãos só data e descrição."""
+    if not votacoes_projeto:
+        return p
+    saida = []
+    for v in sorted(votacoes_projeto, key=lambda x: x["data"] or "", reverse=True)[:MAX_VOTACOES_PROJETO]:
+        item = {"id": v["id"], "data": v["data"], "descricao": v["descricao"]}
+        n = nominais.get(v["id"])
+        if n:
+            item.update(nominal=True, placar=n["placar"], aprovada=n["aprovada"])
+            if orientacoes.get(v["id"]):
+                item["orientacoes"] = orientacoes[v["id"]]
+        saida.append(item)
+    return {**p, "votacoes": saida, "totalVotacoes": len(votacoes_projeto)}
+
+
+MAX_VOTACOES_PROJETO = 8
+
+
+def resumir_temas(proposicoes: list) -> list:
+    """Temas oficiais dos projetos (já com `temas` e `principal` juntados): [[tema, projetos, aprovados, como autor principal]],
+    do mais frequente para o menos. Projeto com vários temas conta em cada um."""
+    por_tema: dict[str, list] = {}
+    for p in proposicoes:
+        for t in p.get("temas", []):
+            c = por_tema.setdefault(t, [0, 0, 0])
+            c[0] += 1
+            c[1] += destino_projeto(p.get("situacao")) == "aprovada"
+            c[2] += bool(p.get("principal"))
+    return sorted(([t, *c] for t, c in por_tema.items()), key=lambda x: (-x[1], x[0]))
+
+
+def ordenar_orgaos(orgaos: list) -> list:
+    """Órgãos em que o deputado está agora primeiro (sem data de fim), depois os que deixou, do mais recente para o mais antigo."""
+    recentes = sorted(orgaos, key=lambda o: o.get("inicio") or "", reverse=True)
+    return sorted(recentes, key=lambda o: bool(o.get("fim")))
+
+
 # cota parlamentar mensal (CEAP) de cada UF, em reais: tabela "valores atuais" do guia para jornalistas da Câmara (verificada em 2026-10-22, sem data de vigência na página)
 FONTE_LIMITE_COTA = "https://www2.camara.leg.br/comunicacao/assessoria-de-imprensa/guia-para-jornalistas/cota-parlamentar"
 LIMITE_COTA_UF = {
@@ -142,6 +272,36 @@ def limite_cota(uf: str, itens: list) -> dict | None:
     mensal = LIMITE_COTA_UF.get(uf)
     meses = max((i["mes"] for i in itens if i.get("mes")), default=0)
     return {"mensal": mensal, "meses": meses} if mensal and meses else None
+
+
+FORNECEDORES_NO_RANKING = 200
+DEPUTADOS_POR_FORNECEDOR = 5
+
+
+def ranking_fornecedores(deputados: dict) -> list:
+    """Fornecedores que mais receberam da cota da Câmara inteira, ligados pelo CNPJ/CPF (não pelo nome), com os
+    deputados que mais os usaram. Despesas sem CNPJ/CPF válido ficam de fora."""
+    por_cnpj: dict[str, dict] = {}
+    for did, d in deputados.items():
+        for i in d["despesas"]["itens"]:
+            cnpj = i.get("cnpj") or ""
+            if not i.get("valor") or cnpj.strip("0") in ("", "1"):
+                continue
+            f = por_cnpj.setdefault(cnpj, {"cnpj": cnpj, "nomes": Counter(), "total": 0.0, "notas": 0, "deps": Counter()})
+            f["nomes"][i.get("fornecedor") or "Não informado"] += i["valor"]
+            f["total"] += i["valor"]
+            f["notas"] += 1
+            f["deps"][did] += i["valor"]
+    ranking = []
+    for f in sorted(por_cnpj.values(), key=lambda f: -f["total"])[:FORNECEDORES_NO_RANKING]:
+        ranking.append({
+            "cnpj": f["cnpj"], "nome": f["nomes"].most_common(1)[0][0], "total": round(f["total"], 2), "notas": f["notas"],
+            "deputados": len(f["deps"]),
+            "maioresDeputados": [{"id": did, "nome": deputados[did]["nome"], "partido": deputados[did]["partido"],
+                                  "uf": deputados[did]["uf"], "valor": round(v, 2)}
+                                 for did, v in f["deps"].most_common(DEPUTADOS_POR_FORNECEDOR)],
+        })
+    return ranking
 
 
 def resumir_despesas(ano: int, itens: list) -> dict:
@@ -199,6 +359,7 @@ def gerar_senadores() -> None:
     votacoes.sort(key=lambda v: (v["data"], v.get("hora") or ""), reverse=True)
     autorias = ler(BRUTO / "senado_autorias.json", {}) or {}
     ceaps = ler(BRUTO / "senado_ceaps.json", {}) or {}
+    recursos = ler(BRUTO / "senado_recursos.json", {}) or {}
 
     por_id = {str(s["id"]): s for s in senadores}
     resumo, votos_por_sen, primeira = [], defaultdict(dict), {}
@@ -259,6 +420,9 @@ def gerar_senadores() -> None:
             **({"presenca": resumir_presenca(presenca[sid])} if presenca.get(sid) else {}),
             # sem o arquivo (coleta falhou) o site mostra só o link para o Portal da Transparência
             **({"despesas": resumir_despesas(ceaps["ano"], ceaps["itens"].get(sid, []))} if ceaps else {}),
+            **({"recursos": {"ano": recursos["ano"], **recursos["recursos"][sid],
+                             **({"escritorios": recursos["escritorios"][sid]} if sid in recursos.get("escritorios", {}) else {})}}
+               if sid in recursos.get("recursos", {}) else {}),
         })
     print(f"Gerado: {len(senadores)} senadores, {len(resumo)} votações nominais do Senado")
 
@@ -292,6 +456,14 @@ def main():
 
     detalhes = ler(BRUTO / "proposicoes_detalhe.json", {}) or {}
     autorias = ler(BRUTO / "proposicoes_autores.json", {}) or {}
+    temas = ler(BRUTO / "proposicoes_temas.json", {}) or {}
+    orgaos = ler(BRUTO / "orgaos_deputados.json", {}) or {}
+    orientacoes = ler(BRUTO / "orientacoes.json", {}) or {}
+    votacoes_projetos = ler(BRUTO / "proposicoes_votacoes.json", {}) or {}
+    presenca = ler(BRUTO / "presenca_eventos.json", {}) or {}
+    medianas = medianas_sessoes(presenca)
+    blocos_lista = ler(BRUTO / "blocos.json", []) or []
+    blocos = {b: partidos_do_bloco(b, blocos_lista) for b in {b for o in orientacoes.values() for b in o if b.startswith("Bl ")}}
     partidos = {str(i): d["partido"] for i, d in deputados.items() if d.get("partido")}
 
     if SAIDA.exists():
@@ -330,6 +502,7 @@ def main():
             "votos": sorted(detalhados, key=lambda x: x["nome"]),
         })
     salvar(SAIDA / "votacoes.json", lista_votacoes)
+    nominais = {r["id"]: r for r in lista_votacoes}
 
     total_nominais = len(votacoes)
     resumo_deps = []
@@ -352,7 +525,13 @@ def main():
         votou = sum(1 for x in votos if x["voto"] in ("sim", "nao", "abstencao", "art17"))
         proposicoes = [juntar_autoria(juntar_detalhe(p, detalhes.get(str(p["id"]))), autorias.get(str(p["id"])), str(did), partidos)
                        for p in d["proposicoes"]]
+        for p in proposicoes:
+            if p.get("tipo") in TIPOS_PROJETO and temas.get(str(p["id"])):
+                p["temas"] = temas[str(p["id"])]
+        proposicoes = [juntar_votacoes(p, votacoes_projetos.get(str(p["id"])), nominais, orientacoes) if p.get("tipo") in TIPOS_PROJETO else p
+                       for p in proposicoes]
         autoria = resumir_autoria(proposicoes)
+        comportamento = resumir_comportamento(votos, orientacoes, d["partido"], blocos)
         da_uf = gastos_por_uf[d["uf"]]
 
         salvar(SAIDA / "deputado" / f"{did}.json", {
@@ -363,7 +542,9 @@ def main():
             "naturalidade": ", ".join(x for x in (d.get("municipioNascimento"), d.get("ufNascimento")) if x),
             "escolaridade": d.get("escolaridade"), "redesSociais": d.get("redesSociais", []),
             "proposicoes": proposicoes, "autoria": autoria,
-            "votos": votos,
+            "temas": resumir_temas(proposicoes), "orgaos": ordenar_orgaos(orgaos.get(str(did), [])),
+            "frentes": sorted(d["frentes"], key=lambda f: f["titulo"]) if d.get("frentes") is not None else None,
+            "votos": votos, "comportamento": comportamento, "presenca": presenca_do_deputado(did, presenca, medianas),
             "totalVotacoes": total_nominais, "eleicao": eleicoes_deps.get(did), "condicao": d.get("condicaoEleitoral"),
             "despesas": {
                 "ano": d["despesas"]["ano"], "total": total_gasto,
@@ -383,8 +564,12 @@ def main():
             "gasto": total_gasto, "votou": votou, "votacoes": total_nominais,
             "proprias": autoria["proprias"], "aprovadasProprias": autoria["aprovadasProprias"],
             "suprapartidarios": autoria["suprapartidarios"], "autoriaColetada": autoria["autoriaColetada"],
+            "fidelidade": comportamento["partido"] if comportamento and comportamento["partido"]["total"] else None,
+            "governismo": comportamento["governo"] if comportamento and comportamento["governo"]["total"] else None,
         })
 
+    salvar(SAIDA / "fornecedores_cota.json", {"ano": next(iter(deputados.values()))["despesas"]["ano"] if deputados else None,
+                                              "fornecedores": ranking_fornecedores(deputados)})
     resumo_deps.sort(key=lambda x: x["nome"])
     salvar(SAIDA / "deputados.json", resumo_deps)
     gerar_senadores()

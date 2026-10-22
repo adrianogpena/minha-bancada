@@ -122,7 +122,7 @@ function abas(alvo, opcoes, aoMudar) {
 /* ---------- moldura comum ---------- */
 function moldura(pagina) {
   const links = [["index.html", "Políticos", "inicio"], ["camara.html", "Câmara", "camara"], ["votacoes.html", "Votações", "votacoes"], ["historico.html", "Histórico", "historico"], ["informado.html", "Fique informado", "informado"], ["sobre.html", "Sobre os dados", "sobre"]];
-  const atual = { deputado: "camara", votacao: "votacoes", politico: "inicio", fonte: "sobre" }[pagina] || pagina;
+  const atual = { fornecedores: "camara", deputado: "camara", votacao: "votacoes", politico: "inicio", fonte: "sobre" }[pagina] || pagina;
   document.body.insertAdjacentHTML("afterbegin", `
     <header class="topo"><div class="recipiente">
       <a class="marca" href="index.html"><span class="marca-icone" aria-hidden="true">${"<i></i>".repeat(9)}</span>Minha Bancada</a>
@@ -165,6 +165,7 @@ async function paginaCamara() {
   const q = new URLSearchParams(location.search);
   for (const k of ["busca", "uf", "partido", "ordem"]) if (q.get(k)) $("#" + k).value = q.get(k);
 
+  const taxa = (x) => (x ? x.seguiu / x.total : -1);
   const ordenadores = {
     nome: (a, b) => a.nome.localeCompare(b.nome, "pt-BR"),
     participacao: (a, b) => b.votou / (b.votacoes || 1) - a.votou / (a.votacoes || 1),
@@ -173,6 +174,8 @@ async function paginaCamara() {
     proprias: (a, b) => b.proprias - a.proprias || b.aprovadasProprias - a.aprovadasProprias,
     aprovadas: (a, b) => b.aprovadasProprias - a.aprovadasProprias || b.proprias - a.proprias,
     suprapartidarios: (a, b) => b.suprapartidarios - a.suprapartidarios,
+    fidelidade: (a, b) => taxa(b.fidelidade) - taxa(a.fidelidade),
+    governismo: (a, b) => taxa(b.governismo) - taxa(a.governismo),
   };
 
   function desenhar() {
@@ -191,7 +194,7 @@ async function paginaCamara() {
     $("#contagem").textContent = `${filtrados.length} de ${deps.length} deputados em exercício`;
     if (!filtrados.length) { alvo.innerHTML = `<p class="vazio">Nenhum deputado com esses filtros. Tente limpar a busca ou escolher outro estado.</p>`; return; }
     alvo.innerHTML = `
-      <div class="cabecalho-lista" aria-hidden="true"><span></span><span>Deputado</span><span>Votou</span><span class="so-largo">Proposições</span><span class="so-largo">Iniciativas próprias</span><span class="so-largo">Gastos no ano</span></div>
+      <div class="cabecalho-lista" aria-hidden="true"><span></span><span>Deputado</span><span>Votou</span><span class="so-largo">Proposições</span><span class="so-largo">Iniciativas próprias</span><span class="so-largo">Fiel ao partido</span><span class="so-largo">Pró-governo</span><span class="so-largo">Gastos no ano</span></div>
       <ul class="lista">${filtrados.map((d) => `
         <li><a class="linha-dep" href="deputado.html?id=${d.id}">
           ${foto(d)}
@@ -199,6 +202,8 @@ async function paginaCamara() {
           <span class="metrica"><b>${pct(d.votou, d.votacoes)}</b><span>das votações</span></span>
           <span class="metrica so-largo"><b>${d.proposicoes}</b><span>apresentadas</span></span>
           <span class="metrica so-largo" title="Projetos em que ${esc(d.nome)} é o primeiro a assinar, entre os ${d.autoriaColetada} com autoria já coletada"><b>${d.proprias}</b><span>${d.aprovadasProprias} aprovados</span></span>
+          <span class="metrica so-largo" title="Votações em que votou como o partido orientou, entre as que o partido orientou Sim, Não ou Obstrução"><b>${d.fidelidade ? pct(d.fidelidade.seguiu, d.fidelidade.total) : "—"}</b><span>${d.fidelidade ? `de ${d.fidelidade.total} votações` : "sem orientação"}</span></span>
+          <span class="metrica so-largo" title="Votações em que votou como o Governo orientou, entre as que o Governo orientou Sim, Não ou Obstrução"><b>${d.governismo ? pct(d.governismo.seguiu, d.governismo.total) : "—"}</b><span>${d.governismo ? `de ${d.governismo.total} votações` : "sem orientação"}</span></span>
           <span class="metrica so-largo"><b>${reais(d.gasto)}</b><span>cota parlamentar</span></span>
         </a></li>`).join("")}</ul>`;
   }
@@ -311,6 +316,88 @@ function painelGastos(desp, explicacao) {
   `;
 }
 
+const ARQUIVOS_CAMARA = "https://dadosabertos.camara.leg.br/arquivos";
+function painelTematico(dep) {
+  const api = `${CAMARA_API}/deputados/${encodeURIComponent(dep.id)}`;
+  const temas = dep.temas || [], max = temas[0]?.[1] || 1;
+  const orgaos = dep.orgaos || [], frentes = dep.frentes;
+  const anos = [...new Set(dep.proposicoes.filter((p) => p.temas).map((p) => p.ano))].sort();
+  return `
+    <h2>Em que áreas atua</h2>
+    <p>Temas oficiais dos projetos que ${esc(dep.nome)} apresentou como autor ou coautor, as comissões de que participa e as frentes parlamentares de que faz parte.</p>
+    <div class="duas-colunas">
+      <div>
+        <h3>Temas dos projetos</h3>
+        ${temas.length ? `<div class="barras">${temas.map(([t, n, ap, pr]) => `
+          <div><div class="barra-rotulo"><span>${esc(t)}</span><b>${n} ${n === 1 ? "projeto" : "projetos"}</b></div><div class="barra"><i style="width:${(n / max) * 100}%"></i></div>
+          <span class="quando">${ap} aprovado${ap === 1 ? "" : "s"} · ${pr} como autor principal</span></div>`).join("")}</div>
+          <p class="quando">Um projeto pode ter mais de um tema e conta em cada um. Para ver os projetos de um tema, use o filtro na aba Propostas.</p>`
+          : `<p class="vazio">Nenhum projeto com tema classificado pela Câmara.</p>`}
+      </div>
+      <div>
+        <h3>Comissões e órgãos</h3>
+        ${orgaos.length ? `<ul class="lista-simples">${orgaos.map((o) => `<li><b>${esc(o.sigla)}</b> ${esc(o.nome)}<br><span class="quando">${esc(o.cargo || "Membro")}${o.inicio ? `, desde ${data(o.inicio)}` : ""}${o.fim ? ` até ${data(o.fim)}` : ""}</span></li>`).join("")}</ul>`
+          : `<p class="vazio">Nenhuma participação registrada nesta legislatura.</p>`}
+      </div>
+    </div>
+    <h3>Frentes parlamentares${frentes ? ` <small class="sub">(${frentes.length})</small>` : ""}</h3>
+    ${frentes === null || frentes === undefined ? `<p class="vazio">Frentes ainda não coletadas.</p>`
+      : frentes.length ? `<details><summary>Ver as ${frentes.length} frentes</summary><ul class="lista-simples">${frentes.map((f) => `<li><a href="https://www.camara.leg.br/internet/deputado/frenteDetalhe.asp?id=${encodeURIComponent(f.id)}" rel="noopener">${esc(f.titulo)}</a></li>`).join("")}</ul></details>`
+      : `<p class="vazio">Não consta em nenhuma frente nesta legislatura.</p>`}
+    ${fontes([["Órgãos do deputado (API da Câmara)", `${api}/orgaos`], ["Frentes do deputado (API da Câmara)", `${api}/frentes`],
+      ...anos.map((a) => [`Temas dos projetos de ${a} (arquivo da Câmara)`, `${ARQUIVOS_CAMARA}/proposicoesTemas/json/proposicoesTemas-${a}.json`])])}`;
+}
+
+/* Votações do projeto (gerar.py: juntar_votacoes): as nominais levam placar e a orientação de cada bancada. */
+function votacoesDoProjeto(p) {
+  const item = (v) => `<li><span class="quando">${data(v.data)}</span> ${esc(v.descricao || "Votação")}
+      ${v.nominal ? `<br><span class="quando">${v.aprovada === true ? "Aprovada" : v.aprovada === false ? "Rejeitada" : "Resultado não informado"}: ${["sim", "nao", "abstencao", "obstrucao"].filter((k) => v.placar[k]).map((k) => `${v.placar[k]} ${VOTOS[k]?.rotulo || k}`).join(", ")}.</span>
+        ${v.orientacoes ? `<br><span class="quando">Orientação das bancadas: ${Object.entries(v.orientacoes).map(([b, o]) => `${esc(b)} ${esc(o)}`).join(" · ")}.</span>` : ""}
+        <br><a href="votacao.html?id=${encodeURIComponent(v.id)}">Ver como cada partido votou</a>`
+      : ` <a href="${CAMARA_API}/votacoes/${encodeURIComponent(v.id)}" rel="noopener">Dados da votação</a> <span class="quando">(sem voto nominal)</span>`}</li>`;
+  return `<details class="texto"><summary><b>${p.totalVotacoes} ${p.totalVotacoes === 1 ? "votação" : "votações"}</b> deste projeto</summary>
+    <ul class="lista-simples">${p.votacoes.map(item).join("")}</ul>
+    ${p.totalVotacoes > p.votacoes.length ? `<p class="quando">Mostrando as ${p.votacoes.length} mais recentes.</p>` : ""}
+    ${fontes([["Votações do projeto (API da Câmara)", `${CAMARA_API}/proposicoes/${encodeURIComponent(p.id)}/votacoes`]])}</details>`;
+}
+
+/* Fidelidade ao partido e governismo do deputado, a partir das orientações de bancada nas votações nominais. */
+function painelComportamento(dep) {
+  const c = dep.comportamento;
+  if (!c) return "";
+  const caixa = (k, titulo, quem) => c[k].total
+    ? `<div><b>${pct(c[k].seguiu, c[k].total)}</b><span>${titulo}: votou como ${quem} orientou em ${c[k].seguiu} de ${c[k].total} votações</span></div>` : "";
+  const div = c.divergencias || [];
+  return `
+    <section class="painel" aria-labelledby="t-comportamento">
+      <div class="painel-titulo">
+        <h2 id="t-comportamento">Fidelidade ao partido e ao governo</h2>
+        <p>Compara o voto de ${esc(dep.nome)} com a orientação que a bancada do partido (${esc(dep.partido)}) e o Governo deram em cada votação. Só entram as votações em que votou e a orientação foi Sim, Não ou Obstrução; "Liberado" não conta. Usa o partido atual do deputado; blocos partidários contam pela composição atual.</p>
+      </div>
+      <div class="numeros">${caixa("partido", "Fidelidade ao partido", "o partido")}${caixa("governo", "Governismo", "o Governo")}</div>
+      ${c.partido.total ? "" : `<p class="vazio">Sem orientação da bancada do ${esc(dep.partido)}: o partido aparece nas votações dentro de um bloco que a Câmara registra com o nome truncado, e não foi possível ligá-lo ao bloco.</p>`}
+      ${div.length ? `<h3>Quando votou diferente</h3><ul class="lista-simples">${div.map((x) => `<li><span class="quando">${data(x.data)}</span> ${x.proposicao ? `<b>${esc(x.proposicao)}</b>: ` : ""}votou <b>${esc(VOTOS[x.voto]?.rotulo || x.voto)}</b>, a orientação ${x.contra === "governo" ? "do Governo" : `da bancada (${esc(x.bancada)})`} foi <b>${esc(x.orientacao)}</b>. <a href="votacao.html?id=${encodeURIComponent(x.id)}">Ver votação</a></li>`).join("")}</ul>` : ""}
+      ${fontes([["Orientações de bancada (arquivo da Câmara)", `${ARQUIVOS_CAMARA}/votacoesOrientacoes/json/votacoesOrientacoes-${(div[0]?.data || new Date().toISOString()).slice(0, 4)}.json`]])}
+    </section>`;
+}
+
+/* Presença do deputado em sessões e reuniões (gerar.py: presenca_do_deputado). */
+function painelPresencaDeputado(dep) {
+  const anos = dep.presenca || [];
+  if (!anos.length) return "";
+  return `
+    <section class="painel" aria-labelledby="t-presenca">
+      <div class="painel-titulo">
+        <h2 id="t-presenca">Presença em sessões e reuniões</h2>
+        <p>Eventos da Câmara em que ${esc(dep.nome)} registrou presença. Nas sessões deliberativas do Plenário há o total do ano para comparar; as reuniões de comissão e audiências não têm total, porque dependem das comissões de que o deputado participa. O ano corrente ainda está em andamento.</p>
+      </div>
+      <div class="rolagem"><table class="tabela"><thead><tr><th>Ano</th><th>Sessões deliberativas</th><th>Mediana dos deputados</th><th>Reuniões e audiências</th><th>Outros eventos</th></tr></thead><tbody>
+        ${anos.map((a) => `<tr><td>${a.ano}</td><td><b>${a.sessoes}</b> de ${a.sessoesDeliberativas} (${pct(a.sessoes, a.sessoesDeliberativas)})</td><td>${a.medianaSessoes}</td><td>${a.comissoes}</td><td>${a.outros}</td></tr>`).join("")}
+      </tbody></table></div>
+      ${fontes(anos.flatMap((a) => [[`Presença em eventos de ${a.ano} (arquivo da Câmara)`, `${ARQUIVOS_CAMARA}/eventosPresencaDeputados/json/eventosPresencaDeputados-${a.ano}.json`], [`Eventos de ${a.ano} (arquivo da Câmara)`, `${ARQUIVOS_CAMARA}/eventos/json/eventos-${a.ano}.json`]]))}
+    </section>`;
+}
+
 async function paginaDeputado() {
   const alvo = $("#conteudo");
   const id = param("id");
@@ -325,6 +412,8 @@ async function paginaDeputado() {
   const painelPerfil = `
     ${painelGastos(desp, "A cota paga despesas do mandato, como passagens, aluguel de escritório e divulgação.")}
     ${fontes([["Cota parlamentar (API da Câmara)", `${CAMARA_API}/deputados/${encodeURIComponent(dep.id)}/despesas?ano=${desp.ano}`], desp.limite ? ["Limite mensal da cota por estado (Câmara)", LIMITE_COTA_URL] : null, ["Portal da Câmara", `https://www.camara.leg.br/deputados/${encodeURIComponent(dep.id)}`]])}
+
+    ${painelTematico(dep)}
 
     <h2>Ficha</h2>
     <dl class="ficha">
@@ -347,6 +436,7 @@ async function paginaDeputado() {
     subtitulo: `<span class="selo">${esc(dep.partido)}/${esc(dep.uf)}</span> ${dep.situacao ? esc(dep.situacao) : ""}`,
     painelPerfil, rotuloPerfil: "Perfil e gastos",
     linhaDoTempo: votacoes.map((v) => ({ ...v, voto: meus.get(v.id) || "ausente" })), // mais recente primeiro
+    painelComportamento: painelComportamento(dep) + painelPresencaDeputado(dep),
     proposicoes: dep.proposicoes, tipoProjeto: (p) => !!TIPOS_PROJETO[p.tipo],
     textoLegislatura: "como autor ou coautor nesta legislatura (desde fev. de 2023)", suprapartidarios: true,
     papel: (p) => p.principal === undefined ? "autor ou coautor. A Câmara lista os dois juntos e a ordem de assinatura desta proposição ainda não foi coletada."
@@ -401,6 +491,7 @@ function montarParlamentar(alvo, c) {
         <div><b>${contagem.ausente || 0}</b><span>sem voto registrado</span></div>
       </div>
     </section>
+    ${c.painelComportamento || ""}
     <h2 id="votos">Como votou</h2>
     <p>Cada linha mostra o voto de ${esc(nome)}, o resultado final da votação e o placar geral.</p>
     <div class="abas" id="abas-votos"></div>
@@ -416,6 +507,7 @@ function montarParlamentar(alvo, c) {
     <p>Projetos de lei, emendas à Constituição e similares. ${esc(c.aviso)}</p>
     ${LEGENDA_PROJETOS}
     <div class="abas" id="abas-proj"></div>
+    <div id="filtro-tema"></div>
     <div id="lista-proj"></div>
     ${avisoDados(["O voto de cada parlamentar nesses projetos (só aparece na aba de votações, e apenas nas votações nominais).", "O texto exato de cada emenda ou substitutivo aprovado, e quem foi o relator.",
       "Se foi o próprio parlamentar quem pediu a retirada ou o arquivamento. \"Tramitação encerrada\" não diz se o projeto virou lei.", "A situação vem do sistema da Casa e pode estar atrasada."])}
@@ -512,14 +604,23 @@ function montarParlamentar(alvo, c) {
       ${p.situacao ? `<span class="texto"><b>Situação:</b> ${esc(p.situacao)}${p.orgao ? ` (${esc(p.orgao)})` : ""}${p.dataSituacao ? `, em ${data(p.dataSituacao)}` : ""}.${p.despacho ? ` <span class="quando">Despacho: ${esc(p.despacho.slice(0, 300))}</span>` : ""}</span>` : ""}
       ${p.tipoDescricao || p.tramitacao || p.regime || p.coautores || p.iniciativa ? `<span class="texto quando">${[p.tipoDescricao && `Tipo: ${esc(p.tipoDescricao)}`, p.iniciativa && `Iniciativa: ${esc(p.iniciativa)}`, p.totalAutores && `Assinado por ${p.totalAutores} autores${p.partidosDistintos ? ` de ${p.partidosDistintos} partidos` : ""}`, p.regime && `Regime: ${esc(p.regime)}`, p.tramitacao && `Tramitação: ${esc(p.tramitacao)}`, p.coautores && `Coautores: ${esc(p.coautores.join(", "))}`].filter(Boolean).join(" · ")}</span>` : ""}
       ${p.apensadoA || p.anterior || p.posterior ? `<span class="texto quando">${[p.apensadoA && ligacao("Apensado ao projeto principal", p.apensadoA), p.anterior && ligacao("Proposição anterior", p.anterior), p.posterior && ligacao("Proposição posterior", p.posterior)].filter(Boolean).join(" · ")}</span>` : ""}
+      ${p.votacoes ? votacoesDoProjeto(p) : ""}
+      ${p.temas ? `<span class="texto quando">Tema oficial: ${esc(p.temas.join(", "))}</span>` : ""}
       ${p.palavrasChave ? `<span class="texto quando">Temas: ${esc(p.palavrasChave)}</span>` : ""}
       <span class="texto">${fontes([[c.fonteTramitacao, c.linkTramitacao(p)], p.linkTexto ? ["Texto integral", p.linkTexto] : null, ["Dados na API", c.linkApi(p)]])}</span>
     </li>`;
   };
   const tiposProj = [...new Set(projetos.map((p) => p.tipo))].sort();
-  const filtroProj = (f) => projetos.filter((p) => f === "todos" ? true : ["tramitando", "aprovada", "rejeitada"].includes(f) ? desfecho(p)[1] === f : p.tipo === f);
+  let abaProj = "todos", temaProj = "";
+  const filtroProj = (f) => projetos.filter((p) => (!temaProj || (p.temas || []).includes(temaProj))
+    && (f === "todos" ? true : ["tramitando", "aprovada", "rejeitada"].includes(f) ? desfecho(p)[1] === f : p.tipo === f));
   const mostrarProj = (f) => listaPaginada($("#lista-proj"), filtroProj(f), renderProj, 10, "Nenhum projeto nesse filtro.");
-  abas($("#abas-proj"), [{ valor: "todos", rotulo: "Todos" }, { valor: "tramitando", rotulo: "Em tramitação" }, { valor: "aprovada", rotulo: "Aprovados" }, { valor: "rejeitada", rotulo: "Arquivados" }, ...tiposProj.map((t) => ({ valor: t, rotulo: t }))], mostrarProj);
+  abas($("#abas-proj"), [{ valor: "todos", rotulo: "Todos" }, { valor: "tramitando", rotulo: "Em tramitação" }, { valor: "aprovada", rotulo: "Aprovados" }, { valor: "rejeitada", rotulo: "Arquivados" }, ...tiposProj.map((t) => ({ valor: t, rotulo: t }))], (f) => mostrarProj((abaProj = f)));
+  const nomesTemas = [...new Set(projetos.flatMap((p) => p.temas || []))].sort((a, b) => a.localeCompare(b, "pt-BR"));
+  if (nomesTemas.length) {
+    $("#filtro-tema").innerHTML = `<label class="campo">Tema do projeto<select><option value="">Todos os temas</option>${nomesTemas.map((t) => `<option>${esc(t)}</option>`).join("")}</select></label>`;
+    $("#filtro-tema select").addEventListener("input", (e) => { temaProj = e.target.value; mostrarProj(abaProj); });
+  }
   mostrarProj("todos");
 
   const renderOutro = (p) => `<li>
@@ -1489,6 +1590,23 @@ function painelPresenca(pr) {
     ${faltas.length ? `Nas demais: ${faltas.join("; ")}.` : "Não faltou a nenhuma."} Fonte: <a href="${SENADO_API}/votacao" rel="noopener">votações nominais do Senado (Dados Abertos)</a>.</p>`;
 }
 
+/* Recursos e benefícios do senador (coletar.py: coletar_recursos_senado). */
+function painelRecursos(rec) {
+  const sim = (rec.beneficios || []).filter(([, u]) => u === "Utilizou").map(([b]) => b);
+  const selos = (rec.beneficios || []).length
+    ? `<p>${(rec.beneficios).map(([b, u]) => `<span class="selo">${esc(b)}: ${u === "Utilizou" ? "usa" : "não usa"}</span>`).join(" ")}</p>` : "";
+  const pessoal = (rec.pessoal || []).filter(([, n]) => n);
+  return `<h2>Recursos e benefícios em ${rec.ano}</h2>
+    ${selos}
+    ${pessoal.length ? `<p>Pessoal: ${pessoal.map(([l, n]) => `<b>${numeroBr(n)}</b> no ${esc(l.toLowerCase().replace("escritório(s) de apoio", "escritório de apoio"))}`).join("; ")}.</p>` : ""}
+    ${rec.foraCota?.length ? `<h3>Gastos fora da cota: ${reaisCentavos(rec.totalForaCota)}</h3>
+      <div class="rolagem"><table class="tabela"><thead><tr><th>Recurso</th><th>Valor</th></tr></thead><tbody>
+      ${rec.foraCota.map(([r, v]) => `<tr><td>${esc(r)}</td><td>${reais(v)}</td></tr>`).join("")}</tbody></table></div>
+      <p class="vazio">Diárias, correios e material pagos pelo Senado, que não entram na cota (CEAPS).</p>` : ""}
+    ${rec.escritorios?.length ? `<h3>Escritório${rec.escritorios.length > 1 ? "s" : ""} de apoio no estado</h3>
+      <ul>${rec.escritorios.map((e) => `<li>${esc(e.endereco || e.nome || "")}${e.telefone ? ` · ${esc(e.telefone)}` : ""}</li>`).join("")}</ul>` : ""}`;
+}
+
 async function montarSenador(alvo, p, nome, ficha) {
   let sen, lista;
   try { [sen, lista] = await Promise.all([carregar(`dados/senador/${encodeURIComponent(p.id)}.json`), carregar("dados/votacoes_senado.json")]); } catch { return false; }
@@ -1508,7 +1626,8 @@ async function montarSenador(alvo, p, nome, ficha) {
       ${sen.presenca ? painelPresenca(sen.presenca) : ""}
       ${sen.despesas ? painelGastos(sen.despesas, "A cota (CEAPS) reembolsa despesas do mandato, como passagens, aluguel de escritório e divulgação. Os valores são os reembolsados pelo Senado.")
         : `<p class="aviso">Os gastos da cota (CEAPS) não puderam ser carregados agora. Veja no <a href="https://www12.senado.leg.br/transparencia/sen/${encodeURIComponent(p.id)}" rel="noopener">Portal da Transparência do Senado</a>.</p>`}
-      ${fontes([["Dados Abertos do Senado", `${SENADO_API}/senador/${encodeURIComponent(p.id)}`], sen.despesas ? ["Cota parlamentar (CEAPS)", `${SENADO_ADM_API}/senadores/despesas_ceaps/${sen.despesas.ano}`] : null, ["Portal da Transparência do Senado", `https://www12.senado.leg.br/transparencia/sen/${encodeURIComponent(p.id)}`]])}`,
+      ${sen.recursos ? painelRecursos(sen.recursos) : ""}
+      ${fontes([["Dados Abertos do Senado", `${SENADO_API}/senador/${encodeURIComponent(p.id)}`], sen.despesas ? ["Cota parlamentar (CEAPS)", `${SENADO_ADM_API}/senadores/despesas_ceaps/${sen.despesas.ano}`] : null, sen.recursos ? ["Recursos utilizados", `${SENADO_ADM_API}/senadores/${encodeURIComponent(p.id)}/recursos-utilizados?ano=${sen.recursos.ano}`] : null, sen.recursos?.escritorios ? ["Escritórios de apoio", `${SENADO_ADM_API}/senadores/escritorios-apoio`] : null, ["Portal da Transparência do Senado", `https://www12.senado.leg.br/transparencia/sen/${encodeURIComponent(p.id)}`]])}`,
     rotuloPerfil: sen.despesas ? "Perfil e gastos" : "Perfil",
     linhaDoTempo, proposicoes: sen.proposicoes, tipoProjeto: (x) => !!TIPOS_PROJETO[x.tipo],
     textoLegislatura: "como autor ou coautor desde 2019",
@@ -1913,7 +2032,28 @@ async function paginaFonte() {
     <section class="painel">${typeof conteudo === "object" && conteudo !== null ? valorFonte(conteudo) : esc(String(conteudo))}${nav ? `<p>${nav}</p>` : ""}</section>`;
 }
 
+async function paginaFornecedores() {
+  const alvo = $("#resultado");
+  let j;
+  try { j = await carregar("dados/fornecedores_cota.json"); } catch (e) { return erro(alvo, e); }
+  if (j.ano) $("#fonte-csv").href = `https://www.camara.leg.br/cotas/Ano-${j.ano}.csv.zip`;
+  const cnpj = (c) => c.length === 14 ? c.replace(/^(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})$/, "$1.$2.$3/$4-$5") : c.length === 11 ? c.replace(/^(\d{3})(\d{3})(\d{3})(\d{2})$/, "$1.$2.$3-$4") : c;
+  const render = (f) => `<li>
+    <span class="quando">${reais(f.total)}</span>
+    <span class="texto"><b>${esc(f.nome)}</b> <span class="quando">${esc(cnpj(f.cnpj))}</span></span>
+    <span class="texto"><span class="quando">${f.deputados} ${f.deputados === 1 ? "deputado" : "deputados"}, ${f.notas} ${f.notas === 1 ? "nota" : "notas"}</span>
+      <br>Mais usado por ${f.maioresDeputados.map((d) => `<a href="deputado.html?id=${d.id}">${esc(d.nome)}</a> (${esc(d.partido)}-${esc(d.uf)}, ${reais(d.valor)})`).join(", ")}</span></li>`;
+  const desenhar = () => {
+    const b = semAcento($("#busca").value.trim());
+    const f = j.fornecedores.filter((x) => !b || semAcento(`${x.nome} ${x.cnpj} ${cnpj(x.cnpj)}`).includes(b));
+    $("#contagem").textContent = `${f.length} fornecedores com mais gastos da cota em ${j.ano}`;
+    listaPaginada(alvo, f, render, 20, "Nenhum fornecedor encontrado com essa busca.");
+  };
+  $("#busca").addEventListener("input", desenhar);
+  desenhar();
+}
+
 /* ---------- início ---------- */
 const pagina = document.body.dataset.pagina;
 moldura(pagina);
-({ inicio: paginaPoliticos, politico: paginaPolitico, camara: paginaCamara, deputado: paginaDeputado, votacoes: paginaVotacoes, votacao: paginaVotacao, fonte: paginaFonte, informado: paginaInformado, historico: paginaHistorico }[pagina] || (() => {}))();
+({ inicio: paginaPoliticos, politico: paginaPolitico, camara: paginaCamara, fornecedores: paginaFornecedores, deputado: paginaDeputado, votacoes: paginaVotacoes, votacao: paginaVotacao, fonte: paginaFonte, informado: paginaInformado, historico: paginaHistorico }[pagina] || (() => {}))();

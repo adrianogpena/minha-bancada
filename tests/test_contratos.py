@@ -310,6 +310,25 @@ def test_ceaps_real(monkeypatch, tmp_path):
     assert itens and all(i["tipo"] and i["data"] for lista in itens.values() for i in lista)
 
 
+def test_recursos_senado_real(monkeypatch, tmp_path):
+    import coletar
+
+    class R:
+        ok = True
+        raise_for_status = lambda self: None
+        json = lambda self: amostra("senado_escritorios") if "escritorios" in self.url else amostra("senado_recursos")
+
+        def __init__(self, url):
+            self.url = url
+
+    (tmp_path / "senado.json").write_text(json.dumps([{"id": "1", "nome": "Alan Rick", "uf": "AC"}]), encoding="utf-8")
+    monkeypatch.setattr(coletar, "DADOS", tmp_path)
+    monkeypatch.setattr(coletar.S, "get", lambda url, **k: R(url))
+    coletar.coletar_recursos_senado()
+    r = json.loads((tmp_path / "senado_recursos.json").read_text(encoding="utf-8"))
+    assert r["recursos"]["1"]["beneficios"] and r["recursos"]["1"]["pessoal"] and r["recursos"]["1"]["totalForaCota"] > 0
+
+
 # ---------------------------------------------------------------- SAPL e SPLegis com respostas reais
 
 def test_materia_real_do_sapl_e_compactada():

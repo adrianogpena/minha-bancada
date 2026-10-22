@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Fornecedores da cota | Minha Bancada</title>
+<meta name="description" content="Quem mais recebe da cota parlamentar da Câmara e quantos deputados usam cada fornecedor, com dados oficiais.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Bricolage+Grotesque:opsz,wght@12..96,700;12..96,800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/estilo.css">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 9 9'%3E%3Crect width='4' height='4' fill='%232456c9'/%3E%3Crect x='5' width='4' height='4' fill='%23c13b1d'/%3E%3Crect y='5' width='4' height='4' fill='%23c13b1d'/%3E%3Crect x='5' y='5' width='4' height='4' fill='%232456c9'/%3E%3C/svg%3E">
+</head>
+<body data-pagina="fornecedores">
+<main class="recipiente">
+<section class="abertura">
+  <h1>Fornecedores da cota parlamentar</h1>
+  <p>As empresas e pessoas que mais receberam da cota dos deputados federais no ano, somando todos os gabinetes. Cada fornecedor é identificado pelo CNPJ ou CPF, não pelo nome, e mostra quantos deputados o usaram.</p>
+</section>
+<form class="filtros" role="search" onsubmit="return false">
+  <label class="campo">Fornecedor ou CNPJ<input id="busca" type="search" placeholder="Ex.: companhia aérea" autocomplete="off"></label>
+</form>
+<p class="contagem" id="contagem" aria-live="polite">Carregando…</p>
+<p class="nota-lista">Valores líquidos das notas lançadas na cota no ano, pelo arquivo anual da Câmara; o CNPJ ou CPF vem como a Câmara o publica e pode estar incompleto. Despesas sem CNPJ ou CPF identificável não entram. Fonte: <a id="fonte-csv" href="https://www.camara.leg.br/cotas/" rel="noopener">arquivo anual da cota parlamentar (Câmara)</a>.</p>
+<div id="resultado"></div>
+</main>
+<script src="assets/app.js"></script>
+</body>
+</html>

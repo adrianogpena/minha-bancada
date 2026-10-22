@@ -24,6 +24,7 @@ class Resp:
 def dados(tmp_path, monkeypatch):
     monkeypatch.setattr(coletar, "DADOS", tmp_path)
     monkeypatch.setattr(coletar, "AVISOS", [])
+    monkeypatch.setattr(coletar, "coletar_cota_csv", lambda ano: {})
     monkeypatch.delenv("GITHUB_ACTIONS", raising=False)
     return tmp_path
 
@@ -67,7 +68,7 @@ def test_coletar_deputado_normaliza_campos(dados, monkeypatch):
     assert d["gabinete"] == {"predio": "4", "andar": "2", "email": "g@x"}  # só chaves conhecidas e não vazias
     assert d["proposicoes"] == [{"id": 9, "tipo": "PL", "numero": 1, "ano": 2024, "ementa": "e"}]
     assert d["despesas"]["ano"] == 2025
-    assert d["despesas"]["itens"][0] == {"mes": 3, "tipo": "Passagens", "valor": 120.5, "fornecedor": "Cia", "data": "2025-03-01", "documento": "http://nf"}
+    assert d["despesas"]["itens"][0] == {"mes": 3, "tipo": "Passagens", "valor": 120.5, "fornecedor": "Cia", "cnpj": "", "data": "2025-03-01", "documento": "http://nf"}
     assert d["despesas"]["itens"][1]["valor"] == 0  # valor nulo vira 0
     assert d["redesSociais"] == ["https://x.com/fulano"]
 
@@ -88,9 +89,44 @@ def test_coletar_deputado_despesas_falham_sem_derrubar(dados, monkeypatch):
     assert any("despesas de F" in a for a in coletar.AVISOS)
 
 
+CSV_COTA = '''﻿"txtFornecedor";"txtCNPJCPF";"txtDescricao";"datEmissao";"vlrLiquido";"numMes";"numAno";"nuDeputadoId";"urlDocumento"
+"Cia A";"12.345.678/0001-90";"Passagens";"2026-01-05T00:00:00";"100.5";"1";"2026";"7";"http://nf1"
+"Cia B";"";"Combustíveis";"2026-02-05T00:00:00";"20";"2";"2026";"7";""
+"Cia C";"1";"Outros";"2025-12-05T00:00:00";"5";"12";"2025";"7";""
+"Cia D";"1";"Outros";"2026-01-05T00:00:00";"5";"1";"2026";"";""
+'''
+
+
+def test_coletar_cota_csv_agrupa_por_deputado(monkeypatch):
+    import io, zipfile
+    csv_ = CSV_COTA
+    buf = io.BytesIO()
+    with zipfile.ZipFile(buf, "w") as z:
+        z.writestr("Ano-2026.csv", csv_.encode("utf-8"))
+
+    class Resp:
+        content = buf.getvalue()
+        def raise_for_status(self): pass
+    monkeypatch.setattr(coletar.S, "get", lambda url, **k: Resp())
+    cota = coletar.coletar_cota_csv(2026)
+    assert list(cota) == [7]
+    assert [i["fornecedor"] for i in cota[7]] == ["Cia B", "Cia A"]
+    assert cota[7][1] == {"mes": 1, "tipo": "Passagens", "valor": 100.5, "fornecedor": "Cia A", "cnpj": "12345678000190",
+                          "data": "2026-01-05", "documento": "http://nf1"}
+    assert cota[7][0]["documento"] is None
+
+
+def test_coletar_deputado_usa_a_cota_do_csv(dados, monkeypatch):
+    monkeypatch.setattr(coletar, "coletar_proposicoes", lambda dep: [])
+    roteador(monkeypatch, {"/deputados/7": DETALHE_DEP})
+    d = coletar.coletar_deputado({"id": 7, "nome": "F"}, 2025, {7: [{"mes": 1, "valor": 3}]})
+    assert d["despesas"]["itens"] == [{"mes": 1, "valor": 3}]
+
+
 def test_coletar_deputados_salva_arquivos_e_resume(dados, monkeypatch):
     monkeypatch.setattr(coletar, "get_todos", lambda c, **p: [{"id": 1, "nome": "A"}, {"id": 2, "nome": "B"}, {"id": 3, "nome": "C"}])
-    monkeypatch.setattr(coletar, "coletar_deputado", lambda dep, ano: {"id": dep["id"], "nome": dep["nome"]})
+    monkeypatch.setattr(coletar, "coletar_cota_csv", lambda ano: {})
+    monkeypatch.setattr(coletar, "coletar_deputado", lambda dep, ano, cota=None: {"id": dep["id"], "nome": dep["nome"]})
     assert sorted(coletar.coletar_deputados(2)) == [1, 2]
     assert json.loads((dados / "deputados.json").read_text()) == [1, 2]
     assert json.loads((dados / "deputados" / "1.json").read_text())["nome"] == "A"
@@ -99,7 +135,7 @@ def test_coletar_deputados_salva_arquivos_e_resume(dados, monkeypatch):
 def test_coletar_deputados_aborta_com_muitas_falhas(dados, monkeypatch):
     monkeypatch.setattr(coletar, "get_todos", lambda c, **p: [{"id": i, "nome": str(i)} for i in range(10)])
 
-    def quebra(dep, ano):
+    def quebra(dep, ano, cota=None):
         if dep["id"] < 5:
             raise RuntimeError("API fora")
         return {"id": dep["id"]}
@@ -112,7 +148,7 @@ def test_coletar_deputados_aborta_com_muitas_falhas(dados, monkeypatch):
 def test_coletar_deputados_tolera_poucas_falhas(dados, monkeypatch):
     monkeypatch.setattr(coletar, "get_todos", lambda c, **p: [{"id": i, "nome": str(i)} for i in range(10)])
 
-    def quebra(dep, ano):
+    def quebra(dep, ano, cota=None):
         if dep["id"] == 0:
             raise RuntimeError("API fora")
         return {"id": dep["id"]}
@@ -308,6 +344,20 @@ def test_ceaps_agrupa_por_senador_ordena_e_ignora_sem_codigo(dados, monkeypatch)
     assert r["itens"]["1"][0]["valor"] == 0
 
 
+def test_recursos_senado_liga_escritorio_por_nome_e_uf_e_ignora_zerados(dados, monkeypatch):
+    (dados / "senado.json").write_text(json.dumps([{"id": "7", "nome": "João Álvares", "uf": "AC"}]), encoding="utf-8")
+    recursos = {"data": [{"gastosNaoInclusos": {"despesas": [{"recurso": "Correios", "valor": 10}, {"recurso": "Material", "valor": 0}], "totalValor": 10},
+                          "beneficios": [{"beneficio": "Imóvel Funcional", "utilizacao": "Utilizou"}],
+                          "pessoal": [{"local": "Gabinete", "quantidade": 3}]}]}
+    escritorios = {"data": [{"parlamentar": {"nome": "JOAO ALVARES", "estado": "AC"}, "setor": {"nome": "Escritório 1", "endereco": "Rua A", "telefone": None}},
+                            {"parlamentar": {"nome": "JOAO ALVARES", "estado": "SP"}, "setor": {"endereco": "Rua B"}}]}
+    monkeypatch.setattr(coletar.S, "get", lambda url, **k: Resp(escritorios if "escritorios" in url else recursos))
+    coletar.coletar_recursos_senado()
+    r = json.loads((dados / "senado_recursos.json").read_text(encoding="utf-8"))
+    assert r["recursos"]["7"]["foraCota"] == [["Correios", 10]] and r["recursos"]["7"]["pessoal"] == [["Gabinete", 3]]
+    assert r["escritorios"] == {"7": [{"nome": "Escritório 1", "endereco": "Rua A"}]}
+
+
 def votacao_s(codigo, data, voto="Sim", **extra):
     """Votação no formato do endpoint /votacao."""
     return {"codigoSessaoVotacao": codigo, "dataSessao": data, "identificacao": "PL 1/2025", "codigoMateria": 10, "resultadoVotacao": "A",
@@ -498,3 +548,105 @@ def test_autores_proposicoes_falha_da_api_mantem_arquivo_anterior(dados, monkeyp
     coletar.coletar_autores_proposicoes()
     assert json.loads((dados / "proposicoes_autores.json").read_text()) == {"12": {"idPrincipal": 5, "autores": [[5, "Cia"]]}}
     assert coletar.AVISOS
+
+
+def test_coletar_deputado_guarda_so_frentes_da_legislatura(dados, monkeypatch):
+    monkeypatch.setattr(coletar, "coletar_proposicoes", lambda dep: [])
+    roteador(monkeypatch, {"/deputados/7": DETALHE_DEP, "/deputados/7/despesas": {"dados": []}, "/deputados/7/frentes": {"dados": [
+        {"id": 1, "titulo": " Frente A ", "idLegislatura": 57}, {"id": 2, "titulo": "Frente B", "idLegislatura": 56}]}})
+    assert coletar.coletar_deputado({"id": 7, "nome": "F"}, 2025)["frentes"] == [{"id": 1, "titulo": "Frente A"}]
+
+
+def test_coletar_deputado_frentes_falham_sem_derrubar(dados, monkeypatch):
+    monkeypatch.setattr(coletar, "coletar_proposicoes", lambda dep: [])
+    roteador(monkeypatch, {"/deputados/7": DETALHE_DEP, "/deputados/7/despesas": {"dados": []}, "/deputados/7/frentes": RuntimeError("fora")})
+    d = coletar.coletar_deputado({"id": 7, "nome": "F"}, 2025)
+    assert "frentes" not in d
+    assert any("frentes" in a for a in coletar.AVISOS)
+
+
+def test_coletar_temas_proposicoes_agrupa_por_projeto_e_ignora_requerimento(dados, monkeypatch):
+    uri = "https://dadosabertos.camara.leg.br/api/v2/proposicoes/"
+    linhas = [
+        {"uriProposicao": uri + "10", "siglaTipo": "PL", "tema": "Saúde", "relevancia": 0},
+        {"uriProposicao": uri + "10", "siglaTipo": "PL", "tema": "Educação", "relevancia": 5},
+        {"uriProposicao": uri + "10", "siglaTipo": "PL", "tema": "Educação", "relevancia": 1},
+        {"uriProposicao": uri + "11", "siglaTipo": "REQ", "tema": "Saúde", "relevancia": 0},
+    ]
+    anos = []
+    monkeypatch.setattr(coletar, "baixar_arquivo_camara", lambda c: anos.append(c) or (linhas if "2023" in c else (_ for _ in ()).throw(RuntimeError("x"))))
+    class Hoje(dt.date):
+        @classmethod
+        def today(cls):
+            return cls(2024, 5, 1)
+    monkeypatch.setattr(coletar.dt, "date", Hoje)
+    coletar.coletar_temas_proposicoes()
+    assert json.loads((dados / "proposicoes_temas.json").read_text(encoding="utf-8")) == {"10": ["Educação", "Saúde"]}
+    assert len(anos) == 2 and len(coletar.AVISOS) == 1
+
+
+def test_coletar_orgaos_deputados_agrupa_por_deputado(dados, monkeypatch):
+    dep = "https://dadosabertos.camara.leg.br/api/v2/deputados/"
+    monkeypatch.setattr(coletar, "baixar_arquivo_camara", lambda c: [
+        {"siglaOrgao": "CSAUDE", "nomeOrgao": "Comissão de Saúde", "nomePublicacaoOrgao": "Saúde", "uriDeputado": dep + "7",
+         "cargo": "Titular", "dataInicio": "2025-03-01", "dataFim": ""},
+        {"siglaOrgao": "", "uriDeputado": dep + "7"}, {"siglaOrgao": "X", "uriDeputado": "sem-id"}])
+    coletar.coletar_orgaos_deputados()
+    assert json.loads((dados / "orgaos_deputados.json").read_text(encoding="utf-8")) == {
+        "7": [{"sigla": "CSAUDE", "nome": "Saúde", "cargo": "Titular", "inicio": "2025-03-01", "fim": None}]}
+
+
+def test_coletar_orientacoes_guarda_so_nominais_e_ignora_em_branco(dados, monkeypatch):
+    (dados / "votacoes").mkdir()
+    (dados / "votacoes" / "2026.json").write_text(json.dumps({
+        "1-1": {"id": "1-1", "data": "2026-03-01", "votos": [["7", "Sim"]]},
+        "2-2": {"id": "2-2", "data": "2026-03-02", "votos": []}}), encoding="utf-8")
+    monkeypatch.setattr(coletar, "baixar_arquivo_camara", lambda c: [
+        {"idVotacao": "1-1", "siglaBancada": "PL", "orientacao": "Sim"},
+        {"idVotacao": "1-1", "siglaBancada": "Governo", "orientacao": "Não"},
+        {"idVotacao": "1-1", "siglaBancada": "Oposição", "orientacao": ""},
+        {"idVotacao": "2-2", "siglaBancada": "PL", "orientacao": "Sim"}])
+    coletar.coletar_orientacoes()
+    assert json.loads((dados / "orientacoes.json").read_text(encoding="utf-8")) == {"1-1": {"PL": "Sim", "Governo": "Não"}}
+
+
+def test_coletar_blocos_guarda_partidos_de_cada_bloco(dados, monkeypatch):
+    monkeypatch.setattr(coletar, "get_todos", lambda c, **p: [{"id": "1", "nome": "A, B", "federacao": False}, {"id": "2", "nome": "PL", "federacao": False}])
+    monkeypatch.setattr(coletar, "get", lambda c, **p: {"dados": [{"sigla": "A"}, {"sigla": "B"}] if c.endswith("/1/partidos") else []})
+    coletar.coletar_blocos()
+    assert json.loads((dados / "blocos.json").read_text(encoding="utf-8")) == [
+        {"nome": "A, B", "federacao": False, "partidos": ["A", "B"]}, {"nome": "PL", "federacao": False, "partidos": []}]
+
+
+def test_coletar_votacoes_proposicoes_guarda_so_projetos_dos_deputados(dados, monkeypatch):
+    (dados / "proposicoes").mkdir()
+    (dados / "proposicoes" / "7.json").write_text(json.dumps({"itens": [{"id": 10, "siglaTipo": "PL"}, {"id": 11, "siglaTipo": "REQ"}]}), encoding="utf-8")
+    monkeypatch.setattr(coletar, "baixar_arquivo_camara", lambda c: [
+        {"idVotacao": "10-1", "data": "2026-02-01", "descricao": "Aprovado.", "proposicao_": {"id": 10}},
+        {"idVotacao": "10-1", "data": "2026-02-01", "descricao": "Aprovado.", "proposicao_": {"id": 10}},
+        {"idVotacao": "11-1", "data": "2026-02-01", "descricao": "x", "proposicao_": {"id": 11}},
+        {"idVotacao": "99-1", "data": "2026-02-01", "descricao": "x", "proposicao_": {"id": 99}}])
+    coletar.coletar_votacoes_proposicoes()
+    assert json.loads((dados / "proposicoes_votacoes.json").read_text(encoding="utf-8")) == {
+        "10": [{"id": "10-1", "data": "2026-02-01", "descricao": "Aprovado."}]}
+
+
+def test_tipo_evento_separa_sessoes_comissoes_e_outros():
+    assert [coletar.tipo_evento(t) for t in ("Sessão Deliberativa", "Reunião Deliberativa", "Audiência Pública", "Sessão Não Deliberativa Solene", None)] == [
+        "sessoes", "comissoes", "comissoes", "outros", "outros"]
+
+
+def test_coletar_presenca_eventos_conta_por_tipo_sem_repetir(dados, monkeypatch):
+    hoje = dt.date.today()
+    monkeypatch.setattr(coletar, "INICIO_LEGISLATURA", f"{hoje.year}-02-01")
+
+    def baixar(caminho):
+        if caminho.startswith("eventos/"):
+            return [{"id": 1, "descricaoTipo": "Sessão Deliberativa", "situacao": "Encerrada"},
+                    {"id": 2, "descricaoTipo": "Sessão Deliberativa", "situacao": "Cancelada"},
+                    {"id": 3, "descricaoTipo": "Reunião Deliberativa", "situacao": "Encerrada (Final)"}]
+        return [{"idEvento": 1, "idDeputado": 7}, {"idEvento": 1, "idDeputado": 7}, {"idEvento": 3, "idDeputado": 7}, {"idEvento": 9, "idDeputado": 8}]
+    monkeypatch.setattr(coletar, "baixar_arquivo_camara", baixar)
+    coletar.coletar_presenca_eventos()
+    assert json.loads((dados / "presenca_eventos.json").read_text(encoding="utf-8")) == {str(hoje.year): {
+        "sessoesDeliberativas": 1, "deputados": {"7": {"sessoes": 1, "comissoes": 1, "outros": 0}, "8": {"sessoes": 0, "comissoes": 0, "outros": 1}}}}

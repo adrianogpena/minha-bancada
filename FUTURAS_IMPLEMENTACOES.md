@@ -17,7 +17,7 @@ por mês e os 10 maiores fornecedores, os bens declarados e a prestação de con
 | Nível | O que exige | Pacotes |
 |---|---|---|
 | 1 | Feito (ver abaixo) | 1.1 a 1.6 |
-| 2 | Coleta leve (um arquivo por ano ou ~81 chamadas), exibida em blocos que já existem | 2.1 Recursos do senador · 2.2 Cota pelo CSV anual · 2.3 Perfil temático · 2.4 Comportamento nas votações |
+| 2 | Feito (ver abaixo) | 2.1 a 2.4 |
 | 3 | Uma chamada por deputado ou por projeto, ou visualização nova | 3.1 Carreira e histórico partidário · 3.2 Vida do projeto · 3.3 Discursos e agenda · 3.4 Rede de coautoria |
 | 4 | Raspagem de HTML ou chave de API | 4.1 Recursos do deputado (portal da Câmara) · 4.2 Emendas e Portal da Transparência |
 | 5 | Fontes grandes, sem padrão ou cruzamentos sensíveis | 5.1 Fornecedores e doadores · 5.2 Assembleias e Câmaras Municipais · 5.3 Órgãos de controle |
@@ -33,9 +33,11 @@ Só com os dados que já tínhamos; registrado no `CHANGELOG.md`.
 - **1.5 Perfil das Casas:** bloco "Perfil dos eleitos" na página de políticos (Assembleia, bancada federal, senadores do estado e Câmara Municipal), com eleitos e eleitorado lado a lado. Usa os eleitos de 2018/2022/2024, não a composição de hoje (suplentes que assumiram não entram).
 - **1.6 Presença no Senado:** comparecimento às votações nominais, com licença e missão separadas.
 
-## Nível 2: coleta leve, exibição em blocos que já existem
+## Nível 2: feito (2026-10-22)
 
-### 2.1 Recursos e benefícios do senador
+### 2.1 Recursos e benefícios do senador: feito (2026-10-22)
+
+Registrado no `CHANGELOG.md`. O auxílio-moradia e o imóvel funcional vêm do próprio `recursos-utilizados`; só ficou de fora a aposentadoria parlamentar (`aposentados*`), que precisa de perfil de ex-senador. Plano original:
 
 Três endpoints do mesmo serviço da CEAPS (`adm.senado.gov.br/adm-dadosabertos/api/v1`), no mesmo passo de
 `coletar_ceaps_senado`; aparecem no bloco "Perfil e gastos" do senador.
@@ -47,36 +49,17 @@ Três endpoints do mesmo serviço da CEAPS (`adm.senado.gov.br/adm-dadosabertos/
 | `/senadores/escritorios-apoio` | 1 chamada para todos | endereço e telefone do escritório no estado |
 | `/senadores/aposentados`, `aposentados-ipc`, `aposentados-pssc` | 1 chamada cada | ex-senadores com aposentadoria parlamentar e o regime (útil para os perfis de ex-parlamentares) |
 
-### 2.2 Cota da Câmara pelo CSV anual
+### 2.2 Cota da Câmara pelo CSV anual: feito (2026-10-22)
 
-- `www.camara.leg.br/cotas/Ano-{ano}.csv.zip` (~7 MB, todos os deputados de uma vez) substitui uma chamada a
-  `/deputados/{id}/despesas` por deputado e traz `cnpjCpfFornecedor`, que identifica o fornecedor sem depender
-  do nome.
-- No site: ranking dos fornecedores que mais recebem da Câmara inteira e quantos deputados usam cada um.
-- Abre caminho para o pacote 5.1 (dados da empresa e cruzamento com doadores).
+Coleta pelo CSV anual (com `cnpj` em cada despesa) e ranking de fornecedores em `fornecedores.html`; registrado no `CHANGELOG.md`. Falta o cruzamento com a empresa e os doadores (pacote 5.1).
 
-### 2.3 Perfil temático do deputado
+### 2.3 Perfil temático do deputado: feito (2026-10-22)
 
-Arquivos em lote da Câmara (`https://dadosabertos.camara.leg.br/arquivos/...`), um download cada, em vez de uma
-chamada por projeto ou deputado. Juntos respondem "em que áreas ele atua".
+Temas oficiais dos projetos, comissões e frentes parlamentares, no bloco "Em que áreas atua" do perfil e no filtro por tema da aba Propostas; registrado no `CHANGELOG.md`. Falta "projetos na área da comissão que ele integra": a Câmara não publica o tema de cada comissão.
 
-| Ideia | Fonte | O que daria no site |
-|---|---|---|
-| Temas oficiais dos projetos | `proposicoesTemas/json/proposicoesTemas-{ano}.json` (~10 MB; ou `/proposicoes/{id}/temas`) | filtrar e agregar propostas por tema (saúde, segurança, economia...) |
-| Comissões do deputado | `orgaosDeputados/json/orgaosDeputados-L57.json` (~8 MB; ou `/deputados/{id}/orgaos`) | "projetos na área da comissão que ele integra" |
-| Frentes parlamentares | `frentesDeputados/json/frentesDeputados.json` (~150 MB; ou `/deputados/{id}/frentes`) | frentes de que participa |
+### 2.4 Comportamento nas votações: feito (2026-10-22)
 
-O arquivo de frentes é grande: baixar uma vez por semana ou extrair só o necessário no próprio coletor.
-
-### 2.4 Comportamento nas votações
-
-Liga as votações já guardadas em `dados/votacoes/` ao partido, ao governo e à presença.
-
-| Ideia | Fonte | O que daria no site |
-|---|---|---|
-| Orientação de bancada | `votacoesOrientacoes/json/votacoesOrientacoes-{ano}.json` (~2 MB; ou `/votacoes/{id}/orientacoes`) | quanto o deputado segue o partido e o governo ("fidelidade partidária" e "governismo") |
-| Presença em eventos | `eventosPresencaDeputados/json/eventosPresencaDeputados-{ano}.json` (~30 MB) | presença em sessões e reuniões de comissão |
-| Votações do projeto | `/proposicoes/{id}/votacoes` (1 por projeto) | na página do projeto, link para as votações e como votou a bancada |
+Fidelidade ao partido e governismo pelas orientações de bancada (também para os partidos de bloco), presença em sessões e reuniões no perfil e as votações de cada projeto na aba Propostas; registrado no `CHANGELOG.md`. Limites: os blocos usam a composição atual e rótulos de blocos que não constam em `/blocos` seguem sem fidelidade; a presença em reuniões de comissão não tem total para comparar.
 
 ## Nível 3: uma chamada por deputado ou projeto, ou visualização nova
 

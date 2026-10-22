@@ -9,5 +9,6 @@ __pycache__/
 dados/senado.json
 dados/senado_autorias.json
 dados/senado_ceaps.json
+dados/senado_recursos.json
 dados/tse_bruto/
 site/feeds/

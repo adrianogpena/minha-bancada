@@ -1,0 +1,125 @@
+{
+ "fonte": "https://adm.senado.gov.br/adm-dadosabertos/api/v1/senadores/escritorios-apoio",
+ "capturadoEm": "2026-10-22",
+ "amostra": {
+  "statusCode": 200,
+  "msg": "Dados gerados com sucesso",
+  "data": [
+   {
+    "parlamentar": {
+     "nome": "ALAN RICK",
+     "partido": null,
+     "estado": "AC"
+    },
+    "setor": {
+     "siglaSetorSuperior": null,
+     "nomeSetorSuperior": null,
+     "sigla": null,
+     "nome": "Escritório de Apoio nº 1 do Senador Alan Rick",
+     "telefone": null,
+     "endereco": "RIO BRANCO.",
+     "codigo": 0
+    }
+   },
+   {
+    "parlamentar": {
+     "nome": "ALESSANDRO VIEIRA",
+     "partido": null,
+     "estado": "SE"
+    },
+    "setor": {
+     "siglaSetorSuperior": null,
+     "nomeSetorSuperior": null,
+     "sigla": null,
+     "nome": "Escritório de Apoio nº 01 do Senador Alessandro Vieira",
+     "telefone": "(79) 3303-4349",
+     "endereco": "RUA FREI PAULO, 444. SUISSA, ARACAJU, SE. CEP:49052-270",
+     "codigo": 0
+    }
+   }
+  ]
+ },
+ "forma": {
+  "data": {
+   "tipos": [
+    "list"
+   ]
+  },
+  "data[]": {
+   "tipos": [
+    "dict"
+   ]
+  },
+  "data[].parlamentar": {
+   "tipos": [
+    "dict"
+   ]
+  },
+  "data[].parlamentar.estado": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "data[].parlamentar.nome": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "data[].parlamentar.partido": {
+   "tipos": [
+    "null"
+   ]
+  },
+  "data[].setor": {
+   "tipos": [
+    "dict"
+   ]
+  },
+  "data[].setor.codigo": {
+   "tipos": [
+    "int"
+   ]
+  },
+  "data[].setor.endereco": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "data[].setor.nome": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "data[].setor.nomeSetorSuperior": {
+   "tipos": [
+    "null"
+   ]
+  },
+  "data[].setor.sigla": {
+   "tipos": [
+    "null"
+   ]
+  },
+  "data[].setor.siglaSetorSuperior": {
+   "tipos": [
+    "null"
+   ]
+  },
+  "data[].setor.telefone": {
+   "tipos": [
+    "null",
+    "str"
+   ]
+  },
+  "msg": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "statusCode": {
+   "tipos": [
+    "int"
+   ]
+  }
+ }
+}

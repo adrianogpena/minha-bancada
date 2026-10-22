@@ -6,7 +6,9 @@ from pathlib import Path
 RAIZ = Path(__file__).resolve().parent.parent
 # hosts só citados em texto, links de rodapé/licença ou exemplos
 IGNORAR = {"github.com", "adrianogpena.github.io", "www.w3.org", "www.openstreetmap.org", "fonts.gstatic.com", "exemplo",
-           "localhost", "seu_usuario.github.io", "www.", "script.google.com"}
+           "localhost", "seu_usuario.github.io", "www.", "script.google.com",
+           # placeholders/regex em comentários e namespaces XML, não são consultas
+           "...", "al", "schemas.openxmlformats.org"}
 
 
 def hosts(texto: str) -> set[str]:

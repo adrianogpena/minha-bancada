@@ -92,6 +92,37 @@ Status: ✅ OK · ❌ ERRO (resposta com falha ou fora do ar) · ❔ não testad
 | leaflet_js | Links e recursos do site | https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js | site/assets/app.js | ✅ OK | 2026-10-21 | HTTP 200, application/javascript, 41 KB |
 | osm_tiles | Links e recursos do site | https://tile.openstreetmap.org/0/0/0.png | site/assets/app.js | ✅ OK | 2026-10-21 | HTTP 200, image/png, 6 KB |
 | google_fonts | Links e recursos do site | https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible | site/*.html | ✅ OK | 2026-10-21 | HTTP 200, text/css |
+| rs_dados_diarias | Assembleias (estaduais) | https://dados.rs.gov.br/api/3/action/package_show?id=diarias-do-estado | scripts/coletar_estadual_rs.py | ❔ não testado | — | ainda não verificado |
+| rs_transparencia_diarias | Assembleias (estaduais) | https://www.transparencia.rs.gov.br/relatorios/externo/diarias-assembleia/dados/ | scripts/coletar_estadual_rs.py | ❔ não testado | — | ainda não verificado |
+| rn_api_transparencia | Assembleias (estaduais) | https://api-transparencialegislativa.al.rn.leg.br/elegis-api-transp-legislativa/ | scripts/coletar_estadual_rn.py | ❔ não testado | — | ainda não verificado |
+| rn_transparencia_verbas | Assembleias (estaduais) | https://transparencia.al.rn.leg.br/verbas | scripts/coletar_estadual_rn.py | ❔ não testado | — | ainda não verificado |
+| rn_transparencia_legislativa | Assembleias (estaduais) | https://transparencialegislativa.al.rn.leg.br | scripts/coletar_estadual_rn.py | ❔ não testado | — | ainda não verificado |
+| rr_deputados | Assembleias (estaduais) | https://al.rr.leg.br/deputados-estaduais-2023/ | scripts/coletar_estadual_rr.py | ❔ não testado | — | ainda não verificado |
+| rr_sapl | Assembleias (estaduais) | https://sapl.al.rr.leg.br | scripts/coletar_estadual_rr.py | ❔ não testado | — | ainda não verificado |
+| rr_transparencia | Assembleias (estaduais) | https://transparencia.al.rr.leg.br | scripts/coletar_estadual_rr.py | ❔ não testado | — | ainda não verificado |
+| pa_alepa | Assembleias (estaduais) | https://alepa.pa.gov.br/Transparencia/FrequenciaSessoes | scripts/coletar_estadual_pa.py | ❔ não testado | — | ainda não verificado |
+| pa_sigep | Assembleias (estaduais) | https://sigep.alepa.pa.gov.br/transp/frame_verbagabinete.php | scripts/coletar_estadual_pa.py | ❔ não testado | — | ainda não verificado |
+| pa_quartertec | Assembleias (estaduais) | https://alepa.quartertec.com.br/api/dashboard/data | scripts/coletar_estadual_pa.py | ❔ não testado | — | ainda não verificado |
+| se_deputados | Assembleias (estaduais) | https://al.se.leg.br/ | scripts/coletar_estadual_se.py | ❔ não testado | — | ainda não verificado |
+| se_legis | Assembleias (estaduais) | https://aleselegis.al.se.leg.br/spl/parlamentar.aspx | scripts/coletar_estadual_se.py | ❔ não testado | — | ainda não verificado |
+| ba_deputados | Assembleias (estaduais) | https://www.al.ba.gov.br/deputados/deputados-estaduais | scripts/coletar_estadual_ba.py | ❔ não testado | — | ainda não verificado |
+| ba_dados_emendas | Assembleias (estaduais) | https://dados.ba.gov.br/dataset/emendas-parlamentares | scripts/coletar_estadual_ba.py | ❔ não testado | — | ainda não verificado |
+| sc_portal_elegis | Assembleias (estaduais) | https://portalelegis.alesc.sc.gov.br | scripts/coletar_estadual_sc.py | ❔ não testado | — | ainda não verificado |
+| sc_transparencia | Assembleias (estaduais) | https://transparencia.alesc.sc.gov.br/deputados?ano=&mes= | scripts/coletar_estadual_sc.py | ❔ não testado | — | ainda não verificado |
+| ce_deputados | Assembleias (estaduais) | https://www.al.ce.gov.br/deputados | scripts/coletar_estadual_ce.py | ❔ não testado | — | ainda não verificado |
+| ce_proposicoes | Assembleias (estaduais) | https://www2.al.ce.gov.br/legislativo/proposicoes/numero.php | scripts/coletar_estadual_ce.py | ❔ não testado | — | ainda não verificado |
+| ce_transparencia | Assembleias (estaduais) | https://transparencia.al.ce.gov.br | scripts/coletar_estadual_ce.py | ❔ não testado | — | ainda não verificado |
+| ms_transparencia | Assembleias (estaduais) | https://transparencia2.al.ms.gov.br | scripts/coletar_estadual_ms.py | ❔ não testado | — | ainda não verificado |
+| pe_dadosabertos | Assembleias (estaduais) | https://dadosabertos.alepe.pe.gov.br/api/v1/parlamentares/ | scripts/coletar_estadual_pe.py | ❔ não testado | — | ainda não verificado |
+| pe_transparencia | Assembleias (estaduais) | https://transparencia.alepe.pe.gov.br/financas/verbas-indenizatorias | scripts/coletar_estadual_pe.py | ❔ não testado | — | ainda não verificado |
+| pe_legis | Assembleias (estaduais) | https://legis.alepe.pe.gov.br | scripts/coletar_estadual_pe.py | ❔ não testado | — | ainda não verificado |
+| pe_deputados | Assembleias (estaduais) | https://www.alepe.pe.gov.br/servicos/transparencia/dep/deputados.php?leg=-16 | scripts/coletar_estadual_pe.py | ❔ não testado | — | ainda não verificado |
+| mt_site | Assembleias (estaduais) | https://www.al.mt.gov.br | scripts/coletar_estadual_mt.py | ❔ não testado | — | ainda não verificado |
+| mt_eloweb | Assembleias (estaduais) | https://almt.eloweb.net/portaltransparencia/1/ | scripts/coletar_estadual_mt.py | ❔ não testado | — | ainda não verificado |
+| rj_transparencia | Assembleias (estaduais) | https://transparencia.alerj.rj.gov.br/section/report/121 | scripts/coletar_estadual_rj.py | ❔ não testado | — | ainda não verificado |
+| rj_ordemdia | Assembleias (estaduais) | https://alerjln1.alerj.rj.gov.br/ordemdia.nsf/presint?OpenForm | scripts/coletar_estadual_rj.py | ❔ não testado | — | o código usa http://; a tabela exige https |
+| mg_site | Assembleias (estaduais) | https://www.almg.gov.br/transparencia/prestacao-de-contas/deputados/verba-indenizatoria/ | scripts/coletar_estadual_mg.py | ❔ não testado | — | ainda não verificado |
+| mg_dadosabertos | Assembleias (estaduais) | https://dadosabertos.almg.gov.br/api/v2 | scripts/coletar_estadual_mg.py | ❔ não testado | — | ainda não verificado |
 
 ## Observações sobre os erros
 

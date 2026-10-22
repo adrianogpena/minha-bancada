@@ -23,6 +23,7 @@ import io
 import json
 import os
 import sys
+import importlib
 import tempfile
 import zipfile
 from collections import Counter, defaultdict
@@ -190,7 +191,8 @@ def cabecalho_csv(url: str) -> list[str]:
 
 
 class Endpoint:
-    def __init__(self, nome, fonte, buscar, usados=(), colunas_criticas=(), colunas_esperadas=(), html=None):
+    def __init__(self, nome, fonte, buscar, usados=(), colunas_criticas=(), colunas_esperadas=(), html=None, independente=False):
+        self.independente = independente
         self.nome, self.fonte, self.buscar, self.usados = nome, fonte, buscar, list(usados)
         self.colunas_criticas, self.colunas_esperadas, self.html = list(colunas_criticas), list(colunas_esperadas), html
 
@@ -503,6 +505,23 @@ def _go_conferir(registro):
 ENDPOINTS.append(Endpoint("go_suap", "https://suap.camaragyn.go.gov.br/camara/consulta_publica/", _go_pagina, html=_go_conferir))
 
 
+# ---------------------------------------------------------------- Assembleias fora do SAPL (um módulo por UF)
+
+def registrar_estaduais(pasta: Path = Path(__file__).resolve().parent) -> None:
+    """Acrescenta os CONTRATOS de cada scripts/coletar_estadual_<uf>.py; módulo que não importa é ignorado com aviso."""
+    for arq in sorted(pasta.glob("coletar_estadual_*.py")):
+        try:
+            modulo = importlib.import_module(arq.stem)
+            novos = [Endpoint(**{**d, "independente": True}) for d in getattr(modulo, "CONTRATOS", [])]
+        except Exception as e:
+            print(f"aviso: {arq.stem}: contratos não carregados ({e})", file=sys.stderr)
+            continue
+        ENDPOINTS.extend(novos)
+
+
+registrar_estaduais()
+
+
 # ---------------------------------------------------------------- gravar e verificar
 
 def caminho(nome: str) -> Path:
@@ -514,7 +533,7 @@ def executar(selecionados: list[str], acao):
     nomes = set(selecionados)
     saida = {}
     for e in ENDPOINTS:
-        independente = bool(e.colunas_criticas or e.colunas_esperadas or e.html)   # não usam o que os anteriores devolveram
+        independente = bool(e.independente or e.colunas_criticas or e.colunas_esperadas or e.html)   # não usam o que os anteriores devolveram
         if nomes and e.nome not in nomes and independente:
             continue
         try:

@@ -1,0 +1,7 @@
+{
+ "fonte": "https://www.al.sp.gov.br/repositorioDados/deputados/despesas_gabinetes_<ano>.xml",
+ "capturadoEm": "2026-10-22",
+ "amostra": {
+  "xml": "<despesas><despesa><Ano>2025</Ano><Matricula>300607</Matricula><Mes>1</Mes><Valor>148.01</Valor><CNPJ>04079097000120</CNPJ><Deputado>Agente Federal Danilo Balas</Deputado><Tipo>A - COMBUSTÍVEIS E LUBRIFICANTES</Tipo><Fornecedor>AUTO POSTO JARDIM ITALIA LTDA</Fornecedor></despesa><despesa><Ano>2025</Ano><Matricula>300607</Matricula><Mes>1</Mes><Valor>9200.0</Valor><CNPJ>00192198000152</CNPJ><Deputado>Agente Federal Danilo Balas</Deputado><Tipo>D - MATERIAIS E SERVIÇOS GRÁFICOS, DE CÓPIAS E REPRODUÇÃO DE DOCS</Tipo><Fornecedor>GRAFICA E EDITORA PARATODOS SOROCABA LTDA</Fornecedor></despesa><despesa><Ano>2025</Ano><Matricula>300607</Matricula><Mes>1</Mes><Valor>50.0</Valor><CNPJ>49003978000104</CNPJ><Deputado>Agente Federal Danilo Balas</Deputado><Tipo>D - MATERIAIS E SERVIÇOS GRÁFICOS, DE CÓPIAS E REPRODUÇÃO DE DOCS</Tipo><Fornecedor>ANDRE RIBEIRO PAIXÃO</Fornecedor></despesa></despesas>"
+ }
+}

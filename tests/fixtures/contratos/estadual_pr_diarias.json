@@ -1,0 +1,63 @@
+{
+ "fonte": "https://transparencia.assembleia.pr.leg.br/api/diarias",
+ "capturadoEm": "2026-10-22",
+ "amostra": {
+  "meses": {
+   "meses": {
+    "9": "Setembro",
+    "8": "Agosto",
+    "7": "Julho",
+    "6": "Junho",
+    "5": "Maio",
+    "4": "Abril",
+    "3": "Março",
+    "2": "Fevereiro",
+    "1": "Janeiro"
+   }
+  },
+  "linhas": [
+   {
+    "id": 5222,
+    "diaria_id": "201",
+    "data_referencia": "2026-08-01T03:00:00.000000Z",
+    "solicitacao_pgto": null,
+    "data_saida": "04/08/2024",
+    "data_retorno": "04/08/2024",
+    "data": null,
+    "protocolo": "14027-90.2026",
+    "orcamento": null,
+    "emitido": "LUIS RAIMUNDO CORTI",
+    "valor": "521.10",
+    "quantidade_autorizada": "0,5",
+    "motivo": "Deputado Luis Corti com autor da Lei 22.953.202, de inspeção sanitária e industrial de produtos origem animal em todo paraná e da lei 22.765.2025 que proíbe reidratação de leite em pó importado pela industria e laticinios no praraná, fundamental estar na discusão no que tange a agropecuária.",
+    "destino": "Maringá",
+    "cargo_funcao": "DEPUTADO",
+    "created_at": "2026-09-01T19:05:57.000000Z",
+    "updated_at": "2026-09-01T19:05:57.000000Z",
+    "deleted_at": null,
+    "deleted_by": null
+   },
+   {
+    "id": 5188,
+    "diaria_id": "200",
+    "data_referencia": "2026-07-01T03:00:00.000000Z",
+    "solicitacao_pgto": null,
+    "data_saida": "06/07/2026",
+    "data_retorno": "08/07/2026",
+    "data": null,
+    "protocolo": "11830-45.2026",
+    "orcamento": null,
+    "emitido": "MARILEI DE SOUZA LIMA",
+    "valor": "2084.38",
+    "quantidade_autorizada": "2",
+    "motivo": "Representar esta Casa de Leis, no Conselho de Pastores Presidentes das Igrejas Evangélicas Assembleia de Deus",
+    "destino": "FRANCISCO BELTRÃO",
+    "cargo_funcao": "DEPUTADA",
+    "created_at": "2026-08-03T14:37:43.000000Z",
+    "updated_at": "2026-08-03T14:37:43.000000Z",
+    "deleted_at": null,
+    "deleted_by": null
+   }
+  ]
+ }
+}

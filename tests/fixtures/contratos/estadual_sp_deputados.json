@@ -1,0 +1,23 @@
+{
+ "fonte": "https://www.al.sp.gov.br/repositorioDados/deputados/deputados.xml",
+ "capturadoEm": "2026-10-22",
+ "amostra": {
+  "xml": "<Deputados><Deputado><IdDeputado>1139</IdDeputado><IdSPL>1000000335</IdSPL><IdUA>20455</IdUA><Situacao>EXE</Situacao><Andar>2º andar</Andar><Aniversario>26/08</Aniversario><txtAreaAtuacao>Combate à Corrupção;\nFiscalização e Controle das Contas Públicas;\nSegurança;\nSaúde;\nEducação; \nEsporte;\nCultura;</txtAreaAtuacao><txtBaseEleitoral>Região Metropolitana de Sorocaba, Itapetininga e Itapeva;\nDemais Macro Regiões do Estado de São Paulo.</txtBaseEleitoral><Email>apfdanilobalas@al.sp.gov.br</Email><Matricula>300607</Matricula><NomeParlamentar>Agente Federal Danilo Balas</NomeParlamentar><PlacaVeiculo>AL146</PlacaVeiculo><Sala>255</Sala><Partido>PL</Partido><Telefone>3886-6054/6052</Telefone></Deputado><Deputado><IdDeputado>1140</IdDeputado><IdSPL>1000000342</IdSPL><IdUA>20399</IdUA><Situacao>EXE</Situacao><Andar>1º</Andar><Aniversario>17/09</Aniversario><txtAreaAtuacao>Defesa da Vida e da Família;\nMeio Ambiente;\nSaúde;\nAssistência Social; \nEducação;\nProteção e Defesa Animal;</txtAreaAtuacao><txtBaseEleitoral>São Paulo (Capital);\nPiracicaba e região;</txtBaseEleitoral><Email>alexdemadureira@al.sp.gov.br</Email><Matricula>300608</Matricula><NomeParlamentar>Alex Madureira</NomeParlamentar><PlacaVeiculo>AL086</PlacaVeiculo><Sala>173</Sala><Partido>PL</Partido><Telefone>(11) 3886-6676/ 6677</Telefone></Deputado></Deputados>",
+  "parlamentares": [
+   {
+    "nuMatricula": 300607,
+    "txNomeParlamentar": "AGENTE FEDERAL DANILO BALAS",
+    "txFoto": "/biografia/fotos/300607/678129ff534ded49f5d96881ab26868b6170b40819639502898b48ee6030c787.jpeg",
+    "txEmail": "apfdanilobalas@al.sp.gov.br",
+    "txPartido": "PL"
+   },
+   {
+    "nuMatricula": 300608,
+    "txNomeParlamentar": "ALEX MADUREIRA",
+    "txFoto": "/biografia/fotos/20230302-145402-id=546-GRD.jpg",
+    "txEmail": "alexdemadureira@al.sp.gov.br",
+    "txPartido": "PL"
+   }
+  ]
+ }
+}

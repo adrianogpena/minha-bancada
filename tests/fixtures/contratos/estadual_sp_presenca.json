@@ -1,0 +1,50 @@
+{
+ "fonte": "https://legis-api-portal-prd.al.sp.gov.br/lista-presenca-parlamentar/<matrícula>/<mês>/<ano>",
+ "capturadoEm": "2026-10-22",
+ "amostra": {
+  "registros": [
+   {
+    "idSessaoPlenaria": 24138,
+    "tituloSessaoPlenaria": "124ª Sessão Ordinária",
+    "data": "01/09/2026",
+    "dataDiaSemana": "(Ter)",
+    "situacao": "Justificada"
+   },
+   {
+    "idSessaoPlenaria": 24139,
+    "tituloSessaoPlenaria": "125ª Sessão Ordinária",
+    "data": "02/09/2026",
+    "dataDiaSemana": "(Qua)",
+    "situacao": "Justificada"
+   },
+   {
+    "idSessaoPlenaria": 24141,
+    "tituloSessaoPlenaria": "126ª Sessão Ordinária",
+    "data": "03/09/2026",
+    "dataDiaSemana": "(Qui)",
+    "situacao": "Sessão não Deliberativa - com quórum regimental para abertura da sessão"
+   },
+   {
+    "idSessaoPlenaria": 24142,
+    "tituloSessaoPlenaria": "127ª Sessão Ordinária",
+    "data": "04/09/2026",
+    "dataDiaSemana": "(Sex)",
+    "situacao": "Sessão não Deliberativa - com quórum regimental para abertura da sessão"
+   },
+   {
+    "idSessaoPlenaria": 24143,
+    "tituloSessaoPlenaria": "128ª Sessão Ordinária",
+    "data": "08/09/2026",
+    "dataDiaSemana": "(Ter)",
+    "situacao": "Justificada"
+   },
+   {
+    "idSessaoPlenaria": 24144,
+    "tituloSessaoPlenaria": "129ª Sessão Ordinária",
+    "data": "09/09/2026",
+    "dataDiaSemana": "(Qua)",
+    "situacao": "Justificada"
+   }
+  ]
+ }
+}

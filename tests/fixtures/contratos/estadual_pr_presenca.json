@@ -1,0 +1,66 @@
+{
+ "fonte": "https://transparencia.assembleia.pr.leg.br/api/presenca/ano",
+ "capturadoEm": "2026-10-22",
+ "amostra": {
+  "sessoes": [
+   {
+    "data": "20/10/2026",
+    "linhas": [
+     [
+      "PRESENTES",
+      "JUSTIFICADOS",
+      "AUSENTES",
+      "TOTAL"
+     ],
+     [
+      "ADEMAR TRAIANO",
+      "MARIA VICTÓRIA(Art. 98, caput, do RI)",
+      "ANA JÚLIA DO PT ",
+      ""
+     ],
+     [
+      "ALEXANDRE AMARO ",
+      "",
+      "CANTORA MARA LIMA",
+      ""
+     ],
+     [
+      "ADÃO LITRO",
+      "",
+      "CRISTINA SILVESTRI  ",
+      ""
+     ]
+    ]
+   },
+   {
+    "data": "19/10/2026",
+    "linhas": [
+     [
+      "PRESENTES",
+      "JUSTIFICADOS",
+      "AUSENTES",
+      "TOTAL"
+     ],
+     [
+      "ADEMAR TRAIANO",
+      "",
+      "COBRA REPÓRTER",
+      ""
+     ],
+     [
+      "ALEXANDRE AMARO ",
+      "",
+      "CRISTINA SILVESTRI  ",
+      ""
+     ],
+     [
+      "ADÃO LITRO",
+      "",
+      "GILBERTO RIBEIRO",
+      ""
+     ]
+    ]
+   }
+  ]
+ }
+}

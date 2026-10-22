@@ -1,0 +1,12 @@
+{
+ "fonte": "https://www.al.sp.gov.br/alesp/folha-de-pagamento-deputados/",
+ "capturadoEm": "2026-10-22",
+ "amostra": {
+  "indice": [
+   "folha-deputados-2026-08.html"
+  ],
+  "linhas": "<table><tr> \r\n \t\t\t\t\t<td width=\"55%\">Nome</td> \r\n \t\t\t\t\t<td width=\"15%\">Remunera&ccedil;&atilde;o<br>Bruta (R$)</td> \r\n \t\t\t\t\t<td width=\"15%\">Tributos (R$)</td> \r\n \t\t\t\t\t<td width=\"15%\">Remunera&ccedil;&atilde;o<br>L&iacute;quida (R$)</td> \r\n \t\t\t\t</tr><tr>\n<td align='left' width=\"55%\">ALEXANDER MUNIZ DE OLIVEIRA                       </td>\n<td align='right' width=\"15%\">34.774,64</td>\n<td align='right' width=\"15%\">9.318,50</td>\n<td align='right' width=\"15%\">25.456,14</td>\n</tr><tr>\n<td align='left'>ALTAIR MORAES DE OLIVEIRA                         </td>\n<td align='right'>34.774,64</td>\n<td align='right'>9.370,64</td>\n<td align='right'>25.404,00</td>\n</tr></table>",
+  "ano": 2026,
+  "mes": 8
+ }
+}

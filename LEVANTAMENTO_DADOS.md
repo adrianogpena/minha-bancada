@@ -42,6 +42,21 @@ A API de dados abertos tem só as 6 rotas acima: não há rota de deputados, vot
 Para cada um: conferir SAPL (comando acima); se não for, achar o portal de transparência e a API/dados abertos da Assembleia e preencher a tabela como no PR.
 
 ### AP: Amapá
+
+Apuração de 2026-10-22: **nada obtido**, site da Assembleia inacessível. Repetir as tentativas abaixo no futuro.
+
+| URL tentada | Ferramenta | Resultado em 2026-10-22 |
+|---|---|---|
+| `http://www.al.ap.leg.br` | curl | DNS resolve (`132.255.49.19`), timeout de 20 s |
+| `http://www.al.ap.leg.br` | WebFetch | `ECONNREFUSED 132.255.49.19:443` |
+| `https://www.al.ap.leg.br`, `https://al.ap.leg.br`, `http://al.ap.leg.br` | curl | timeout |
+| `https://www.al.ap.leg.br/pagina.php?pg=transparencia` | curl | timeout (URL de transparência chutada) |
+| `https://sapl.al.ap.leg.br/api/parlamentares/legislatura/?page_size=1` | curl | host não resolve (não usa SAPL nesse endereço) |
+| `https://transparencia.al.ap.leg.br` | curl | host não resolve |
+| `https://web.archive.org/web/20241206213457/http://al.ap.leg.br/` | curl | HTTP 403 (existe cópia de 06/12/2024, curl é bloqueado) |
+| mesma cópia do Wayback | WebFetch | bloqueado pela ferramenta ("unable to fetch from web.archive.org") |
+
+Próximos passos: repetir as URLs acima; abrir a cópia do Wayback no Firefox (curl e WebFetch não passam); procurar o portal de transparência e dados abertos por busca; os dados dos deputados estaduais (nome, partido, votos) já vêm do TSE.
 ### BA: Bahia
 ### CE: Ceará
 ### DF: Distrito Federal (Câmara Legislativa)

@@ -407,4 +407,20 @@ Próximos passos:
 3. Fonte de link por dado: folha → `https://al.se.leg.br/portal-da-transparencia/recursos-humanos`.
 4. Se seguir: `scripts/coletar_se.py`, amostras em `tests/fixtures/contratos/`, `ENDPOINTS.md` e `CHANGELOG.md`.
 
-### SP: São Paulo
+### SP: São Paulo (Assembleia Legislativa, Alesp; apurado em 2026-10-22)
+
+**Portal de transparência: `https://www.al.sp.gov.br/transparencia/informacoes/`.** Só li o texto do índice (formato de exportação e API não confirmados; a página só diz que Dados Abertos está "em formato aberto").
+- Atividade parlamentar: projetos (`/propositura`), processos (`/processo`), comissões (`/comissao/comissoes-permanentes`), sessões plenárias (`/sessao-plenaria`), prestação de contas dos deputados com verba de gabinete e CNPJ dos fornecedores (`/deputado/contas/`), subsídios dos deputados (`/alesp/folha-de-pagamento-deputados/`).
+- Também no menu: presença em plenário (`/deputado/presenca-plenario`), votações no plenário (`/sessao-plenaria/?tab=votacoes`), lista de deputados (`/deputado/lista/`).
+- Servidores: lotação (`/servidor/lista/`), vagas e cargos (`/servidor/vagas/`), organograma, tabela de vencimentos, remuneração por matrícula (`/alesp/folha-de-pagamento/`).
+- Finanças: contratos, contrato de publicidade, licitações, execução orçamentária (Alesp e FED), gestão fiscal, repasses do Tesouro, ordem cronológica de pagamentos.
+- Dados abertos: `https://www.al.sp.gov.br/dados-abertos/` (conteúdo, formato e período não abertos).
+- Todas as URLs acima são relativas a `https://www.al.sp.gov.br`.
+
+**ITGP** (`https://transparenciainternacional.org.br/itgp/assembleia-legislativa/sao-paulo`, ano da avaliação não informado): nota **46,8/100 ("Regular")**, 9º de 27. Por dimensão (pareamento pela ordem da página; conferir na fonte): Governança 70,6; Comunicação 72,7; Transparência Legislativa 62,5; Plataformas 60; Participação e Engajamento 43,7; Transformação Digital 40; Transparência Administrativa 25; Marcos Legais 0 (sem regras próprias de acesso à informação, proteção de dados, plano de dados abertos, proteção a denunciantes nem lobby). Ponto forte: publicação de pautas e informações de plenário e comissões. Banco de dados da avaliação: `https://comunidade.transparenciainternacional.org.br/itgp-legislativo-estadual-banco-de-dados`.
+
+Próximos passos:
+1. No Firefox, abrir `/dados-abertos/` e `/deputado/contas/` com a aba Rede aberta, para ver formato (CSV/XML/API), URL de dados, período e exportação.
+2. Abrir presença em plenário, votações e projetos para ver se há dados estruturados.
+3. Fonte de link por dado: verba de gabinete → `https://www.al.sp.gov.br/deputado/contas/`; subsídio → `https://www.al.sp.gov.br/alesp/folha-de-pagamento-deputados/`.
+4. Se seguir: `scripts/coletar_sp.py`, amostras em `tests/fixtures/contratos/`, `ENDPOINTS.md` e `CHANGELOG.md`.

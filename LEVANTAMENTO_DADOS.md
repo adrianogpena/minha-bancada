@@ -57,7 +57,30 @@ Apuração de 2026-10-22: **nada obtido**, site da Assembleia inacessível. Repe
 | mesma cópia do Wayback | WebFetch | bloqueado pela ferramenta ("unable to fetch from web.archive.org") |
 
 Próximos passos: repetir as URLs acima; abrir a cópia do Wayback no Firefox (curl e WebFetch não passam); procurar o portal de transparência e dados abertos por busca; os dados dos deputados estaduais (nome, partido, votos) já vêm do TSE.
-### BA: Bahia
+### BA: Bahia (apurado em 2026-10-22)
+
+Portal da Assembleia: `https://www.al.ba.gov.br/` (acessível por `curl` com User-Agent de navegador). Não usa SAPL (`sapl.al.ba.leg.br` não resolve). O sistema legislativo é o NoPaper (`albalegis.nopapercloud.com.br`), **atrás de Cloudflare: HTTP 403 "Sorry, you have been blocked"**, inclusive a página de dados abertos e a API. Não contornar.
+
+| Dado | Onde | Acesso |
+|---|---|---|
+| Deputados em exercício (63, nome + partido) | `/deputados/deputados-estaduais`; ficha em `/deputados/deputado-estadual/{id}` (id = 910629 etc.) | HTML estático. Ficha tem nascimento, formação, mandatos, filiações, atividade parlamentar. Também `/deputados/todos-deputados`, `/ex-deputados-estaduais`, `/contatos-deputados` |
+| Verba indenizatória (cota) por deputado | `/transparencia/verbas-idenizatorias` (filtro deputado, mês/ano, categoria); detalhe `/transparencia/verbas-idenizatorias/{id}/` | HTML estático: lançamento (nº, mês/ano, deputado, categoria, valor) e detalhe com nota/recibo, CNPJ/CPF, fornecedor, valor, glosa e PDF da NF em `/fserver/...`. Paginação/filtro a descobrir |
+| Proposições (autoria, ementa, data, tramitação) | `/atividade-legislativa-nova/proposicoes`; detalhe `/atividade-legislativa-nova/proposicao/REQ-10650-2025` | HTML estático: "Autor: DEPUTADO ...", origem, data de entrada, regime, ementa, tramitação. Lista por ano em `/atividade-legislativa/proposicoes-por-ano` |
+| Emendas parlamentares estaduais (por deputado, 2020 até hoje) | CKAN `https://dados.ba.gov.br/` dataset `emendas-parlamentares`, ZIP `.../emendasparlamentares.zip` (2,5 MB) | **CSV aberto**, atualizado diariamente. `VW_PAINEL_EMENDAS_PARLAMENTARES_DESPESAS.csv` tem ano, órgão, ação, `Deputado`, `Nome do Deputado`, valores orçado/empenhado/liquidado/pago; `..._PAGAMENTOS.csv` tem credor, data, valor e objeto; ligação por `num_codigo`. Dataset `transferencias-especiais` análogo. API CKAN `/api/3/action/package_search` responde |
+| Presença/frequência | `albalegis.nopapercloud.com.br/spl/sessoes.aspx` | **Bloqueado (Cloudflare 403)** |
+| Votações nominais | Sem seção própria; `/transparencia/ativ-legislat`, `/atividade-legislativa-nova/ordem-do-dia`, `/sessoes-plenarias` | A descobrir se trazem voto por deputado (no NoPaper, provavelmente bloqueado) |
+| API de dados abertos (comissões, parlamentares, proposições, trâmites, autores) | `albalegis.nopapercloud.com.br/dados-abertos.aspx` (descrita em `/transparencia/avisos2`) | **Bloqueada (Cloudflare 403)** para curl; testar no Firefox e ver se o bloqueio é só do curl |
+| Remuneração, diárias, estagiários | `https://portalrh.alba.ba.gov.br/transparencia` (+ `/diarias`, `/estagiarios`) | HTTP 200; conteúdo a descobrir |
+| Liderança/blocos | `albalegis.nopapercloud.com.br/spl/liderancas.aspx` | Provavelmente bloqueado |
+
+`https://www.transparencia.ba.gov.br/` é o portal do **Poder Executivo**: não tem dados da Assembleia/deputados. Só serve para emendas (via CKAN acima), pagamentos, despesas e servidores do estado. Links `/EmendasParlamentares/...` e `/ServidorPessoal/RemuneracaoServidores` dão 404 (caminhos citados na home não existem como escritos; usar o CKAN).
+
+Próximos passos:
+1. Abrir `albalegis.nopapercloud.com.br/dados-abertos.aspx` no Firefox: se abrir, anotar os endpoints REST (parlamentares, proposições, trâmites, autores) e se o Cloudflare bloqueia também o acesso programático; se bloquear, pedir liberação/exportação à ALBA (e-SIC/e-Ouv) em vez de contornar.
+2. Scraping das páginas HTML do `al.ba.gov.br` (deputados, verbas, proposições): conferir `robots.txt`, paginação e parâmetros de filtro da verba indenizatória (aba Rede do Firefox).
+3. Emendas: baixar o ZIP do CKAN, ligar `Nome do Deputado` ao deputado do TSE (nomes com espaços extras) e registrar em `ENDPOINTS.md`/`CHANGELOG.md`.
+4. Votos e presença: sem fonte aberta confirmada; verificar se `ordem-do-dia`/`sessoes-plenarias` trazem votação nominal.
+5. Verificar `portalrh.alba.ba.gov.br` (remuneração por deputado/gabinete).
 ### CE: Ceará
 ### DF: Distrito Federal (Câmara Legislativa)
 ### ES: Espírito Santo

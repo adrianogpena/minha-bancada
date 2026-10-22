@@ -7,7 +7,9 @@ Fonte: API pública de dados abertos https://dadosabertos.almg.gov.br/api/v2 (JS
   - verba indenizatória: prestacao_contas/verbas_indenizatorias/deputados/{id}/datas (meses fechados) e .../{id}/{ano}/{mes}
     (por tipo de despesa, com cada nota em `listaDetalheVerba`). O CSV `verbas-indenizatorias` dos arquivos abertos vem sem
     valores nem emitentes (só código, tipo e mês), por isso não é usado.
-  - proposições: proposicoes/pesquisa/direcionada?ini=&fim=&tp=100&p= (uma janela por mês: a API só pagina até 10 mil resultados; autores no campo `autor`: "Deputado Fulano   PARTIDO"; texto em `ementa`, ou em `assunto` nos tipos sem ementa)
+  - proposições: proposicoes/pesquisa/direcionada?ini=&fim=&tp=100&p= (uma janela por mês: a API só pagina até 10 mil resultados; autores no campo `autor`: "Deputado Fulano   PARTIDO"; texto em `ementa`, ou em `assunto` nos tipos sem ementa).
+    Com `ord=3` a lista vem da última ação mais recente para a mais antiga (`dataUltimaAcao`): a coleta diária lê só as primeiras
+    páginas, até chegar na data da coleta anterior, e a coleta completa por janelas mensais só se repete a cada RENOVAR_COMPLETA_DIAS.
 
 Não existe na API (Swagger conferido): remuneração, presença e votações nominais. A ALMG não publica salários nominais.
 Não coletado: foto (a API não traz URL), comissões, pronunciamentos, reuniões do plenário.
@@ -16,7 +18,7 @@ Não coletado: foto (a API não traz URL), comissões, pronunciamentos, reuniõe
 import re
 import sys
 import time
-from datetime import date
+from datetime import date, timedelta
 
 import estaduais_comum as comum
 
@@ -32,6 +34,8 @@ PRIMEIRO_ANO_VERBA = 2025
 PRIMEIRO_ANO_PROPOSICOES = 2023
 MESES_RECENTES = 2
 LIMITE_EMENTA = 400
+RENOVAR_COMPLETA_DIAS = 14   # de tempos em tempos refaz tudo, por segurança contra o que a leitura incremental não enxergue
+ORDEM_ULTIMA_ACAO = 3
 
 
 def pegar(sessao, caminho: str, **params) -> dict:
@@ -193,6 +197,66 @@ def proposicoes_do_ano(sessao, ano: int, hoje: date) -> list[dict]:
 
 # ---------------------------------------------------------------- coleta
 
+def proposicoes_alteradas(sessao, desde: date, hoje: date) -> list[dict]:
+    """Proposições com última ação a partir de `desde` (menos 1 dia de folga): a lista vem ordenada por `dataUltimaAcao`, da mais recente para a mais antiga."""
+    limite = (desde - timedelta(days=1)).isoformat()
+    itens, pagina = [], 1
+    while True:
+        r = pegar(sessao, "proposicoes/pesquisa/direcionada", ini=f"{PRIMEIRO_ANO_PROPOSICOES}0101", fim=hoje.strftime("%Y%m%d"),
+                  tp=TAMANHO_PAGINA, p=pagina, ord=ORDEM_ULTIMA_ACAO)["resultado"]
+        if r.get("erro"):
+            raise RuntimeError(f"erro na página {pagina} das alteradas")
+        lista = r.get("listaItem") or []
+        for i in lista:
+            if (data_iso(i.get("dataUltimaAcao")) or limite) < limite:
+                return itens
+            itens.append(i)
+        if len(lista) < TAMANHO_PAGINA or len(itens) >= r.get("noOcorrencias", 0):
+            return itens
+        pagina += 1
+
+
+def juntar_alteradas(por_ano: dict, novas: dict) -> None:
+    """Põe cada matéria nova ou alterada no arquivo do ano de publicação, tirando a versão antiga de onde estiver."""
+    for chave, m in novas.items():
+        ano = int((m["dataApresentacao"] or "")[:4] or m["ano"] or 0)
+        if ano not in por_ano:
+            continue
+        for materias_ano in por_ano.values():
+            materias_ano.pop(chave, None)
+        por_ano[ano][chave] = m
+
+
+def coletar_proposicoes(s, deputados: list[dict], hoje: date, pasta, agora: str) -> None:
+    arquivos = {ano: pasta / f"materias_{ano}.json" for ano in range(PRIMEIRO_ANO_PROPOSICOES, hoje.year + 1)}
+    atuais = {ano: comum.ler(arq) for ano, arq in arquivos.items()}
+    ultimo = atuais[hoje.year] or {}
+    completa_em = ultimo.get("completaEm")
+    if all(atuais.values()) and completa_em and ultimo.get("coletadoEm") and (hoje - date.fromisoformat(completa_em)).days < RENOVAR_COMPLETA_DIAS:
+        try:
+            itens = proposicoes_alteradas(s, date.fromisoformat(ultimo["coletadoEm"]), hoje)
+            por_ano = {ano: dict(a["materias"]) for ano, a in atuais.items()}
+            juntar_alteradas(por_ano, materias(itens, deputados))
+        except Exception as e:
+            comum.avisar(f"MG: proposições alteradas: {type(e).__name__}: {str(e)[:120]}")
+            return
+        for ano, achadas in por_ano.items():
+            if ano == hoje.year or achadas != atuais[ano]["materias"]:
+                comum.salvar(arquivos[ano], {**atuais[ano], "coletadoEm": agora, "materias": achadas})
+        print(f"MG: proposições alteradas lidas {len(itens)}")
+        return
+    for ano, arq in arquivos.items():
+        if arq.exists() and ano < hoje.year - 1:
+            continue
+        try:
+            achadas = materias(proposicoes_do_ano(s, ano, hoje), deputados)
+        except Exception as e:
+            comum.avisar(f"MG: proposições {ano}: {type(e).__name__}: {str(e)[:120]}")
+            continue
+        comum.salvar(arq, {"coletadoEm": agora, "completaEm": agora, "fonte": PROPOSICOES_PAGINA, "materias": achadas})
+        print(f"MG: {ano} proposições {len(achadas)}")
+
+
 def coletar() -> None:
     pasta = comum.DADOS / UF
     hoje = date.today()
@@ -207,17 +271,7 @@ def coletar() -> None:
     comum.salvar(pasta / "deputados.json", {"fonte": EM_EXERCICIO_URL, "host": None, "legislatura": "2023-2027", "deputados": deputados})
     print(f"MG: {len(deputados)} deputados")
 
-    for ano in range(PRIMEIRO_ANO_PROPOSICOES, hoje.year + 1):
-        arq = pasta / f"materias_{ano}.json"
-        if arq.exists() and ano < hoje.year - 1:
-            continue
-        try:
-            achadas = materias(proposicoes_do_ano(s, ano, hoje), deputados)
-        except Exception as e:
-            comum.avisar(f"MG: proposições {ano}: {type(e).__name__}: {str(e)[:120]}")
-            continue
-        comum.salvar(arq, {"coletadoEm": agora, "fonte": PROPOSICOES_PAGINA, "materias": achadas})
-        print(f"MG: {ano} proposições {len(achadas)}")
+    coletar_proposicoes(s, deputados, hoje, pasta, agora)
 
     coletar_verba(s, deputados, hoje, pasta, agora)
 

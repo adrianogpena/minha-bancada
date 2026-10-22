@@ -32,6 +32,7 @@ DESDE = f"{ANO_INICIAL}-01-01"
 TIMEOUT = 60
 TAMANHO = 200
 EM_PARALELO = 2
+RENOVAR_COMPLETA_DIAS = 14   # a leitura incremental só vê projetos novos: arquivamentos de projetos antigos entram na releitura completa
 RENOVAR_FALHA_DIAS = 7   # sessão cuja presença deu erro só é consultada de novo depois disso
 MINUSCULAS = {"de", "da", "do", "dos", "das", "e"}
 VOTOS = {1: "Sim", 0: "Não", 2: "Abstenção"}
@@ -112,11 +113,11 @@ def materia(p: dict, ids: list[str]) -> tuple[str, dict]:
         "idsAutores": ids, "idsDeputados": ids, "fonte": f"{SITE}/projeto/{p['id']}"}
 
 
-def projetos_do_deputado(s, d: dict) -> list[dict]:
+def projetos_do_deputado(s, d: dict, desde: str = DESDE) -> list[dict]:
     achados = []
     for ini in d["iniciativas"]:
         for p in paginas(s, "processo", iniciativa=ini):
-            if (p.get("dataEntrada") or "") < DESDE:
+            if (p.get("dataEntrada") or "") < desde:
                 break
             if eh_projeto(p):
                 achados.append(p)
@@ -138,10 +139,37 @@ def montar_materias(por_deputado: dict[str, list[dict]]) -> dict[int, dict]:
     return por_ano
 
 
+def desde_incremental(hoje: date) -> tuple[str, dict[int, dict]] | None:
+    """(data a partir da qual ler, arquivos atuais) se a última coleta completa é recente e há arquivo de todos os anos; senão None."""
+    atuais = {ano: comum.ler(PASTA / f"materias_{ano}.json") for ano in range(ANO_INICIAL, hoje.year + 1)}
+    ultimo = atuais[hoje.year] or {}
+    if all(atuais.values()) and ultimo.get("completaEm") and ultimo.get("coletadoEm") \
+            and (hoje - date.fromisoformat(ultimo["completaEm"])).days < RENOVAR_COMPLETA_DIAS:
+        return (date.fromisoformat(ultimo["coletadoEm"]) - timedelta(days=1)).isoformat(), atuais
+    return None
+
+
+def juntar_novos(atuais: dict[int, dict], novos: dict[int, dict]) -> dict[int, dict]:
+    """Matérias de cada ano: as já guardadas mais as lidas agora (autores somados, versão nova no resto)."""
+    por_ano = {ano: dict(a["materias"]) for ano, a in atuais.items()}
+    for ano, materias in novos.items():
+        for chave, m in materias.items():
+            antiga = por_ano.get(ano, {}).get(chave)
+            if antiga:
+                ids = sorted(set(antiga["idsDeputados"]) | set(m["idsDeputados"]))
+                m = {**m, "idsAutores": ids, "idsDeputados": ids}
+            por_ano.setdefault(ano, {})[chave] = m
+    return por_ano
+
+
 def coletar_projetos(s, deputados: list[dict]) -> None:
+    hoje = date.today()
+    incremental = desde_incremental(hoje)
+    desde = incremental[0] if incremental else DESDE
+
     def um(d):
         try:
-            return d["id"], projetos_do_deputado(s, d)
+            return d["id"], projetos_do_deputado(s, d, desde)
         except Exception as e:
             comum.avisar(f"RN: projetos de {d['nome']}: {e}")
             return d["id"], []
@@ -149,9 +177,13 @@ def coletar_projetos(s, deputados: list[dict]) -> None:
     with ThreadPoolExecutor(EM_PARALELO) as ex:
         por_deputado = dict(ex.map(um, deputados))
     por_ano = montar_materias(por_deputado)
+    completa_em = hoje.isoformat()
+    if incremental:
+        por_ano = juntar_novos(incremental[1], por_ano)
+        completa_em = incremental[1][hoje.year]["completaEm"]
     for ano, materias in por_ano.items():
-        comum.salvar(PASTA / f"materias_{ano}.json", {"coletadoEm": date.today().isoformat(), "fonte": f"{SITE}/projetos", "materias": materias})
-    print(f"RN: {sum(len(m) for m in por_ano.values())} projetos em {len(por_ano)} anos")
+        comum.salvar(PASTA / f"materias_{ano}.json", {"coletadoEm": hoje.isoformat(), "completaEm": completa_em, "fonte": f"{SITE}/projetos", "materias": materias})
+    print(f"RN: {sum(len(m) for m in por_ano.values())} projetos em {len(por_ano)} anos" + (f" (lidos desde {desde})" if incremental else ""))
 
 
 # ---------------------------------------------------------------- reuniões, presença e votações

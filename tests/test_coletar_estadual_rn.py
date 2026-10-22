@@ -106,3 +106,33 @@ def test_presenca_guarda_sessoes_lidas_e_nao_repete(tmp_path, monkeypatch):
     assert chamadas == ["reuniao/presenca/2"]
     itens = json.loads((tmp_path / "presenca.json").read_text(encoding="utf-8"))["itens"]
     assert sum(i["presente"] for i in itens) == 2  # sessões 1 e 2; a 3 ficou de fora
+
+
+def test_coletar_projetos_incremental_le_so_o_novo_e_soma_autores(monkeypatch, tmp_path):
+    from datetime import date, timedelta
+
+    projeto = next(p for p in amostra("estadual_rn_projetos")["processos"] if rn.eh_projeto(p))
+    ano = projeto["propositura"]["ano"]
+    chave, antigo = next(iter(rn.montar_materias({"9": [projeto]})[ano].items()))
+    hoje = date.today()
+    monkeypatch.setattr(rn.comum, "DADOS", tmp_path)
+    monkeypatch.setattr(rn, "PASTA", tmp_path)
+    for a in range(rn.ANO_INICIAL, hoje.year + 1):
+        rn.comum.salvar(tmp_path / f"materias_{a}.json", {"coletadoEm": hoje.isoformat(), "completaEm": hoje.isoformat(), "fonte": "x",
+                                                         "materias": {chave: antigo} if a == ano else {}})
+    lidas = []
+
+    def falso(s, d, desde=rn.DESDE):
+        lidas.append(desde)
+        return [projeto]
+
+    monkeypatch.setattr(rn, "projetos_do_deputado", falso)
+    rn.coletar_projetos(None, [{"id": "8", "nome": "A", "iniciativas": []}])
+    assert lidas == [(hoje - timedelta(days=1)).isoformat()]
+    salvo = rn.comum.ler(tmp_path / f"materias_{ano}.json")
+    assert salvo["materias"][chave]["idsDeputados"] == ["8", "9"] and salvo["completaEm"] == hoje.isoformat()
+
+    rn.comum.salvar(tmp_path / f"materias_{hoje.year}.json", {"coletadoEm": "2020-01-01", "completaEm": "2020-01-01", "fonte": "x", "materias": {}})
+    lidas.clear()
+    rn.coletar_projetos(None, [{"id": "8", "nome": "A", "iniciativas": []}])
+    assert lidas == [rn.DESDE]   # completa velha: lê tudo

@@ -201,13 +201,13 @@ jobs:
 
       - name: Empacotar o resultado
         if: always()
-        run: scripts/empacotar.sh "$RUNNER_TEMP/estaduais.tgz" "$RUNNER_TEMP/inicio" dados/estaduais
+        run: scripts/empacotar.sh "$RUNNER_TEMP/estaduais-${{ matrix.id }}.tgz" "$RUNNER_TEMP/inicio" dados/estaduais
 
       - uses: actions/upload-artifact@v4
         if: always()
         with:
           name: pacote-estaduais-${{ matrix.id }}
-          path: ${{ runner.temp }}/estaduais.tgz
+          path: ${{ runner.temp }}/estaduais-${{ matrix.id }}.tgz
           if-no-files-found: ignore
           retention-days: 1
 

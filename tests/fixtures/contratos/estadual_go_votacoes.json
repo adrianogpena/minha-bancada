@@ -1,0 +1,54 @@
+{
+ "fonte": "https://transparencia.al.go.leg.br/api/transparencia/votacoes.json",
+ "capturadoEm": "2026-10-22",
+ "amostra": [
+  {
+   "data_sessao": "2025-12-22",
+   "ano": 2025.0,
+   "mes": 12.0,
+   "dia": 22.0,
+   "nome_sessao": "41ª SESSÃO EXTRAORDINÁRIA HÍBRIDA",
+   "categoria": "EXTRAORDINARIA",
+   "ementa_projeto": "AUTOR - GOVERNADORIA\nASSUNTO - AUTORIZA A AGÊNCIA GOIANA DE INFRAESTRUTURA E TRANSPORTES - GOINFRA A ALIENAR, POR DOAÇÃO ONEROSA, O IMÓVEL QUE ESPECIFICA AO MUNICÍPIO DE RIO VERDE/GO.",
+   "pauta_id": 31680,
+   "parlamentar": "KARLOS CABRAL",
+   "tipo_voto": "SIM",
+   "partido_sigla": "PSB",
+   "partido_nome": "PARTIDO SOCIALISTA BRASILEIRO",
+   "resultado_votacao": "APROVADO EM 2ª DISCUSSÃO E VOTAÇÃO, À SECRETARIA PARA EXTRAÇÃO DE AUTÓGRAFO.",
+   "tipo_votacao": "NOMINAL"
+  },
+  {
+   "data_sessao": "2025-12-22",
+   "ano": 2025.0,
+   "mes": 12.0,
+   "dia": 22.0,
+   "nome_sessao": "41ª SESSÃO EXTRAORDINÁRIA HÍBRIDA",
+   "categoria": "EXTRAORDINARIA",
+   "ementa_projeto": "AUTORES - DEPUTADOS....\nPROCESSOS - 28070/2025, 26155/2025, 7613/2025, 19862/2025 E 24753/2025.\nASSUNTO - RECONHECIMENTO DO BEM COMO PATRIMÔNIO ESTADUAL ",
+   "pauta_id": 31671,
+   "parlamentar": "CRISTÓVÃO TORMIN",
+   "tipo_voto": "SIM",
+   "partido_sigla": "PRD",
+   "partido_nome": "PARTIDO RENOVAÇÃO DEMOCRÁTICA",
+   "resultado_votacao": "APROVADO EM 2ª DISCUSSÃO E VOTAÇÃO. À SECRETARIA PARA EXTRAÇÃO DE AUTÓGRAFO.",
+   "tipo_votacao": "NOMINAL"
+  },
+  {
+   "data_sessao": "2025-12-22",
+   "ano": 2025.0,
+   "mes": 12.0,
+   "dia": 22.0,
+   "nome_sessao": "41ª SESSÃO EXTRAORDINÁRIA HÍBRIDA",
+   "categoria": "EXTRAORDINARIA",
+   "ementa_projeto": "AUTORES - DEPUTADOS....\nPROCESSOS - 28070/2025, 26155/2025, 7613/2025, 19862/2025 E 24753/2025.\nASSUNTO - RECONHECIMENTO DO BEM COMO PATRIMÔNIO ESTADUAL ",
+   "pauta_id": 31671,
+   "parlamentar": "Cristóvão Tormin",
+   "tipo_voto": "SIM",
+   "partido_sigla": "PRD",
+   "partido_nome": "Partido da Renovação Democrática",
+   "resultado_votacao": "APROVADO EM 2ª DISCUSSÃO E VOTAÇÃO. À SECRETARIA PARA EXTRAÇÃO DE AUTÓGRAFO.",
+   "tipo_votacao": "NOMINAL"
+  }
+ ]
+}

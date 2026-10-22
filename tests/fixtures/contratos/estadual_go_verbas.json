@@ -1,0 +1,28 @@
+{
+ "fonte": "https://transparencia.al.go.leg.br/api/transparencia/verbas_indenizatorias",
+ "capturadoEm": "2026-10-22",
+ "amostra": [
+  {
+   "id": 10344,
+   "ano": 2026,
+   "mes": 8,
+   "valor_apresentado": "31310.41",
+   "valor_indenizado": "31310.41",
+   "deputado": {
+    "id": 808,
+    "nome": "Alessandro Moreira"
+   }
+  },
+  {
+   "id": 10345,
+   "ano": 2026,
+   "mes": 8,
+   "valor_apresentado": "40478.2",
+   "valor_indenizado": "40478.2",
+   "deputado": {
+    "id": 137,
+    "nome": "Amauri Ribeiro"
+   }
+  }
+ ]
+}

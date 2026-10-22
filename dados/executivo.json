@@ -18,7 +18,7 @@
 "ementa": "Abre crédito extraordinário, em favor do Ministério da Integração e do Desenvolvimento Regional, no valor de R$ 300.000.000,00, para o fim que especifica.",
 "dataApresentacao": "2026-10-21",
 "situacao": null,
-"dataSituacao": "2026-10-21",
+"dataSituacao": "2026-10-22",
 "inteiroTeor": "https://www.camara.leg.br/proposicoesWeb/prop_mostrarintegra?codteor=3185402"
 },
 {
@@ -29,7 +29,7 @@
 "ementa": "Abre crédito extraordinário, em favor de Encargos Financeiros da União, no valor de R$6.494.296.446,00, para o fim que especifica.",
 "dataApresentacao": "2026-10-21",
 "situacao": null,
-"dataSituacao": "2026-10-21",
+"dataSituacao": "2026-10-22",
 "inteiroTeor": "https://www.camara.leg.br/proposicoesWeb/prop_mostrarintegra?codteor=3185390"
 },
 {
@@ -325,7 +325,7 @@
 "ementa": "Amplia o rol de Carreiras e Planos Especiais de Cargos cujos ocupantes fazem jus à indenização de que trata a Lei nº 12.855, de 2 de setembro de 2013, altera a Lei nº 15.367, de 30 de março de 2026, para admitir que as pessoas de que tratam o art. 6º da Emenda Constitucional nº 79, de 27 de maio de 2014, e o art. 6º da Emenda Constitucional nº 98, de 6 de dezembro de 2017, exerçam o direito de opção de que tratam os art. 52 a art. 54 da referida Lei, e transforma cargos efetivos vagos.",
 "dataApresentacao": "2026-07-03",
 "situacao": null,
-"dataSituacao": "2026-10-21",
+"dataSituacao": "2026-10-22",
 "inteiroTeor": "https://www.camara.leg.br/proposicoesWeb/prop_mostrarintegra?codteor=3157732"
 },
 {
@@ -341,6 +341,9 @@
 },
 {
 "tramitacaoLida": true,
+"norma": "Lei Complementar 238/2026",
+"dataNorma": "2026-10-21",
+"veto": null,
 "remessa": "2026-10-16",
 "id": 2635476,
 "tipo": "PLP",
@@ -348,8 +351,8 @@
 "ano": 2026,
 "ementa": "Altera a Lei Complementar nº 123, de 14 de dezembro de 2006, para dispor sobre o limite de receita bruta anual e o número de empregados do Microempreendedor Individual.",
 "dataApresentacao": "2026-06-29",
-"situacao": "Aguardando Sanção",
-"dataSituacao": "2026-10-16",
+"situacao": "Transformado em Norma Jurídica",
+"dataSituacao": "2026-10-21",
 "inteiroTeor": "https://www.camara.leg.br/proposicoesWeb/prop_mostrarintegra?codteor=3153934"
 },
 {

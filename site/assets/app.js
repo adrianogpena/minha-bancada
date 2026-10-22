@@ -1689,7 +1689,7 @@ async function montarEstadual(alvo, p, nome, ficha, situacao) {
 /* Feeds RSS estáticos (site/feeds/<código>.xml, gerados por scripts/feeds.py). Nada é enviado nem guardado: quem assina é o leitor de RSS da pessoa. */
 const arquivoFeed = (codigo) => `feeds/${codigo.replace(/:/g, "-")}.xml`;
 /* Endereço do Apps Script que guarda os cadastros cifrados (assinaturas/LEIAME.md). Vazio = aviso por e-mail desligado. */
-const URL_ASSINATURAS = "";
+const URL_ASSINATURAS = "https://script.google.com/macros/s/AKfycbw7wYVPqPthp0XkckChSa0lpbQJ6oHnNusYzgP9aGukc2zmEIeZkgOQOfPpcgYql31f/exec";
 const urlFeed = (codigo) => new URL(arquivoFeed(codigo), location.href).href;
 
 async function paginaInformado() {

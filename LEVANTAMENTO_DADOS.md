@@ -240,7 +240,28 @@ Próximos passos:
 3. Fonte de link por dado: CEAP → `https://transparencia2.al.ms.gov.br/ceap` (e o PDF do comprovante).
 4. Se seguir: `scripts/coletar_ms.py`, amostras em `tests/fixtures/contratos/`, `ENDPOINTS.md` e `CHANGELOG.md`.
 
-### MT: Mato Grosso
+### MT: Mato Grosso (Assembleia Legislativa, ALMT; apurado em 2026-10-22)
+
+**`https://www.al.mt.gov.br/transparencia/` não respondeu:** WebFetch falhou e o curl deu timeout (20 s) em `www.al.mt.gov.br` e `al.mt.gov.br`, do meu ambiente. Conteúdo e links do menu não verificados; abrir no Firefox.
+
+**Portal de transparência (Elotech): `https://almt.eloweb.net/portaltransparencia/1/`.** Livre, sem login; só carrega um SPA React (a página tem o reCAPTCHA `google.com/recaptcha/api.js` carregado, uso não confirmado). Nenhum dado vem no HTML. Pelo bundle JS (`static/js/main.d260357a.chunk.js`) as rotas relevantes são:
+- `/verbas` e `/verbas/detalhes` (API `/api/servidores/verbas/{a}/{b}` e `/api/servidores/verbas/detalhes/{a}/{b}/{c}`; parâmetros não identificados);
+- `/cotas-parlamentares` (tela própria; API não identificada);
+- `/servidores`, `/servidores/aposentados`, `/servidores/detalhes` (`/api/servidores/`);
+- `/diarias` e `/diarias/detalhes`; `/ajuda-custo`; `/adiantamento`; `/afastamento`;
+- `/emendas-parlamentares` (`/api/emendas-parlamentares/...`), contratos, licitações, almoxarifado, estagiários, terceirizados.
+Não achei rota de presença, votações nominais nem proposições: isso fica no site da ALMT (não acessado).
+
+**API não utilizável por curl:** `/api/...` na raiz do host devolve 404 (página de erro da Elotech); sob `/portaltransparencia/api/...` e `/portaltransparencia/actuator/info` volta o HTML do SPA (200, `text/html`). Entidade e exercício são enviados pelo front (`/api/exercicios/entidade/{id}`, `/api/entidades/lista`); o contrato real (host/cabeçalhos) só aparece na aba Rede do Firefox. Nenhum CSV/JSON de download foi confirmado.
+
+**ITGP** (`https://transparenciainternacional.org.br/itgp/assembleia-legislativa/mato-grosso`, ano da avaliação não informado): nota **58,2/100 ("Regular")**, 6º de 27 assembleias e 3º no Centro-Oeste. Pontos fortes: Comunicação, Governança e Plataformas. Fracos: Marcos Legais e dados administrativos. Não atende: dados abertos e acessíveis, agenda de encontros com grupos de interesse, regulamentação da LGPD, proteção a denunciantes. As oito notas por dimensão não puderam ser associadas aos nomes (valores: 28,6; 18,7; 80; 88,2; 41,7; 77,8; 90,9; 40). Critérios individuais: `https://comunidade.transparenciainternacional.org.br/itgp-legislativo-estadual-banco-de-dados`.
+
+Próximos passos:
+1. Abrir `al.mt.gov.br/transparencia` no Firefox e listar o menu (verba indenizatória, remuneração, presença, votações).
+2. No Firefox, abrir `/verbas` e `/cotas-parlamentares` do Eloweb com a aba Rede aberta para capturar a chamada JSON (URL, cabeçalhos, parâmetros) e ver se há exportação.
+3. Fonte de link por dado: telas `https://almt.eloweb.net/portaltransparencia/1/verbas` e `.../cotas-parlamentares` (a confirmar).
+4. Se seguir: `scripts/coletar_mt.py`, amostras em `tests/fixtures/contratos/`, `ENDPOINTS.md` e `CHANGELOG.md`.
+
 ### PA: Pará
 ### PE: Pernambuco
 ### RJ: Rio de Janeiro

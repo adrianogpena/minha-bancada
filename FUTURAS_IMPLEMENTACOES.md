@@ -17,7 +17,7 @@ por mês e os 10 maiores fornecedores, os bens declarados e a prestação de con
 | Nível | O que exige | Pacotes |
 |---|---|---|
 | 1 | Feito (ver abaixo) | 1.1 a 1.6 |
-| 2 | Coleta leve (um arquivo por ano ou ~81 chamadas), exibida em blocos que já existem | 2.1 Recursos do senador · 2.4 Comportamento nas votações (resta presença e votações do projeto) |
+| 2 | Feito (ver abaixo) | 2.1 a 2.4 |
 | 3 | Uma chamada por deputado ou por projeto, ou visualização nova | 3.1 Carreira e histórico partidário · 3.2 Vida do projeto · 3.3 Discursos e agenda · 3.4 Rede de coautoria |
 | 4 | Raspagem de HTML ou chave de API | 4.1 Recursos do deputado (portal da Câmara) · 4.2 Emendas e Portal da Transparência |
 | 5 | Fontes grandes, sem padrão ou cruzamentos sensíveis | 5.1 Fornecedores e doadores · 5.2 Assembleias e Câmaras Municipais · 5.3 Órgãos de controle |
@@ -33,9 +33,11 @@ Só com os dados que já tínhamos; registrado no `CHANGELOG.md`.
 - **1.5 Perfil das Casas:** bloco "Perfil dos eleitos" na página de políticos (Assembleia, bancada federal, senadores do estado e Câmara Municipal), com eleitos e eleitorado lado a lado. Usa os eleitos de 2018/2022/2024, não a composição de hoje (suplentes que assumiram não entram).
 - **1.6 Presença no Senado:** comparecimento às votações nominais, com licença e missão separadas.
 
-## Nível 2: coleta leve, exibição em blocos que já existem
+## Nível 2: feito (2026-10-22)
 
-### 2.1 Recursos e benefícios do senador
+### 2.1 Recursos e benefícios do senador: feito (2026-10-22)
+
+Registrado no `CHANGELOG.md`. O auxílio-moradia e o imóvel funcional vêm do próprio `recursos-utilizados`; só ficou de fora a aposentadoria parlamentar (`aposentados*`), que precisa de perfil de ex-senador. Plano original:
 
 Três endpoints do mesmo serviço da CEAPS (`adm.senado.gov.br/adm-dadosabertos/api/v1`), no mesmo passo de
 `coletar_ceaps_senado`; aparecem no bloco "Perfil e gastos" do senador.
@@ -55,15 +57,9 @@ Coleta pelo CSV anual (com `cnpj` em cada despesa) e ranking de fornecedores em 
 
 Temas oficiais dos projetos, comissões e frentes parlamentares, no bloco "Em que áreas atua" do perfil e no filtro por tema da aba Propostas; registrado no `CHANGELOG.md`. Falta "projetos na área da comissão que ele integra": a Câmara não publica o tema de cada comissão.
 
-### 2.4 Comportamento nas votações: orientação feita (2026-10-22)
+### 2.4 Comportamento nas votações: feito (2026-10-22)
 
-Fidelidade ao partido e governismo pelas orientações de bancada, no perfil e na lista de deputados; registrado no `CHANGELOG.md`. Falta:
-
-| Ideia | Fonte | O que daria no site |
-|---|---|---|
-| Fidelidade dos partidos de bloco | nomes dos blocos vêm truncados em `votacoesOrientacoes` | ligar o bloco aos partidos (ex.: via `/blocos`) para o MDB, PSD, União etc. também terem fidelidade |
-| Presença em eventos | `eventosPresencaDeputados/json/eventosPresencaDeputados-{ano}.json` (~30 MB) | presença em sessões e reuniões de comissão |
-| Votações do projeto | `/proposicoes/{id}/votacoes` (1 por projeto) | na página do projeto, link para as votações e como votou a bancada |
+Fidelidade ao partido e governismo pelas orientações de bancada (também para os partidos de bloco), presença em sessões e reuniões no perfil e as votações de cada projeto na aba Propostas; registrado no `CHANGELOG.md`. Limites: os blocos usam a composição atual e rótulos de blocos que não constam em `/blocos` seguem sem fidelidade; a presença em reuniões de comissão não tem total para comparar.
 
 ## Nível 3: uma chamada por deputado ou projeto, ou visualização nova
 

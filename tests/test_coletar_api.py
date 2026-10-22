@@ -608,3 +608,45 @@ def test_coletar_orientacoes_guarda_so_nominais_e_ignora_em_branco(dados, monkey
         {"idVotacao": "2-2", "siglaBancada": "PL", "orientacao": "Sim"}])
     coletar.coletar_orientacoes()
     assert json.loads((dados / "orientacoes.json").read_text(encoding="utf-8")) == {"1-1": {"PL": "Sim", "Governo": "Não"}}
+
+
+def test_coletar_blocos_guarda_partidos_de_cada_bloco(dados, monkeypatch):
+    monkeypatch.setattr(coletar, "get_todos", lambda c, **p: [{"id": "1", "nome": "A, B", "federacao": False}, {"id": "2", "nome": "PL", "federacao": False}])
+    monkeypatch.setattr(coletar, "get", lambda c, **p: {"dados": [{"sigla": "A"}, {"sigla": "B"}] if c.endswith("/1/partidos") else []})
+    coletar.coletar_blocos()
+    assert json.loads((dados / "blocos.json").read_text(encoding="utf-8")) == [
+        {"nome": "A, B", "federacao": False, "partidos": ["A", "B"]}, {"nome": "PL", "federacao": False, "partidos": []}]
+
+
+def test_coletar_votacoes_proposicoes_guarda_so_projetos_dos_deputados(dados, monkeypatch):
+    (dados / "proposicoes").mkdir()
+    (dados / "proposicoes" / "7.json").write_text(json.dumps({"itens": [{"id": 10, "siglaTipo": "PL"}, {"id": 11, "siglaTipo": "REQ"}]}), encoding="utf-8")
+    monkeypatch.setattr(coletar, "baixar_arquivo_camara", lambda c: [
+        {"idVotacao": "10-1", "data": "2026-02-01", "descricao": "Aprovado.", "proposicao_": {"id": 10}},
+        {"idVotacao": "10-1", "data": "2026-02-01", "descricao": "Aprovado.", "proposicao_": {"id": 10}},
+        {"idVotacao": "11-1", "data": "2026-02-01", "descricao": "x", "proposicao_": {"id": 11}},
+        {"idVotacao": "99-1", "data": "2026-02-01", "descricao": "x", "proposicao_": {"id": 99}}])
+    coletar.coletar_votacoes_proposicoes()
+    assert json.loads((dados / "proposicoes_votacoes.json").read_text(encoding="utf-8")) == {
+        "10": [{"id": "10-1", "data": "2026-02-01", "descricao": "Aprovado."}]}
+
+
+def test_tipo_evento_separa_sessoes_comissoes_e_outros():
+    assert [coletar.tipo_evento(t) for t in ("Sessão Deliberativa", "Reunião Deliberativa", "Audiência Pública", "Sessão Não Deliberativa Solene", None)] == [
+        "sessoes", "comissoes", "comissoes", "outros", "outros"]
+
+
+def test_coletar_presenca_eventos_conta_por_tipo_sem_repetir(dados, monkeypatch):
+    hoje = dt.date.today()
+    monkeypatch.setattr(coletar, "INICIO_LEGISLATURA", f"{hoje.year}-02-01")
+
+    def baixar(caminho):
+        if caminho.startswith("eventos/"):
+            return [{"id": 1, "descricaoTipo": "Sessão Deliberativa", "situacao": "Encerrada"},
+                    {"id": 2, "descricaoTipo": "Sessão Deliberativa", "situacao": "Cancelada"},
+                    {"id": 3, "descricaoTipo": "Reunião Deliberativa", "situacao": "Encerrada (Final)"}]
+        return [{"idEvento": 1, "idDeputado": 7}, {"idEvento": 1, "idDeputado": 7}, {"idEvento": 3, "idDeputado": 7}, {"idEvento": 9, "idDeputado": 8}]
+    monkeypatch.setattr(coletar, "baixar_arquivo_camara", baixar)
+    coletar.coletar_presenca_eventos()
+    assert json.loads((dados / "presenca_eventos.json").read_text(encoding="utf-8")) == {str(hoje.year): {
+        "sessoesDeliberativas": 1, "deputados": {"7": {"sessoes": 1, "comissoes": 1, "outros": 0}, "8": {"sessoes": 0, "comissoes": 0, "outros": 1}}}}

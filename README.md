@@ -146,7 +146,6 @@ Para saber se algum endpoint em uso foi marcado como descontinuado, rode `python
 ## Próximos passos possíveis
 
 - Assembleias legislativas e câmaras municipais que publicam dados abertos.
-- Orientação dos partidos em cada votação (`/votacoes/{id}/orientacoes`), para mostrar quem votou contra o próprio partido.
 - Votações nas comissões, além do Plenário.
 - Doações e gastos de campanha (TSE).
 - Seguir políticos: lista salva no navegador de cada pessoa.

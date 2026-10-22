@@ -459,6 +459,98 @@ def coletar_orientacoes() -> None:
     print(f"Orientações: {len(cache)} votações")
 
 
+def coletar_blocos() -> None:
+    """Blocos partidários e federações da legislatura com os partidos de cada um (/blocos e /blocos/{id}/partidos).
+    Guardado em dados/blocos.json como [{nome, federacao, partidos}] (vai para o git): serve para ligar o nome truncado
+    do bloco em votacoesOrientacoes ("Bl UniPpPsd...") aos partidos. Se a API falhar, o arquivo anterior fica."""
+    blocos = []
+    for b in get_todos("/blocos", idLegislatura=LEGISLATURA):
+        partidos = get(f"/blocos/{b['id']}/partidos").get("dados", [])
+        blocos.append({"nome": b["nome"], "federacao": bool(b.get("federacao")), "partidos": [p["sigla"] for p in partidos]})
+    if blocos:
+        salvar(DADOS / "blocos.json", blocos)
+    print(f"Blocos: {len(blocos)}")
+
+
+def coletar_votacoes_proposicoes() -> None:
+    """Votações de cada projeto (nominais ou não), do arquivo anual votacoesProposicoes-{ano}.json: um download por ano da
+    legislatura no lugar de uma chamada a /proposicoes/{id}/votacoes por projeto. Guardado em dados/proposicoes_votacoes.json
+    como {id do projeto: [{id, data, descricao}]} (vai para o git), só dos projetos dos deputados. Um ano que falha mantém
+    o que já estava guardado."""
+    arquivo = DADOS / "proposicoes_votacoes.json"
+    cache = ler(arquivo, {})
+    meus = set()
+    for arq in (DADOS / "proposicoes").glob("*.json"):
+        for p in ler(arq, {"itens": []})["itens"]:
+            if p.get("siglaTipo") in TIPOS_PROJETO:
+                meus.add(str(p["id"]))
+    mudou = False
+    for ano in range(int(INICIO_LEGISLATURA[:4]), dt.date.today().year + 1):
+        try:
+            linhas = baixar_arquivo_camara(f"votacoesProposicoes/json/votacoesProposicoes-{ano}.json")
+        except Exception as e:
+            avisar(f"votações das proposições de {ano}: {e}")
+            continue
+        for l in linhas:
+            pid = str((l.get("proposicao_") or l.get("proposicao") or {}).get("id") or "")
+            if pid not in meus or not l.get("idVotacao"):
+                continue
+            lista = cache.setdefault(pid, [])
+            if not any(x["id"] == l["idVotacao"] for x in lista):
+                lista.append({"id": l["idVotacao"], "data": l.get("data"), "descricao": (l.get("descricao") or "").strip()[:300]})
+                mudou = True
+    if mudou:
+        for lista in cache.values():
+            lista.sort(key=lambda x: x["data"] or "")
+        salvar(arquivo, cache)
+    print(f"Votações de projetos: {sum(len(v) for v in cache.values())} votações em {len(cache)} projetos")
+
+
+def tipo_evento(descricao_tipo: str | None) -> str:
+    """Classe do evento da Câmara para a presença: sessoes (Sessão Deliberativa do Plenário), comissoes (reuniões e
+    audiências, que são das comissões) ou outros (sessões solenes, seminários, visitas...)."""
+    t = (descricao_tipo or "").strip()
+    if t == "Sessão Deliberativa":
+        return "sessoes"
+    if t.startswith(("Reunião", "Audiência")):
+        return "comissoes"
+    return "outros"
+
+
+def coletar_presenca_eventos() -> None:
+    """Presença dos deputados nos eventos da Câmara, de eventosPresencaDeputados-{ano}.json (~30 MB por ano) e da lista de
+    eventos do ano, que dá o tipo de cada um. Guardado em dados/presenca_eventos.json como
+    {ano: {sessoesDeliberativas, deputados: {id: {sessoes, comissoes, outros}}}} (vai para o git): `sessoesDeliberativas` é o
+    total de sessões deliberativas encerradas do ano. Anos encerrados já guardados não são baixados de novo; um ano que
+    falha mantém o que já estava guardado."""
+    arquivo = DADOS / "presenca_eventos.json"
+    cache = ler(arquivo, {})
+    hoje = dt.date.today()
+    for ano in range(int(INICIO_LEGISLATURA[:4]), hoje.year + 1):
+        if str(ano) in cache and ano < hoje.year:
+            continue
+        try:
+            eventos = {e["id"]: e for e in baixar_arquivo_camara(f"eventos/json/eventos-{ano}.json")}
+            presencas = baixar_arquivo_camara(f"eventosPresencaDeputados/json/eventosPresencaDeputados-{ano}.json")
+        except Exception as e:
+            avisar(f"presença em eventos de {ano}: {e}")
+            continue
+        vistos: set[tuple] = set()
+        deputados: dict[str, dict] = {}
+        for l in presencas:
+            chave = (l.get("idEvento"), l.get("idDeputado"))
+            if None in chave or chave in vistos:
+                continue
+            vistos.add(chave)
+            classe = tipo_evento((eventos.get(l["idEvento"]) or {}).get("descricaoTipo"))
+            d = deputados.setdefault(str(l["idDeputado"]), {"sessoes": 0, "comissoes": 0, "outros": 0})
+            d[classe] += 1
+        sessoes = sum(1 for e in eventos.values() if tipo_evento(e.get("descricaoTipo")) == "sessoes" and (e.get("situacao") or "").startswith("Encerrada"))
+        cache[str(ano)] = {"sessoesDeliberativas": sessoes, "deputados": deputados}
+        print(f"Presença {ano}: {len(deputados)} deputados, {sessoes} sessões deliberativas")
+        salvar(arquivo, cache)
+
+
 def situacao_final(situacao: str) -> bool:
     """True quando a proposição não vai mais tramitar (não precisa ser reconsultada)."""
     s = (situacao or "").lower()
@@ -904,7 +996,8 @@ def main():
             coletar_autores_proposicoes()
         except Exception as e:
             avisar(f"autores das proposições: {e}")
-        for etapa in (coletar_temas_proposicoes, coletar_orgaos_deputados, coletar_orientacoes):  # complementos: cada um falha sozinho
+        for etapa in (coletar_temas_proposicoes, coletar_orgaos_deputados, coletar_orientacoes,
+                      coletar_blocos, coletar_votacoes_proposicoes, coletar_presenca_eventos):  # complementos: cada um falha sozinho
             try:
                 etapa()
             except Exception as e:

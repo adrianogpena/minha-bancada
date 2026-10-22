@@ -348,6 +348,19 @@ function painelTematico(dep) {
       ...anos.map((a) => [`Temas dos projetos de ${a} (arquivo da Câmara)`, `${ARQUIVOS_CAMARA}/proposicoesTemas/json/proposicoesTemas-${a}.json`])])}`;
 }
 
+/* Votações do projeto (gerar.py: juntar_votacoes): as nominais levam placar e a orientação de cada bancada. */
+function votacoesDoProjeto(p) {
+  const item = (v) => `<li><span class="quando">${data(v.data)}</span> ${esc(v.descricao || "Votação")}
+      ${v.nominal ? `<br><span class="quando">${v.aprovada === true ? "Aprovada" : v.aprovada === false ? "Rejeitada" : "Resultado não informado"}: ${["sim", "nao", "abstencao", "obstrucao"].filter((k) => v.placar[k]).map((k) => `${v.placar[k]} ${VOTOS[k]?.rotulo || k}`).join(", ")}.</span>
+        ${v.orientacoes ? `<br><span class="quando">Orientação das bancadas: ${Object.entries(v.orientacoes).map(([b, o]) => `${esc(b)} ${esc(o)}`).join(" · ")}.</span>` : ""}
+        <br><a href="votacao.html?id=${encodeURIComponent(v.id)}">Ver como cada partido votou</a>`
+      : ` <a href="${CAMARA_API}/votacoes/${encodeURIComponent(v.id)}" rel="noopener">Dados da votação</a> <span class="quando">(sem voto nominal)</span>`}</li>`;
+  return `<details class="texto"><summary><b>${p.totalVotacoes} ${p.totalVotacoes === 1 ? "votação" : "votações"}</b> deste projeto</summary>
+    <ul class="lista-simples">${p.votacoes.map(item).join("")}</ul>
+    ${p.totalVotacoes > p.votacoes.length ? `<p class="quando">Mostrando as ${p.votacoes.length} mais recentes.</p>` : ""}
+    ${fontes([["Votações do projeto (API da Câmara)", `${CAMARA_API}/proposicoes/${encodeURIComponent(p.id)}/votacoes`]])}</details>`;
+}
+
 /* Fidelidade ao partido e governismo do deputado, a partir das orientações de bancada nas votações nominais. */
 function painelComportamento(dep) {
   const c = dep.comportamento;
@@ -359,12 +372,29 @@ function painelComportamento(dep) {
     <section class="painel" aria-labelledby="t-comportamento">
       <div class="painel-titulo">
         <h2 id="t-comportamento">Fidelidade ao partido e ao governo</h2>
-        <p>Compara o voto de ${esc(dep.nome)} com a orientação que a bancada do partido (${esc(dep.partido)}) e o Governo deram em cada votação. Só entram as votações em que votou e a orientação foi Sim, Não ou Obstrução; "Liberado" não conta. Usa o partido atual do deputado.</p>
+        <p>Compara o voto de ${esc(dep.nome)} com a orientação que a bancada do partido (${esc(dep.partido)}) e o Governo deram em cada votação. Só entram as votações em que votou e a orientação foi Sim, Não ou Obstrução; "Liberado" não conta. Usa o partido atual do deputado; blocos partidários contam pela composição atual.</p>
       </div>
       <div class="numeros">${caixa("partido", "Fidelidade ao partido", "o partido")}${caixa("governo", "Governismo", "o Governo")}</div>
-      ${c.partido.total ? "" : `<p class="vazio">Sem orientação da bancada do ${esc(dep.partido)}: a Câmara registra partidos de bloco com o nome do bloco truncado, e não dá para ligá-los ao partido.</p>`}
+      ${c.partido.total ? "" : `<p class="vazio">Sem orientação da bancada do ${esc(dep.partido)}: o partido aparece nas votações dentro de um bloco que a Câmara registra com o nome truncado, e não foi possível ligá-lo ao bloco.</p>`}
       ${div.length ? `<h3>Quando votou diferente</h3><ul class="lista-simples">${div.map((x) => `<li><span class="quando">${data(x.data)}</span> ${x.proposicao ? `<b>${esc(x.proposicao)}</b>: ` : ""}votou <b>${esc(VOTOS[x.voto]?.rotulo || x.voto)}</b>, a orientação ${x.contra === "governo" ? "do Governo" : `da bancada (${esc(x.bancada)})`} foi <b>${esc(x.orientacao)}</b>. <a href="votacao.html?id=${encodeURIComponent(x.id)}">Ver votação</a></li>`).join("")}</ul>` : ""}
       ${fontes([["Orientações de bancada (arquivo da Câmara)", `${ARQUIVOS_CAMARA}/votacoesOrientacoes/json/votacoesOrientacoes-${(div[0]?.data || new Date().toISOString()).slice(0, 4)}.json`]])}
+    </section>`;
+}
+
+/* Presença do deputado em sessões e reuniões (gerar.py: presenca_do_deputado). */
+function painelPresencaDeputado(dep) {
+  const anos = dep.presenca || [];
+  if (!anos.length) return "";
+  return `
+    <section class="painel" aria-labelledby="t-presenca">
+      <div class="painel-titulo">
+        <h2 id="t-presenca">Presença em sessões e reuniões</h2>
+        <p>Eventos da Câmara em que ${esc(dep.nome)} registrou presença. Nas sessões deliberativas do Plenário há o total do ano para comparar; as reuniões de comissão e audiências não têm total, porque dependem das comissões de que o deputado participa. O ano corrente ainda está em andamento.</p>
+      </div>
+      <div class="rolagem"><table class="tabela"><thead><tr><th>Ano</th><th>Sessões deliberativas</th><th>Mediana dos deputados</th><th>Reuniões e audiências</th><th>Outros eventos</th></tr></thead><tbody>
+        ${anos.map((a) => `<tr><td>${a.ano}</td><td><b>${a.sessoes}</b> de ${a.sessoesDeliberativas} (${pct(a.sessoes, a.sessoesDeliberativas)})</td><td>${a.medianaSessoes}</td><td>${a.comissoes}</td><td>${a.outros}</td></tr>`).join("")}
+      </tbody></table></div>
+      ${fontes(anos.flatMap((a) => [[`Presença em eventos de ${a.ano} (arquivo da Câmara)`, `${ARQUIVOS_CAMARA}/eventosPresencaDeputados/json/eventosPresencaDeputados-${a.ano}.json`], [`Eventos de ${a.ano} (arquivo da Câmara)`, `${ARQUIVOS_CAMARA}/eventos/json/eventos-${a.ano}.json`]]))}
     </section>`;
 }
 
@@ -406,7 +436,7 @@ async function paginaDeputado() {
     subtitulo: `<span class="selo">${esc(dep.partido)}/${esc(dep.uf)}</span> ${dep.situacao ? esc(dep.situacao) : ""}`,
     painelPerfil, rotuloPerfil: "Perfil e gastos",
     linhaDoTempo: votacoes.map((v) => ({ ...v, voto: meus.get(v.id) || "ausente" })), // mais recente primeiro
-    painelComportamento: painelComportamento(dep),
+    painelComportamento: painelComportamento(dep) + painelPresencaDeputado(dep),
     proposicoes: dep.proposicoes, tipoProjeto: (p) => !!TIPOS_PROJETO[p.tipo],
     textoLegislatura: "como autor ou coautor nesta legislatura (desde fev. de 2023)", suprapartidarios: true,
     papel: (p) => p.principal === undefined ? "autor ou coautor. A Câmara lista os dois juntos e a ordem de assinatura desta proposição ainda não foi coletada."
@@ -574,6 +604,7 @@ function montarParlamentar(alvo, c) {
       ${p.situacao ? `<span class="texto"><b>Situação:</b> ${esc(p.situacao)}${p.orgao ? ` (${esc(p.orgao)})` : ""}${p.dataSituacao ? `, em ${data(p.dataSituacao)}` : ""}.${p.despacho ? ` <span class="quando">Despacho: ${esc(p.despacho.slice(0, 300))}</span>` : ""}</span>` : ""}
       ${p.tipoDescricao || p.tramitacao || p.regime || p.coautores || p.iniciativa ? `<span class="texto quando">${[p.tipoDescricao && `Tipo: ${esc(p.tipoDescricao)}`, p.iniciativa && `Iniciativa: ${esc(p.iniciativa)}`, p.totalAutores && `Assinado por ${p.totalAutores} autores${p.partidosDistintos ? ` de ${p.partidosDistintos} partidos` : ""}`, p.regime && `Regime: ${esc(p.regime)}`, p.tramitacao && `Tramitação: ${esc(p.tramitacao)}`, p.coautores && `Coautores: ${esc(p.coautores.join(", "))}`].filter(Boolean).join(" · ")}</span>` : ""}
       ${p.apensadoA || p.anterior || p.posterior ? `<span class="texto quando">${[p.apensadoA && ligacao("Apensado ao projeto principal", p.apensadoA), p.anterior && ligacao("Proposição anterior", p.anterior), p.posterior && ligacao("Proposição posterior", p.posterior)].filter(Boolean).join(" · ")}</span>` : ""}
+      ${p.votacoes ? votacoesDoProjeto(p) : ""}
       ${p.temas ? `<span class="texto quando">Tema oficial: ${esc(p.temas.join(", "))}</span>` : ""}
       ${p.palavrasChave ? `<span class="texto quando">Temas: ${esc(p.palavrasChave)}</span>` : ""}
       <span class="texto">${fontes([[c.fonteTramitacao, c.linkTramitacao(p)], p.linkTexto ? ["Texto integral", p.linkTexto] : null, ["Dados na API", c.linkApi(p)]])}</span>

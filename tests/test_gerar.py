@@ -189,3 +189,51 @@ def test_resumir_comportamento_conta_partido_governo_e_divergencias():
     assert r["partido"] == {"total": 2, "seguiu": 2} and r["governo"] == {"total": 1, "seguiu": 0}
     assert [(x["id"], x["contra"], x["orientacao"]) for x in r["divergencias"]] == [("a", "governo", "Não")]
     assert gerar.resumir_comportamento(votos, {}, "PL") is None
+
+
+BLOCOS = [{"nome": "AVANTE, SOLIDARIEDADE, PRD", "federacao": False, "partidos": []},
+          {"nome": "UNIÃO", "federacao": False, "partidos": []},
+          {"nome": "UNIÃO, PP, PSD", "federacao": False, "partidos": ["UNIÃO", "PP", "PSD"]},
+          {"nome": "Federação PSOL REDE", "federacao": True, "partidos": ["PSOL", "REDE"]}]
+
+
+def test_partidos_do_bloco_liga_o_nome_truncado_ao_bloco():
+    assert gerar.partidos_do_bloco("Bl UniPpPsd...", BLOCOS) == {"UNIÃO", "PP", "PSD"}
+    assert gerar.partidos_do_bloco("Bl AvanSolidPrd...", BLOCOS) == {"AVANTE", "SOLIDARIEDADE", "PRD"}
+    assert gerar.partidos_do_bloco("Bl Uni...", BLOCOS) == set()
+    assert gerar.partidos_do_bloco("Bl PlFdrPtUniPp...", BLOCOS) == set()
+
+
+def test_bancada_do_partido_acha_bloco_e_federacao_truncada():
+    blocos = {"Bl UniPpPsd...": {"UNIÃO", "PP", "PSD"}}
+    assert gerar.bancada_do_partido("pp", ["Bl UniPpPsd...", "PL"], blocos) == "Bl UniPpPsd..."
+    assert gerar.bancada_do_partido("MDB", ["Bl UniPpPsd..."], blocos) is None
+    assert gerar.bancada_do_partido("CIDADANIA", ["Fdr PSDB-CIDADAN"]) == "Fdr PSDB-CIDADAN"
+    assert gerar.bancada_do_partido("PT", ["Fdr PSDB-CIDADAN"]) is None
+
+
+def test_resumir_comportamento_usa_a_orientacao_do_bloco():
+    votos = [{"id": "a", "data": "2026-01-01", "descricao": "d", "voto": "sim"}]
+    r = gerar.resumir_comportamento(votos, {"a": {"Bl UniPpPsd...": "Sim"}}, "PP", {"Bl UniPpPsd...": {"PP"}})
+    assert r["partido"] == {"total": 1, "seguiu": 1}
+
+
+def test_juntar_votacoes_traz_placar_e_orientacoes_so_das_nominais():
+    p = {"id": 10}
+    vots = [{"id": "1-1", "data": "2026-01-01", "descricao": "a"}, {"id": "2-2", "data": "2026-02-01", "descricao": "b"}]
+    nominais = {"2-2": {"placar": {"sim": 3}, "aprovada": True}}
+    r = gerar.juntar_votacoes(p, vots, nominais, {"2-2": {"PL": "Sim"}})
+    assert [v["id"] for v in r["votacoes"]] == ["2-2", "1-1"] and r["totalVotacoes"] == 2
+    assert r["votacoes"][0] == {"id": "2-2", "data": "2026-02-01", "descricao": "b", "nominal": True, "placar": {"sim": 3},
+                                "aprovada": True, "orientacoes": {"PL": "Sim"}}
+    assert "nominal" not in r["votacoes"][1]
+    assert gerar.juntar_votacoes(p, None, nominais, {}) == p
+
+
+def test_presenca_do_deputado_por_ano_com_mediana():
+    presenca = {"2025": {"sessoesDeliberativas": 10, "deputados": {"1": {"sessoes": 8, "comissoes": 2, "outros": 0}, "2": {"sessoes": 4, "comissoes": 0, "outros": 1}, "3": {"sessoes": 6, "comissoes": 0, "outros": 0}}},
+                "2026": {"sessoesDeliberativas": 5, "deputados": {"2": {"sessoes": 5, "comissoes": 1, "outros": 0}}}}
+    medianas = gerar.medianas_sessoes(presenca)
+    assert medianas == {"2025": 6, "2026": 5}
+    assert gerar.presenca_do_deputado("1", presenca, medianas) == [
+        {"ano": 2025, "sessoes": 8, "comissoes": 2, "outros": 0, "sessoesDeliberativas": 10, "medianaSessoes": 6}]

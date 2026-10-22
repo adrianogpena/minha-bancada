@@ -284,7 +284,31 @@ Próximos passos:
 3. Fonte de link por dado: verba indenizatória → `https://alepa.pa.gov.br/Transparencia/Page/VerbaIndenizatoria`; frequência → `.../Frequencia`; remuneração → `.../RemuneracaodePessoal` (a confirmar).
 4. Se seguir: `scripts/coletar_pa.py`, amostras em `tests/fixtures/contratos/`, `ENDPOINTS.md` e `CHANGELOG.md`.
 
-### PE: Pernambuco
+### PE: Pernambuco (Assembleia Legislativa, ALEPE; apurado em 2026-10-22)
+
+**Portal de transparência: `https://transparencia.alepe.pe.gov.br/`.** Livre, sem login. É uma SPA React (o WebFetch só recebe o título); rotas e endpoints saíram do bundle JS (`/static/js/main.*.js`). Seções: `/financas/*` (despesas, contratos, licitações, `verbas-indenizatorias`, `remuneracao-ajuda-deputados`, obras, convênios), `/pessoal/*` (servidores efetivos, comissionados, cedidos, lotação, remuneração), `/proposicoes`, `/legislacao`, `/ouvidoria`. Não achei seção de frequência/presença nem de votações nominais.
+
+**Verba indenizatória (JSON aberto, sem login; mesmo que alimenta a tela `/financas/verbas-indenizatorias`), base `https://www.alepe.pe.gov.br/servicos/transparencia/`:**
+- `dep/deputados.php?leg=-16` → 163 registros (`id`, `nome`, `partido`, `email`, `foto`, `to_ascii`); o `id` (ex.: 4508) é a chave dos demais.
+- `adm/verbaindenizatoria-rubricas.php?ano=2026` → rubricas e teto mensal (I Imóveis 25.326,00; II Locação de veículos 33.025,10; III Assessoria jurídica 21.881,66; IV Consultorias 41.939,86; V Divulgação da atividade parlamentar; ...).
+- `adm/verbaindenizatoria-dep-meses.php?dep={id}&ano={ano}` → meses com lançamento (`[{"mes":1},...]`; o site lista os últimos 6 anos).
+- `adm/verbaindenizatoria.php?dep={id}&ano={ano}&mes={mes}` → lançamentos (`docid`, `numero`, `tipo` P/C, `deputado`, `mes`, `total`).
+- `adm/verbaindenizatorianotas.php?docid={docid}` → notas do lançamento (`rubrica`, `sequencial`, `data`, `cnpj`, `empresa`, `valor`). Dá o fornecedor por CNPJ. Exemplo: Abimael Santos, jan/2026, 2 lançamentos (44.880 e 15.000).
+Resposta vazia `[]` quando `dep` não existe. Dado mais completo que em PA/MT; ainda não conferi a diferença entre `tipo` P e C nem o campo de data do lançamento.
+
+**API de dados abertos (`https://dadosabertos.alepe.pe.gov.br/`, `/api/v1/<método>?formato=csv|json&filtros`)**, sem login:
+- `parlamentares` (JSON/CSV; só `nomeParlamentar` e `partido` da legislatura atual); `cargos?vinculo=comissionado|efetivo`; `lotacoes`; `servidores?vinculo=...&ano=`; `remuneracao` (por cargo, não por pessoa; competência 10/2026); `licitacoes`; `contratos`.
+- `proposicoes/projetos/`, `proposicoes/indicacoes/`, `proposicoes/requerimentos/` (XML; `projetos` trouxe 638 itens com `docid`, `numero`, `ano`, `tipo`, `ementa`, `dataPublicacao` e `autores` com nome do deputado; `?docid=` detalha). Útil para projetos por autor; o `ementa` dos requerimentos vem com HTML escapado.
+- Não há votações, presença nem verbas nessa API.
+
+**ITGP** (`https://transparenciainternacional.org.br/itgp/assembleia-legislativa/pernambuco`, ano da avaliação não informado): nota **45,2/100 ("Regular")**, 11º de 27. Por dimensão: Comunicação 72,7; Governança 58,8; Plataformas 50; Participação e Engajamento 43,7; Transformação Digital 40; Transparência Legislativa 37,5; Transparência Administrativa 30,6; Marcos Legais 28,6. Pontos fortes: aplicativo cidadão e ferramenta de consulta popular; agendas do plenário e de parte das comissões publicadas. A página pede melhor divulgação da presença dos parlamentares em plenário e das votações nominais. Critérios individuais: `https://comunidade.transparenciainternacional.org.br/itgp-legislativo-estadual-banco-de-dados`.
+
+Próximos passos:
+1. Confirmar `tipo` P/C e o período de dados disponível (anos anteriores a 2026) nos endpoints de verba.
+2. Procurar fonte de presença e votações nominais (não há no portal nem na API; testar `https://www.alepe.pe.gov.br` e `https://legis.alepe.pe.gov.br`).
+3. Fonte de link por dado: verba → `https://transparencia.alepe.pe.gov.br/financas/verbas-indenizatorias`; projetos → `https://transparencia.alepe.pe.gov.br/proposicoes`; remuneração → `https://transparencia.alepe.pe.gov.br/financas/remuneracao-ajuda-deputados` (a confirmar).
+4. Se seguir: `scripts/coletar_pe.py`, amostras em `tests/fixtures/contratos/`, `ENDPOINTS.md` e `CHANGELOG.md`.
+
 ### RJ: Rio de Janeiro
 ### RN: Rio Grande do Norte
 ### RR: Roraima

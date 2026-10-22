@@ -23,9 +23,12 @@
   <label class="campo">Partido<select id="partido"><option value="">Todos</option></select></label>
   <label class="campo">Ordenar por<select id="ordem">
     <option value="nome">Nome</option><option value="participacao">Quem mais votou</option>
-    <option value="proposicoes">Mais proposições</option><option value="gasto">Maiores gastos</option></select></label>
+    <option value="proposicoes">Mais proposições</option><option value="proprias">Mais iniciativas próprias</option>
+    <option value="aprovadas">Mais projetos aprovados (autor principal)</option><option value="suprapartidarios">Mais projetos suprapartidários</option>
+    <option value="gasto">Maiores gastos</option></select></label>
 </form>
 <p class="contagem" id="contagem" aria-live="polite">Carregando…</p>
+<p class="nota-lista">Iniciativa própria é um projeto (de lei, emenda à Constituição e afins) em que o deputado é o primeiro a assinar; "aprovados" são os que já passaram por uma Casa ou viraram lei. Só conta projetos cuja ordem de assinatura já foi coletada, então os números crescem a cada dia até completar. Fonte: <a href="https://dadosabertos.camara.leg.br/api/v2/proposicoes" rel="noopener">API de proposições da Câmara</a>.</p>
 <div id="resultado"></div>
 </main>
 <script src="assets/app.js"></script>

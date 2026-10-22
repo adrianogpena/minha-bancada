@@ -1,4 +1,6 @@
-# Minha Bancada
+<p align="center">
+  <img src="docs/logo/logo.svg" alt="Minha Bancada" width="380">
+</p>
 
 Site estático com todos os políticos com mandato no Brasil, de vereador a presidente, e os eleitos de 2026. Para deputados federais, mostra também como votam, o que propõem e quanto gastam. Os dados vêm do [TSE](https://dadosabertos.tse.jus.br), da [Câmara](https://dadosabertos.camara.leg.br) e do [Senado](https://legis.senado.leg.br/dadosabertos) e são atualizados sozinhos todo dia.
 

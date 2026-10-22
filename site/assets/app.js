@@ -170,6 +170,9 @@ async function paginaCamara() {
     participacao: (a, b) => b.votou / (b.votacoes || 1) - a.votou / (a.votacoes || 1),
     proposicoes: (a, b) => b.proposicoes - a.proposicoes,
     gasto: (a, b) => b.gasto - a.gasto,
+    proprias: (a, b) => b.proprias - a.proprias || b.aprovadasProprias - a.aprovadasProprias,
+    aprovadas: (a, b) => b.aprovadasProprias - a.aprovadasProprias || b.proprias - a.proprias,
+    suprapartidarios: (a, b) => b.suprapartidarios - a.suprapartidarios,
   };
 
   function desenhar() {
@@ -188,13 +191,14 @@ async function paginaCamara() {
     $("#contagem").textContent = `${filtrados.length} de ${deps.length} deputados em exercício`;
     if (!filtrados.length) { alvo.innerHTML = `<p class="vazio">Nenhum deputado com esses filtros. Tente limpar a busca ou escolher outro estado.</p>`; return; }
     alvo.innerHTML = `
-      <div class="cabecalho-lista" aria-hidden="true"><span></span><span>Deputado</span><span>Votou</span><span class="so-largo">Proposições</span><span class="so-largo">Gastos no ano</span></div>
+      <div class="cabecalho-lista" aria-hidden="true"><span></span><span>Deputado</span><span>Votou</span><span class="so-largo">Proposições</span><span class="so-largo">Iniciativas próprias</span><span class="so-largo">Gastos no ano</span></div>
       <ul class="lista">${filtrados.map((d) => `
         <li><a class="linha-dep" href="deputado.html?id=${d.id}">
           ${foto(d)}
           <span><span class="nome">${esc(d.nome)}</span><br><span class="sigla">${esc(d.partido)}/${esc(d.uf)}</span></span>
           <span class="metrica"><b>${pct(d.votou, d.votacoes)}</b><span>das votações</span></span>
           <span class="metrica so-largo"><b>${d.proposicoes}</b><span>apresentadas</span></span>
+          <span class="metrica so-largo" title="Projetos em que ${esc(d.nome)} é o primeiro a assinar, entre os ${d.autoriaColetada} com autoria já coletada"><b>${d.proprias}</b><span>${d.aprovadasProprias} aprovados</span></span>
           <span class="metrica so-largo"><b>${reais(d.gasto)}</b><span>cota parlamentar</span></span>
         </a></li>`).join("")}</ul>`;
   }
@@ -258,11 +262,37 @@ function fontes(links) {
 }
 
 /* gastos da cota (deputado: CEAP; senador: CEAPS); desp vem de gerar.py */
+const LIMITE_COTA_URL = "https://www2.camara.leg.br/comunicacao/assessoria-de-imprensa/guia-para-jornalistas/cota-parlamentar";
+const pctBr = (v) => `${v.toFixed(1).replace(".", ",")}%`;
+
+/* Quanto da cota o deputado usou (limite mensal da UF x meses com despesa) e como se compara com a média da bancada do estado. */
+function comparativoCota(desp) {
+  const partes = [];
+  if (desp.limite) {
+    const acumulado = desp.limite.mensal * desp.limite.meses;
+    partes.push(`O limite mensal da cota em ${esc(desp.mediaUF?.uf || "seu estado")} é de ${reaisCentavos(desp.limite.mensal)}, e o que sobra num mês acumula até o fim do ano. Com despesas lançadas até o mês ${desp.limite.meses}, o acumulado permitido é ${reaisCentavos(acumulado)}: o deputado usou <b>${pctBr((100 * desp.total) / acumulado)}</b>.`);
+  }
+  if (desp.mediaUF && desp.mediaUF.deputados > 1) {
+    const dif = desp.mediaUF.media ? (100 * (desp.total - desp.mediaUF.media)) / desp.mediaUF.media : 0;
+    partes.push(`A média dos ${desp.mediaUF.deputados} deputados em exercício de ${esc(desp.mediaUF.uf)} é de ${reaisCentavos(desp.mediaUF.media)}; este deputado gastou ${Math.abs(dif) < 0.05 ? "o mesmo" : `<b>${pctBr(Math.abs(dif))} ${dif > 0 ? "a mais" : "a menos"}</b>`}.`);
+  }
+  return partes.map((t) => `<p>${t}</p>`).join("");
+}
+
+function listaMaioresNotas(desp) {
+  if (!desp.maiores || !desp.maiores.length) return "";
+  return `<h3>Maiores notas do ano</h3>
+    <div class="rolagem"><table class="tabela"><thead><tr><th>Data</th><th>Fornecedor</th><th>Tipo</th><th>Valor</th><th>Nota</th></tr></thead><tbody>
+    ${desp.maiores.map((n) => `<tr><td>${n.data ? data(n.data) : `mês ${esc(n.mes)}`}</td><td>${esc(n.fornecedor || "Não informado")}</td><td>${esc(n.tipo || "")}</td><td>${reaisCentavos(n.valor)}</td>
+      <td><a href="${esc(n.documento)}" rel="noopener">documento fiscal</a></td></tr>`).join("")}</tbody></table></div>`;
+}
+
 function painelGastos(desp, explicacao) {
   const maxTipo = desp.porTipo[0]?.[1] || 1;
   return `
     <h2>Gastos da cota parlamentar em ${desp.ano}</h2>
     <p>Total no ano: <b>${reaisCentavos(desp.total)}</b>. ${esc(explicacao)}</p>
+    ${comparativoCota(desp)}
     <div class="duas-colunas">
       <div>
         <h3>Por tipo de despesa</h3>
@@ -277,6 +307,7 @@ function painelGastos(desp, explicacao) {
           : `<p class="vazio">Sem fornecedores no período.</p>`}
       </div>
     </div>
+    ${listaMaioresNotas(desp)}
   `;
 }
 
@@ -293,7 +324,7 @@ async function paginaDeputado() {
   const desp = dep.despesas;
   const painelPerfil = `
     ${painelGastos(desp, "A cota paga despesas do mandato, como passagens, aluguel de escritório e divulgação.")}
-    ${fontes([["Cota parlamentar (API da Câmara)", `${CAMARA_API}/deputados/${encodeURIComponent(dep.id)}/despesas?ano=${desp.ano}`], ["Portal da Câmara", `https://www.camara.leg.br/deputados/${encodeURIComponent(dep.id)}`]])}
+    ${fontes([["Cota parlamentar (API da Câmara)", `${CAMARA_API}/deputados/${encodeURIComponent(dep.id)}/despesas?ano=${desp.ano}`], desp.limite ? ["Limite mensal da cota por estado (Câmara)", LIMITE_COTA_URL] : null, ["Portal da Câmara", `https://www.camara.leg.br/deputados/${encodeURIComponent(dep.id)}`]])}
 
     <h2>Ficha</h2>
     <dl class="ficha">
@@ -301,6 +332,7 @@ async function paginaDeputado() {
       ${dep.nascimento ? `<dt>Nascimento</dt><dd>${data(dep.nascimento, true)}${dep.naturalidade ? `, ${esc(dep.naturalidade)}` : ""}</dd>` : ""}
       ${dep.escolaridade ? `<dt>Escolaridade</dt><dd>${esc(dep.escolaridade)}</dd>` : ""}
       <dt>No cargo até</dt><dd>${linhaNoCargoAte({ fimMandato: "2027-01-31", estado: "atual" }, "DEPUTADO FEDERAL")[1]}</dd>
+      ${itemFicha(linhaSubsidio({ cargoTse: "DEPUTADO FEDERAL", estado: "atual" }))}
       ${dep.email ? `<dt>E-mail</dt><dd><a href="mailto:${esc(dep.email)}">${esc(dep.email)}</a></dd>` : ""}
       ${dep.gabinete ? `<dt>Gabinete</dt><dd>${esc([dep.gabinete.predio && `Prédio ${dep.gabinete.predio}`, dep.gabinete.andar && `${dep.gabinete.andar}º andar`, dep.gabinete.sala && `sala ${dep.gabinete.sala}`].filter(Boolean).join(", "))}${dep.gabinete.telefone ? `, tel. ${esc(dep.gabinete.telefone)}` : ""}${dep.gabinete.email && dep.gabinete.email !== dep.email ? `, <a href="mailto:${esc(dep.gabinete.email)}">${esc(dep.gabinete.email)}</a>` : ""} <span class="fonte-link"><span class="rotulo-fonte">Fonte</span> <a href="${CAMARA_API}/deputados/${encodeURIComponent(dep.id)}" rel="noopener">cadastro na API da Câmara</a></span></dd>` : ""}
       <dt>Página oficial</dt><dd><a href="https://www.camara.leg.br/deputados/${encodeURIComponent(dep.id)}">camara.leg.br/deputados/${esc(dep.id)}</a></dd>
@@ -316,7 +348,7 @@ async function paginaDeputado() {
     painelPerfil, rotuloPerfil: "Perfil e gastos",
     linhaDoTempo: votacoes.map((v) => ({ ...v, voto: meus.get(v.id) || "ausente" })), // mais recente primeiro
     proposicoes: dep.proposicoes, tipoProjeto: (p) => !!TIPOS_PROJETO[p.tipo],
-    textoLegislatura: "como autor ou coautor nesta legislatura (desde fev. de 2023)",
+    textoLegislatura: "como autor ou coautor nesta legislatura (desde fev. de 2023)", suprapartidarios: true,
     papel: (p) => p.principal === undefined ? "autor ou coautor. A Câmara lista os dois juntos e a ordem de assinatura desta proposição ainda não foi coletada."
       : p.principal ? "<b>autor principal</b> (o primeiro a assinar)." : "<b>coautor</b> (assinou depois do autor principal).",
     aviso: "A situação vem da ficha de tramitação da Câmara e é atualizada aos poucos todo dia.",
@@ -455,6 +487,20 @@ function montarParlamentar(alvo, c) {
     <div><b>${cont.aprovada || 0}</b><span>aprovados ou viraram lei</span></div>
     <div><b>${cont.rejeitada || 0}</b><span>arquivados ou retirados</span></div>
     <div><b>${cont.sem || 0}</b><span>${esc(c.rotuloSem || "situação a consultar")}</span></div>`;
+  const comAutoria = projetos.filter((p) => p.principal !== undefined), proprias = comAutoria.filter((p) => p.principal);
+  if (comAutoria.length) {
+    const aprovadasProprias = proprias.filter((p) => desfecho(p)[1] === "aprovada").length, supra = comAutoria.filter((p) => p.partidosDistintos > 1).length;
+    $("#numeros-prop").insertAdjacentHTML("beforeend", `
+      <div><b>${proprias.length}</b><span>como autor principal (${pct(proprias.length, comAutoria.length)} dos ${comAutoria.length} com autoria coletada)</span></div>
+      <div><b>${comAutoria.length - proprias.length}</b><span>como coautor</span></div>
+      <div><b>${aprovadasProprias}</b><span>aprovados, sendo autor principal</span></div>
+      ${c.suprapartidarios ? `<div><b>${supra}</b><span>suprapartidários (de 2 ou mais partidos)</span></div>` : ""}`);
+  }
+  const porId = new Map(c.proposicoes.map((x) => [String(x.id), x]));
+  const ligacao = (rotulo, id) => {
+    const outro = porId.get(String(id));
+    return `${rotulo}: <a href="${esc(c.linkTramitacao({ id }))}" rel="noopener">${outro ? esc(`${outro.tipo} ${outro.numero}/${outro.ano}`) : "ver tramitação"}</a>`;
+  };
 
   const renderProj = (p) => {
     const [texto, destino, cor] = desfecho(p), classe = cor || destino;
@@ -465,6 +511,7 @@ function montarParlamentar(alvo, c) {
       ${c.papel ? `<span class="texto"><b>Papel de ${esc(nome)}:</b> ${c.papel(p)}</span>` : ""}
       ${p.situacao ? `<span class="texto"><b>Situação:</b> ${esc(p.situacao)}${p.orgao ? ` (${esc(p.orgao)})` : ""}${p.dataSituacao ? `, em ${data(p.dataSituacao)}` : ""}.${p.despacho ? ` <span class="quando">Despacho: ${esc(p.despacho.slice(0, 300))}</span>` : ""}</span>` : ""}
       ${p.tipoDescricao || p.tramitacao || p.regime || p.coautores || p.iniciativa ? `<span class="texto quando">${[p.tipoDescricao && `Tipo: ${esc(p.tipoDescricao)}`, p.iniciativa && `Iniciativa: ${esc(p.iniciativa)}`, p.totalAutores && `Assinado por ${p.totalAutores} autores${p.partidosDistintos ? ` de ${p.partidosDistintos} partidos` : ""}`, p.regime && `Regime: ${esc(p.regime)}`, p.tramitacao && `Tramitação: ${esc(p.tramitacao)}`, p.coautores && `Coautores: ${esc(p.coautores.join(", "))}`].filter(Boolean).join(" · ")}</span>` : ""}
+      ${p.apensadoA || p.anterior || p.posterior ? `<span class="texto quando">${[p.apensadoA && ligacao("Apensado ao projeto principal", p.apensadoA), p.anterior && ligacao("Proposição anterior", p.anterior), p.posterior && ligacao("Proposição posterior", p.posterior)].filter(Boolean).join(" · ")}</span>` : ""}
       ${p.palavrasChave ? `<span class="texto quando">Temas: ${esc(p.palavrasChave)}</span>` : ""}
       <span class="texto">${fontes([[c.fonteTramitacao, c.linkTramitacao(p)], p.linkTexto ? ["Texto integral", p.linkTexto] : null, ["Dados na API", c.linkApi(p)]])}</span>
     </li>`;
@@ -646,6 +693,48 @@ async function desenharEleitorado(el, uf, mun, nomeLocal) {
   el.hidden = false;
 }
 
+/* Quem é cada Casa: perfil dos eleitos (TSE) ao lado do perfil do eleitorado, quando existe. */
+const perfisCasas = {};
+const FONTES_ELEITOS = { estadual: [2022], federal: [2022], senado: [2018, 2022], municipal: [2024] };
+async function desenharPerfilCasas(el, uf, mun, nomeLocal) {
+  el.innerHTML = "";
+  if (!uf) return;
+  try { perfisCasas[uf] ||= await carregar(`dados/perfil_casas/${uf}.json`); } catch { return; }
+  let local = null;
+  try { eleitoradoUf[uf] ||= await carregar(`dados/eleitorado/${uf}.json`); local = eleitoradoUf[uf].locais[mun || "_uf"]; } catch { /* sem eleitorado: mostra só os eleitos */ }
+  const casas = perfisCasas[uf];
+  const lista = mun
+    ? [[`Câmara Municipal de ${nomeLocal}`, casas.municipal && casas.municipal[mun], "municipal", local]]
+    : [[uf === "DF" ? "Câmara Legislativa" : `Assembleia Legislativa (${UFS[uf]})`, casas.estadual, "estadual", local],
+       [`Bancada de ${UFS[uf]} na Câmara dos Deputados`, casas.federal, "federal", local], [`Senadores de ${UFS[uf]}`, casas.senado, "senado", local]];
+  el.innerHTML = lista.map(([titulo, p, chave, eleitorado]) => perfilCasaHtml(titulo, p, chave, eleitorado ? eleitoradoUf[uf].ano : null, eleitorado)).join("");
+}
+function perfilCasaHtml(titulo, p, chave, anoEleitorado, eleitorado) {
+  if (!p || !p.total) return "";
+  const soma = (v) => v.reduce((a, b) => a + b, 0);
+  const porcento = (v, base) => (base ? `${((100 * v) / base).toFixed(1).replace(".", ",")}%` : "0%");
+  const barras = (rotulos, eleitos, eleitores) => {
+    const be = soma(eleitos), bl = eleitores ? soma(eleitores) : 0;
+    return `<div class="barras">${rotulos.map((r, i) => `<div><div class="barra-rotulo"><span>${esc(r)}</span>
+      <b>${numeroBr(eleitos[i])} eleitos · ${porcento(eleitos[i], be)}${bl ? ` · eleitorado ${porcento(eleitores[i], bl)}` : ""}</b></div>
+      <div class="barra"><i style="width:${be ? (100 * eleitos[i]) / be : 0}%"></i></div>
+      ${bl ? `<div class="barra ref"><i style="width:${(100 * eleitores[i]) / bl}%"></i></div>` : ""}</div>`).join("")}</div>`;
+  };
+  const e = eleitorado;
+  const racaTotal = soma(p.raca.map(([, n]) => n));
+  const anos = FONTES_ELEITOS[chave];
+  return `<details class="eleitorado"><summary>Perfil dos eleitos: ${esc(titulo)} (<b>${numeroBr(p.total)}</b>)</summary>
+    ${e ? `<p class="legenda-barras">Barra larga: eleitos. Barra fina: eleitorado (${esc(anoEleitorado)}).</p>` : ""}
+    <h3>Gênero</h3>${barras(["Mulheres", "Homens"], [p.genero[1], p.genero[0]], e && [e.porGenero[1], e.porGenero[0]])}
+    <h3>Idade na eleição</h3>${barras(FAIXAS, p.faixas, e && e.porFaixaEtaria)}
+    <h3>Escolaridade</h3>${barras(ESCOLARIDADE, p.instrucao, e && e.porEscolaridade)}
+    ${racaTotal ? `<h3>Cor ou raça declarada</h3><ul class="lista-eleicao">${p.raca.map(([r, n]) => `<li>${esc(r)}: <b>${numeroBr(n)}</b> (${porcento(n, racaTotal)})</li>`).join("")}</ul>` : ""}
+    ${p.ocupacoes.length ? `<h3>Ocupações mais declaradas</h3><ul class="lista-eleicao">${p.ocupacoes.map(([o, n]) => `<li>${esc(o)}: <b>${numeroBr(n)}</b></li>`).join("")}</ul>` : ""}
+    <p class="fonte-link"><span class="rotulo-fonte">Fonte</span> ${anos.map((a) => `<a href="${arquivoTse("consulta_cand", { ano: a })}" rel="noopener">Candidatos ${a} (TSE)</a>`).join(" · ")}${e ? ` · <a href="${TSE_CDN}/perfil_eleitorado/perfil_eleitorado_${anoEleitorado}.zip" rel="noopener">Perfil do eleitorado ${esc(anoEleitorado)} (TSE)</a>` : ""}.
+    Dados da candidatura: os eleitos de ${anos.join(" e ")}, sem contar suplentes que assumiram depois. A raça e a ocupação não existem no perfil do eleitorado.
+    Escolaridade e idade do eleitorado seguem as mesmas faixas; o eleitorado de ${esc(anoEleitorado || "")} pode diferir do ano da eleição.</p></details>`;
+}
+
 async function paginaPoliticos() {
   const alvo = $("#resultado"), mapa = $("#mapa"), dica = $("#dica"), trilha = $("#trilha");
   const q = new URLSearchParams(location.search);
@@ -780,6 +869,7 @@ async function paginaPoliticos() {
     }
     const onde = mun ? `${nomes.get(mun)}, ${UFS[uf]}` : uf ? UFS[uf] : "Brasil";
     desenharEleitorado($("#eleitorado"), uf, mun, mun ? `${nomes.get(mun)}, ${uf}` : uf ? UFS[uf] : "");
+    desenharPerfilCasas($("#casas"), uf, mun, mun ? `${nomes.get(mun)}, ${uf}` : uf ? UFS[uf] : "");
     $("#contagem").textContent = `${total} políticos ${periodo === "agora" ? "no cargo" : "eleitos ou no 2º turno em 2026"}: ${onde}`;
   }
 
@@ -975,8 +1065,62 @@ function linhaNoCargoAte(p, cargoTse = p.cargoTse) {
   return ["No cargo até", `${antes}${data(p.fimMandato, true)} ${origem ? `<span class="fonte-link"><span class="rotulo-fonte">Fonte</span> ${origem}</span>` : semFonte("prazo do mandato")}`, true];
 }
 
+/* Subsídio mensal bruto. Federal: Decreto Legislativo 172/2022 (4ª etapa, desde 1/2/2025), igual para deputados, senadores, presidente e vice.
+   Estadual e distrital: até 75% do federal (CF, art. 27, §2º). Vereador: 20% a 75% do estadual, conforme a população (CF, art. 29, VI). */
+const SUBSIDIO_FEDERAL = 46366.19;
+const SUBSIDIO_ESTADUAL_MAX = Math.round(SUBSIDIO_FEDERAL * 0.75 * 100) / 100;
+const SUBSIDIO_VEREADOR_MAX = Math.round(SUBSIDIO_ESTADUAL_MAX * 0.75 * 100) / 100;
+const DL172_URL = "https://www2.camara.leg.br/legin/fed/decleg/2022/decretolegislativo-172-21-dezembro-2022-793529-republicacao-166629-pl.html";
+const fonteLink = (texto, url) => `<span class="fonte-link"><span class="rotulo-fonte">Fonte</span> <a href="${esc(url)}" rel="noopener">${esc(texto)}</a></span>`;
+function linhaSubsidio(p) {
+  const c = p.cargoTse;
+  if (p.estado !== "atual") return ["Subsídio mensal", null];
+  if (["DEPUTADO FEDERAL", "SENADOR", "PRESIDENTE", "VICE-PRESIDENTE"].includes(c))
+    return ["Subsídio mensal bruto", `${reaisCentavos(SUBSIDIO_FEDERAL)} (valor desde fev. de 2025) ${fonteLink("Decreto Legislativo 172/2022", DL172_URL)}`, true];
+  if (c === "DEPUTADO ESTADUAL" || c === "DEPUTADO DISTRITAL")
+    return ["Subsídio mensal (teto legal)", `até ${reaisCentavos(SUBSIDIO_ESTADUAL_MAX)}, 75% do subsídio de deputado federal. É o máximo permitido, não o valor pago: o valor exato está no portal de transparência da Casa. ${fonteLink(`Constituição Federal, art. ${c === "DEPUTADO ESTADUAL" ? 27 : 32}`, linkCF(c === "DEPUTADO ESTADUAL" ? 27 : 32))}`, true];
+  if (c === "VEREADOR")
+    return ["Subsídio mensal (teto legal)", `de 20% a 75% do subsídio de deputado estadual, conforme a população do município; no máximo ${reaisCentavos(SUBSIDIO_VEREADOR_MAX)}. É o máximo permitido, não o valor pago: o valor exato está no portal de transparência da Câmara Municipal. ${fonteLink("Constituição Federal, art. 29, VI", linkCF(29))}`, true];
+  return ["Subsídio mensal", null];
+}
+
 const numeroBr = (n) => n.toLocaleString("pt-BR");
 const rotuloResultado = (r) => /turno/i.test(r) ? "Vai ao 2º turno" : ({ "eleito por qp": "Eleito por quociente partidário", "eleito por média": "Eleito por média", "eleito por media": "Eleito por média" })[r.toLowerCase()] || r;
+
+/* Custo do voto (receita por voto) comparado à mediana dos eleitos do mesmo cargo e partido, e quanto da receita veio do partido. */
+function blocoCustoDoVoto(c, e) {
+  const partes = [];
+  const v = c.custoVoto;
+  if (v) {
+    const turnos = (e.votos || []).length > 1 ? ", somando os turnos" : "";
+    const comp = [v.cargo && `mediana dos eleitos para o mesmo cargo: ${reaisCentavos(v.cargo.mediana)} (${numeroBr(v.cargo.n)} eleitos)`,
+      v.partido && `mediana do ${esc(e.partido)} nesse cargo: ${reaisCentavos(v.partido.mediana)} (${numeroBr(v.partido.n)} eleitos)`].filter(Boolean);
+    partes.push(`<p>Custo do voto: <b>${reaisCentavos(v.valor)}</b> de receita de campanha por voto recebido${turnos}.${comp.length ? ` Para comparar, ${comp.join("; ")}.` : ""}</p>`);
+  }
+  const doPartido = (c.origensReceita || []).filter(([o]) => /partido pol[ií]tico/i.test(o)).reduce((t, [, x]) => t + x, 0);
+  if (c.receitas && doPartido) partes.push(`<p>Dependência do partido: <b>${pctBr((100 * doPartido) / c.receitas)}</b> da receita veio de recursos do partido (fundo eleitoral e fundo partidário).</p>`);
+  return partes.join("");
+}
+
+/* Total de bens declarado em cada eleição do mesmo político. A ligação entre eleições é por nome e data de nascimento (o TSE não publica mais o CPF). */
+function blocoPatrimonio(p, fontesLista) {
+  const h = p.patrimonio;
+  if (!h || h.length < 2) return "";
+  h.forEach(([ano]) => fontesLista.push([`Bens de candidatos ${ano} (TSE)`, arquivoTse("bem_candidato", { ano })]));
+  const itens = h.map(([ano, cargo, total], i) => {
+    const antes = i ? h[i - 1][2] : null;
+    const variacao = antes === null ? "" : antes > 0 ? ` (${total >= antes ? "+" : "−"}${pctBr((100 * Math.abs(total - antes)) / antes)} em relação a ${h[i - 1][0]})` : ` (antes: ${reaisCentavos(antes)})`;
+    return `<li><span class="quando">${esc(ano)}, ${esc(cargo.charAt(0) + cargo.slice(1).toLowerCase())}</span> <b>${reaisCentavos(total)}</b>${variacao}</li>`;
+  });
+  return `<h3>Evolução do patrimônio declarado</h3><ul class="lista-eleicao">${itens.join("")}</ul>
+    <p>Valores declarados à Justiça Eleitoral em cada candidatura, sem correção pela inflação. As eleições foram ligadas pelo nome e pela data de nascimento, porque o TSE não publica mais o CPF.</p>`;
+}
+
+/* Evolução do patrimônio e as fontes da seção de bens. */
+function blocoPatrimonioFontes(p, fonteTse, outras = []) {
+  const lista = [...fonteTse, ["Bens de candidatos (TSE)", arquivoTse("bem_candidato", p)], ["Portal de Dados Abertos do TSE", "https://dadosabertos.tse.jus.br"], ...outras];
+  return blocoPatrimonio(p, lista) + fontes(lista);
+}
 
 /* Dinheiro da campanha (prestação de contas ao TSE): quanto arrecadou, de onde veio, quem mais doou e em que gastou. */
 function blocoCampanha(e, fontesLista) {
@@ -986,6 +1130,7 @@ function blocoCampanha(e, fontesLista) {
   fontesLista.unshift([`Prestação de contas de campanha ${e.ano} (TSE)`, `${TSE_CDN}/prestacao_contas/prestacao_de_contas_eleitorais_candidatos_${e.ano}.zip`]);
   return `<h3>Campanha de ${esc(e.ano)}: quem pagou</h3>
     <p>Arrecadou <b>${reaisCentavos(c.receitas)}</b> e contratou <b>${reaisCentavos(c.despesasContratadas)}</b> em despesas. ${c.despesasPagas != null && c.despesasContratadas - c.despesasPagas > 1 ? `Pagou <b>${reaisCentavos(c.despesasPagas)}</b> até a prestação de contas; <b>${reaisCentavos(c.despesasContratadas - c.despesasPagas)}</b> ficaram contratados e sem pagamento registrado.` : ""} Valores declarados pelo próprio candidato na prestação de contas ao TSE.</p>
+    ${blocoCustoDoVoto(c, e)}
     ${c.origensReceita.length ? `<h4>De onde veio o dinheiro</h4>${linhas(c.origensReceita, ([o, v]) => `<span class="quando">${esc(o)}</span> <b>${reaisCentavos(v)}</b>${c.receitas ? ` (${Math.round((100 * v) / c.receitas)}%)` : ""}`)}` : ""}
     ${c.principaisDoadores.length ? `<h4>Maiores doadores</h4>${linhas(c.principaisDoadores, ([n, o, v]) => `<b>${esc(n)}</b> <span class="quando">${esc(o)}</span> <b>${reaisCentavos(v)}</b>`)}
       <p>"Recursos de partido político" inclui o fundo eleitoral e o fundo partidário repassados pelo partido.</p>` : ""}
@@ -1191,6 +1336,7 @@ async function paginaPolitico() {
     ["Escolaridade", p.instrucao],
     ["Ocupação declarada", p.ocupacao],
     ["E-mail", p.email ? `<a href="mailto:${esc(p.email)}">${esc(p.email)}</a>` : null, true],
+    linhaSubsidio(p),
     linhaNoCargoAte(p),
     ["Redes e sites declarados na candidatura", linksRedes(p.redes, { ...p, fonteRedes: fonteRedesTse(p) }), true, true],
   ].filter(([, v]) => v);
@@ -1225,7 +1371,7 @@ async function paginaPolitico() {
     <h2>Bens declarados em ${esc(p.ano)}</h2>
     <p>Total: <b>${reaisCentavos(p.totalBens)}</b>${bens.length ? `, em ${bens.length} ${bens.length === 1 ? "item" : "itens"}` : ""}. Valores informados pelo próprio candidato ao registrar a candidatura.</p>
     <div id="lista-bens"></div>
-    ${fontes([...fonteTse, ["Bens de candidatos (TSE)", arquivoTse("bem_candidato", p)], ["Portal de Dados Abertos do TSE", "https://dadosabertos.tse.jus.br"]])}`
+    ${blocoPatrimonioFontes(p, fonteTse)}`
     : `<p class="fonte"><span class="rotulo-fonte">Fonte</span> <a href="https://legis.senado.leg.br/dadosabertos">Dados Abertos do Senado Federal</a>.${p.fimMandato ? ` Mandato até ${data(p.fimMandato, true)}.` : ""}</p>`}`;
 
   /* Para estes cargos ainda não temos votos nem projetos coletados; as abas dizem isso e levam à fonte oficial. */
@@ -1334,6 +1480,15 @@ const SENADO_API = "https://legis.senado.leg.br/dadosabertos";
 const SENADO_ADM_API = "https://adm.senado.gov.br/adm-dadosabertos/api/v1";
 const linkMateriaSenado = (id) => `https://www25.senado.leg.br/web/atividade/materias/-/materia/${encodeURIComponent(id)}`;
 
+/* Comparecimento do senador às votações nominais (gerar.py: categoria_presenca). */
+function painelPresenca(pr) {
+  const faltas = [pr.naoCompareceu && `não compareceu a ${pr.naoCompareceu}`, pr.licenca && `${pr.licenca} em licença`,
+    pr.missao && `${pr.missao} em missão oficial ou atividade parlamentar`, pr.outros && `${pr.outros} por outros motivos`].filter(Boolean);
+  return `<h2>Comparecimento às votações</h2>
+    <p>Compareceu a <b>${numeroBr(pr.compareceu || 0)}</b> de ${numeroBr(pr.votacoes)} votações nominais (<b>${pct(pr.compareceu || 0, pr.votacoes)}</b>), contando como presença quem votou ou registrou presença sem votar.
+    ${faltas.length ? `Nas demais: ${faltas.join("; ")}.` : "Não faltou a nenhuma."} Fonte: <a href="${SENADO_API}/votacao" rel="noopener">votações nominais do Senado (Dados Abertos)</a>.</p>`;
+}
+
 async function montarSenador(alvo, p, nome, ficha) {
   let sen, lista;
   try { [sen, lista] = await Promise.all([carregar(`dados/senador/${encodeURIComponent(p.id)}.json`), carregar("dados/votacoes_senado.json")]); } catch { return false; }
@@ -1350,6 +1505,7 @@ async function montarSenador(alvo, p, nome, ficha) {
         <dt>Onde atua</dt><dd>${esc(UFS[p.uf] || p.uf)}</dd>
         ${p.pagina ? `<dt>Página oficial</dt><dd><a href="${esc(p.pagina)}" rel="noopener">Perfil no Senado Federal</a></dd>` : ""}
       </dl>
+      ${sen.presenca ? painelPresenca(sen.presenca) : ""}
       ${sen.despesas ? painelGastos(sen.despesas, "A cota (CEAPS) reembolsa despesas do mandato, como passagens, aluguel de escritório e divulgação. Os valores são os reembolsados pelo Senado.")
         : `<p class="aviso">Os gastos da cota (CEAPS) não puderam ser carregados agora. Veja no <a href="https://www12.senado.leg.br/transparencia/sen/${encodeURIComponent(p.id)}" rel="noopener">Portal da Transparência do Senado</a>.</p>`}
       ${fontes([["Dados Abertos do Senado", `${SENADO_API}/senador/${encodeURIComponent(p.id)}`], sen.despesas ? ["Cota parlamentar (CEAPS)", `${SENADO_ADM_API}/senadores/despesas_ceaps/${sen.despesas.ano}`] : null, ["Portal da Transparência do Senado", `https://www12.senado.leg.br/transparencia/sen/${encodeURIComponent(p.id)}`]])}`,
@@ -1390,7 +1546,7 @@ async function montarEstadual(alvo, p, nome, ficha, situacao) {
       <h2>Bens declarados em ${esc(p.ano)}</h2>
       <p>Total: <b>${reaisCentavos(p.totalBens)}</b>${bens.length ? `, em ${bens.length} ${bens.length === 1 ? "item" : "itens"}` : ""}. Valores informados pelo próprio candidato ao registrar a candidatura.</p>
       <div id="lista-bens"></div>
-      ${fontes([["Portal de Dados Abertos do TSE", "https://dadosabertos.tse.jus.br"], ["Assembleia Legislativa (SAPL)", `https://${dep.host}`]])}`,
+      ${blocoPatrimonioFontes(p, [], [["Assembleia Legislativa (SAPL)", `https://${dep.host}`]])}`,
     rotuloPerfil: "Perfil e bens",
     linhaDoTempo, proposicoes: dep.proposicoes, tipoProjeto: () => true,
     textoLegislatura: "como autor ou coautor nesta legislatura",

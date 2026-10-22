@@ -16,67 +16,22 @@ por mês e os 10 maiores fornecedores, os bens declarados e a prestação de con
 
 | Nível | O que exige | Pacotes |
 |---|---|---|
-| 1 | Nada de coleta nova; só `gerar.py` e `app.js` | 1.1 Autoria · 1.2 Cota em detalhe · 1.3 Salário · 1.4 Campanha e patrimônio · 1.5 Perfil das Casas · 1.6 Presença no Senado |
+| 1 | Feito (ver abaixo) | 1.1 a 1.6 |
 | 2 | Coleta leve (um arquivo por ano ou ~81 chamadas), exibida em blocos que já existem | 2.1 Recursos do senador · 2.2 Cota pelo CSV anual · 2.3 Perfil temático · 2.4 Comportamento nas votações |
 | 3 | Uma chamada por deputado ou por projeto, ou visualização nova | 3.1 Carreira e histórico partidário · 3.2 Vida do projeto · 3.3 Discursos e agenda · 3.4 Rede de coautoria |
 | 4 | Raspagem de HTML ou chave de API | 4.1 Recursos do deputado (portal da Câmara) · 4.2 Emendas e Portal da Transparência |
 | 5 | Fontes grandes, sem padrão ou cruzamentos sensíveis | 5.1 Fornecedores e doadores · 5.2 Assembleias e Câmaras Municipais · 5.3 Órgãos de controle |
 
-## Nível 1: só com os dados que já temos
+## Nível 1: feito (2026-10-22)
 
-### 1.1 Autoria dos projetos
+Só com os dados que já tínhamos; registrado no `CHANGELOG.md`.
 
-Tudo sai de `proposicoes_autores.json` e `proposicoes_detalhe.json`; entra no perfil do deputado e numa lista geral.
-
-- Proporção de projetos como autor principal versus coautor, por deputado.
-- Ranking de deputados por iniciativas próprias (principal) em vez de coautorias.
-- Aprovados ou sancionados em que foi autor principal (situação em `proposicoes_detalhe.json`).
-- Projetos suprapartidários (`partidosDistintos` alto) versus de bancada única.
-- Apensados e substitutos: `uriPropPrincipal`, `uriPropAnterior` e `uriPropPosterior` já vêm em `/proposicoes/{id}`;
-  basta ligar um projeto ao outro na lista.
-
-### 1.2 Cota parlamentar em detalhe
-
-Mesmo painel de gastos (`painelGastos` em `app.js`), com mais informação.
-
-- `urlDocumento` já é coletado em `despesas.itens[].documento`, mas `gerar.py` só publica totais: listar as maiores
-  notas com link para o documento fiscal.
-- Percentual do limite usado no ano (o limite mensal da cota varia por UF; tabela fixa no código, com a fonte).
-- Gasto do deputado contra a média da bancada do estado.
-
-### 1.3 Salário (subsídio)
-
-Constante no código com a data e o link do decreto legislativo; sem coleta.
-
-- O valor é igual para todos: hoje R$ 46.366,19 brutos por mês para deputados federais e senadores (o mesmo teto
-  do STF). O portal da Câmara mostra o mesmo valor em "Salário mensal bruto" (`www.camara.leg.br/deputados/{id}`).
-  Presidente, vice e ministros também têm valor fixo por decreto.
-- Deputados estaduais e vereadores: o subsídio é um percentual do federal (até 75% para estaduais; para vereadores,
-  de 20% a 75% do estadual, conforme a população do município, pela Constituição). Mostrar o teto legal calculado,
-  deixando claro que é o máximo, não o valor pago (o valor exato está no pacote 5.2).
-
-### 1.4 Campanha e patrimônio
-
-Bloco "Campanha" e "Bens" do perfil do político (`dados/tse/`).
-
-- Custo do voto: receitas de campanha divididas pelos votos recebidos, por cargo e partido.
-- Dependência do partido: participação de "Recursos de partido político" em `origensReceita`.
-- Evolução patrimonial: os bens declarados existem para cada eleição coletada, e `gerar_politicos.py` já liga as
-  eleições do mesmo político por nome e UF (`chave_nome`); falta mostrar a variação do total entre uma eleição e
-  outra (o TSE não publica mais o CPF, então a ligação continua sendo por nome).
-
-### 1.5 Perfil das Casas
-
-Página nova ou bloco na página de cada Casa, comparando eleitos e eleitorado.
-
-- Gênero, cor ou raça, instrução, idade e ocupação já são coletados por eleito (`coletar_tse.py`), mas só aparecem
-  no perfil individual. Mostrar "quem é a Câmara Municipal de X" ao lado do eleitorado (`perfil_eleitorado` já é
-  coletado).
-
-### 1.6 Presença no Senado
-
-- As votações em `dados/senado_votacoes/` já classificam "não compareceu", "licença", "missão" etc.
-  (`tipo_voto_senado`): taxa de comparecimento às votações nominais, no perfil do senador.
+- **1.1 Autoria:** proporção principal/coautor, aprovados como autor principal e suprapartidários na aba Propostas; colunas e ordenações "iniciativas próprias" e "aprovados" na lista de deputados; apensados, anterior e posterior ligados à ficha de tramitação (o coletor passou a guardar `apensadoA`, `anterior` e `posterior`; projetos já finalizados no cache só ganham o campo se forem consultados de novo).
+- **1.2 Cota:** maiores notas com link para o documento fiscal, percentual do limite acumulado no ano (tabela `LIMITE_COTA_UF` em `gerar.py`, copiada do guia da Câmara, sem data de vigência na página) e comparação com a média dos deputados do estado.
+- **1.3 Salário:** linha "Subsídio mensal" na ficha (R$ 46.366,19 para deputados federais, senadores, presidente e vice; teto legal para deputados estaduais/distritais e vereadores).
+- **1.4 Campanha e patrimônio:** custo do voto com a mediana do cargo e do partido, dependência do partido e evolução do patrimônio declarado (eleições ligadas por nome e data de nascimento).
+- **1.5 Perfil das Casas:** bloco "Perfil dos eleitos" na página de políticos (Assembleia, bancada federal, senadores do estado e Câmara Municipal), com eleitos e eleitorado lado a lado. Usa os eleitos de 2018/2022/2024, não a composição de hoje (suplentes que assumiram não entram).
+- **1.6 Presença no Senado:** comparecimento às votações nominais, com licença e missão separadas.
 
 ## Nível 2: coleta leve, exibição em blocos que já existem
 

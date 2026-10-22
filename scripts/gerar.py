@@ -7,7 +7,9 @@ Uso:
 """
 
 import json
+import re
 import shutil
+import unicodedata
 from collections import Counter, defaultdict
 from pathlib import Path
 
@@ -44,7 +46,7 @@ def juntar_detalhe(p: dict, det: dict | None) -> dict:
     if not det:
         return p
     campos = ("dataApresentacao", "situacao", "despacho", "orgao", "dataSituacao", "ementaDetalhada", "palavrasChave",
-              "tramitacao", "regime")
+              "tramitacao", "regime", "apensadoA", "anterior", "posterior")
     return {**p, **{c: det[c] for c in campos if det.get(c)}, **({"linkTexto": det["inteiroTeor"]} if det.get("inteiroTeor") else {})}
 
 
@@ -81,6 +83,67 @@ def juntar_autoria(p: dict, aut: dict | None, did: str, partidos: dict | None = 
     return {**p, **extra}
 
 
+TIPOS_PROJETO = {"PL", "PLP", "PEC", "PDL", "PRC", "PLC", "PLS", "PRS", "PDS", "PLN", "PFC", "PLV", "MPV"}
+
+
+def destino_projeto(situacao: str | None) -> str:
+    """Mesma classificação de `desfecho` em site/assets/app.js: aprovada, rejeitada, tramitando ou sem (sem desfecho conhecido)."""
+    s = unicodedata.normalize("NFD", (situacao or "").lower())
+    s = "".join(c for c in s if unicodedata.category(c) != "Mn")
+    if not situacao or "tramitacao encerrada" in s:
+        return "sem"
+    if re.match(r"(sancionad|promulgad|aprovad)", s):
+        return "aprovada"
+    if re.match(r"rejeitad", s):
+        return "rejeitada"
+    if re.search(r"transformad[ao] em (norma|lei)|sancionad", s):
+        return "aprovada"
+    if re.search(r"arquivad|retirad|vetad|prejudicad", s):
+        return "rejeitada"
+    if re.search(r"remetid[ao] a camara|aguardando sancao|remetid.*(sancao|senado)", s):
+        return "aprovada"
+    return "tramitando"
+
+
+def resumir_autoria(proposicoes: list) -> dict:
+    """Contagens de autoria dos projetos (não dos requerimentos e afins) do deputado, a partir das proposições já enriquecidas:
+    `projetos`, `autoriaColetada` (projetos com a ordem de assinatura conhecida), `proprias` (autor principal),
+    `aprovadasProprias` (autor principal e aprovado ou virou lei), `suprapartidarios` (assinados por deputados de mais de um partido)."""
+    projetos = [p for p in proposicoes if p.get("tipo") in TIPOS_PROJETO]
+    com_autoria = [p for p in projetos if p.get("principal") is not None]
+    proprias = [p for p in com_autoria if p["principal"]]
+    return {
+        "projetos": len(projetos), "autoriaColetada": len(com_autoria), "proprias": len(proprias),
+        "aprovadasProprias": sum(1 for p in proprias if destino_projeto(p.get("situacao")) == "aprovada"),
+        "suprapartidarios": sum(1 for p in com_autoria if p.get("partidosDistintos", 0) > 1),
+    }
+
+
+# cota parlamentar mensal (CEAP) de cada UF, em reais: tabela "valores atuais" do guia para jornalistas da Câmara (verificada em 2026-10-22, sem data de vigência na página)
+FONTE_LIMITE_COTA = "https://www2.camara.leg.br/comunicacao/assessoria-de-imprensa/guia-para-jornalistas/cota-parlamentar"
+LIMITE_COTA_UF = {
+    "AC": 57359.87, "AL": 53164.36, "AM": 56151.46, "AP": 55929.26, "BA": 50965.29, "CE": 54879.34, "DF": 41612.55, "ES": 49160.15,
+    "GO": 46979.73, "MA": 54537.99, "MG": 47645.91, "MS": 52707.93, "MT": 51439.83, "PA": 54624.17, "PB": 54402.48, "PE": 53997.81,
+    "PI": 53195.84, "PR": 50807.19, "RJ": 47267.41, "RN": 55198.09, "RO": 56267.90, "RR": 58474.70, "RS": 53086.78, "SC": 51951.42,
+    "SE": 52248.86, "SP": 48727.46, "TO": 51525.80,
+}
+MAIORES_NOTAS = 10
+
+
+def maiores_notas(itens: list) -> list:
+    """As maiores despesas do ano que têm o documento fiscal publicado, para o site listar com o link."""
+    com_doc = [i for i in itens if i.get("documento") and i.get("valor")]
+    return [{k: i.get(k) for k in ("data", "mes", "tipo", "fornecedor", "valor", "documento")}
+            for i in sorted(com_doc, key=lambda i: -i["valor"])[:MAIORES_NOTAS]]
+
+
+def limite_cota(uf: str, itens: list) -> dict | None:
+    """Limite mensal da UF e quantos meses do ano já têm despesa lançada (a cota não usada acumula dentro do ano)."""
+    mensal = LIMITE_COTA_UF.get(uf)
+    meses = max((i["mes"] for i in itens if i.get("mes")), default=0)
+    return {"mensal": mensal, "meses": meses} if mensal and meses else None
+
+
 def resumir_despesas(ano: int, itens: list) -> dict:
     """Totais por tipo, mês e fornecedor, no formato que o site usa para deputados e senadores."""
     por_tipo, por_mes, fornecedores = Counter(), Counter(), Counter()
@@ -95,6 +158,32 @@ def resumir_despesas(ano: int, itens: list) -> dict:
         "fornecedores": [[k, round(v, 2)] for k, v in fornecedores.most_common(10)],
         "recentes": itens[:30],
     }
+
+
+def categoria_presenca(tipo: str, rotulo: str | None) -> str:
+    """Classifica o registro de um senador numa votação nominal: compareceu (votou ou registrou presença sem voto),
+    naoCompareceu, licenca, missao (missão oficial ou atividade parlamentar), ignorar (dispositivo não aplicável) ou outros."""
+    if tipo != "ausente":
+        return "compareceu"
+    sigla, _, desc = (rotulo or "").partition("|")
+    s, d = sigla.strip().lower(), desc.lower()
+    if s == "p-nrv" or "presente" in d:
+        return "compareceu"
+    if s == "ncom" or "não compareceu" in d or "nao compareceu" in d:
+        return "naoCompareceu"
+    if s in ("ls", "lp", "lap") or "licen" in d:
+        return "licenca"
+    if s in ("mis", "ap") or any(k in d for k in ("missão", "missao", "atividade", "representa")):
+        return "missao"
+    if s == "na" or "não citado" in d or "nao citado" in d:
+        return "ignorar"
+    return "outros"
+
+
+def resumir_presenca(c: Counter) -> dict:
+    """Comparecimento do senador às votações nominais em que tem registro. Dispositivo não aplicável não entra na base."""
+    base = sum(n for k, n in c.items() if k != "ignorar")
+    return {"votacoes": base, **{k: c[k] for k in ("compareceu", "naoCompareceu", "licenca", "missao", "outros") if c[k]}}
 
 
 def gerar_senadores() -> None:
@@ -113,6 +202,7 @@ def gerar_senadores() -> None:
 
     por_id = {str(s["id"]): s for s in senadores}
     resumo, votos_por_sen, primeira = [], defaultdict(dict), {}
+    presenca = defaultdict(Counter)
     for v in votacoes:
         contagem = Counter(x[1] for x in v["votos"])
         placar = {k: n for k, n in contagem.items() if k != "ausente"}
@@ -147,6 +237,7 @@ def gerar_senadores() -> None:
                 # fora do exercício hoje: sem ficha no site para ligar
                 **({} if sen else {"anterior": True}),
             })
+            presenca[sid][categoria_presenca(t, resto[0] if resto else "")] += 1
             if sid not in primeira or v["data"] < primeira[sid]:
                 primeira[sid] = v["data"]
         salvar(SAIDA / "votacao_senado" / f"{v['id']}.json", {
@@ -165,6 +256,7 @@ def gerar_senadores() -> None:
             "votos": [{"id": v["id"], "voto": votos_por_sen[sid].get(v["id"], "ausente")}
                       for v in resumo if desde and v["data"] >= desde],
             "proposicoes": propostas,
+            **({"presenca": resumir_presenca(presenca[sid])} if presenca.get(sid) else {}),
             # sem o arquivo (coleta falhou) o site mostra só o link para o Portal da Transparência
             **({"despesas": resumir_despesas(ceaps["ano"], ceaps["itens"].get(sid, []))} if ceaps else {}),
         })
@@ -242,6 +334,10 @@ def main():
     total_nominais = len(votacoes)
     resumo_deps = []
     eleicoes_deps = gerar_politicos.eleicao_deputados(deputados)
+    totais_gasto = {did: round(sum(i["valor"] for i in d["despesas"]["itens"]), 2) for did, d in deputados.items()}
+    gastos_por_uf = defaultdict(list)
+    for did, d in deputados.items():
+        gastos_por_uf[d["uf"]].append(totais_gasto[did])
     for did, d in deputados.items():
         itens = d["despesas"]["itens"]
         por_tipo = Counter()
@@ -251,9 +347,13 @@ def main():
             por_tipo[i["tipo"] or "Outros"] += i["valor"]
             por_mes[i["mes"]] += i["valor"]
             fornecedores[i["fornecedor"] or "Não informado"] += i["valor"]
-        total_gasto = round(sum(por_tipo.values()), 2)
+        total_gasto = totais_gasto[did]
         votos = votos_por_dep.get(did, [])
         votou = sum(1 for x in votos if x["voto"] in ("sim", "nao", "abstencao", "art17"))
+        proposicoes = [juntar_autoria(juntar_detalhe(p, detalhes.get(str(p["id"]))), autorias.get(str(p["id"])), str(did), partidos)
+                       for p in d["proposicoes"]]
+        autoria = resumir_autoria(proposicoes)
+        da_uf = gastos_por_uf[d["uf"]]
 
         salvar(SAIDA / "deputado" / f"{did}.json", {
             "id": did, "nome": d["nome"], "nomeCivil": d.get("nomeCivil"),
@@ -262,8 +362,7 @@ def main():
             "nascimento": d.get("nascimento"),
             "naturalidade": ", ".join(x for x in (d.get("municipioNascimento"), d.get("ufNascimento")) if x),
             "escolaridade": d.get("escolaridade"), "redesSociais": d.get("redesSociais", []),
-            "proposicoes": [juntar_autoria(juntar_detalhe(p, detalhes.get(str(p["id"]))), autorias.get(str(p["id"])), str(did), partidos)
-                              for p in d["proposicoes"]],
+            "proposicoes": proposicoes, "autoria": autoria,
             "votos": votos,
             "totalVotacoes": total_nominais, "eleicao": eleicoes_deps.get(did), "condicao": d.get("condicaoEleitoral"),
             "despesas": {
@@ -272,6 +371,9 @@ def main():
                 "porMes": sorted(([k, round(v, 2)] for k, v in por_mes.items())),
                 "fornecedores": [[k, round(v, 2)] for k, v in fornecedores.most_common(10)],
                 "recentes": itens[:30],
+                "maiores": maiores_notas(itens),
+                "mediaUF": {"uf": d["uf"], "media": round(sum(da_uf) / len(da_uf), 2), "deputados": len(da_uf)},
+                "limite": limite_cota(d["uf"], itens),
             },
             "coletadoEm": d.get("coletadoEm"),
         })
@@ -279,6 +381,8 @@ def main():
             "id": did, "nome": d["nome"], "partido": d["partido"], "uf": d["uf"],
             "foto": d.get("foto"), "proposicoes": len(d["proposicoes"]),
             "gasto": total_gasto, "votou": votou, "votacoes": total_nominais,
+            "proprias": autoria["proprias"], "aprovadasProprias": autoria["aprovadasProprias"],
+            "suprapartidarios": autoria["suprapartidarios"], "autoriaColetada": autoria["autoriaColetada"],
         })
 
     resumo_deps.sort(key=lambda x: x["nome"])

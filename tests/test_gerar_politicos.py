@@ -43,3 +43,39 @@ def test_cargos_atuais_existem():
     for cargos in g.MANDATO_ATUAL.values():
         assert cargos <= set(g.CARGOS)
     assert g.MUNICIPAIS <= set(g.CARGOS)
+
+
+def test_perfil_eleitos_usa_as_mesmas_posicoes_do_eleitorado():
+    eleitos = [
+        {"genero": "FEMININO", "nascimento": "1990-05-01", "instrucao": "Superior completo", "corRaca": "Parda", "ocupacao": "ADVOGADO"},
+        {"genero": "MASCULINO", "nascimento": "1950-01-01", "instrucao": "Ensino médio incompleto", "corRaca": "Branca", "ocupacao": "Advogado"},
+        {"genero": "MASCULINO", "nascimento": None, "instrucao": "Lê e escreve"},
+    ]
+    p = g.perfil_eleitos(eleitos, 2022)
+    assert p["total"] == 3 and p["genero"] == [2, 1]
+    assert p["faixas"] == [0, 0, 1, 0, 0, 0, 1, 0]
+    assert p["instrucao"] == [0, 1, 0, 0, 1, 0, 0, 1]
+    assert p["ocupacoes"] == [("Advogado", 2)] and dict(p["raca"]) == {"Parda": 1, "Branca": 1}
+
+
+def test_nivel_instrucao():
+    assert g.nivel_instrucao("Ensino fundamental completo") == 3
+    assert g.nivel_instrucao("Superior incompleto") == 6
+    assert g.nivel_instrucao("Não informado") is None
+
+
+def test_custo_do_voto_e_patrimonio(tmp_path, monkeypatch):
+    e = {"votos": [{"votos": 100}, {"votos": 50}]}
+    assert g.custo_do_voto(e, {"receitas": 300.0}) == 2.0
+    assert g.custo_do_voto(e, None) is None
+    assert g.custo_do_voto({"votos": []}, {"receitas": 10.0}) is None
+    monkeypatch.setattr(g, "BRUTO", tmp_path)
+    monkeypatch.setattr(g, "_CUSTOS", {})
+    for ano, cargo, total in ((2018, "SENADOR", 100.0), (2022, "DEPUTADO FEDERAL", 300.0)):
+        (tmp_path / "tse" / str(ano)).mkdir(parents=True)
+        (tmp_path / "tse" / str(ano) / "SP.json").write_text(
+            '[{"nome": "José da Silva", "nascimento": "1970-01-01", "cargo": "%s", "totalBens": %s, "uf": "SP"},'
+            '{"nome": "José da Silva", "nascimento": "1980-01-01", "cargo": "%s", "totalBens": 1.0, "uf": "SP"}]' % (cargo, total, cargo), encoding="utf-8")
+    atual = {"nome": "JOSE DA SILVA", "nascimento": "1970-01-01"}
+    assert g.patrimonio_de(atual) == [[2018, "SENADOR", 100.0], [2022, "DEPUTADO FEDERAL", 300.0]]
+    assert g.patrimonio_de({"nome": "Outra", "nascimento": "1970-01-01"}) is None

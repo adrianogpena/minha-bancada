@@ -123,6 +123,15 @@ Status: ✅ OK · ❌ ERRO (resposta com falha ou fora do ar) · ❔ não testad
 | rj_ordemdia | Assembleias (estaduais) | https://alerjln1.alerj.rj.gov.br/ordemdia.nsf/presint?OpenForm | scripts/coletar_estadual_rj.py | ❔ não testado | — | o código usa http://; a tabela exige https |
 | mg_site | Assembleias (estaduais) | https://www.almg.gov.br/transparencia/prestacao-de-contas/deputados/verba-indenizatoria/ | scripts/coletar_estadual_mg.py | ❔ não testado | — | ainda não verificado |
 | mg_dadosabertos | Assembleias (estaduais) | https://dadosabertos.almg.gov.br/api/v2 | scripts/coletar_estadual_mg.py | ❔ não testado | — | ainda não verificado |
+| go_portal | Assembleias (estaduais) | https://portal.al.go.leg.br/deputados/em-exercicio | scripts/coletar_estadual_go.py | ❔ não testado | 2026-10-22 | HTML no servidor; lista e ficha (/deputados/perfil/<id>) com partido, e-mail, nome civil e foto |
+| go_transparencia | Assembleias (estaduais) | https://transparencia.al.go.leg.br/api/transparencia/verbas_indenizatorias?ano=2026&mes=8 | scripts/coletar_estadual_go.py | ❔ não testado | 2026-10-22 | API JSON: verbas, remuneracoes (só 2026), diarias, requerimentos (até 2023) e votacoes.json?tipo=detalhes |
+| pr_site | Assembleias (estaduais) | https://www.assembleia.pr.leg.br/deputados/conheca | scripts/coletar_estadual_pr.py | ❔ não testado | 2026-10-22 | HTML; lista de deputados |
+| pr_transparencia | Assembleias (estaduais) | https://transparencia.assembleia.pr.leg.br/api/remuneracao | scripts/coletar_estadual_pr.py | ❔ não testado | 2026-10-22 | API JSON: remuneração, diárias e presença |
+| pr_webservices | Assembleias (estaduais) | https://webservices.assembleia.pr.leg.br/api/public/proposicao/filtrar | scripts/coletar_estadual_pr.py | ❔ não testado | 2026-10-22 | POST JSON de proposições; o código usa http://, a tabela exige https; autor só por nome |
+| pr_consultas | Assembleias (estaduais) | https://consultas.assembleia.pr.leg.br/#/pesquisa-legislativa | scripts/coletar_estadual_pr.py | ❔ não testado | 2026-10-22 | só link de fonte; ressarcimento atrás de reCAPTCHA (bloqueado) |
+| sp_dados_abertos | Assembleias (estaduais) | https://www.al.sp.gov.br/repositorioDados/ | scripts/coletar_estadual_sp.py | ❔ não testado | 2026-10-22 | XML/ZIP: deputados, despesas de gabinete, proposituras e autores; folha de subsídio em HTML |
+| sp_legis_api | Assembleias (estaduais) | https://legis-api-portal-prd.al.sp.gov.br | scripts/coletar_estadual_sp.py | ❔ não testado | 2026-10-22 | API JSON de presença |
+| sp_legis | Assembleias (estaduais) | https://www3.al.sp.gov.br/legis/ | scripts/coletar_estadual_sp.py | ❔ não testado | 2026-10-22 | só link de fonte |
 
 ## Observações sobre os erros
 
@@ -130,4 +139,4 @@ Status: ✅ OK · ❌ ERRO (resposta com falha ou fora do ar) · ❔ não testad
 - **tse_votacao_secao_2024** e **tse_fotos_2024**: o TSE não publica esses arquivos para 2024 (só 2022); os coletores avisam e seguem.
 - **tse_divulgacandcontas**: responde 403 a clientes automatizados; é só link para o navegador (pode funcionar para pessoas).
 - **sapl_*_PB (Assembleia da Paraíba)**: o servidor não responde (timeout de 60 s).
-
+- **Assembleias estaduais bloqueadas ou fora do ar (2026-10-22)**: `www.al.ap.leg.br`, `www.cl.df.gov.br`, `www.al.es.gov.br` e `sistemas.al.ma.leg.br` dão timeout de qualquer ferramenta (sem coletor). `sapl.al.rr.leg.br` responde 403 a clientes automatizados; `albalegis.nopapercloud.com.br` (BA) dá 403 do Cloudflare; `sgpl.consulta.al.ms.gov.br` (MS) pede captcha; `api-transparencia.al.rn.leg.br` (RN) exige token Bearer; `consultas.assembleia.pr.leg.br` (PR) usa reCAPTCHA; `aleselegis.al.se.leg.br` e `www.al.mt.gov.br` não respondem. São só links de fonte ou hosts não coletados.

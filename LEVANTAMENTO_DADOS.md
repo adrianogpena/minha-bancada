@@ -2,12 +2,14 @@
 
 Estados cujas Assembleias Legislativas ainda não coletamos. Cada tópico guarda o que já foi apurado e o próximo passo, para uma nova sessão continuar sem refazer a pesquisa. Ideias de funcionalidade ficam em `FUTURAS_IMPLEMENTACOES.md`.
 
-**Já coletados** (SAPL, `scripts/coletar_estaduais.py`, dicionário `ASSEMBLEIAS`): AC, AL, AM, PB, PI, RO, TO.
-**Faltam:** AP, BA, CE, DF, ES, GO, MA, MG, MS, MT, PA, PE, PR, RJ, RN, RR, RS, SC, SE, SP.
+**Já coletados** (SAPL, `scripts/coletar_estaduais.py`, dicionário `ASSEMBLEIAS`): AC, AL, AM, PB, PI, RO, TO. Fora do SAPL, um módulo `scripts/coletar_estadual_<uf>.py` por UF: BA, CE, GO, MG, MS, MT, PA, PE, PR, RJ, RN, RR, RS, SC, SE e SP (o que cada um coleta e o que ficou de fora está no tópico da UF).
+**Faltam:** AP, DF, ES, MA (sites das Assembleias sem resposta desta rede em 2026-10-22).
 
 Para cada estado, apurar: lista de deputados, proposições (autoria), votações nominais, presença, cota/verba e remuneração. Antes de escrever coletor, conferir se a Assembleia usa SAPL (`https://sapl.al.<uf>.leg.br/api/parlamentares/legislatura/?page_size=1`); se usar, basta incluir o host em `ASSEMBLEIAS`. Registrar endpoint novo em `ENDPOINTS.md` e o conjunto no `CHANGELOG.md`.
 
 ## PR: Paraná (apurado em 2026-10-22)
+
+**Atualização (2026-10-22):** coletor `scripts/coletar_estadual_pr.py` feito: deputados, remuneração, diárias (por nome civil), presença e proposições (autor só por nome). Ressarcimento segue bloqueado (reCAPTCHA); votações nominais só em PDF por sessão; passagens e cartões não trazem o deputado.
 
 Portal: `https://transparencia.assembleia.pr.leg.br/` (acessível por `curl` com User-Agent de navegador, sem bloqueio). Não usa SAPL.
 
@@ -43,6 +45,8 @@ Para cada um: conferir SAPL (comando acima); se não for, achar o portal de tran
 
 ### AP: Amapá
 
+**Atualização (2026-10-22):** nova tentativa (g13), mesmo resultado: `www.al.ap.leg.br` dá timeout no curl e no Firefox, `sapl.al.ap.leg.br` não resolve e o Wayback responde HTTP 403 "Web Site Blocked" (bloqueio da rede). Sem coletor; o script seria `scripts/coletar_estadual_ap.py`.
+
 Apuração de 2026-10-22: **nada obtido**, site da Assembleia inacessível. Repetir as tentativas abaixo no futuro.
 
 | URL tentada | Ferramenta | Resultado em 2026-10-22 |
@@ -58,6 +62,8 @@ Apuração de 2026-10-22: **nada obtido**, site da Assembleia inacessível. Repe
 
 Próximos passos: repetir as URLs acima; abrir a cópia do Wayback no Firefox (curl e WebFetch não passam); procurar o portal de transparência e dados abertos por busca; os dados dos deputados estaduais (nome, partido, votos) já vêm do TSE.
 ### BA: Bahia (apurado em 2026-10-22)
+
+**Atualização (2026-10-22):** coletor `scripts/coletar_estadual_ba.py` feito: deputados, verba (planilha `verbas-idenizatorias-excel?ano=`, a lista HTML limita a 20 por página), proposições e emendas (CKAN, certificado sem intermediário). NoPaper dá 403 do Cloudflare também no Firefox (votações, presença e API de dados abertos bloqueados). `ordem-do-dia` e `ativ-legislat` não trazem votação nominal nem presença; `/sessoes-plenarias` dá 404; `robots.txt` dá 404. Diárias: o portalrh (`/transparencia-troca/0`) só lista servidores; remuneração dos deputados só em PDF.
 
 Portal da Assembleia: `https://www.al.ba.gov.br/` (acessível por `curl` com User-Agent de navegador). Não usa SAPL (`sapl.al.ba.leg.br` não resolve). O sistema legislativo é o NoPaper (`albalegis.nopapercloud.com.br`), **atrás de Cloudflare: HTTP 403 "Sorry, you have been blocked"**, inclusive a página de dados abertos e a API. Não contornar.
 
@@ -83,6 +89,8 @@ Próximos passos:
 5. Verificar `portalrh.alba.ba.gov.br` (remuneração por deputado/gabinete).
 ### CE: Ceará (apurado em 2026-10-22)
 
+**Atualização (2026-10-22):** coletor `scripts/coletar_estadual_ce.py` feito (deputados, VDP, votações nominais, projetos, remuneração, diárias). Remuneração: `/gestao-de-pessoas/pessoal/csv?mes=MM&ano=AAAA` (CSV cp1252, linhas CATEGORIA=DEPUTADOS). Diárias: `/despesas/despesas-diarias?ano=AAAA&export=csv` (UTF-8, quase só servidores). Votações: lista estática em `transparencia.al.ce.gov.br`; `votacaoNominalcsv` só traz PDF; o XLSX é UTF-8. Proposições em UTF-8. Emendas: só o quadro consolidado da LOA, sem arquivo. Presença: não existe.
+
 Portal: `https://transparencia.al.ce.gov.br/` (dados desde 2021). Acessível por `curl` com User-Agent de navegador, `robots.txt` sem restrição. Não usa SAPL. Site institucional: `https://www.al.ce.gov.br/`.
 
 | Dado | Onde | Acesso |
@@ -107,6 +115,8 @@ Próximos passos:
 5. Se os passos 1 a 3 forem estáveis: `scripts/coletar_ce.py` (cache em `dados/estaduais/CE/`), amostras em `tests/fixtures/contratos/`, e registrar em `ENDPOINTS.md` e `CHANGELOG.md`.
 ### DF: Distrito Federal (Câmara Legislativa)
 
+**Atualização (2026-10-22):** nova tentativa (g13), mesmo resultado: `www.cl.df.gov.br` dá timeout no curl e no Firefox e `sapl.cl.df.gov.br` não resolve (a CLDF não usa SAPL nesse endereço). Sem coletor; o script seria `scripts/coletar_estadual_df.py`.
+
 Apuração de 2026-10-22: **nada obtido**, site da CLDF inacessível (teste manual do usuário no navegador também falhou). Repetir as tentativas abaixo no futuro.
 
 | URL tentada | Ferramenta | Resultado em 2026-10-22 |
@@ -117,6 +127,8 @@ Apuração de 2026-10-22: **nada obtido**, site da CLDF inacessível (teste manu
 | `www.cl.df.gov.br` | nslookup | DNS resolve (`189.84.137.29`, `179.124.14.95`), servidor não responde |
 
 ### ES: Espírito Santo (Assembleia Legislativa, ALES)
+
+**Atualização (2026-10-22):** nova tentativa (g13), mesmo resultado: `www.al.es.gov.br/Transparencia` e `/DadosAbertos/Remuneracao` dão timeout. Sem coletor; o script seria `scripts/coletar_estadual_es.py` (não `coletar_es.py`).
 
 Apuração de 2026-10-22: **nenhum dado obtido**, o site da ALES não responde a partir desta rede. Repetir as tentativas no futuro (ou de outra rede/navegador).
 
@@ -149,6 +161,8 @@ Próximos passos:
 
 ### GO: Goiás
 
+**Atualização (2026-10-22):** coletor `scripts/coletar_estadual_go.py` feito: deputados, verba indenizatória 2023-2026, remuneração (a API só tem 2026), diárias, requerimentos (a API só lista até 2023) e votações nominais (`votacoes.json?tipo=detalhes&ano=`, um registro por voto). Proposições (projetos de lei) e presença: sem coleta (a API só traz datas e pauta das sessões); emendas não existem na fonte.
+
 Apuração de 2026-10-22 em `https://transparencia.al.go.leg.br/` (Transparência Alego). A página inicial é uma SPA (AngularJS) que só mostra o aviso de cookies no HTML; **os dados saem de uma API JSON pública, sem autenticação nem captcha**, descoberta no bundle `/assets/application.transparencia-*.js`. Qualquer caminho do site devolve o mesmo HTML (roteamento no cliente), então só os `/api/...` valem. `robots.txt` bloqueia apenas as páginas HTML `/prestacao-de-contas/gestao-de-pessoas/quadro-de-remuneracao` (a API não é citada).
 
 Base: `https://transparencia.al.go.leg.br/api/transparencia/`. Testado com curl (HTTP 200, `application/json`):
@@ -179,6 +193,8 @@ Próximos passos:
 3. Se seguir: `scripts/coletar_go.py`, amostras em `tests/fixtures/contratos/`, `ENDPOINTS.md` e `CHANGELOG.md`.
 ### MA: Maranhão (Assembleia Legislativa, ALEMA; apurado em 2026-10-22)
 
+**Atualização (2026-10-22):** nova tentativa (g13), mesmo resultado: `sistemas.al.ma.leg.br` e `www.al.ma.leg.br/sitealema/` dão timeout. Sem coletor; o script seria `scripts/coletar_estadual_ma.py` (não `coletar_ma.py`).
+
 **Acesso bloqueado desta rede.** `www.al.ma.leg.br` e `sistemas.al.ma.leg.br` resolvem para 45.238.236.197, mas a porta 443 não responde (WebFetch: `ECONNREFUSED`; curl: timeout após 20 s). Nada foi lido de:
 - `https://sistemas.al.ma.leg.br/transparencia/index.html` (portal de transparência)
 - `https://www.al.ma.leg.br/sitealema/` (site institucional)
@@ -191,6 +207,8 @@ Próximos passos:
 3. Se acessível: `scripts/coletar_ma.py`, amostras em `tests/fixtures/contratos/`, `ENDPOINTS.md` e `CHANGELOG.md`.
 
 ### MG: Minas Gerais (Assembleia Legislativa, ALMG; apurado em 2026-10-22)
+
+**Atualização (2026-10-22):** coletor `scripts/coletar_estadual_mg.py` feito (deputados, verba 2025+, proposições 2023-2026). Salário, presença e votações nominais não existem na API (Swagger de 528 KB conferido, nenhuma rota). Proposições: paginação por `tp` (máx. 100) e `p`; `p` > 100 dá 400 (corte de 10 mil resultados), por isso a coleta usa janelas mensais `ini`/`fim` AAAAMMDD; texto em `ementa` (PL) ou `assunto` (MSG, OFI); autor é texto. O CSV `verbas-indenizatorias` (16 MB) vem sem valores, emitente e CNPJ: a verba só sai da API por deputado e mês (`.../datas?atual=true` lista os meses fechados). Sobra: ficha completa, comissões, tramitação e verba 2023-2024 (uma constante, ~1 h de coleta).
 
 **Acesso livre: API JSON pública, sem autenticação nem captcha.** `https://www.almg.gov.br/transparencia/inicial/` é só o menu do portal (sem dados). Seções: Assembleia em números, Balanço das atividades, Diário do Legislativo, Licitações, Contratos e convênios, Prestação de contas (`/transparencia/prestacao-de-contas/`), Concursos, Dados abertos. Remuneração, verba indenizatória e gastos de deputados não aparecem no menu inicial; a verba tem página própria: `https://www.almg.gov.br/transparencia/prestacao-de-contas/deputados/verba-indenizatoria/` (não aberta). "Dados abertos" redireciona para `https://dadosabertos.almg.gov.br/`.
 
@@ -219,6 +237,8 @@ Próximos passos:
 
 ### MS: Mato Grosso do Sul (Assembleia Legislativa, ALEMS; apurado em 2026-10-22)
 
+**Atualização (2026-10-22):** coletor `scripts/coletar_estadual_ms.py` feito (CEAP 2023-2026; lista dos eleitos de 2022). Diárias: 2021-2026 sem despesa (CSV vazio). Remuneração só em PDF mensal no portal antigo (`gerdocumento/1201/<ano>`). O SGPL (`sgpl.consulta.al.ms.gov.br`) está bloqueado por captcha. O CSV da CEAP aceita `ano=todos` em `/ceap/exportar-csv`; `/ceap/data?ano=` devolve JSON agregado por deputado, mês e categoria; `consultaservidores` traz só tabelas de salário em documentos.
+
 **Acesso livre; sem captcha nem login.** `https://al.ms.gov.br/Transparencia` é o menu do portal (sem dados). Os links apontam para `www.transparencia.al.ms.gov.br/pages/index.php/...` (portal antigo, em redirecionamento) e para o portal novo `https://transparencia2.al.ms.gov.br/`. Seções do menu: Verbas Indenizatórias (CEAP), Relação Nominal de Servidores (`.../consultaservidores`), Diárias (`.../consultadiarias`), Remuneração Parlamentares (`.../gerdocumento/1200`, categoria 1201), Atividade Legislativa (`.../atividadelegislativa`, hoje `transparencia2.../home/atividadelegislativa`), Licitações e Contratos, Execução Orçamentária, LRF, Estagiários. Não há API JSON/XML anunciada.
 
 **CEAP (verba indenizatória): CSV público, fonte principal.** Página: `https://transparencia2.al.ms.gov.br/ceap` (filtros ano 2012 a 2026, mês, categoria; a tabela carrega por JS). Exportação testada com curl (HTTP 200, `text/csv`, UTF-8 com BOM, separador `;`): `https://transparencia2.al.ms.gov.br/ceap/notas/exportar-csv?ano=2026` (~1,4 MB, ~5,2 mil linhas; `ano=2012` devolve ~4,7 mil linhas). Quatro linhas de cabeçalho/metadados, depois uma linha em branco e as colunas: `Deputado;Ano;Mês;Categoria;CPF/CNPJ;Fornecedor;Documento;Emissão;Valor (R$);Comprovante`. O `Comprovante` é link para o PDF da nota (`http://www.transparencia.al.ms.gov.br/arquivo/...pdf`): dá a fonte por lançamento. Parâmetros de mês/deputado/categoria existem no formulário (nomes não confirmados). 14 categorias (combustíveis, locomoção, divulgação, imóvel de apoio, consultorias, software/internet, segurança, material de expediente, diárias, material de consumo, auxílios alimentação e transporte, equipamentos). Total de 2026 na página: R$ 11.692.887,03.
@@ -242,6 +262,8 @@ Próximos passos:
 
 ### MT: Mato Grosso (Assembleia Legislativa, ALMT; apurado em 2026-10-22)
 
+**Atualização (2026-10-22):** coletor `scripts/coletar_estadual_mt.py` feito (deputados, remuneração e diárias 2023-2026). A API do Elotech é `https://almt.eloweb.net/portaltransparencia-api/api/` (o portal usa esse prefixo), pública com os cabeçalhos `entidade` e `exercicio`; `/verbas`, `/cotas-parlamentares` e `/emendas-parlamentares` não têm dado. `www.al.mt.gov.br` segue sem responder.
+
 **`https://www.al.mt.gov.br/transparencia/` não respondeu:** WebFetch falhou e o curl deu timeout (20 s) em `www.al.mt.gov.br` e `al.mt.gov.br`, do meu ambiente. Conteúdo e links do menu não verificados; abrir no Firefox.
 
 **Portal de transparência (Elotech): `https://almt.eloweb.net/portaltransparencia/1/`.** Livre, sem login; só carrega um SPA React (a página tem o reCAPTCHA `google.com/recaptcha/api.js` carregado, uso não confirmado). Nenhum dado vem no HTML. Pelo bundle JS (`static/js/main.d260357a.chunk.js`) as rotas relevantes são:
@@ -264,6 +286,8 @@ Próximos passos:
 
 ### PA: Pará (Assembleia Legislativa, ALEPA; apurado em 2026-10-22)
 
+**Atualização (2026-10-22):** coletor `scripts/coletar_estadual_pa.py` feito (deputados e presença, verba indenizatória, verba de gabinete, diárias). O conteúdo carregado depois do HTML vem de iframes: verba indenizatória e diárias são dashboards Quartertec com API JSON; verba de gabinete e pessoal são o SIGEP (PHP). Frequência filtra por POST de callback. Emendas vão ao portal do Estado; estrutura remuneratória é PDF. Ligação com o TSE: 37 de 41.
+
 **Portal de transparência: `https://alepa.pa.gov.br/Transparencia/Index`.** Livre, sem login (plataforma ASP.NET com DevExpress; fornecedor `alepa.quartertec.com.br` nas fotos). Menu relevante (todas sob `/Transparencia/Page/`):
 - `VerbaIndenizatoria` e `VerbadeGabinete` (não há "cota parlamentar" com esse nome);
 - `Frequencia`; `RemuneracaodePessoal`, `QuadrodePessoal`, `EstruturaRemuneratoriaDeputados`, `EstruturaRemuneratoriaServidores`;
@@ -285,6 +309,8 @@ Próximos passos:
 4. Se seguir: `scripts/coletar_pa.py`, amostras em `tests/fixtures/contratos/`, `ENDPOINTS.md` e `CHANGELOG.md`.
 
 ### PE: Pernambuco (Assembleia Legislativa, ALEPE; apurado em 2026-10-22)
+
+**Atualização (2026-10-22):** coletor `scripts/coletar_estadual_pe.py` feito (deputados, verba 2023-2026, projetos, indicações e requerimentos). Tipo P = pedido e C = complemento (confirmado no bundle). `leg=-16` é a legislatura atual; `parlamentares` (com a barra final) dá os 49 em exercício, 2 deles (Cayo Albino, Junior Matuto) fora de `leg=-16`. `?ano=` funciona nas proposições. `legis.alepe.pe.gov.br` só tem login: presença e votações não são públicas.
 
 **Portal de transparência: `https://transparencia.alepe.pe.gov.br/`.** Livre, sem login. É uma SPA React (o WebFetch só recebe o título); rotas e endpoints saíram do bundle JS (`/static/js/main.*.js`). Seções: `/financas/*` (despesas, contratos, licitações, `verbas-indenizatorias`, `remuneracao-ajuda-deputados`, obras, convênios), `/pessoal/*` (servidores efetivos, comissionados, cedidos, lotação, remuneração), `/proposicoes`, `/legislacao`, `/ouvidoria`. Não achei seção de frequência/presença nem de votações nominais.
 
@@ -311,6 +337,8 @@ Próximos passos:
 
 ### RJ: Rio de Janeiro (Assembleia Legislativa, ALERJ; apurado em 2026-10-22)
 
+**Atualização (2026-10-22):** coletor `scripts/coletar_estadual_rj.py` feito: presença (Lotus Notes, só 2026) e emendas impositivas (XLSX em /121). Diárias, viagens, folha e benefícios só em PDF; /134 só painéis; DOCIGP, projetos e votações sem fonte aberta achada. Ligação com o TSE: 70 de 70.
+
 **Portal de transparência: `https://transparencia.alerj.rj.gov.br/`.** Livre, sem login. Organizado em relatórios `https://transparencia.alerj.rj.gov.br/section/report/<n>`; só li o índice, não abri cada relatório (formato de exportação e API não confirmados; o índice não cita CSV nem dados abertos).
 - Deputados: lista de presença `/17`; benefícios `/33`; subsídio `/62`; folha de pagamento `/73`; DOCIGP (descentralização orçamentária) `http://docigp.alerj.rj.gov.br`; Resolução 178/2019, art. 2º `/107`; sinopse da atividade legislativa (Anuário) `/114`.
 - Viagens autorizadas `/66`; diárias `/119`.
@@ -328,6 +356,8 @@ Próximos passos:
 4. Se seguir: `scripts/coletar_rj.py`, amostras em `tests/fixtures/contratos/`, `ENDPOINTS.md` e `CHANGELOG.md`.
 
 ### RN: Rio Grande do Norte (Assembleia Legislativa, ALRN; apurado em 2026-10-22)
+
+**Atualização (2026-10-22):** coletor `scripts/coletar_estadual_rn.py` feito. O portal de dados é `api-transparencialegislativa.al.rn.leg.br` (API JSON aberta com parlamentares, projetos, presença e votos nominais), não um JS opaco. As cotas estão na API `api-transparencia.al.rn.leg.br`, que exige token Bearer (embutido no JS): registrado como bloqueado, aguardando decisão do usuário.
 
 **Portal de transparência: `https://transparencia.al.rn.leg.br/`.** Livre, sem login. Só li o texto das páginas (o conteúdo é montado por formulário; formato de exportação, API e tecnologia não confirmados).
 - Parlamentares: só **Cotas Parlamentares** `https://transparencia.al.rn.leg.br/verbas` (CEAP, 63ª Legislatura). Consulta por formulário com Legislatura, Ano (padrão 2026), Mês e Parlamentar; botão "PESQUISAR". Não vi valores, links de nota fiscal, exportação CSV/PDF nem os anos anteriores disponíveis.
@@ -347,6 +377,8 @@ Próximos passos:
 
 ### RR: Roraima (Assembleia Legislativa, ALE-RR; apurado em 2026-10-22)
 
+**Atualização (2026-10-22):** coletor `scripts/coletar_estadual_rr.py` feito (deputados, verba e diárias). Verba por deputado e mês em ODT/PDF (set/2025 em diante) e diárias em XLSX/ODS, ambos listados pelo plugin WP Display Files; `sapl.al.rr.leg.br` existe mas dá 403; não há remuneração por deputado; emendas com link vazio.
+
 **Portal de transparência: `https://transparencia.al.rr.leg.br/`.** Só li o texto do índice (provavelmente WordPress, feito pela Arcus Consultoria; login, formato de exportação e API não confirmados; não há menção a dados abertos).
 - Execução orçamentária e financeira (base `https://transparencia.al.rr.leg.br/execucao-orcamentaria-e-financeira/`): `repasses-ale-intro/`, `despesas/`, `diarias-passagens-intro/`, `contratos-intro/`, `licitacoes-intro/`, `verbas-indenizatorias-intro/`, `gestao-fiscal-intro/`, `gestao-de-pessoal-intro/` (subsídio, vencimento e remuneração). Emendas Parlamentares: link vazio (`#`).
 - Planejamento e prestação de contas: LOA, parcerias, prestação de contas; FUNESPLE (fundo do Legislativo): receitas, gestão fiscal, prestação de contas.
@@ -363,6 +395,8 @@ Próximos passos:
 
 ### RS: Rio Grande do Sul (Assembleia Legislativa, ALRS; apurado em 2026-10-22)
 
+**Atualização (2026-10-22):** coletor `scripts/coletar_estadual_rs.py` feito (lista dos eleitos de 2022 e diárias). As diárias da Assembleia saem dos CSV do CKAN `dados.rs.gov.br/dataset/diarias-do-estado`; a tela `/relatorios/externo/diarias-assembleia/dados/` é Power BI com token de embed. `www.al.rs.gov.br` (e www2, ww3) não responde. Próximos passos: tentar `al.rs.gov.br` pelo Firefox e ver se a folha estadual do CKAN traz deputados.
+
 **Portal do Estado: `https://www.transparencia.rs.gov.br/`** (mantido pela CAGE, não pela Assembleia). Só li o texto da página `https://www.transparencia.rs.gov.br/relatorios/externo/diarias-assembleia/dados/` ("Diárias Assembleia", Relatórios > Externo): a leitura devolveu só título e navegação, sem colunas, formato (CSV/JSON/API), período, atualização nem links de download (conteúdo provavelmente carregado por JavaScript; não confirmado). O portal tem seção "Dados abertos" no menu (não aberta).
 - Parlamentares: não vi cota, presença, votações nem projetos nessas páginas.
 
@@ -375,6 +409,8 @@ Próximos passos:
 4. Se seguir: `scripts/coletar_rs.py`, amostras em `tests/fixtures/contratos/`, `ENDPOINTS.md` e `CHANGELOG.md`.
 
 ### SC: Santa Catarina (Assembleia Legislativa, ALESC; apurado em 2026-10-22)
+
+**Atualização (2026-10-22):** coletor `scripts/coletar_estadual_sc.py` feito (deputados, remuneração, gabinetes, diárias e presença). Dados abertos são CSV por ano (gabinetes, diárias, despesas, pagamentos, receitas); deputados e contracheque saem de `/deputados` (HTMX); presença por sessão no e-Legis. Proposições e votações só no e-Legis, sem exportação. Ligação com o TSE: 37 de 41.
 
 **Portal de transparência: `https://transparencia.alesc.sc.gov.br/`.** Só li o texto do índice (formato de exportação e API não confirmados; várias seções mostram "Carregando…", conteúdo provavelmente carregado por JavaScript).
 - Administrativo: estrutura, pessoal (deputados, servidores, terceirizados, estagiários), planos de carreira e salários, licitações, contratos, plano anual de contratações, relatórios de atividades.
@@ -393,6 +429,8 @@ Próximos passos:
 
 ### SE: Sergipe (Assembleia Legislativa, Alese; apurado em 2026-10-22)
 
+**Atualização (2026-10-22):** coletor `scripts/coletar_estadual_se.py` feito, só a lista de deputados (carrossel de `al.se.leg.br`: 24, com partido atual e foto). Verba, diárias e remuneração existem só em PDF mensal (WordPress Download Manager); emendas apontam para Power BI; o Alese Legis não responde.
+
 **Portal da Transparência: `https://al.se.leg.br/portal-da-transparencia/`.** Só li o texto do índice (formato de exportação e API não confirmados; o caminho `/wp-content/` sugere WordPress).
 - Seções (todas sob o portal): despesas, receitas, recursos humanos (folha por cargo/função e nome, efetivos e comissionados), licitações e contratos, obras, orçamentos (LOA, LDO, PPA), relatórios (gestão fiscal, prestação de contas, RREO), emendas parlamentares, estrutura organizacional, diversos (convênios e parcerias), ouvidoria/SIC, IPLESE, LGPD.
 - Espaço do Servidor: contracheque, ficha financeira, informe de rendimentos (acesso restrito).
@@ -408,6 +446,8 @@ Próximos passos:
 4. Se seguir: `scripts/coletar_se.py`, amostras em `tests/fixtures/contratos/`, `ENDPOINTS.md` e `CHANGELOG.md`.
 
 ### SP: São Paulo (Assembleia Legislativa, Alesp; apurado em 2026-10-22)
+
+**Atualização (2026-10-22):** coletor `scripts/coletar_estadual_sp.py` feito: deputados (XML), despesas de gabinete (XML, com CNPJ), folha de subsídio (HTML), presença (API do portal) e proposituras (PL, PLC, PR, PDL, PEC, PCONST). Não coletados: requerimentos, indicações e moções (79 mil documentos); votações nominais (PDF por sessão); diárias e emendas (sem fonte).
 
 **Portal de transparência: `https://www.al.sp.gov.br/transparencia/informacoes/`.** Só li o texto do índice (formato de exportação e API não confirmados; a página só diz que Dados Abertos está "em formato aberto").
 - Atividade parlamentar: projetos (`/propositura`), processos (`/processo`), comissões (`/comissao/comissoes-permanentes`), sessões plenárias (`/sessao-plenaria`), prestação de contas dos deputados com verba de gabinete e CNPJ dos fornecedores (`/deputado/contas/`), subsídios dos deputados (`/alesp/folha-de-pagamento-deputados/`).

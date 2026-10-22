@@ -1,0 +1,48 @@
+{
+ "fonte": "https://transparencia.al.go.leg.br/api/transparencia/diarias",
+ "capturadoEm": "2026-10-22",
+ "amostra": [
+  {
+   "id": 999997571,
+   "ano": 2026,
+   "mes": 9,
+   "data_inicio": "2026-09-26",
+   "data_fim": "2026-09-28",
+   "tipo_solicitacao": "Diária Alego Digital",
+   "trecho": "Goiânia/GO - Rio Verde/GO",
+   "transporte": "",
+   "motivo": "EU, ADEMILSON BATISTA DE SOUZA,  CINEGRAFISTA, COMO SUPORTE, ASSESSORIA E ACOMPANHAMENTO NO SERVIÇO DE COMUNICAÇÃO,\nLOTADO NA DIRETORIA DE GESTÃO DE TV E RADIO, IREI REALIZAR COBERTURA JORNALISTICA NO CAMPEONATO GOIANO DA DIVISÃO DE ACESSO, NO JOGO RIO VERDE X BOM JESUS, NO MUNICÍPIO  DE RIO VERDE,   COM SAIDA NO  DIA 26/09 AS 08:00   E O RETORNO DIA 28/09 ÀS 13H.",
+   "data_pagamento": null,
+   "matricula": 503895591,
+   "beneficiario": "ADEMILSON BATISTA DE SOUZA",
+   "cargo": "TECNICO ADMINISTRATIVO",
+   "quantidade_diaria": "2.5",
+   "valor_unitario_diaria": "370.0",
+   "valor_locomocao": "0.0",
+   "valor_passagem_aerea": "0.0",
+   "outros": null,
+   "total": "925.0"
+  },
+  {
+   "id": 999997583,
+   "ano": 2026,
+   "mes": 9,
+   "data_inicio": "2026-09-29",
+   "data_fim": "2026-10-03",
+   "tipo_solicitacao": "Diária Alego Digital",
+   "trecho": "Goiânia/GO - Porangatu/GO",
+   "transporte": "",
+   "motivo": "A solicitação de diária justifica-se pela necessidade de deslocamento ao município de Porangatu/GO, para participação em palestra em alusão à campanha Outubro Rosa, realizada no âmbito do Projeto de Extensão FACLIBER.\n\nA atividade contará com a representação da Secretaria de Projetos Especiais e da Procuradoria Especial da Mulher da Assembleia Legislativa do Estado de Goiás, contribuindo para a promoção de ações de conscientização, prevenção e cuidado com a saúde da mulher, além do fortalecimento das políticas públicas voltadas à proteção e à garantia de direitos das mulheres goianas.\n\nA participação institucional também possibilitará a aproximação da Assembleia Legislativa com a comunidade local e com instituições parceiras, ampliando o alcance das ações desenvolvidas pela Secretaria e pela Procuradoria Especial da Mulher no interior do Estado.\n\nDessa forma, o deslocamento e a concessão da respectiva diária são necessários para viabilizar a representação institucional e o cumprimento da agenda oficial no município de Porangatu.",
+   "data_pagamento": null,
+   "matricula": 503897548,
+   "beneficiario": "BRUNO NERES NEGRAMES",
+   "cargo": "ASSESSOR NIVEL VIII",
+   "quantidade_diaria": "4.0",
+   "valor_unitario_diaria": "370.0",
+   "valor_locomocao": "0.0",
+   "valor_passagem_aerea": "0.0",
+   "outros": null,
+   "total": "1480.0"
+  }
+ ]
+}

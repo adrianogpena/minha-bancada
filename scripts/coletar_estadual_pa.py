@@ -219,14 +219,6 @@ def meses_ate(hoje: date):
         ano, mes = (ano + 1, 1) if mes == 12 else (ano, mes + 1)
 
 
-def recentes(hoje: date) -> set:
-    achados, ano, mes = set(), hoje.year, hoje.month
-    for _ in range(MESES_RECENTES):
-        achados.add((ano, mes))
-        ano, mes = mes_anterior(ano, mes)
-    return achados
-
-
 def coletar() -> None:
     pasta = comum.DADOS / UF
     hoje = date.today()
@@ -254,10 +246,10 @@ def coletar() -> None:
 
     existente = comum.ler(pasta / "presenca.json", {"itens": []})["itens"]
     guardados = {i["periodo"] for i in existente}
-    itens = [i for i in existente if i["periodo"] not in {f"{a}-{m:02d}" for a, m in recentes(hoje)}]
+    itens = [i for i in existente if i["periodo"] not in {f"{a}-{m:02d}" for a, m in comum.meses_recentes(hoje, MESES_RECENTES)}]
     for ano, mes in meses_ate(hoje):
         periodo = f"{ano}-{mes:02d}"
-        if periodo in guardados and (ano, mes) not in recentes(hoje):
+        if periodo in guardados and (ano, mes) not in comum.meses_recentes(hoje, MESES_RECENTES):
             continue
         pagina = parse_cartoes(consulta_frequencia(s, ano, mes))
         if pagina["totalSessoes"]:

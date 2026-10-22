@@ -1,0 +1,49 @@
+{
+ "fonte": "https://www.al.sp.gov.br/repositorioDados/processo_legislativo/proposituras.zip",
+ "capturadoEm": "2026-10-22",
+ "amostra": {
+  "proposituras": {
+   "1000612728": {
+    "natureza": "2",
+    "ano": 2025,
+    "numero": "21",
+    "ementa": "Dispõe sobre a revalorização das Escalas de Classes e Vencimentos do Quadro da Secretaria da Assembleia Legislativa do Estado de São Paulo e dá outras providências.",
+    "data": "2025-06-11"
+   },
+   "1000686807": {
+    "natureza": "1",
+    "ano": 2026,
+    "numero": "361",
+    "ementa": "Altera a Lei nº 18.176, de 8 de julho de 2025, que institui o Programa de Superação da Pobreza no Estado de São Paulo, para incluir ação específica de apoio ao cuidado familiar da pessoa idosa.",
+    "data": "2026-04-23"
+   },
+   "1000695584": {
+    "natureza": "1",
+    "ano": 2026,
+    "numero": "617",
+    "ementa": "Institui o Programa de Defesa Pessoal e Prevenção à Violência Contra Mulheres, como atividade extracurricular nas unidades da rede pública estadual de ensino.",
+    "data": "2026-06-19"
+   }
+  },
+  "autores": {
+   "1000612728": [
+    [
+     "9761",
+     "Mesa Diretora"
+    ]
+   ],
+   "1000695584": [
+    [
+     "1000000975",
+     "Felipe Franco"
+    ]
+   ],
+   "1000686807": [
+    [
+     "1000001205",
+     "Fábio Faria de Sá"
+    ]
+   ]
+  }
+ }
+}

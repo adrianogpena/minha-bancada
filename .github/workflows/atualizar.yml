@@ -167,17 +167,20 @@ jobs:
           - { id: sapl, ufs: "PB AM AL RO AC PI TO" }   # Assembleias que usam o SAPL (API igual, coleta rápida)
           - { id: ba, ufs: "BA" }
           - { id: ce, ufs: "CE" }
+          - { id: go, ufs: "GO" }
           - { id: mg, ufs: "MG" }
           - { id: ms, ufs: "MS" }
           - { id: mt, ufs: "MT" }
           - { id: pa, ufs: "PA" }
           - { id: pe, ufs: "PE" }
+          - { id: pr, ufs: "PR" }
           - { id: rj, ufs: "RJ" }
           - { id: rn, ufs: "RN" }
           - { id: rr, ufs: "RR" }
           - { id: rs, ufs: "RS" }
           - { id: sc, ufs: "SC" }
           - { id: se, ufs: "SE" }
+          - { id: sp, ufs: "SP" }
     steps:
       - uses: actions/checkout@v5
 
@@ -191,7 +194,7 @@ jobs:
       - name: Marcar o início (só o que for gravado depois disso vai no pacote)
         run: touch "$RUNNER_TEMP/inicio"
 
-      - name: Coletar deputados estaduais (${{ matrix.ufs }})
+      - name: Coletar Assembleias Legislativas (deputados estaduais, ${{ matrix.ufs }})
         # ESTADUAIS_PRAZO_MIN: depois de 25 min o coletor não faz novas requisições, guarda o que já leu e termina; o timeout do passo é só a rede de segurança
         run: python scripts/coletar_estaduais.py ${{ matrix.ufs }}
         env:

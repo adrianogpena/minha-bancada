@@ -21,6 +21,8 @@ import xml.etree.ElementTree as ET
 from concurrent.futures import ThreadPoolExecutor
 from datetime import date
 
+import requests
+
 import estaduais_comum as comum
 
 UF = "PE"
@@ -123,17 +125,9 @@ def verba_do_mes(sessao, id_deputado: str, ano: int, mes: int, rubricas: dict) -
     return itens
 
 
-def recentes(hoje: date) -> set:
-    achados, ano, mes = set(), hoje.year, hoje.month
-    for _ in range(MESES_RECENTES):
-        achados.add((ano, mes))
-        ano, mes = (ano - 1, 12) if mes == 1 else (ano, mes - 1)
-    return achados
-
-
 def verba_do_ano(sessao, deputados: list[dict], ano: int, existentes: list[dict], hoje: date) -> list[dict]:
     rubricas = rubricas_do_ano(sessao, ano)
-    novos = recentes(hoje)
+    novos = comum.meses_recentes(hoje, MESES_RECENTES)
     itens = [i for i in existentes if (ano, i["mes"]) not in novos]
     guardados = {(i["idDeputado"], i["mes"]) for i in itens}
 
@@ -196,40 +190,55 @@ def proposicoes_do_ano(sessao, ano: int, tipo: str) -> list[dict]:
 
 # ---------------------------------------------------------------- coleta
 
+def coletar_proposicoes(s, deputados: list[dict], ano: int, pasta, agora: str) -> None:
+    achadas = {}
+    for tipo in TIPOS_PROPOSICAO:
+        props = proposicoes_do_ano(s, ano, tipo)
+        achadas.update(materias(props, ligar({a for p in props for a in p["autores"]}, deputados), tipo))
+    comum.salvar(pasta / f"materias_{ano}.json", {"coletadoEm": agora, "fonte": PROPOSICOES_PAGINA, "materias": achadas})
+    print(f"PE: {ano} proposições {len(achadas)}")
+
+
 def coletar() -> None:
     pasta = comum.DADOS / UF
     hoje = date.today()
     agora = hoje.isoformat()
     s = comum.sessao()
-    lista = get_json_utf8(s, DEPUTADOS_URL)
-    parlamentares = get_json_utf8(s, PARLAMENTARES_URL)
-    if not lista or not parlamentares:
-        comum.avisar("PE: lista de deputados vazia")
-        return
-    deputados = montar_deputados(lista, parlamentares)
-    comum.salvar(pasta / "deputados.json", {"fonte": PARLAMENTARES_URL, "host": None, "legislatura": "2023-2027", "deputados": deputados})
-    sem_id = [d["nome"] for d in deputados if d["id"].startswith("sem-")]
-    if sem_id:
-        comum.avisar(f"PE: sem id na lista da legislatura (sem verba): {', '.join(sem_id)}")
+    portal_no_ar = True
+    try:
+        deputados = montar_deputados(get_json_utf8(s, DEPUTADOS_URL), get_json_utf8(s, PARLAMENTARES_URL))
+    except Exception as e:
+        # o portal da ALEPE às vezes não aceita conexão (visto no GitHub Actions); a verba vem dele, as proposições não
+        comum.avisar(f"PE: lista de deputados: {type(e).__name__}: {str(e)[:120]}")
+        portal_no_ar = not isinstance(e, requests.ConnectionError)
+        deputados = []
+    if deputados:
+        comum.salvar(pasta / "deputados.json", {"fonte": PARLAMENTARES_URL, "host": None, "legislatura": "2023-2027", "deputados": deputados})
+        sem_id = [d["nome"] for d in deputados if d["id"].startswith("sem-")]
+        if sem_id:
+            comum.avisar(f"PE: sem id na lista da legislatura (sem verba): {', '.join(sem_id)}")
+    else:
+        deputados = (comum.ler(pasta / "deputados.json") or {}).get("deputados") or []
+        if not deputados:
+            comum.avisar("PE: lista de deputados vazia")
+            return
+        comum.avisar("PE: usando a lista de deputados da coleta anterior")
     print(f"PE: {len(deputados)} deputados")
 
     for ano in range(PRIMEIRO_ANO, hoje.year + 1):
         arq = pasta / f"verbas_{ano}.json"
-        existentes = comum.ler(arq, {"itens": []})["itens"]
-        itens = verba_do_ano(s, deputados, ano, existentes, hoje)
-        comum.salvar(arq, {"coletadoEm": agora, "fonte": VERBA_PAGINA, "itens": itens})
-        print(f"PE: {ano} verba {len(itens)} notas")
-        if (pasta / f"materias_{ano}.json").exists() and ano < hoje.year - 1:  # ano fechado há mais de um ano: não muda
-            continue
-        ids_deputados = {}
-        achadas = {}
-        for tipo in TIPOS_PROPOSICAO:
-            props = proposicoes_do_ano(s, ano, tipo)
-            nomes = {a for p in props for a in p["autores"]}
-            ids_deputados = ligar(nomes, deputados)
-            achadas.update(materias(props, ids_deputados, tipo))
-        comum.salvar(pasta / f"materias_{ano}.json", {"coletadoEm": agora, "fonte": PROPOSICOES_PAGINA, "materias": achadas})
-        print(f"PE: {ano} proposições {len(achadas)}")
+        if portal_no_ar and not comum.ano_encerrado(ano, hoje, arq):
+            try:
+                itens = verba_do_ano(s, deputados, ano, comum.ler(arq, {"itens": []})["itens"], hoje)
+                comum.salvar(arq, {"coletadoEm": agora, "fonte": VERBA_PAGINA, "itens": itens})
+                print(f"PE: {ano} verba {len(itens)} notas")
+            except Exception as e:
+                comum.avisar(f"PE: verba {ano}: {type(e).__name__}: {str(e)[:120]}")
+        if not comum.ano_encerrado(ano, hoje, pasta / f"materias_{ano}.json"):
+            try:
+                coletar_proposicoes(s, deputados, ano, pasta, agora)
+            except Exception as e:
+                comum.avisar(f"PE: proposições {ano}: {type(e).__name__}: {str(e)[:120]}")
 
 
 # ---------------------------------------------------------------- contratos

@@ -2,7 +2,8 @@
 Monta, a partir de dados/estaduais/<UF>/ (coletar_estaduais.py), os arquivos
 que o site lê para deputados estaduais:
 
-  site/dados/estadual/<UF>/<id>.json     votos e projetos de um deputado
+  site/dados/estadual/<UF>/<id>.json     votos e projetos de um deputado, mais (quando a coleta tem os
+                                         arquivos) resumos de verba, remuneração, presença, diárias e emendas
   site/dados/votacoes_estadual_<UF>.json lista das votações nominais da Assembleia
 
 Devolve o mapa nome -> (UF, id), que o gerar_politicos usa para ligar a ficha
@@ -33,6 +34,101 @@ def salvar(caminho: Path, obj) -> None:
     caminho.write_text(json.dumps(obj, ensure_ascii=False, separators=(",", ":")), encoding="utf-8")
 
 
+INICIO_LEGISLATURA = 2023
+TOP_FORNECEDORES = 10
+
+
+def numero(x) -> float:
+    return x if isinstance(x, (int, float)) and not isinstance(x, bool) else 0.0
+
+
+def itens_por_deputado(pasta: Path, padrao: str) -> tuple:
+    """{idDeputado: [(ano do arquivo, item)]} dos arquivos <padrao>[_<ano>].json; None no ano do arquivo sem ano."""
+    saida, fonte = defaultdict(list), None
+    for arq in sorted(pasta.glob(padrao)):
+        m = re.search(r"_(\d{4})\.json$", arq.name)
+        ano = int(m.group(1)) if m else None
+        if ano is not None and ano < INICIO_LEGISLATURA:
+            continue
+        env = ler(arq, {})
+        fonte = env.get("fonte") or fonte
+        for it in env.get("itens", []):
+            saida[str(it.get("idDeputado"))].append((ano, it))
+    return saida, fonte
+
+
+def resumo_verba(itens: list, fonte) -> dict:
+    anos = {}
+    for ano, it in itens:
+        a = anos.setdefault(ano, {"total": 0.0, "meses": defaultdict(float), "categorias": defaultdict(float), "fornecedores": defaultdict(float)})
+        v = numero(it.get("valor"))
+        a["total"] += v
+        a["meses"][it.get("mes")] += v
+        a["categorias"][it.get("categoria") or "Sem categoria"] += v
+        if it.get("fornecedor"):
+            a["fornecedores"][(it["fornecedor"], it.get("cnpj"))] += v
+    out = []
+    for ano in sorted(anos, key=lambda x: x or 0):
+        a = anos[ano]
+        forn = sorted(a["fornecedores"].items(), key=lambda kv: -kv[1])[:TOP_FORNECEDORES]
+        out.append({"ano": ano, "total": round(a["total"], 2),
+                    "meses": [{"mes": m, "total": round(t, 2)} for m, t in sorted(a["meses"].items(), key=lambda kv: str(kv[0]))],
+                    "categorias": [{"categoria": c, "total": round(t, 2)} for c, t in sorted(a["categorias"].items(), key=lambda kv: -kv[1])],
+                    "fornecedores": [{"fornecedor": f, "cnpj": c, "total": round(t, 2)} for (f, c), t in forn]})
+    return {"fonte": fonte, "anos": out}
+
+
+def resumo_remuneracao(itens: list, fonte) -> dict:
+    ano, it = max(itens, key=lambda x: (x[0] or 0, numero_mes(x[1].get("mes"))))
+    return {"fonte": it.get("fonte") or fonte, "ano": ano, "mes": it.get("mes"), "bruto": it.get("bruto"),
+            "liquido": it.get("liquido"), "componentes": it.get("componentes")}
+
+
+def numero_mes(m) -> int:
+    try:
+        return int(str(m).split("-")[-1])
+    except ValueError:
+        return 0
+
+
+def resumo_diarias(itens: list, fonte) -> dict:
+    anos = defaultdict(lambda: [0.0, 0])
+    for ano, it in itens:
+        a = anos[ano or int(str(it.get("data") or 0)[:4] or 0)]
+        a[0] += numero(it.get("valor"))
+        a[1] += 1
+    return {"fonte": fonte, "anos": [{"ano": a, "total": round(t, 2), "quantidade": q} for a, (t, q) in sorted(anos.items())]}
+
+
+def resumo_emendas(itens: list, fonte) -> dict:
+    anos = defaultdict(lambda: [0.0, 0.0, 0])
+    for ano, it in itens:
+        a = anos[it.get("ano") or ano]
+        a[0] += numero(it.get("empenhado"))
+        a[1] += numero(it.get("pago"))
+        a[2] += 1
+    return {"fonte": fonte, "anos": [{"ano": a, "empenhado": round(e, 2), "pago": round(p, 2), "quantidade": q} for a, (e, p, q) in sorted(anos.items())]}
+
+
+def resumo_presenca(itens: list, fonte) -> dict:
+    campos = ("periodo", "presente", "ausente", "licenca", "totalSessoes")
+    return {"fonte": fonte, "periodos": sorted(({k: it.get(k) for k in campos} for _, it in itens), key=lambda x: str(x["periodo"]))}
+
+
+def resumos_novos(pasta: Path) -> dict:
+    """{idDeputado: {bloco: resumo}} só com os arquivos que a coleta da UF tem."""
+    blocos = (("verba", "verbas_*.json", resumo_verba), ("remuneracao", "remuneracao_*.json", resumo_remuneracao),
+              ("presenca", "presenca.json", resumo_presenca), ("diarias", "diarias_*.json", resumo_diarias),
+              ("emendas", "emendas_*.json", resumo_emendas))
+    saida = defaultdict(dict)
+    for nome, padrao, f in blocos:
+        por_dep, fonte = itens_por_deputado(pasta, padrao)
+        for pid, itens in por_dep.items():
+            if itens:
+                saida[pid][nome] = f(itens, fonte)
+    return saida
+
+
 def tipo_voto(v: str) -> str:
     return VOTOS.get((v or "").strip().lower(), "outro")
 
@@ -55,7 +151,8 @@ def gerar_assembleia(uf: str, pasta: Path) -> list[dict]:
     info = ler(pasta / "deputados.json")
     if not info:
         return []
-    host = info["host"]
+    host = info.get("host")
+    novos = resumos_novos(pasta)
     deputados = {d["id"]: d for d in info["deputados"]}
     votacoes = ler(pasta / "votacoes.json", {"votacoes": {}})["votacoes"]
     materias_votadas = ler(pasta / "materias_votadas.json", {})
@@ -70,6 +167,7 @@ def gerar_assembleia(uf: str, pasta: Path) -> list[dict]:
             "proposicao": f"{mat['tipo']} {mat['numero']}/{mat['ano']}" if mat else None,
             "ementa": mat.get("ementa") or None, "aprovada": v["aprovada"], "resultadoTexto": v.get("resultado"),
             "placar": placar, "_votos": votos,
+            **({"fonte": v["fonte"]} if v.get("fonte") else {}),
         })
     lista.sort(key=lambda v: (v["data"], v["id"]), reverse=True)
 
@@ -90,7 +188,8 @@ def gerar_assembleia(uf: str, pasta: Path) -> list[dict]:
                 projetos[pid].append({"id": mid, "tipo": m["tipo"], "tipoDescricao": m.get("tipoDescricao"), "numero": m["numero"], "ano": m["ano"],
                                       "dataApresentacao": m.get("dataApresentacao"), "ementa": m["ementa"], "situacao": m["situacao"],
                                       "emTramitacao": m.get("emTramitacao"), "linkTexto": m.get("linkTexto"),
-                                      **({"coautores": coautores} if coautores else {})})
+                                      **({"coautores": coautores} if coautores else {}),
+                                      **({"fonte": m["fonte"]} if m.get("fonte") else {})})
 
     for pid in deputados:
         desde = primeira.get(pid)  # antes do primeiro voto o deputado pode nem estar em exercício
@@ -101,6 +200,8 @@ def gerar_assembleia(uf: str, pasta: Path) -> list[dict]:
             "votos": [{"id": v["id"], "voto": votos_dep[pid].get(v["id"], "ausente")}
                       for v in resumo if desde and v["data"] >= desde],
             "proposicoes": meus,
+            **({"fonte": deputados[pid]["fonte"]} if deputados[pid].get("fonte") else {}),
+            **novos.get(str(pid), {}),
         })
     gerar_governo(uf, pasta, host)
     print(f"Gerado: {uf}, {len(deputados)} deputados, {len(resumo)} votações nominais, "

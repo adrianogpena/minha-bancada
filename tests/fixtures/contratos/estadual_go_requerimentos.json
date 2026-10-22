@@ -1,0 +1,40 @@
+{
+ "fonte": "https://transparencia.al.go.leg.br/api/transparencia/requerimentos",
+ "capturadoEm": "2026-10-22",
+ "amostra": [
+  {
+   "id": 34455,
+   "numero": 1815,
+   "oficio_presidencia": false,
+   "deputado": {
+    "nome": "Paulo Cezar Martins"
+   },
+   "tipo_requerimento": {
+    "descricao": "Sessão Especial/Solene e Título de Cidadão Goiano"
+   },
+   "etapa": {
+    "id": 0,
+    "descricao": "Apresentação em Plenário"
+   },
+   "url_download": "https://saba.al.go.leg.br/v1/view/spl/public/TZ9yyreGiofcEfWZfXYCR0xvGWbPdRCTxo3DnnIQMAU=/requerimento-alego-34455",
+   "tamanho_arquivo": 375254
+  },
+  {
+   "id": 34471,
+   "numero": 1749,
+   "oficio_presidencia": false,
+   "deputado": {
+    "nome": "Dr. George Morais"
+   },
+   "tipo_requerimento": {
+    "descricao": "Conhecimento e Providência"
+   },
+   "etapa": {
+    "id": 4,
+    "descricao": "Aprovado - Aguardando Assinatura"
+   },
+   "url_download": "https://saba.al.go.leg.br/v1/view/spl/public/TZ9yyreGiofcEfWZfXYCRxXCCpa26XxJbIFPLAo4I0s=/requerimento-alego-34471",
+   "tamanho_arquivo": 50291
+  }
+ ]
+}

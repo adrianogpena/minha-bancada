@@ -30,7 +30,8 @@ todo `fonte` é a URL que a pessoa abre para conferir o dado):
   diarias_<ano>.json  {coletadoEm, fonte, itens:[{idDeputado, data (AAAA-MM-DD), destino, motivo, valor, fonte}]}
   emendas_<ano>.json  {coletadoEm, fonte, itens:[{idDeputado, ano, objeto, orgao, empenhado, pago, fonte}]}
 
-Helpers: `sessao`, `ler`, `salvar`, `avisar`, `sem_acento`, `nome_limpo`, `valor_br`, `mes_numero`, `ligar_nomes`.
+Helpers: `sessao`, `ler`, `salvar`, `avisar`, `sem_acento`, `nome_limpo`, `valor_br`, `mes_numero`, `ligar_nomes`,
+`meses_recentes`, `ano_encerrado`.
 """
 
 import json
@@ -142,6 +143,20 @@ def mes_numero(nome) -> int | None:
         if m == t or (len(t) == 3 and m.startswith(t)):
             return n
     return None
+
+
+def meses_recentes(hoje, quantos: int) -> set:
+    """{(ano, mes)} dos `quantos` meses até o de `hoje`, inclusive: os que a coleta diária relê (o resto vem do arquivo anterior)."""
+    achados, ano, mes = set(), hoje.year, hoje.month
+    for _ in range(quantos):
+        achados.add((ano, mes))
+        ano, mes = (ano - 1, 12) if mes == 1 else (ano, mes - 1)
+    return achados
+
+
+def ano_encerrado(ano: int, hoje, arquivo: Path) -> bool:
+    """Ano anterior ao passado com arquivo já gravado: não muda mais e não é baixado de novo."""
+    return ano < hoje.year - 1 and arquivo.exists()
 
 
 def ligar_nomes(nomes_fonte, deputados: list[dict]) -> dict:

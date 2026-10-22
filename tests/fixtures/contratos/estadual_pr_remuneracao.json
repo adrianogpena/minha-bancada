@@ -1,0 +1,101 @@
+{
+ "fonte": "https://transparencia.assembleia.pr.leg.br/api/remuneracao",
+ "capturadoEm": "2026-10-22",
+ "amostra": {
+  "meses": {
+   "meses": {
+    "1": "Janeiro",
+    "2": "Fevereiro",
+    "3": "Março",
+    "4": "Abril",
+    "5": "Maio",
+    "6": "Junho",
+    "7": "Julho",
+    "8": "Agosto",
+    "9": "Setembro"
+   }
+  },
+  "remuneracoes": [
+   {
+    "id": 516744,
+    "matricula": "7000393",
+    "nome": "ADAO FERNANDES DA SILVA",
+    "nivel": "SDP",
+    "lotacao": "GAB. DEP. ADÃO LITRO",
+    "data_nomeacao": "01/02/2023",
+    "data_exoneracao": null,
+    "jornada_trabalho_semanal": "40",
+    "cargo": "DEPUTADO ESTADUAL",
+    "funcao": "PARLAMENTAR",
+    "valor": "25403.99",
+    "vinculo": "DEPUTADO ESTADUAL",
+    "observacao": null
+   },
+   {
+    "id": 516750,
+    "matricula": "7000394",
+    "nome": "ADEMAR LUIZ TRAIANO",
+    "nivel": "SDP",
+    "lotacao": "GAB. DEP. ADEMAR TRAIANO",
+    "data_nomeacao": "01/02/2023",
+    "data_exoneracao": null,
+    "jornada_trabalho_semanal": "40",
+    "cargo": "DEPUTADO ESTADUAL",
+    "funcao": "PARLAMENTAR",
+    "valor": "25403.99",
+    "vinculo": "DEPUTADO ESTADUAL",
+    "observacao": null
+   }
+  ],
+  "detalhe": {
+   "nome": "ADAO FERNANDES DA SILVA",
+   "valores": [
+    [
+     "Vantagens Fixas (1)",
+     "Vantagens Pessoais (2)",
+     "Cargo em Comissão (3)",
+     "Função Privativa Policial - Lei 17.246 (4)",
+     "Provento de Pensão (5)",
+     "Subsídio Deputado (6)",
+     "1/3 de Férias (7)",
+     "Vantagens Transitórias (8)",
+     "Abono de Permanência (9)",
+     "Benefícios (10)",
+     "Total Bruto (11)",
+     "Redutor Constitucional (12)",
+     "Descontos Obrigatórios (13)",
+     "Valor Bruto (- Descontos Obrigatórios) (14)"
+    ],
+    [
+     "R$ 0,00",
+     "R$ 0,00",
+     "R$ 0,00",
+     "R$ 0,00",
+     "R$ 0,00",
+     "R$ 34.774,64",
+     "R$ 0,00",
+     "R$ 0,00",
+     "R$ 0,00",
+     "R$ 0,00",
+     "R$ 34.774,64",
+     "R$ 0,00",
+     "R$ 9.370,65",
+     "R$ 25.403,99"
+    ]
+   ],
+   "valores_eventuais": [
+    [
+     "RRA (15)"
+    ],
+    [
+     "R$ 0,00"
+    ]
+   ],
+   "endereco": null,
+   "telefone": null,
+   "email": null,
+   "cidade_regiao": "CURITIBA",
+   "observacao": null
+  }
+ }
+}

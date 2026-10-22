@@ -35,6 +35,8 @@ PRESENCA_PAGINA = f"{PORTAL}/plenario/presenca-em-plenario"
 PROPOSICOES_PAGINA = "https://consultas.assembleia.pr.leg.br/#/pesquisa-legislativa"
 TIPO_REMUNERACAO = "deputado estadual"
 PRIMEIRO_ANO = 2023
+MESES_RECENTES = 2   # meses de diárias relidos todo dia; os anteriores vêm do arquivo
+RELER_ULTIMO_MES_DIAS = 7   # o último mês da remuneração (um POST por deputado) é relido uma vez por semana, para pegar correções
 PAUSA = 1.2
 LIMITE_EMENTA = 400
 SIGLAS = {"PROJETO DE LEI": "PRO", "PROJETO DE LEI COMPLEMENTAR": "PLC", "PROJETO DECRETO LEGISLATIVO": "PDL",
@@ -172,15 +174,20 @@ def remuneracao_do_mes(sessao, ano: int, mes: int, deputados: list[dict]) -> lis
     return [i for i in map(um, lista) if i]
 
 
-def remuneracao_do_ano(sessao, ano: int, deputados: list[dict], existentes: list[dict]) -> list[dict]:
+def remuneracao_do_ano(sessao, ano: int, deputados: list[dict], anterior: dict, hoje: date) -> tuple[list[dict], dict]:
+    """Lê os meses que faltam no arquivo; o último publicado é relido se faz RELER_ULTIMO_MES_DIAS que foi lido.
+    Devolve os itens e a marca {mes, dia} da última leitura do último mês."""
     meses = sorted(int(m) for m in (get_json(sessao, f"{PORTAL}/api/remuneracao/meses", ano=ano).get("meses") or {}))
-    refazer = {meses[-1]} if meses else set()
-    itens = [i for i in existentes if i["mes"] not in refazer]
+    lido = anterior.get("ultimoMesLidoEm") or {}
+    velho = meses and (lido.get("mes") != meses[-1] or (hoje - date.fromisoformat(lido["dia"])).days >= RELER_ULTIMO_MES_DIAS)
+    refazer = {meses[-1]} if velho else set()
+    itens = [i for i in anterior.get("itens", []) if i["mes"] not in refazer]
     feitos = {i["mes"] for i in itens}
-    for mes in meses:
-        if mes not in feitos:
-            itens += remuneracao_do_mes(sessao, ano, mes, deputados)
-    return sorted(itens, key=lambda i: (i["mes"], i["idDeputado"]))
+    lidos = [m for m in meses if m not in feitos]
+    for mes in lidos:
+        itens += remuneracao_do_mes(sessao, ano, mes, deputados)
+    marca = {"mes": meses[-1], "dia": hoje.isoformat()} if meses and meses[-1] in lidos else lido
+    return sorted(itens, key=lambda i: (i["mes"], i["idDeputado"])), marca
 
 
 # ---------------------------------------------------------------- diárias
@@ -203,11 +210,15 @@ def itens_diarias(linhas: list[dict], deputados: list[dict]) -> list[dict]:
     return itens
 
 
-def diarias_do_ano(sessao, ano: int, deputados: list[dict]) -> list[dict]:
+def diarias_do_ano(sessao, ano: int, deputados: list[dict], existentes: list[dict], hoje: date) -> list[dict]:
+    """Lê só os meses que faltam no arquivo e os MESES_RECENTES; o resto fica como estava."""
     meses = sorted(int(m) for m in (get_json(sessao, f"{PORTAL}/api/diarias/meses", ano=ano).get("meses") or {}))
-    itens = []
+    novos = comum.meses_recentes(hoje, MESES_RECENTES)
+    itens = [i for i in existentes if i.get("mes") and (ano, i["mes"]) not in novos]
+    feitos = {i["mes"] for i in itens}
     for mes in meses:
-        itens += itens_diarias(get_json(sessao, f"{PORTAL}/api/diarias", ano=ano, mes=mes), deputados)
+        if mes not in feitos:
+            itens += [{**i, "mes": mes} for i in itens_diarias(get_json(sessao, f"{PORTAL}/api/diarias", ano=ano, mes=mes), deputados)]
     return sorted(itens, key=lambda i: (i["data"] or "", i["idDeputado"], i["protocolo"] or ""))
 
 
@@ -319,27 +330,35 @@ def coletar() -> None:
             comum.avisar(f"PR: {rotulo}: {e}")
 
     def proposicoes(ano):
+        if comum.ano_encerrado(ano, hoje, pasta / f"materias_{ano}.json"):
+            return
         achadas = materias(proposicoes_do_ano(s, ano), deputados)
         comum.salvar(pasta / f"materias_{ano}.json", {"coletadoEm": agora, "fonte": PROPOSICOES_PAGINA, "materias": achadas})
         print(f"PR: {ano} proposições {len(achadas)}")
 
     def diarias(ano):
-        itens = diarias_do_ano(s, ano, deputados)
-        comum.salvar(pasta / f"diarias_{ano}.json", {"coletadoEm": agora, "fonte": DIARIAS_PAGINA, "itens": itens})
+        arq = pasta / f"diarias_{ano}.json"
+        if comum.ano_encerrado(ano, hoje, arq):
+            return
+        itens = diarias_do_ano(s, ano, deputados, comum.ler(arq, {"itens": []})["itens"], hoje)
+        comum.salvar(arq, {"coletadoEm": agora, "fonte": DIARIAS_PAGINA, "itens": itens})
         print(f"PR: {ano} diárias {len(itens)}")
 
     def remuneracao(ano):
         arq = pasta / f"remuneracao_{ano}.json"
-        itens = remuneracao_do_ano(s, ano, deputados, comum.ler(arq, {"itens": []})["itens"])
-        comum.salvar(arq, {"coletadoEm": agora, "fonte": REMUNERACAO_PAGINA, "itens": itens})
+        itens, marca = remuneracao_do_ano(s, ano, deputados, comum.ler(arq, {"itens": []}), hoje)
+        comum.salvar(arq, {"coletadoEm": agora, "fonte": REMUNERACAO_PAGINA, "ultimoMesLidoEm": marca, "itens": itens})
         print(f"PR: {ano} remuneração {len(itens)} linhas")
 
     def presenca():
+        arq = pasta / "presenca.json"
+        guardados = [i for i in comum.ler(arq, {"itens": []})["itens"] if int(i["periodo"][:4]) < hoje.year - 1]
+        primeiro = hoje.year - 1 if guardados else PRIMEIRO_ANO   # anos encerrados não mudam: vêm do arquivo
         sessoes = []
-        for ano in range(PRIMEIRO_ANO, hoje.year + 1):
+        for ano in range(primeiro, hoje.year + 1):
             sessoes += get_json(s, f"{PORTAL}/api/presenca/ano", ano=ano).get("sessoes") or []
-        itens = itens_presenca(contar_presenca(sessoes), deputados)
-        comum.salvar(pasta / "presenca.json", {"coletadoEm": agora, "fonte": PRESENCA_PAGINA, "itens": itens})
+        itens = guardados + itens_presenca(contar_presenca(sessoes), deputados)
+        comum.salvar(arq, {"coletadoEm": agora, "fonte": PRESENCA_PAGINA, "itens": itens})
         print(f"PR: presença {len(itens)} linhas")
 
     for ano in range(PRIMEIRO_ANO, hoje.year + 1):

@@ -82,3 +82,19 @@ def test_matriz_do_workflow_cobre_todas_as_ufs():
     no_workflow = {u for ufs in re.findall(r'\{ id: \w+, ufs: "([A-Z ]+)" \}', texto) for u in ufs.split()}
     esperadas = set(coletar_estaduais.ASSEMBLEIAS) | set(coletar_estaduais.modulos_uf())
     assert no_workflow == esperadas
+
+
+def test_meses_recentes_atravessa_o_ano():
+    from datetime import date
+    assert ec.meses_recentes(date(2026, 1, 10), 2) == {(2026, 1), (2025, 12)}
+    assert ec.meses_recentes(date(2026, 5, 1), 3) == {(2026, 5), (2026, 4), (2026, 3)}
+
+
+def test_ano_encerrado_so_com_arquivo_e_antes_do_ano_passado(tmp_path):
+    from datetime import date
+    hoje = date(2026, 10, 22)
+    arq = tmp_path / "x.json"
+    assert not ec.ano_encerrado(2024, hoje, arq)
+    arq.write_text("{}")
+    assert ec.ano_encerrado(2024, hoje, arq)
+    assert not ec.ano_encerrado(2025, hoje, arq)

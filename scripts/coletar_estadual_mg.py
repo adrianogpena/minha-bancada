@@ -95,17 +95,9 @@ def meses_fechados(resp: dict) -> list[tuple[int, int]]:
     return sorted(achados)
 
 
-def recentes(hoje: date) -> set:
-    achados, ano, mes = set(), hoje.year, hoje.month
-    for _ in range(MESES_RECENTES):
-        achados.add((ano, mes))
-        ano, mes = (ano - 1, 12) if mes == 1 else (ano, mes - 1)
-    return achados
-
-
 def coletar_verba(sessao, deputados: list[dict], hoje: date, pasta, agora: str) -> None:
     anteriores = {ano: comum.ler(pasta / f"verbas_{ano}.json", {"itens": []})["itens"] for ano in range(PRIMEIRO_ANO_VERBA, hoje.year + 1)}
-    novos = recentes(hoje)
+    novos = comum.meses_recentes(hoje, MESES_RECENTES)
     por_ano = {ano: [i for i in itens if (ano, i["mes"]) not in novos] for ano, itens in anteriores.items()}
     guardados = {(ano, i["idDeputado"], i["mes"]) for ano, itens in por_ano.items() for i in itens}
     for d in deputados:

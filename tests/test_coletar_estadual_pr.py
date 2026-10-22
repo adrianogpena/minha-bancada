@@ -115,3 +115,33 @@ def test_materias_liga_autores_e_ignora_quem_nao_e_deputado():
 
 def test_proposicoes_do_contrato():
     assert pr._conferir_proposicoes(amostra("proposicoes")) == ([], [])
+
+
+def test_diarias_le_so_meses_que_faltam_e_os_recentes(monkeypatch):
+    lidos = []
+
+    def get_json(s, url, ano, mes=None):
+        if url.endswith("/meses"):
+            return {"meses": {str(m): m for m in range(1, 11)}}
+        lidos.append(mes)
+        return []
+
+    monkeypatch.setattr(pr, "get_json", get_json)
+    existentes = [{"idDeputado": "ana-julia", "mes": m, "data": f"2026-{m:02d}-01", "protocolo": str(m)} for m in range(1, 11)]
+    existentes.append({"idDeputado": "ana-julia", "data": "2026-03-05", "protocolo": "sem-mes"})
+    itens = pr.diarias_do_ano(None, 2026, DEPUTADOS, existentes, pr.date(2026, 10, 22))
+    assert lidos == [9, 10]
+    assert [i["mes"] for i in itens] == list(range(1, 9))
+
+
+def test_remuneracao_rele_ultimo_mes_so_uma_vez_por_semana(monkeypatch):
+    lidos = []
+    monkeypatch.setattr(pr, "get_json", lambda s, url, ano: {"meses": {"8": 8, "9": 9}})
+    monkeypatch.setattr(pr, "remuneracao_do_mes", lambda s, ano, mes, deps: lidos.append(mes) or [{"idDeputado": "ana-julia", "mes": mes}])
+    anterior = {"itens": [{"idDeputado": "ana-julia", "mes": 8}, {"idDeputado": "ana-julia", "mes": 9}], "ultimoMesLidoEm": {"mes": 9, "dia": "2026-10-20"}}
+    itens, marca = pr.remuneracao_do_ano(None, 2026, DEPUTADOS, anterior, pr.date(2026, 10, 22))
+    assert lidos == [] and marca == {"mes": 9, "dia": "2026-10-20"} and len(itens) == 2
+    itens, marca = pr.remuneracao_do_ano(None, 2026, DEPUTADOS, anterior, pr.date(2026, 10, 27))
+    assert lidos == [9] and marca == {"mes": 9, "dia": "2026-10-27"} and len(itens) == 2
+    itens, marca = pr.remuneracao_do_ano(None, 2026, DEPUTADOS, {"itens": [], "ultimoMesLidoEm": None}, pr.date(2026, 10, 22))
+    assert lidos == [9, 8, 9] and marca == {"mes": 9, "dia": "2026-10-22"}

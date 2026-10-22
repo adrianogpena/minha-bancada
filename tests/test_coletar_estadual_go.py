@@ -162,3 +162,54 @@ def test_itens_requerimentos_so_de_deputado_ligado():
     m = materias["34455"]
     assert m["idsDeputados"] == ["117"] and m["situacao"] == "Aprovado" and m["linkTexto"] == "https://saba.al.go.leg.br/x"
     assert m["ementa"] == "Requerimento nº 1815: Conhecimento e Providência" and m["ano"] == 2023
+
+
+class Hoje(go.date):
+    @classmethod
+    def today(cls):
+        return cls(2026, 10, 22)
+
+
+def test_verbas_le_so_meses_que_faltam_e_os_recentes(monkeypatch, tmp_path):
+    monkeypatch.setattr(go, "date", Hoje)
+    monkeypatch.setattr(go, "PASTA", tmp_path)
+    lidos = []
+
+    def paginar(s, caminho, ano, mes):
+        lidos.append((ano, mes))
+        return [{"deputado": {"id": 117}, "valor_indenizado": "10,00", "valor_apresentado": "10,00"}]
+
+    monkeypatch.setattr(go, "paginar", paginar)
+    guardado = lambda ano, meses: {"itens": [{"idDeputado": "117", "mes": m, "valor": 1.0} for m in meses]}
+    go.comum.salvar(tmp_path / "verbas_2024.json", guardado(2024, [1]))
+    go.comum.salvar(tmp_path / "verbas_2025.json", guardado(2025, range(1, 13)))
+    go.comum.salvar(tmp_path / "verbas_2026.json", guardado(2026, range(1, 11)))
+    go.coletar_verbas(None, DEPUTADOS)
+    assert sorted(lidos) == [(2023, m) for m in range(1, 13)] + [(2026, 9), (2026, 10)]
+    itens = go.comum.ler(tmp_path / "verbas_2026.json")["itens"]
+    assert [i["mes"] for i in itens] == list(range(1, 11))
+    assert [i["valor"] for i in itens if i["mes"] >= 9] == [10.0, 10.0]
+
+
+def test_votacoes_de_anos_encerrados_vem_do_arquivo(monkeypatch, tmp_path):
+    monkeypatch.setattr(go, "date", Hoje)
+    monkeypatch.setattr(go, "PASTA", tmp_path)
+    go.comum.salvar(tmp_path / "votacoes.json", {"votacoes": {"1": {"data": "2023-05-02", "votos": []}, "2": {"data": "2025-05-02", "votos": []}}})
+    go.comum.salvar(tmp_path / "materias_votadas.json", {"1": {"ano": 2023}, "2": {"ano": 2025}})
+    lidos = []
+    monkeypatch.setattr(go, "pegar_json", lambda s, caminho, tipo, ano: lidos.append(ano) or [])
+    go.coletar_votacoes(None, DEPUTADOS)
+    assert lidos == [2025, 2026]
+    assert list(go.comum.ler(tmp_path / "votacoes.json")["votacoes"]) == ["1"]
+    assert go.comum.ler(tmp_path / "materias_votadas.json") == {"1": {"ano": 2023}}
+
+
+def test_ficha_so_e_lida_para_quem_nao_tem_nome_civil_guardado(monkeypatch, tmp_path):
+    monkeypatch.setattr(go, "PASTA", tmp_path)
+    go.comum.salvar(tmp_path / "deputados.json", {"deputados": [{"id": "117", "nomeCivil": "Charles Bento Evangelista", "foto": "f.jpg", "email": None}]})
+    monkeypatch.setattr(go, "parse_lista", lambda html: [{"id": "117", "nome": "Charles Bento"}, {"id": "808", "nome": "Alessandro Moreira"}])
+    lidas = []
+    monkeypatch.setattr(go, "pegar_html", lambda s, url: lidas.append(url) or "")
+    deputados = {d["id"]: d for d in go.coletar_deputados(None)}
+    assert lidas == [go.LISTA_URL, go.PERFIL_URL.format(id="808")]
+    assert deputados["117"]["nomeCivil"] == "Charles Bento Evangelista" and deputados["117"]["foto"] == "f.jpg"

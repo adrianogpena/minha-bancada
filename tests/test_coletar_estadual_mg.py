@@ -48,10 +48,6 @@ def test_meses_fechados_ordena_e_ignora_data_invalida():
     assert mg.meses_fechados({}) == []
 
 
-def test_recentes():
-    assert mg.recentes(date(2026, 1, 10)) == {(2026, 1), (2025, 12)}
-
-
 def test_autores_deputados_le_varios_autores_e_ignora_governador():
     autor = "Deputada Beatriz Cerqueira                 PT\nDeputada Bella Gonçalves                   PT\n"
     assert mg.autores_deputados(autor) == ["Beatriz Cerqueira", "Bella Gonçalves"]

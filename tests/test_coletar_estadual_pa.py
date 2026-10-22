@@ -90,9 +90,8 @@ def test_parse_gabinetes_do_contrato():
     assert pa._conferir_gabinete(a) == ([], [])
 
 
-def test_meses_ate_e_recentes():
+def test_meses_ate():
     assert list(pa.meses_ate(date(2023, 4, 10))) == [(2023, 2), (2023, 3), (2023, 4)]
-    assert pa.recentes(date(2026, 1, 5)) == {(2026, 1), (2025, 12)}
 
 
 class Resposta:

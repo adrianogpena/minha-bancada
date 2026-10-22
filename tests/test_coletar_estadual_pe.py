@@ -1,6 +1,8 @@
 import json
 from datetime import date
 
+import pytest
+
 import coletar_estadual_pe as pe
 from conftest import RAIZ
 
@@ -65,10 +67,6 @@ def test_verba_do_contrato():
     assert itens[0]["categoria"] == "ASSESSORIA JURÍDICA" and itens[0]["data"] == "2025-01-31" and itens[0]["cnpj"] == "47006999000140"
 
 
-def test_recentes():
-    assert pe.recentes(date(2026, 1, 10)) == {(2026, 1), (2025, 12)}
-
-
 def test_proposicoes_do_contrato():
     for tipo in pe.TIPOS_PROPOSICAO:
         a = amostra(f"estadual_pe_{tipo}")
@@ -90,3 +88,18 @@ def test_materias_liga_autor_e_corta_ementa():
     assert m["fonte"] == pe.PROPOSICOES_PAGINA
     longa = [{**props[0], "ementa": "palavra " * 100}]
     assert pe.materias(longa, {"João Paulo do PT": "4496"}, "projetos")["projetos-16370"]["ementa"].endswith("...")
+
+
+def test_portal_fora_do_ar_usa_lista_anterior_e_pula_verba(monkeypatch, tmp_path):
+    monkeypatch.setattr(pe.comum, "DADOS", tmp_path)
+    pe.comum.salvar(tmp_path / "PE" / "deputados.json", {"deputados": [{"id": "4508", "nome": "Fulano"}]})
+
+    def fora(*a, **k):
+        raise pe.requests.ConnectionError("sem conexão")
+
+    monkeypatch.setattr(pe, "get_json_utf8", fora)
+    monkeypatch.setattr(pe, "verba_do_ano", lambda *a: pytest.fail("verba com o portal fora do ar"))
+    anos = []
+    monkeypatch.setattr(pe, "proposicoes_do_ano", lambda s, ano, tipo: anos.append(ano) or [])
+    pe.coletar()
+    assert set(anos) == set(range(pe.PRIMEIRO_ANO, pe.date.today().year + 1))

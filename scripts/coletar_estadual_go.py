@@ -41,6 +41,8 @@ REQUERIMENTOS_PAGINA = f"{TRANSP}/gestao-parlamentar/assuntos-legislativos/reque
 VOTACOES_PAGINA = f"{TRANSP}/gestao-parlamentar/painel-votacao-parlamentar/votacoes"
 ANO_INICIAL = 2023
 ANO_REQUERIMENTOS_FINAL = 2023
+ANO_INICIAL_REMUNERACAO = 2026   # a API devolve vazio para 2023 a 2025 (conferido em 2026-10-22)
+MESES_RECENTES = 2   # meses relidos todo dia; os anteriores já gravados vêm do arquivo
 MAX_PAGINAS = 400
 TIMEOUT = 90
 INTERVALO = 0.8
@@ -145,9 +147,14 @@ def montar_deputados(lista: list[dict], perfis: dict) -> list[dict]:
 
 
 def coletar_deputados(s) -> list[dict]:
+    """A ficha (nome civil, foto) só é lida para quem não tem nome civil no `deputados.json` anterior."""
     lista = parse_lista(pegar_html(s, LISTA_URL))
+    anteriores = {d["id"]: d for d in (comum.ler(PASTA / "deputados.json") or {}).get("deputados") or [] if d.get("nomeCivil")}
     perfis = {}
     for d in lista:
+        if d["id"] in anteriores:
+            perfis[d["id"]] = {k: anteriores[d["id"]].get(k) for k in ("nomeCivil", "foto", "email")}
+            continue
         try:
             perfis[d["id"]] = parse_perfil(pegar_html(s, PERFIL_URL.format(id=d["id"])))
         except Exception as e:
@@ -164,8 +171,11 @@ def anos() -> list[int]:
     return list(range(ANO_INICIAL, date.today().year + 1))
 
 
-def pular(destino, ano: int) -> bool:
-    return ano < date.today().year and destino.exists()
+def meses_a_ler(ano: int, existentes: list[dict], hoje: date) -> list[int]:
+    """Meses do ano que faltam no arquivo ou estão entre os MESES_RECENTES; os outros ficam como estavam."""
+    novos = comum.meses_recentes(hoje, MESES_RECENTES)
+    feitos = {i["mes"] for i in existentes if (ano, i["mes"]) not in novos}
+    return [m for m in meses_do_ano(ano) if m not in feitos]
 
 
 def float_ou_zero(v) -> float:
@@ -186,16 +196,20 @@ def itens_verba(registros: list[dict], ids: set, ano: int, mes: int) -> list[dic
 
 def coletar_verbas(s, deputados: list[dict]) -> None:
     ids = {d["id"] for d in deputados}
-    hoje = date.today().isoformat()
+    hoje = date.today()
     for ano in anos():
         destino = PASTA / f"verbas_{ano}.json"
-        if pular(destino, ano):
+        if comum.ano_encerrado(ano, hoje, destino):
             continue
-        por_mes = [(m, paginar(s, "verbas_indenizatorias", ano=ano, mes=m)) for m in meses_do_ano(ano)]
-        itens = [i for m, regs in por_mes for i in itens_verba(regs, ids, ano, m)]
+        existentes = comum.ler(destino, {"itens": []})["itens"]
+        ler = meses_a_ler(ano, existentes, hoje)
+        itens = [i for i in existentes if i["mes"] not in ler]
+        for m in ler:
+            itens += itens_verba(paginar(s, "verbas_indenizatorias", ano=ano, mes=m), ids, ano, m)
+        itens.sort(key=lambda i: (i["mes"], i["idDeputado"]))
         if itens:
-            comum.salvar(destino, {"coletadoEm": hoje, "fonte": VERBA_PAGINA, "itens": itens})
-        print(f"GO: verbas {ano}: {len(itens)} lançamentos")
+            comum.salvar(destino, {"coletadoEm": hoje.isoformat(), "fonte": VERBA_PAGINA, "itens": itens})
+        print(f"GO: verbas {ano}: {len(itens)} lançamentos ({len(ler)} meses lidos)")
 
 
 def item_remuneracao(r: dict, dep: str, ano: int, mes: int) -> dict:
@@ -209,24 +223,27 @@ def item_remuneracao(r: dict, dep: str, ano: int, mes: int) -> dict:
 
 
 def coletar_remuneracao(s, deputados: list[dict]) -> None:
-    hoje = date.today().isoformat()
+    hoje = date.today()
     sem_par = set()
-    for ano in anos():
+    for ano in range(ANO_INICIAL_REMUNERACAO, hoje.year + 1):
         destino = PASTA / f"remuneracao_{ano}.json"
-        if pular(destino, ano):
+        if comum.ano_encerrado(ano, hoje, destino):
             continue
-        por_mes = [(m, paginar(s, "remuneracoes", ano=ano, mes=m, categoria=7)) for m in meses_do_ano(ano)]
-        itens = []
-        for mes, regs in por_mes:
+        existentes = comum.ler(destino, {"itens": []})["itens"]
+        ler = meses_a_ler(ano, existentes, hoje)
+        itens = [i for i in existentes if i["mes"] not in ler]
+        for mes in ler:
+            regs = paginar(s, "remuneracoes", ano=ano, mes=mes, categoria=7)
             ligacao = comum.ligar_nomes({r["nome"] for r in regs}, deputados)
             for r in regs:
                 if r["nome"] in ligacao:
                     itens.append(item_remuneracao(r, ligacao[r["nome"]], ano, mes))
                 else:
                     sem_par.add(r["nome"])
+        itens.sort(key=lambda i: (i["mes"], i["idDeputado"]))
         if itens:
-            comum.salvar(destino, {"coletadoEm": hoje, "fonte": REMUNERACAO_PAGINA, "itens": itens})
-        print(f"GO: remuneração {ano}: {len(itens)} lançamentos")
+            comum.salvar(destino, {"coletadoEm": hoje.isoformat(), "fonte": REMUNERACAO_PAGINA, "itens": itens})
+        print(f"GO: remuneração {ano}: {len(itens)} lançamentos ({len(ler)} meses lidos)")
     if sem_par:
         comum.avisar(f"GO: remuneração sem deputado em exercício ({len(sem_par)}): {sorted(sem_par)[:12]}")
 
@@ -247,7 +264,8 @@ def coletar_diarias(s, deputados: list[dict]) -> None:
     com_nome = [d for d in deputados if d.get("nomeCivil")]
     for ano in anos():
         destino = PASTA / f"diarias_{ano}.json"
-        if pular(destino, ano):
+        # a consulta é por deputado e ano inteiro (uma volta por todos): só o ano corrente é relido
+        if ano < date.today().year and destino.exists():
             continue
         itens = []
         for d in com_nome:
@@ -282,9 +300,20 @@ def montar_votacoes(linhas: list[dict], ligacao: dict, ano: int) -> tuple[dict, 
     return votacoes, materias
 
 
+def ano_da_votacao(v: dict) -> int:
+    a = str(v.get("data") or "")[:4]
+    return int(a) if a.isdigit() else 0
+
+
 def coletar_votacoes(s, deputados: list[dict]) -> None:
-    votacoes, materias, sem_par = {}, {}, set()
-    for ano in anos():
+    """Votações de anos encerrados vêm do arquivo anterior; só o ano passado e o corrente são lidos de novo."""
+    hoje = date.today()
+    anteriores = (comum.ler(PASTA / "votacoes.json") or {}).get("votacoes") or {}
+    votacoes = {k: v for k, v in anteriores.items() if 0 < ano_da_votacao(v) < hoje.year - 1}
+    materias_anteriores = comum.ler(PASTA / "materias_votadas.json", {})
+    materias = {k: materias_anteriores[k] for k in votacoes if k in materias_anteriores}
+    sem_par = set()
+    for ano in range(hoje.year - 1 if votacoes else ANO_INICIAL, hoje.year + 1):
         linhas = pegar_json(s, "votacoes.json", tipo="detalhes", ano=ano)
         ligacao = comum.ligar_nomes({l["parlamentar"] for l in linhas}, deputados)
         sem_par |= {l["parlamentar"] for l in linhas if l["parlamentar"] not in ligacao}

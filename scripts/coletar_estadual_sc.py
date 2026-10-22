@@ -78,14 +78,6 @@ def mes_anterior(ano: int, mes: int) -> tuple[int, int]:
     return (ano - 1, 12) if mes == 1 else (ano, mes - 1)
 
 
-def recentes(hoje: date) -> set:
-    achados, ano, mes = set(), hoje.year, hoje.month
-    for _ in range(MESES_RECENTES):
-        achados.add((ano, mes))
-        ano, mes = mes_anterior(ano, mes)
-    return achados
-
-
 # ---------------------------------------------------------------- deputados
 
 def parse_deputados(html: str) -> list[dict]:
@@ -237,7 +229,7 @@ def coletar_remuneracao(s, pasta, hoje: date, agora: str) -> None:
         for mes in range(1, 13):
             if (ano, mes) > (hoje.year, hoje.month):
                 break
-            if mes in feitos and (ano, mes) not in recentes(hoje):
+            if mes in feitos and (ano, mes) not in comum.meses_recentes(hoje, MESES_RECENTES):
                 continue
             itens = [i for i in itens if i["mes"] != mes]
             lista = parse_deputados(baixar(s, DEPUTADOS_URL, params={"ano": ano, "mes": mes}).text)

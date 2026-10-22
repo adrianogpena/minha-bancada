@@ -309,7 +309,24 @@ Próximos passos:
 3. Fonte de link por dado: verba → `https://transparencia.alepe.pe.gov.br/financas/verbas-indenizatorias`; projetos → `https://transparencia.alepe.pe.gov.br/proposicoes`; remuneração → `https://transparencia.alepe.pe.gov.br/financas/remuneracao-ajuda-deputados` (a confirmar).
 4. Se seguir: `scripts/coletar_pe.py`, amostras em `tests/fixtures/contratos/`, `ENDPOINTS.md` e `CHANGELOG.md`.
 
-### RJ: Rio de Janeiro
+### RJ: Rio de Janeiro (Assembleia Legislativa, ALERJ; apurado em 2026-10-22)
+
+**Portal de transparência: `https://transparencia.alerj.rj.gov.br/`.** Livre, sem login. Organizado em relatórios `https://transparencia.alerj.rj.gov.br/section/report/<n>`; só li o índice, não abri cada relatório (formato de exportação e API não confirmados; o índice não cita CSV nem dados abertos).
+- Deputados: lista de presença `/17`; benefícios `/33`; subsídio `/62`; folha de pagamento `/73`; DOCIGP (descentralização orçamentária) `http://docigp.alerj.rj.gov.br`; Resolução 178/2019, art. 2º `/107`; sinopse da atividade legislativa (Anuário) `/114`.
+- Viagens autorizadas `/66`; diárias `/119`.
+- Servidores e estagiários: benefícios `/72`; folha `/73`; tabela remuneratória `/103`; estagiários `/74`, `/75`, `/96`.
+- Orçamento e finanças: gestão fiscal, relatório anual, execução orçamentária, contratos, pagamentos, gastos do Legislativo em `/76`, `/98`, `/104`, `/117`, `/118`, `/120`; licitações em sistemas em `www2.alerj.rj.gov.br`.
+- Emendas parlamentares impositivas `/121` e acompanhamento da execução `/134`; LOA, PPA, LDO e pareceres `/108` a `/115`; prestações de contas `/125`, `/129`, `/130`, `/132`; LAI `/57` a `/61`, `/88`.
+- Não há menção a verba indenizatória/cota parlamentar nem a gabinete no índice (o DOCIGP pode cobrir a descentralização de verba; conferir).
+
+**ITGP** (`https://transparenciainternacional.org.br/itgp/assembleia-legislativa/rio-de-janeiro`, ano da avaliação não informado): nota **24,4/100 ("Ruim")**, 24º de 27. Por dimensão: Comunicação 72,7; Transparência Legislativa 29,2; Transparência Administrativa 27,8; Governança 23,5; Plataformas 20; Participação e Engajamento 12,5; Transformação Digital 10; Marcos Legais 0 (a página deixa dúbio o pareamento das duas últimas; conferir na fonte).
+
+Próximos passos:
+1. No Firefox, abrir `/17` (presença), `/33` (benefícios), `/73` (folha), `/119` (diárias), `/121` e `/134` (emendas) e o DOCIGP com a aba Rede aberta, para ver a chamada de dados (URL, parâmetros) e se há exportação.
+2. Achar a fonte de projetos e votações (o Anuário `/114` é só sinopse) e de verba/ cota por deputado.
+3. Fonte de link por dado: presença → `https://transparencia.alerj.rj.gov.br/section/report/17`; diárias → `.../report/119`; emendas → `.../report/121` (a confirmar).
+4. Se seguir: `scripts/coletar_rj.py`, amostras em `tests/fixtures/contratos/`, `ENDPOINTS.md` e `CHANGELOG.md`.
+
 ### RN: Rio Grande do Norte
 ### RR: Roraima
 ### RS: Rio Grande do Sul

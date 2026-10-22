@@ -36,7 +36,7 @@ jobs:
 
           Execução: ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}
 
-          Se a mudança for esperada, ajuste o coletor e regrave as amostras: \`python scripts/contrato_apis.py --gravar\`."
+          Se a mudança for esperada, ajuste o coletor e regrave só as amostras da fonte afetada: \`python scripts/contrato_apis.py --gravar <nome>\` (nomes em \`--listar\`)."
           existente="$(gh issue list --state open --search "\"$titulo\" in:title" --json number --jq '.[0].number')"
           if [ -n "$existente" ]; then
             gh issue comment "$existente" --body "$corpo"

@@ -1,0 +1,405 @@
+{
+ "fonte": "https://dados.rs.gov.br/api/3/action/package_show?id=diarias-do-estado",
+ "capturadoEm": "2026-10-22",
+ "amostra": {
+  "help": "https://dados.rs.gov.br/api/3/action/help_show?name=package_show",
+  "success": true,
+  "result": {
+   "author": null,
+   "author_email": null,
+   "creator_user_id": "4a55bb5a-dc5b-4f2c-88e2-e71a2bc871cf",
+   "id": "c9bb21a5-6ab8-4d61-8dac-de47fe175caf",
+   "isopen": false,
+   "license_id": "CC0-1.0",
+   "license_title": "CC0-1.0",
+   "maintainer": null,
+   "maintainer_email": null,
+   "metadata_created": "2026-03-31T16:46:15.164177",
+   "metadata_modified": "2026-10-06T19:52:09.530814",
+   "name": "diarias-do-estado",
+   "notes": "Diárias do Estado",
+   "num_resources": 24,
+   "num_tags": 0,
+   "organization": {
+    "id": "8148a475-23ca-41d8-8816-3894c529abd3",
+    "name": "cage",
+    "title": "Contadoria e Auditoria-Geral do Estado",
+    "type": "organization",
+    "description": "A Contadoria e Auditoria-Geral do Estado (CAGE) é um órgão com status de subsecretaria integrante da estrutura da Secretaria da Fazenda.\r\n\r\nÉ responsável pelo Controle Interno do Estado e sua missão é orientar e controlar a gestão, protegendo os recursos púbicos com transparência e estímulo ao contr",
+    "image_url": "2026-04-06-121736.7096862018-09-04-162534.113770Logonovo.jpg",
+    "created": "2026-03-31T16:43:52.664002",
+    "is_organization": true,
+    "approval_status": "approved",
+    "state": "active"
+   },
+   "owner_org": "8148a475-23ca-41d8-8816-3894c529abd3",
+   "private": false,
+   "state": "active",
+   "title": "Diárias do Estado",
+   "type": "dataset",
+   "url": "",
+   "version": null,
+   "resources": [
+    {
+     "cache_last_updated": null,
+     "cache_url": null,
+     "created": "2026-03-31T16:46:15.166544",
+     "description": "",
+     "format": "PDF",
+     "hash": "",
+     "id": "8ed97400-8d5a-4021-893a-7165a0705595",
+     "last_modified": null,
+     "metadata_modified": "2026-04-23T15:19:07.604599",
+     "mimetype": null,
+     "mimetype_inner": null,
+     "name": "Layout Diarias",
+     "package_id": "c9bb21a5-6ab8-4d61-8dac-de47fe175caf",
+     "position": 0,
+     "resource_type": null,
+     "size": null,
+     "state": "active",
+     "url": "https://dados.rs.gov.br/dataset/c9bb21a5-6ab8-4d61-8dac-de47fe175caf/resource/8ed97400-8d5a-4021-893a-7165a0705595/download/layout-diarias.pdf",
+     "url_type": "upload"
+    },
+    {
+     "cache_last_updated": null,
+     "cache_url": null,
+     "created": "2026-03-31T16:46:15.166549",
+     "description": "",
+     "format": "zip/csv",
+     "hash": "",
+     "id": "83afba4b-60b9-4d89-9fe3-128fb35111c9",
+     "last_modified": null,
+     "metadata_modified": "2026-04-23T15:19:07.803054",
+     "mimetype": null,
+     "mimetype_inner": null,
+     "name": "Diarias 2004",
+     "package_id": "c9bb21a5-6ab8-4d61-8dac-de47fe175caf",
+     "position": 1,
+     "resource_type": null,
+     "size": null,
+     "state": "active",
+     "url": "https://dados.rs.gov.br/dataset/c9bb21a5-6ab8-4d61-8dac-de47fe175caf/resource/83afba4b-60b9-4d89-9fe3-128fb35111c9/download/diarias-rs-2004.zip",
+     "url_type": "upload"
+    }
+   ],
+   "tags": [],
+   "extras": [],
+   "groups": [],
+   "relationships_as_subject": [],
+   "relationships_as_object": []
+  }
+ },
+ "forma": {
+  "help": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "result": {
+   "tipos": [
+    "dict"
+   ]
+  },
+  "result.author": {
+   "tipos": [
+    "null"
+   ]
+  },
+  "result.author_email": {
+   "tipos": [
+    "null"
+   ]
+  },
+  "result.creator_user_id": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "result.extras": {
+   "tipos": [
+    "list"
+   ]
+  },
+  "result.groups": {
+   "tipos": [
+    "list"
+   ]
+  },
+  "result.id": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "result.isopen": {
+   "tipos": [
+    "bool"
+   ]
+  },
+  "result.license_id": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "result.license_title": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "result.maintainer": {
+   "tipos": [
+    "null"
+   ]
+  },
+  "result.maintainer_email": {
+   "tipos": [
+    "null"
+   ]
+  },
+  "result.metadata_created": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "result.metadata_modified": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "result.name": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "result.notes": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "result.num_resources": {
+   "tipos": [
+    "int"
+   ]
+  },
+  "result.num_tags": {
+   "tipos": [
+    "int"
+   ]
+  },
+  "result.organization": {
+   "tipos": [
+    "dict"
+   ]
+  },
+  "result.organization.approval_status": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "result.organization.created": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "result.organization.description": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "result.organization.id": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "result.organization.image_url": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "result.organization.is_organization": {
+   "tipos": [
+    "bool"
+   ]
+  },
+  "result.organization.name": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "result.organization.state": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "result.organization.title": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "result.organization.type": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "result.owner_org": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "result.private": {
+   "tipos": [
+    "bool"
+   ]
+  },
+  "result.relationships_as_object": {
+   "tipos": [
+    "list"
+   ]
+  },
+  "result.relationships_as_subject": {
+   "tipos": [
+    "list"
+   ]
+  },
+  "result.resources": {
+   "tipos": [
+    "list"
+   ]
+  },
+  "result.resources[]": {
+   "tipos": [
+    "dict"
+   ]
+  },
+  "result.resources[].cache_last_updated": {
+   "tipos": [
+    "null"
+   ]
+  },
+  "result.resources[].cache_url": {
+   "tipos": [
+    "null"
+   ]
+  },
+  "result.resources[].created": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "result.resources[].description": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "result.resources[].format": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "result.resources[].hash": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "result.resources[].id": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "result.resources[].last_modified": {
+   "tipos": [
+    "null"
+   ]
+  },
+  "result.resources[].metadata_modified": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "result.resources[].mimetype": {
+   "tipos": [
+    "null"
+   ]
+  },
+  "result.resources[].mimetype_inner": {
+   "tipos": [
+    "null"
+   ]
+  },
+  "result.resources[].name": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "result.resources[].package_id": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "result.resources[].position": {
+   "tipos": [
+    "int"
+   ]
+  },
+  "result.resources[].resource_type": {
+   "tipos": [
+    "null"
+   ]
+  },
+  "result.resources[].size": {
+   "tipos": [
+    "null"
+   ]
+  },
+  "result.resources[].state": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "result.resources[].url": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "result.resources[].url_type": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "result.state": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "result.tags": {
+   "tipos": [
+    "list"
+   ]
+  },
+  "result.title": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "result.type": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "result.url": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "result.version": {
+   "tipos": [
+    "null"
+   ]
+  },
+  "success": {
+   "tipos": [
+    "bool"
+   ]
+  }
+ }
+}

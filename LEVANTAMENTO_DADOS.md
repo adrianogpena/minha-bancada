@@ -374,6 +374,22 @@ Próximos passos:
 3. Fonte de link por dado: diárias → `https://www.transparencia.rs.gov.br/relatorios/externo/diarias-assembleia/dados/`.
 4. Se seguir: `scripts/coletar_rs.py`, amostras em `tests/fixtures/contratos/`, `ENDPOINTS.md` e `CHANGELOG.md`.
 
-### SC: Santa Catarina
+### SC: Santa Catarina (Assembleia Legislativa, ALESC; apurado em 2026-10-22)
+
+**Portal de transparência: `https://transparencia.alesc.sc.gov.br/`.** Só li o texto do índice (formato de exportação e API não confirmados; várias seções mostram "Carregando…", conteúdo provavelmente carregado por JavaScript).
+- Administrativo: estrutura, pessoal (deputados, servidores, terceirizados, estagiários), planos de carreira e salários, licitações, contratos, plano anual de contratações, relatórios de atividades.
+- Legislativo: deputados e gabinetes, sessões plenárias (pauta, planilhas de votação, presença, atas), comissões, tramitação de projetos, orçamento e contas do Estado. Quase tudo leva ao portal externo portalelegis.
+- Receitas e Despesas: gabinetes parlamentares, recursos humanos, diárias e passagens, despesas por classificação e detalhadas, pagamentos a credores (inclui publicidade), licitações e contratos, receitas, execução orçamentária, gestão fiscal, prestação de contas.
+- Dados abertos: há páginas próprias para gabinetes parlamentares, diárias e passagens, despesas, pagamentos a credores e receitas. Formato (CSV etc.), API, período e atualização não aparecem no índice.
+- Não há seção "verbas" nem "salários"; o mais próximo é "Gabinetes Parlamentares" (verba de gabinete) e "Certidão Remuneratória de Subsídio". "Convênios e Transferências" tem link vazio (`#`).
+
+**ITGP** (`https://transparenciainternacional.org.br/itgp/assembleia-legislativa/santa-catarina`, ano da avaliação não informado): nota **44,4/100 ("Regular")**, 13º de 27. Por dimensão: Comunicação 81,8; Transformação Digital 70; Participação e Engajamento 62,5; Transparência Administrativa 50; Transparência Legislativa 37,5; Plataformas 30; Governança 23,5; Marcos Legais 0. Pontos fracos: sem regulamento próprio da Lei de Acesso, pouca transparência sobre contatos com grupos de interesse, sem dados em formato aberto, sem canal de denúncia de corrupção, planejamento estratégico não divulgado. Fortes: curso gratuito de orçamento público, audiências públicas interativas, espaço da bancada feminina. Banco de dados da avaliação: `https://comunidade.transparenciainternacional.org.br/itgp-legislativo-estadual-banco-de-dados`.
+
+Próximos passos:
+1. No Firefox, abrir as páginas de Dados Abertos (gabinetes, diárias e passagens, despesas) com a aba Rede aberta, para ver formato, URL de dados, período e exportação.
+2. Abrir o portalelegis para presença, votações e projetos.
+3. Fonte de link por dado: gabinetes → `https://transparencia.alesc.sc.gov.br/` (URL exata da página a confirmar).
+4. Se seguir: `scripts/coletar_sc.py`, amostras em `tests/fixtures/contratos/`, `ENDPOINTS.md` e `CHANGELOG.md`.
+
 ### SE: Sergipe
 ### SP: São Paulo

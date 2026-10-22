@@ -1,0 +1,46 @@
+{
+ "fonte": "https://almt.eloweb.net/portaltransparencia/1/servidores",
+ "capturadoEm": "2026-10-22",
+ "amostra": {
+  "matricula": 100176,
+  "ano": 2026,
+  "dadosFinanceiros": [
+   {
+    "entidade": 1,
+    "matricula": 100176,
+    "anoCompetencia": 2026,
+    "mesCompetencia": 1,
+    "salarioBase": 34774.64,
+    "vencimentos": 41729.57,
+    "descontos": 9787.99,
+    "outrosProventos": 6954.93,
+    "tipoFolha": 1,
+    "descricaoTipoFolha": "Folha Normal"
+   },
+   {
+    "entidade": 1,
+    "matricula": 100176,
+    "anoCompetencia": 2026,
+    "mesCompetencia": 2,
+    "salarioBase": 34774.64,
+    "vencimentos": 41729.57,
+    "descontos": 9787.99,
+    "outrosProventos": 6954.93,
+    "tipoFolha": 1,
+    "descricaoTipoFolha": "Folha Normal"
+   },
+   {
+    "entidade": 1,
+    "matricula": 100176,
+    "anoCompetencia": 2026,
+    "mesCompetencia": 3,
+    "salarioBase": 34774.64,
+    "vencimentos": 41729.57,
+    "descontos": 9787.99,
+    "outrosProventos": 6954.93,
+    "tipoFolha": 1,
+    "descricaoTipoFolha": "Folha Normal"
+   }
+  ]
+ }
+}

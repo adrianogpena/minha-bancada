@@ -51,3 +51,34 @@ def test_sessao_limita_conexoes_por_host():
     s = ec.sessao()
     a = s.get_adapter("https://exemplo.gov.br")
     assert a._pool_maxsize == 2 and "Mozilla" in s.headers["User-Agent"]
+
+
+def test_prazo_esgotado_interrompe_novas_requisicoes(monkeypatch):
+    monkeypatch.setattr(ec, "PRAZO_FIM", None)
+    ec.checar_prazo()  # sem prazo, nunca levanta
+    monkeypatch.setattr(ec, "PRAZO_FIM", ec.time.monotonic() - 1)
+    with pytest.raises(ec.PrazoEsgotado):
+        ec.checar_prazo()
+    with pytest.raises(ec.PrazoEsgotado):
+        ec.sessao().get("https://exemplo.invalid/")
+
+
+def test_sessao_tem_timeout_padrao(monkeypatch):
+    monkeypatch.setattr(ec, "PRAZO_FIM", None)
+    vistos = {}
+    monkeypatch.setattr(ec.requests.Session, "request", lambda self, *a, **kw: vistos.update(kw))
+    ec.sessao().get("https://exemplo.invalid/")
+    assert vistos["timeout"] == ec.TIMEOUT_PADRAO
+    ec.sessao().get("https://exemplo.invalid/", timeout=5)
+    assert vistos["timeout"] == 5
+
+
+def test_matriz_do_workflow_cobre_todas_as_ufs():
+    """Cada UF nova (SAPL ou módulo coletar_estadual_<uf>.py) precisa entrar na matriz do job `estaduais` em atualizar.yml."""
+    import re
+    from conftest import RAIZ
+    import coletar_estaduais
+    texto = (RAIZ / ".github" / "workflows" / "atualizar.yml").read_text(encoding="utf-8")
+    no_workflow = {u for ufs in re.findall(r'\{ id: \w+, ufs: "([A-Z ]+)" \}', texto) for u in ufs.split()}
+    esperadas = set(coletar_estaduais.ASSEMBLEIAS) | set(coletar_estaduais.modulos_uf())
+    assert no_workflow == esperadas

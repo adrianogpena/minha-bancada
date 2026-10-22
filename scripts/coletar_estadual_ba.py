@@ -74,6 +74,7 @@ def baixar(s, url: str, params: dict | None = None, timeout: int = TIMEOUT) -> b
 def baixar_ckan(s, url: str, timeout: int = TIMEOUT) -> bytes:
     """dados.ba.gov.br não envia o certificado intermediário (o Python recusa, o navegador aceita): sem verificar, só para dados abertos."""
     urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
+    comum.checar_prazo()
     r = requests.get(url, timeout=timeout, verify=False, headers={"User-Agent": comum.USER_AGENT})
     r.raise_for_status()
     return r.content

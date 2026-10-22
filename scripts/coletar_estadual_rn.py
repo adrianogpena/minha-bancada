@@ -15,7 +15,7 @@ membro apareceria como ausente), remuneração dos deputados, diárias e emendas
 
 import sys
 from concurrent.futures import ThreadPoolExecutor
-from datetime import date
+from datetime import date, timedelta
 
 import requests
 from requests.adapters import HTTPAdapter
@@ -32,6 +32,7 @@ DESDE = f"{ANO_INICIAL}-01-01"
 TIMEOUT = 60
 TAMANHO = 200
 EM_PARALELO = 2
+RENOVAR_FALHA_DIAS = 7   # sessão cuja presença deu erro só é consultada de novo depois disso
 MINUSCULAS = {"de", "da", "do", "dos", "das", "e"}
 VOTOS = {1: "Sim", 0: "Não", 2: "Abstenção"}
 TIPO_PLENARIO = {1, 2, 12}
@@ -189,23 +190,43 @@ def somar_presenca(sessoes: list[tuple[str, list[dict]]]) -> dict:
 
 def coletar_presenca(s, deputados: list[dict], sessoes: list[dict]) -> None:
     ids = {d["id"] for d in deputados}
+    arq = PASTA / "presenca_sessoes.json"
+    cache = comum.ler(arq, {"sessoes": {}, "falhas": {}})
+    guardadas, falhas_antigas = cache["sessoes"], cache["falhas"]
+    hoje = date.today()
+    recentes = (hoje - timedelta(days=RENOVAR_FALHA_DIAS)).isoformat()
+    # sessão antiga já lida não muda (as dos últimos dias são lidas de novo); com erro, só é tentada de novo depois de RENOVAR_FALHA_DIAS
+    pendentes = [r for r in sessoes if (str(r["id"]) not in guardadas or (r["dataInicio"] or "") >= recentes)
+                 and (hoje - date.fromisoformat(falhas_antigas.get(str(r["id"]), "2000-01-01"))).days >= RENOVAR_FALHA_DIAS]
     falhas: list[int] = []
 
     def uma(r):
         try:
-            return (r["dataInicio"], pegar(s, f"reuniao/presenca/{r['id']}")["dados"])
+            registros = pegar(s, f"reuniao/presenca/{r['id']}")["dados"]
+        except comum.PrazoEsgotado:
+            raise
         except Exception as e:
             falhas.append(r["id"])
             return None
+        return str(r["id"]), {"data": r["dataInicio"], "registros": [{"id": x["id"], "evento": {"chave": (x.get("evento") or {}).get("chave")}} for x in registros]}
 
-    with ThreadPoolExecutor(EM_PARALELO) as ex:
-        lidas = [x for x in ex.map(uma, sessoes) if x]
+    try:
+        with ThreadPoolExecutor(EM_PARALELO) as ex:
+            for x in ex.map(uma, pendentes):
+                if x:
+                    guardadas[x[0]] = x[1]
+    finally:  # prazo esgotado no meio: o que já foi lido fica guardado para a próxima
+        falhas_atuais = {i: d for i, d in falhas_antigas.items() if i not in guardadas}
+        falhas_atuais.update({str(i): hoje.isoformat() for i in falhas})
+        comum.salvar(arq, {"sessoes": guardadas, "falhas": falhas_atuais})
+    lidas = [(guardadas[str(r["id"])]["data"], guardadas[str(r["id"])]["registros"]) for r in sessoes if str(r["id"]) in guardadas]
     soma = somar_presenca(lidas)
     itens = [{"idDeputado": pid, "periodo": ano, **c, "fonte": f"{SITE}/parlamentar/{pid}"} for (pid, ano), c in sorted(soma.items()) if pid in ids]
     comum.salvar(PASTA / "presenca.json", {"coletadoEm": date.today().isoformat(), "fonte": f"{SITE}/eventos-legislativos", "itens": itens})
-    print(f"RN: presença {len(itens)} registros em {len(lidas)} de {len(sessoes)} sessões plenárias")
-    if falhas:
-        comum.avisar(f"RN: a API respondeu erro em {len(falhas)} sessões plenárias (ids {min(falhas)} a {max(falhas)}), fora da presença")
+    print(f"RN: presença {len(itens)} registros em {len(lidas)} de {len(sessoes)} sessões plenárias ({len(pendentes)} lidas agora)")
+    sem_presenca = [int(i) for i in falhas_atuais if int(i) in {r["id"] for r in sessoes}]
+    if sem_presenca:
+        comum.avisar(f"RN: a API respondeu erro em {len(sem_presenca)} sessões plenárias (ids {min(sem_presenca)} a {max(sem_presenca)}), fora da presença")
 
 
 def votacao(processo: dict, detalhe: dict, ids: set) -> tuple[dict, dict] | None:

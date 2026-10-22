@@ -156,9 +156,28 @@ jobs:
           retention-days: 1
 
   estaduais:
-    name: Coletar Assembleias (SAPL)
+    name: Coletar Assembleias (${{ matrix.id }})
     runs-on: ubuntu-latest
-    timeout-minutes: 60
+    timeout-minutes: 35
+    strategy:
+      fail-fast: false
+      matrix:
+        # cada Assembleia fora do SAPL tem site próprio e ritmo próprio: um job por UF, para uma lenta não segurar as outras
+        include:
+          - { id: sapl, ufs: "PB AM AL RO AC PI TO" }   # Assembleias que usam o SAPL (API igual, coleta rápida)
+          - { id: ba, ufs: "BA" }
+          - { id: ce, ufs: "CE" }
+          - { id: mg, ufs: "MG" }
+          - { id: ms, ufs: "MS" }
+          - { id: mt, ufs: "MT" }
+          - { id: pa, ufs: "PA" }
+          - { id: pe, ufs: "PE" }
+          - { id: rj, ufs: "RJ" }
+          - { id: rn, ufs: "RN" }
+          - { id: rr, ufs: "RR" }
+          - { id: rs, ufs: "RS" }
+          - { id: sc, ufs: "SC" }
+          - { id: se, ufs: "SE" }
     steps:
       - uses: actions/checkout@v5
 
@@ -172,9 +191,12 @@ jobs:
       - name: Marcar o início (só o que for gravado depois disso vai no pacote)
         run: touch "$RUNNER_TEMP/inicio"
 
-      - name: Coletar Assembleias que usam o SAPL (deputados estaduais)
-        run: python scripts/coletar_estaduais.py
-        timeout-minutes: 45
+      - name: Coletar deputados estaduais (${{ matrix.ufs }})
+        # ESTADUAIS_PRAZO_MIN: depois de 25 min o coletor não faz novas requisições, guarda o que já leu e termina; o timeout do passo é só a rede de segurança
+        run: python scripts/coletar_estaduais.py ${{ matrix.ufs }}
+        env:
+          ESTADUAIS_PRAZO_MIN: "25"
+        timeout-minutes: 30
         continue-on-error: true
 
       - name: Empacotar o resultado
@@ -184,7 +206,7 @@ jobs:
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: pacote-estaduais
+          name: pacote-estaduais-${{ matrix.id }}
           path: ${{ runner.temp }}/estaduais.tgz
           if-no-files-found: ignore
           retention-days: 1

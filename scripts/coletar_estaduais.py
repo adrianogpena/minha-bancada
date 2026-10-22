@@ -25,6 +25,8 @@ import requests
 from requests.adapters import HTTPAdapter
 from urllib3.util.retry import Retry
 
+import estaduais_comum as comum
+
 RAIZ = Path(__file__).resolve().parent.parent
 DADOS = RAIZ / "dados" / "estaduais"
 
@@ -73,7 +75,8 @@ def salvar(caminho: Path, obj) -> None:
 
 
 def get(host: str, caminho: str, **params) -> dict:
-    r = S.get(f"https://{host}/api/{caminho.strip('/')}/", params=params or None, timeout=90)
+    comum.checar_prazo()
+    r = S.get(f"https://{host}/api/{caminho.strip('/')}/", params=params or None, timeout=60)
     if not r.ok:
         raise RuntimeError(f"HTTP {r.status_code} em {r.url}")
     return r.json()

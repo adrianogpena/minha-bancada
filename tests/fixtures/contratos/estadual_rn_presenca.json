@@ -1,0 +1,776 @@
+{
+ "fonte": "https://api-transparencialegislativa.al.rn.leg.br/elegis-api-transp-legislativa/reuniao",
+ "capturadoEm": "2026-10-22",
+ "amostra": {
+  "reunioes": [
+   {
+    "id": 3043,
+    "numero": 95,
+    "situacao": "R",
+    "dataInicio": "2026-10-21T10:30:00.000Z",
+    "tipoReuniao": {
+     "id": 1,
+     "sigla": "Sessão Ordinária",
+     "nome": "Sessão Plenária Ordinária"
+    },
+    "reuniaoComissao": [],
+    "reuniaoPublica": null
+   },
+   {
+    "id": 3039,
+    "numero": 94,
+    "situacao": "R",
+    "dataInicio": "2026-10-20T10:30:00.000Z",
+    "tipoReuniao": {
+     "id": 1,
+     "sigla": "Sessão Ordinária",
+     "nome": "Sessão Plenária Ordinária"
+    },
+    "reuniaoComissao": [],
+    "reuniaoPublica": null
+   },
+   {
+    "id": 3040,
+    "numero": 3,
+    "situacao": "R",
+    "dataInicio": "2026-10-20T09:00:00.000Z",
+    "tipoReuniao": {
+     "id": 3,
+     "sigla": "Comissão Ordinária",
+     "nome": "Reunião de Comissão Ordinária"
+    },
+    "reuniaoComissao": [
+     {
+      "id": 4294,
+      "comissao": {
+       "id": 17,
+       "sigla": "CS",
+       "nome": "Comissão de Saúde"
+      }
+     }
+    ],
+    "reuniaoPublica": null
+   },
+   {
+    "id": 3029,
+    "numero": 18,
+    "situacao": "R",
+    "dataInicio": "2026-10-20T09:00:00.000Z",
+    "tipoReuniao": {
+     "id": 3,
+     "sigla": "Comissão Ordinária",
+     "nome": "Reunião de Comissão Ordinária"
+    },
+    "reuniaoComissao": [
+     {
+      "id": 4295,
+      "comissao": {
+       "id": 11,
+       "sigla": "CCJR",
+       "nome": "Comissão de Constituição, Justiça e Redação"
+      }
+     }
+    ],
+    "reuniaoPublica": null
+   },
+   {
+    "id": 3038,
+    "numero": 93,
+    "situacao": "R",
+    "dataInicio": "2026-10-15T10:30:00.000Z",
+    "tipoReuniao": {
+     "id": 1,
+     "sigla": "Sessão Ordinária",
+     "nome": "Sessão Plenária Ordinária"
+    },
+    "reuniaoComissao": [],
+    "reuniaoPublica": null
+   },
+   {
+    "id": 3037,
+    "numero": 92,
+    "situacao": "R",
+    "dataInicio": "2026-10-14T10:30:00.000Z",
+    "tipoReuniao": {
+     "id": 1,
+     "sigla": "Sessão Ordinária",
+     "nome": "Sessão Plenária Ordinária"
+    },
+    "reuniaoComissao": [],
+    "reuniaoPublica": null
+   },
+   {
+    "id": 3036,
+    "numero": 91,
+    "situacao": "R",
+    "dataInicio": "2026-10-13T10:30:00.000Z",
+    "tipoReuniao": {
+     "id": 1,
+     "sigla": "Sessão Ordinária",
+     "nome": "Sessão Plenária Ordinária"
+    },
+    "reuniaoComissao": [],
+    "reuniaoPublica": null
+   },
+   {
+    "id": 3035,
+    "numero": 90,
+    "situacao": "R",
+    "dataInicio": "2026-10-08T10:30:00.000Z",
+    "tipoReuniao": {
+     "id": 1,
+     "sigla": "Sessão Ordinária",
+     "nome": "Sessão Plenária Ordinária"
+    },
+    "reuniaoComissao": [],
+    "reuniaoPublica": null
+   },
+   {
+    "id": 3034,
+    "numero": 89,
+    "situacao": "R",
+    "dataInicio": "2026-10-07T10:30:00.000Z",
+    "tipoReuniao": {
+     "id": 1,
+     "sigla": "Sessão Ordinária",
+     "nome": "Sessão Plenária Ordinária"
+    },
+    "reuniaoComissao": [],
+    "reuniaoPublica": null
+   },
+   {
+    "id": 3033,
+    "numero": 88,
+    "situacao": "R",
+    "dataInicio": "2026-10-06T10:30:00.000Z",
+    "tipoReuniao": {
+     "id": 1,
+     "sigla": "Sessão Ordinária",
+     "nome": "Sessão Plenária Ordinária"
+    },
+    "reuniaoComissao": [],
+    "reuniaoPublica": null
+   },
+   {
+    "id": 3032,
+    "numero": 87,
+    "situacao": "R",
+    "dataInicio": "2026-09-30T10:30:00.000Z",
+    "tipoReuniao": {
+     "id": 1,
+     "sigla": "Sessão Ordinária",
+     "nome": "Sessão Plenária Ordinária"
+    },
+    "reuniaoComissao": [],
+    "reuniaoPublica": null
+   },
+   {
+    "id": 3031,
+    "numero": 86,
+    "situacao": "R",
+    "dataInicio": "2026-09-29T10:30:00.000Z",
+    "tipoReuniao": {
+     "id": 1,
+     "sigla": "Sessão Ordinária",
+     "nome": "Sessão Plenária Ordinária"
+    },
+    "reuniaoComissao": [],
+    "reuniaoPublica": null
+   },
+   {
+    "id": 3030,
+    "numero": 85,
+    "situacao": "R",
+    "dataInicio": "2026-09-23T10:30:00.000Z",
+    "tipoReuniao": {
+     "id": 1,
+     "sigla": "Sessão Ordinária",
+     "nome": "Sessão Plenária Ordinária"
+    },
+    "reuniaoComissao": [],
+    "reuniaoPublica": null
+   },
+   {
+    "id": 3028,
+    "numero": 84,
+    "situacao": "R",
+    "dataInicio": "2026-09-22T10:30:00.000Z",
+    "tipoReuniao": {
+     "id": 1,
+     "sigla": "Sessão Ordinária",
+     "nome": "Sessão Plenária Ordinária"
+    },
+    "reuniaoComissao": [],
+    "reuniaoPublica": null
+   },
+   {
+    "id": 3020,
+    "numero": 181,
+    "situacao": "R",
+    "dataInicio": "2026-09-16T14:00:00.000Z",
+    "tipoReuniao": {
+     "id": 14,
+     "sigla": "sessao-solene",
+     "nome": "Sessão Solene"
+    },
+    "reuniaoComissao": [],
+    "reuniaoPublica": {
+     "id": 554,
+     "tema": "Sessão Solene em homenagem ao Centenário do Hospital do Seridó",
+     "localizacao": "Plenário Deputado Clóvis Motta - Assembleia Legislativa",
+     "processo": {
+      "id": 63478,
+      "numero": 2583,
+      "ano": 2026,
+      "ementa": "Sessão Solene 100 anos do Hospital do Seridó de Caicó"
+     },
+     "propositores": {
+      "iniciativa": {
+       "id": 19,
+       "tipo": "PARLAMENTAR",
+       "descricao": "DEP. NÉLTER QUEIROZ",
+       "parlamentar": {
+        "id": 22,
+        "nomeParlamentar": "DEPUTADO NELTER QUEIROZ",
+        "partido": {
+         "id": 23,
+         "nome": "PP",
+         "nomeOriginal": "Partido Progressista"
+        }
+       }
+      },
+      "subscricoes": []
+     }
+    }
+   },
+   {
+    "id": 3027,
+    "numero": 83,
+    "situacao": "R",
+    "dataInicio": "2026-09-16T10:30:00.000Z",
+    "tipoReuniao": {
+     "id": 1,
+     "sigla": "Sessão Ordinária",
+     "nome": "Sessão Plenária Ordinária"
+    },
+    "reuniaoComissao": [],
+    "reuniaoPublica": null
+   },
+   {
+    "id": 3025,
+    "numero": 82,
+    "situacao": "R",
+    "dataInicio": "2026-09-15T10:30:00.000Z",
+    "tipoReuniao": {
+     "id": 1,
+     "sigla": "Sessão Ordinária",
+     "nome": "Sessão Plenária Ordinária"
+    },
+    "reuniaoComissao": [],
+    "reuniaoPublica": null
+   },
+   {
+    "id": 3026,
+    "numero": 17,
+    "situacao": "R",
+    "dataInicio": "2026-09-15T09:00:00.000Z",
+    "tipoReuniao": {
+     "id": 3,
+     "sigla": "Comissão Ordinária",
+     "nome": "Reunião de Comissão Ordinária"
+    },
+    "reuniaoComissao": [
+     {
+      "id": 4284,
+      "comissao": {
+       "id": 11,
+       "sigla": "CCJR",
+       "nome": "Comissão de Constituição, Justiça e Redação"
+      }
+     }
+    ],
+    "reuniaoPublica": null
+   },
+   {
+    "id": 3024,
+    "numero": 81,
+    "situacao": "R",
+    "dataInicio": "2026-09-09T10:30:00.000Z",
+    "tipoReuniao": {
+     "id": 1,
+     "sigla": "Sessão Ordinária",
+     "nome": "Sessão Plenária Ordinária"
+    },
+    "reuniaoComissao": [],
+    "reuniaoPublica": null
+   },
+   {
+    "id": 3022,
+    "numero": 80,
+    "situacao": "R",
+    "dataInicio": "2026-09-08T10:30:00.000Z",
+    "tipoReuniao": {
+     "id": 1,
+     "sigla": "Sessão Ordinária",
+     "nome": "Sessão Plenária Ordinária"
+    },
+    "reuniaoComissao": [],
+    "reuniaoPublica": null
+   },
+   {
+    "id": 3023,
+    "numero": 16,
+    "situacao": "R",
+    "dataInicio": "2026-09-08T09:00:00.000Z",
+    "tipoReuniao": {
+     "id": 3,
+     "sigla": "Comissão Ordinária",
+     "nome": "Reunião de Comissão Ordinária"
+    },
+    "reuniaoComissao": [
+     {
+      "id": 4281,
+      "comissao": {
+       "id": 11,
+       "sigla": "CCJR",
+       "nome": "Comissão de Constituição, Justiça e Redação"
+      }
+     }
+    ],
+    "reuniaoPublica": null
+   },
+   {
+    "id": 3021,
+    "numero": 79,
+    "situacao": "R",
+    "dataInicio": "2026-09-02T10:30:00.000Z",
+    "tipoReuniao": {
+     "id": 1,
+     "sigla": "Sessão Ordinária",
+     "nome": "Sessão Plenária Ordinária"
+    },
+    "reuniaoComissao": [],
+    "reuniaoPublica": null
+   },
+   {
+    "id": 3019,
+    "numero": 78,
+    "situacao": "R",
+    "dataInicio": "2026-09-01T10:30:00.000Z",
+    "tipoReuniao": {
+     "id": 1,
+     "sigla": "Sessão Ordinária",
+     "nome": "Sessão Plenária Ordinária"
+    },
+    "reuniaoComissao": [],
+    "reuniaoPublica": null
+   },
+   {
+    "id": 3018,
+    "numero": 77,
+    "situacao": "R",
+    "dataInicio": "2026-08-26T10:30:00.000Z",
+    "tipoReuniao": {
+     "id": 1,
+     "sigla": "Sessão Ordinária",
+     "nome": "Sessão Plenária Ordinária"
+    },
+    "reuniaoComissao": [],
+    "reuniaoPublica": null
+   },
+   {
+    "id": 3011,
+    "numero": 2,
+    "situacao": "R",
+    "dataInicio": "2026-08-25T11:16:00.000Z",
+    "tipoReuniao": {
+     "id": 2,
+     "sigla": "Sessão Extraordinária",
+     "nome": "Sessão Plenária Extraordinária"
+    },
+    "reuniaoComissao": [],
+    "reuniaoPublica": null
+   },
+   {
+    "id": 3016,
+    "numero": 76,
+    "situacao": "R",
+    "dataInicio": "2026-08-25T10:30:00.000Z",
+    "tipoReuniao": {
+     "id": 1,
+     "sigla": "Sessão Ordinária",
+     "nome": "Sessão Plenária Ordinária"
+    },
+    "reuniaoComissao": [],
+    "reuniaoPublica": null
+   },
+   {
+    "id": 3017,
+    "numero": 15,
+    "situacao": "R",
+    "dataInicio": "2026-08-25T09:00:00.000Z",
+    "tipoReuniao": {
+     "id": 3,
+     "sigla": "Comissão Ordinária",
+     "nome": "Reunião de Comissão Ordinária"
+    },
+    "reuniaoComissao": [
+     {
+      "id": 4277,
+      "comissao": {
+       "id": 11,
+       "sigla": "CCJR",
+       "nome": "Comissão de Constituição, Justiça e Redação"
+      }
+     }
+    ],
+    "reuniaoPublica": null
+   },
+   {
+    "id": 3015,
+    "numero": 75,
+    "situacao": "R",
+    "dataInicio": "2026-08-20T10:30:00.000Z",
+    "tipoReuniao": {
+     "id": 1,
+     "sigla": "Sessão Ordinária",
+     "nome": "Sessão Plenária Ordinária"
+    },
+    "reuniaoComissao": [],
+    "reuniaoPublica": null
+   },
+   {
+    "id": 3013,
+    "numero": 74,
+    "situacao": "R",
+    "dataInicio": "2026-08-19T10:30:00.000Z",
+    "tipoReuniao": {
+     "id": 1,
+     "sigla": "Sessão Ordinária",
+     "nome": "Sessão Plenária Ordinária"
+    },
+    "reuniaoComissao": [],
+    "reuniaoPublica": null
+   },
+   {
+    "id": 3014,
+    "numero": 8,
+    "situacao": "R",
+    "dataInicio": "2026-08-19T09:30:00.000Z",
+    "tipoReuniao": {
+     "id": 3,
+     "sigla": "Comissão Ordinária",
+     "nome": "Reunião de Comissão Ordinária"
+    },
+    "reuniaoComissao": [
+     {
+      "id": 4274,
+      "comissao": {
+       "id": 13,
+       "sigla": "CECTDSMAT",
+       "nome": "Comissão de Educação, Ciência e Tecnologia, Desenvolvimento Socioeconômico, Meio Ambiente e Turismo"
+      }
+     }
+    ],
+    "reuniaoPublica": null
+   }
+  ],
+  "presenca": [
+   {
+    "id": 8,
+    "nomeParlamentar": "DEPUTADA CRISTIANE DANTAS",
+    "partido": {
+     "id": 7,
+     "nome": "PSDB",
+     "nomeOriginal": "Partido da Social Democracia Brasileira"
+    },
+    "evento": {
+     "id": 8,
+     "chave": "presenca"
+    }
+   },
+   {
+    "id": 56,
+    "nomeParlamentar": "DEPUTADA DIVANEIDE BASÍLIO",
+    "partido": {
+     "id": 1,
+     "nome": "PT",
+     "nomeOriginal": "Partido dos Trabalhadores"
+    },
+    "evento": {
+     "id": 9,
+     "chave": "ausencia-justificada"
+    }
+   },
+   {
+    "id": 10,
+    "nomeParlamentar": "DEPUTADA EUDIANE MACEDO",
+    "partido": {
+     "id": 20,
+     "nome": "PV",
+     "nomeOriginal": "Partido Verde"
+    },
+    "evento": {
+     "id": 8,
+     "chave": "presenca"
+    }
+   },
+   {
+    "id": 18,
+    "nomeParlamentar": "DEPUTADA ISOLDA DANTAS",
+    "partido": {
+     "id": 1,
+     "nome": "PT",
+     "nomeOriginal": "Partido dos Trabalhadores"
+    },
+    "evento": {
+     "id": 9,
+     "chave": "ausencia-justificada"
+    }
+   },
+   {
+    "id": 60,
+    "nomeParlamentar": "DEPUTADA TEREZINHA MAIA",
+    "partido": {
+     "id": 17,
+     "nome": "PL",
+     "nomeOriginal": "Partido Liberal"
+    },
+    "evento": {
+     "id": 8,
+     "chave": "presenca"
+    }
+   },
+   {
+    "id": 57,
+    "nomeParlamentar": "DEPUTADO ADJUTO DIAS",
+    "partido": {
+     "id": 17,
+     "nome": "PL",
+     "nomeOriginal": "Partido Liberal"
+    },
+    "evento": {
+     "id": 8,
+     "chave": "presenca"
+    }
+   },
+   {
+    "id": 7,
+    "nomeParlamentar": "DEPUTADO CORONEL AZEVEDO",
+    "partido": {
+     "id": 17,
+     "nome": "PL",
+     "nomeOriginal": "Partido Liberal"
+    },
+    "evento": {
+     "id": 8,
+     "chave": "presenca"
+    }
+   },
+   {
+    "id": 9,
+    "nomeParlamentar": "DEPUTADO DR. BERNARDO",
+    "partido": {
+     "id": 20,
+     "nome": "PV",
+     "nomeOriginal": "Partido Verde"
+    },
+    "evento": null
+   },
+   {
+    "id": 61,
+    "nomeParlamentar": "DEPUTADO DR. KERGINALDO",
+    "partido": {
+     "id": 17,
+     "nome": "PL",
+     "nomeOriginal": "Partido Liberal"
+    },
+    "evento": {
+     "id": 8,
+     "chave": "presenca"
+    }
+   },
+   {
+    "id": 11,
+    "nomeParlamentar": "DEPUTADO EZEQUIEL FERREIRA",
+    "partido": {
+     "id": 7,
+     "nome": "PSDB",
+     "nomeOriginal": "Partido da Social Democracia Brasileira"
+    },
+    "evento": {
+     "id": 9,
+     "chave": "ausencia-justificada"
+    }
+   },
+   {
+    "id": 12,
+    "nomeParlamentar": "DEPUTADO FRANCISCO DO PT",
+    "partido": {
+     "id": 1,
+     "nome": "PT",
+     "nomeOriginal": "Partido dos Trabalhadores"
+    },
+    "evento": null
+   },
+   {
+    "id": 13,
+    "nomeParlamentar": "DEPUTADO GALENO TORQUATO",
+    "partido": {
+     "id": 21,
+     "nome": "UNIÃO",
+     "nomeOriginal": "União Brasil"
+    },
+    "evento": null
+   },
+   {
+    "id": 16,
+    "nomeParlamentar": "DEPUTADO GUSTAVO CARVALHO",
+    "partido": {
+     "id": 17,
+     "nome": "PL",
+     "nomeOriginal": "Partido Liberal"
+    },
+    "evento": null
+   },
+   {
+    "id": 17,
+    "nomeParlamentar": "DEPUTADO HERMANO MORAIS",
+    "partido": {
+     "id": 11,
+     "nome": "MDB",
+     "nomeOriginal": "Movimento Democrático Brasileiro"
+    },
+    "evento": {
+     "id": 8,
+     "chave": "presenca"
+    }
+   },
+   {
+    "id": 58,
+    "nomeParlamentar": "DEPUTADO IVANILSON OLIVEIRA",
+    "partido": {
+     "id": 20,
+     "nome": "PV",
+     "nomeOriginal": "Partido Verde"
+    },
+    "evento": null
+   },
+   {
+    "id": 19,
+    "nomeParlamentar": "DEPUTADO JOSÉ DIAS",
+    "partido": {
+     "id": 17,
+     "nome": "PL",
+     "nomeOriginal": "Partido Liberal"
+    },
+    "evento": {
+     "id": 8,
+     "chave": "presenca"
+    }
+   },
+   {
+    "id": 21,
+    "nomeParlamentar": "DEPUTADO KLEBER RODRIGUES",
+    "partido": {
+     "id": 23,
+     "nome": "PP",
+     "nomeOriginal": "Partido Progressista"
+    },
+    "evento": {
+     "id": 9,
+     "chave": "ausencia-justificada"
+    }
+   },
+   {
+    "id": 59,
+    "nomeParlamentar": "DEPUTADO LUIZ EDUARDO",
+    "partido": {
+     "id": 17,
+     "nome": "PL",
+     "nomeOriginal": "Partido Liberal"
+    },
+    "evento": {
+     "id": 8,
+     "chave": "presenca"
+    }
+   },
+   {
+    "id": 62,
+    "nomeParlamentar": "DEPUTADO NEILTON DIÓGENES",
+    "partido": {
+     "id": 23,
+     "nome": "PP",
+     "nomeOriginal": "Partido Progressista"
+    },
+    "evento": {
+     "id": 9,
+     "chave": "ausencia-justificada"
+    }
+   },
+   {
+    "id": 22,
+    "nomeParlamentar": "DEPUTADO NELTER QUEIROZ",
+    "partido": {
+     "id": 23,
+     "nome": "PP",
+     "nomeOriginal": "Partido Progressista"
+    },
+    "evento": {
+     "id": 8,
+     "chave": "presenca"
+    }
+   },
+   {
+    "id": 55,
+    "nomeParlamentar": "DEPUTADO TAVEIRA JÚNIOR",
+    "partido": {
+     "id": 7,
+     "nome": "PSDB",
+     "nomeOriginal": "Partido da Social Democracia Brasileira"
+    },
+    "evento": {
+     "id": 8,
+     "chave": "presenca"
+    }
+   },
+   {
+    "id": 26,
+    "nomeParlamentar": "DEPUTADO TOMBA FARIAS",
+    "partido": {
+     "id": 17,
+     "nome": "PL",
+     "nomeOriginal": "Partido Liberal"
+    },
+    "evento": {
+     "id": 8,
+     "chave": "presenca"
+    }
+   },
+   {
+    "id": 27,
+    "nomeParlamentar": "DEPUTADO UBALDO FERNANDES",
+    "partido": {
+     "id": 20,
+     "nome": "PV",
+     "nomeOriginal": "Partido Verde"
+    },
+    "evento": null
+   },
+   {
+    "id": 28,
+    "nomeParlamentar": "DEPUTADO VIVALDO COSTA",
+    "partido": {
+     "id": 20,
+     "nome": "PV",
+     "nomeOriginal": "Partido Verde"
+    },
+    "evento": {
+     "id": 8,
+     "chave": "presenca"
+    }
+   }
+  ],
+  "reuniao": 3043
+ }
+}

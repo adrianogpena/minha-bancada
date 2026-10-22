@@ -1,0 +1,2382 @@
+{
+ "fonte": "https://api-transparencialegislativa.al.rn.leg.br/elegis-api-transp-legislativa/processo",
+ "capturadoEm": "2026-10-22",
+ "amostra": {
+  "processos": [
+   {
+    "id": 64181,
+    "numero": 3239,
+    "ano": 2026,
+    "numeroExterno": null,
+    "anoExterno": null,
+    "ementa": "Solicita a realização de serviços de limpeza, conservação e manutenção das instalações da Cidade da Criança, localizada em Natal/RN.",
+    "informacaoLei": null,
+    "dataEntrada": "2026-10-21T10:08:29.233Z",
+    "dataArquivamento": null,
+    "propositura": {
+     "tipo": {
+      "id": 9,
+      "sigla": "REQ",
+      "descricao": "REQUERIMENTO"
+     },
+     "numero": 2216,
+     "ano": 2026
+    },
+    "inclusao": {
+     "data": "2026-10-21T10:08:29.233Z"
+    },
+    "exclusao": {
+     "data": null
+    },
+    "iniciativa": {
+     "id": 3,
+     "tipo": "PARLAMENTAR",
+     "descricao": "DEP. CRISTIANE DANTAS",
+     "parlamentar": {
+      "id": 8,
+      "nomeParlamentar": "DEPUTADA CRISTIANE DANTAS",
+      "partido": {
+       "id": 7,
+       "nome": "PSDB",
+       "nomeOriginal": "Partido da Social Democracia Brasileira"
+      }
+     }
+    },
+    "apensamentos": [],
+    "apensamento": null,
+    "documento": {
+     "id": 307683,
+     "ementa": "Solicita a realização de serviços de limpeza, conservação e manutenção das instalações da Cidade da Criança, localizada em Natal/RN.",
+     "tipoDocumento": {
+      "id": 8,
+      "descricao": "Requerimento"
+     }
+    },
+    "reuniaoProcesso": null,
+    "publicacao": [],
+    "emenda": [],
+    "comissao": []
+   },
+   {
+    "id": 64178,
+    "numero": 3238,
+    "ano": 2026,
+    "numeroExterno": null,
+    "anoExterno": null,
+    "ementa": "Solicita a aquisição de uma ambulância para atender à Unidade Básica de Saúde (UBS) do distrito de Campo de Santana, no município de Nísia Floresta/RN.",
+    "informacaoLei": null,
+    "dataEntrada": "2026-10-21T09:56:51.677Z",
+    "dataArquivamento": null,
+    "propositura": {
+     "tipo": {
+      "id": 9,
+      "sigla": "REQ",
+      "descricao": "REQUERIMENTO"
+     },
+     "numero": 2215,
+     "ano": 2026
+    },
+    "inclusao": {
+     "data": "2026-10-21T09:56:51.677Z"
+    },
+    "exclusao": {
+     "data": null
+    },
+    "iniciativa": {
+     "id": 3,
+     "tipo": "PARLAMENTAR",
+     "descricao": "DEP. CRISTIANE DANTAS",
+     "parlamentar": {
+      "id": 8,
+      "nomeParlamentar": "DEPUTADA CRISTIANE DANTAS",
+      "partido": {
+       "id": 7,
+       "nome": "PSDB",
+       "nomeOriginal": "Partido da Social Democracia Brasileira"
+      }
+     }
+    },
+    "apensamentos": [],
+    "apensamento": null,
+    "documento": {
+     "id": 307671,
+     "ementa": "Solicita a aquisição de uma ambulância para atender à Unidade Básica de Saúde (UBS) do distrito de Campo de Santana, no município de Nísia Floresta/RN.",
+     "tipoDocumento": {
+      "id": 8,
+      "descricao": "Requerimento"
+     }
+    },
+    "reuniaoProcesso": null,
+    "publicacao": [],
+    "emenda": [],
+    "comissao": []
+   },
+   {
+    "id": 64159,
+    "numero": 3220,
+    "ano": 2026,
+    "numeroExterno": null,
+    "anoExterno": null,
+    "ementa": "Solicitando a perfuração de poços artesianos nos distritos de Jerusalém e Catingueira, no município de Itaú/RN.",
+    "informacaoLei": null,
+    "dataEntrada": "2026-10-20T10:07:22.753Z",
+    "dataArquivamento": null,
+    "propositura": {
+     "tipo": {
+      "id": 9,
+      "sigla": "REQ",
+      "descricao": "REQUERIMENTO"
+     },
+     "numero": 2202,
+     "ano": 2026
+    },
+    "inclusao": {
+     "data": "2026-10-20T10:07:22.753Z"
+    },
+    "exclusao": {
+     "data": null
+    },
+    "iniciativa": {
+     "id": 3,
+     "tipo": "PARLAMENTAR",
+     "descricao": "DEP. CRISTIANE DANTAS",
+     "parlamentar": {
+      "id": 8,
+      "nomeParlamentar": "DEPUTADA CRISTIANE DANTAS",
+      "partido": {
+       "id": 7,
+       "nome": "PSDB",
+       "nomeOriginal": "Partido da Social Democracia Brasileira"
+      }
+     }
+    },
+    "apensamentos": [],
+    "apensamento": null,
+    "documento": {
+     "id": 307544,
+     "ementa": "Solicitando a perfuração de poços artesianos nos distritos de Jerusalém e Catingueira, no município de Itaú/RN.",
+     "tipoDocumento": {
+      "id": 8,
+      "descricao": "Requerimento"
+     }
+    },
+    "reuniaoProcesso": null,
+    "publicacao": [],
+    "emenda": [],
+    "comissao": []
+   },
+   {
+    "id": 64157,
+    "numero": 3219,
+    "ano": 2026,
+    "numeroExterno": null,
+    "anoExterno": null,
+    "ementa": "Solicita a adoção das providências necessárias para a construção de um terminal pesqueiro no distrito de Pajuçara, no município de São Gonçalo do Amarante/RN.",
+    "informacaoLei": null,
+    "dataEntrada": "2026-10-20T09:57:27.447Z",
+    "dataArquivamento": null,
+    "propositura": {
+     "tipo": {
+      "id": 9,
+      "sigla": "REQ",
+      "descricao": "REQUERIMENTO"
+     },
+     "numero": 2201,
+     "ano": 2026
+    },
+    "inclusao": {
+     "data": "2026-10-20T09:57:27.447Z"
+    },
+    "exclusao": {
+     "data": null
+    },
+    "iniciativa": {
+     "id": 3,
+     "tipo": "PARLAMENTAR",
+     "descricao": "DEP. CRISTIANE DANTAS",
+     "parlamentar": {
+      "id": 8,
+      "nomeParlamentar": "DEPUTADA CRISTIANE DANTAS",
+      "partido": {
+       "id": 7,
+       "nome": "PSDB",
+       "nomeOriginal": "Partido da Social Democracia Brasileira"
+      }
+     }
+    },
+    "apensamentos": [],
+    "apensamento": null,
+    "documento": {
+     "id": 307537,
+     "ementa": "Solicita a adoção das providências necessárias para a construção de um terminal pesqueiro no distrito de Pajuçara, no município de São Gonçalo do Amarante/RN.",
+     "tipoDocumento": {
+      "id": 8,
+      "descricao": "Requerimento"
+     }
+    },
+    "reuniaoProcesso": null,
+    "publicacao": [],
+    "emenda": [],
+    "comissao": []
+   },
+   {
+    "id": 64116,
+    "numero": 3179,
+    "ano": 2026,
+    "numeroExterno": null,
+    "anoExterno": null,
+    "ementa": "Solicita a adoção\ndas providências necessárias para a recuperação asfáltica da rodovia RN-061",
+    "informacaoLei": null,
+    "dataEntrada": "2026-10-15T10:03:03.590Z",
+    "dataArquivamento": null,
+    "propositura": {
+     "tipo": {
+      "id": 9,
+      "sigla": "REQ",
+      "descricao": "REQUERIMENTO"
+     },
+     "numero": 2177,
+     "ano": 2026
+    },
+    "inclusao": {
+     "data": "2026-10-15T10:03:03.590Z"
+    },
+    "exclusao": {
+     "data": null
+    },
+    "iniciativa": {
+     "id": 3,
+     "tipo": "PARLAMENTAR",
+     "descricao": "DEP. CRISTIANE DANTAS",
+     "parlamentar": {
+      "id": 8,
+      "nomeParlamentar": "DEPUTADA CRISTIANE DANTAS",
+      "partido": {
+       "id": 7,
+       "nome": "PSDB",
+       "nomeOriginal": "Partido da Social Democracia Brasileira"
+      }
+     }
+    },
+    "apensamentos": [],
+    "apensamento": null,
+    "documento": {
+     "id": 307200,
+     "ementa": "Recuperação asfáltica da rodovia RN-061",
+     "tipoDocumento": {
+      "id": 8,
+      "descricao": "Requerimento"
+     }
+    },
+    "reuniaoProcesso": null,
+    "publicacao": [],
+    "emenda": [],
+    "comissao": []
+   },
+   {
+    "id": 64091,
+    "numero": 3155,
+    "ano": 2026,
+    "numeroExterno": null,
+    "anoExterno": null,
+    "ementa": "Solicita a adoção de providências para a realização de serviços de conservação rodoviária na RN-203, no trecho que interliga os municípios de São Tomé e Cerro Corá.",
+    "informacaoLei": null,
+    "dataEntrada": "2026-10-14T10:19:32.077Z",
+    "dataArquivamento": null,
+    "propositura": {
+     "tipo": {
+      "id": 9,
+      "sigla": "REQ",
+      "descricao": "REQUERIMENTO"
+     },
+     "numero": 2160,
+     "ano": 2026
+    },
+    "inclusao": {
+     "data": "2026-10-14T10:19:32.077Z"
+    },
+    "exclusao": {
+     "data": null
+    },
+    "iniciativa": {
+     "id": 3,
+     "tipo": "PARLAMENTAR",
+     "descricao": "DEP. CRISTIANE DANTAS",
+     "parlamentar": {
+      "id": 8,
+      "nomeParlamentar": "DEPUTADA CRISTIANE DANTAS",
+      "partido": {
+       "id": 7,
+       "nome": "PSDB",
+       "nomeOriginal": "Partido da Social Democracia Brasileira"
+      }
+     }
+    },
+    "apensamentos": [],
+    "apensamento": null,
+    "documento": {
+     "id": 307077,
+     "ementa": "Solicita a adoção de providências para a realização de serviços de conservação rodoviária na RN-203, no trecho que interliga os municípios de São Tomé e Cerro Corá.",
+     "tipoDocumento": {
+      "id": 8,
+      "descricao": "Requerimento"
+     }
+    },
+    "reuniaoProcesso": null,
+    "publicacao": [],
+    "emenda": [],
+    "comissao": []
+   },
+   {
+    "id": 64089,
+    "numero": 3154,
+    "ano": 2026,
+    "numeroExterno": null,
+    "anoExterno": null,
+    "ementa": "Solicita a regularização dos pagamentos dos médicos que prestam serviços nas Unidades de Terapia Intensiva (UTIs) dos hospitais regionais Tarcísio Maia, em Mossoró, e Nelson Inácio dos Santos, em Assú.",
+    "informacaoLei": null,
+    "dataEntrada": "2026-10-14T10:04:50.453Z",
+    "dataArquivamento": null,
+    "propositura": {
+     "tipo": {
+      "id": 9,
+      "sigla": "REQ",
+      "descricao": "REQUERIMENTO"
+     },
+     "numero": 2159,
+     "ano": 2026
+    },
+    "inclusao": {
+     "data": "2026-10-14T10:04:50.453Z"
+    },
+    "exclusao": {
+     "data": null
+    },
+    "iniciativa": {
+     "id": 3,
+     "tipo": "PARLAMENTAR",
+     "descricao": "DEP. CRISTIANE DANTAS",
+     "parlamentar": {
+      "id": 8,
+      "nomeParlamentar": "DEPUTADA CRISTIANE DANTAS",
+      "partido": {
+       "id": 7,
+       "nome": "PSDB",
+       "nomeOriginal": "Partido da Social Democracia Brasileira"
+      }
+     }
+    },
+    "apensamentos": [],
+    "apensamento": null,
+    "documento": {
+     "id": 307050,
+     "ementa": "Solicita a regularização dos pagamentos dos médicos que prestam serviços nas Unidades de Terapia Intensiva (UTIs) dos hospitais regionais Tarcísio Maia, em Mossoró, e Nelson Inácio dos Santos, em Assú.",
+     "tipoDocumento": {
+      "id": 8,
+      "descricao": "Requerimento"
+     }
+    },
+    "reuniaoProcesso": null,
+    "publicacao": [],
+    "emenda": [],
+    "comissao": []
+   },
+   {
+    "id": 64073,
+    "numero": 3138,
+    "ano": 2026,
+    "numeroExterno": null,
+    "anoExterno": null,
+    "ementa": "Regularização dos pagamentos pendentes aos postos fornecedores de combustíveis responsáveis pelo abastecimento das viaturas das forças de segurança pública no município de Pau dos Ferros/RN.",
+    "informacaoLei": null,
+    "dataEntrada": "2026-10-13T10:05:32.997Z",
+    "dataArquivamento": null,
+    "propositura": {
+     "tipo": {
+      "id": 9,
+      "sigla": "REQ",
+      "descricao": "REQUERIMENTO"
+     },
+     "numero": 2144,
+     "ano": 2026
+    },
+    "inclusao": {
+     "data": "2026-10-13T10:05:32.997Z"
+    },
+    "exclusao": {
+     "data": null
+    },
+    "iniciativa": {
+     "id": 3,
+     "tipo": "PARLAMENTAR",
+     "descricao": "DEP. CRISTIANE DANTAS",
+     "parlamentar": {
+      "id": 8,
+      "nomeParlamentar": "DEPUTADA CRISTIANE DANTAS",
+      "partido": {
+       "id": 7,
+       "nome": "PSDB",
+       "nomeOriginal": "Partido da Social Democracia Brasileira"
+      }
+     }
+    },
+    "apensamentos": [],
+    "apensamento": null,
+    "documento": {
+     "id": 306944,
+     "ementa": "Regularização dos pagamentos pendentes aos postos fornecedores de combustíveis responsáveis pelo abastecimento das viaturas das forças de segurança pública no município de Pau dos Ferros/RN.",
+     "tipoDocumento": {
+      "id": 8,
+      "descricao": "Requerimento"
+     }
+    },
+    "reuniaoProcesso": null,
+    "publicacao": [],
+    "emenda": [],
+    "comissao": []
+   },
+   {
+    "id": 64072,
+    "numero": 3122,
+    "ano": 2026,
+    "numeroExterno": null,
+    "anoExterno": null,
+    "ementa": "Justificativa  de ausência nas sessões plenárias dos dias 7 e 8 de agosto de 2026).",
+    "informacaoLei": null,
+    "dataEntrada": "2026-10-13T09:52:42.350Z",
+    "dataArquivamento": null,
+    "propositura": {
+     "tipo": {
+      "id": 9,
+      "sigla": "REQ",
+      "descricao": "REQUERIMENTO"
+     },
+     "numero": 2129,
+     "ano": 2026
+    },
+    "inclusao": {
+     "data": "2026-10-13T09:52:42.350Z"
+    },
+    "exclusao": {
+     "data": null
+    },
+    "iniciativa": {
+     "id": 3,
+     "tipo": "PARLAMENTAR",
+     "descricao": "DEP. CRISTIANE DANTAS",
+     "parlamentar": {
+      "id": 8,
+      "nomeParlamentar": "DEPUTADA CRISTIANE DANTAS",
+      "partido": {
+       "id": 7,
+       "nome": "PSDB",
+       "nomeOriginal": "Partido da Social Democracia Brasileira"
+      }
+     }
+    },
+    "apensamentos": [],
+    "apensamento": null,
+    "documento": {
+     "id": 306934,
+     "ementa": "Justificativa  de ausência nas sessões plenárias dos dias 7 e 8 de agosto de 2026).",
+     "tipoDocumento": {
+      "id": 8,
+      "descricao": "Requerimento"
+     }
+    },
+    "reuniaoProcesso": null,
+    "publicacao": [],
+    "emenda": [],
+    "comissao": []
+   },
+   {
+    "id": 64039,
+    "numero": 3124,
+    "ano": 2026,
+    "numeroExterno": null,
+    "anoExterno": null,
+    "ementa": "Solicita informações e providências quanto às constantes interrupções no abastecimento de água no município de Itaú/RN.",
+    "informacaoLei": null,
+    "dataEntrada": "2026-10-07T10:03:04.013Z",
+    "dataArquivamento": null,
+    "propositura": {
+     "tipo": {
+      "id": 9,
+      "sigla": "REQ",
+      "descricao": "REQUERIMENTO"
+     },
+     "numero": 2130,
+     "ano": 2026
+    },
+    "inclusao": {
+     "data": "2026-10-07T10:03:04.013Z"
+    },
+    "exclusao": {
+     "data": null
+    },
+    "iniciativa": {
+     "id": 3,
+     "tipo": "PARLAMENTAR",
+     "descricao": "DEP. CRISTIANE DANTAS",
+     "parlamentar": {
+      "id": 8,
+      "nomeParlamentar": "DEPUTADA CRISTIANE DANTAS",
+      "partido": {
+       "id": 7,
+       "nome": "PSDB",
+       "nomeOriginal": "Partido da Social Democracia Brasileira"
+      }
+     }
+    },
+    "apensamentos": [],
+    "apensamento": null,
+    "documento": {
+     "id": 306754,
+     "ementa": "Solicita informações e providências quanto às constantes interrupções no abastecimento de água no município de Itaú/RN.",
+     "tipoDocumento": {
+      "id": 8,
+      "descricao": "Requerimento"
+     }
+    },
+    "reuniaoProcesso": null,
+    "publicacao": [],
+    "emenda": [],
+    "comissao": []
+   },
+   {
+    "id": 64019,
+    "numero": 3088,
+    "ano": 2026,
+    "numeroExterno": null,
+    "anoExterno": null,
+    "ementa": "Solicita a aquisição e disponibilização de um trator para atender às demandas da Colônia de Pescadores Z-34, localizada no município de São Miguel do Gostoso.",
+    "informacaoLei": null,
+    "dataEntrada": "2026-10-06T10:01:35.360Z",
+    "dataArquivamento": null,
+    "propositura": {
+     "tipo": {
+      "id": 9,
+      "sigla": "REQ",
+      "descricao": "REQUERIMENTO"
+     },
+     "numero": 2107,
+     "ano": 2026
+    },
+    "inclusao": {
+     "data": "2026-10-06T10:01:35.360Z"
+    },
+    "exclusao": {
+     "data": null
+    },
+    "iniciativa": {
+     "id": 3,
+     "tipo": "PARLAMENTAR",
+     "descricao": "DEP. CRISTIANE DANTAS",
+     "parlamentar": {
+      "id": 8,
+      "nomeParlamentar": "DEPUTADA CRISTIANE DANTAS",
+      "partido": {
+       "id": 7,
+       "nome": "PSDB",
+       "nomeOriginal": "Partido da Social Democracia Brasileira"
+      }
+     }
+    },
+    "apensamentos": [],
+    "apensamento": null,
+    "documento": {
+     "id": 306622,
+     "ementa": "Solicita a aquisição e disponibilização de um trator para atender às demandas da Colônia de Pescadores Z-34, localizada no município de São Miguel do Gostoso.",
+     "tipoDocumento": {
+      "id": 8,
+      "descricao": "Requerimento"
+     }
+    },
+    "reuniaoProcesso": null,
+    "publicacao": [],
+    "emenda": [],
+    "comissao": []
+   },
+   {
+    "id": 64016,
+    "numero": 3090,
+    "ano": 2026,
+    "numeroExterno": null,
+    "anoExterno": null,
+    "ementa": "Solicita a realização de obra de recuperação asfáltica da RN-120, no trecho compreendido entre os municípios de Nova Cruz e Santo Antônio.",
+    "informacaoLei": null,
+    "dataEntrada": "2026-10-06T09:54:31.280Z",
+    "dataArquivamento": null,
+    "propositura": {
+     "tipo": {
+      "id": 9,
+      "sigla": "REQ",
+      "descricao": "REQUERIMENTO"
+     },
+     "numero": 2109,
+     "ano": 2026
+    },
+    "inclusao": {
+     "data": "2026-10-06T09:54:31.280Z"
+    },
+    "exclusao": {
+     "data": null
+    },
+    "iniciativa": {
+     "id": 3,
+     "tipo": "PARLAMENTAR",
+     "descricao": "DEP. CRISTIANE DANTAS",
+     "parlamentar": {
+      "id": 8,
+      "nomeParlamentar": "DEPUTADA CRISTIANE DANTAS",
+      "partido": {
+       "id": 7,
+       "nome": "PSDB",
+       "nomeOriginal": "Partido da Social Democracia Brasileira"
+      }
+     }
+    },
+    "apensamentos": [],
+    "apensamento": null,
+    "documento": {
+     "id": 306602,
+     "ementa": "Solicita a realização de obra de recuperação asfáltica da RN-120, no trecho compreendido entre os municípios de Nova Cruz e Santo Antônio.",
+     "tipoDocumento": {
+      "id": 8,
+      "descricao": "Requerimento"
+     }
+    },
+    "reuniaoProcesso": null,
+    "publicacao": [],
+    "emenda": [],
+    "comissao": []
+   },
+   {
+    "id": 63991,
+    "numero": 3065,
+    "ano": 2026,
+    "numeroExterno": null,
+    "anoExterno": null,
+    "ementa": "Solicita a adoção das providências necessárias para a recuperação da passarela destinada à travessia de pedestres localizada às margens da BR-101, na altura do município de São José de Mipibu/RN.",
+    "informacaoLei": null,
+    "dataEntrada": "2026-09-30T09:32:58.820Z",
+    "dataArquivamento": null,
+    "propositura": {
+     "tipo": {
+      "id": 9,
+      "sigla": "REQ",
+      "descricao": "REQUERIMENTO"
+     },
+     "numero": 2097,
+     "ano": 2026
+    },
+    "inclusao": {
+     "data": "2026-09-30T09:32:58.820Z"
+    },
+    "exclusao": {
+     "data": null
+    },
+    "iniciativa": {
+     "id": 3,
+     "tipo": "PARLAMENTAR",
+     "descricao": "DEP. CRISTIANE DANTAS",
+     "parlamentar": {
+      "id": 8,
+      "nomeParlamentar": "DEPUTADA CRISTIANE DANTAS",
+      "partido": {
+       "id": 7,
+       "nome": "PSDB",
+       "nomeOriginal": "Partido da Social Democracia Brasileira"
+      }
+     }
+    },
+    "apensamentos": [],
+    "apensamento": null,
+    "documento": {
+     "id": 306325,
+     "ementa": "Solicita a adoção das providências necessárias para a recuperação da passarela destinada à travessia de pedestres localizada às margens da BR-101, na altura do município de São José de Mipibu/RN.",
+     "tipoDocumento": {
+      "id": 8,
+      "descricao": "Requerimento"
+     }
+    },
+    "reuniaoProcesso": null,
+    "publicacao": [],
+    "emenda": [],
+    "comissao": []
+   },
+   {
+    "id": 63974,
+    "numero": 3049,
+    "ano": 2026,
+    "numeroExterno": null,
+    "anoExterno": null,
+    "ementa": "Solicita instalação de redutores de velocidade na RN-088, na altura do Conjunto Ana Cunha, trecho situado entre os municípios de Parelhas e Jardim do Seridó.",
+    "informacaoLei": null,
+    "dataEntrada": "2026-09-29T09:53:35.057Z",
+    "dataArquivamento": null,
+    "propositura": {
+     "tipo": {
+      "id": 9,
+      "sigla": "REQ",
+      "descricao": "REQUERIMENTO"
+     },
+     "numero": 2085,
+     "ano": 2026
+    },
+    "inclusao": {
+     "data": "2026-09-29T09:53:35.057Z"
+    },
+    "exclusao": {
+     "data": null
+    },
+    "iniciativa": {
+     "id": 3,
+     "tipo": "PARLAMENTAR",
+     "descricao": "DEP. CRISTIANE DANTAS",
+     "parlamentar": {
+      "id": 8,
+      "nomeParlamentar": "DEPUTADA CRISTIANE DANTAS",
+      "partido": {
+       "id": 7,
+       "nome": "PSDB",
+       "nomeOriginal": "Partido da Social Democracia Brasileira"
+      }
+     }
+    },
+    "apensamentos": [],
+    "apensamento": null,
+    "documento": {
+     "id": 306262,
+     "ementa": "Solicita instalação de redutores de velocidade na RN-088, na altura do Conjunto Ana Cunha, trecho situado entre os municípios de Parelhas e Jardim do Seridó.",
+     "tipoDocumento": {
+      "id": 8,
+      "descricao": "Requerimento"
+     }
+    },
+    "reuniaoProcesso": null,
+    "publicacao": [],
+    "emenda": [],
+    "comissao": []
+   },
+   {
+    "id": 63971,
+    "numero": 3051,
+    "ano": 2026,
+    "numeroExterno": null,
+    "anoExterno": null,
+    "ementa": "Recuperação asfáltica da RN-041, no trecho compreendido entre a BR-304 e o Município de Santana do Matos",
+    "informacaoLei": null,
+    "dataEntrada": "2026-09-29T09:43:48.540Z",
+    "dataArquivamento": null,
+    "propositura": {
+     "tipo": {
+      "id": 9,
+      "sigla": "REQ",
+      "descricao": "REQUERIMENTO"
+     },
+     "numero": 2087,
+     "ano": 2026
+    },
+    "inclusao": {
+     "data": "2026-09-29T09:43:48.540Z"
+    },
+    "exclusao": {
+     "data": null
+    },
+    "iniciativa": {
+     "id": 3,
+     "tipo": "PARLAMENTAR",
+     "descricao": "DEP. CRISTIANE DANTAS",
+     "parlamentar": {
+      "id": 8,
+      "nomeParlamentar": "DEPUTADA CRISTIANE DANTAS",
+      "partido": {
+       "id": 7,
+       "nome": "PSDB",
+       "nomeOriginal": "Partido da Social Democracia Brasileira"
+      }
+     }
+    },
+    "apensamentos": [],
+    "apensamento": null,
+    "documento": {
+     "id": 306250,
+     "ementa": "Recuperação asfáltica da RN-041, no trecho compreendido entre a BR-304 e o Município de Santana do Matos",
+     "tipoDocumento": {
+      "id": 8,
+      "descricao": "Requerimento"
+     }
+    },
+    "reuniaoProcesso": null,
+    "publicacao": [],
+    "emenda": [],
+    "comissao": []
+   },
+   {
+    "id": 63931,
+    "numero": 3006,
+    "ano": 2026,
+    "numeroExterno": null,
+    "anoExterno": null,
+    "ementa": "Solicita a perfuração e instalação de poços nas comunidades São Pedro e Serra da Volta, localizadas no município de Angicos/RN.",
+    "informacaoLei": null,
+    "dataEntrada": "2026-09-23T10:37:19.130Z",
+    "dataArquivamento": null,
+    "propositura": {
+     "tipo": {
+      "id": 9,
+      "sigla": "REQ",
+      "descricao": "REQUERIMENTO"
+     },
+     "numero": 2061,
+     "ano": 2026
+    },
+    "inclusao": {
+     "data": "2026-09-23T10:37:19.130Z"
+    },
+    "exclusao": {
+     "data": null
+    },
+    "iniciativa": {
+     "id": 3,
+     "tipo": "PARLAMENTAR",
+     "descricao": "DEP. CRISTIANE DANTAS",
+     "parlamentar": {
+      "id": 8,
+      "nomeParlamentar": "DEPUTADA CRISTIANE DANTAS",
+      "partido": {
+       "id": 7,
+       "nome": "PSDB",
+       "nomeOriginal": "Partido da Social Democracia Brasileira"
+      }
+     }
+    },
+    "apensamentos": [],
+    "apensamento": null,
+    "documento": {
+     "id": 305901,
+     "ementa": "Solicita a perfuração e instalação de poços nas comunidades São Pedro e Serra da Volta, localizadas no município de Angicos/RN.",
+     "tipoDocumento": {
+      "id": 8,
+      "descricao": "Requerimento"
+     }
+    },
+    "reuniaoProcesso": null,
+    "publicacao": [],
+    "emenda": [],
+    "comissao": []
+   },
+   {
+    "id": 63917,
+    "numero": 2997,
+    "ano": 2026,
+    "numeroExterno": null,
+    "anoExterno": null,
+    "ementa": "Requer informações sobre resultados, metas e ações voltadas à melhoria da eficiência dos serviços públicos estaduais.",
+    "informacaoLei": null,
+    "dataEntrada": "2026-09-22T09:19:25.910Z",
+    "dataArquivamento": null,
+    "propositura": {
+     "tipo": {
+      "id": 17,
+      "sigla": "REQINFOR",
+      "descricao": "Requerimento - Pedido de Informação"
+     },
+     "numero": 2060,
+     "ano": 2026
+    },
+    "inclusao": {
+     "data": "2026-09-22T09:19:25.910Z"
+    },
+    "exclusao": {
+     "data": null
+    },
+    "iniciativa": {
+     "id": 3,
+     "tipo": "PARLAMENTAR",
+     "descricao": "DEP. CRISTIANE DANTAS",
+     "parlamentar": {
+      "id": 8,
+      "nomeParlamentar": "DEPUTADA CRISTIANE DANTAS",
+      "partido": {
+       "id": 7,
+       "nome": "PSDB",
+       "nomeOriginal": "Partido da Social Democracia Brasileira"
+      }
+     }
+    },
+    "apensamentos": [],
+    "apensamento": null,
+    "documento": {
+     "id": 305710,
+     "ementa": "Requer informações sobre resultados, metas e ações voltadas à melhoria da eficiência dos serviços públicos estaduais.",
+     "tipoDocumento": {
+      "id": 8,
+      "descricao": "Requerimento"
+     }
+    },
+    "reuniaoProcesso": null,
+    "publicacao": [],
+    "emenda": [],
+    "comissao": []
+   },
+   {
+    "id": 63888,
+    "numero": 2955,
+    "ano": 2026,
+    "numeroExterno": null,
+    "anoExterno": null,
+    "ementa": "Justiticativa de ausência",
+    "informacaoLei": null,
+    "dataEntrada": "2026-09-16T10:09:50.833Z",
+    "dataArquivamento": null,
+    "propositura": {
+     "tipo": {
+      "id": 9,
+      "sigla": "REQ",
+      "descricao": "REQUERIMENTO"
+     },
+     "numero": 2033,
+     "ano": 2026
+    },
+    "inclusao": {
+     "data": "2026-09-16T10:09:50.833Z"
+    },
+    "exclusao": {
+     "data": null
+    },
+    "iniciativa": {
+     "id": 3,
+     "tipo": "PARLAMENTAR",
+     "descricao": "DEP. CRISTIANE DANTAS",
+     "parlamentar": {
+      "id": 8,
+      "nomeParlamentar": "DEPUTADA CRISTIANE DANTAS",
+      "partido": {
+       "id": 7,
+       "nome": "PSDB",
+       "nomeOriginal": "Partido da Social Democracia Brasileira"
+      }
+     }
+    },
+    "apensamentos": [],
+    "apensamento": null,
+    "documento": {
+     "id": 305331,
+     "ementa": "Justiticativa de ausência",
+     "tipoDocumento": {
+      "id": 8,
+      "descricao": "Requerimento"
+     }
+    },
+    "reuniaoProcesso": null,
+    "publicacao": [],
+    "emenda": [],
+    "comissao": []
+   },
+   {
+    "id": 63887,
+    "numero": 2961,
+    "ano": 2026,
+    "numeroExterno": null,
+    "anoExterno": null,
+    "ementa": "Solicita a construção de uma quadra poliesportiva no Distrito de Cruzamento, no Município de São Miguel do Gostoso/RN.",
+    "informacaoLei": null,
+    "dataEntrada": "2026-09-16T10:06:19.480Z",
+    "dataArquivamento": null,
+    "propositura": {
+     "tipo": {
+      "id": 9,
+      "sigla": "REQ",
+      "descricao": "REQUERIMENTO"
+     },
+     "numero": 2039,
+     "ano": 2026
+    },
+    "inclusao": {
+     "data": "2026-09-16T10:06:19.480Z"
+    },
+    "exclusao": {
+     "data": null
+    },
+    "iniciativa": {
+     "id": 3,
+     "tipo": "PARLAMENTAR",
+     "descricao": "DEP. CRISTIANE DANTAS",
+     "parlamentar": {
+      "id": 8,
+      "nomeParlamentar": "DEPUTADA CRISTIANE DANTAS",
+      "partido": {
+       "id": 7,
+       "nome": "PSDB",
+       "nomeOriginal": "Partido da Social Democracia Brasileira"
+      }
+     }
+    },
+    "apensamentos": [],
+    "apensamento": null,
+    "documento": {
+     "id": 305330,
+     "ementa": "Solicita a construção de uma quadra poliesportiva no Distrito de Cruzamento, no Município de São Miguel do Gostoso/RN.",
+     "tipoDocumento": {
+      "id": 8,
+      "descricao": "Requerimento"
+     }
+    },
+    "reuniaoProcesso": null,
+    "publicacao": [],
+    "emenda": [],
+    "comissao": []
+   },
+   {
+    "id": 63837,
+    "numero": 2933,
+    "ano": 2026,
+    "numeroExterno": null,
+    "anoExterno": null,
+    "ementa": "Solicita auditoria operacional e inspeção extraordinária nas unidades do sistema penitenciário do Rio Grande do Norte",
+    "informacaoLei": null,
+    "dataEntrada": "2026-09-10T09:18:13.140Z",
+    "dataArquivamento": null,
+    "propositura": {
+     "tipo": {
+      "id": 9,
+      "sigla": "REQ",
+      "descricao": "REQUERIMENTO"
+     },
+     "numero": 2021,
+     "ano": 2026
+    },
+    "inclusao": {
+     "data": "2026-09-10T09:18:13.140Z"
+    },
+    "exclusao": {
+     "data": null
+    },
+    "iniciativa": {
+     "id": 3,
+     "tipo": "PARLAMENTAR",
+     "descricao": "DEP. CRISTIANE DANTAS",
+     "parlamentar": {
+      "id": 8,
+      "nomeParlamentar": "DEPUTADA CRISTIANE DANTAS",
+      "partido": {
+       "id": 7,
+       "nome": "PSDB",
+       "nomeOriginal": "Partido da Social Democracia Brasileira"
+      }
+     }
+    },
+    "apensamentos": [],
+    "apensamento": null,
+    "documento": {
+     "id": 304899,
+     "ementa": "Solicita auditoria operacional e inspeção extraordinária nas unidades do sistema penitenciário do Rio Grande do Norte",
+     "tipoDocumento": {
+      "id": 8,
+      "descricao": "Requerimento"
+     }
+    },
+    "reuniaoProcesso": null,
+    "publicacao": [],
+    "emenda": [],
+    "comissao": []
+   },
+   {
+    "id": 63836,
+    "numero": 2932,
+    "ano": 2026,
+    "numeroExterno": null,
+    "anoExterno": null,
+    "ementa": "Solicita a revisão e formalização dos protocolos de interlocução entre gestores da SEAP e pessoas privadas de liberdade",
+    "informacaoLei": null,
+    "dataEntrada": "2026-09-10T09:15:57.170Z",
+    "dataArquivamento": null,
+    "propositura": {
+     "tipo": {
+      "id": 9,
+      "sigla": "REQ",
+      "descricao": "REQUERIMENTO"
+     },
+     "numero": 2020,
+     "ano": 2026
+    },
+    "inclusao": {
+     "data": "2026-09-10T09:15:57.170Z"
+    },
+    "exclusao": {
+     "data": null
+    },
+    "iniciativa": {
+     "id": 3,
+     "tipo": "PARLAMENTAR",
+     "descricao": "DEP. CRISTIANE DANTAS",
+     "parlamentar": {
+      "id": 8,
+      "nomeParlamentar": "DEPUTADA CRISTIANE DANTAS",
+      "partido": {
+       "id": 7,
+       "nome": "PSDB",
+       "nomeOriginal": "Partido da Social Democracia Brasileira"
+      }
+     }
+    },
+    "apensamentos": [],
+    "apensamento": null,
+    "documento": {
+     "id": 304898,
+     "ementa": "Solicita a revisão e formalização dos protocolos de interlocução entre gestores da SEAP e pessoas privadas de liberdade",
+     "tipoDocumento": {
+      "id": 8,
+      "descricao": "Requerimento"
+     }
+    },
+    "reuniaoProcesso": null,
+    "publicacao": [],
+    "emenda": [],
+    "comissao": []
+   },
+   {
+    "id": 63835,
+    "numero": 2931,
+    "ano": 2026,
+    "numeroExterno": null,
+    "anoExterno": null,
+    "ementa": "Solicita a adoção de plano emergencial de reforço da segurança no Complexo Penal de Alcaçuz.",
+    "informacaoLei": null,
+    "dataEntrada": "2026-09-10T09:13:55.233Z",
+    "dataArquivamento": null,
+    "propositura": {
+     "tipo": {
+      "id": 9,
+      "sigla": "REQ",
+      "descricao": "REQUERIMENTO"
+     },
+     "numero": 2019,
+     "ano": 2026
+    },
+    "inclusao": {
+     "data": "2026-09-10T09:13:55.233Z"
+    },
+    "exclusao": {
+     "data": null
+    },
+    "iniciativa": {
+     "id": 3,
+     "tipo": "PARLAMENTAR",
+     "descricao": "DEP. CRISTIANE DANTAS",
+     "parlamentar": {
+      "id": 8,
+      "nomeParlamentar": "DEPUTADA CRISTIANE DANTAS",
+      "partido": {
+       "id": 7,
+       "nome": "PSDB",
+       "nomeOriginal": "Partido da Social Democracia Brasileira"
+      }
+     }
+    },
+    "apensamentos": [],
+    "apensamento": null,
+    "documento": {
+     "id": 304897,
+     "ementa": "Solicita a adoção de plano emergencial de reforço da segurança no Complexo Penal de Alcaçuz.",
+     "tipoDocumento": {
+      "id": 8,
+      "descricao": "Requerimento"
+     }
+    },
+    "reuniaoProcesso": null,
+    "publicacao": [],
+    "emenda": [],
+    "comissao": []
+   },
+   {
+    "id": 63834,
+    "numero": 2930,
+    "ano": 2026,
+    "numeroExterno": null,
+    "anoExterno": null,
+    "ementa": "Solicita providências para apuração dos fatos ocorridos em 26 de agosto de 2026 na Penitenciária Rogério Coutinho Madruga.",
+    "informacaoLei": null,
+    "dataEntrada": "2026-09-10T09:12:06.887Z",
+    "dataArquivamento": null,
+    "propositura": {
+     "tipo": {
+      "id": 9,
+      "sigla": "REQ",
+      "descricao": "REQUERIMENTO"
+     },
+     "numero": 2018,
+     "ano": 2026
+    },
+    "inclusao": {
+     "data": "2026-09-10T09:12:06.887Z"
+    },
+    "exclusao": {
+     "data": null
+    },
+    "iniciativa": {
+     "id": 3,
+     "tipo": "PARLAMENTAR",
+     "descricao": "DEP. CRISTIANE DANTAS",
+     "parlamentar": {
+      "id": 8,
+      "nomeParlamentar": "DEPUTADA CRISTIANE DANTAS",
+      "partido": {
+       "id": 7,
+       "nome": "PSDB",
+       "nomeOriginal": "Partido da Social Democracia Brasileira"
+      }
+     }
+    },
+    "apensamentos": [],
+    "apensamento": null,
+    "documento": {
+     "id": 304896,
+     "ementa": "Solicita providências para apuração dos fatos ocorridos em 26 de agosto de 2026 na Penitenciária Rogério Coutinho Madruga.",
+     "tipoDocumento": {
+      "id": 8,
+      "descricao": "Requerimento"
+     }
+    },
+    "reuniaoProcesso": null,
+    "publicacao": [],
+    "emenda": [],
+    "comissao": []
+   },
+   {
+    "id": 63821,
+    "numero": 2882,
+    "ano": 2026,
+    "numeroExterno": null,
+    "anoExterno": null,
+    "ementa": "Altera dispositivos e anexo da Lei Complementar nº 694, de 29 de junho de 2022, para reestruturar a carreira do Grupo de Nível Fundamental (GNF) dos servidores da Secretaria de Estado da Saúde Pública do Rio Grande do Norte, e dá outras providências.",
+    "informacaoLei": null,
+    "dataEntrada": "2026-09-09T10:16:37.480Z",
+    "dataArquivamento": null,
+    "propositura": {
+     "tipo": {
+      "id": 2,
+      "sigla": "PLC",
+      "descricao": "PROJETO DE LEI COMPLEMENTAR"
+     },
+     "numero": 21,
+     "ano": 2026
+    },
+    "inclusao": {
+     "data": "2026-09-09T10:16:37.480Z"
+    },
+    "exclusao": {
+     "data": null
+    },
+    "iniciativa": {
+     "id": 3,
+     "tipo": "PARLAMENTAR",
+     "descricao": "DEP. CRISTIANE DANTAS",
+     "parlamentar": {
+      "id": 8,
+      "nomeParlamentar": "DEPUTADA CRISTIANE DANTAS",
+      "partido": {
+       "id": 7,
+       "nome": "PSDB",
+       "nomeOriginal": "Partido da Social Democracia Brasileira"
+      }
+     }
+    },
+    "apensamentos": [],
+    "apensamento": null,
+    "documento": {
+     "id": 304757,
+     "ementa": "Altera dispositivos e anexo da Lei Complementar nº 694, de 29 de junho de 2022, para reestruturar a carreira do Grupo de Nível Fundamental (GNF) dos servidores da Secretaria de Estado da Saúde Pública do Rio Grande do Norte, e dá outras providências.",
+     "tipoDocumento": {
+      "id": 20,
+      "descricao": "Projeto de Lei Complementar"
+     }
+    },
+    "reuniaoProcesso": null,
+    "publicacao": [
+     {
+      "id": 525761,
+      "observacao": "Publicado no DLE do dia 10/09/2026.",
+      "linkDOE": "https://dle.al.rn.leg.br/abrearquivo/6ED7D358-4A09-4500-8033-A54425F549E5-N/",
+      "origem": {
+       "setor": {
+        "id": 22,
+        "nome": "DIÁRIO OFICIAL ELETRÔNICO DA ALRN",
+        "sigla": "DOE AL/RN",
+        "comissao": null
+       },
+       "data": "2026-09-10T07:13:00.000Z"
+      },
+      "situacaoProcesso": {
+       "id": 13,
+       "nome": "Publicado no Diário Oficial Eletrônico da ALRN"
+      }
+     }
+    ],
+    "emenda": [],
+    "comissao": [
+     {
+      "sigla": "CCJR",
+      "descricao": "Comissão de Constituição, Justiça e Redação",
+      "assessor": "BRENDA RAPHAELA DE AZEVEDO MASCENA FRANCA",
+      "relator": "DEPUTADO VIVALDO COSTA"
+     },
+     {
+      "sigla": "CFF",
+      "descricao": "Comissão de Finanças e Fiscalização",
+      "assessor": null,
+      "relator": null
+     },
+     {
+      "sigla": "CASPTSP",
+      "descricao": "Comissão de Administração, Serviços Públicos, Trabalho e Segurança Pública",
+      "assessor": null,
+      "relator": null
+     }
+    ]
+   },
+   {
+    "id": 63818,
+    "numero": 2881,
+    "ano": 2026,
+    "numeroExterno": null,
+    "anoExterno": null,
+    "ementa": "Dispõe sobre a preservação dos efeitos jurídicos  decorrentes dos atos  administrativos praticados  sob a  égide da Lei Complementar Estadual nº 122, de 30  de  junho    de 1994,  relativamente  aos servidores públicos  civis admitidos anteriormente  à  promulgação  da Constituição da República, e dá outras providências.",
+    "informacaoLei": null,
+    "dataEntrada": "2026-09-09T10:14:45.370Z",
+    "dataArquivamento": null,
+    "propositura": {
+     "tipo": {
+      "id": 2,
+      "sigla": "PLC",
+      "descricao": "PROJETO DE LEI COMPLEMENTAR"
+     },
+     "numero": 20,
+     "ano": 2026
+    },
+    "inclusao": {
+     "data": "2026-09-09T10:14:45.370Z"
+    },
+    "exclusao": {
+     "data": null
+    },
+    "iniciativa": {
+     "id": 3,
+     "tipo": "PARLAMENTAR",
+     "descricao": "DEP. CRISTIANE DANTAS",
+     "parlamentar": {
+      "id": 8,
+      "nomeParlamentar": "DEPUTADA CRISTIANE DANTAS",
+      "partido": {
+       "id": 7,
+       "nome": "PSDB",
+       "nomeOriginal": "Partido da Social Democracia Brasileira"
+      }
+     }
+    },
+    "apensamentos": [],
+    "apensamento": null,
+    "documento": {
+     "id": 304756,
+     "ementa": "Dispõe sobre a preservação dos efeitos jurídicos  decorrentes dos atos  administrativos praticados  sob a  égide da Lei Complementar Estadual nº 122, de 30  de  junho    de 1994,  relativamente  aos servidores públicos  civis admitidos anteriormente  à  promulgação  da Constituição da República, e dá outras providências.",
+     "tipoDocumento": {
+      "id": 20,
+      "descricao": "Projeto de Lei Complementar"
+     }
+    },
+    "reuniaoProcesso": null,
+    "publicacao": [
+     {
+      "id": 525760,
+      "observacao": "Publicado no DLE do dia 10/09/2026.",
+      "linkDOE": "https://dle.al.rn.leg.br/abrearquivo/6ED7D358-4A09-4500-8033-A54425F549E5-N/",
+      "origem": {
+       "setor": {
+        "id": 22,
+        "nome": "DIÁRIO OFICIAL ELETRÔNICO DA ALRN",
+        "sigla": "DOE AL/RN",
+        "comissao": null
+       },
+       "data": "2026-09-10T07:11:58.000Z"
+      },
+      "situacaoProcesso": {
+       "id": 13,
+       "nome": "Publicado no Diário Oficial Eletrônico da ALRN"
+      }
+     }
+    ],
+    "emenda": [],
+    "comissao": [
+     {
+      "sigla": "CCJR",
+      "descricao": "Comissão de Constituição, Justiça e Redação",
+      "assessor": "BRENDA RAPHAELA DE AZEVEDO MASCENA FRANCA",
+      "relator": "DEPUTADO VIVALDO COSTA"
+     },
+     {
+      "sigla": "CFF",
+      "descricao": "Comissão de Finanças e Fiscalização",
+      "assessor": null,
+      "relator": null
+     },
+     {
+      "sigla": "CASPTSP",
+      "descricao": "Comissão de Administração, Serviços Públicos, Trabalho e Segurança Pública",
+      "assessor": null,
+      "relator": null
+     }
+    ]
+   },
+   {
+    "id": 63813,
+    "numero": 2895,
+    "ano": 2026,
+    "numeroExterno": null,
+    "anoExterno": null,
+    "ementa": "Solicita serviços de conservação, manutenção e recuperação da RN-269, no trecho entre o município de Nova Cruz e a BR-101.",
+    "informacaoLei": null,
+    "dataEntrada": "2026-09-09T09:55:24.417Z",
+    "dataArquivamento": null,
+    "propositura": {
+     "tipo": {
+      "id": 9,
+      "sigla": "REQ",
+      "descricao": "REQUERIMENTO"
+     },
+     "numero": 1998,
+     "ano": 2026
+    },
+    "inclusao": {
+     "data": "2026-09-09T09:55:24.417Z"
+    },
+    "exclusao": {
+     "data": null
+    },
+    "iniciativa": {
+     "id": 3,
+     "tipo": "PARLAMENTAR",
+     "descricao": "DEP. CRISTIANE DANTAS",
+     "parlamentar": {
+      "id": 8,
+      "nomeParlamentar": "DEPUTADA CRISTIANE DANTAS",
+      "partido": {
+       "id": 7,
+       "nome": "PSDB",
+       "nomeOriginal": "Partido da Social Democracia Brasileira"
+      }
+     }
+    },
+    "apensamentos": [],
+    "apensamento": null,
+    "documento": {
+     "id": 304794,
+     "ementa": "Solicita serviços de conservação, manutenção e recuperação da RN-269, no trecho entre o município de Nova Cruz e a BR-101.",
+     "tipoDocumento": {
+      "id": 8,
+      "descricao": "Requerimento"
+     }
+    },
+    "reuniaoProcesso": null,
+    "publicacao": [],
+    "emenda": [],
+    "comissao": []
+   },
+   {
+    "id": 63793,
+    "numero": 2876,
+    "ano": 2026,
+    "numeroExterno": null,
+    "anoExterno": null,
+    "ementa": "Solicita em caráter de urgência, a realização de serviços de manutenção, recuperação e conservação da RN-288, no trecho compreendido entre a Serra da Rajada e o município de Carnaúba dos Dantas.",
+    "informacaoLei": null,
+    "dataEntrada": "2026-09-08T10:08:26.613Z",
+    "dataArquivamento": null,
+    "propositura": {
+     "tipo": {
+      "id": 9,
+      "sigla": "REQ",
+      "descricao": "REQUERIMENTO"
+     },
+     "numero": 1988,
+     "ano": 2026
+    },
+    "inclusao": {
+     "data": "2026-09-08T10:08:26.613Z"
+    },
+    "exclusao": {
+     "data": null
+    },
+    "iniciativa": {
+     "id": 3,
+     "tipo": "PARLAMENTAR",
+     "descricao": "DEP. CRISTIANE DANTAS",
+     "parlamentar": {
+      "id": 8,
+      "nomeParlamentar": "DEPUTADA CRISTIANE DANTAS",
+      "partido": {
+       "id": 7,
+       "nome": "PSDB",
+       "nomeOriginal": "Partido da Social Democracia Brasileira"
+      }
+     }
+    },
+    "apensamentos": [],
+    "apensamento": null,
+    "documento": {
+     "id": 304599,
+     "ementa": "Solicita em caráter de urgência, a realização de serviços de manutenção, recuperação e conservação da RN-288, no trecho compreendido entre a Serra da Rajada e o município de Carnaúba dos Dantas.",
+     "tipoDocumento": {
+      "id": 8,
+      "descricao": "Requerimento"
+     }
+    },
+    "reuniaoProcesso": null,
+    "publicacao": [],
+    "emenda": [],
+    "comissao": []
+   },
+   {
+    "id": 63787,
+    "numero": 2851,
+    "ano": 2026,
+    "numeroExterno": null,
+    "anoExterno": null,
+    "ementa": "Reconhece a Lagoa de Lajes, localizada no Município de Alexandria, como Patrimônio Natural, Histórico, Paisagístico e Turístico do Estado do Rio Grande do Norte.",
+    "informacaoLei": null,
+    "dataEntrada": "2026-09-07T20:45:20.580Z",
+    "dataArquivamento": null,
+    "propositura": {
+     "tipo": {
+      "id": 1,
+      "sigla": "PL",
+      "descricao": "PROJETO DE LEI"
+     },
+     "numero": 393,
+     "ano": 2026
+    },
+    "inclusao": {
+     "data": "2026-09-07T20:45:20.580Z"
+    },
+    "exclusao": {
+     "data": null
+    },
+    "iniciativa": {
+     "id": 3,
+     "tipo": "PARLAMENTAR",
+     "descricao": "DEP. CRISTIANE DANTAS",
+     "parlamentar": {
+      "id": 8,
+      "nomeParlamentar": "DEPUTADA CRISTIANE DANTAS",
+      "partido": {
+       "id": 7,
+       "nome": "PSDB",
+       "nomeOriginal": "Partido da Social Democracia Brasileira"
+      }
+     }
+    },
+    "apensamentos": [],
+    "apensamento": null,
+    "documento": {
+     "id": 304564,
+     "ementa": "Reconhece a Lagoa de Lajes, localizada no Município de Alexandria, como Patrimônio Natural, Histórico, Paisagístico e Turístico do Estado do Rio Grande do Norte.",
+     "tipoDocumento": {
+      "id": 9,
+      "descricao": "Projeto de Lei"
+     }
+    },
+    "reuniaoProcesso": null,
+    "publicacao": [
+     {
+      "id": 525574,
+      "observacao": "Publicado no DLE do dia 09/09/2026.",
+      "linkDOE": "https://dle.al.rn.leg.br/abrearquivo/77994366-97FE-4E18-B0B7-773D855493C4-N/",
+      "origem": {
+       "setor": {
+        "id": 22,
+        "nome": "DIÁRIO OFICIAL ELETRÔNICO DA ALRN",
+        "sigla": "DOE AL/RN",
+        "comissao": null
+       },
+       "data": "2026-09-09T07:21:28.000Z"
+      },
+      "situacaoProcesso": {
+       "id": 13,
+       "nome": "Publicado no Diário Oficial Eletrônico da ALRN"
+      }
+     }
+    ],
+    "emenda": [],
+    "comissao": [
+     {
+      "sigla": "CCJR",
+      "descricao": "Comissão de Constituição, Justiça e Redação",
+      "assessor": null,
+      "relator": null
+     },
+     {
+      "sigla": "CECTDSMAT",
+      "descricao": "Comissão de Educação, Ciência e Tecnologia, Desenvolvimento Socioeconômico, Meio Ambiente e Turismo",
+      "assessor": null,
+      "relator": null
+     }
+    ]
+   },
+   {
+    "id": 63761,
+    "numero": 2861,
+    "ano": 2026,
+    "numeroExterno": null,
+    "anoExterno": null,
+    "ementa": "Requerimento solicitando informações acerca dos critérios adotados pelo Governo do Estado para a definição da ordem e do escalonamento do pagamento da folha salarial dos servidores públicos estaduais, especialmente no que se refere aos servidores aposentados e pensionistas.",
+    "informacaoLei": null,
+    "dataEntrada": "2026-09-02T10:47:49.970Z",
+    "dataArquivamento": null,
+    "propositura": {
+     "tipo": {
+      "id": 17,
+      "sigla": "REQINFOR",
+      "descricao": "Requerimento - Pedido de Informação"
+     },
+     "numero": 1975,
+     "ano": 2026
+    },
+    "inclusao": {
+     "data": "2026-09-02T10:47:49.970Z"
+    },
+    "exclusao": {
+     "data": null
+    },
+    "iniciativa": {
+     "id": 3,
+     "tipo": "PARLAMENTAR",
+     "descricao": "DEP. CRISTIANE DANTAS",
+     "parlamentar": {
+      "id": 8,
+      "nomeParlamentar": "DEPUTADA CRISTIANE DANTAS",
+      "partido": {
+       "id": 7,
+       "nome": "PSDB",
+       "nomeOriginal": "Partido da Social Democracia Brasileira"
+      }
+     }
+    },
+    "apensamentos": [],
+    "apensamento": null,
+    "documento": {
+     "id": 304292,
+     "ementa": "Requerimento solicitando informações acerca dos critérios adotados pelo Governo do Estado para a definição da ordem e do escalonamento do pagamento da folha salarial dos servidores públicos estaduais, especialmente no que se refere aos servidores aposentados e pensionistas.",
+     "tipoDocumento": {
+      "id": 8,
+      "descricao": "Requerimento"
+     }
+    },
+    "reuniaoProcesso": null,
+    "publicacao": [],
+    "emenda": [],
+    "comissao": []
+   },
+   {
+    "id": 63757,
+    "numero": 2845,
+    "ano": 2026,
+    "numeroExterno": null,
+    "anoExterno": null,
+    "ementa": "Solicita a adoção de providências para a realização de serviços de reforma, recuperação, manutenção e revitalização da Cidade da Criança, localizada no bairro do Tirol, em Natal/RN.",
+    "informacaoLei": null,
+    "dataEntrada": "2026-09-02T10:03:12.860Z",
+    "dataArquivamento": null,
+    "propositura": {
+     "tipo": {
+      "id": 9,
+      "sigla": "REQ",
+      "descricao": "REQUERIMENTO"
+     },
+     "numero": 1971,
+     "ano": 2026
+    },
+    "inclusao": {
+     "data": "2026-09-02T10:03:12.860Z"
+    },
+    "exclusao": {
+     "data": null
+    },
+    "iniciativa": {
+     "id": 3,
+     "tipo": "PARLAMENTAR",
+     "descricao": "DEP. CRISTIANE DANTAS",
+     "parlamentar": {
+      "id": 8,
+      "nomeParlamentar": "DEPUTADA CRISTIANE DANTAS",
+      "partido": {
+       "id": 7,
+       "nome": "PSDB",
+       "nomeOriginal": "Partido da Social Democracia Brasileira"
+      }
+     }
+    },
+    "apensamentos": [],
+    "apensamento": null,
+    "documento": {
+     "id": 304273,
+     "ementa": "Solicita a adoção de providências para a realização de serviços de reforma, recuperação, manutenção e revitalização da Cidade da Criança, localizada no bairro do Tirol, em Natal/RN.",
+     "tipoDocumento": {
+      "id": 8,
+      "descricao": "Requerimento"
+     }
+    },
+    "reuniaoProcesso": null,
+    "publicacao": [],
+    "emenda": [],
+    "comissao": []
+   },
+   {
+    "id": 63739,
+    "numero": 2825,
+    "ano": 2026,
+    "numeroExterno": null,
+    "anoExterno": null,
+    "ementa": "Institui a Campanha \u001cPet Doador\u001d, destinada a incentivar a doação de sangue animal e a criação e manutenção de bancos de sangue veterinários no âmbito do Estado do Rio Grande do Norte, e dá outras providências.",
+    "informacaoLei": null,
+    "dataEntrada": "2026-09-01T10:58:02.560Z",
+    "dataArquivamento": null,
+    "propositura": {
+     "tipo": {
+      "id": 1,
+      "sigla": "PL",
+      "descricao": "PROJETO DE LEI"
+     },
+     "numero": 387,
+     "ano": 2026
+    },
+    "inclusao": {
+     "data": "2026-09-01T10:58:02.560Z"
+    },
+    "exclusao": {
+     "data": null
+    },
+    "iniciativa": {
+     "id": 3,
+     "tipo": "PARLAMENTAR",
+     "descricao": "DEP. CRISTIANE DANTAS",
+     "parlamentar": {
+      "id": 8,
+      "nomeParlamentar": "DEPUTADA CRISTIANE DANTAS",
+      "partido": {
+       "id": 7,
+       "nome": "PSDB",
+       "nomeOriginal": "Partido da Social Democracia Brasileira"
+      }
+     }
+    },
+    "apensamentos": [],
+    "apensamento": {
+     "id": 217,
+     "processoPai": {
+      "id": 63361,
+      "numero": 2454,
+      "ano": 2026,
+      "propositura": {
+       "numero": 337,
+       "ano": 2026
+      }
+     }
+    },
+    "documento": {
+     "id": 304209,
+     "ementa": "Institui a Campanha “Pet Doador”, destinada a incentivar a doação de sangue animal e a criação e manutenção de bancos de sangue veterinários no âmbito do Estado do Rio Grande do Norte, e dá outras providências.",
+     "tipoDocumento": {
+      "id": 9,
+      "descricao": "Projeto de Lei"
+     }
+    },
+    "reuniaoProcesso": null,
+    "publicacao": [
+     {
+      "id": 524859,
+      "observacao": "Publicado no DLE do dia 03/09/2026.",
+      "linkDOE": "https://dle.al.rn.leg.br/abrearquivo/9850AC92-5CF6-4569-8D49-724035515D6D-N/",
+      "origem": {
+       "setor": {
+        "id": 22,
+        "nome": "DIÁRIO OFICIAL ELETRÔNICO DA ALRN",
+        "sigla": "DOE AL/RN",
+        "comissao": null
+       },
+       "data": "2026-09-03T07:07:56.000Z"
+      },
+      "situacaoProcesso": {
+       "id": 13,
+       "nome": "Publicado no Diário Oficial Eletrônico da ALRN"
+      }
+     }
+    ],
+    "emenda": [],
+    "comissao": [
+     {
+      "sigla": "CCJR",
+      "descricao": "Comissão de Constituição, Justiça e Redação",
+      "assessor": null,
+      "relator": null
+     }
+    ]
+   },
+   {
+    "id": 63722,
+    "numero": 2819,
+    "ano": 2026,
+    "numeroExterno": null,
+    "anoExterno": null,
+    "ementa": "Requer providências para assegurar a continuidade do monitoramento eletrônico e a substituição dos equipamentos afetados.",
+    "informacaoLei": null,
+    "dataEntrada": "2026-08-31T15:36:41.727Z",
+    "dataArquivamento": null,
+    "propositura": {
+     "tipo": {
+      "id": 9,
+      "sigla": "REQ",
+      "descricao": "REQUERIMENTO"
+     },
+     "numero": 1953,
+     "ano": 2026
+    },
+    "inclusao": {
+     "data": "2026-08-31T15:36:41.727Z"
+    },
+    "exclusao": {
+     "data": null
+    },
+    "iniciativa": {
+     "id": 3,
+     "tipo": "PARLAMENTAR",
+     "descricao": "DEP. CRISTIANE DANTAS",
+     "parlamentar": {
+      "id": 8,
+      "nomeParlamentar": "DEPUTADA CRISTIANE DANTAS",
+      "partido": {
+       "id": 7,
+       "nome": "PSDB",
+       "nomeOriginal": "Partido da Social Democracia Brasileira"
+      }
+     }
+    },
+    "apensamentos": [],
+    "apensamento": null,
+    "documento": {
+     "id": 304165,
+     "ementa": "Requer providências para assegurar a continuidade do monitoramento eletrônico e a substituição dos equipamentos afetados.",
+     "tipoDocumento": {
+      "id": 8,
+      "descricao": "Requerimento"
+     }
+    },
+    "reuniaoProcesso": null,
+    "publicacao": [],
+    "emenda": [],
+    "comissao": []
+   },
+   {
+    "id": 63721,
+    "numero": 2818,
+    "ano": 2026,
+    "numeroExterno": null,
+    "anoExterno": null,
+    "ementa": "Requer informações sobre a interrupção do sinal de 340 tornozeleiras eletrônicas no Rio Grande do Norte.",
+    "informacaoLei": null,
+    "dataEntrada": "2026-08-31T15:32:28.070Z",
+    "dataArquivamento": null,
+    "propositura": {
+     "tipo": {
+      "id": 17,
+      "sigla": "REQINFOR",
+      "descricao": "Requerimento - Pedido de Informação"
+     },
+     "numero": 1953,
+     "ano": 2026
+    },
+    "inclusao": {
+     "data": "2026-08-31T15:32:28.070Z"
+    },
+    "exclusao": {
+     "data": null
+    },
+    "iniciativa": {
+     "id": 3,
+     "tipo": "PARLAMENTAR",
+     "descricao": "DEP. CRISTIANE DANTAS",
+     "parlamentar": {
+      "id": 8,
+      "nomeParlamentar": "DEPUTADA CRISTIANE DANTAS",
+      "partido": {
+       "id": 7,
+       "nome": "PSDB",
+       "nomeOriginal": "Partido da Social Democracia Brasileira"
+      }
+     }
+    },
+    "apensamentos": [],
+    "apensamento": null,
+    "documento": {
+     "id": 304164,
+     "ementa": "Requer informações sobre a interrupção do sinal de 340 tornozeleiras eletrônicas no Rio Grande do Norte.",
+     "tipoDocumento": {
+      "id": 8,
+      "descricao": "Requerimento"
+     }
+    },
+    "reuniaoProcesso": null,
+    "publicacao": [],
+    "emenda": [],
+    "comissao": []
+   },
+   {
+    "id": 63713,
+    "numero": 2809,
+    "ano": 2026,
+    "numeroExterno": null,
+    "anoExterno": null,
+    "ementa": "Estabelece normas complementares, no âmbito do Estado do Rio Grande do Norte, para o cadastro, a autorização, o licenciamento ambiental, quando exigível, a fiscalização e o controle das atividades de uso e manejo de fauna silvestre nativa e exótica mantida em cativeiro, inclusive a criação amadorista e comercial de passeriformes nativos, e dá outras providências",
+    "informacaoLei": null,
+    "dataEntrada": "2026-08-29T12:34:49.370Z",
+    "dataArquivamento": null,
+    "propositura": {
+     "tipo": {
+      "id": 1,
+      "sigla": "PL",
+      "descricao": "PROJETO DE LEI"
+     },
+     "numero": 385,
+     "ano": 2026
+    },
+    "inclusao": {
+     "data": "2026-08-29T12:34:49.370Z"
+    },
+    "exclusao": {
+     "data": null
+    },
+    "iniciativa": {
+     "id": 3,
+     "tipo": "PARLAMENTAR",
+     "descricao": "DEP. CRISTIANE DANTAS",
+     "parlamentar": {
+      "id": 8,
+      "nomeParlamentar": "DEPUTADA CRISTIANE DANTAS",
+      "partido": {
+       "id": 7,
+       "nome": "PSDB",
+       "nomeOriginal": "Partido da Social Democracia Brasileira"
+      }
+     }
+    },
+    "apensamentos": [],
+    "apensamento": {
+     "id": 219,
+     "processoPai": {
+      "id": 62267,
+      "numero": 1455,
+      "ano": 2026,
+      "propositura": {
+       "numero": 207,
+       "ano": 2026
+      }
+     }
+    },
+    "documento": {
+     "id": 303986,
+     "ementa": "Estabelece normas complementares, no âmbito do Estado do Rio Grande do Norte, para o cadastro, a autorização, o licenciamento ambiental, quando exigível, a fiscalização e o controle das atividades de uso e manejo de fauna silvestre nativa e exótica mantida em cativeiro, inclusive a criação amadorista e comercial de passeriformes nativos, e dá outras providências",
+     "tipoDocumento": {
+      "id": 9,
+      "descricao": "Projeto de Lei"
+     }
+    },
+    "reuniaoProcesso": null,
+    "publicacao": [
+     {
+      "id": 524640,
+      "observacao": "Publicado no DLE do dia 02/09/2026.",
+      "linkDOE": "https://dle.al.rn.leg.br/abrearquivo/CC156C02-732C-44A3-A811-698DAFD36AA0-N/",
+      "origem": {
+       "setor": {
+        "id": 22,
+        "nome": "DIÁRIO OFICIAL ELETRÔNICO DA ALRN",
+        "sigla": "DOE AL/RN",
+        "comissao": null
+       },
+       "data": "2026-09-02T07:25:03.000Z"
+      },
+      "situacaoProcesso": {
+       "id": 13,
+       "nome": "Publicado no Diário Oficial Eletrônico da ALRN"
+      }
+     }
+    ],
+    "emenda": [],
+    "comissao": [
+     {
+      "sigla": "CCJR",
+      "descricao": "Comissão de Constituição, Justiça e Redação",
+      "assessor": null,
+      "relator": null
+     }
+    ]
+   },
+   {
+    "id": 63711,
+    "numero": 2813,
+    "ano": 2026,
+    "numeroExterno": null,
+    "anoExterno": null,
+    "ementa": "Solicita a adoção de providências urgentes para a regularização do abastecimento e da dispensação do medicamento Pancreatina 25.000 UI na UNICAT e na rede estadual de assistência farmacêutica.",
+    "informacaoLei": null,
+    "dataEntrada": "2026-08-28T18:40:58.327Z",
+    "dataArquivamento": null,
+    "propositura": {
+     "tipo": {
+      "id": 9,
+      "sigla": "REQ",
+      "descricao": "REQUERIMENTO"
+     },
+     "numero": 1948,
+     "ano": 2026
+    },
+    "inclusao": {
+     "data": "2026-08-28T18:40:58.327Z"
+    },
+    "exclusao": {
+     "data": null
+    },
+    "iniciativa": {
+     "id": 3,
+     "tipo": "PARLAMENTAR",
+     "descricao": "DEP. CRISTIANE DANTAS",
+     "parlamentar": {
+      "id": 8,
+      "nomeParlamentar": "DEPUTADA CRISTIANE DANTAS",
+      "partido": {
+       "id": 7,
+       "nome": "PSDB",
+       "nomeOriginal": "Partido da Social Democracia Brasileira"
+      }
+     }
+    },
+    "apensamentos": [],
+    "apensamento": null,
+    "documento": {
+     "id": 303983,
+     "ementa": "Solicita a adoção de providências urgentes para a regularização do abastecimento e da dispensação do medicamento Pancreatina 25.000 UI na UNICAT e na rede estadual de assistência farmacêutica.",
+     "tipoDocumento": {
+      "id": 8,
+      "descricao": "Requerimento"
+     }
+    },
+    "reuniaoProcesso": null,
+    "publicacao": [],
+    "emenda": [],
+    "comissao": []
+   },
+   {
+    "id": 63710,
+    "numero": 2812,
+    "ano": 2026,
+    "numeroExterno": null,
+    "anoExterno": null,
+    "ementa": "Solicita informações detalhadas acerca do estoque, do desabastecimento, dos procedimentos de aquisição e da previsão de regularização do fornecimento do medicamento Pancreatina 25.000 UI no âmbito da UNICAT e da assistência farmacêutica estadual.",
+    "informacaoLei": null,
+    "dataEntrada": "2026-08-28T18:38:24.843Z",
+    "dataArquivamento": null,
+    "propositura": {
+     "tipo": {
+      "id": 17,
+      "sigla": "REQINFOR",
+      "descricao": "Requerimento - Pedido de Informação"
+     },
+     "numero": 1948,
+     "ano": 2026
+    },
+    "inclusao": {
+     "data": "2026-08-28T18:38:24.843Z"
+    },
+    "exclusao": {
+     "data": null
+    },
+    "iniciativa": {
+     "id": 3,
+     "tipo": "PARLAMENTAR",
+     "descricao": "DEP. CRISTIANE DANTAS",
+     "parlamentar": {
+      "id": 8,
+      "nomeParlamentar": "DEPUTADA CRISTIANE DANTAS",
+      "partido": {
+       "id": 7,
+       "nome": "PSDB",
+       "nomeOriginal": "Partido da Social Democracia Brasileira"
+      }
+     }
+    },
+    "apensamentos": [],
+    "apensamento": null,
+    "documento": {
+     "id": 303982,
+     "ementa": "Solicita informações detalhadas acerca do estoque, do desabastecimento, dos procedimentos de aquisição e da previsão de regularização do fornecimento do medicamento Pancreatina 25.000 UI no âmbito da UNICAT e da assistência farmacêutica estadual.",
+     "tipoDocumento": {
+      "id": 8,
+      "descricao": "Requerimento"
+     }
+    },
+    "reuniaoProcesso": null,
+    "publicacao": [],
+    "emenda": [],
+    "comissao": []
+   },
+   {
+    "id": 63670,
+    "numero": 2772,
+    "ano": 2026,
+    "numeroExterno": null,
+    "anoExterno": null,
+    "ementa": "Solicita providências urgentes para a recuperação, restauração e manutenção da RN-091, no trecho entre os municípios de São Bento do Trairi e Santa Cruz.",
+    "informacaoLei": null,
+    "dataEntrada": "2026-08-26T10:00:57.033Z",
+    "dataArquivamento": null,
+    "propositura": {
+     "tipo": {
+      "id": 9,
+      "sigla": "REQ",
+      "descricao": "REQUERIMENTO"
+     },
+     "numero": 1922,
+     "ano": 2026
+    },
+    "inclusao": {
+     "data": "2026-08-26T10:00:57.033Z"
+    },
+    "exclusao": {
+     "data": null
+    },
+    "iniciativa": {
+     "id": 3,
+     "tipo": "PARLAMENTAR",
+     "descricao": "DEP. CRISTIANE DANTAS",
+     "parlamentar": {
+      "id": 8,
+      "nomeParlamentar": "DEPUTADA CRISTIANE DANTAS",
+      "partido": {
+       "id": 7,
+       "nome": "PSDB",
+       "nomeOriginal": "Partido da Social Democracia Brasileira"
+      }
+     }
+    },
+    "apensamentos": [],
+    "apensamento": null,
+    "documento": {
+     "id": 303514,
+     "ementa": "Solicita providências urgentes para a recuperação, restauração e manutenção da RN-091, no trecho entre os municípios de São Bento do Trairi e Santa Cruz.",
+     "tipoDocumento": {
+      "id": 8,
+      "descricao": "Requerimento"
+     }
+    },
+    "reuniaoProcesso": null,
+    "publicacao": [],
+    "emenda": [],
+    "comissao": []
+   },
+   {
+    "id": 63666,
+    "numero": 2768,
+    "ano": 2026,
+    "numeroExterno": null,
+    "anoExterno": null,
+    "ementa": "Solicita informações sobre ações de prevenção e tratamento do superendividamento no Rio Grande do Norte.",
+    "informacaoLei": null,
+    "dataEntrada": "2026-08-26T09:37:35.323Z",
+    "dataArquivamento": null,
+    "propositura": {
+     "tipo": {
+      "id": 17,
+      "sigla": "REQINFOR",
+      "descricao": "Requerimento - Pedido de Informação"
+     },
+     "numero": 1918,
+     "ano": 2026
+    },
+    "inclusao": {
+     "data": "2026-08-26T09:37:35.323Z"
+    },
+    "exclusao": {
+     "data": null
+    },
+    "iniciativa": {
+     "id": 3,
+     "tipo": "PARLAMENTAR",
+     "descricao": "DEP. CRISTIANE DANTAS",
+     "parlamentar": {
+      "id": 8,
+      "nomeParlamentar": "DEPUTADA CRISTIANE DANTAS",
+      "partido": {
+       "id": 7,
+       "nome": "PSDB",
+       "nomeOriginal": "Partido da Social Democracia Brasileira"
+      }
+     }
+    },
+    "apensamentos": [],
+    "apensamento": null,
+    "documento": {
+     "id": 303506,
+     "ementa": "Solicita informações sobre ações de prevenção e tratamento do superendividamento no Rio Grande do Norte.",
+     "tipoDocumento": {
+      "id": 8,
+      "descricao": "Requerimento"
+     }
+    },
+    "reuniaoProcesso": null,
+    "publicacao": [],
+    "emenda": [],
+    "comissao": []
+   },
+   {
+    "id": 63662,
+    "numero": 2760,
+    "ano": 2026,
+    "numeroExterno": null,
+    "anoExterno": null,
+    "ementa": "Institui  diretrizes para a formação e o uso consciente de Inteligência Artificial na rede pública estadual de ensino do Rio Grande do Norte e dá outras providências.",
+    "informacaoLei": null,
+    "dataEntrada": "2026-08-25T11:00:48.270Z",
+    "dataArquivamento": null,
+    "propositura": {
+     "tipo": {
+      "id": 1,
+      "sigla": "PL",
+      "descricao": "PROJETO DE LEI"
+     },
+     "numero": 377,
+     "ano": 2026
+    },
+    "inclusao": {
+     "data": "2026-08-25T11:00:48.270Z"
+    },
+    "exclusao": {
+     "data": null
+    },
+    "iniciativa": {
+     "id": 3,
+     "tipo": "PARLAMENTAR",
+     "descricao": "DEP. CRISTIANE DANTAS",
+     "parlamentar": {
+      "id": 8,
+      "nomeParlamentar": "DEPUTADA CRISTIANE DANTAS",
+      "partido": {
+       "id": 7,
+       "nome": "PSDB",
+       "nomeOriginal": "Partido da Social Democracia Brasileira"
+      }
+     }
+    },
+    "apensamentos": [],
+    "apensamento": null,
+    "documento": {
+     "id": 303316,
+     "ementa": "Institui  diretrizes para a formação e o uso consciente de Inteligência Artificial na rede pública estadual de ensino do Rio Grande do Norte e dá outras providências.",
+     "tipoDocumento": {
+      "id": 9,
+      "descricao": "Projeto de Lei"
+     }
+    },
+    "reuniaoProcesso": null,
+    "publicacao": [
+     {
+      "id": 523789,
+      "observacao": "Publicado no DLE do dia 27/08/2026.",
+      "linkDOE": "https://dle.al.rn.leg.br/abrearquivo/BBDE42A6-7293-418B-BD4B-3A4BD0DA8DCC-N/",
+      "origem": {
+       "setor": {
+        "id": 22,
+        "nome": "DIÁRIO OFICIAL ELETRÔNICO DA ALRN",
+        "sigla": "DOE AL/RN",
+        "comissao": null
+       },
+       "data": "2026-08-27T07:22:15.000Z"
+      },
+      "situacaoProcesso": {
+       "id": 13,
+       "nome": "Publicado no Diário Oficial Eletrônico da ALRN"
+      }
+     }
+    ],
+    "emenda": [],
+    "comissao": [
+     {
+      "sigla": "CCJR",
+      "descricao": "Comissão de Constituição, Justiça e Redação",
+      "assessor": null,
+      "relator": null
+     },
+     {
+      "sigla": "CECTDSMAT",
+      "descricao": "Comissão de Educação, Ciência e Tecnologia, Desenvolvimento Socioeconômico, Meio Ambiente e Turismo",
+      "assessor": null,
+      "relator": null
+     }
+    ]
+   },
+   {
+    "id": 63654,
+    "numero": 2748,
+    "ano": 2026,
+    "numeroExterno": null,
+    "anoExterno": null,
+    "ementa": "Requer informações sobre a falta de medicamentos e insumos no Hospital Monsenhor Walfredo Gurgel.",
+    "informacaoLei": null,
+    "dataEntrada": "2026-08-25T09:58:08.863Z",
+    "dataArquivamento": null,
+    "propositura": {
+     "tipo": {
+      "id": 17,
+      "sigla": "REQINFOR",
+      "descricao": "Requerimento - Pedido de Informação"
+     },
+     "numero": 1909,
+     "ano": 2026
+    },
+    "inclusao": {
+     "data": "2026-08-25T09:58:08.863Z"
+    },
+    "exclusao": {
+     "data": null
+    },
+    "iniciativa": {
+     "id": 3,
+     "tipo": "PARLAMENTAR",
+     "descricao": "DEP. CRISTIANE DANTAS",
+     "parlamentar": {
+      "id": 8,
+      "nomeParlamentar": "DEPUTADA CRISTIANE DANTAS",
+      "partido": {
+       "id": 7,
+       "nome": "PSDB",
+       "nomeOriginal": "Partido da Social Democracia Brasileira"
+      }
+     }
+    },
+    "apensamentos": [],
+    "apensamento": null,
+    "documento": {
+     "id": 303321,
+     "ementa": "Requer informações sobre a falta de medicamentos e insumos no Hospital Monsenhor Walfredo Gurgel.",
+     "tipoDocumento": {
+      "id": 8,
+      "descricao": "Requerimento"
+     }
+    },
+    "reuniaoProcesso": null,
+    "publicacao": [],
+    "emenda": [],
+    "comissao": []
+   }
+  ]
+ }
+}

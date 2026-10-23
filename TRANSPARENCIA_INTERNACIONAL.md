@@ -29,6 +29,16 @@ Os grupos "Legal", "Plataformas", "Participação" e "Transformação digital" m
 | IBGE: ESTADIC e MUNIC (normas, ouvidoria, LGPD) | ❔ API de metadados não respondeu; SIDRA responde mas sem a tabela localizada | Existência de normas e estruturas no estado e no município | Pode estar só como arquivos no FTP do IBGE. Não testado |
 | Querido Diário (Diários Oficiais municipais) | ❔ sem conexão no teste | Publicações dos Diários das capitais | Repetir o teste antes de decidir |
 
+## Página das Assembleias Legislativas (`/itgp/legislativo/`)
+
+Apurado em 2026-10-23. Sem API de dados; só HTML e uma planilha.
+
+- A página lista o ranking das 27 Assembleias (posição, UF, pontuação, conceito) e liga cada linha a `/itgp/assembleia-legislativa/<estado>`.
+- Banco de dados: `https://comunidade.transparenciainternacional.org.br/itgp-legislativo-estadual-banco-de-dados` devolve direto um `.xlsx`, sem chave nem login. Abas: `Indicadores` (27 UFs × ~60 perguntas sim/não, A1:BL28) e `Gerais_Dimensão` (notas por dimensão e geral, A1:CD29).
+- Perguntas úteis para priorizar coletores estaduais: TL11 a TL16 (proposições, salários, viagens, cota parlamentar, votações nominais e presença em dados abertos) e TA01 a TA09 (servidores, verbas indenizatórias, receitas, despesas, contratos e licitações).
+- Notas metodológicas: `comunidade.transparenciainternacional.org.br/itgp-legislativo-estadual-distrital-nota-metodologica` e `.../itgp-boas-praticas-para-o-legislativo`.
+- O índice só diz se a Assembleia publica a informação, não traz o dado. Uso possível: roteiro de quais Assembleias têm dado aberto de cada tipo.
+
 ## O que vale adicionar (ordem sugerida)
 
 1. **Finanças do estado e da capital (SICONFI)**: receita, despesa e pessoal do governo estadual e da prefeitura da capital, na ficha do governador e do prefeito. Fonte oficial, sem chave, mesmo formato para estado e município. Já há uma ideia parecida (despesa das Câmaras e Assembleias) em `FUTURAS_IMPLEMENTACOES.md`.

@@ -14,6 +14,7 @@ import datetime as dt
 import html
 import re
 
+import estaduais_comum as comum
 from coletar_estaduais import RENOVAR_ANO_ANTIGO_DIAS, avisar, ler, salvar, sessao
 from coletar_estaduais import DADOS as DADOS_ESTADUAIS
 
@@ -73,8 +74,8 @@ def historico(par: str) -> list[dict]:
     return movs
 
 
-def iso(d: str) -> str:
-    return dt.datetime.strptime(d, "%d/%m/%Y").date().isoformat()
+def iso(d: str) -> str | None:
+    return comum.data_br_iso(d, inteiro=True)
 
 
 def situacao(tipo: str, movs: list[dict], da_grade: str) -> str:

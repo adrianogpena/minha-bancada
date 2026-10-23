@@ -13,6 +13,7 @@ e lei aprovada vêm das listas por promovente; o que não está em nenhuma delas
 import datetime as dt
 from concurrent.futures import ThreadPoolExecutor
 
+import estaduais_comum as comum
 from coletar_estaduais import RENOVAR_ANO_ANTIGO_DIAS, avisar, ler, salvar, sessao
 from coletar_estaduais import DADOS as DADOS_ESTADUAIS
 
@@ -76,14 +77,14 @@ def coletar() -> None:
             vistos.add(chave(p))
             if sim:
                 itens_ant[f"{p['tipo']}-{p['numero']}-{p['ano']}"] = {"tipo": p["tipo"], "numero": p["numero"], "ano": p["ano"],
-                                                                      "dataApresentacao": p["data"][:10], "ementa": p["ementa"].strip()}
+                                                                      "dataApresentacao": comum.data_iso(p["data"]), "ementa": p["ementa"].strip()}
         itens = {}
         for mid, m in itens_ant.items():
             k = (m["tipo"], m["numero"], m["ano"])
             td, cod = TIPOS[m["tipo"]]
             lei = leis.get(k)
             if lei:
-                sit = f"Virou lei (Lei {lei['numero']:,}".replace(",", ".") + (f", publicada em {lei['publicacao'][:10]})" if lei.get("publicacao") else ")")
+                sit = f"Virou lei (Lei {lei['numero']:,}".replace(",", ".") + (f", publicada em {comum.data_iso(lei['publicacao'])})" if comum.data_iso(lei.get("publicacao")) else ")")
             elif k in tramitando:
                 sit = "Em tramitação"
             elif k in vetos:

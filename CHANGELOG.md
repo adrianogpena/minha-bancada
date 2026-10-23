@@ -5,6 +5,10 @@ Regra: toda fonte nova ou mudança de coleta ganha uma entrada aqui, no mesmo co
 Datas dos conjuntos que já existiam vêm do primeiro commit que os trouxe (`git log --diff-filter=A`).
 Todas as coletas rodam sozinhas no GitHub Actions (`.github/workflows/atualizar.yml`, todo dia às 05:00 de Brasília), salvo onde indicado.
 
+## Datas dos demais coletores e teste de guarda da normalização (2026-10-23)
+- **De onde:** nenhuma fonte nova; mudança em `coletar_executivo.py`, `coletar_estaduais.py`, `coletar_estadual_pr.py` e nas prefeituras BA, GO e SP.
+- **Como:** as datas passam por `estaduais_comum.data_iso` / `data_br_iso` (só data que existe no calendário); onde a fonte não traz data válida o campo fica `null` (no executivo, `remessa` só é gravada com data válida; na prefeitura de GO, a proposição sem data de criação é ignorada). `tests/test_normalizacao_coletores.py` falha se um coletor voltar a cortar data com `[:10]`, usar `strptime` dd/mm/aaaa ou limpar CNPJ com `re.sub` à mão.
+
 ## Câmara e Senado: documento, data e e-mail normalizados na coleta (2026-10-23)
 - **De onde:** nenhuma fonte nova; mudança em `scripts/coletar.py` (cota da Câmara pelo CSV e pela API, CEAPS, proposições, votações e perfis).
 - **Como:** o CNPJ/CPF do fornecedor passa por `fornecedores.documento` (via `estaduais_comum.fornecedor`): só dígitos, zero à esquerda restaurado, dígito verificador conferido; vazio, mascarado ou inválido vira `null` (antes `""` ou os dígitos como vieram). As datas passam por `estaduais_comum.data_iso` (existente no calendário) e o e-mail por `estaduais_comum.email`.

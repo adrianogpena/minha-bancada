@@ -244,7 +244,7 @@ def materias(lista: list[dict], deputados: list[dict]) -> dict:
         status = p.get("status")
         achadas[str(p["codigo"])] = {
             "tipo": SIGLAS.get(tipo, tipo[:4].upper()), "tipoDescricao": tipo.title(), "numero": p.get("numero"), "ano": p.get("ano"),
-            "dataApresentacao": (p.get("dataRecebimento") or "")[:10] or None, "ementa": ementa, "situacao": status,
+            "dataApresentacao": comum.data_iso(p.get("dataRecebimento")), "ementa": ementa, "situacao": status,
             "emTramitacao": status == "TRAMITANDO" if status else None, "linkTexto": None, "idsAutores": autores, "idsDeputados": autores,
             "fonte": PROPOSICOES_PAGINA}
     return achadas

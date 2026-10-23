@@ -22,6 +22,7 @@ from pathlib import Path
 
 import certifi
 
+import estaduais_comum as comum
 from coletar_estaduais import RENOVAR_ANO_ANTIGO_DIAS, avisar, ler, salvar, sessao
 from coletar_estaduais import DADOS as DADOS_ESTADUAIS
 
@@ -89,7 +90,9 @@ def coletar() -> None:
                 t, td = TIPOS[m.group(1).lower()]
                 ano_p = int(m.group(3)) + (2000 if len(m.group(3)) == 2 else 0)
                 mid = f"{t}-{int(m.group(2))}-{ano_p}"
-                criado = dt.datetime.strptime(x["criado"][:10], "%d/%m/%Y").date().isoformat()
+                criado = comum.data_br_iso(x["criado"])
+                if not criado:
+                    continue
                 if mid in itens and itens[mid]["dataApresentacao"] <= criado:
                     continue
                 itens[mid] = {"tipo": t, "tipoDescricao": td, "numero": int(m.group(2)), "ano": ano_p, "dataApresentacao": criado,

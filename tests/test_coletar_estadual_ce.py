@@ -58,7 +58,7 @@ def test_vdp_itens():
     ligacao = ce.ligar({linha["DEPUTADO"] for linha in linhas}, DEPUTADOS)
     itens, sem_par = ce.itens_vdp(linhas, ligacao, "http://fonte")
     assert itens[0]["idDeputado"] == "agenor-neto" and itens[0]["mes"] == 10 and itens[0]["valor"] == 4000.0
-    assert itens[0]["categoria"] == "Alimentação e refeição" and itens[0]["cnpj"] == "47866934000174" and itens[0]["fonte"] == "http://fonte"
+    assert itens[0]["categoria"].startswith("REFERE-SE A DISPONIBILIZACAO DO BENEFICIO ALIMENTACAO") and itens[0]["cnpj"] == "47866934000174" and itens[0]["fonte"] == "http://fonte"
     assert sem_par == set() or "AGENOR NETO" not in sem_par
 
 

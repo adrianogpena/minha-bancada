@@ -90,7 +90,7 @@ def ler_proposituras(zip_bytes: bytes, primeiro_ano: int) -> dict:
                 if natureza in NATUREZAS and ano >= primeiro_ano:
                     achadas[(el.findtext("IdDocumento") or "").strip()] = {
                         "natureza": natureza, "ano": ano, "numero": (el.findtext("NroLegislativo") or "").strip(),
-                        "ementa": " ".join((el.findtext("Ementa") or "").split()), "data": (el.findtext("DtPublicacao") or "")[:10] or None}
+                        "ementa": " ".join((el.findtext("Ementa") or "").split()), "data": comum.data_iso(el.findtext("DtPublicacao"))}
                 el.clear()
     return achadas
 

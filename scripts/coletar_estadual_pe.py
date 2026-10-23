@@ -90,10 +90,9 @@ def itens_verba(lancamento: dict, notas: list[dict], id_deputado: str, ano: int,
     itens = []
     for n in notas:
         data = n.get("data") or ""
-        m = re.match(r"(\d{2})/(\d{2})/(\d{4})$", data)
         itens.append({"idDeputado": id_deputado, "mes": mes, "categoria": rubricas.get(n.get("rubrica")) or f"Rubrica {n.get('rubrica')}",
                       **comum.fornecedor(n.get("empresa"), n.get("cnpj")), "valor": comum.valor_br(n.get("valor")),
-                      "data": f"{m.group(3)}-{m.group(2)}-{m.group(1)}" if m else None, "tipo": tipo, "numero": lancamento.get("numero"),
+                      "data": comum.data_br_iso(data, inteiro=True), "tipo": tipo, "numero": lancamento.get("numero"),
                       "docid": lancamento.get("docid"), "fonte": VERBA_PAGINA})
     if not notas and lancamento.get("total") is not None:
         itens.append({"idDeputado": id_deputado, "mes": mes, "categoria": "Sem detalhamento", "fornecedor": None, "cnpj": None,
@@ -143,9 +142,8 @@ def parse_proposicoes(conteudo: bytes, tipo: str) -> list[dict]:
     itens = []
     for p in raiz.iter(TAG_PROPOSICAO[tipo]):
         data = p.get("dataPublicacao") or ""
-        m = re.match(r"(\d{2})/(\d{2})/(\d{4})$", data)
         itens.append({"docid": p.get("docid"), "numero": p.get("numero"), "ano": p.get("ano"), "tipo": p.get("tipo"), "subtipo": p.get("subtipo"),
-                      "ementa": limpar_texto(p.get("ementa")), "data": f"{m.group(3)}-{m.group(2)}-{m.group(1)}" if m else None,
+                      "ementa": limpar_texto(p.get("ementa")), "data": comum.data_br_iso(data, inteiro=True),
                       "autores": [a.get("nome") for a in p.iter("autor") if a.get("tipo") == "DEPUTADO" and a.get("nome")]})
     return itens
 

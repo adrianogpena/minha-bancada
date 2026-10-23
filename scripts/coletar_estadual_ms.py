@@ -65,10 +65,7 @@ def itens_ceap(linhas: list[dict], ligacao: dict, fonte: str) -> tuple[list[dict
 
 
 def emissao_iso(texto) -> str | None:
-    p = (texto or "").strip().split("/")
-    if len(p) == 3 and all(x.isdigit() for x in p):
-        return f"{p[2]}-{p[1]}-{p[0]}"
-    return None
+    return comum.data_br_iso(texto, inteiro=True)
 
 
 def baixar(s, url: str) -> str:

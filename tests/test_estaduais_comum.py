@@ -177,3 +177,16 @@ def test_faltando():
 ])
 def test_fornecedor(nome, doc, esperado):
     assert ec.fornecedor(nome, doc) == esperado
+
+
+@pytest.mark.parametrize("valor,esperado", [
+    ("2026-01-31", "2026-01-31"), ("2026-01-31T10:00:00", "2026-01-31"), ({"$": "2026-01-31"}, "2026-01-31"),
+    ("2026-02-31", None), ("", None), (None, None), (20260131, None),
+])
+def test_data_iso(valor, esperado):
+    assert ec.data_iso(valor) == esperado
+
+
+def test_data_br_iso_recusa_data_inexistente():
+    assert ec.data_br_iso("31/02/2026") is None
+    assert ec.data_br_iso("28/02/2026") == "2026-02-28"

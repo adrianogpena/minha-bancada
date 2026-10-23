@@ -19,6 +19,8 @@ import categorias
     ("Aluguel de imóveis para escritório político, compreendendo despesas concernentes a eles", "imovel"),
     ("Passagens aéreas, aquáticas e terrestres nacionais", "locomocao"), ("Serviços de Segurança Privada", "seguranca"),
     # Assembleias
+    ("REFERE-SE A DISPONIBILIZACAO DO BENEFICIO ALIMENTACAO DE OUTUBRO/2026", "locomocao"),
+    ("CONTRATACAO DE PACOTE DE DADOS MOVEIS", "telecom"), ("LOCACAO DE VEICULOS PARA O GABINETE", "veiculos"),
     ("A - COMBUSTÍVEIS E LUBRIFICANTES", "combustivel"), ("H - SERV.UTIL.PÚBLICA (TELEF.MÓVEL/FIXA, ENERGIA, ÁGUA, GÁS ETC)", "imovel"),
     ("K - LOCAÇÃO DE BENS MÓVEIS", "material"), ("L - LOCAÇÃO DE BENS IMÓVEIS", "imovel"),
     ("C - MATERIAIS E SERVIÇOS DE MANUT E CONSERV DE VEÍCULOS ; PEDÁGIOS", "veiculos"),

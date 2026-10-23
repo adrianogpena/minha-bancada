@@ -63,10 +63,7 @@ def montar_deputados(em_exercicio: list[dict], telefonica: list[dict]) -> list[d
 # ---------------------------------------------------------------- verba indenizatória
 
 def data_iso(valor) -> str | None:
-    if isinstance(valor, dict):
-        valor = valor.get("$")
-    m = re.match(r"(\d{4}-\d{2}-\d{2})", valor or "")
-    return m.group(1) if m else None
+    return comum.data_iso(valor)
 
 
 def itens_verba(registros: list[dict], id_deputado: str, mes: int) -> list[dict]:

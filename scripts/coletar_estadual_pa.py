@@ -110,7 +110,7 @@ def linhas_dashboard(dto: dict) -> list[dict]:
             indices = json.loads(chave)
             r = {c: mapas[c][i] for c, i in zip(chaves, indices, strict=False)}
             valor = valores.get("0")
-            linhas.append({"data": (r.get("DataItem1") or "")[:10], "deputado": r.get("DataItem0"), "conta": r.get("DataItem5"),
+            linhas.append({"data": comum.data_iso(r.get("DataItem1")) or "", "deputado": r.get("DataItem0"), "conta": r.get("DataItem5"),
                            "descricao": r.get("DataItem2"), "valor": valor})
     return sorted(linhas, key=lambda lin: (lin["data"], lin["deputado"] or "", lin["descricao"] or ""))
 

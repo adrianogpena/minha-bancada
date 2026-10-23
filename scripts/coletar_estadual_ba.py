@@ -19,7 +19,7 @@ import re
 import zipfile
 import zlib
 from concurrent.futures import ThreadPoolExecutor
-from datetime import date, datetime, timedelta
+from datetime import date, timedelta
 from functools import partial
 
 import requests
@@ -78,10 +78,7 @@ def baixar_ckan(s, url: str, timeout: int = TIMEOUT) -> bytes:
 
 
 def iso_data(texto: str) -> str | None:
-    try:
-        return datetime.strptime((texto or "").strip()[:10], "%d/%m/%Y").date().isoformat()
-    except ValueError:
-        return None
+    return comum.data_br_iso(texto)
 
 
 def data_serial(valor) -> date | None:

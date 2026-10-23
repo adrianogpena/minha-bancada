@@ -5,6 +5,11 @@ Regra: toda fonte nova ou mudança de coleta ganha uma entrada aqui, no mesmo co
 Datas dos conjuntos que já existiam vêm do primeiro commit que os trouxe (`git log --diff-filter=A`).
 Todas as coletas rodam sozinhas no GitHub Actions (`.github/workflows/atualizar.yml`, todo dia às 05:00 de Brasília), salvo onde indicado.
 
+## Datas e categorias normalizadas nos coletores estaduais (2026-10-23)
+- **De onde:** nenhuma fonte nova; mudança em `estaduais_comum.py` e nos coletores BA, CE, MG, MS, PA, PE, RN e SP.
+- **Como:** `estaduais_comum.data_br_iso` e a nova `data_iso` (AAAA-MM-DD, também com hora ou `{"$": ...}`) só devolvem data que existe no calendário; os coletores deixam de montar a data à mão (`[:10]`, `split("/")`, f-string). O CE deixa de mapear a categoria da verba de desempenho no coletor: grava a descrição da fonte e o `gerar*` agrupa por `categorias.REGRAS` (acrescentadas "pacote de dados" em telefonia).
+- **Mudança de dado:** `categoria` das despesas do CE passa de rótulo curto ("Alimentação e refeição") para a descrição original do empenho; o agrupamento do site continua pelos ids de `categorias.py`.
+
 ## Fornecedor normalizado na entrada dos coletores estaduais (2026-10-23)
 - **De onde:** nenhuma fonte nova; mudança em `coletar_estadual_{ce,mg,ms,pe,sc,sp}.py`.
 - **Como:** `estaduais_comum.fornecedor` grava o nome com espaços compactados e o documento só com dígitos (zeros à esquerda restaurados, dígito verificador conferido por `fornecedores.documento`); vazio, mascarado ou inválido vira `null`. Antes cada coletor gravava o CNPJ como a fonte trouxe.

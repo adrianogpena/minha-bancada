@@ -48,16 +48,6 @@ TABELAS = {  # tabela em numero.php -> (sigla, descrição)
     "projeto_decre": ("PDL", "Projeto de Decreto Legislativo"),
     "projeto_reso": ("PR", "Projeto de Resolução"),
 }
-CATEGORIAS_VDP = [
-    ("anulacao", "Anulação de empenho"), ("cartoes eletronicos", "Alimentação e refeição"), ("alimentacao", "Alimentação e refeição"),
-    ("refeicao", "Alimentação e refeição"), ("reembolso", "Reembolso de despesas indenizatórias"),
-    ("telecomunica", "Telefonia e dados"), ("telefonia", "Telefonia e dados"), ("pacote de dados", "Telefonia e dados"),
-    ("juridic", "Consultoria jurídica"), ("comunicacao", "Assessoria de comunicação"),
-    ("consultoria", "Consultoria e assessoria"), ("assessoria", "Consultoria e assessoria"),
-    ("impress", "Impressos gráficos"), ("locacao", "Locação de veículos"), ("combustiv", "Combustível"),
-]
-
-
 ligar = partial(identidades.ligar_nomes, uf=UF)
 
 
@@ -148,14 +138,6 @@ def linhas_csv(texto: str, cabecalho_em: str) -> list[dict]:
     return [dict(zip(cab, linha, strict=False)) for linha in todas[inicio + 1:] if any(c.strip() for c in linha)]
 
 
-def categoria_vdp(descricao: str) -> str:
-    d = comum.sem_acento(descricao)
-    for chave, nome in CATEGORIAS_VDP:
-        if chave in d:
-            return nome
-    return "Outros"
-
-
 def itens_vdp(linhas: list[dict], ligacao: dict, fonte: str) -> tuple[list[dict], set]:
     itens, sem_par = [], set()
     for linha in linhas:
@@ -166,7 +148,7 @@ def itens_vdp(linhas: list[dict], ligacao: dict, fonte: str) -> tuple[list[dict]
             continue
         periodo = (linha.get("PERIODO") or "").split("/")
         itens.append({"idDeputado": pid, "mes": int(periodo[0]) if periodo[0].isdigit() else None,
-                      "categoria": categoria_vdp(linha.get("DESCRICAO", "")),
+                      "categoria": comum.compactar(linha.get("DESCRICAO")),
                       **comum.fornecedor(linha.get("CREDOR"), linha.get("CNPJ")), "valor": comum.valor_br(linha.get("VALOR")), "empenho": linha.get("EMPENHO") or None,
                       "descricao": " ".join((linha.get("DESCRICAO") or "").split()) or None, "fonte": fonte})
     return itens, sem_par

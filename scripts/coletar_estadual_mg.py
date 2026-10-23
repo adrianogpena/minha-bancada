@@ -56,7 +56,7 @@ def montar_deputados(em_exercicio: list[dict], telefonica: list[dict]) -> list[d
     for d in em_exercicio:
         t = por_id.get(d["id"], {})
         deputados.append({"id": str(d["id"]), "nome": comum.nome_limpo(d["nome"]), "nomeCivil": t.get("nomeServidor") or None, "foto": None,
-                          "email": t.get("email") or None, "titular": True, "partido": d.get("partido") or None, "fonte": ficha_url(d["id"])})
+                          "email": comum.email(t.get("email")), "titular": True, "partido": comum.sigla_partido(d.get("partido")), "fonte": ficha_url(d["id"])})
     return deputados
 
 

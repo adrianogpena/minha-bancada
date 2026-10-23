@@ -64,7 +64,7 @@ def parse_deputados(xml: bytes) -> list[dict]:
             continue
         matricula = d.findtext("Matricula").strip()
         achados.append({"id": matricula, "nome": " ".join((d.findtext("NomeParlamentar") or "").split()), "nomeCivil": None, "foto": None,
-                        "email": (d.findtext("Email") or "").strip() or None, "titular": True, "partido": (d.findtext("Partido") or "").strip() or None,
+                        "email": comum.email(d.findtext("Email")), "titular": True, "partido": comum.sigla_partido(d.findtext("Partido")),
                         "fonte": f"{SITE}/deputado/?matricula={matricula}", "idAutor": (d.findtext("IdSPL") or "").strip() or None})
     return achados
 

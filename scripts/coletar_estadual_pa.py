@@ -61,7 +61,7 @@ def parse_cartoes(html: str) -> dict:
         link = re.search(r"href='/Institucional/Deputado/(\d+)'", bloco)
         foto = re.search(r'<img src="([^"]+)"', bloco)
         contagens = {k: int(v) for k, v in re.findall(r"<p><b>(Presente|Licenciado|Ausente):\s*</b>(\d+)</p>", bloco)}
-        deputados.append({"id": link.group(1) if link else None, "nome": nome, "partido": partido,
+        deputados.append({"id": link.group(1) if link else None, "nome": nome, "partido": comum.sigla_partido(partido),
                           "foto": foto.group(1).replace("\\", "/").split("?")[0].replace(" ", "%20") if foto else None,
                           "ficha": FICHA_URL.format(link.group(1)) if link else None,
                           "presente": contagens.get("Presente"), "licenciado": contagens.get("Licenciado"), "ausente": contagens.get("Ausente")})
@@ -71,7 +71,7 @@ def parse_cartoes(html: str) -> dict:
 def parse_ficha(html: str) -> dict:
     civil = re.search(r"Nome completo:\s*(?:<[^>]+>\s*)*([^<]+)", html)
     email = re.search(r"mailto:([^\"'>\s]+)", html)
-    return {"nomeCivil": " ".join(unescape(civil.group(1)).split()) if civil else None, "email": email.group(1) if email else None}
+    return {"nomeCivil": " ".join(unescape(civil.group(1)).split()) if civil else None, "email": comum.email(email.group(1)) if email else None}
 
 
 def id_deputado(d: dict) -> str:
@@ -111,7 +111,7 @@ def linhas_dashboard(dto: dict) -> list[dict]:
             r = {c: mapas[c][i] for c, i in zip(chaves, indices, strict=False)}
             valor = valores.get("0")
             linhas.append({"data": comum.data_iso(r.get("DataItem1")) or "", "deputado": r.get("DataItem0"), "conta": r.get("DataItem5"),
-                           "descricao": r.get("DataItem2"), "valor": valor})
+                           "descricao": r.get("DataItem2"), "valor": comum.valor_br(valor)})
     return sorted(linhas, key=lambda lin: (lin["data"], lin["deputado"] or "", lin["descricao"] or ""))
 
 

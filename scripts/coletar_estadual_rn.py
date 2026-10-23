@@ -75,7 +75,7 @@ def paginas(s, caminho: str, **params):
 def partido_atual(p: dict) -> str | None:
     atuais = [f for f in p.get("filiacoes") or [] if not (f.get("vigencia") or {}).get("fim")]
     atuais.sort(key=lambda f: (f.get("vigencia") or {}).get("inicio") or "")
-    return (atuais[-1]["partido"].get("nome") or atuais[-1]["partido"].get("sigla")) if atuais else None
+    return comum.sigla_partido(atuais[-1]["partido"].get("nome") or atuais[-1]["partido"].get("sigla")) if atuais else None
 
 
 def deputado(p: dict) -> dict:

@@ -68,7 +68,7 @@ def parse_deputados(texto: str) -> list[dict]:
         foto = re.search(r'<img src="([^"]+)"', c)
         achados.append({"id": href.group(1), "nome": " ".join(html_lib.unescape(nome.group(1)).split()),
                         "nomeCivil": None, "foto": foto.group(1) if foto else None, "email": None, "titular": True,
-                        "partido": " ".join(partido.group(1).split()) if partido else None,
+                        "partido": comum.sigla_partido(partido.group(1)) if partido else None,
                         "fonte": f"{SITE}/deputados/perfil/{href.group(1)}"})
     return achados
 

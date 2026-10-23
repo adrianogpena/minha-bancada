@@ -106,14 +106,14 @@ def cartoes(html: str) -> list[dict]:
         partido = re.search(r'<div class="partido-nome">(.*)', bloco, re.S)
         lista.append({"id": link.group(1), "nome": comum.limpar(link.group(2)),
                       "foto": f"{SITE}{foto.group(1)}" if foto and foto.group(1).startswith("/") else (foto.group(1) if foto else None),
-                      "partido": comum.limpar(partido.group(1)) if partido else None})
+                      "partido": comum.sigla_partido(comum.limpar(partido.group(1))) if partido else None})
     return lista
 
 
 def ficha(html: str) -> dict:
     nome = re.search(r"<strong>Nome:\s*</strong>\s*<span>(.*?)</span>", html, re.S)
     email = re.search(r'<a href="\.email"><span>([^<@\s]+@[^<\s]+)</span>', html)
-    return {"nomeCivil": comum.limpar(nome.group(1)) if nome else None, "email": email.group(1) if email else None}
+    return {"nomeCivil": comum.limpar(nome.group(1)) if nome else None, "email": comum.email(email.group(1)) if email else None}
 
 
 def coletar_deputados(s) -> list[dict]:

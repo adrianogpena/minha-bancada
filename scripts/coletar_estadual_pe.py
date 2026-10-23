@@ -71,11 +71,11 @@ def montar_deputados(lista: list[dict], parlamentares: list[dict]) -> list[dict]
         if achado:
             foto = achado.get("foto")
             deputados.append({"id": achado["id"], "nome": nome, "nomeCivil": None, "foto": SITE + foto if foto else None,
-                              "email": achado.get("email") or None, "titular": True, "partido": p.get("partido") or achado.get("partido"),
+                              "email": comum.email(achado.get("email")), "titular": True, "partido": comum.sigla_partido(p.get("partido") or achado.get("partido")),
                               "fonte": DEPUTADOS_URL})
         else:
             deputados.append({"id": "sem-" + re.sub(r"\W+", "-", comum.sem_acento(nome)), "nome": nome, "nomeCivil": None, "foto": None,
-                              "email": None, "titular": True, "partido": p.get("partido"), "fonte": PARLAMENTARES_URL})
+                              "email": None, "titular": True, "partido": comum.sigla_partido(p.get("partido")), "fonte": PARLAMENTARES_URL})
     return deputados
 
 

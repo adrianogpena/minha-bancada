@@ -77,7 +77,7 @@ def parse_ficha(html: str) -> dict:
     partido = re.search(r"Partido:\s*(.+?)\s+Gabinete", desc)
     email = re.search(r"mailto:([^\"'\s>]+)", html) or re.search(r"e-mail:\s*(\S+@\S+)", desc)
     return {"nome": nome or None, "nomeCivil": civil.group(1).strip() if civil else None,
-            "partido": partido.group(1).strip() if partido else None, "email": unescape(email.group(1)).strip() if email else None}
+            "partido": comum.sigla_partido(partido.group(1)) if partido else None, "email": comum.email(email.group(1)) if email else None}
 
 
 def coletar_deputados(s) -> list[dict]:

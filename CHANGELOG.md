@@ -5,6 +5,10 @@ Regra: toda fonte nova ou mudança de coleta ganha uma entrada aqui, no mesmo co
 Datas dos conjuntos que já existiam vêm do primeiro commit que os trouxe (`git log --diff-filter=A`).
 Todas as coletas rodam sozinhas no GitHub Actions (`.github/workflows/atualizar.yml`, todo dia às 05:00 de Brasília), salvo onde indicado.
 
+## E-mail, partido, valor e mês normalizados nos coletores estaduais (2026-10-23)
+- **De onde:** nenhuma fonte nova; mudança em `estaduais_comum.py` e nos coletores BA, CE, GO, MG, MT, PA, PE, PR, RN, RR, SC, SE e SP.
+- **Como:** `estaduais_comum.email` grava o e-mail em minúsculas, sem `mailto:` e só se tiver forma de e-mail; `sigla_partido` resolve entidades e compacta espaços (o id continua saindo de `identidades.partido_id` no núcleo); PA passa o valor da verba por `valor_br`; MT passa `mesCompetencia` por `mes_numero`.
+
 ## Datas e categorias normalizadas nos coletores estaduais (2026-10-23)
 - **De onde:** nenhuma fonte nova; mudança em `estaduais_comum.py` e nos coletores BA, CE, MG, MS, PA, PE, RN e SP.
 - **Como:** `estaduais_comum.data_br_iso` e a nova `data_iso` (AAAA-MM-DD, também com hora ou `{"$": ...}`) só devolvem data que existe no calendário; os coletores deixam de montar a data à mão (`[:10]`, `split("/")`, f-string). O CE deixa de mapear a categoria da verba de desempenho no coletor: grava a descrição da fonte e o `gerar*` agrupa por `categorias.REGRAS` (acrescentadas "pacote de dados" em telefonia).

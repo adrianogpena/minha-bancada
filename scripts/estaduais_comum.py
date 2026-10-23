@@ -237,6 +237,19 @@ def valor_br(texto) -> float | None:
         return None
 
 
+def email(texto) -> str | None:
+    """E-mail em minúsculas, sem "mailto:", parâmetros nem espaços; None se vazio ou sem forma de e-mail."""
+    t = unescape(str(texto or "")).strip().lower()
+    t = re.sub(r"^mailto:", "", t).split("?")[0].strip()
+    return t if re.fullmatch(r"[\w.+-]+@[\w-]+(\.[\w-]+)+", t) else None
+
+
+def sigla_partido(texto) -> str | None:
+    """Sigla ou nome do partido como a fonte trouxe, com entidades resolvidas e espaços compactados (o id sai de
+    `identidades.partido_id` no núcleo); vazio vira None."""
+    return compactar(unescape(str(texto or "")).strip(" .-"))
+
+
 def mes_numero(nome) -> int | None:
     """"janeiro" (ou "Março", "mar") -> 1; já numérico devolve o número."""
     t = sem_acento(str(nome)).strip(" ./")

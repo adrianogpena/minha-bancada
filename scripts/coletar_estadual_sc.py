@@ -59,7 +59,7 @@ def deputados_com_tse(lista: list[dict]) -> list[dict]:
         e = identidades.eleito_do_tse(UF, d["nomeCivil"], eleitos)
         saida.append({"id": d["idContracheque"], "nome": e["urna"] if e and e.get("urna") else d["nomeCivil"].title(),
                       "nomeCivil": e["nome"] if e else d["nomeCivil"].title(), "nomeFonte": d["nomeCivil"].title(), "foto": None,
-                      "email": e.get("email") if e else None, "titular": True, "partido": e.get("partido") if e else None, "fonte": DEPUTADOS_URL})
+                      "email": comum.email(e.get("email")) if e else None, "titular": True, "partido": comum.sigla_partido(e.get("partido")) if e else None, "fonte": DEPUTADOS_URL})
     return sorted(saida, key=lambda d: comum.sem_acento(d["nome"]))
 
 

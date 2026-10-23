@@ -5,6 +5,11 @@ Regra: toda fonte nova ou mudança de coleta ganha uma entrada aqui, no mesmo co
 Datas dos conjuntos que já existiam vêm do primeiro commit que os trouxe (`git log --diff-filter=A`).
 Todas as coletas rodam sozinhas no GitHub Actions (`.github/workflows/atualizar.yml`, todo dia às 05:00 de Brasília), salvo onde indicado.
 
+## Lista fixa de categorias de despesa (2026-10-23)
+- **De onde:** nenhuma fonte nova; mesmos rótulos de despesa da Câmara (`tipoDespesa`), do Senado (CEAPS) e das verbas das Assembleias.
+- **Como:** `scripts/categorias.py` define 16 categorias e as regras que ligam o rótulo de cada fonte a uma delas. `gerar.py` e `gerar_estaduais.py` agrupam por categoria: `despesas.porCategoria` (Câmara e Senado, no lugar de `porTipo`) e `verba.anos[].categorias` (Assembleias) trazem `id`, `categoria`, `total` e `originais` (rótulo da fonte e valor). Os arquivos de `dados/` não mudam (rótulo original), então vale para o que já foi coletado. Rótulo novo sem regra vai para `outros` e `gerar.py` avisa.
+- **Conferido contra os dados reais:** os 233.603 lançamentos de `dados/estaduais/*/verbas_*.json` (BA, CE, ES, GO, MG, MS, PA, PE, RR, SC, SP) caem todos em regra, nenhum em `outros` por falta de regra. Câmara e Senado ficaram cobertos só pelos rótulos conhecidos e pela amostra do contrato (os dados brutos federais não estão no repositório).
+
 ## Ligação de nomes das Assembleias só em `identidades.py` (2026-10-23)
 - **De onde:** nenhuma fonte nova; mudança de código nos 17 coletores estaduais com ligação de nome (BA, CE, ES, GO, MG, MS, MT, PA, PE, PR, RJ, RR, RS, SC, SE, SP).
 - **Como:** `identidades.ligar_nomes(nomes, deputados, uf)` substitui `estaduais_comum.ligar_nomes`/`ligar_por_palavras` e as funções `ligar` de cada UF (regra de cada UF em `identidades.ESTRATEGIAS`; apelidos de MS em `scripts/ligacoes_manuais.json`). Cada coleta grava `dados/estaduais/<UF>/ligacoes.json` (`nomes`: nome -> [id, método, confiança], `ambiguos`, `semPar`), e o `gerar.py` junta tudo em `site/dados/nucleo/ligacoes.json` (`registros`, `resumoRegistros`), com a pessoa do núcleo. Os arquivos de dados dos coletores não mudam de formato. `ligacoes.json` por UF só passa a existir na próxima coleta de cada UF.

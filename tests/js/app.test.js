@@ -95,13 +95,14 @@ test("urlLegivel reaproveita páginas do site e usa fonte.html nas demais APIs",
 test("resumosEstadual mostra cada seção com fonte e avisa quando falta", () => {
   assert.equal(resumosEstadual({}), "");
   const html = resumosEstadual({
-    verba: { fonte: "https://v.org/dados", anos: [{ ano: 2024, total: 30, meses: [{ mes: 1, total: 30 }], categorias: [{ categoria: "Aluguel", total: 30 }], fornecedores: [{ fornecedor: "F", cnpj: "1", total: 30 }] }] },
+    verba: { fonte: "https://v.org/dados", anos: [{ ano: 2024, total: 30, meses: [{ mes: 1, total: 30 }], categorias: [{ id: "imovel", categoria: "Imóvel e escritório de apoio", total: 30, originais: [["Aluguel", 30]] }], fornecedores: [{ fornecedor: "F", cnpj: "1", total: 30 }] }] },
     remuneracao: { fonte: "https://r.org/dados", ano: 2024, mes: 3, bruto: 100, liquido: 80 },
     diarias: { anos: [{ ano: 2024, total: 5, quantidade: 1 }] },
   });
   assert.match(html, /Verba\/cota/);
   assert.match(html, /jan/);
   assert.match(html, /href="https:\/\/v\.org\/dados"/);
+  assert.match(html, /title="Aluguel: [^"]*">Imóvel e escritório de apoio/);
   assert.match(html, /Remuneração/);
   assert.match(html, /mar\/2024/);
   assert.match(html, /Diárias[\s\S]*sem-fonte/);

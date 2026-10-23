@@ -31,8 +31,9 @@ def test_resumir_despesas():
     r = gerar.resumir_despesas(2024, itens)
     assert r["ano"] == 2024
     assert r["total"] == 160.25
-    assert r["porTipo"][0][0] == "Passagens"
-    assert ["Outros", 10] in [[k, v] for k, v in r["porTipo"]]
+    assert r["porCategoria"][0] == {"id": "locomocao", "categoria": "Passagens, locomoção, hospedagem e alimentação", "total": 150.25,
+                                    "originais": [["Passagens", 150.25]]}
+    assert {"id": "sem_detalhe", "categoria": "Reembolso ou verba sem detalhamento da fonte", "total": 10.0, "originais": [["Sem categoria", 10.0]]} in r["porCategoria"]
     assert r["porMes"] == [[1, 110.25], [2, 50.0]]
     assert r["fornecedores"][0][0] == "A"
     assert any(f[0] == "Não informado" for f in r["fornecedores"])

@@ -2,7 +2,10 @@
 Monta o índice de todos os políticos (vereador a presidente) que o site usa:
 
   site/dados/indice/<UF>.json   lista leve, para busca e filtros (BR = Presidência)
-  site/dados/p/<arquivo>.json   fichas completas, agrupadas por município ou estado
+  site/dados/p/<arquivo>.json   fichas completas, agrupadas por município ou estado. Nos arquivos do TSE (t/<ano>/…), a chave
+                                `_disputas` traz uma vez só o que os eleitos do mesmo cargo e local têm em comum (comparecimento e
+                                vagas, votos por partido, coligações); a página monta `disputa`, `partidoVotos` e `alianca` de
+                                cada ficha a partir dela (`completarEleicao`, em site/assets/js/ficha.js)
 
 Fontes: dados/tse/ (eleitos 2022, 2024 e 2026), dados/senado.json e os
 deputados federais em exercício já coletados da Câmara.
@@ -191,6 +194,16 @@ def alianca_de(ano: int, e: dict):
     return dict(zip(("tipo", "nome", "composicao", "situacao"), local["coligacoes"][i], strict=False)) if i is not None else None
 
 
+COMUNS = "_disputas"
+
+
+def comuns_de(e: dict) -> dict:
+    """Chaves, nos arquivos disputa, partidos e coligacoes do TSE, do que o eleito tem em comum com os outros do mesmo cargo e local.
+    O vice disputa com o titular (disputa); votos por partido e coligações usam o cargo como está."""
+    local = e["unidadeEleitoral"]
+    return {"disputa": f"{e['cargo'].replace('VICE-', '')}|{local}", "partidos": f"{e['cargo']}|{local}", "coligacoes": f"{e['cargo']}|{local}"}
+
+
 def eleitos_por_nome(cargo_tse: str) -> dict:
     """Eleitos de 2018 e 2022 a um cargo federal, por nome e UF, para ligar com a Câmara e o Senado."""
     achados = defaultdict(list)
@@ -317,6 +330,7 @@ def gerar(deputados: dict, estaduais: dict | None = None, pessoas: dict | None =
     pessoas = pessoas or {}
     indice = defaultdict(list)       # UF -> entradas
     fichas = defaultdict(dict)       # arquivo -> {id: ficha}
+    comuns = defaultdict(lambda: defaultdict(dict))   # arquivo -> {disputa|partidos|coligacoes: {cargo|local: dado do TSE}}
 
     # páginas atuais de deputados federais e senadores, para ligar com o TSE
     paginas_atuais = {}
@@ -371,15 +385,16 @@ def gerar(deputados: dict, estaduais: dict | None = None, pessoas: dict | None =
                 if estado == "atual" and cargo_tse in ("DEPUTADO ESTADUAL", "DEPUTADO DISTRITAL"):
                     achado = estaduais.get(chave_nome(e.get("urna"), uf)) or estaduais.get(chave_nome(e.get("nome"), uf))
                     estadual = {"uf": achado[0], "id": achado[1]} if achado else None
+                for grupo, chave in comuns_de(e).items():
+                    achado = resumo_tse(grupo, ano, e["uf"]).get(chave)
+                    if achado is not None:
+                        comuns[arquivo][grupo][chave] = achado
                 fichas[arquivo][e["sequencial"]] = {
                     **e, "pessoa": pessoas.get(("tse", ano, e["sequencial"])), "cargo": cargo, "cargoTse": cargo_tse, "ano": ano, "fonte": "tse",
                     "estado": estado, "inicioMandato": periodo(ano, cargo_tse)[0], "fimMandato": periodo(ano, cargo_tse)[1],
                     "paginaAtual": atual_href,
                     "contas": contas_de(ano, e),
                     "secoes": secoes_de(ano, e),
-                    "disputa": disputa_de(ano, e),
-                    "partidoVotos": partido_de(ano, e),
-                    "alianca": alianca_de(ano, e),
                     **({"patrimonio": patrimonio_de(e)} if patrimonio_de(e) else {}),
                     **({"estadual": estadual} if estadual else {}),
                 }
@@ -409,7 +424,7 @@ def gerar(deputados: dict, estaduais: dict | None = None, pessoas: dict | None =
         lista.sort(key=lambda x: (x["ordemCargo"], x.get("municipio") or "", x["nome"] or ""))
         salvar(SAIDA / "indice" / f"{uf}.json", [{k: v for k, v in x.items() if v is not None} for x in lista])
     for arquivo, mapa in fichas.items():
-        salvar(SAIDA / "p" / f"{arquivo}.json", mapa)
+        salvar(SAIDA / "p" / f"{arquivo}.json", {**mapa, **({COMUNS: dict(comuns[arquivo])} if comuns.get(arquivo) else {})})
 
     resumo = {}
     for uf, lista in indice.items():

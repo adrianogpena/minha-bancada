@@ -143,6 +143,32 @@ export function blocoCampanha(e, fontesLista) {
     ${c.gastosPorCategoria.length ? `<h4>Em que gastou</h4>${linhas(c.gastosPorCategoria, ([g, v]) => `<span class="quando">${esc(g)}</span> <b>${reaisCentavos(v)}</b>`)}` : ""}`;
 }
 
+/* Fichas do TSE (dados/p/t/...) trazem uma vez só, em `_disputas`, o que os eleitos do mesmo cargo e local têm em comum
+   (scripts/gerar_politicos.py, comuns_de). Monta a partir disso `disputa`, `partidoVotos` e `alianca` da ficha, como os
+   blocos abaixo esperam; ficha que já os traz (eleição aninhada de senador e deputado) fica como está. */
+export function completarEleicao(e, comuns) {
+  if (!comuns || e.disputa !== undefined || e.partidoVotos !== undefined || e.alianca !== undefined) return e;
+  const local = e.unidadeEleitoral;
+  const disputa = comuns.disputa && comuns.disputa[`${e.cargoTse.replace("VICE-", "")}|${local}`];
+  if (disputa) e.disputa = disputa;
+  const votos = comuns.partidos && comuns.partidos[`${e.cargoTse}|${local}`];
+  const p = votos && votos.partidos[e.partido];
+  if (p) {
+    e.partidoVotos = { votosLegenda: p[0], votosNominais: p[1], totalVotosPartidos: votos.totalVotos };
+    if (p[2]) {
+      const membros = Object.values(votos.partidos).filter((v) => v[2] === p[2]);
+      Object.assign(e.partidoVotos, { federacao: p[2], votosLegendaFederacao: membros.reduce((t, v) => t + v[0], 0), votosNominaisFederacao: membros.reduce((t, v) => t + v[1], 0) });
+    }
+  }
+  const aliancas = comuns.coligacoes && comuns.coligacoes[`${e.cargoTse}|${local}`];
+  const i = aliancas && aliancas.coligacaoDoPartido[e.partido];
+  if (i !== undefined && i !== null) {
+    const [tipo, nome, composicao, situacao] = aliancas.coligacoes[i];
+    e.alianca = { tipo, nome, composicao, situacao };
+  }
+  return e;
+}
+
 /* Comparecimento e vagas da eleição (TSE: detalhe da votação e vagas). */
 export function blocoDisputa(e, fontesLista) {
   const d = e.disputa;

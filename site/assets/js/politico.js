@@ -1,7 +1,7 @@
 /* Ficha de um político (TSE ou Senado). */
 import { $, esc, reais, reaisCentavos, data, param, carregar, urlSegura } from "./util.js";
 import { itemFicha, foto, listaPaginada, erro, ligarAbas } from "./comum.js";
-import { linksRedes, fonteRedesTse, divulgaUrl, linhaNoCargoAte, linhaSubsidio, blocoPatrimonioFontes } from "./ficha.js";
+import { linksRedes, fonteRedesTse, divulgaUrl, linhaNoCargoAte, linhaSubsidio, blocoPatrimonioFontes, completarEleicao } from "./ficha.js";
 import { arquivoTse, fontes, UFS } from "./apis.js";
 import { linkPolitico } from "./mapa.js";
 import { EXECUTIVOS, casaLegislativa, itemGoverno, LEGENDA_PRESIDENTE, legendaGoverno, AVISO_PRESIDENTE, AVISO_PROPOSTAS_PRESIDENTE, avisoGovernoPropostas, avisoGoverno, itemExecutivo } from "./executivo.js";
@@ -15,8 +15,10 @@ export async function paginaPolitico() {
   let p;
   try {
     if (!f || !/^[\w/-]+$/.test(f)) throw new Error("Endereço incompleto");
-    p = (await carregar(`dados/p/${f}.json`))[i];
+    const fichas = await carregar(`dados/p/${f}.json`);
+    p = i === "_disputas" ? null : fichas[i];
     if (!p) throw new Error("Político não encontrado. Ele pode ter deixado o cargo desde a última atualização");
+    completarEleicao(p, fichas._disputas);
   } catch (e) { return erro(alvo, e); }
 
   const nome = p.urna || p.nome;

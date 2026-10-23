@@ -104,6 +104,18 @@ def test_mandatos_ligam_pessoa_e_exercicio(site):
     assert m["cargo"] == "DEPUTADO FEDERAL" and m["status"] == "atual" and m["confirmado"] is True and m["fontes"] == {"camara": 101}
 
 
-def test_nucleo_gera_candidaturas_e_disputas_mesmo_sem_tse(site):
-    assert (site / "nucleo" / "mandatos.json").is_file()
-    assert not (site / "nucleo" / "candidaturas").exists()      # o dados/ mínimo não tem eleitos do TSE
+def test_nucleo_gera_candidaturas_e_disputas(site):
+    cands = {c["id"]: c for c in ler(site / "nucleo" / "candidaturas" / "2024.json")}
+    pessoas = {p["id"] for p in ler(site / "nucleo" / "pessoas.json")}
+    assert cands["can_2024_500"]["pessoa"] in pessoas and cands["can_2024_500"]["federacao"] == "fed_pcdob_pt_pv"
+    disputa = ler(site / "nucleo" / "disputas" / "2024.json")["dsp_2024_vereador_71072"]
+    assert disputa["vagas"] == 55 and disputa["partidos"]["par_pt"] == [100, 300, "fed_pcdob_pt_pv"]
+
+
+def test_fichas_do_tse_trazem_o_que_o_local_tem_em_comum_uma_vez_so(site):
+    arq = ler(site / "p" / "t" / "2024" / "71072.json")
+    comuns = arq["_disputas"]
+    assert sorted(comuns) == ["coligacoes", "disputa", "partidos"] and list(comuns["disputa"]) == ["VEREADOR|71072"]
+    for seq in ("500", "501"):
+        assert not {"disputa", "partidoVotos", "alianca"} & set(arq[seq])           # nada repetido em cada ficha
+    assert comuns["partidos"]["VEREADOR|71072"]["partidos"]["PT"] == [100, 300, "PT/PC do B/PV"]

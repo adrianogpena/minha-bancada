@@ -170,7 +170,7 @@ def test_faltando():
 
 @pytest.mark.parametrize("nome,doc,esperado", [
     ("  ACME   Ltda ", "11.222.333/0001-81", {"fornecedor": "ACME Ltda", "cnpj": "11222333000181"}),
-    ("Padaria", "1222333000181", {"fornecedor": "Padaria", "cnpj": "01222333000181"}),   # zero à esquerda perdido
+    ("Padaria", "360305000104", {"fornecedor": "Padaria", "cnpj": "00360305000104"}),   # zero à esquerda perdido
     ("Fulano", "***.123.456-**", {"fornecedor": "Fulano", "cnpj": None}),                  # mascarado
     ("Fulano", "11222333000182", {"fornecedor": "Fulano", "cnpj": None}),                  # dígito verificador errado
     ("", None, {"fornecedor": None, "cnpj": None}),

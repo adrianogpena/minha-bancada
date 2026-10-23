@@ -94,6 +94,7 @@ Status: ✅ OK · ❌ ERRO (resposta com falha ou fora do ar) · ❔ não testad
 | osm_tiles | Links e recursos do site | https://tile.openstreetmap.org/0/0/0.png | site/assets/app.js | ✅ OK | 2026-10-21 | HTTP 200, image/png, 6 KB |
 | google_fonts | Links e recursos do site | https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible | site/*.html | ✅ OK | 2026-10-21 | HTTP 200, text/css |
 | rs_dados_diarias | Assembleias (estaduais) | https://dados.rs.gov.br/api/3/action/package_show?id=diarias-do-estado | scripts/coletar_estadual_rs.py | ❔ não testado | — | ainda não verificado |
+| es_dados_despesas | Assembleias (estaduais) | https://dados.es.gov.br/api/3/action/package_show?id=portal-da-transparencia-despesas-execucao-orcamentaria-e-financeira | scripts/coletar_estadual_es.py | ❔ não testado | — | ainda não verificado |
 | rs_transparencia_diarias | Assembleias (estaduais) | https://www.transparencia.rs.gov.br/relatorios/externo/diarias-assembleia/dados/ | scripts/coletar_estadual_rs.py | ❔ não testado | — | ainda não verificado |
 | rn_api_transparencia | Assembleias (estaduais) | https://api-transparencialegislativa.al.rn.leg.br/elegis-api-transp-legislativa/ | scripts/coletar_estadual_rn.py | ❔ não testado | — | ainda não verificado |
 | rn_transparencia_verbas | Assembleias (estaduais) | https://transparencia.al.rn.leg.br/verbas | scripts/coletar_estadual_rn.py | ❔ não testado | — | ainda não verificado |

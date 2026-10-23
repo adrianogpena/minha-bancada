@@ -167,6 +167,7 @@ jobs:
           - { id: sapl, ufs: "PB AM AL RO AC PI TO", rotulo: "PB, AM, AL, RO, AC, PI e TO (SAPL)" }   # Assembleias que usam o SAPL (API igual, coleta rápida)
           - { id: ba, ufs: "BA", rotulo: "BA" }
           - { id: ce, ufs: "CE", rotulo: "CE" }
+          - { id: es, ufs: "ES", rotulo: "ES" }
           - { id: go, ufs: "GO", rotulo: "GO" }
           - { id: mg, ufs: "MG", rotulo: "MG" }
           - { id: ms, ufs: "MS", rotulo: "MS" }

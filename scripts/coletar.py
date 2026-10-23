@@ -761,7 +761,7 @@ def coletar_ceaps_senado() -> None:
             continue
         itens.setdefault(str(d["codSenador"]), []).append({
             "mes": d.get("mes"), "tipo": d.get("tipoDespesa"), "valor": d.get("valorReembolsado") or 0,
-            "fornecedor": d.get("fornecedor"), "data": d.get("data"),
+            "fornecedor": d.get("fornecedor"), "cnpj": re.sub(r"\D", "", d.get("cpfCnpj") or ""), "data": d.get("data"),
         })
     for lista in itens.values():
         lista.sort(key=lambda i: i["data"] or "", reverse=True)

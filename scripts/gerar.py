@@ -13,6 +13,7 @@ from collections import Counter, defaultdict
 from pathlib import Path
 
 import gerar_estaduais
+import fornecedores as nucleo_fornecedores
 import identidades
 import gerar_prefeituras
 import gerar_politicos
@@ -262,36 +263,6 @@ def limite_cota(uf: str, itens: list) -> dict | None:
     mensal = LIMITE_COTA_UF.get(uf)
     meses = max((i["mes"] for i in itens if i.get("mes")), default=0)
     return {"mensal": mensal, "meses": meses} if mensal and meses else None
-
-
-FORNECEDORES_NO_RANKING = 200
-DEPUTADOS_POR_FORNECEDOR = 5
-
-
-def ranking_fornecedores(deputados: dict) -> list:
-    """Fornecedores que mais receberam da cota da Câmara inteira, ligados pelo CNPJ/CPF (não pelo nome), com os
-    deputados que mais os usaram. Despesas sem CNPJ/CPF válido ficam de fora."""
-    por_cnpj: dict[str, dict] = {}
-    for did, d in deputados.items():
-        for i in d["despesas"]["itens"]:
-            cnpj = i.get("cnpj") or ""
-            if not i.get("valor") or cnpj.strip("0") in ("", "1"):
-                continue
-            f = por_cnpj.setdefault(cnpj, {"cnpj": cnpj, "nomes": Counter(), "total": 0.0, "notas": 0, "deps": Counter()})
-            f["nomes"][i.get("fornecedor") or "Não informado"] += i["valor"]
-            f["total"] += i["valor"]
-            f["notas"] += 1
-            f["deps"][did] += i["valor"]
-    return [
-        {
-            "cnpj": f["cnpj"], "nome": f["nomes"].most_common(1)[0][0], "total": round(f["total"], 2), "notas": f["notas"],
-            "deputados": len(f["deps"]),
-            "maioresDeputados": [{"id": did, "nome": deputados[did]["nome"], "partido": deputados[did]["partido"],
-                                  "uf": deputados[did]["uf"], "valor": round(v, 2)}
-                                 for did, v in f["deps"].most_common(DEPUTADOS_POR_FORNECEDOR)],
-        }
-        for f in sorted(por_cnpj.values(), key=lambda f: -f["total"])[:FORNECEDORES_NO_RANKING]
-    ]
 
 
 def resumir_despesas(ano: int, itens: list) -> dict:
@@ -560,8 +531,6 @@ def main():
             "governismo": comportamento["governo"] if comportamento and comportamento["governo"]["total"] else None,
         })
 
-    salvar(SAIDA / "fornecedores_cota.json", {"ano": next(iter(deputados.values()))["despesas"]["ano"] if deputados else None,
-                                              "fornecedores": ranking_fornecedores(deputados)})
     resumo_deps.sort(key=lambda x: x["nome"])
     salvar(SAIDA / "deputados.json", resumo_deps)
     votacoes_senado = gerar_senadores()
@@ -570,6 +539,7 @@ def main():
                                     votacoes_senado, TIPOS_PROJETO, destino_projeto)
     print(f"Gerado: {total} proposições para a busca")
     identidades.salvar_nucleo(nucleo, SAIDA / "nucleo")
+    nucleo_fornecedores.salvar_fornecedores(nucleo_fornecedores.construir(deputados, BRUTO, nucleo), SAIDA)
     gerar_politicos.gerar(deputados, gerar_estaduais.gerar(), nucleo["chaves"])
     gerar_prefeituras.gerar()
     gerar_eleitorado()

@@ -333,7 +333,7 @@ def test_coletar_senado_http_erro_propaga(dados, monkeypatch):
 
 def test_ceaps_agrupa_por_senador_ordena_e_ignora_sem_codigo(dados, monkeypatch):
     senado_resp(monkeypatch, [
-        {"codSenador": 1, "mes": 1, "tipoDespesa": "Aluguel", "valorReembolsado": 100, "fornecedor": "A", "data": "2025-01-05"},
+        {"codSenador": 1, "mes": 1, "tipoDespesa": "Aluguel", "valorReembolsado": 100, "fornecedor": "A", "cpfCnpj": "02.964.380/0001-00", "data": "2025-01-05"},
         {"codSenador": 1, "mes": 3, "tipoDespesa": "Passagem", "valorReembolsado": None, "fornecedor": "B", "data": "2025-03-05"},
         {"codSenador": None, "valorReembolsado": 5},
     ])
@@ -342,6 +342,7 @@ def test_ceaps_agrupa_por_senador_ordena_e_ignora_sem_codigo(dados, monkeypatch)
     assert list(r["itens"]) == ["1"]
     assert [i["data"] for i in r["itens"]["1"]] == ["2025-03-05", "2025-01-05"]
     assert r["itens"]["1"][0]["valor"] == 0
+    assert r["itens"]["1"][1]["cnpj"] == "02964380000100" and r["itens"]["1"][0]["cnpj"] == ""
 
 
 def test_recursos_senado_liga_escritorio_por_nome_e_uf_e_ignora_zerados(dados, monkeypatch):

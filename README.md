@@ -101,6 +101,7 @@ Sem `--limite` a coleta pega todos os deputados em exercício. `--dias` só vale
 | `scripts/feeds.py` | Feeds RSS da página Fique informado (um por local e por político acompanhável), em `site/feeds/`, a partir do histórico git. Sem cadastro de leitores. |
 | `scripts/gerar_municipios_ibge.py`, `scripts/simplificar_df.py` | Refazem `dados/municipios_ibge.json` (código TSE → IBGE) e `site/geo/df_ras.json` (regiões administrativas do DF) a partir das fontes oficiais. Rodar só se mudarem. |
 | `scripts/identidades.py` | Núcleo de identidades: id próprio de pessoa e de partido ligando TSE, Câmara, Senado e Assembleias (`site/dados/nucleo/`), com o método e a confiança de cada ligação. Chamado pelo `gerar.py`. |
+| `scripts/fornecedores.py` | Núcleo de fornecedores: normaliza CNPJ/CPF e nome e gera o ranking nacional das cotas e verbas (Câmara, Senado e Assembleias) em `site/dados/fornecedores.json` e `site/dados/nucleo/fornecedores.json`. Chamado pelo `gerar.py`. |
 | `scripts/gerar.py` | Monta os JSONs enxutos que o site lê. Não acessa a internet. |
 | `scripts/gerar_politicos.py` | Junta TSE, Câmara e Senado no índice de todos os políticos (chamado pelo `gerar.py`). |
 | `dados/proposicoes_detalhe.json` | Situação atual de cada projeto (aprovado, arquivado, em tramitação), da API da Câmara. Cada execução consulta até 4000 projetos (`DETALHES_POR_EXECUCAO`), então o cache se completa em alguns dias. |

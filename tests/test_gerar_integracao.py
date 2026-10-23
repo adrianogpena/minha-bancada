@@ -21,7 +21,7 @@ def ler(caminho):
 
 def test_arquivos_basicos_do_site_existem(site):
     for rel in ("meta.json", "deputados.json", "votacoes.json", "votacao/1-1.json", "deputado/101.json",
-                "senador/7.json", "votacoes_senado.json", "votacao_senado/9.json", "fornecedores_cota.json", "cobertura.json"):
+                "senador/7.json", "votacoes_senado.json", "votacao_senado/9.json", "fornecedores.json", "nucleo/fornecedores.json", "cobertura.json"):
         assert (site / rel).is_file(), rel
 
 

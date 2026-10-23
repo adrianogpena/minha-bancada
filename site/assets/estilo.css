@@ -347,6 +347,8 @@ select:disabled { opacity: .55; }
 .hist-tag.k-lote { background: var(--linha); color: var(--tinta-suave); }
 .hist-lista { margin: 4px 0; font-size: 14px; color: var(--tinta-suave); }
 .hist-lista summary { cursor: pointer; }
+.hist-sem h3 { margin: 14px 0 0; font-size: 1rem; }
+.hist-sem h3 small { color: var(--tinta-suave); font-weight: normal; }
 .hist-sem ul { margin: 6px 0 0; padding-left: 20px; color: var(--tinta-suave); }
 @media (max-width: 720px) { .hist-filtros { grid-template-columns: 1fr; } }
 

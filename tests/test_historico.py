@@ -185,5 +185,28 @@ def test_cobertura_mostra_local_sem_novidade_e_desde_quando(repo, tmp_path):
     subprocess.run(["git", "add", "-A"], cwd=tmp_path, check=True)
     subprocess.run(["git", "commit", "-qm", "so tse"], cwd=tmp_path, check=True)
     cob = h.dia("2026-01-03", "HEAD~1", "HEAD")["cobertura"]
-    assert cob["UF:AC"] == {"nome": "Estado: Acre", "mudou": False, "itens": 0, "ultimaMudanca": "2026-01-02"}
-    assert cob["BR"]["mudou"] is False and cob["BR"]["ultimaMudanca"] == "2026-01-02"
+    assert cob["UF:AC"] == {"nome": "Estado: Acre", "mudou": False, "itens": 0, "status": "parado", "ultimaMudanca": "2026-01-02"}
+    assert cob["BR"]["status"] == "parado" and cob["BR"]["ultimaMudanca"] == "2026-01-02"
+    assert cob["UF:SP"] == {"nome": "Estado: São Paulo", "mudou": False, "itens": 0, "status": "sem_cobertura"}
+
+
+def test_cobertura_separa_mudanca_irrelevante_de_so_data_de_coleta(repo, tmp_path):
+    def commit(msg):
+        subprocess.run(["git", "add", "-A"], cwd=tmp_path, check=True)
+        subprocess.run(["git", "commit", "-qm", msg], cwd=tmp_path, check=True)
+
+    arq = tmp_path / "dados" / "estaduais" / "AC" / "materias_2026.json"
+    base = json.loads(arq.read_text(encoding="utf-8"))
+    arq.write_text(json.dumps({**base, "coletadoEm": "2026-01-01"}), encoding="utf-8")
+    (tmp_path / "dados" / "outro.json").write_text("{}")
+    commit("nada de AC")
+    cob = h.dia("2026-01-03", "HEAD~1", "HEAD")["cobertura"]["UF:AC"]
+    assert cob["status"] == "falha" and cob["ultimaColeta"] == "2026-01-01"
+    arq.write_text(json.dumps({**base, "coletadoEm": "2026-01-03"}), encoding="utf-8")
+    commit("so a data")
+    cob = h.dia("2026-01-03", "HEAD~1", "HEAD")["cobertura"]["UF:AC"]
+    assert cob["status"] == "parado" and cob["mudou"] is False
+    arq.write_text(json.dumps({**base, "coletadoEm": "2026-01-04", "fonte": "outra"}), encoding="utf-8")
+    commit("campo novo")
+    cob = h.dia("2026-01-04", "HEAD~1", "HEAD")["cobertura"]["UF:AC"]
+    assert cob["status"] == "irrelevante" and cob["mudancas"] == ["matérias"] and cob["mudou"] is True

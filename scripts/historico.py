@@ -15,8 +15,9 @@ Cada evento do dia:
     relevancia    3 marco (votação, projeto aprovado/sancionado/vetado, eleito), 2 projeto de verdade, 1 o resto (requerimento, parecer, carga antiga)
     quantidade    só no evento "lote": quantos registros de baixa relevância ele resume (acima de LIMITE_LOTE por local)
     titulos       só no evento "lote": os títulos resumidos (ex.: "REQ 12/2026"), em ordem
-O dia também traz "cobertura": para cada local monitorado, o nome, se os dados mudaram, quantos itens saíram (itens) e, se não mudaram,
-a última vez que mudaram (ultimaMudanca).
+O dia também traz "cobertura": para cada local (todos os estados, com ou sem fonte), o nome, quantos itens saíram (itens) e o status:
+novidade, irrelevante (dados mudaram sem virar item; "mudancas" lista o quê), parado (ultimaMudanca quando conhecida), falha (coleta não gravou nada
+no dia; ultimaColeta) ou sem_cobertura. O campo coletadoEm, que muda todo dia, não conta como mudança.
 Os códigos de local e de político são os mesmos do feeds.py.
 
 Uso:
@@ -495,9 +496,60 @@ def agrupar_lotes(eventos: list) -> list:
     return saida
 
 
-def cobertura(ctx: Contexto, antes: str, depois: str, contagem: dict) -> dict:
-    """Todo local monitorado no dia, com ou sem novidade: {código: {nome, mudou, itens, ultimaMudanca (quando não mudaram)}}.
+ADMINISTRATIVOS = ("coletadoEm", "vistas", "completaEm")   # campos de controle da coleta: mudam todo dia sem trazer dado
+ROTULOS_ARQUIVO = {"materias": "matérias", "materias_votadas": "matérias votadas", "governo": "projetos do governo", "votacoes": "votações",
+                   "deputados": "deputados", "verbas": "verbas", "remuneracao": "remuneração", "presenca": "presença", "diarias": "diárias",
+                   "emendas": "emendas", "proposicoes": "proposições"}
+
+
+def rotulo_arquivo(caminho: str) -> str:
+    nome = re.sub(r"(_\d{4})?\.json$", "", caminho.rsplit("/", 1)[-1])
+    if nome.isdigit():
+        nome = caminho.split("/")[-2]
+    return ROTULOS_ARQUIVO.get(nome, nome.replace("_", " "))
+
+
+def sem_controle(obj):
+    return {k: v for k, v in obj.items() if k not in ADMINISTRATIVOS} if isinstance(obj, dict) else obj
+
+
+def mudancas_reais(antes: str, depois: str, arquivos: list[str]) -> list[str]:
+    """Rótulos dos arquivos cujo conteúdo mudou de verdade (ignora coletadoEm e afins), sem repetição, em ordem."""
+    a, b = ler_lote(antes, arquivos), ler_lote(depois, arquivos)
+    return sorted({rotulo_arquivo(f) for f in arquivos if sem_controle(a.get(f)) != sem_controle(b.get(f))})
+
+
+def ultima_coleta(depois: str, prefixo: str) -> str | None:
+    """Data (AAAA-MM-DD) mais recente de coletadoEm entre os arquivos sem ano e os do último ano do local."""
+    arquivos = [f for f in listar(depois, prefixo) if f.endswith(".json")]
+    anos = {m.group(1) for f in arquivos if (m := re.search(r"_(\d{4})\.json$", f))}
+    recentes = [f for f in arquivos if not re.search(r"_\d{4}\.json$", f) or f.endswith(f"_{max(anos)}.json")]
+    datas = [str(x["coletadoEm"])[:10] for x in ler_lote(depois, recentes).values() if isinstance(x, dict) and x.get("coletadoEm")]
+    return max(datas) if datas else None
+
+
+def ultima_mudanca_registrada(data: str, local: str) -> str | None:
+    """Último dia anterior a `data` em que o histórico já gravado marcou mudança real (novidade ou mudança sem relevância) no local."""
+    for arq in sorted(PASTA.glob("????-??-??.json"), reverse=True):
+        if arq.stem >= data:
+            continue
+        try:
+            item = json.loads(arq.read_text(encoding="utf-8")).get("cobertura", {}).get(local)
+        except (OSError, ValueError):
+            return None
+        if not item or "status" not in item:
+            return None   # dia gravado antes dos status: a data de mudança não é confiável
+        if item["status"] in ("novidade", "irrelevante"):
+            return arq.stem
+    return None
+
+
+def cobertura(ctx: Contexto, antes: str, depois: str, contagem: dict, data: str | None = None) -> dict:
+    """Todo local monitorado no dia, com ou sem novidade: {código: {nome, mudou, itens, status, mudancas, ultimaMudanca, ultimaColeta}}.
+    status: "novidade" (saiu item), "irrelevante" (os dados mudaram mas nada vira item; `mudancas` diz o que), "parado" (nenhum dado novo),
+    "falha" (a coleta não gravou nada nesse dia; `ultimaColeta`) e "sem_cobertura" (estado ainda sem fonte coletada).
     Assim "nada aconteceu" se distingue de "o local não foi acompanhado" e uma coleta parada há dias aparece."""
+    data = data or r.git("log", "-1", "--format=%cs", depois).strip()
     prefixos = {"BR": list(PREFIXOS_BR)}
     for tipo, pasta in (("UF", "estaduais"), ("MUN", "municipais")):
         for uf in sorted({f.split("/")[2] for f in listar(depois, f"dados/{pasta}")}):
@@ -506,15 +558,32 @@ def cobertura(ctx: Contexto, antes: str, depois: str, contagem: dict) -> dict:
     saida = {}
     for local in sorted(prefixos, key=ORDEM_LOCAL):
         itens = sum(contagem.get(local, {}).values())
-        mudou_ = bool(itens) or any(r.arquivos(antes, depois, p) for p in prefixos[local])   # o TSE tem arquivos próprios, fora dos prefixos
-        item = {"nome": ctx.nome_local(local), "mudou": mudou_, "itens": itens}
-        if not mudou_:
-            try:
-                item["ultimaMudanca"] = r.git("log", "-1", "--format=%cs", depois, "--", *prefixos[local]).strip() or None
-            except subprocess.CalledProcessError:
-                item["ultimaMudanca"] = None
+        alterados = [f for p in prefixos[local] for f in r.arquivos(antes, depois, p)]   # o TSE tem arquivos próprios, fora dos prefixos
+        item = {"nome": ctx.nome_local(local), "itens": itens}
+        if itens:
+            item.update(mudou=True, status="novidade")
+        else:
+            mudancas = mudancas_reais(antes, depois, alterados)
+            item["mudou"] = bool(mudancas)
+            if mudancas:
+                item.update(status="irrelevante", mudancas=mudancas)
+            else:
+                coleta = ultima_coleta(depois, prefixos[local][0]) if local != "BR" else None
+                if coleta and coleta < data:
+                    item.update(status="falha", ultimaColeta=coleta)
+                else:
+                    item["status"] = "parado"
+                item["ultimaMudanca"] = ultima_mudanca_registrada(data, local)
+                if not item["ultimaMudanca"] and not alterados:
+                    try:
+                        item["ultimaMudanca"] = r.git("log", "-1", "--format=%cs", depois, "--", *prefixos[local]).strip() or None
+                    except subprocess.CalledProcessError:
+                        pass
         saida[local] = {k: v for k, v in item.items() if v is not None}
-    return saida
+    for uf in sorted(feeds.UFS):
+        if f"UF:{uf}" not in saida:
+            saida[f"UF:{uf}"] = {"nome": ctx.nome_local(f"UF:{uf}"), "mudou": False, "itens": 0, "status": "sem_cobertura"}
+    return dict(sorted(saida.items(), key=lambda kv: ORDEM_LOCAL(kv[0])))
 
 
 COLETORES = (camara, votacoes_camara, senado, votacoes_senado, executivo, estados, capitais, eleitos)
@@ -539,7 +608,7 @@ def dia(data: str, antes: str, depois: str) -> dict:
     for e in eventos:
         contagem[e["local"]][e["categoria"]] = contagem[e["local"]].get(e["categoria"], 0) + e.get("quantidade", 1)
     return {"data": data, "antes": r.git("rev-parse", antes).strip(), "depois": r.git("rev-parse", depois).strip(),
-            "locais": {c: ctx.nome_local(c) for c in locais}, "contagem": contagem, "cobertura": cobertura(ctx, antes, depois, contagem),
+            "locais": {c: ctx.nome_local(c) for c in locais}, "contagem": contagem, "cobertura": cobertura(ctx, antes, depois, contagem, data),
             "eventos": eventos}
 
 

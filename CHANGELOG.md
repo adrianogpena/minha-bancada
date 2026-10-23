@@ -5,6 +5,11 @@ Regra: toda fonte nova ou mudança de coleta ganha uma entrada aqui, no mesmo co
 Datas dos conjuntos que já existiam vêm do primeiro commit que os trouxe (`git log --diff-filter=A`).
 Todas as coletas rodam sozinhas no GitHub Actions (`.github/workflows/atualizar.yml`, todo dia às 05:00 de Brasília), salvo onde indicado.
 
+## Câmara e Senado: documento, data e e-mail normalizados na coleta (2026-10-23)
+- **De onde:** nenhuma fonte nova; mudança em `scripts/coletar.py` (cota da Câmara pelo CSV e pela API, CEAPS, proposições, votações e perfis).
+- **Como:** o CNPJ/CPF do fornecedor passa por `fornecedores.documento` (via `estaduais_comum.fornecedor`): só dígitos, zero à esquerda restaurado, dígito verificador conferido; vazio, mascarado ou inválido vira `null` (antes `""` ou os dígitos como vieram). As datas passam por `estaduais_comum.data_iso` (existente no calendário) e o e-mail por `estaduais_comum.email`.
+- **Mudança de dado:** `cnpj` ausente passa de `""` para `null`; documentos com dígito verificador errado deixam de ser gravados. O cache bruto já versionado só muda quando o ano for recoletado.
+
 ## E-mail, partido, valor e mês normalizados nos coletores estaduais (2026-10-23)
 - **De onde:** nenhuma fonte nova; mudança em `estaduais_comum.py` e nos coletores BA, CE, GO, MG, MT, PA, PE, PR, RN, RR, SC, SE e SP.
 - **Como:** `estaduais_comum.email` grava o e-mail em minúsculas, sem `mailto:` e só se tiver forma de e-mail; `sigla_partido` resolve entidades e compacta espaços (o id continua saindo de `identidades.partido_id` no núcleo); PA passa o valor da verba por `valor_br`; MT passa `mesCompetencia` por `mes_numero`.

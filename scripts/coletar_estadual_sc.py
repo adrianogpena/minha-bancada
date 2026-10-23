@@ -97,7 +97,7 @@ def itens_gabinetes(linhas: list[dict], deputados: list[dict]) -> list[dict]:
         if did is None or data is None:
             continue
         categoria = " / ".join(x for x in (linha.get("Verba"), linha.get("Descrição")) if x)
-        itens.append({"idDeputado": did, "mes": int(data[5:7]), "categoria": categoria, "fornecedor": linha.get("Favorecido") or None, "cnpj": None,
+        itens.append({"idDeputado": did, "mes": int(data[5:7]), "categoria": categoria, "fornecedor": comum.compactar(linha.get("Favorecido")), "cnpj": None,
                       "valor": comum.valor_br(linha.get("Valor")), "data": data, "trecho": linha.get("Trecho") or None, "fonte": GABINETES_PAGINA})
     return itens
 

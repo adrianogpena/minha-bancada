@@ -57,9 +57,8 @@ def itens_ceap(linhas: list[dict], ligacao: dict, fonte: str) -> tuple[list[dict
         if not pid:
             sem_par.add(comum.nome_limpo(nome))
             continue
-        cnpj = "".join(c for c in (linha.get("CPF/CNPJ") or "") if c.isdigit())
         itens.append({"idDeputado": pid, "mes": comum.mes_numero(linha.get("MES")), "categoria": " ".join((linha.get("CATEGORIA") or "").split()) or None,
-                      "fornecedor": " ".join((linha.get("FORNECEDOR") or "").split()) or None, "cnpj": cnpj or None,
+                      **comum.fornecedor(linha.get("FORNECEDOR"), linha.get("CPF/CNPJ")),
                       "valor": comum.valor_br(linha.get("VALOR (R$)")), "documento": linha.get("DOCUMENTO") or None,
                       "emissao": emissao_iso(linha.get("EMISSAO")), "fonte": (linha.get("COMPROVANTE") or "").strip() or fonte})
     return itens, sem_par

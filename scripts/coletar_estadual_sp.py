@@ -137,7 +137,7 @@ def itens_verba(xml: bytes, ids_por_matricula: dict) -> list[dict]:
         if not id_dep:
             continue
         itens.append({"idDeputado": id_dep, "mes": int(d.findtext("Mes")), "categoria": (d.findtext("Tipo") or "").strip() or None,
-                      "fornecedor": " ".join((d.findtext("Fornecedor") or "").split()) or None, "cnpj": (d.findtext("CNPJ") or "").strip() or None,
+                      **comum.fornecedor(d.findtext("Fornecedor"), d.findtext("CNPJ")),
                       "valor": comum.valor_br(d.findtext("Valor")), "fonte": DESPESAS_PAGINA})
     return sorted(itens, key=lambda i: (i["mes"], i["idDeputado"], i["categoria"] or "", i["fornecedor"] or "", i["valor"] or 0))
 

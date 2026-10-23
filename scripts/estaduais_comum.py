@@ -187,6 +187,14 @@ def compactar(texto) -> str | None:
     return " ".join((texto or "").split()) or None
 
 
+def fornecedor(nome, doc=None) -> dict:
+    """{fornecedor, cnpj} de um fornecedor como a fonte trouxe, normalizados na entrada: nome com espaços compactados;
+    documento só com dígitos (zeros à esquerda restaurados, dígito verificador conferido), None se vazio, mascarado ou inválido."""
+    import fornecedores
+    achado = fornecedores.documento(doc)
+    return {"fornecedor": compactar(nome), "cnpj": achado[1] if achado else None}
+
+
 def data_br_iso(texto: str | None, inteiro: bool = False) -> str | None:
     """"31/12/2024" (com espaços nas pontas) -> "2024-12-31". `inteiro`: recusa texto depois da data (hora)."""
     padrao = r"\s*(\d\d)/(\d\d)/(\d{4})" + (r"\s*" if inteiro else "")

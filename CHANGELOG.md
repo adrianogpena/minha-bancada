@@ -5,6 +5,10 @@ Regra: toda fonte nova ou mudança de coleta ganha uma entrada aqui, no mesmo co
 Datas dos conjuntos que já existiam vêm do primeiro commit que os trouxe (`git log --diff-filter=A`).
 Todas as coletas rodam sozinhas no GitHub Actions (`.github/workflows/atualizar.yml`, todo dia às 05:00 de Brasília), salvo onde indicado.
 
+## Fornecedor normalizado na entrada dos coletores estaduais (2026-10-23)
+- **De onde:** nenhuma fonte nova; mudança em `coletar_estadual_{ce,mg,ms,pe,sc,sp}.py`.
+- **Como:** `estaduais_comum.fornecedor` grava o nome com espaços compactados e o documento só com dígitos (zeros à esquerda restaurados, dígito verificador conferido por `fornecedores.documento`); vazio, mascarado ou inválido vira `null`. Antes cada coletor gravava o CNPJ como a fonte trouxe.
+
 ## Ids estáveis, com hash da fonte (2026-10-23)
 - **De onde:** nenhuma fonte nova; mudança no jeito de gerar os ids do núcleo (`site/dados/nucleo/`).
 - **Como:** `scripts/ids.py` (`gerar_id`) passa a ser o único gerador: `pes_` (os mesmos ids de antes), `man_`, `can_`, `dsp_`, `for_pf_` e `for_n_`. O id de mandato deixa de depender da pessoa e da data de início e sai do registro da fonte que o criou (sequencial do TSE ou id da Casa); candidaturas guardam `eleicao` e `sequencial`. **Mudam de valor** os ids `man_`, `can_`, `dsp_`, `for_pf_` e `for_n_` (nada deles é salvo em `dados/` nem usado pelas páginas); os `pes_` e `for_<CNPJ>` ficam iguais.

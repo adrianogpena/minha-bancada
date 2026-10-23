@@ -166,8 +166,8 @@ def itens_vdp(linhas: list[dict], ligacao: dict, fonte: str) -> tuple[list[dict]
             continue
         periodo = (linha.get("PERIODO") or "").split("/")
         itens.append({"idDeputado": pid, "mes": int(periodo[0]) if periodo[0].isdigit() else None,
-                      "categoria": categoria_vdp(linha.get("DESCRICAO", "")), "fornecedor": linha.get("CREDOR") or None,
-                      "cnpj": linha.get("CNPJ") or None, "valor": comum.valor_br(linha.get("VALOR")), "empenho": linha.get("EMPENHO") or None,
+                      "categoria": categoria_vdp(linha.get("DESCRICAO", "")),
+                      **comum.fornecedor(linha.get("CREDOR"), linha.get("CNPJ")), "valor": comum.valor_br(linha.get("VALOR")), "empenho": linha.get("EMPENHO") or None,
                       "descricao": " ".join((linha.get("DESCRICAO") or "").split()) or None, "fonte": fonte})
     return itens, sem_par
 

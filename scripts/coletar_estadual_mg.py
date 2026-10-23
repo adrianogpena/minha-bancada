@@ -75,7 +75,7 @@ def itens_verba(registros: list[dict], id_deputado: str, mes: int) -> list[dict]
         categoria = r.get("descTipoDespesa") or f"Tipo {r.get('codTipoDespesa')}"
         notas = r.get("listaDetalheVerba") or []
         itens.extend({"idDeputado": id_deputado, "mes": mes, "categoria": n.get("descTipoDespesa") or categoria,
-                      "fornecedor": n.get("nomeEmitente") or None, "cnpj": n.get("cpfCnpj") or None,
+                      **comum.fornecedor(n.get("nomeEmitente"), n.get("cpfCnpj")),
                       "valor": comum.valor_br(n.get("valorReembolsado")), "data": data_iso(n.get("dataEmissao")),
                       "documento": n.get("descDocumento") or None, "fonte": VERBA_PAGINA} for n in notas)
         if not notas:

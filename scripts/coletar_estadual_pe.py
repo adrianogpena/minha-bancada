@@ -92,7 +92,7 @@ def itens_verba(lancamento: dict, notas: list[dict], id_deputado: str, ano: int,
         data = n.get("data") or ""
         m = re.match(r"(\d{2})/(\d{2})/(\d{4})$", data)
         itens.append({"idDeputado": id_deputado, "mes": mes, "categoria": rubricas.get(n.get("rubrica")) or f"Rubrica {n.get('rubrica')}",
-                      "fornecedor": n.get("empresa") or None, "cnpj": n.get("cnpj") or None, "valor": comum.valor_br(n.get("valor")),
+                      **comum.fornecedor(n.get("empresa"), n.get("cnpj")), "valor": comum.valor_br(n.get("valor")),
                       "data": f"{m.group(3)}-{m.group(2)}-{m.group(1)}" if m else None, "tipo": tipo, "numero": lancamento.get("numero"),
                       "docid": lancamento.get("docid"), "fonte": VERBA_PAGINA})
     if not notas and lancamento.get("total") is not None:

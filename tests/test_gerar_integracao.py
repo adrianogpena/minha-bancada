@@ -81,3 +81,11 @@ def test_proposicoes_ligam_indice_ficha_autores_e_votacao(site):
     ficha = ler(site / "proposicao" / "c-2026.json")["900"]
     assert ficha["au"] == [{"id": "101"}]
     assert "v" not in ficha   # a votação 1-1 tem propId 900 mas só entra por proposicoes_votacoes.json (coleta da Câmara)
+
+
+def test_nucleo_de_identidades_e_o_id_da_pessoa_nas_fichas(site):
+    pessoas = ler(site / "nucleo" / "pessoas.json")
+    assert (site / "nucleo" / "partidos.json").is_file() and (site / "nucleo" / "ligacoes.json").is_file()
+    por_id = {p["id"]: p for p in pessoas}
+    assert por_id[ler(site / "deputado" / "101.json")["pessoa"]]["fontes"]["camara"] == 101
+    assert por_id[ler(site / "p" / "senado.json")["7"]["pessoa"]]["fontes"]["senado"] == "7"

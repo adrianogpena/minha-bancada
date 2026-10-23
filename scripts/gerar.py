@@ -13,6 +13,7 @@ from collections import Counter, defaultdict
 from pathlib import Path
 
 import gerar_estaduais
+import identidades
 import gerar_prefeituras
 import gerar_politicos
 import gerar_proposicoes
@@ -437,6 +438,7 @@ def main():
         d = ler(BRUTO / "deputados" / f"{did}.json")
         if d:
             deputados[did] = d
+    nucleo = identidades.construir(deputados, BRUTO)
 
     # todas as votações do histórico, só as nominais (com votos registrados)
     votacoes = []
@@ -525,7 +527,7 @@ def main():
         da_uf = gastos_por_uf[d["uf"]]
 
         salvar(SAIDA / "deputado" / f"{did}.json", {
-            "id": did, "nome": d["nome"], "nomeCivil": d.get("nomeCivil"),
+            "id": did, "pessoa": nucleo["chaves"].get(("camara", str(did))), "nome": d["nome"], "nomeCivil": d.get("nomeCivil"),
             "partido": d["partido"], "uf": d["uf"], "foto": d.get("foto"),
             "email": d.get("email"), "situacao": d.get("situacao"), "gabinete": d.get("gabinete") or None,
             "nascimento": d.get("nascimento"),
@@ -567,7 +569,8 @@ def main():
                                     ler(BRUTO / "senado.json", []) or [], ler(BRUTO / "senado_autorias.json", {}) or {},
                                     votacoes_senado, TIPOS_PROJETO, destino_projeto)
     print(f"Gerado: {total} proposições para a busca")
-    gerar_politicos.gerar(deputados, gerar_estaduais.gerar())
+    identidades.salvar_nucleo(nucleo, SAIDA / "nucleo")
+    gerar_politicos.gerar(deputados, gerar_estaduais.gerar(), nucleo["chaves"])
     gerar_prefeituras.gerar()
     gerar_eleitorado()
     if (BRUTO / "executivo.json").exists():

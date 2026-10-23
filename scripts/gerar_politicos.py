@@ -311,8 +311,10 @@ def gerar_perfil_casas() -> None:
         salvar(SAIDA / "perfil_casas" / f"{uf}.json", {k: v for k, v in casas.items() if v})
 
 
-def gerar(deputados: dict, estaduais: dict | None = None) -> dict:
+def gerar(deputados: dict, estaduais: dict | None = None, pessoas: dict | None = None) -> dict:
+    """`pessoas` (identidades.construir()["chaves"]) acrescenta `pessoa`, o id do núcleo, às fichas do TSE e do Senado."""
     estaduais = estaduais or {}
+    pessoas = pessoas or {}
     indice = defaultdict(list)       # UF -> entradas
     fichas = defaultdict(dict)       # arquivo -> {id: ficha}
 
@@ -336,7 +338,7 @@ def gerar(deputados: dict, estaduais: dict | None = None) -> dict:
     for s in ler(BRUTO / "senado.json", []) or []:
         cargo, ordem = rotulo("SENADOR", s.get("genero"))
         sid = str(s["id"])
-        fichas["senado"][sid] = {**s, "cargo": cargo, "fonte": "senado", "estado": "atual",
+        fichas["senado"][sid] = {**s, "pessoa": pessoas.get(("senado", sid)), "cargo": cargo, "fonte": "senado", "estado": "atual",
                                  "eleicao": achar_eleicao(eleitos_senado, [s.get("titular")] if s.get("titular") else [s.get("nomeCivil"), s.get("nome")],
                                                           s["uf"], s.get("fimMandato"))}
         paginas_atuais[chave_nome(s.get("nomeCivil"), s["uf"])] = f"politico.html?f=senado&i={sid}"
@@ -370,7 +372,7 @@ def gerar(deputados: dict, estaduais: dict | None = None) -> dict:
                     achado = estaduais.get(chave_nome(e.get("urna"), uf)) or estaduais.get(chave_nome(e.get("nome"), uf))
                     estadual = {"uf": achado[0], "id": achado[1]} if achado else None
                 fichas[arquivo][e["sequencial"]] = {
-                    **e, "cargo": cargo, "cargoTse": cargo_tse, "ano": ano, "fonte": "tse",
+                    **e, "pessoa": pessoas.get(("tse", ano, e["sequencial"])), "cargo": cargo, "cargoTse": cargo_tse, "ano": ano, "fonte": "tse",
                     "estado": estado, "inicioMandato": periodo(ano, cargo_tse)[0], "fimMandato": periodo(ano, cargo_tse)[1],
                     "paginaAtual": atual_href,
                     "contas": contas_de(ano, e),

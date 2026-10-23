@@ -45,7 +45,7 @@ Valem para todo código novo e para qualquer arquivo que você tocar. Onde o có
 
 ## Coletores de Assembleias estaduais (novo estado)
 
-Um `scripts/coletar_estadual_<uf>.py` por UF fora do SAPL, com job próprio na matriz `estaduais` de `.github/workflows/atualizar.yml` (job lento não segura os outros). Use `estaduais_comum as comum` (`sessao()`, `salvar`, `ler`, `avisar`, `ligar_nomes`) e grave em `dados/estaduais/<UF>/`. Foco no tempo de execução:
+Um `scripts/coletar_estadual_<uf>.py` por UF fora do SAPL, com job próprio na matriz `estaduais` de `.github/workflows/atualizar.yml` (job lento não segura os outros). Use `estaduais_comum as comum` (`sessao()`, `salvar`, `ler`, `avisar`; ligação de deputado só pelo núcleo) e grave em `dados/estaduais/<UF>/`. Foco no tempo de execução:
 
 - **Nunca refaça tudo todo dia.** O CI parte de checkout limpo; só o que está commitado em `dados/estaduais/` vale como cache. Antes de escrever o coletor, meça uma coleta do zero e uma com cache (`time` em Python, contra a API real) e anote no `CHANGELOG.md`.
 - **Anos encerrados** (`comum.ano_encerrado`: `ano < hoje.year - 1` com arquivo existente) não são baixados de novo. Dado mensal (verba, remuneração, diárias): releia só os meses que faltam no arquivo e `comum.meses_recentes(hoje, MESES_RECENTES)`; o resto vem do arquivo anterior (guarde `mes` em cada item).

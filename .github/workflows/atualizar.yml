@@ -2,7 +2,7 @@ name: Atualizar dados e publicar site
 
 on:
   schedule:
-    - cron: "17 9 * * *"   # todo dia às 09:17 UTC (06:17 em Brasília)
+    - cron: "0 8 * * *"    # todo dia às 08:00 UTC (05:00 em Brasília)
   workflow_dispatch:        # permite rodar manualmente pela aba Actions
   push:
     branches: [master]

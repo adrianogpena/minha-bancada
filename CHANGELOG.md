@@ -3,7 +3,7 @@
 Registro de **quando** cada conjunto de dados entrou no projeto, **de onde** vem (URL) e **como** foi baixado.
 Regra: toda fonte nova ou mudança de coleta ganha uma entrada aqui, no mesmo commit.
 Datas dos conjuntos que já existiam vêm do primeiro commit que os trouxe (`git log --diff-filter=A`).
-Todas as coletas rodam sozinhas no GitHub Actions (`.github/workflows/atualizar.yml`, todo dia às 06:17 de Brasília), salvo onde indicado.
+Todas as coletas rodam sozinhas no GitHub Actions (`.github/workflows/atualizar.yml`, todo dia às 05:00 de Brasília), salvo onde indicado.
 
 ## Coleta incremental das Assembleias de GO, PE e PR (2026-10-22)
 - **De onde:** as mesmas fontes (API de transparência da Alego, portal e dados abertos da ALEPE, transparência e webservices da ALEP), sem endpoint novo.

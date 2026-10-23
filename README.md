@@ -18,7 +18,7 @@ API da Câmara ──> scripts/coletar.py ──> dados/        (cache bruto; o 
                          └──> site/dados/  ──> GitHub Pages
 ```
 
-O arquivo `.github/workflows/atualizar.yml` roda as duas etapas todo dia às 6h17 (Brasília) e publica o resultado. Depois de salvar os dados do dia, na ordem:
+O arquivo `.github/workflows/atualizar.yml` roda as duas etapas todo dia às 5h (Brasília) e publica o resultado. Depois de salvar os dados do dia, na ordem:
 
 1. `scripts/historico.py` registra tudo o que mudou, com fontes, em `dados/historico/` (página **Histórico** do site);
 2. `scripts/feeds.py` atualiza os feeds RSS;

@@ -9,6 +9,8 @@ const PAGINAS = {
   deputado: ["deputado", "paginaDeputado"],
   votacoes: ["votacoes", "paginaVotacoes"],
   votacao: ["votacoes", "paginaVotacao"],
+  proposicoes: ["proposicoes", "paginaProposicoes"],
+  proposicao: ["proposicoes", "paginaProposicao"],
   fonte: ["fonte", "paginaFonte"],
   informado: ["informado", "paginaInformado"],
   historico: ["historico", "paginaHistorico"],

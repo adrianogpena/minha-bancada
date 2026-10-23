@@ -15,6 +15,7 @@ from pathlib import Path
 import gerar_estaduais
 import gerar_prefeituras
 import gerar_politicos
+import gerar_proposicoes
 from gerar_politicos import ler, salvar
 
 RAIZ = Path(__file__).resolve().parent.parent
@@ -334,13 +335,13 @@ def resumir_presenca(c: Counter) -> dict:
     return {"votacoes": base, **{k: c[k] for k in ("compareceu", "naoCompareceu", "licenca", "missao", "outros") if c[k]}}
 
 
-def gerar_senadores() -> None:
+def gerar_senadores() -> list:
     """Votos e projetos dos senadores em exercício -> site/dados/senador/<id>.json,
     site/dados/votacoes_senado.json (lista, sem o voto de cada um) e
     site/dados/votacao_senado/<id>.json (uma votação com o voto de cada senador)."""
     senadores = ler(BRUTO / "senado.json", []) or []
     if not senadores:
-        return
+        return []
     votacoes = []
     for arq in sorted((BRUTO / "senado_votacoes").glob("[0-9]*.json")):
         votacoes += ler(arq, {}).values()
@@ -413,6 +414,7 @@ def gerar_senadores() -> None:
                if sid in recursos.get("recursos", {}) else {}),
         })
     print(f"Gerado: {len(senadores)} senadores, {len(resumo)} votações nominais do Senado")
+    return resumo
 
 
 def gerar_eleitorado() -> None:
@@ -560,7 +562,11 @@ def main():
                                               "fornecedores": ranking_fornecedores(deputados)})
     resumo_deps.sort(key=lambda x: x["nome"])
     salvar(SAIDA / "deputados.json", resumo_deps)
-    gerar_senadores()
+    votacoes_senado = gerar_senadores()
+    total = gerar_proposicoes.gerar(SAIDA, deputados, detalhes, autorias, votacoes_projetos, nominais,
+                                    ler(BRUTO / "senado.json", []) or [], ler(BRUTO / "senado_autorias.json", {}) or {},
+                                    votacoes_senado, TIPOS_PROJETO, destino_projeto)
+    print(f"Gerado: {total} proposições para a busca")
     gerar_politicos.gerar(deputados, gerar_estaduais.gerar())
     gerar_prefeituras.gerar()
     gerar_eleitorado()

@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Proposições | Minha Bancada</title>
+<meta name="description" content="Busque projetos de lei, PECs e outras proposições e veja os políticos ligados a cada uma: autores e quem votou.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Bricolage+Grotesque:opsz,wght@12..96,700;12..96,800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/estilo.css">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 9 9'%3E%3Crect width='4' height='4' fill='%232456c9'/%3E%3Crect x='5' width='4' height='4' fill='%23c13b1d'/%3E%3Crect y='5' width='4' height='4' fill='%23c13b1d'/%3E%3Crect x='5' y='5' width='4' height='4' fill='%232456c9'/%3E%3C/svg%3E">
+</head>
+<body data-pagina="proposicoes">
+<main class="recipiente">
+<section class="abertura">
+  <h1>Proposições</h1>
+  <p>Projetos de lei, PECs e outras proposições da Câmara e do Senado. Abra uma para ver todos os políticos ligados a ela: quem assinou e como cada um votou.</p>
+</section>
+<div class="filtros"><label class="campo">Buscar<input id="busca" type="search" placeholder="Ex.: PEC 45/2019, reforma tributária" autocomplete="off"></label>
+  <label class="campo">Tipo<select id="tipo"></select></label>
+  <label class="campo">Casa<select id="casa"><option value="">Câmara e Senado</option><option value="c">Câmara</option><option value="s">Senado</option></select></label>
+  <label class="campo">Situação<select id="situacao"></select></label></div>
+<p class="contagem" id="contagem" aria-live="polite">Carregando…</p>
+<div id="resultado"></div>
+</main>
+<script type="module" src="assets/app.js"></script>
+</body>
+</html>

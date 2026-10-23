@@ -48,6 +48,8 @@ const PAGINAS = [
   ["index.html", "Minha Bancada"],
   ["camara.html", "Ana Souza"],
   ["deputado.html?id=101", "Ana Souza"],
+  ["proposicoes.html", "PL 1/2026"],
+  ["proposicao.html?k=c-900", "Ana Souza"],
   ["votacoes.html", "PL 1/2026"],
   ["votacao.html?id=1-1", "PL 1/2026"],
   ["fornecedores.html", "Cia Aérea"],

@@ -59,6 +59,7 @@ export async function montarSenador(alvo, p, nome, ficha) {
     aviso: "A situação vem da tramitação no Senado e é atualizada aos poucos todo dia.",
     fonteTramitacao: "Tramitação (Senado)",
     fonteEmenta: "Senado",
+    hrefProposicao: (x) => `proposicao.html?k=s-${encodeURIComponent(x.id)}`,
     linkTramitacao: (x) => linkMateriaSenado(x.id),
     linkApi: (x) => `${SENADO_API}/processo/${encodeURIComponent(x.proc)}`,
     hrefVotacao: (v) => `votacao.html?casa=senado&id=${encodeURIComponent(v.id)}`,

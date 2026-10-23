@@ -5,6 +5,10 @@ Regra: toda fonte nova ou mudança de coleta ganha uma entrada aqui, no mesmo co
 Datas dos conjuntos que já existiam vêm do primeiro commit que os trouxe (`git log --diff-filter=A`).
 Todas as coletas rodam sozinhas no GitHub Actions (`.github/workflows/atualizar.yml`, todo dia às 05:00 de Brasília), salvo onde indicado.
 
+## Página Proposições: busca de projetos e PECs com os políticos ligados (2026-10-23)
+- **De onde:** nenhuma fonte nova; usa o que já é coletado (`proposicoes_autores.json`, `proposicoes_detalhe.json`, `proposicoes_votacoes.json`, `senado_autorias.json` e as votações nominais das duas casas).
+- **Como:** `scripts/gerar_proposicoes.py` (chamado pelo `gerar.py`) grava `site/dados/proposicoes.json` (índice dos projetos, PECs etc. da Câmara e do Senado, com ementa e situação), `site/dados/proposicao/<c|s>-<ano>.json` (só autores e votações, por ano, sem repetir o que já está nas outras listas) e `site/dados/senadores.json`. A busca roda no navegador (`proposicoes.html`); a ficha (`proposicao.html?k=c-<id>`) junta esses arquivos com `deputados.json` e `votacoes[_senado].json` e lê o voto de cada político de `votacao[_senado]/<id>.json`. Só entram proposições de deputados e senadores em exercício; requerimentos e emendas ficam de fora.
+
 ## Anos encerrados não são baixados de novo em MS, MT, PA, RJ, RR, RS e SC (2026-10-23)
 - **De onde:** as mesmas fontes, sem endpoint novo.
 - **Como:** esses coletores refaziam todo dia 2023 em diante. Agora seguem `estaduais_comum.ano_encerrado`: ano anterior ao passado com arquivo gravado fica como está. RS: ZIP de diárias por ano (CKAN). MT: remuneração (uma consulta por deputado por ano) e diárias. SC: CSVs de gabinete e diárias. PA: painéis de verba e diárias e as 12 consultas mensais de gabinete. RJ: planilha de emendas por ano. RR: planilhas de diárias das pastas mensais. MS: as diárias, que só são conferidas e não gravadas, passam a ser lidas só no ano passado e no corrente. Hoje isso deixa 2023 e 2024 de fora da coleta diária.

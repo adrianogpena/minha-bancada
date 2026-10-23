@@ -45,6 +45,7 @@ export async function paginaVotacao() {
     <section class="abertura">
       <p>${data(v.data, true)}${v.hora ? `, às ${esc(v.hora)}` : ""}, no Plenário${senado ? " do Senado" : ""}</p>
       <h1 style="max-width:none;font-size:clamp(28px,4.5vw,44px)">${esc(v.proposicao || "Votação no Plenário")}</h1>
+      ${v.propId ? `<p><a href="proposicao.html?k=${senado ? "s" : "c"}-${encodeURIComponent(v.propId)}">Ver autores e outras votações desta proposição</a></p>` : ""}
       ${v.ementa ? `<p class="texto-longo"><b>Sobre o quê:</b> ${esc(v.ementa)}</p>` : ""}
       <p class="texto-longo">${esc(v.descricao)}</p>
     </section>

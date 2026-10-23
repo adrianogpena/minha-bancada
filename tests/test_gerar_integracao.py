@@ -73,3 +73,11 @@ def test_tudo_que_o_front_busca_com_caminho_fixo_e_gerado_ou_conhecido(site):
     assert "dados/deputados.json" in achados and "dados/votacoes.json" in achados   # a busca em si funciona
     faltando = {c for c in achados if c not in opcionais and not (site.parent / c).is_file()}
     assert not faltando, faltando
+
+
+def test_proposicoes_ligam_indice_ficha_autores_e_votacao(site):
+    (item,) = ler(site / "proposicoes.json")
+    assert item["k"] == "c-900" and (item["t"], item["n"], item["a"]) == ("PL", 1, 2026)
+    ficha = ler(site / "proposicao" / "c-2026.json")["900"]
+    assert ficha["au"] == [{"id": "101"}]
+    assert "v" not in ficha   # a votação 1-1 tem propId 900 mas só entra por proposicoes_votacoes.json (coleta da Câmara)

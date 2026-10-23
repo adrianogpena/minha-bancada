@@ -171,6 +171,7 @@ export async function paginaDeputado() {
       : p.principal ? "<b>autor principal</b> (o primeiro a assinar)." : "<b>coautor</b> (assinou depois do autor principal).",
     aviso: "A situação vem da ficha de tramitação da Câmara e é atualizada aos poucos todo dia.",
     fonteTramitacao: "Ficha de tramitação (Câmara)",
+    hrefProposicao: (p) => `proposicao.html?k=c-${encodeURIComponent(p.id)}`,
     linkTramitacao: (p) => linkTramitacao(p.id),
     linkApi: (p) => `${CAMARA_API}/proposicoes/${encodeURIComponent(p.id)}`,
     hrefVotacao: (v) => `votacao.html?id=${encodeURIComponent(v.id)}`,

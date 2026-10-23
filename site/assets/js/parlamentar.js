@@ -151,6 +151,7 @@ export function montarParlamentar(alvo, c) {
       ${p.votacoes ? votacoesDoProjeto(p) : ""}
       ${p.temas ? `<span class="texto quando">Tema oficial: ${esc(p.temas.join(", "))}</span>` : ""}
       ${p.palavrasChave ? `<span class="texto quando">Temas: ${esc(p.palavrasChave)}</span>` : ""}
+      ${c.hrefProposicao && c.tipoProjeto(p) ? `<span class="texto"><a href="${esc(c.hrefProposicao(p))}">Ver todos os políticos ligados a esta proposição</a></span>` : ""}
       <span class="texto">${fontes([[c.fonteTramitacao, c.linkTramitacao(p)], p.linkTexto ? ["Texto integral", p.linkTexto] : null, ["Dados na API", c.linkApi(p)]])}</span>
     </li>`;
   };

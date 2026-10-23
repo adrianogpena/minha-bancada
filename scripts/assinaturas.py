@@ -150,7 +150,7 @@ def main() -> None:
     if a.saida:
         pasta = Path(a.saida)
         pasta.mkdir(parents=True, exist_ok=True)
-        for n, (ass, assunto, h, t, _) in enumerate(envios):
+        for n, (ass, assunto, h, *_) in enumerate(envios):
             (pasta / f"{n}.html").write_text(f"<!doctype html><meta charset=utf-8><title>{html.escape(assunto)}</title><p>Para: {html.escape(ass['email'])}</p>{h}", encoding="utf-8")
     if not a.enviar:
         return

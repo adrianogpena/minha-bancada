@@ -14,12 +14,12 @@ Sem dado por deputado: gestão de pessoal (planilha de servidores sem remuneraç
 """
 
 import re
-import sys
 import zipfile
 from datetime import date
 from html import unescape
 from io import BytesIO
-from xml.etree import ElementTree
+from functools import partial
+from defusedxml import ElementTree
 
 import estaduais_comum as comum
 
@@ -32,7 +32,6 @@ DIARIAS_PAGINA = f"{TRANSP}/execucao-orcamentaria-e-financeira/diarias-e-passage
 AJAX = f"{TRANSP}/wp-admin/admin-ajax.php"
 MESES_REVISTOS = 2
 NS_ODF = {"t": "urn:oasis:names:tc:opendocument:xmlns:table:1.0"}
-NS_XLSX = {"m": "http://schemas.openxmlformats.org/spreadsheetml/2006/main"}
 TITULOS = {"dr", "dra", "prof", "profa", "coronel", "dep", "de", "da", "do", "dos", "das"}
 
 GRUPOS = {"1": "Apoio à atividade parlamentar", "2": "Manutenção de escritório", "3": "Serviços postais", "4": "Apoio técnico",
@@ -54,31 +53,16 @@ CATEGORIAS = {
 }
 
 
-def limpar(html: str) -> str:
-    return " ".join(unescape(re.sub(r"<[^>]+>", " ", html)).split())
-
-
-def _tokens(nome: str) -> set:
-    return {t for t in re.sub(r"[^a-z ]", " ", comum.sem_acento(nome)).split() if t not in TITULOS}
-
-
 def _extremos(nome: str) -> tuple:
-    palavras = [t for t in re.sub(r"[^a-z ]", " ", comum.sem_acento(nome)).split() if t not in TITULOS]
+    palavras = comum.palavras(nome, TITULOS)
     return (palavras[0], palavras[-1]) if len(palavras) >= 2 else ()
 
 
-def ligar(nomes, deputados: list[dict]) -> dict:
-    """Como `ligar_nomes`; o nome que não casa inteiro casa quando todas as suas palavras estão em um só nome (urna ou civil)."""
-    ligados = comum.ligar_nomes(nomes, deputados)
-    for n in nomes:
-        if n in ligados or not _tokens(n):
-            continue
-        ids = {d["id"] for d in deputados if any(d.get(c) and _tokens(n) <= _tokens(d[c]) for c in ("nome", "nomeCivil"))}
-        if len(ids) != 1:
-            ids = {d["id"] for d in deputados if _extremos(n) and any(d.get(c) and _extremos(n) == _extremos(d[c]) for c in ("nome", "nomeCivil"))}
-        if len(ids) == 1:
-            ligados[n] = next(iter(ids))
-    return ligados
+def _por_extremos(nome: str, deputados: list[dict]) -> set:
+    return {d["id"] for d in deputados if _extremos(nome) and any(d.get(c) and _extremos(nome) == _extremos(d[c]) for c in ("nome", "nomeCivil"))}
+
+
+ligar = partial(comum.ligar_por_palavras, ignorar=TITULOS, extra=_por_extremos)
 
 
 # ---------------------------------------------------------------- deputados
@@ -95,9 +79,9 @@ def parse_ficha(html: str) -> dict:
     """{nome, nomeCivil, partido, email} da página de um deputado (título, <h1> e meta og:description)."""
     h1 = re.search(r"<h1[^>]*>(.*?)</h1>", html, re.S)
     titulo = re.search(r"<title>(.*?)</title>", html, re.S)
-    nome = limpar(h1.group(1)) if h1 else (limpar(titulo.group(1)).split("|")[0].strip() if titulo else None)
+    nome = comum.limpar(h1.group(1)) if h1 else (comum.limpar(titulo.group(1)).split("|")[0].strip() if titulo else None)
     og = re.search(r'<meta property="og:description" content="([^"]*)"', html)
-    desc = limpar(og.group(1)) if og else ""
+    desc = comum.limpar(og.group(1)) if og else ""
     civil = re.search(r"Nome:\s*(.+?)\s+Data\b", desc)
     partido = re.search(r"Partido:\s*(.+?)\s+Gabinete", desc)
     email = re.search(r"mailto:([^\"'\s>]+)", html) or re.search(r"e-mail:\s*(\S+@\S+)", desc)
@@ -179,10 +163,10 @@ def linhas_odf(conteudo: bytes) -> list[list[str]]:
     """Linhas de todas as tabelas de um ODT/ODS (células em ordem; colunas repetidas contam uma vez)."""
     raiz = ElementTree.fromstring(zipfile.ZipFile(BytesIO(conteudo)).read("content.xml"))
     linhas = []
-    for linha in raiz.iter("{%s}table-row" % NS_ODF["t"]):
+    for linha in raiz.iter("{{{}}}table-row".format(NS_ODF["t"])):
         celulas = []
         for c in linha.findall("t:table-cell", NS_ODF):
-            repete = int(c.get("{%s}number-columns-repeated" % NS_ODF["t"], 1))
+            repete = int(c.get("{{{}}}number-columns-repeated".format(NS_ODF["t"]), 1))
             celulas += [_texto_celula(c)] * (repete if _texto_celula(c) and repete < 50 else 1)
         if any(celulas):
             linhas.append(celulas)
@@ -191,25 +175,15 @@ def linhas_odf(conteudo: bytes) -> list[list[str]]:
 
 def linhas_xlsx(conteudo: bytes) -> list[list[str]]:
     """Linhas da primeira aba de um XLSX, com as colunas A, B, C... preenchidas em ordem (vazia = "")."""
-    z = zipfile.ZipFile(BytesIO(conteudo))
-    strings = []
-    if "xl/sharedStrings.xml" in z.namelist():
-        for si in ElementTree.fromstring(z.read("xl/sharedStrings.xml")).findall("m:si", NS_XLSX):
-            strings.append("".join(t.text or "" for t in si.iter("{%s}t" % NS_XLSX["m"])))
     linhas = []
-    for row in ElementTree.fromstring(z.read("xl/worksheets/sheet1.xml")).iter("{%s}row" % NS_XLSX["m"]):
+    for linha in comum.xlsx_linhas(conteudo, aparar=False):
         celulas = {}
-        for c in row.findall("m:c", NS_XLSX):
-            v = c.find("m:v", NS_XLSX)
-            if v is None or v.text is None:
-                continue
-            col = re.match(r"[A-Z]+", c.get("r")).group(0)
+        for col, valor in linha.items():
             idx = 0
             for ch in col:
                 idx = idx * 26 + ord(ch) - 64
-            celulas[idx - 1] = strings[int(v.text)] if c.get("t") == "s" else v.text
-        if celulas:
-            linhas.append([celulas.get(i, "") for i in range(max(celulas) + 1)])
+            celulas[idx - 1] = valor
+        linhas.append([celulas.get(i, "") for i in range(max(celulas) + 1)])
     return linhas
 
 
@@ -222,12 +196,12 @@ def linhas_planilha(conteudo: bytes, tipo: str) -> list[list[str]]:
 def parse_verba(linhas: list[list[str]]) -> list[dict]:
     """[{item, categoria, grupo, valor}] das linhas de despesa com valor de um demonstrativo mensal."""
     itens = []
-    for l in linhas:
-        if len(l) >= 3 and re.fullmatch(r"\d\.\d+", l[0].strip()):
-            valor = comum.valor_br(l[2])
+    for lin in linhas:
+        if len(lin) >= 3 and re.fullmatch(r"\d\.\d+", lin[0].strip()):
+            valor = comum.valor_br(lin[2])
             if valor:
-                cod = l[0].strip()
-                itens.append({"item": cod, "categoria": CATEGORIAS.get(cod, l[1].strip()), "grupo": GRUPOS.get(cod.split(".")[0]), "valor": valor})
+                cod = lin[0].strip()
+                itens.append({"item": cod, "categoria": CATEGORIAS.get(cod, lin[1].strip()), "grupo": GRUPOS.get(cod.split(".")[0]), "valor": valor})
     return itens
 
 
@@ -253,9 +227,9 @@ def itens_verba(arquivos: list[dict], baixar, deputados: list[dict], ano: int, m
             continue
         if "odt" not in urls:
             continue
-        for i in parse_verba(linhas_odf(baixar(urls["odt"]))):
-            itens.append({"idDeputado": ligados[nome], "mes": mes, "categoria": i["categoria"], "fornecedor": None, "cnpj": None, "valor": i["valor"],
-                          "item": i["item"], "grupo": i["grupo"], "fonte": urls.get("pdf") or urls["odt"]})
+        itens.extend({"idDeputado": ligados[nome], "mes": mes, "categoria": i["categoria"], "fornecedor": None, "cnpj": None, "valor": i["valor"],
+                      "item": i["item"], "grupo": i["grupo"], "fonte": urls.get("pdf") or urls["odt"]}
+                     for i in parse_verba(linhas_odf(baixar(urls["odt"]))))
     return itens
 
 
@@ -293,15 +267,15 @@ def periodo_para_datas(periodo: str) -> tuple[str | None, str | None]:
 
 def registros_diarias(linhas: list[list[str]]) -> list[dict]:
     """Linhas de deputados (cargo "DEPUTADO(A)") do demonstrativo; as colunas vêm do cabeçalho (NOME, CARGO, DESTINO, FINALIDADE, PERÍODO, VALOR)."""
-    cab = next((i for i, l in enumerate(linhas) if {"nome", "cargo", "destino"} <= {comum.sem_acento(c) for c in l}), None)
+    cab = next((i for i, lin in enumerate(linhas) if {"nome", "cargo", "destino"} <= {comum.sem_acento(c) for c in lin}), None)
     if cab is None:
         return []
     col = {comum.sem_acento(c): i for i, c in enumerate(linhas[cab]) if c}
     registros = []
-    for l in linhas[cab + 1:]:
-        def campo(nome):
+    for lin in linhas[cab + 1:]:
+        def campo(nome, lin=lin):
             i = col.get(nome)
-            return l[i].strip() if i is not None and i < len(l) else ""
+            return lin[i].strip() if i is not None and i < len(lin) else ""
         if comum.sem_acento(campo("cargo")).startswith("deputad") and campo("nome"):
             registros.append({"nome": campo("nome"), "destino": campo("destino"), "motivo": campo("finalidade"), "periodo": campo("periodo"),
                               "valor": comum.valor_br(campo("valor"))})
@@ -368,7 +342,13 @@ def coletar_diarias(s, deputados: list[dict], pasta, hoje: date) -> None:
     lista = Lista(s, DIARIAS_PAGINA)
     baixar = _baixar(s)
     por_ano: dict[int, list] = {}
-    for ano, mes, caminho in _meses(lista):
+
+    def encerrado(ano):  # o arquivo gravado fica como está
+        return comum.ano_encerrado(ano, hoje, pasta / f"diarias_{ano}.json")
+
+    for ano, _mes, caminho in _meses(lista):
+        if encerrado(ano):
+            continue
         arquivos = lista.pasta(caminho)[1]
         pdfs = [a for a in arquivos if a["tipo"] == "pdf" and not re.search(r"sem efeito", a["nome"], re.I)]
         planilhas = [a for a in arquivos if a["tipo"] in ("xlsx", "ods") and not re.search(r"sem efeito", a["nome"], re.I)]
@@ -377,6 +357,8 @@ def coletar_diarias(s, deputados: list[dict], pasta, hoje: date) -> None:
             for i in itens_diarias(registros, deputados, (pdfs[0] if pdfs else p)["url"]):
                 por_ano.setdefault(int((i["data"] or f"{ano}")[:4]), []).append(i)
     for ano, itens in sorted(por_ano.items()):
+        if encerrado(ano):
+            continue
         itens.sort(key=lambda i: (i["data"] or "", str(i["idDeputado"])))
         comum.salvar(pasta / f"diarias_{ano}.json", {"coletadoEm": hoje.isoformat(), "fonte": DIARIAS_PAGINA, "itens": itens})
         print(f"RR: diárias {ano} {len(itens)} registros")
@@ -421,9 +403,7 @@ def _conferir_deputados(registro):
     if not cartoes(registro["lista"]):
         falhas.append("lista de deputados sem cartões (link da ficha + foto)")
     f = parse_ficha(registro["ficha"])
-    for campo in ("nome", "nomeCivil", "partido"):
-        if not f[campo]:
-            falhas.append(f"ficha de deputado sem {campo}")
+    falhas += comum.campos_vazios(f, ("nome", "nomeCivil", "partido"), "ficha de deputado")
     return falhas, [] if f["email"] else ["ficha sem e-mail"]
 
 
@@ -446,9 +426,7 @@ def _conferir_listagem(registro):
     arquivos = entradas(registro["pasta"])[1]
     if not arquivos:
         falhas.append("pasta mensal sem arquivos com link de download")
-    for a in arquivos:
-        if nome_do_arquivo(a["nome"]) is None:
-            falhas.append(f"nome de arquivo fora do padrão 'Dep. Nome - Mês Ano': {a['nome']}")
+    falhas += [f"nome de arquivo fora do padrão 'Dep. Nome - Mês Ano': {a['nome']}" for a in arquivos if nome_do_arquivo(a["nome"]) is None]
     return falhas, []
 
 
@@ -467,13 +445,13 @@ def _conferir_verba(registro):
     itens = parse_verba(registro["linhas"])
     if not itens:
         falhas.append("demonstrativo sem item de despesa com valor")
-    todos = [l for l in registro["linhas"] if len(l) >= 2 and re.fullmatch(r"\d\.\d+", l[0].strip())]
-    desconhecidos = [l[0] for l in todos if l[0].strip() not in CATEGORIAS]
+    todos = [lin for lin in registro["linhas"] if len(lin) >= 2 and re.fullmatch(r"\d\.\d+", lin[0].strip())]
+    desconhecidos = [lin[0] for lin in todos if lin[0].strip() not in CATEGORIAS]
     return falhas, [f"item de despesa novo: {', '.join(desconhecidos)}"] if desconhecidos else []
 
 
 def _indice_cabecalho(linhas):
-    return next((i for i, l in enumerate(linhas) if {"nome", "cargo", "destino"} <= {comum.sem_acento(c) for c in l}), None)
+    return next((i for i, lin in enumerate(linhas) if {"nome", "cargo", "destino"} <= {comum.sem_acento(c) for c in lin}), None)
 
 
 def _contrato_diarias(ctx):
@@ -485,7 +463,7 @@ def _contrato_diarias(ctx):
                 cab = _indice_cabecalho(linhas)
                 if cab is None:
                     continue
-                deputados = [l for l in linhas[cab + 1:] if any(re.match(r"(?i)deputad", c) for c in l)][:3]
+                deputados = [lin for lin in linhas[cab + 1:] if any(re.match(r"(?i)deputad", c) for c in lin)][:3]
                 if deputados:
                     return {"arquivo": a["nome"], "linhas": [*linhas[: cab + 1], *deputados]}
     raise RuntimeError("nenhuma planilha de diárias com linha de deputado")
@@ -506,13 +484,12 @@ def _conferir_diarias(registro):
 
 
 CONTRATOS = [
-    dict(nome="estadual_rr_deputados", fonte=LISTA_DEPUTADOS, buscar=_contrato_deputados, html=_conferir_deputados),
-    dict(nome="estadual_rr_listagem", fonte=VERBAS_PAGINA, buscar=_contrato_listagem, html=_conferir_listagem),
-    dict(nome="estadual_rr_verba", fonte=VERBAS_PAGINA, buscar=_contrato_verba, html=_conferir_verba),
-    dict(nome="estadual_rr_diarias", fonte=DIARIAS_PAGINA, buscar=_contrato_diarias, html=_conferir_diarias),
+    {"nome": "estadual_rr_deputados", "fonte": LISTA_DEPUTADOS, "buscar": _contrato_deputados, "html": _conferir_deputados},
+    {"nome": "estadual_rr_listagem", "fonte": VERBAS_PAGINA, "buscar": _contrato_listagem, "html": _conferir_listagem},
+    {"nome": "estadual_rr_verba", "fonte": VERBAS_PAGINA, "buscar": _contrato_verba, "html": _conferir_verba},
+    {"nome": "estadual_rr_diarias", "fonte": DIARIAS_PAGINA, "buscar": _contrato_diarias, "html": _conferir_diarias},
 ]
 
 
 if __name__ == "__main__":
-    coletar()
-    sys.exit(0)
+    comum.principal(coletar)

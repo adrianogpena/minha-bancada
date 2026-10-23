@@ -53,7 +53,7 @@ def test_linhas_dashboard_do_contrato():
     a = amostra("estadual_pa_verba_indenizatoria")
     linhas = pa.linhas_dashboard(a["DataStorageDTO"])
     assert linhas[0]["deputado"] == "Ana Cunha" and linhas[0]["data"] == "2026-10-21" and linhas[0]["conta"] == "INDENIZACAO DE TRANSPORTE"
-    assert sorted(l["valor"] for l in linhas) == [1607.86, 4238.89]
+    assert sorted(linha["valor"] for linha in linhas) == [1607.86, 4238.89]
     assert pa._conferir_dashboard(a) == ([], [])
 
 
@@ -69,7 +69,7 @@ def test_itens_verba_e_diarias_filtram_ano_e_deputado():
     linhas = [{"data": "2026-03-05", "deputado": "Ana Cunha", "conta": "INDENIZACOES", "descricao": "X", "valor": 10.0},
               {"data": "2025-03-05", "deputado": "Ana Cunha", "conta": "INDENIZACOES", "descricao": "Y", "valor": 20.0},
               {"data": "2026-03-05", "deputado": "Desconhecido", "conta": "INDENIZACOES", "descricao": "Z", "valor": 30.0}]
-    ids = pa.ligar({l["deputado"] for l in linhas}, DEPUTADOS)
+    ids = pa.ligar({linha["deputado"] for linha in linhas}, DEPUTADOS)
     verba = pa.itens_verba(linhas, ids, 2026)
     assert [(i["idDeputado"], i["mes"], i["valor"], i["fonte"]) for i in verba] == [("1011", 3, 10.0, pa.VERBA_PAGINA)]
     diarias = pa.itens_diarias(linhas, ids, 2026)

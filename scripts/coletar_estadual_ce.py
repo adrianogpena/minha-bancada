@@ -16,12 +16,9 @@ Não coletado: emendas (a página só publica o quadro consolidado da LOA, sem a
 import csv
 import io
 import re
-import sys
-import zipfile
 from concurrent.futures import ThreadPoolExecutor
 from datetime import date, datetime
-from html import unescape
-from xml.etree import ElementTree
+from functools import partial
 
 import estaduais_comum as comum
 
@@ -42,7 +39,6 @@ ANO_PROPOSICOES = 2023
 TIMEOUT = 20
 TIMEOUT_CSV = 90
 EM_PARALELO = 2
-NS = {"m": "http://schemas.openxmlformats.org/spreadsheetml/2006/main"}
 
 TABELAS = {  # tabela em numero.php -> (sigla, descrição)
     "projeto_lei": ("PL", "Projeto de Lei"),
@@ -81,14 +77,7 @@ def decodificar(conteudo: bytes, codificacao: str | None = None) -> str:
         return conteudo.decode("cp1252", errors="replace")
 
 
-def baixar(s, url: str, timeout: int = TIMEOUT) -> bytes:
-    r = s.get(url, timeout=timeout)
-    r.raise_for_status()
-    return r.content
-
-
-def limpar(html: str) -> str:
-    return " ".join(unescape(re.sub(r"<[^>]+>", " ", html)).split())
+baixar = partial(comum.baixar, timeout=TIMEOUT)
 
 
 def iso_data(texto: str) -> str | None:
@@ -114,15 +103,15 @@ def cartoes(html: str) -> list[dict]:
             continue
         foto = re.search(r'src="([^"]+)"', bloco)
         partido = re.search(r'deputado_card--partido[^>]*>(.*?)</p>', bloco, re.S)
-        lista.append({"id": link.group(1), "nome": limpar(link.group(2)), "foto": foto.group(1) if foto else None,
-                      "partido": limpar(partido.group(1)) if partido else None,
+        lista.append({"id": link.group(1), "nome": comum.limpar(link.group(2)), "foto": foto.group(1) if foto else None,
+                      "partido": comum.limpar(partido.group(1)) if partido else None,
                       "titular": not (corte >= 0 and m.start() > corte)})
     return lista
 
 
 def campo_ficha(html: str, rotulo: str) -> str | None:
     m = re.search(rf'<span class="font-weight-bold">\s*{rotulo}\s*</span>\s*<span[^>]*>(.*?)</span>', html, re.S)
-    valor = limpar(m.group(1)) if m else ""
+    valor = comum.limpar(m.group(1)) if m else ""
     return valor if valor and valor != "-" else None
 
 
@@ -159,11 +148,11 @@ def coletar_deputados(s) -> list[dict]:
 def linhas_csv(texto: str, cabecalho_em: str) -> list[dict]:
     """Linhas do CSV com ';' como dicts de cabeçalho sem acento; ignora o que vem antes da linha com `cabecalho_em`."""
     todas = list(csv.reader(io.StringIO(texto), delimiter=";"))
-    inicio = next((i for i, l in enumerate(todas) if cabecalho_em in [comum.sem_acento(c).upper() for c in l]), None)
+    inicio = next((i for i, linha in enumerate(todas) if cabecalho_em in [comum.sem_acento(c).upper() for c in linha]), None)
     if inicio is None:
         return []
     cab = [comum.sem_acento(c).upper() for c in todas[inicio]]
-    return [dict(zip(cab, l)) for l in todas[inicio + 1:] if any(c.strip() for c in l)]
+    return [dict(zip(cab, linha, strict=False)) for linha in todas[inicio + 1:] if any(c.strip() for c in linha)]
 
 
 def categoria_vdp(descricao: str) -> str:
@@ -176,17 +165,17 @@ def categoria_vdp(descricao: str) -> str:
 
 def itens_vdp(linhas: list[dict], ligacao: dict, fonte: str) -> tuple[list[dict], set]:
     itens, sem_par = [], set()
-    for l in linhas:
-        nome = l.get("DEPUTADO", "")
+    for linha in linhas:
+        nome = linha.get("DEPUTADO", "")
         pid = ligacao.get(nome)
         if not pid:
             sem_par.add(comum.nome_limpo(nome))
             continue
-        periodo = (l.get("PERIODO") or "").split("/")
+        periodo = (linha.get("PERIODO") or "").split("/")
         itens.append({"idDeputado": pid, "mes": int(periodo[0]) if periodo[0].isdigit() else None,
-                      "categoria": categoria_vdp(l.get("DESCRICAO", "")), "fornecedor": l.get("CREDOR") or None,
-                      "cnpj": l.get("CNPJ") or None, "valor": comum.valor_br(l.get("VALOR")), "empenho": l.get("EMPENHO") or None,
-                      "descricao": " ".join((l.get("DESCRICAO") or "").split()) or None, "fonte": fonte})
+                      "categoria": categoria_vdp(linha.get("DESCRICAO", "")), "fornecedor": linha.get("CREDOR") or None,
+                      "cnpj": linha.get("CNPJ") or None, "valor": comum.valor_br(linha.get("VALOR")), "empenho": linha.get("EMPENHO") or None,
+                      "descricao": " ".join((linha.get("DESCRICAO") or "").split()) or None, "fonte": fonte})
     return itens, sem_par
 
 
@@ -204,11 +193,11 @@ def coletar_por_ano(s, nome_arquivo: str, fonte: str, ano_inicial: int, dia_por_
             continue
         periodos = list(meses_do_ano(ano)) if dia_por_mes else [None]
 
-        def um(mes):
+        def um(mes, ano=ano):
             try:
                 return montar(ano, mes, baixar_periodo(s, ano, mes))
             except Exception as e:
-                comum.avisar(f"CE: {nome_arquivo} {ano}{'-%02d' % mes if mes else ''}: {e}")
+                comum.avisar(f"CE: {nome_arquivo} {ano}{f'-{mes:02d}' if mes else ''}: {e}")
                 return [], set()
 
         with ThreadPoolExecutor(EM_PARALELO) as ex:
@@ -224,11 +213,11 @@ def coletar_por_ano(s, nome_arquivo: str, fonte: str, ano_inicial: int, dia_por_
 
 def coletar_vdp(s, deputados: list[dict]) -> None:
     def baixar_mes(s, ano, mes):
-        return decodificar(baixar(s, f"{TRANSP}/despesas/verba-desempenho-parlamentar/csv?mes={mes}&ano={ano}", TIMEOUT_CSV))
+        return decodificar(baixar(s, f"{TRANSP}/despesas/verba-desempenho-parlamentar/csv?mes={mes}&ano={ano}", timeout=TIMEOUT_CSV))
 
     def montar(ano, mes, texto):
         linhas = linhas_csv(texto, "DEPUTADO")
-        ligacao = ligar({l["DEPUTADO"] for l in linhas}, deputados)
+        ligacao = ligar({linha["DEPUTADO"] for linha in linhas}, deputados)
         return itens_vdp(linhas, ligacao, f"{VDP_PAGINA}?mes={mes}&ano={ano}")
 
     sem_par = coletar_por_ano(s, "verbas", VDP_PAGINA, ANO_VDP, True, baixar_mes, montar)
@@ -238,30 +227,30 @@ def coletar_vdp(s, deputados: list[dict]) -> None:
 
 def itens_remuneracao(linhas: list[dict], ligacao: dict, ano: int, mes: int) -> tuple[list[dict], set]:
     itens, sem_par = [], set()
-    for l in linhas:
-        if (l.get("CATEGORIA") or "").strip().upper() != "DEPUTADOS":
+    for linha in linhas:
+        if (linha.get("CATEGORIA") or "").strip().upper() != "DEPUTADOS":
             continue
-        pid = ligacao.get(l.get("NOME", ""))
+        pid = ligacao.get(linha.get("NOME", ""))
         if not pid:
-            sem_par.add(l.get("NOME", ""))
+            sem_par.add(linha.get("NOME", ""))
             continue
-        componentes = {"descontosLegais": comum.valor_br(l.get("DESCONTOS LEGAIS")),
-                       "abatimentoTeto": comum.valor_br(l.get('ABATIMENTO EM FUNCAO DO "TETO" CONSTITUCIONAL')),
-                       "decimoTerceiro": comum.valor_br(l.get("13O SAL / ADTO 13O SAL")),
-                       "descontosDecimoTerceiro": comum.valor_br(l.get("DESCONTOS ADTO 13O SAL"))}
-        itens.append({"idDeputado": pid, "mes": mes, "bruto": comum.valor_br(l.get("REMUNERACAO BRUTA")),
-                      "liquido": comum.valor_br(l.get("REMUNERACAO LIQUIDA")),
+        componentes = {"descontosLegais": comum.valor_br(linha.get("DESCONTOS LEGAIS")),
+                       "abatimentoTeto": comum.valor_br(linha.get('ABATIMENTO EM FUNCAO DO "TETO" CONSTITUCIONAL')),
+                       "decimoTerceiro": comum.valor_br(linha.get("13O SAL / ADTO 13O SAL")),
+                       "descontosDecimoTerceiro": comum.valor_br(linha.get("DESCONTOS ADTO 13O SAL"))}
+        itens.append({"idDeputado": pid, "mes": mes, "bruto": comum.valor_br(linha.get("REMUNERACAO BRUTA")),
+                      "liquido": comum.valor_br(linha.get("REMUNERACAO LIQUIDA")),
                       "componentes": {k: v for k, v in componentes.items() if v}, "fonte": f"{PESSOAL_PAGINA}?mes={mes:02d}&ano={ano}"})
     return itens, sem_par
 
 
 def coletar_remuneracao(s, deputados: list[dict]) -> None:
     def baixar_mes(s, ano, mes):
-        return decodificar(baixar(s, f"{PESSOAL_PAGINA}/csv?mes={mes:02d}&ano={ano}", TIMEOUT_CSV))
+        return decodificar(baixar(s, f"{PESSOAL_PAGINA}/csv?mes={mes:02d}&ano={ano}", timeout=TIMEOUT_CSV))
 
     def montar(ano, mes, texto):
         linhas = linhas_csv(texto, "NOME")
-        ligacao = ligar({l.get("NOME", "") for l in linhas if (l.get("CATEGORIA") or "").upper() == "DEPUTADOS"}, deputados)
+        ligacao = ligar({linha.get("NOME", "") for linha in linhas if (linha.get("CATEGORIA") or "").upper() == "DEPUTADOS"}, deputados)
         return itens_remuneracao(linhas, ligacao, ano, mes)
 
     sem_par = coletar_por_ano(s, "remuneracao", PESSOAL_PAGINA, ANO_REMUNERACAO, True, baixar_mes, montar)
@@ -271,25 +260,25 @@ def coletar_remuneracao(s, deputados: list[dict]) -> None:
 
 def itens_diarias(linhas: list[dict], ligacao: dict, ano: int) -> tuple[list[dict], set]:
     itens, sem_par = [], set()
-    for l in linhas:
-        nome = l.get("BENEFICIARIO", "")
+    for linha in linhas:
+        nome = linha.get("BENEFICIARIO", "")
         pid = ligacao.get(nome)
         if not pid:
             sem_par.add(nome)
             continue
-        itens.append({"idDeputado": pid, "data": iso_data(l.get("DATA PAGAMENTO")), "destino": None,
-                      "motivo": " ".join((l.get("DESCRICAO") or "").split()) or None, "valor": comum.valor_br(l.get("VALOR")),
-                      "empenho": l.get("EMPENHO") or None, "fonte": f"{DIARIAS_PAGINA}?ano={ano}"})
+        itens.append({"idDeputado": pid, "data": iso_data(linha.get("DATA PAGAMENTO")), "destino": None,
+                      "motivo": " ".join((linha.get("DESCRICAO") or "").split()) or None, "valor": comum.valor_br(linha.get("VALOR")),
+                      "empenho": linha.get("EMPENHO") or None, "fonte": f"{DIARIAS_PAGINA}?ano={ano}"})
     return itens, sem_par
 
 
 def coletar_diarias(s, deputados: list[dict]) -> None:
     def baixar_ano(s, ano, mes):
-        return decodificar(baixar(s, f"{DIARIAS_PAGINA}?ano={ano}&export=csv", TIMEOUT_CSV))
+        return decodificar(baixar(s, f"{DIARIAS_PAGINA}?ano={ano}&export=csv", timeout=TIMEOUT_CSV))
 
     def montar(ano, mes, texto):
         linhas = linhas_csv(texto, "BENEFICIARIO")
-        ligacao = ligar({l.get("BENEFICIARIO", "") for l in linhas}, deputados)
+        ligacao = ligar({linha.get("BENEFICIARIO", "") for linha in linhas}, deputados)
         return itens_diarias(linhas, ligacao, ano)
 
     coletar_por_ano(s, "diarias", DIARIAS_PAGINA, ANO_REMUNERACAO, False, baixar_ano, montar)
@@ -305,34 +294,11 @@ def votacoes_da_pagina(html: str) -> list[dict]:
         if not xlsx:
             continue
         pdf = re.search(r'href="([^"]*votacao_nominal_materia/[^"]+\.pdf)"', tr)
-        celulas = [limpar(c) for c in re.findall(r"<td[^>]*>(.*?)</td>", tr, re.S)]
+        celulas = [comum.limpar(c) for c in re.findall(r"<td[^>]*>(.*?)</td>", tr, re.S)]
         lista.append({"id": xlsx.group(2), "xlsx": xlsx.group(1), "pdf": pdf.group(1) if pdf else xlsx.group(1),
                       "sessao": celulas[2] if len(celulas) > 2 else None, "data": iso_data(celulas[3]) if len(celulas) > 3 else None,
                       "materia": celulas[4] if len(celulas) > 4 else None})
     return lista
-
-
-def ler_xlsx(conteudo: bytes) -> list[dict]:
-    """Primeira planilha como lista de linhas {coluna: texto}, só células preenchidas."""
-    z = zipfile.ZipFile(io.BytesIO(conteudo))
-    textos = []
-    if "xl/sharedStrings.xml" in z.namelist():
-        for si in ElementTree.fromstring(z.read("xl/sharedStrings.xml")).findall("m:si", NS):
-            textos.append("".join(t.text or "" for t in si.iter(f"{{{NS['m']}}}t")))
-    folha = ElementTree.fromstring(z.read("xl/worksheets/sheet1.xml"))
-    linhas = []
-    for row in folha.iter(f"{{{NS['m']}}}row"):
-        celulas = {}
-        for c in row.findall("m:c", NS):
-            v = c.find("m:v", NS)
-            if v is None or v.text is None:
-                continue
-            valor = textos[int(v.text)] if c.get("t") == "s" else v.text
-            if valor.strip():
-                celulas[re.match(r"[A-Z]+", c.get("r")).group(0)] = valor.strip()
-        if celulas:
-            linhas.append(celulas)
-    return linhas
 
 
 def tipo_da_materia(texto: str) -> tuple[str, str | None]:
@@ -353,20 +319,20 @@ def voto_normalizado(texto: str) -> str | None:
 
 def votacao_do_xlsx(linhas: list[dict]) -> dict | None:
     """Cabeçalho (data, resultado, matéria) e votos [(nome, partido, voto)] de um "RELATÓRIO DE VOTAÇÃO"."""
-    cabecalho = " ".join(l.get("A", "") for l in linhas[:8])
+    cabecalho = " ".join(linha.get("A", "") for linha in linhas[:8])
     data = re.search(r"Data:\s*(\d{1,2})\s*/\s*(\d{1,2})\s*/\s*(\d{4})", cabecalho)
     resultado = re.search(r"Resultado:\s*([A-Za-zÀ-ú]+)", cabecalho)
-    materia = next((l["A"] for l in linhas[:8] if l.get("A", "").upper().startswith(("MATERIA", "MATÉRIA"))), "")
+    materia = next((linha["A"] for linha in linhas[:8] if linha.get("A", "").upper().startswith(("MATERIA", "MATÉRIA"))), "")
     numero = re.search(r"(\d+)\s*/\s*(\d{4})\s*[-–—]\s*(.*)", materia, re.S)
     votos, apuracao = [], {}
-    for l in linhas:
-        if l.get("A", "").upper().startswith("APURA"):
-            apuracao = {"sim": l.get("D"), "nao": l.get("E"), "abstencao": l.get("F")}
-        if not l.get("B") or not l.get("A", "").isdigit():
+    for linha in linhas:
+        if linha.get("A", "").upper().startswith("APURA"):
+            apuracao = {"sim": linha.get("D"), "nao": linha.get("E"), "abstencao": linha.get("F")}
+        if not linha.get("B") or not linha.get("A", "").isdigit():
             continue
-        voto = next((voto_normalizado(l[c]) for c in "DEF" if l.get(c) and voto_normalizado(l[c])), None)
+        voto = next((voto_normalizado(linha[c]) for c in "DEF" if linha.get(c) and voto_normalizado(linha[c])), None)
         if voto:
-            votos.append((l["B"], l.get("C"), voto))
+            votos.append((linha["B"], linha.get("C"), voto))
     if not votos:
         return None
     tipo, descricao = tipo_da_materia(numero.group(3) if numero else materia)
@@ -386,7 +352,7 @@ def coletar_votacoes(s, deputados: list[dict]) -> None:
 
     def uma(v):
         try:
-            return v, votacao_do_xlsx(ler_xlsx(baixar(s, v["xlsx"])))
+            return v, votacao_do_xlsx(comum.xlsx_linhas(baixar(s, v["xlsx"])))
         except Exception as e:
             comum.avisar(f"CE: votação {v['id']}: {e}")
             return v, None
@@ -430,7 +396,7 @@ def proposicoes_da_pagina(html: str) -> list[dict]:
     itens = []
     for bloco in html.split("N&ordm; do Proj.:")[1:]:
         cel = re.search(r"</b></font><br>\s*<font[^>]*>(.*?)</font>", bloco, re.S)
-        num = re.search(r"(\d+)\s*/\s*(\d{2,4})", limpar(cel.group(1))) if cel else None
+        num = re.search(r"(\d+)\s*/\s*(\d{2,4})", comum.limpar(cel.group(1))) if cel else None
         if not num:
             continue
         ano = int(num.group(2))
@@ -438,24 +404,20 @@ def proposicoes_da_pagina(html: str) -> list[dict]:
         ementa_html = campo_proposicao(bloco, "Ementa:")
         link = re.search(r"href=['\"]([^'\"]+)['\"]", ementa_html)
         trecho = re.search(r"Localiza&ccedil;&atilde;o:</b></font>.*?<br>\s*<font[^>]*>(.*?)</font>", bloco, re.S)
-        movimentos = [limpar(x) for x in re.split(r"<br\s*/?>", trecho.group(1))] if trecho else []
-        lei = limpar(campo_proposicao(bloco, "Lei:"))
-        obs = limpar(campo_proposicao(bloco, "OBS:"))
+        movimentos = [comum.limpar(x) for x in re.split(r"<br\s*/?>", trecho.group(1))] if trecho else []
+        lei = comum.limpar(campo_proposicao(bloco, "Lei:"))
+        obs = comum.limpar(campo_proposicao(bloco, "OBS:"))
         situacao = f"Lei {lei}" if lei and lei != "-" else (movimentos[-1] if movimentos else (obs if obs and obs != "-" else None))
-        itens.append({"numero": int(num.group(1)), "ano": ano, "autor": limpar(campo_proposicao(bloco, "Autor:")),
-                      "dataApresentacao": iso_data(limpar(campo_proposicao(bloco, "Entrada:"))), "ementa": limpar(ementa_html),
+        itens.append({"numero": int(num.group(1)), "ano": ano, "autor": comum.limpar(campo_proposicao(bloco, "Autor:")),
+                      "dataApresentacao": iso_data(comum.limpar(campo_proposicao(bloco, "Entrada:"))), "ementa": comum.limpar(ementa_html),
                       "linkTexto": link.group(1) if link else None, "situacao": situacao})
     return itens
 
 
 def autores(texto: str) -> list[str]:
     """Nomes do campo Autor ("A, COAUTORIA: B", "AUTORIA: DEPUTADO C.")."""
-    nomes = []
-    for a in re.split(r"\s*[,;/]\s*|\s+E\s+|(?i:\s*COAUTOR(?:IA|ES)\s*:?\s*|\s*AUTORIA\s*:\s*)", texto or ""):
-        a = re.sub(r"(?i)^DEPUTAD[OA]\s+", "", a.strip()).strip(" .")
-        if a:
-            nomes.append(a)
-    return nomes
+    partes = re.split(r"\s*[,;/]\s*|\s+E\s+|(?i:\s*COAUTOR(?:IA|ES)\s*:?\s*|\s*AUTORIA\s*:\s*)", texto or "")
+    return [nome for p in partes if (nome := re.sub(r"(?i)^DEPUTAD[OA]\s+", "", p.strip()).strip(" ."))]
 
 
 def coletar_proposicoes(s, deputados: list[dict]) -> None:
@@ -471,7 +433,7 @@ def coletar_proposicoes(s, deputados: list[dict]) -> None:
                 continue
             paginas = {1: primeira}
 
-            def pagina(n, base=base):
+            def pagina(n, base=base, tabela=tabela, opcao=opcao):
                 try:
                     return n, decodificar(baixar(s, f"{base}&absolutepage={n}"), "utf-8")
                 except Exception as e:
@@ -479,8 +441,7 @@ def coletar_proposicoes(s, deputados: list[dict]) -> None:
                     return n, ""
 
             with ThreadPoolExecutor(EM_PARALELO) as ex:
-                for n, h in ex.map(pagina, range(2, ultima_pagina(primeira) + 1)):
-                    paginas[n] = h
+                paginas.update(ex.map(pagina, range(2, ultima_pagina(primeira) + 1)))
             for h in paginas.values():
                 for p in proposicoes_da_pagina(h):
                     if p["ano"] >= ANO_PROPOSICOES:
@@ -510,12 +471,9 @@ def coletar_proposicoes(s, deputados: list[dict]) -> None:
 def coletar() -> None:
     s = comum.sessao()
     deputados = coletar_deputados(s)
-    for nome, etapa in [("verba", coletar_vdp), ("votações", coletar_votacoes), ("proposições", coletar_proposicoes),
-                        ("remuneração", coletar_remuneracao), ("diárias", coletar_diarias)]:
-        try:
-            etapa(s, deputados)
-        except Exception as e:
-            comum.avisar(f"CE: {nome}: {e}")
+    comum.rodar_etapas(UF, [("verba", lambda: coletar_vdp(s, deputados)), ("votações", lambda: coletar_votacoes(s, deputados)),
+                            ("proposições", lambda: coletar_proposicoes(s, deputados)), ("remuneração", lambda: coletar_remuneracao(s, deputados)),
+                            ("diárias", lambda: coletar_diarias(s, deputados))])
 
 
 # ---------------------------------------------------------------- contratos (amostras reduzidas das respostas reais)
@@ -555,7 +513,7 @@ def _conferir_deputados(registro):
 
 
 def _contrato_vdp(ctx):
-    texto = decodificar(baixar(comum.sessao(), f"{TRANSP}/despesas/verba-desempenho-parlamentar/csv?mes=10&ano=2026", TIMEOUT_CSV))
+    texto = decodificar(baixar(comum.sessao(), f"{TRANSP}/despesas/verba-desempenho-parlamentar/csv?mes=10&ano=2026", timeout=TIMEOUT_CSV))
     return {"csv": "\n".join(texto.splitlines()[:6])}
 
 
@@ -564,18 +522,16 @@ def _conferir_vdp(registro):
     falhas = []
     if not linhas:
         return ["CSV da VDP sem cabeçalho DEPUTADO ou sem linhas"], []
-    for coluna in ("PERIODO", "EMPENHO", "DESCRICAO", "CNPJ", "CREDOR", "VALOR"):
-        if coluna not in linhas[0]:
-            falhas.append(f"CSV da VDP sem a coluna {coluna}")
+    falhas += comum.faltando(linhas[0], ("PERIODO", "EMPENHO", "DESCRICAO", "CNPJ", "CREDOR", "VALOR"), "CSV da VDP")
     if comum.valor_br(linhas[0].get("VALOR")) is None:
         falhas.append("VALOR da VDP ilegível")
     return falhas, []
 
 
 def _contrato_pessoal(ctx):
-    texto = decodificar(baixar(comum.sessao(), f"{PESSOAL_PAGINA}/csv?mes=09&ano=2026", TIMEOUT_CSV))
+    texto = decodificar(baixar(comum.sessao(), f"{PESSOAL_PAGINA}/csv?mes=09&ano=2026", timeout=TIMEOUT_CSV))
     linhas = texto.splitlines()
-    return {"csv": "\n".join(linhas[:1] + [l for l in linhas if ";DEPUTADOS;" in l][:2])}
+    return {"csv": "\n".join(linhas[:1] + [linha for linha in linhas if ";DEPUTADOS;" in linha][:2])}
 
 
 def _conferir_pessoal(registro):
@@ -583,17 +539,15 @@ def _conferir_pessoal(registro):
     falhas = []
     if not linhas:
         return ["CSV de pessoal sem cabeçalho NOME ou sem linhas de deputados"], []
-    for coluna in ("CATEGORIA", "REMUNERACAO BRUTA", "REMUNERACAO LIQUIDA"):
-        if coluna not in linhas[0]:
-            falhas.append(f"CSV de pessoal sem a coluna {coluna}")
-    itens, _ = itens_remuneracao(linhas, {l["NOME"]: "x" for l in linhas}, 2026, 9)
+    falhas += comum.faltando(linhas[0], ("CATEGORIA", "REMUNERACAO BRUTA", "REMUNERACAO LIQUIDA"), "CSV de pessoal")
+    itens, _ = itens_remuneracao(linhas, {linha["NOME"]: "x" for linha in linhas}, 2026, 9)
     if not itens or itens[0]["bruto"] is None:
         falhas.append("remuneração bruta de deputado ilegível")
     return falhas, []
 
 
 def _contrato_diarias(ctx):
-    texto = decodificar(baixar(comum.sessao(), f"{DIARIAS_PAGINA}?ano=2026&export=csv", TIMEOUT_CSV))
+    texto = decodificar(baixar(comum.sessao(), f"{DIARIAS_PAGINA}?ano=2026&export=csv", timeout=TIMEOUT_CSV))
     return {"csv": "\n".join(texto.splitlines()[:4])}
 
 
@@ -602,7 +556,7 @@ def _conferir_diarias(registro):
     if not linhas:
         return ["CSV de diárias sem cabeçalho BENEFICIÁRIO ou sem linhas"], []
     falhas = [f"CSV de diárias sem a coluna {c}" for c in ("DESCRICAO", "DATA PAGAMENTO", "VALOR") if c not in linhas[0]]
-    itens, _ = itens_diarias(linhas, {l["BENEFICIARIO"]: "x" for l in linhas}, 2026)
+    itens, _ = itens_diarias(linhas, {linha["BENEFICIARIO"]: "x" for linha in linhas}, 2026)
     if not itens or itens[0]["data"] is None or itens[0]["valor"] is None:
         falhas.append("data ou valor de diária ilegível")
     return falhas, []
@@ -620,17 +574,15 @@ def _conferir_votacoes_lista(registro):
     falhas = []
     if not lista:
         return ["tabela de votações nominais sem links de XLSX"], []
-    for v in lista:
-        if not (v["id"] and v["data"] and v["materia"] and v["pdf"]):
-            falhas.append("linha de votação sem id, data, matéria ou PDF")
+    falhas += ["linha de votação sem id, data, matéria ou PDF" for v in lista if not (v["id"] and v["data"] and v["materia"] and v["pdf"])]
     return falhas, []
 
 
 def _contrato_votacao_xlsx(ctx):
     s = comum.sessao()
     lista = votacoes_da_pagina(decodificar(baixar(s, VOTACOES_URL), "utf-8"))
-    linhas = ler_xlsx(baixar(s, lista[0]["xlsx"]))
-    return {"linhas": linhas[:14] + [l for l in linhas if l.get("A", "").upper().startswith("APURA")]}
+    linhas = comum.xlsx_linhas(baixar(s, lista[0]["xlsx"]))
+    return {"linhas": linhas[:14] + [linha for linha in linhas if linha.get("A", "").upper().startswith("APURA")]}
 
 
 def _conferir_votacao_xlsx(registro):
@@ -648,7 +600,7 @@ def _conferir_votacao_xlsx(registro):
 
 
 def _contrato_proposicoes(ctx):
-    html = decodificar(baixar(comum.sessao(), f"{PROPOSICOES}?nome=31_legislatura&tabela=projeto_lei&opcao=D", TIMEOUT), "utf-8")
+    html = decodificar(baixar(comum.sessao(), f"{PROPOSICOES}?nome=31_legislatura&tabela=projeto_lei&opcao=D", timeout=TIMEOUT), "utf-8")
     pos = html.index("&Uacute;ltima")
     blocos = [m.start() for m in re.finditer(r"N&ordm; do Proj\.:", html)]
     fim = blocos[2] if len(blocos) > 2 else len(html)
@@ -663,23 +615,20 @@ def _conferir_proposicoes(registro):
     if not itens:
         return falhas + ["nenhuma proposição reconhecida"], []
     for p in itens:
-        for campo in ("autor", "ementa", "dataApresentacao"):
-            if not p[campo]:
-                falhas.append(f"proposição sem {campo}")
+        falhas += comum.campos_vazios(p, ("autor", "ementa", "dataApresentacao"), "proposição")
     return falhas, []
 
 
 CONTRATOS = [
-    dict(nome="estadual_ce_deputados", fonte=LISTA_URL, buscar=_contrato_deputados, html=_conferir_deputados),
-    dict(nome="estadual_ce_vdp", fonte=VDP_PAGINA, buscar=_contrato_vdp, html=_conferir_vdp),
-    dict(nome="estadual_ce_pessoal", fonte=PESSOAL_PAGINA, buscar=_contrato_pessoal, html=_conferir_pessoal),
-    dict(nome="estadual_ce_diarias", fonte=DIARIAS_PAGINA, buscar=_contrato_diarias, html=_conferir_diarias),
-    dict(nome="estadual_ce_votacoes_lista", fonte=VOTACOES_URL, buscar=_contrato_votacoes_lista, html=_conferir_votacoes_lista),
-    dict(nome="estadual_ce_votacao_xlsx", fonte=VOTACOES_URL, buscar=_contrato_votacao_xlsx, html=_conferir_votacao_xlsx),
-    dict(nome="estadual_ce_proposicoes", fonte=PROPOSICOES, buscar=_contrato_proposicoes, html=_conferir_proposicoes),
+    {"nome": "estadual_ce_deputados", "fonte": LISTA_URL, "buscar": _contrato_deputados, "html": _conferir_deputados},
+    {"nome": "estadual_ce_vdp", "fonte": VDP_PAGINA, "buscar": _contrato_vdp, "html": _conferir_vdp},
+    {"nome": "estadual_ce_pessoal", "fonte": PESSOAL_PAGINA, "buscar": _contrato_pessoal, "html": _conferir_pessoal},
+    {"nome": "estadual_ce_diarias", "fonte": DIARIAS_PAGINA, "buscar": _contrato_diarias, "html": _conferir_diarias},
+    {"nome": "estadual_ce_votacoes_lista", "fonte": VOTACOES_URL, "buscar": _contrato_votacoes_lista, "html": _conferir_votacoes_lista},
+    {"nome": "estadual_ce_votacao_xlsx", "fonte": VOTACOES_URL, "buscar": _contrato_votacao_xlsx, "html": _conferir_votacao_xlsx},
+    {"nome": "estadual_ce_proposicoes", "fonte": PROPOSICOES, "buscar": _contrato_proposicoes, "html": _conferir_proposicoes},
 ]
 
 
 if __name__ == "__main__":
-    coletar()
-    sys.exit(0)
+    comum.principal(coletar)

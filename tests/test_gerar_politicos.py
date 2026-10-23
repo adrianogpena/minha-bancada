@@ -1,4 +1,3 @@
-import pytest
 
 import gerar_politicos as g
 
@@ -42,7 +41,7 @@ def test_mandatos_nao_se_sobrepoem_para_o_mesmo_cargo_executivo():
 def test_cargos_atuais_existem():
     for cargos in g.MANDATO_ATUAL.values():
         assert cargos <= set(g.CARGOS)
-    assert g.MUNICIPAIS <= set(g.CARGOS)
+    assert set(g.CARGOS) >= g.MUNICIPAIS
 
 
 def test_perfil_eleitos_usa_as_mesmas_posicoes_do_eleitorado():
@@ -74,8 +73,8 @@ def test_custo_do_voto_e_patrimonio(tmp_path, monkeypatch):
     for ano, cargo, total in ((2018, "SENADOR", 100.0), (2022, "DEPUTADO FEDERAL", 300.0)):
         (tmp_path / "tse" / str(ano)).mkdir(parents=True)
         (tmp_path / "tse" / str(ano) / "SP.json").write_text(
-            '[{"nome": "José da Silva", "nascimento": "1970-01-01", "cargo": "%s", "totalBens": %s, "uf": "SP"},'
-            '{"nome": "José da Silva", "nascimento": "1980-01-01", "cargo": "%s", "totalBens": 1.0, "uf": "SP"}]' % (cargo, total, cargo), encoding="utf-8")
+            f'[{{"nome": "José da Silva", "nascimento": "1970-01-01", "cargo": "{cargo}", "totalBens": {total}, "uf": "SP"}},'
+            f'{{"nome": "José da Silva", "nascimento": "1980-01-01", "cargo": "{cargo}", "totalBens": 1.0, "uf": "SP"}}]', encoding="utf-8")
     atual = {"nome": "JOSE DA SILVA", "nascimento": "1970-01-01"}
     assert g.patrimonio_de(atual) == [[2018, "SENADOR", 100.0], [2022, "DEPUTADO FEDERAL", 300.0]]
     assert g.patrimonio_de({"nome": "Outra", "nascimento": "1970-01-01"}) is None

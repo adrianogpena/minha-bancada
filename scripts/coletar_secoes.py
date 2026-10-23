@@ -65,10 +65,10 @@ def carregar_locais(ano: int) -> dict:
     locais = {}
     for col, linhas in ler_csv(BRUTO / "eleitorado_locais_votacao" / f"eleitorado_local_votacao_{ano}.zip"):
         i = {k: col[k] for k in ("SG_UF", "CD_MUNICIPIO", "NR_ZONA", "NR_LOCAL_VOTACAO", "NR_LATITUDE", "NR_LONGITUDE")}
-        for l in linhas:
-            k = (l[i["SG_UF"]], int(l[i["CD_MUNICIPIO"]]), int(l[i["NR_ZONA"]]), int(l[i["NR_LOCAL_VOTACAO"]]))
+        for lin in linhas:
+            k = (lin[i["SG_UF"]], int(lin[i["CD_MUNICIPIO"]]), int(lin[i["NR_ZONA"]]), int(lin[i["NR_LOCAL_VOTACAO"]]))
             if k not in locais:
-                locais[k] = (coordenada(l[i["NR_LATITUDE"]]), coordenada(l[i["NR_LONGITUDE"]]))
+                locais[k] = (coordenada(lin[i["NR_LATITUDE"]]), coordenada(lin[i["NR_LONGITUDE"]]))
     return locais
 
 
@@ -98,18 +98,18 @@ def coletar_ano(ano: int) -> None:
             sq_i, t_i, v_i = col["SQ_CANDIDATO"], col["NR_TURNO"], col["QT_VOTOS"]
             uf_i, mun_i, nm_i, z_i, loc_i, nl_i = (col["SG_UF"], col["CD_MUNICIPIO"], col["NM_MUNICIPIO"],
                                                    col["NR_ZONA"], col["NR_LOCAL_VOTACAO"], col["NM_LOCAL_VOTACAO"])
-            for l in linhas:
-                sq = l[sq_i]
+            for lin in linhas:
+                sq = lin[sq_i]
                 if sq not in alvo:
                     continue
-                turno, votos = int(l[t_i]), int(l[v_i])
+                turno, votos = int(lin[t_i]), int(lin[v_i])
                 total[(sq, turno)] += votos
-                chave = (sq, turno, l[uf_i], int(l[mun_i]), int(l[z_i]), int(l[loc_i]))
+                chave = (sq, turno, lin[uf_i], int(lin[mun_i]), int(lin[z_i]), int(lin[loc_i]))
                 por_local[chave] += votos
                 if chave not in nome_local:
-                    nome_local[chave] = l[nl_i].strip()
-                por_mun[(sq, turno, l[nm_i].strip())] += votos
-                por_cod[(sq, turno, int(l[mun_i]))] += votos
+                    nome_local[chave] = lin[nl_i].strip()
+                por_mun[(sq, turno, lin[nm_i].strip())] += votos
+                por_cod[(sq, turno, int(lin[mun_i]))] += votos
 
     ultimo = {}
     for (sq, turno) in total:
@@ -148,7 +148,7 @@ def coletar_ano(ano: int) -> None:
     for uf, mapa in por_uf.items():
         (pasta / f"{uf}.json").write_text(json.dumps(mapa, ensure_ascii=False, separators=(",", ":")), encoding="utf-8")
     (pasta / "_coleta.json").write_text(json.dumps({
-        "coletadoEm": dt.datetime.now(dt.timezone.utc).isoformat(timespec="seconds"),
+        "coletadoEm": dt.datetime.now(dt.UTC).isoformat(timespec="seconds"),
         "eleitos": sum(len(m) for m in por_uf.values()), "versao": VERSAO}), encoding="utf-8")
     print(f"  salvo em {pasta} ({sum(len(m) for m in por_uf.values())} eleitos)")
 

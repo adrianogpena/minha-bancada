@@ -15,16 +15,16 @@ Não coletado: proposições e votações (e-Legis, um documento por proposiçã
 import csv
 import io
 import re
-import sys
 from datetime import date
 from html import unescape
+from functools import partial
 
 import estaduais_comum as comum
 
 UF = "SC"
 TRANSPARENCIA = "https://transparencia.alesc.sc.gov.br"
 ELEGIS = "https://portalelegis.alesc.sc.gov.br"
-TSE_ARQUIVO = comum.RAIZ / "dados" / "tse" / "2022" / "SC.json"
+TSE_ARQUIVO = comum.arquivo_tse(UF)
 DEPUTADOS_URL = f"{TRANSPARENCIA}/deputados"
 GABINETES_PAGINA = f"{TRANSPARENCIA}/gabinetes-parlamentares"
 DIARIAS_PAGINA = f"{TRANSPARENCIA}/diarias"
@@ -34,15 +34,8 @@ PRIMEIRO_ANO = 2023
 ANOS_REMUNERACAO = 2
 MESES_RECENTES = 2
 TITULOS = {"dr", "dra", "prof", "profa", "delegado", "delegada", "dep", "deputado", "deputada", "da", "de", "do", "dos", "das", "e"}
+tokens = partial(comum.palavras, ignorar=TITULOS)
 CAMPOS_NOME = ("nome", "nomeCivil", "nomeFonte")
-
-
-def limpar(html: str) -> str:
-    return " ".join(unescape(re.sub(r"<[^>]+>", " ", html)).split())
-
-
-def _tokens(nome: str) -> list:
-    return [t for t in re.sub(r"[^a-z ]", " ", comum.sem_acento(nome)).split() if t not in TITULOS]
 
 
 def _cabe(a: list, b: list) -> bool:
@@ -62,12 +55,12 @@ def ligar(nomes, deputados: list[dict]) -> dict:
     """Como `ligar_nomes`; o nome que não casa inteiro casa pelas palavras (sem "da", "de"...) com um só nome de deputado.
     "Ana Paula da Silva (Paulinha)" também tenta só o apelido entre parênteses."""
     ligados = comum.ligar_nomes(nomes, deputados)
-    candidatos = [(d["id"], t) for d in deputados for c in CAMPOS_NOME if d.get(c) and (t := _tokens(d[c]))]
+    candidatos = [(d["id"], t) for d in deputados for c in CAMPOS_NOME if d.get(c) and (t := tokens(d[c]))]
     for n in nomes:
         if n in ligados:
             continue
         for v in [re.sub(r"\([^)]*\)", " ", n)] + re.findall(r"\(([^)]*)\)", n):
-            achado = _unico(_tokens(v), candidatos)
+            achado = _unico(tokens(v), candidatos)
             if achado is not None:
                 ligados[n] = achado
                 break
@@ -84,18 +77,18 @@ def parse_deputados(html: str) -> list[dict]:
     """[{nomeCivil, idContracheque}] da tabela de subsídios."""
     achados = []
     for nome, ident in re.findall(r'<td class="fw-semibold">(.*?)</td>.*?/deputados/contracheque/(\d+)\?', html, re.S):
-        achados.append({"nomeCivil": limpar(nome), "idContracheque": ident})
+        achados.append({"nomeCivil": comum.limpar(nome), "idContracheque": ident})
     return achados
 
 
 def deputados_com_tse(lista: list[dict]) -> list[dict]:
     """O nome civil da fonte casa com o do TSE por palavras; o casado leva nome de urna, nome do TSE e partido."""
-    eleitos = [e for e in comum.ler(TSE_ARQUIVO, []) if e.get("cargo") == "DEPUTADO ESTADUAL" and e.get("situacao") == "eleito"]
-    candidatos = [(e["sequencial"], t) for e in eleitos for campo in ("nome", "urna") if e.get(campo) and (t := _tokens(e[campo]))]
+    eleitos = comum.eleitos_tse(TSE_ARQUIVO)
+    candidatos = [(e["sequencial"], t) for e in eleitos for campo in ("nome", "urna") if e.get(campo) and (t := tokens(e[campo]))]
     por_id = {e["sequencial"]: e for e in eleitos}
     saida = []
     for d in lista:
-        e = por_id.get(_unico(_tokens(d["nomeCivil"]), candidatos))
+        e = por_id.get(_unico(tokens(d["nomeCivil"]), candidatos))
         saida.append({"id": d["idContracheque"], "nome": e["urna"] if e and e.get("urna") else d["nomeCivil"].title(),
                       "nomeCivil": e["nome"] if e else d["nomeCivil"].title(), "nomeFonte": d["nomeCivil"].title(), "foto": None,
                       "email": e.get("email") if e else None, "titular": True, "partido": e.get("partido") if e else None, "fonte": DEPUTADOS_URL})
@@ -128,34 +121,29 @@ def ler_csv(texto: str) -> list[dict]:
     return list(csv.DictReader(io.StringIO(texto.lstrip("﻿")), delimiter=";"))
 
 
-def data_iso(texto: str) -> str | None:
-    m = re.match(r"(\d\d)/(\d\d)/(\d{4})", texto or "")
-    return f"{m.group(3)}-{m.group(2)}-{m.group(1)}" if m else None
-
-
 def itens_gabinetes(linhas: list[dict], deputados: list[dict]) -> list[dict]:
-    ligados = ligar({l["Conta"] for l in linhas if l.get("Conta")}, deputados)
+    ligados = ligar({linha["Conta"] for linha in linhas if linha.get("Conta")}, deputados)
     itens = []
-    for l in linhas:
-        did, data = ligados.get(l.get("Conta")), data_iso(l.get("Data de Referência"))
+    for linha in linhas:
+        did, data = ligados.get(linha.get("Conta")), comum.data_br_iso(linha.get("Data de Referência"))
         if did is None or data is None:
             continue
-        categoria = " / ".join(x for x in (l.get("Verba"), l.get("Descrição")) if x)
-        itens.append({"idDeputado": did, "mes": int(data[5:7]), "categoria": categoria, "fornecedor": l.get("Favorecido") or None, "cnpj": None,
-                      "valor": comum.valor_br(l.get("Valor")), "data": data, "trecho": l.get("Trecho") or None, "fonte": GABINETES_PAGINA})
+        categoria = " / ".join(x for x in (linha.get("Verba"), linha.get("Descrição")) if x)
+        itens.append({"idDeputado": did, "mes": int(data[5:7]), "categoria": categoria, "fornecedor": linha.get("Favorecido") or None, "cnpj": None,
+                      "valor": comum.valor_br(linha.get("Valor")), "data": data, "trecho": linha.get("Trecho") or None, "fonte": GABINETES_PAGINA})
     return itens
 
 
 def itens_diarias(linhas: list[dict], deputados: list[dict]) -> list[dict]:
-    so_deputados = [l for l in linhas if l.get("Vínculo") == "Deputado"]
-    ligados = ligar({l["Nome"] for l in so_deputados}, deputados)
+    so_deputados = [linha for linha in linhas if linha.get("Vínculo") == "Deputado"]
+    ligados = ligar({linha["Nome"] for linha in so_deputados}, deputados)
     itens = []
-    for l in so_deputados:
-        did, data = ligados.get(l["Nome"]), data_iso(l.get("Data"))
+    for linha in so_deputados:
+        did, data = ligados.get(linha["Nome"]), comum.data_br_iso(linha.get("Data"))
         if did is None or data is None:
             continue
-        itens.append({"idDeputado": did, "data": data, "destino": None, "motivo": None, "valor": comum.valor_br(l.get("Valor")),
-                      "quantidade": comum.valor_br(l.get("Quantidade")), "fonte": l.get("Relatório") or DIARIAS_PAGINA})
+        itens.append({"idDeputado": did, "data": data, "destino": None, "motivo": None, "valor": comum.valor_br(linha.get("Valor")),
+                      "quantidade": comum.valor_br(linha.get("Quantidade")), "fonte": linha.get("Relatório") or DIARIAS_PAGINA})
     return itens
 
 
@@ -170,8 +158,8 @@ def parse_sessoes(html: str) -> list[dict]:
         data = re.search(r"(\d\d/\d\d/\d{4})\s*·", bloco)
         situacao = re.search(r'</i>\s*([^<]+)</span>\s*</div>\s*</div>\s*</div>', bloco)
         if codigo and titulo and data:
-            sessoes.append({"codigo": codigo.group(1), "titulo": limpar(titulo.group(1)), "data": data_iso(data.group(1)),
-                            "situacao": limpar(situacao.group(1)) if situacao else None})
+            sessoes.append({"codigo": codigo.group(1), "titulo": comum.limpar(titulo.group(1)), "data": comum.data_br_iso(data.group(1)),
+                            "situacao": comum.limpar(situacao.group(1)) if situacao else None})
     return sessoes
 
 
@@ -182,7 +170,7 @@ def total_paginas(html: str) -> int:
 
 def parse_presenca(html: str) -> dict:
     """{nome: situação} da tabela de presença de uma sessão."""
-    return {limpar(n): limpar(s) for n, s in re.findall(r"<tr>\s*<td>(.*?)</td>\s*<td>(.*?)</td>\s*</tr>", html, re.S) if limpar(n)}
+    return {comum.limpar(n): comum.limpar(s) for n, s in re.findall(r"<tr>\s*<td>(.*?)</td>\s*<td>(.*?)</td>\s*</tr>", html, re.S) if comum.limpar(n)}
 
 
 def tipo_presenca(situacao: str) -> str:
@@ -215,10 +203,7 @@ def itens_presenca(sessoes: dict, deputados: list[dict]) -> list[dict]:
 
 # ---------------------------------------------------------------- coleta
 
-def baixar(s, url: str, **kw):
-    r = s.get(url, timeout=60, **kw)
-    r.raise_for_status()
-    return r
+baixar = partial(comum.get, timeout=60)
 
 
 def coletar_remuneracao(s, pasta, hoje: date, agora: str) -> None:
@@ -280,6 +265,8 @@ def coletar() -> None:
     comum.salvar(pasta / "deputados.json", {"fonte": DEPUTADOS_URL, "host": None, "legislatura": "2023-2027", "deputados": deputados})
 
     for ano in range(PRIMEIRO_ANO, hoje.year + 1):
+        if all(comum.ano_encerrado(ano, hoje, pasta / f"{nome}_{ano}.json") for nome in ("verbas", "diarias")):
+            continue
         gab = itens_gabinetes(ler_csv(baixar(s, f"{GABINETES_PAGINA}/csv/{ano}").content.decode("utf-8-sig")), deputados)
         comum.salvar(pasta / f"verbas_{ano}.json", {"coletadoEm": agora, "fonte": GABINETES_PAGINA, "itens": gab})
         dia = itens_diarias(ler_csv(baixar(s, f"{DIARIAS_PAGINA}/csv/{ano}").content.decode("utf-8-sig")), deputados)
@@ -328,7 +315,7 @@ def _contrato_csv(caminho, vinculo=None):
         texto = baixar(comum.sessao(), f"{TRANSPARENCIA}/{caminho}/csv/{date.today().year}").content.decode("utf-8-sig")
         linhas = texto.splitlines()
         if vinculo:
-            return {"csv": "\n".join(linhas[:1] + [l for l in linhas[1:] if f";{vinculo};" in l][:2])}
+            return {"csv": "\n".join(linhas[:1] + [linha for linha in linhas[1:] if f";{vinculo};" in linha][:2])}
         return {"csv": "\n".join(linhas[:4])}
     return buscar
 
@@ -366,23 +353,20 @@ def _contrato_sessoes(ctx):
 def _conferir_sessoes(registro):
     sessoes = parse_sessoes(registro["lista"])
     falhas = [] if sessoes else ["lista de sessões plenárias vazia"]
-    for x in sessoes:
-        if not x["data"] or not x["situacao"]:
-            falhas.append("sessão sem data ou situação")
+    falhas += ["sessão sem data ou situação" for x in sessoes if not x["data"] or not x["situacao"]]
     if not parse_presenca(registro["presenca"]):
         falhas.append("página de presença sem linhas")
     return falhas, []
 
 
 CONTRATOS = [
-    dict(nome="estadual_sc_deputados", fonte=DEPUTADOS_URL, buscar=_contrato_deputados, html=_conferir_deputados),
-    dict(nome="estadual_sc_contracheque", fonte=DEPUTADOS_URL, buscar=_contrato_contracheque, html=_conferir_contracheque),
-    dict(nome="estadual_sc_gabinetes", fonte=f"{GABINETES_PAGINA}/dados-abertos", buscar=_contrato_csv("gabinetes-parlamentares"), html=_conferir_gabinetes),
-    dict(nome="estadual_sc_diarias", fonte=f"{DIARIAS_PAGINA}/dados-abertos", buscar=_contrato_csv("diarias", "Deputado"), html=_conferir_diarias),
-    dict(nome="estadual_sc_sessoes", fonte=SESSOES_URL, buscar=_contrato_sessoes, html=_conferir_sessoes),
+    {"nome": "estadual_sc_deputados", "fonte": DEPUTADOS_URL, "buscar": _contrato_deputados, "html": _conferir_deputados},
+    {"nome": "estadual_sc_contracheque", "fonte": DEPUTADOS_URL, "buscar": _contrato_contracheque, "html": _conferir_contracheque},
+    {"nome": "estadual_sc_gabinetes", "fonte": f"{GABINETES_PAGINA}/dados-abertos", "buscar": _contrato_csv("gabinetes-parlamentares"), "html": _conferir_gabinetes},
+    {"nome": "estadual_sc_diarias", "fonte": f"{DIARIAS_PAGINA}/dados-abertos", "buscar": _contrato_csv("diarias", "Deputado"), "html": _conferir_diarias},
+    {"nome": "estadual_sc_sessoes", "fonte": SESSOES_URL, "buscar": _contrato_sessoes, "html": _conferir_sessoes},
 ]
 
 
 if __name__ == "__main__":
-    coletar()
-    sys.exit(0)
+    comum.principal(coletar)

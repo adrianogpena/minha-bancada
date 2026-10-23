@@ -98,7 +98,7 @@ def linhas_csv(zip_path: Path):
                 leitor = csv.reader(texto, delimiter=";", quotechar='"')
                 cabecalho = next(leitor)
                 for linha in leitor:
-                    yield dict(zip(cabecalho, linha))
+                    yield dict(zip(cabecalho, linha, strict=False))
 
 
 def limpo(v: str | None) -> str | None:
@@ -155,9 +155,9 @@ def coletar_redes(ano: int, eleitos: dict) -> None:
         except Exception as e:
             avisar(f"redes sociais de {ano} ({url.rsplit('/', 1)[-1]}): {e}")
             continue
-        for l in linhas_csv(z):
-            e = eleitos.get(l.get("SQ_CANDIDATO"))
-            link = url_rede(l.get("DS_URL"))
+        for lin in linhas_csv(z):
+            e = eleitos.get(lin.get("SQ_CANDIDATO"))
+            link = url_rede(lin.get("DS_URL"))
             if e and link and link not in e["redes"]:
                 e["redes"].append(link)
         z.unlink()
@@ -207,16 +207,16 @@ def coletar_votos(ano: int, eleitos: dict) -> None:
     votos = defaultdict(dict)        # sq -> {turno: [data, votos]}
     totais = defaultdict(float)      # (cargo, ue, turno) -> votos válidos
     zip_votos = baixar(f"{CDN}/votacao_candidato_munzona/votacao_candidato_munzona_{ano}.zip")
-    for l in linhas_csv(zip_votos):
-        cargo = (l.get("DS_CARGO") or "").strip().upper()
+    for lin in linhas_csv(zip_votos):
+        cargo = (lin.get("DS_CARGO") or "").strip().upper()
         if cargo in SO_CARGOS.get(ano, {cargo}) and cargo:
-            turno = int(l.get("NR_TURNO") or 1)
-            qt = numero(l.get("QT_VOTOS_NOMINAIS_VALIDOS") or l.get("QT_VOTOS_NOMINAIS"))
+            turno = int(lin.get("NR_TURNO") or 1)
+            qt = numero(lin.get("QT_VOTOS_NOMINAIS_VALIDOS") or lin.get("QT_VOTOS_NOMINAIS"))
             if cargo in MAJORITARIOS:
-                totais[(cargo, l["SG_UE"].strip(), turno)] += qt
-            sq = l.get("SQ_CANDIDATO")
+                totais[(cargo, lin["SG_UE"].strip(), turno)] += qt
+            sq = lin.get("SQ_CANDIDATO")
             if sq in ids:
-                d = votos[sq].setdefault(turno, [limpo(l.get("DT_ELEICAO")), 0.0])
+                d = votos[sq].setdefault(turno, [limpo(lin.get("DT_ELEICAO")), 0.0])
                 d[1] += qt
     zip_votos.unlink()
 
@@ -245,29 +245,29 @@ def coletar_ano(ano: int) -> None:
     candidatos: dict[str, dict] = {}
     obrigatorias = {"SQ_CANDIDATO", "DS_CARGO", "DS_SIT_TOT_TURNO", "SG_UF", "SG_UE", "NM_UE", "NR_CANDIDATO"}
     verificado = False
-    for l in linhas_csv(zip_cand):
+    for lin in linhas_csv(zip_cand):
         if not verificado:
-            faltando = obrigatorias - l.keys()
+            faltando = obrigatorias - lin.keys()
             if faltando:
                 raise SystemExit(f"Colunas ausentes no arquivo do TSE {ano}: {sorted(faltando)}. "
-                                 f"Colunas encontradas: {sorted(l.keys())[:60]}")
+                                 f"Colunas encontradas: {sorted(lin.keys())[:60]}")
             verificado = True
-        sq = l["SQ_CANDIDATO"]
+        sq = lin["SQ_CANDIDATO"]
         try:
-            turno = int(l.get("NR_TURNO") or 1)
+            turno = int(lin.get("NR_TURNO") or 1)
         except ValueError:
             turno = 1
         atual = candidatos.get(sq)
         if atual is None or turno >= atual["_turno"]:
-            enxuto = {k: l.get(k) for k in COLUNAS}
+            enxuto = {k: lin.get(k) for k in COLUNAS}
             enxuto["_turno"] = turno
             candidatos[sq] = enxuto
     zip_cand.unlink()
     print(f"  candidaturas: {len(candidatos)}")
 
     # 2) titulares eleitos (ou no 2º turno), para achar os vices da mesma chapa
-    def situacao(l):
-        s = (l.get("DS_SIT_TOT_TURNO") or "").strip().upper()
+    def situacao(lin):
+        s = (lin.get("DS_SIT_TOT_TURNO") or "").strip().upper()
         if s in ELEITO or (s.startswith("ELEITO") and "NÃO" not in s):
             return "eleito"
         if s in SEGUNDO_TURNO or ("TURNO" in s and "2" in s):
@@ -277,82 +277,82 @@ def coletar_ano(ano: int) -> None:
     # enquanto o 2º turno não acontece, os finalistas de presidente e governador
     # já têm uma linha de 2º turno, ainda sem resultado (#NULO)
     if ano == ANO_EM_ANDAMENTO:
-        for l in candidatos.values():
-            if (l["DS_CARGO"].strip().upper() in ("PRESIDENTE", "GOVERNADOR") and l["_turno"] == 2
-                    and (l.get("DS_SIT_TOT_TURNO") or "").strip().upper().startswith("#NULO")):
-                l["DS_SIT_TOT_TURNO"] = "2º TURNO"
-        finalistas = Counter(l["SG_UE"] for l in candidatos.values()
-                             if l["DS_CARGO"].strip().upper() in ("PRESIDENTE", "GOVERNADOR") and situacao(l) == "2turno")
+        for lin in candidatos.values():
+            if (lin["DS_CARGO"].strip().upper() in ("PRESIDENTE", "GOVERNADOR") and lin["_turno"] == 2
+                    and (lin.get("DS_SIT_TOT_TURNO") or "").strip().upper().startswith("#NULO")):
+                lin["DS_SIT_TOT_TURNO"] = "2º TURNO"
+        finalistas = Counter(lin["SG_UE"] for lin in candidatos.values()
+                             if lin["DS_CARGO"].strip().upper() in ("PRESIDENTE", "GOVERNADOR") and situacao(lin) == "2turno")
         estranhos = {ue: n for ue, n in finalistas.items() if n != 2}
         if estranhos:
             avisar(f"TSE {ano}: lugares com número de finalistas diferente de 2: {estranhos}")
 
     chapas = {}
     titulares = {}
-    for sq, l in candidatos.items():
-        cargo = l["DS_CARGO"].strip().upper()
-        if cargo in VICES.values() and situacao(l):
-            chapas[(cargo, l["SG_UE"], l["NR_CANDIDATO"])] = situacao(l)
-            titulares[(cargo, l["SG_UE"], l["NR_CANDIDATO"])] = sq
+    for sq, lin in candidatos.items():
+        cargo = lin["DS_CARGO"].strip().upper()
+        if cargo in VICES.values() and situacao(lin):
+            chapas[(cargo, lin["SG_UE"], lin["NR_CANDIDATO"])] = situacao(lin)
+            titulares[(cargo, lin["SG_UE"], lin["NR_CANDIDATO"])] = sq
 
     # se uma chapa tem mais de um vice registrado (troca antes da eleição),
     # fica o registro mais recente: o substituto recebe número de registro maior
     vice_da_chapa = {}
-    for sq, l in candidatos.items():
-        cargo = l["DS_CARGO"].strip().upper()
+    for sq, lin in candidatos.items():
+        cargo = lin["DS_CARGO"].strip().upper()
         if cargo in VICES:
-            chave = (cargo, l["SG_UE"], l["NR_CANDIDATO"])
+            chave = (cargo, lin["SG_UE"], lin["NR_CANDIDATO"])
             atual = vice_da_chapa.get(chave)
-            if atual is None or (l["_turno"], int(sq)) > (candidatos[atual]["_turno"], int(atual)):
+            if atual is None or (lin["_turno"], int(sq)) > (candidatos[atual]["_turno"], int(atual)):
                 vice_da_chapa[chave] = sq
 
     eleitos = {}
-    for sq, l in candidatos.items():
-        cargo = l["DS_CARGO"].strip().upper()
+    for sq, lin in candidatos.items():
+        cargo = lin["DS_CARGO"].strip().upper()
         if cargo in VICES:
-            if vice_da_chapa.get((cargo, l["SG_UE"], l["NR_CANDIDATO"])) != sq:
+            if vice_da_chapa.get((cargo, lin["SG_UE"], lin["NR_CANDIDATO"])) != sq:
                 continue
-            sit = chapas.get((VICES[cargo], l["SG_UE"], l["NR_CANDIDATO"]))
+            sit = chapas.get((VICES[cargo], lin["SG_UE"], lin["NR_CANDIDATO"]))
         else:
-            sit = situacao(l)
+            sit = situacao(lin)
         if not sit or "SUPLENTE" in cargo or cargo not in SO_CARGOS.get(ano, {cargo}):
             continue
         chapa_sq = titular_nome = None
         if cargo in VICES:
-            chapa_sq = titulares.get((VICES[cargo], l["SG_UE"], l["NR_CANDIDATO"]))
+            chapa_sq = titulares.get((VICES[cargo], lin["SG_UE"], lin["NR_CANDIDATO"]))
             if chapa_sq:
                 tl = candidatos[chapa_sq]
                 titular_nome = titulo(limpo(tl.get("NM_URNA_CANDIDATO"))) or titulo(limpo(tl.get("NM_CANDIDATO")))
-        uf = l["SG_UF"].strip().upper()
-        nascimento = limpo(l.get("DT_NASCIMENTO"))
+        uf = lin["SG_UF"].strip().upper()
+        nascimento = limpo(lin.get("DT_NASCIMENTO"))
         if nascimento and "/" in nascimento:
             d, m, a = nascimento.split("/")
             nascimento = f"{a}-{m}-{d}"
         eleitos[sq] = {
             "sequencial": sq,
-            "nome": titulo(limpo(l.get("NM_CANDIDATO"))),
-            "urna": titulo(limpo(l.get("NM_URNA_CANDIDATO"))) or titulo(limpo(l.get("NM_CANDIDATO"))),
+            "nome": titulo(limpo(lin.get("NM_CANDIDATO"))),
+            "urna": titulo(limpo(lin.get("NM_URNA_CANDIDATO"))) or titulo(limpo(lin.get("NM_CANDIDATO"))),
             "cargo": cargo,
             "situacao": sit,
-            "partido": limpo(l.get("SG_PARTIDO")),
-            "federacao": limpo(l.get("SG_FEDERACAO")) or limpo(l.get("NM_FEDERACAO")),
-            "numero": limpo(l.get("NR_CANDIDATO")),
+            "partido": limpo(lin.get("SG_PARTIDO")),
+            "federacao": limpo(lin.get("SG_FEDERACAO")) or limpo(lin.get("NM_FEDERACAO")),
+            "numero": limpo(lin.get("NR_CANDIDATO")),
             "uf": uf,
-            "unidadeEleitoral": l["SG_UE"].strip(),
-            "municipio": titulo(limpo(l.get("NM_UE"))) if cargo in ("VEREADOR", "PREFEITO", "VICE-PREFEITO") else None,
+            "unidadeEleitoral": lin["SG_UE"].strip(),
+            "municipio": titulo(limpo(lin.get("NM_UE"))) if cargo in ("VEREADOR", "PREFEITO", "VICE-PREFEITO") else None,
             "nascimento": nascimento,
-            "genero": limpo(l.get("DS_GENERO")),
-            "instrucao": frase(limpo(l.get("DS_GRAU_INSTRUCAO"))),
-            "ocupacao": frase(limpo(l.get("DS_OCUPACAO"))),
-            "corRaca": frase(limpo(l.get("DS_COR_RACA"))),
-            "coligacao": titulo(limpo(l.get("NM_COLIGACAO"))),
-            "composicaoColigacao": limpo(l.get("DS_COMPOSICAO_COLIGACAO")),
-            "estadoCivil": frase(limpo(l.get("DS_ESTADO_CIVIL"))),
-            "ufNascimento": limpo(l.get("SG_UF_NASCIMENTO")),
-            "nomeSocial": titulo(limpo(l.get("NM_SOCIAL_CANDIDATO"))),
-            "email": (limpo(l.get("DS_EMAIL")) or "").lower() if "@" in (l.get("DS_EMAIL") or "") else None,
-            "eleicao": limpo(l.get("CD_ELEICAO")),
-            "resultado": frase(limpo(l.get("DS_SIT_TOT_TURNO"))),
+            "genero": limpo(lin.get("DS_GENERO")),
+            "instrucao": frase(limpo(lin.get("DS_GRAU_INSTRUCAO"))),
+            "ocupacao": frase(limpo(lin.get("DS_OCUPACAO"))),
+            "corRaca": frase(limpo(lin.get("DS_COR_RACA"))),
+            "coligacao": titulo(limpo(lin.get("NM_COLIGACAO"))),
+            "composicaoColigacao": limpo(lin.get("DS_COMPOSICAO_COLIGACAO")),
+            "estadoCivil": frase(limpo(lin.get("DS_ESTADO_CIVIL"))),
+            "ufNascimento": limpo(lin.get("SG_UF_NASCIMENTO")),
+            "nomeSocial": titulo(limpo(lin.get("NM_SOCIAL_CANDIDATO"))),
+            "email": (limpo(lin.get("DS_EMAIL")) or "").lower() if "@" in (lin.get("DS_EMAIL") or "") else None,
+            "eleicao": limpo(lin.get("CD_ELEICAO")),
+            "resultado": frase(limpo(lin.get("DS_SIT_TOT_TURNO"))),
             "sequencialChapa": chapa_sq,
             "titular": titular_nome,
             "votos": [],
@@ -377,14 +377,14 @@ def coletar_ano(ano: int) -> None:
     # 3) bens declarados, só dos eleitos
     try:
         zip_bens = baixar(f"{CDN}/bem_candidato/bem_candidato_{ano}.zip")
-        for l in linhas_csv(zip_bens):
-            e = eleitos.get(l.get("SQ_CANDIDATO"))
+        for lin in linhas_csv(zip_bens):
+            e = eleitos.get(lin.get("SQ_CANDIDATO"))
             if not e:
                 continue
-            valor = numero(l.get("VR_BEM_CANDIDATO"))
+            valor = numero(lin.get("VR_BEM_CANDIDATO"))
             e["totalBens"] += valor
-            e["bens"].append([frase(limpo(l.get("DS_TIPO_BEM_CANDIDATO"))) or "Outros",
-                              (limpo(l.get("DS_BEM_CANDIDATO")) or "")[:160], round(valor, 2)])
+            e["bens"].append([frase(limpo(lin.get("DS_TIPO_BEM_CANDIDATO"))) or "Outros",
+                              (limpo(lin.get("DS_BEM_CANDIDATO")) or "")[:160], round(valor, 2)])
         zip_bens.unlink()
     except Exception as e:
         avisar(f"bens de {ano}: {e}")
@@ -417,7 +417,7 @@ def salvar_ano(ano: int, pasta: Path, eleitos: dict) -> None:
         lista.sort(key=lambda e: (e["cargo"], e["municipio"] or "", e["urna"] or ""))
         (pasta / f"{uf}.json").write_text(json.dumps(lista, ensure_ascii=False, separators=(",", ":")), encoding="utf-8")
     (pasta / "_coleta.json").write_text(json.dumps({
-        "coletadoEm": dt.datetime.now(dt.timezone.utc).isoformat(timespec="seconds"),
+        "coletadoEm": dt.datetime.now(dt.UTC).isoformat(timespec="seconds"),
         "eleitos": len(eleitos),
         "versao": VERSAO,
     }), encoding="utf-8")
@@ -434,7 +434,7 @@ def precisa_coletar(ano: int, forcar: bool) -> bool:
     if ano != ANO_EM_ANDAMENTO:
         return False
     quando = dt.datetime.fromisoformat(info["coletadoEm"])
-    return dt.datetime.now(dt.timezone.utc) - quando > dt.timedelta(days=DIAS_ENTRE_ATUALIZACOES)
+    return dt.datetime.now(dt.UTC) - quando > dt.timedelta(days=DIAS_ENTRE_ATUALIZACOES)
 
 
 def main():

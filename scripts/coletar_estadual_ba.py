@@ -16,13 +16,11 @@ import csv
 import io
 import json
 import re
-import sys
 import zipfile
 import zlib
 from concurrent.futures import ThreadPoolExecutor
 from datetime import date, datetime, timedelta
-from html import unescape
-from xml.etree import ElementTree
+from functools import partial
 
 import requests
 import urllib3
@@ -49,7 +47,6 @@ TIMEOUT = 30
 TIMEOUT_ARQUIVO = 120
 EM_PARALELO = 2
 RENOVAR_DETALHE_DIAS = 7   # o detalhe de proposição do ano corrente é relido a cada 7 a 20 dias (escalonado por proposição); anos encerrados só uma vez
-NS = {"m": "http://schemas.openxmlformats.org/spreadsheetml/2006/main"}
 
 TIPOS = {  # valor do filtro `tipo` -> (sigla, descrição)
     "PL.": ("PL", "Projeto de Lei"),
@@ -67,10 +64,7 @@ def decodificar(conteudo: bytes) -> str:
         return conteudo.decode("cp1252", errors="replace")
 
 
-def baixar(s, url: str, params: dict | None = None, timeout: int = TIMEOUT) -> bytes:
-    r = s.get(url, params=params, timeout=timeout)
-    r.raise_for_status()
-    return r.content
+baixar = partial(comum.baixar, timeout=TIMEOUT)
 
 
 def baixar_ckan(s, url: str, timeout: int = TIMEOUT) -> bytes:
@@ -80,10 +74,6 @@ def baixar_ckan(s, url: str, timeout: int = TIMEOUT) -> bytes:
     r = requests.get(url, timeout=timeout, verify=False, headers={"User-Agent": comum.USER_AGENT})
     r.raise_for_status()
     return r.content
-
-
-def limpar(html: str) -> str:
-    return " ".join(unescape(re.sub(r"<[^>]+>", " ", html or "")).split())
 
 
 def iso_data(texto: str) -> str | None:
@@ -116,16 +106,16 @@ def cartoes(html: str) -> list[dict]:
             continue
         foto = re.search(r'<img src="([^"]+)"', bloco)
         partido = re.search(r'<div class="partido-nome">(.*)', bloco, re.S)
-        lista.append({"id": link.group(1), "nome": limpar(link.group(2)),
+        lista.append({"id": link.group(1), "nome": comum.limpar(link.group(2)),
                       "foto": f"{SITE}{foto.group(1)}" if foto and foto.group(1).startswith("/") else (foto.group(1) if foto else None),
-                      "partido": limpar(partido.group(1)) if partido else None})
+                      "partido": comum.limpar(partido.group(1)) if partido else None})
     return lista
 
 
 def ficha(html: str) -> dict:
     nome = re.search(r"<strong>Nome:\s*</strong>\s*<span>(.*?)</span>", html, re.S)
     email = re.search(r'<a href="\.email"><span>([^<@\s]+@[^<\s]+)</span>', html)
-    return {"nomeCivil": limpar(nome.group(1)) if nome else None, "email": email.group(1) if email else None}
+    return {"nomeCivil": comum.limpar(nome.group(1)) if nome else None, "email": email.group(1) if email else None}
 
 
 def coletar_deputados(s) -> list[dict]:
@@ -152,51 +142,28 @@ def coletar_deputados(s) -> list[dict]:
 
 # ---------------------------------------------------------------- verba indenizatória (planilha anual)
 
-def ler_xlsx(conteudo: bytes) -> list[dict]:
-    """Primeira planilha como lista de linhas {coluna: texto}, só células preenchidas."""
-    z = zipfile.ZipFile(io.BytesIO(conteudo))
-    textos = []
-    if "xl/sharedStrings.xml" in z.namelist():
-        for si in ElementTree.fromstring(z.read("xl/sharedStrings.xml")).findall("m:si", NS):
-            textos.append("".join(t.text or "" for t in si.iter(f"{{{NS['m']}}}t")))
-    folha = ElementTree.fromstring(z.read("xl/worksheets/sheet1.xml"))
-    linhas = []
-    for row in folha.iter(f"{{{NS['m']}}}row"):
-        celulas = {}
-        for c in row.findall("m:c", NS):
-            v = c.find("m:v", NS)
-            if v is None or v.text is None:
-                continue
-            valor = textos[int(v.text)] if c.get("t") == "s" else v.text
-            if valor.strip():
-                celulas[re.match(r"[A-Z]+", c.get("r")).group(0)] = valor.strip()
-        if celulas:
-            linhas.append(celulas)
-    return linhas
-
-
 def itens_verba(linhas: list[dict], deputados: list[dict], ano: int) -> tuple[list[dict], set]:
     """Linhas da planilha (cabeçalho "DEPUTADO (A)" em alguma coluna) viram itens do contrato; devolve também nomes sem par."""
-    cab = next((l for l in linhas if "DEPUTADO (A)" in l.values()), None)
+    cab = next((linha for linha in linhas if "DEPUTADO (A)" in linha.values()), None)
     if not cab:
         return [], set()
     col = {v: k for k, v in cab.items()}
     dados = linhas[linhas.index(cab) + 1:]
-    nomes = {sem_espacos(l.get(col["DEPUTADO (A)"], "")) for l in dados}
+    nomes = {sem_espacos(linha.get(col["DEPUTADO (A)"], "")) for linha in dados}
     ligacao = comum.ligar_nomes(nomes, deputados)
     itens, sem_par = [], set()
-    for l in dados:
-        nome = sem_espacos(l.get(col["DEPUTADO (A)"], ""))
+    for linha in dados:
+        nome = sem_espacos(linha.get(col["DEPUTADO (A)"], ""))
         pid = ligacao.get(nome)
         if not pid:
             if nome:
                 sem_par.add(nome)
             continue
-        quando = data_serial(l.get(col.get("DATA")))
-        itens.append({"idDeputado": pid, "mes": quando.month if quando else None, "categoria": sem_espacos(l.get(col["CATEGORIA"], "")) or None,
-                      "fornecedor": None, "cnpj": None, "valor": comum.valor_br(l.get(col["VALOR (R$)"])),
-                      "processo": l.get(col["N° PROCESSO"]) if "N° PROCESSO" in col else None,
-                      "notaFiscal": l.get(col["N° NF"]) if "N° NF" in col else None,
+        quando = data_serial(linha.get(col.get("DATA")))
+        itens.append({"idDeputado": pid, "mes": quando.month if quando else None, "categoria": sem_espacos(linha.get(col["CATEGORIA"], "")) or None,
+                      "fornecedor": None, "cnpj": None, "valor": comum.valor_br(linha.get(col["VALOR (R$)"])),
+                      "processo": linha.get(col["N° PROCESSO"]) if "N° PROCESSO" in col else None,
+                      "notaFiscal": linha.get(col["N° NF"]) if "N° NF" in col else None,
                       "fonte": f"{VERBA_PAGINA}?ano={ano}&deputado={pid}" + (f"&mes={quando.month}" if quando else "")})
     return itens, sem_par
 
@@ -207,7 +174,7 @@ def coletar_verba(s, deputados: list[dict]) -> None:
         destino = PASTA / f"verbas_{ano}.json"
         if ano < hoje.year and destino.exists():
             continue
-        linhas = ler_xlsx(baixar(s, VERBA_EXCEL, {"ano": ano}, TIMEOUT_ARQUIVO))
+        linhas = comum.xlsx_linhas(baixar(s, VERBA_EXCEL, {"ano": ano}, timeout=TIMEOUT_ARQUIVO))
         itens, sem_par = itens_verba(linhas, deputados, ano)
         if itens or ano == hoje.year:
             comum.salvar(destino, {"coletadoEm": hoje.isoformat(), "fonte": f"{VERBA_PAGINA}?ano={ano}", "itens": itens})
@@ -234,7 +201,7 @@ def proposicoes_da_lista(html: str) -> list[dict]:
         texto = re.search(r'href="(https?://[^"]+)"', tr)
         sigla = link.group(1).split("-")[0].rstrip(".")
         lista.append({"slug": link.group(1), "sigla": sigla, "numero": int(link.group(2)), "ano": int(link.group(3)),
-                      "ementa": limpar(ementa.group(1)) if ementa else None, "linkTexto": texto.group(1) if texto else None})
+                      "ementa": comum.limpar(ementa.group(1)) if ementa else None, "linkTexto": texto.group(1) if texto else None})
     return lista
 
 
@@ -245,26 +212,22 @@ def detalhe_proposicao(html: str) -> dict:
     tramitacao = []
     bloco = re.search(r'<div class="inter-title">TRAMITAÇÃO</div>(.*?)</div>\s*</div>\s*</div>', html, re.S)
     if bloco:
-        tramitacao = [limpar(x) for x in re.findall(r"<span>(.*?)</span>", bloco.group(1), re.S)]
+        tramitacao = [comum.limpar(x) for x in re.findall(r"<span>(.*?)</span>", bloco.group(1), re.S)]
     uteis = [t for t in tramitacao if not re.search(r"- (Recebido|Encaminhado)", t)]
-    return {"autor": limpar(autor.group(1)) if autor else "", "dataApresentacao": iso_data(limpar(entrada.group(1))) if entrada else None,
-            "ementa": limpar(ementa.group(1)) if ementa else None, "situacao": (uteis or tramitacao or [None])[-1]}
+    return {"autor": comum.limpar(autor.group(1)) if autor else "", "dataApresentacao": iso_data(comum.limpar(entrada.group(1))) if entrada else None,
+            "ementa": comum.limpar(ementa.group(1)) if ementa else None, "situacao": (uteis or tramitacao or [None])[-1]}
 
 
 def autores(texto: str) -> list[str]:
-    nomes = []
-    for a in re.split(r"\s*[,;/]\s*|\s+E\s+", texto or ""):
-        a = re.sub(r"(?i)^(DEPUTAD[OA]|DEP\.?)\s+", "", a.strip()).strip(" .")
-        if a:
-            nomes.append(a)
-    return nomes
+    partes = re.split(r"\s*[,;/]\s*|\s+E\s+", texto or "")
+    return [nome for p in partes if (nome := re.sub(r"(?i)^(DEPUTAD[OA]|DEP\.?)\s+", "", p.strip()).strip(" ."))]
 
 
 def listar_proposicoes(s) -> dict:
     """{slug: item da lista} dos tipos de projeto desde ANO_PROPOSICOES."""
     achados = {}
     params = {"dataInicio": f"01/01/{ANO_PROPOSICOES}", "dataFim": date.today().strftime("%d/%m/%Y"), "size": 20}
-    for tipo, (sigla, _) in TIPOS.items():
+    for tipo in TIPOS:
         try:
             primeira = decodificar(baixar(s, PROPOSICOES, {**params, "tipo": tipo, "page": 0}))
         except Exception as e:
@@ -363,28 +326,28 @@ def itens_emendas(texto: str, deputados: list[dict]) -> tuple[dict, set]:
     linhas = list(csv.DictReader(io.StringIO(texto), delimiter=";"))
     cab = {comum.sem_acento(k): k for k in (linhas[0] if linhas else {})}
 
-    def campo(l, nome):
-        return l.get(next((orig for sem, orig in cab.items() if sem.startswith(nome)), ""), "")
+    def campo(linha, nome):
+        return linha.get(next((orig for sem, orig in cab.items() if sem.startswith(nome)), ""), "")
 
-    ligacao = comum.ligar_nomes({sem_espacos(campo(l, "nome do deputado")) for l in linhas}, deputados)
+    ligacao = comum.ligar_nomes({sem_espacos(campo(linha, "nome do deputado")) for linha in linhas}, deputados)
     por_ano: dict[int, list] = {}
     sem_par = set()
-    for l in linhas:
-        nome = sem_espacos(campo(l, "nome do deputado"))
+    for linha in linhas:
+        nome = sem_espacos(campo(linha, "nome do deputado"))
         pid = ligacao.get(nome)
         if not pid:
             if nome:
                 sem_par.add(nome)
             continue
-        ano = int(campo(l, "ano exerc") or 0) or None
+        ano = int(campo(linha, "ano exerc") or 0) or None
         if not ano:
             continue
         por_ano.setdefault(ano, []).append({
-            "idDeputado": pid, "ano": ano, "objeto": sem_espacos(campo(l, "acao do programa")) or None,
-            "orgao": sem_espacos(campo(l, "orgao")) or None, "unidade": sem_espacos(campo(l, "unidade orcamentaria")) or None,
-            "numero": campo(l, "num_codigo") or None, "orcado": comum.valor_br(campo(l, "valor orcado atual")),
-            "empenhado": comum.valor_br(campo(l, "valor empenhado")), "liquidado": comum.valor_br(campo(l, "valor liquidado")),
-            "pago": comum.valor_br(campo(l, "valor pago")), "fonte": EMENDAS_PAGINA})
+            "idDeputado": pid, "ano": ano, "objeto": sem_espacos(campo(linha, "acao do programa")) or None,
+            "orgao": sem_espacos(campo(linha, "orgao")) or None, "unidade": sem_espacos(campo(linha, "unidade orcamentaria")) or None,
+            "numero": campo(linha, "num_codigo") or None, "orcado": comum.valor_br(campo(linha, "valor orcado atual")),
+            "empenhado": comum.valor_br(campo(linha, "valor empenhado")), "liquidado": comum.valor_br(campo(linha, "valor liquidado")),
+            "pago": comum.valor_br(campo(linha, "valor pago")), "fonte": EMENDAS_PAGINA})
     return por_ano, sem_par
 
 
@@ -405,11 +368,8 @@ def coletar_emendas(s, deputados: list[dict]) -> None:
 def coletar() -> None:
     s = comum.sessao()
     deputados = coletar_deputados(s)
-    for nome, etapa in [("verba", coletar_verba), ("proposições", coletar_proposicoes), ("emendas", coletar_emendas)]:
-        try:
-            etapa(s, deputados)
-        except Exception as e:
-            comum.avisar(f"BA: {nome}: {e}")
+    comum.rodar_etapas(UF, [("verba", lambda: coletar_verba(s, deputados)), ("proposições", lambda: coletar_proposicoes(s, deputados)),
+                            ("emendas", lambda: coletar_emendas(s, deputados))])
 
 
 # ---------------------------------------------------------------- contratos (amostras reduzidas das respostas reais)
@@ -438,19 +398,17 @@ def _conferir_deputados(registro):
 
 
 def _contrato_verba(ctx):
-    linhas = ler_xlsx(baixar(comum.sessao(), VERBA_EXCEL, {"ano": date.today().year}, TIMEOUT_ARQUIVO))
+    linhas = comum.xlsx_linhas(baixar(comum.sessao(), VERBA_EXCEL, {"ano": date.today().year}, timeout=TIMEOUT_ARQUIVO))
     return {"linhas": linhas[:7]}
 
 
 def _conferir_verba(registro):
     itens, _ = itens_verba(registro["linhas"], [{"id": "x", "nome": n, "nomeCivil": None}
-                                                 for n in {sem_espacos(l.get("F", "")) for l in registro["linhas"][3:]}], date.today().year)
+                                                 for n in {sem_espacos(linha.get("F", "")) for linha in registro["linhas"][3:]}], date.today().year)
     falhas = []
     if not itens:
         return ["planilha de verba sem lançamentos reconhecidos"], []
-    for i in itens:
-        if i["valor"] is None or not i["mes"] or not i["categoria"]:
-            falhas.append("lançamento sem valor, mês ou categoria")
+    falhas += ["lançamento sem valor, mês ou categoria" for i in itens if i["valor"] is None or not i["mes"] or not i["categoria"]]
     return falhas, []
 
 
@@ -477,9 +435,7 @@ def _conferir_proposicoes(registro):
     if not itens or not all(i["ementa"] and i["linkTexto"] for i in itens):
         falhas.append("lista de proposições sem ementa ou link do texto")
     d = detalhe_proposicao(registro["detalhe"])
-    for campo in ("autor", "ementa", "dataApresentacao", "situacao"):
-        if not d[campo]:
-            falhas.append(f"proposição sem {campo}")
+    falhas += comum.campos_vazios(d, ("autor", "ementa", "dataApresentacao", "situacao"), "proposição")
     return falhas, []
 
 
@@ -505,13 +461,12 @@ def _conferir_emendas(registro):
 
 
 CONTRATOS = [
-    dict(nome="estadual_ba_deputados", fonte=LISTA_URL, buscar=_contrato_deputados, html=_conferir_deputados),
-    dict(nome="estadual_ba_verba", fonte=VERBA_PAGINA, buscar=_contrato_verba, html=_conferir_verba),
-    dict(nome="estadual_ba_proposicoes", fonte=PROPOSICOES, buscar=_contrato_proposicoes, html=_conferir_proposicoes),
-    dict(nome="estadual_ba_emendas", fonte=EMENDAS_PAGINA, buscar=_contrato_emendas, html=_conferir_emendas),
+    {"nome": "estadual_ba_deputados", "fonte": LISTA_URL, "buscar": _contrato_deputados, "html": _conferir_deputados},
+    {"nome": "estadual_ba_verba", "fonte": VERBA_PAGINA, "buscar": _contrato_verba, "html": _conferir_verba},
+    {"nome": "estadual_ba_proposicoes", "fonte": PROPOSICOES, "buscar": _contrato_proposicoes, "html": _conferir_proposicoes},
+    {"nome": "estadual_ba_emendas", "fonte": EMENDAS_PAGINA, "buscar": _contrato_emendas, "html": _conferir_emendas},
 ]
 
 
 if __name__ == "__main__":
-    coletar()
-    sys.exit(0)
+    comum.principal(coletar)

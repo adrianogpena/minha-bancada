@@ -14,7 +14,6 @@ painel Power BI embutido, sem dado na página; os CSV acima são os mesmos dados
 
 import csv
 import re
-import sys
 import zipfile
 from datetime import date
 from io import BytesIO, StringIO
@@ -22,21 +21,15 @@ from io import BytesIO, StringIO
 import estaduais_comum as comum
 
 UF = "RS"
-TSE_ARQUIVO = comum.RAIZ / "dados" / "tse" / "2022" / "RS.json"
-TSE_FICHA = "https://divulgacandcontas.tse.jus.br/divulga/#/candidato/2022/2040602022/RS/{}"
+TSE_ARQUIVO = comum.arquivo_tse(UF)
+TSE_FICHA = comum.ficha_tse(UF)
 CKAN = "https://dados.rs.gov.br/api/3/action/package_show?id=diarias-do-estado"
 PAGINA_DIARIAS = "https://dados.rs.gov.br/dataset/diarias-do-estado"
 PRIMEIRO_ANO = 2023
 
 
 def deputados_do_tse() -> list[dict]:
-    lista = []
-    for e in comum.ler(TSE_ARQUIVO, []):
-        if e.get("cargo") != "DEPUTADO ESTADUAL" or e.get("situacao") != "eleito":
-            continue
-        lista.append({"id": e["sequencial"], "nome": e.get("urna") or e["nome"], "nomeCivil": e["nome"], "foto": None,
-                      "email": e.get("email"), "titular": True, "partido": e.get("partido"), "fonte": TSE_FICHA.format(e["sequencial"])})
-    return sorted(lista, key=lambda d: comum.sem_acento(d["nome"]))
+    return comum.deputados_do_tse(TSE_ARQUIVO, TSE_FICHA)
 
 
 def arquivos_por_ano(pacote: dict) -> dict:
@@ -52,24 +45,19 @@ def arquivos_por_ano(pacote: dict) -> dict:
 def linhas_da_assembleia(texto_csv: str) -> list[dict]:
     """Linhas do CSV cujo órgão é a Assembleia Legislativa."""
     leitor = csv.DictReader(StringIO(texto_csv), delimiter=";")
-    return [l for l in leitor if (l.get("Orgao") or "").upper().startswith("ASSEMBLEIA")]
-
-
-def data_iso(texto_data: str) -> str | None:
-    m = re.fullmatch(r"\s*(\d\d)/(\d\d)/(\d{4})\s*", texto_data or "")
-    return f"{m.group(3)}-{m.group(2)}-{m.group(1)}" if m else None
+    return [linha for linha in leitor if (linha.get("Orgao") or "").upper().startswith("ASSEMBLEIA")]
 
 
 def itens_diarias(linhas: list[dict], deputados: list[dict]) -> list[dict]:
-    ligados = comum.ligar_nomes({l["Favorecido"] for l in linhas}, deputados)
+    ligados = comum.ligar_nomes({linha["Favorecido"] for linha in linhas}, deputados)
     itens = []
-    for l in linhas:
-        if l["Favorecido"] not in ligados:
+    for linha in linhas:
+        if linha["Favorecido"] not in ligados:
             continue
-        itens.append({"idDeputado": ligados[l["Favorecido"]], "data": data_iso(l.get("DataInicio")), "dataFim": data_iso(l.get("DataFim")),
-                      "destino": (l.get("Destino") or "").strip() or None, "motivo": (l.get("Motivo") or "").strip() or None,
-                      "tipo": (l.get("Tipo") or "").strip() or None, "origem": (l.get("Origem") or "").strip() or None,
-                      "empenho": (l.get("Empenho") or "").strip() or None, "valor": comum.valor_br(l.get("Valor")), "fonte": PAGINA_DIARIAS})
+        itens.append({"idDeputado": ligados[linha["Favorecido"]], "data": comum.data_br_iso(linha.get("DataInicio"), inteiro=True), "dataFim": comum.data_br_iso(linha.get("DataFim"), inteiro=True),
+                      "destino": (linha.get("Destino") or "").strip() or None, "motivo": (linha.get("Motivo") or "").strip() or None,
+                      "tipo": (linha.get("Tipo") or "").strip() or None, "origem": (linha.get("Origem") or "").strip() or None,
+                      "empenho": (linha.get("Empenho") or "").strip() or None, "valor": comum.valor_br(linha.get("Valor")), "fonte": PAGINA_DIARIAS})
     itens.sort(key=lambda i: (i["data"] or "", i["idDeputado"]))
     return itens
 
@@ -93,7 +81,7 @@ def coletar() -> None:
     r = s.get(CKAN, timeout=30)
     r.raise_for_status()
     for ano, url in sorted(arquivos_por_ano(r.json()).items()):
-        if ano < PRIMEIRO_ANO:
+        if ano < PRIMEIRO_ANO or comum.ano_encerrado(ano, date.today(), pasta / f"diarias_{ano}.json"):
             continue
         resp = s.get(url, timeout=300)
         resp.raise_for_status()
@@ -113,32 +101,29 @@ def _contrato_diarias(ctx):
     texto_csv = ler_zip_csv(resp.content)
     linhas = linhas_da_assembleia(texto_csv)
     cabecalho = texto_csv.split("\n", 1)[0].strip()
-    amostra = [";".join(l.values()) for l in linhas[:6]]
+    amostra = [";".join(linha.values()) for linha in linhas[:6]]
     return {"ano": ano, "csv": "\n".join([cabecalho, *amostra])}
 
 
 def _conferir_diarias(registro):
     falhas = []
     colunas = registro["csv"].split("\n", 1)[0].split(";")
-    for c in ("Exercicio", "Orgao", "Favorecido", "DataInicio", "DataFim", "Destino", "Tipo", "Motivo", "Valor"):
-        if c not in colunas:
-            falhas.append(f"CSV de diárias sem a coluna {c}")
+    falhas += comum.faltando(colunas, ("Exercicio", "Orgao", "Favorecido", "DataInicio", "DataFim", "Destino", "Tipo", "Motivo", "Valor"), "CSV de diárias")
     linhas = linhas_da_assembleia(registro["csv"])
     if not linhas:
         falhas.append("nenhuma linha da Assembleia no CSV de diárias")
-    for l in linhas:
-        if not data_iso(l.get("DataInicio")) or comum.valor_br(l.get("Valor")) is None:
+    for linha in linhas:
+        if not comum.data_br_iso(linha.get("DataInicio"), inteiro=True) or comum.valor_br(linha.get("Valor")) is None:
             falhas.append("diária sem data ou valor legível")
     return falhas, []
 
 
 CONTRATOS = [
-    dict(nome="estadual_rs_ckan", fonte=CKAN, buscar=lambda ctx: comum.sessao().get(CKAN, timeout=30).json(),
-         usados=["result.resources[].name", "result.resources[].url"]),
-    dict(nome="estadual_rs_diarias", fonte=PAGINA_DIARIAS, buscar=_contrato_diarias, html=_conferir_diarias),
+    {"nome": "estadual_rs_ckan", "fonte": CKAN, "buscar": lambda ctx: comum.contrato_json(CKAN),
+         "usados": ["result.resources[].name", "result.resources[].url"]},
+    {"nome": "estadual_rs_diarias", "fonte": PAGINA_DIARIAS, "buscar": _contrato_diarias, "html": _conferir_diarias},
 ]
 
 
 if __name__ == "__main__":
-    coletar()
-    sys.exit(0)
+    comum.principal(coletar)

@@ -26,12 +26,13 @@ Uso:
 """
 
 import argparse
+import contextlib
 import json
 import re
 import shutil
 import subprocess
 from collections import Counter, defaultdict
-from datetime import date, datetime, timezone
+from datetime import date
 from pathlib import Path
 
 import feeds
@@ -64,7 +65,7 @@ def ler_lote(rev: str, caminhos: list[str]) -> dict:
     """{caminho: JSON} dos arquivos que existem em `rev`, com um único processo git."""
     if not caminhos:
         return {}
-    p = subprocess.run(["git", "cat-file", "--batch"], cwd=r.RAIZ, check=True, capture_output=True,
+    p = subprocess.run([r.GIT, "cat-file", "--batch"], cwd=r.RAIZ, check=True, capture_output=True,
                        input="".join(f"{rev}:{c}\n" for c in caminhos).encode())
     saida, buf, pos = {}, p.stdout, 0
     for c in caminhos:
@@ -74,10 +75,8 @@ def ler_lote(rev: str, caminhos: list[str]) -> dict:
         if cab[-1] == b"missing":
             continue
         n = int(cab[2])
-        try:
+        with contextlib.suppress(ValueError):
             saida[c] = nomes_legados.atualizar(c, json.loads(buf[pos:pos + n]))
-        except ValueError:
-            pass
         pos += n + 1
     return saida
 
@@ -126,10 +125,8 @@ class Contexto:
             for x in json.loads(arq.read_text(encoding="utf-8")):
                 if x.get("codigoFeed"):
                     self.codigos.setdefault(x["codigoFeed"], (x["nome"], x.get("pagina")))
-        try:
+        with contextlib.suppress(OSError, ValueError, KeyError):
             self.capitais = json.loads((SITE_DADOS / "cobertura.json").read_text(encoding="utf-8"))["capitais"]
-        except (OSError, ValueError, KeyError):
-            pass
         try:
             for d in json.loads((SITE_DADOS / "deputados.json").read_text(encoding="utf-8")):
                 self.deputados[int(d["id"])] = (d["nome"], d["uf"])
@@ -384,10 +381,10 @@ def votacoes_estaduais(ctx: Contexto, antes: str, depois: str, uf: str, ass: dic
     arqs = listar(depois, f"dados/estaduais/{uf}/materias_")
     lotes = ler_lote(depois, [f"dados/estaduais/{uf}/materias_votadas.json"] + [x for x in arqs if re.search(r"materias_\d{4}\.json$", x)])
     materias = {}
-    for caminho_, d in lotes.items():
+    for d in lotes.values():
         materias.update(d.get("materias", d) if isinstance(d, dict) else {})
     saida = []
-    for vid, v in novas.items():
+    for v in novas.values():
         m = materias.get(str(v.get("idMateria"))) or {}
         titulo = f"{m.get('tipo', '')} {m.get('numero', '')}/{m.get('ano', '')}".strip() if m else f"Matéria {v.get('idMateria')}"
         placar = f"{v.get('sim', 0)} sim, {v.get('nao', 0)} não, {v.get('abstencoes', 0)} abstenções"
@@ -556,7 +553,7 @@ def cobertura(ctx: Contexto, antes: str, depois: str, contagem: dict, data: str 
             if re.fullmatch(r"[A-Z]{2}", uf):
                 prefixos[f"{tipo}:{uf}"] = [f"dados/{pasta}/{uf}"]
     saida = {}
-    for local in sorted(prefixos, key=ORDEM_LOCAL):
+    for local in sorted(prefixos, key=ordem_local):
         itens = sum(contagem.get(local, {}).values())
         alterados = [f for p in prefixos[local] for f in r.arquivos(antes, depois, p)]   # o TSE tem arquivos próprios, fora dos prefixos
         item = {"nome": ctx.nome_local(local), "itens": itens}
@@ -575,15 +572,13 @@ def cobertura(ctx: Contexto, antes: str, depois: str, contagem: dict, data: str 
                     item["status"] = "parado"
                 item["ultimaMudanca"] = ultima_mudanca_registrada(data, local)
                 if not item["ultimaMudanca"] and not alterados:
-                    try:
+                    with contextlib.suppress(subprocess.CalledProcessError):
                         item["ultimaMudanca"] = r.git("log", "-1", "--format=%cs", depois, "--", *prefixos[local]).strip() or None
-                    except subprocess.CalledProcessError:
-                        pass
         saida[local] = {k: v for k, v in item.items() if v is not None}
     for uf in sorted(feeds.UFS):
         if f"UF:{uf}" not in saida:
             saida[f"UF:{uf}"] = {"nome": ctx.nome_local(f"UF:{uf}"), "mudou": False, "itens": 0, "status": "sem_cobertura"}
-    return dict(sorted(saida.items(), key=lambda kv: ORDEM_LOCAL(kv[0])))
+    return dict(sorted(saida.items(), key=lambda kv: ordem_local(kv[0])))
 
 
 COLETORES = (camara, votacoes_camara, senado, votacoes_senado, executivo, estados, capitais, eleitos)
@@ -591,7 +586,8 @@ COLETORES = (camara, votacoes_camara, senado, votacoes_senado, executivo, estado
 
 # ---------------------------------------------------------------- montagem do dia
 
-ORDEM_LOCAL = lambda c: (c != "BR", c.startswith("MUN"), c)
+def ordem_local(c):
+    return (c != "BR", c.startswith("MUN"), c)
 
 
 def dia(data: str, antes: str, depois: str) -> dict:
@@ -602,8 +598,8 @@ def dia(data: str, antes: str, depois: str) -> dict:
     for e in eventos:
         e["relevancia"] = relevancia(e, data)
     eventos = agrupar_lotes(eventos)
-    eventos.sort(key=lambda e: (ORDEM_LOCAL(e["local"]), -e["relevancia"]))   # a ordem do arquivo já põe o que importa primeiro
-    locais = sorted({e["local"] for e in eventos}, key=ORDEM_LOCAL)
+    eventos.sort(key=lambda e: (ordem_local(e["local"]), -e["relevancia"]))   # a ordem do arquivo já põe o que importa primeiro
+    locais = sorted({e["local"] for e in eventos}, key=ordem_local)
     contagem = {c: {} for c in locais}
     for e in eventos:
         contagem[e["local"]][e["categoria"]] = contagem[e["local"]].get(e["categoria"], 0) + e.get("quantidade", 1)

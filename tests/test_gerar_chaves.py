@@ -27,7 +27,10 @@ def test_gera_chaves_compatíveis(tmp_path, monkeypatch, capsys):
     saida = capsys.readouterr().out
     pem = saida[saida.index("-----BEGIN"):saida.index("-----END PRIVATE KEY-----") + len("-----END PRIVATE KEY-----")]
     privada = serialization.load_pem_private_key(pem.encode(), password=None)
-    dec = lambda v: int.from_bytes(base64.urlsafe_b64decode(v + "=" * (-len(v) % 4)), "big")
+
+    def dec(v):
+        return int.from_bytes(base64.urlsafe_b64decode(v + "=" * (-len(v) % 4)), "big")
+
     pub = rsa.RSAPublicNumbers(dec(jwk["e"]), dec(jwk["n"])).public_key()
     msg = pub.encrypt(b"segredo", padding.OAEP(mgf=padding.MGF1(hashes.SHA256()), algorithm=hashes.SHA256(), label=None))
     assert privada.decrypt(msg, padding.OAEP(mgf=padding.MGF1(hashes.SHA256()), algorithm=hashes.SHA256(), label=None)) == b"segredo"

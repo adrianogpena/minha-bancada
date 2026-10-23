@@ -196,7 +196,6 @@ input:focus, select:focus { border-color: var(--marca); outline: none; box-shado
 @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
 
 /* políticos */
-.filtros.tres { grid-template-columns: 1fr 1.4fr 1.6fr; }
 .periodo { margin: 18px 0 0; }
 .grupo h2 { display: flex; align-items: baseline; gap: 10px; }
 .grupo h2 small { font: 700 15px var(--texto); color: var(--tinta-suave); }
@@ -210,7 +209,6 @@ input:focus, select:focus { border-color: var(--marca); outline: none; box-shado
 .fonte { font-size: 14px; color: var(--tinta-suave); margin-top: 18px; }
 select:disabled { opacity: .55; }
 @media (max-width: 760px) {
-  .filtros.tres { grid-template-columns: 1fr; }
   .linha-pol { grid-template-columns: 44px 1fr; }
   .linha-pol .etiqueta { grid-column: 2; justify-self: start; }
 }
@@ -264,7 +262,7 @@ select:disabled { opacity: .55; }
 .mapa path.unico:hover { fill: var(--marca); }
 
 /* celular */
-.dd-quebra, .ficha dd { overflow-wrap: anywhere; }
+.ficha dd { overflow-wrap: anywhere; }
 @media (max-width: 760px) {
   .recipiente { padding: 0 14px; }
   .topo .recipiente { min-height: 0; padding-bottom: 0; }
@@ -376,3 +374,7 @@ select:disabled { opacity: .55; }
 .legenda-barras { font-size: 14px; color: var(--tinta-suave); margin: 4px 0 0; }
 .lista-simples { list-style: none; padding: 0; margin: 0; display: grid; gap: 8px; }
 .lista-simples li { font-size: 15px; }
+.fonte-link { color: var(--tinta-suave); font-size: .85em; }
+.sem-fonte { color: #b45309; font-weight: 600; }
+.lista-eleicao { list-style: none; padding: 0; margin: 0 0 12px; }
+.lista-eleicao li { margin: 4px 0; }

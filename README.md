@@ -63,7 +63,7 @@ Os testes não acessam a internet: as respostas das APIs (Câmara, Senado, TSE, 
 ```bash
 pip install -r requirements-dev.txt
 python -m pytest                       # scripts de coleta/geração + sanidade dos arquivos em dados/
-node --test tests/js/app.test.js       # utilidades do site/assets/app.js
+node --test tests/js/app.test.js       # módulos de site/assets/js
 node --test tests/e2e/fumaca.test.js   # abre cada página no Chromium sobre dados mínimos (precisa de `npm i --no-save playwright`)
 ```
 
@@ -110,14 +110,14 @@ Sem `--limite` a coleta pega todos os deputados em exercício. `--dias` só vale
 | `dados/votacoes/` | Histórico de votações, um arquivo por ano. Vai crescendo a cada execução. |
 | `scripts/coletar_prefeituras.py` | Baixa o que os prefeitos de capitais enviaram às Câmaras Municipais que usam o SAPL (Rio Branco, Boa Vista, Natal e João Pessoa), incluindo vetos. As outras capitais mostram só o link oficial da Câmara. |
 | `scripts/coletar_prefeitura_sp.py` | O mesmo para São Paulo, que não usa SAPL: lê o webservice do SPLegis. Nova capital com sistema próprio entra em `OUTRAS`, em `coletar_prefeituras.py`, com um coletor assim. |
-| `scripts/coletar_estaduais.py` | Deputados estaduais das Assembleias que usam o SAPL (AC, AL, AM, PB, PI, RO, TO) e, por descoberta, de cada módulo `scripts/coletar_estadual_<uf>.py` (BA, CE, GO, MG, MS, MT, PA, PE, PR, RJ, RN, RR, RS, SC, SE e SP), com fonte própria por UF. Grava em `dados/estaduais/<UF>/`; o que cada UF coleta e o que ficou de fora está em `LEVANTAMENTO_DADOS.md`. AP, DF, ES e MA ainda não têm coletor. |
+| `scripts/coletar_estaduais.py` | Deputados estaduais das Assembleias que usam o SAPL (AC, AL, AM, PB, PI, RO, TO) e, por descoberta, de cada módulo `scripts/coletar_estadual_<uf>.py` (BA, CE, ES, GO, MG, MS, MT, PA, PE, PR, RJ, RN, RR, RS, SC, SE e SP), com fonte própria por UF. Grava em `dados/estaduais/<UF>/`; o que cada UF coleta e o que ficou de fora está em `LEVANTAMENTO_DADOS.md`. AP, DF e MA ainda não têm coletor. |
 | `scripts/estaduais_comum.py`, `scripts/gerar_estaduais.py` | Funções comuns dos coletores estaduais (sessão HTTP, cache, avisos, ligação de nomes) e a montagem dos JSONs dos deputados estaduais para o site (verba, remuneração, presença, diárias, emendas, projetos e votações, cada um com `fonte`). |
 | `scripts/coletar_prefeitura_ba.py` | O mesmo para Salvador: consulta de proposições da Câmara (grade Scriptcase), filtrada pelo autor "Executivo Municipal"; o link de cada projeto é o PDF do texto integral. |
 | `scripts/coletar_prefeitura_go.py` | O mesmo para Goiânia: consulta pública de processos do SUAP da Câmara, filtrada pelo interessado "Prefeito de Goiânia"; o link de cada projeto é a página pública do processo. Usa o certificado intermediário de `scripts/certs/`, que o servidor não envia. |
 | `dados/municipais/` | Cache dessas coletas, um arquivo por ano e capital. |
 | `dados/tse/` | Eleitos de cada eleição, um arquivo por estado. |
 | `dados/proposicoes/` | Proposições já coletadas de cada deputado. A API só aceita 3 meses por consulta, então a primeira coleta é longa e as seguintes buscam só o período novo. |
-| `site/` | O site: HTML, CSS e um único `assets/app.js`, sem framework nem etapa de build. |
+| `site/` | O site: HTML, CSS e módulos ES em `assets/js/` (entrada `assets/app.js`), sem framework nem etapa de build. |
 | `.github/workflows/atualizar.yml` | Agenda diária: coletas em jobs paralelos, depois gera o site, salva o histórico e publica. |
 
 ## Endpoints desativados
@@ -148,7 +148,7 @@ Para saber se algum endpoint em uso foi marcado como descontinuado, rode `python
 
 ## Próximos passos possíveis
 
-- Coletores para as Assembleias que faltam (AP, DF, ES, MA) e câmaras municipais que publicam dados abertos.
+- Coletores para as Assembleias que faltam (AP, DF, MA) e câmaras municipais que publicam dados abertos.
 - Votações nas comissões, além do Plenário.
 - Doações e gastos de campanha (TSE).
 - Seguir políticos: lista salva no navegador de cada pessoa.

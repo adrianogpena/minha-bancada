@@ -48,17 +48,17 @@ def inteiro(v: str) -> int:
 
 def coletar_ano(ano: int) -> None:
     dados = defaultdict(lambda: {"turnos": {}, "vagas": None})   # (uf, cargo, ue) -> dados
-    for l in linhas(BRUTO / "detalhe_votacao_munzona" / f"detalhe_votacao_munzona_{ano}.zip"):
-        t = dados[(l["SG_UF"], l["DS_CARGO"].upper(), l["SG_UE"])]["turnos"].setdefault(
-            l["NR_TURNO"], dict.fromkeys(("aptos", "comparecimento", "abstencoes", "brancos", "nulos", "validos"), 0))
-        t["aptos"] += inteiro(l["QT_APTOS"])
-        t["comparecimento"] += inteiro(l["QT_COMPARECIMENTO"])
-        t["abstencoes"] += inteiro(l["QT_ABSTENCOES"])
-        t["brancos"] += inteiro(l["QT_VOTOS_BRANCOS"])
-        t["nulos"] += inteiro(l["QT_TOTAL_VOTOS_NULOS"])
-        t["validos"] += inteiro(l["QT_TOTAL_VOTOS_VALIDOS"])
-    for l in linhas(BRUTO / "consulta_vagas" / f"consulta_vagas_{ano}.zip"):
-        dados[(l["SG_UF"], l["DS_CARGO"].upper(), l["SG_UE"])]["vagas"] = inteiro(l["QT_VAGA"])
+    for lin in linhas(BRUTO / "detalhe_votacao_munzona" / f"detalhe_votacao_munzona_{ano}.zip"):
+        t = dados[(lin["SG_UF"], lin["DS_CARGO"].upper(), lin["SG_UE"])]["turnos"].setdefault(
+            lin["NR_TURNO"], dict.fromkeys(("aptos", "comparecimento", "abstencoes", "brancos", "nulos", "validos"), 0))
+        t["aptos"] += inteiro(lin["QT_APTOS"])
+        t["comparecimento"] += inteiro(lin["QT_COMPARECIMENTO"])
+        t["abstencoes"] += inteiro(lin["QT_ABSTENCOES"])
+        t["brancos"] += inteiro(lin["QT_VOTOS_BRANCOS"])
+        t["nulos"] += inteiro(lin["QT_TOTAL_VOTOS_NULOS"])
+        t["validos"] += inteiro(lin["QT_TOTAL_VOTOS_VALIDOS"])
+    for lin in linhas(BRUTO / "consulta_vagas" / f"consulta_vagas_{ano}.zip"):
+        dados[(lin["SG_UF"], lin["DS_CARGO"].upper(), lin["SG_UE"])]["vagas"] = inteiro(lin["QT_VAGA"])
 
     por_uf = defaultdict(dict)
     for (uf, cargo, ue), d in dados.items():
@@ -70,7 +70,7 @@ def coletar_ano(ano: int) -> None:
     for uf, mapa in por_uf.items():
         (pasta / f"{uf}.json").write_text(json.dumps(mapa, ensure_ascii=False, separators=(",", ":")), encoding="utf-8")
     (pasta / "_coleta.json").write_text(json.dumps({
-        "coletadoEm": dt.datetime.now(dt.timezone.utc).isoformat(timespec="seconds"), "versao": VERSAO}), encoding="utf-8")
+        "coletadoEm": dt.datetime.now(dt.UTC).isoformat(timespec="seconds"), "versao": VERSAO}), encoding="utf-8")
     print(f"TSE disputa {ano}: {len(dados)} cargos/locais em {len(por_uf)} arquivos")
 
 

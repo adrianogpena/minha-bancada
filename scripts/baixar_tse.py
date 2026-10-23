@@ -80,7 +80,7 @@ def baixar(s: requests.Session, url: str, destino: Path, esperado: int) -> None:
                 h.update(bloco)
     if tmp.stat().st_size != esperado:
         tmp.unlink()
-        raise IOError(f"tamanho diferente do esperado ({esperado})")
+        raise OSError(f"tamanho diferente do esperado ({esperado})")
     tmp.replace(destino)
     registrar(url, destino, esperado, h.hexdigest())
 

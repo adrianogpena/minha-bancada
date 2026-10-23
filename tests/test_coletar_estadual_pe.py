@@ -1,5 +1,4 @@
 import json
-from datetime import date
 
 import pytest
 
@@ -62,8 +61,8 @@ def test_itens_verba_sem_notas_usa_o_total():
 def test_verba_do_contrato():
     a = amostra("estadual_pe_verba")
     assert pe._conferir_verba(a) == ([], [])
-    l, n = a["lancamentos"][0], a["notas"]
-    itens = pe.itens_verba(l, n, "4508", a["ano"], 1, {r["numero_categoria"]: r["nome_categoria"] for r in a["rubricas"]})
+    linha, n = a["lancamentos"][0], a["notas"]
+    itens = pe.itens_verba(linha, n, "4508", a["ano"], 1, {r["numero_categoria"]: r["nome_categoria"] for r in a["rubricas"]})
     assert itens[0]["categoria"] == "ASSESSORIA JURÍDICA" and itens[0]["data"] == "2025-01-31" and itens[0]["cnpj"] == "47006999000140"
 
 

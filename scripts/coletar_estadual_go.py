@@ -17,7 +17,6 @@ proposições (processos/busca-avancada devolve vazio sem os parâmetros certos;
 """
 
 import re
-import sys
 import time
 from datetime import date
 from html import unescape
@@ -71,7 +70,6 @@ def pegar(s, url: str, **params):
             break
         time.sleep(PAUSA_403 * (tentativa + 1))
     r.raise_for_status()
-    r.encoding = "utf-8"
     return r
 
 
@@ -115,8 +113,8 @@ def sigla_partido(texto: str) -> str | None:
 def parse_lista(html: str) -> list[dict]:
     """Linhas da tabela de deputados em exercício: id, nome parlamentar, partido (sigla) e e-mail."""
     lista = []
-    for linha in html.split('<tr data-target="search.filterable"')[1:]:
-        linha = linha.split("</tr>", 1)[0]
+    for trecho in html.split('<tr data-target="search.filterable"')[1:]:
+        linha = trecho.split("</tr>", 1)[0]
         m = re.search(r'href="?/deputados/perfil/(\d+)"?>(.*?)</a>', linha, re.S)
         if not m:
             continue
@@ -277,24 +275,24 @@ def coletar_diarias(s, deputados: list[dict]) -> None:
 def montar_votacoes(linhas: list[dict], ligacao: dict, ano: int) -> tuple[dict, dict]:
     """Agrupa os votos nominais por pauta (`pauta_id`); voto secreto fica de fora."""
     votacoes, materias = {}, {}
-    for l in linhas:
-        if l.get("tipo_votacao") != "NOMINAL":
+    for lin in linhas:
+        if lin.get("tipo_votacao") != "NOMINAL":
             continue
-        pauta = str(l["pauta_id"])
-        mes = int(l.get("mes") or 0)
-        v = votacoes.setdefault(pauta, {"data": l.get("data_sessao"), "idMateria": pauta, "aprovada": (l.get("resultado_votacao") or "").strip().upper().startswith("APROVADO"),
-                                        "resultado": " ".join((l.get("resultado_votacao") or "").split()) or None, "sim": 0, "nao": 0,
+        pauta = str(lin["pauta_id"])
+        mes = int(lin.get("mes") or 0)
+        v = votacoes.setdefault(pauta, {"data": lin.get("data_sessao"), "idMateria": pauta, "aprovada": (lin.get("resultado_votacao") or "").strip().upper().startswith("APROVADO"),
+                                        "resultado": " ".join((lin.get("resultado_votacao") or "").split()) or None, "sim": 0, "nao": 0,
                                         "abstencoes": 0, "votos": [], "fonte": f"{VOTACOES_PAGINA}?tipo=detalhes&ano={ano}&mes={mes}"})
         materias.setdefault(pauta, {"tipo": None, "tipoDescricao": None, "numero": None, "ano": ano,
-                                    "ementa": " ".join((l.get("ementa_projeto") or "").split()) or None})
-        voto = VOTOS.get(comum.sem_acento(l.get("tipo_voto")).upper().replace(" ", ""))
+                                    "ementa": " ".join((lin.get("ementa_projeto") or "").split()) or None})
+        voto = VOTOS.get(comum.sem_acento(lin.get("tipo_voto")).upper().replace(" ", ""))
         if voto == "Sim":
             v["sim"] += 1
         elif voto == "Não":
             v["nao"] += 1
         elif voto:
             v["abstencoes"] += 1
-        dep = ligacao.get(l.get("parlamentar"))
+        dep = ligacao.get(lin.get("parlamentar"))
         if dep and voto:
             v["votos"].append([dep, voto])
     return votacoes, materias
@@ -315,8 +313,8 @@ def coletar_votacoes(s, deputados: list[dict]) -> None:
     sem_par = set()
     for ano in range(hoje.year - 1 if votacoes else ANO_INICIAL, hoje.year + 1):
         linhas = pegar_json(s, "votacoes.json", tipo="detalhes", ano=ano)
-        ligacao = comum.ligar_nomes({l["parlamentar"] for l in linhas}, deputados)
-        sem_par |= {l["parlamentar"] for l in linhas if l["parlamentar"] not in ligacao}
+        ligacao = comum.ligar_nomes({lin["parlamentar"] for lin in linhas}, deputados)
+        sem_par |= {lin["parlamentar"] for lin in linhas if lin["parlamentar"] not in ligacao}
         v, m = montar_votacoes(linhas, ligacao, ano)
         votacoes.update(v)
         materias.update(m)
@@ -363,13 +361,9 @@ def coletar() -> None:
         return
     comum.salvar(PASTA / "deputados.json", {"fonte": LISTA_URL, "host": None, "legislatura": "2023-2027", "deputados": deputados})
     print(f"GO: {len(deputados)} deputados")
-    etapas = [("verbas", coletar_verbas), ("remuneração", coletar_remuneracao), ("votações", coletar_votacoes),
-              ("requerimentos", coletar_requerimentos), ("diárias", coletar_diarias)]
-    for nome, etapa in etapas:
-        try:
-            etapa(s, deputados)
-        except Exception as e:
-            comum.avisar(f"GO: {nome}: {e}")
+    comum.rodar_etapas(UF, [("verbas", lambda: coletar_verbas(s, deputados)), ("remuneração", lambda: coletar_remuneracao(s, deputados)),
+                            ("votações", lambda: coletar_votacoes(s, deputados)), ("requerimentos", lambda: coletar_requerimentos(s, deputados)),
+                            ("diárias", lambda: coletar_diarias(s, deputados))])
 
 
 def _contrato_lista(ctx):
@@ -383,9 +377,7 @@ def _conferir_lista(registro):
     if not lista:
         return ["lista de deputados sem linhas com /deputados/perfil/<id>"], []
     falhas = []
-    for campo in ("id", "nome", "partido"):
-        if not lista[0].get(campo):
-            falhas.append(f"linha da lista sem {campo}")
+    falhas += comum.campos_vazios(lista[0], ("id", "nome", "partido"), "linha da lista")
     return falhas, []
 
 
@@ -410,7 +402,7 @@ def _conferir_campos(*campos):
 
 def _contrato_votacoes(ctx):
     dados = pegar_json(comum.sessao(), "votacoes.json", tipo="detalhes", ano=date.today().year - 1)
-    nominais = [l for l in dados if l.get("tipo_votacao") == "NOMINAL"]
+    nominais = [lin for lin in dados if lin.get("tipo_votacao") == "NOMINAL"]
     return nominais[:3]
 
 
@@ -429,21 +421,20 @@ def _ultimo_mes_publicado(caminho: str, **params) -> list:
 
 
 CONTRATOS = [
-    dict(nome="estadual_go_lista", fonte=LISTA_URL, buscar=_contrato_lista, html=_conferir_lista),
-    dict(nome="estadual_go_perfil", fonte=PERFIL_URL.format(id=117), buscar=_contrato_perfil, html=_conferir_perfil),
-    dict(nome="estadual_go_verbas", fonte=f"{API}/verbas_indenizatorias", html=_conferir_campos("ano", "mes", "valor_indenizado", "valor_apresentado", "deputado"),
-         buscar=lambda ctx: _ultimo_mes_publicado("verbas_indenizatorias")),
-    dict(nome="estadual_go_remuneracao", fonte=f"{API}/remuneracoes", html=_conferir_campos("nome", "matricula", "vencimento", "remuneracao_liquida", "status"),
-         buscar=lambda ctx: _ultimo_mes_publicado("remuneracoes", categoria=7)),
-    dict(nome="estadual_go_diarias", fonte=f"{API}/diarias", html=_conferir_campos("id", "beneficiario", "cargo", "trecho", "data_inicio", "total"),
-         buscar=lambda ctx: _ultimo_mes_publicado("diarias")),
-    dict(nome="estadual_go_requerimentos", fonte=f"{API}/requerimentos", html=_conferir_campos("id", "numero", "deputado", "tipo_requerimento", "etapa", "url_download"),
-         buscar=lambda ctx: pegar_json(comum.sessao(), "requerimentos", ano=ANO_REQUERIMENTOS_FINAL)[:2]),
-    dict(nome="estadual_go_votacoes", fonte=f"{API}/votacoes.json", html=_conferir_campos("data_sessao", "pauta_id", "parlamentar", "tipo_voto", "resultado_votacao", "tipo_votacao", "ementa_projeto"),
-         buscar=_contrato_votacoes),
+    {"nome": "estadual_go_lista", "fonte": LISTA_URL, "buscar": _contrato_lista, "html": _conferir_lista},
+    {"nome": "estadual_go_perfil", "fonte": PERFIL_URL.format(id=117), "buscar": _contrato_perfil, "html": _conferir_perfil},
+    {"nome": "estadual_go_verbas", "fonte": f"{API}/verbas_indenizatorias", "html": _conferir_campos("ano", "mes", "valor_indenizado", "valor_apresentado", "deputado"),
+         "buscar": lambda ctx: _ultimo_mes_publicado("verbas_indenizatorias")},
+    {"nome": "estadual_go_remuneracao", "fonte": f"{API}/remuneracoes", "html": _conferir_campos("nome", "matricula", "vencimento", "remuneracao_liquida", "status"),
+         "buscar": lambda ctx: _ultimo_mes_publicado("remuneracoes", categoria=7)},
+    {"nome": "estadual_go_diarias", "fonte": f"{API}/diarias", "html": _conferir_campos("id", "beneficiario", "cargo", "trecho", "data_inicio", "total"),
+         "buscar": lambda ctx: _ultimo_mes_publicado("diarias")},
+    {"nome": "estadual_go_requerimentos", "fonte": f"{API}/requerimentos", "html": _conferir_campos("id", "numero", "deputado", "tipo_requerimento", "etapa", "url_download"),
+         "buscar": lambda ctx: pegar_json(comum.sessao(), "requerimentos", ano=ANO_REQUERIMENTOS_FINAL)[:2]},
+    {"nome": "estadual_go_votacoes", "fonte": f"{API}/votacoes.json", "html": _conferir_campos("data_sessao", "pauta_id", "parlamentar", "tipo_voto", "resultado_votacao", "tipo_votacao", "ementa_projeto"),
+         "buscar": _contrato_votacoes},
 ]
 
 
 if __name__ == "__main__":
-    coletar()
-    sys.exit(0)
+    comum.principal(coletar)

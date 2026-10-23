@@ -1,0 +1,583 @@
+{
+ "fonte": "https://dados.es.gov.br/api/3/action/package_show?id=portal-da-transparencia-despesas-execucao-orcamentaria-e-financeira",
+ "capturadoEm": "2026-10-23",
+ "amostra": {
+  "help": "https://dados.es.gov.br/api/3/action/help_show?name=package_show",
+  "success": true,
+  "result": {
+   "author": "",
+   "author_email": "",
+   "creator_user_id": "29420903-aaf8-44d6-8167-c688c4938ac0",
+   "id": "99e16b13-0e6f-4504-8544-00de842ab1fd",
+   "isopen": true,
+   "license_id": "cc-by",
+   "license_title": "Creative Commons Atribuição",
+   "license_url": "http://www.opendefinition.org/licenses/cc-by",
+   "maintainer": "Coordenação de Transparência",
+   "maintainer_email": "transparencia@secont.es.gov.br",
+   "metadata_created": "2020-06-22T20:16:36.223155",
+   "metadata_modified": "2026-10-23T10:04:41.240037",
+   "name": "portal-da-transparencia-despesas-execucao-orcamentaria-e-financeira",
+   "notes": "Esta base de dados é extraída do Sistema Integrado de Gestão das Finanças Públicas do Espírito Santo (SIGEFES) e apresenta a execução orçamentária e financeira dos Órgãos e Entidades da Administração Pública Estadual.",
+   "num_resources": 76,
+   "num_tags": 5,
+   "organization": {
+    "id": "06565e7c-dd2f-46fa-912c-67b2ecc3cadf",
+    "name": "sefaz-secretaria-de-estado-da-fazenda",
+    "title": "SEFAZ - Secretaria de Estado da Fazenda",
+    "type": "organization",
+    "description": "SEFAZ - Secretaria de Estado da Fazenda",
+    "image_url": "https://cdn.es.gov.br/images/logo/governo/brasao/center/Brasao_Governo_800.png",
+    "created": "2020-06-22T10:32:57.507384",
+    "is_organization": true,
+    "approval_status": "approved",
+    "state": "active"
+   },
+   "owner_org": "06565e7c-dd2f-46fa-912c-67b2ecc3cadf",
+   "private": false,
+   "state": "active",
+   "title": "[Portal da Transparência] Despesas - Execução orçamentária e financeira",
+   "type": "dataset",
+   "url": "SEFAZ - Secretaria de Estado da Fazenda",
+   "version": "",
+   "resources": [
+    {
+     "cache_last_updated": null,
+     "cache_url": null,
+     "created": "2021-07-13T20:39:11.544122",
+     "datastore_active": false,
+     "datastore_contains_all_records_of_source_file": false,
+     "description": "Este arquivo se trata do dicionário de dados para os dados inseridos neste Dataset.",
+     "format": "PDF",
+     "hash": "",
+     "id": "0bc7abdb-b770-405d-b3de-4085083bba2e",
+     "last_modified": "2026-06-08T13:32:53.958229",
+     "metadata_modified": "2026-06-09T08:26:28.830502",
+     "mimetype": "application/pdf",
+     "mimetype_inner": null,
+     "name": "Dicionario de Dados",
+     "package_id": "99e16b13-0e6f-4504-8544-00de842ab1fd",
+     "position": 0,
+     "resource_type": null,
+     "size": 235263,
+     "state": "active",
+     "tracking_summary": {
+      "total": 12,
+      "recent": 7
+     },
+     "url": "https://dados.es.gov.br/dataset/99e16b13-0e6f-4504-8544-00de842ab1fd/resource/0bc7abdb-b770-405d-b3de-4085083bba2e/download/dicionario_despesas.pdf",
+     "url_type": "upload"
+    },
+    {
+     "cache_last_updated": null,
+     "cache_url": null,
+     "ckan_url": "https://dados.es.gov.br",
+     "created": "2020-09-13T08:04:23.592479",
+     "datastore_active": true,
+     "datastore_contains_all_records_of_source_file": true,
+     "delimiter": ";",
+     "description": null,
+     "encoding": "UTF-8",
+     "first_record_is_header": "true",
+     "format": "CSV",
+     "hash": "3b2a61d537e5c2cb45ecc1caa923a4ff",
+     "id": "8ffd4e6c-6e30-419d-9baa-921045caa22e",
+     "ignore_hash": false,
+     "last_modified": "2026-10-17T08:28:27.382567",
+     "metadata_modified": "2026-10-17T09:01:42.047353",
+     "mimetype": "text/csv",
+     "mimetype_inner": null,
+     "name": "Despesas-2004.csv",
+     "original_url": "https://dados.es.gov.br/dataset/99e16b13-0e6f-4504-8544-00de842ab1fd/resource/8ffd4e6c-6e30-419d-9baa-921045caa22e/download/despesas-2004.csv",
+     "package_id": "99e16b13-0e6f-4504-8544-00de842ab1fd",
+     "position": 1,
+     "queue_name": "default",
+     "resource_id": "8ffd4e6c-6e30-419d-9baa-921045caa22e",
+     "resource_type": null,
+     "set_url_type": false,
+     "size": 618242,
+     "state": "active",
+     "task_created": "2026-10-17 08:28:28.410944",
+     "tracking_summary": {
+      "total": 4,
+      "recent": 2
+     },
+     "url": "https://dados.es.gov.br/dataset/99e16b13-0e6f-4504-8544-00de842ab1fd/resource/8ffd4e6c-6e30-419d-9baa-921045caa22e/download/despesas-2004.csv",
+     "url_type": "upload"
+    }
+   ],
+   "tags": [
+    {
+     "display_name": "despesas diretas",
+     "id": "f9b9a3fe-0780-4050-9f42-d8c28bfc8aaa",
+     "name": "despesas diretas",
+     "state": "active",
+     "vocabulary_id": null
+    },
+    {
+     "display_name": "execução orçamentária e financeira",
+     "id": "0e21746b-8dd8-45d6-8e28-229f332df640",
+     "name": "execução orçamentária e financeira",
+     "state": "active",
+     "vocabulary_id": null
+    }
+   ],
+   "extras": [],
+   "groups": [],
+   "relationships_as_subject": [],
+   "relationships_as_object": [],
+   "tracking_summary": {
+    "total": 345,
+    "recent": 63
+   }
+  }
+ },
+ "forma": {
+  "help": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "result": {
+   "tipos": [
+    "dict"
+   ]
+  },
+  "result.author": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "result.author_email": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "result.creator_user_id": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "result.extras": {
+   "tipos": [
+    "list"
+   ]
+  },
+  "result.groups": {
+   "tipos": [
+    "list"
+   ]
+  },
+  "result.id": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "result.isopen": {
+   "tipos": [
+    "bool"
+   ]
+  },
+  "result.license_id": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "result.license_title": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "result.license_url": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "result.maintainer": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "result.maintainer_email": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "result.metadata_created": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "result.metadata_modified": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "result.name": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "result.notes": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "result.num_resources": {
+   "tipos": [
+    "int"
+   ]
+  },
+  "result.num_tags": {
+   "tipos": [
+    "int"
+   ]
+  },
+  "result.organization": {
+   "tipos": [
+    "dict"
+   ]
+  },
+  "result.organization.approval_status": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "result.organization.created": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "result.organization.description": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "result.organization.id": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "result.organization.image_url": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "result.organization.is_organization": {
+   "tipos": [
+    "bool"
+   ]
+  },
+  "result.organization.name": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "result.organization.state": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "result.organization.title": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "result.organization.type": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "result.owner_org": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "result.private": {
+   "tipos": [
+    "bool"
+   ]
+  },
+  "result.relationships_as_object": {
+   "tipos": [
+    "list"
+   ]
+  },
+  "result.relationships_as_subject": {
+   "tipos": [
+    "list"
+   ]
+  },
+  "result.resources": {
+   "tipos": [
+    "list"
+   ]
+  },
+  "result.resources[]": {
+   "tipos": [
+    "dict"
+   ]
+  },
+  "result.resources[].cache_last_updated": {
+   "tipos": [
+    "null"
+   ]
+  },
+  "result.resources[].cache_url": {
+   "tipos": [
+    "null"
+   ]
+  },
+  "result.resources[].ckan_url": {
+   "tipos": [
+    "str"
+   ],
+   "opcional": true
+  },
+  "result.resources[].created": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "result.resources[].datastore_active": {
+   "tipos": [
+    "bool"
+   ]
+  },
+  "result.resources[].datastore_contains_all_records_of_source_file": {
+   "tipos": [
+    "bool"
+   ]
+  },
+  "result.resources[].delimiter": {
+   "tipos": [
+    "str"
+   ],
+   "opcional": true
+  },
+  "result.resources[].description": {
+   "tipos": [
+    "null",
+    "str"
+   ]
+  },
+  "result.resources[].encoding": {
+   "tipos": [
+    "str"
+   ],
+   "opcional": true
+  },
+  "result.resources[].first_record_is_header": {
+   "tipos": [
+    "str"
+   ],
+   "opcional": true
+  },
+  "result.resources[].format": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "result.resources[].hash": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "result.resources[].id": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "result.resources[].ignore_hash": {
+   "tipos": [
+    "bool"
+   ],
+   "opcional": true
+  },
+  "result.resources[].last_modified": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "result.resources[].metadata_modified": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "result.resources[].mimetype": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "result.resources[].mimetype_inner": {
+   "tipos": [
+    "null"
+   ]
+  },
+  "result.resources[].name": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "result.resources[].original_url": {
+   "tipos": [
+    "str"
+   ],
+   "opcional": true
+  },
+  "result.resources[].package_id": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "result.resources[].position": {
+   "tipos": [
+    "int"
+   ]
+  },
+  "result.resources[].queue_name": {
+   "tipos": [
+    "str"
+   ],
+   "opcional": true
+  },
+  "result.resources[].resource_id": {
+   "tipos": [
+    "str"
+   ],
+   "opcional": true
+  },
+  "result.resources[].resource_type": {
+   "tipos": [
+    "null"
+   ]
+  },
+  "result.resources[].set_url_type": {
+   "tipos": [
+    "bool"
+   ],
+   "opcional": true
+  },
+  "result.resources[].size": {
+   "tipos": [
+    "int"
+   ]
+  },
+  "result.resources[].state": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "result.resources[].task_created": {
+   "tipos": [
+    "str"
+   ],
+   "opcional": true
+  },
+  "result.resources[].tracking_summary": {
+   "tipos": [
+    "dict"
+   ]
+  },
+  "result.resources[].tracking_summary.recent": {
+   "tipos": [
+    "int"
+   ]
+  },
+  "result.resources[].tracking_summary.total": {
+   "tipos": [
+    "int"
+   ]
+  },
+  "result.resources[].url": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "result.resources[].url_type": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "result.state": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "result.tags": {
+   "tipos": [
+    "list"
+   ]
+  },
+  "result.tags[]": {
+   "tipos": [
+    "dict"
+   ]
+  },
+  "result.tags[].display_name": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "result.tags[].id": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "result.tags[].name": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "result.tags[].state": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "result.tags[].vocabulary_id": {
+   "tipos": [
+    "null"
+   ]
+  },
+  "result.title": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "result.tracking_summary": {
+   "tipos": [
+    "dict"
+   ]
+  },
+  "result.tracking_summary.recent": {
+   "tipos": [
+    "int"
+   ]
+  },
+  "result.tracking_summary.total": {
+   "tipos": [
+    "int"
+   ]
+  },
+  "result.type": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "result.url": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "result.version": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "success": {
+   "tipos": [
+    "bool"
+   ]
+  }
+ }
+}

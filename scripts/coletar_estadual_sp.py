@@ -16,13 +16,13 @@ fora do contrato); diárias e emendas (sem fonte localizada).
 import html as html_lib
 import io
 import re
-import sys
 import time
-import xml.etree.ElementTree as ET
+from defusedxml import ElementTree as ET
 import zipfile
 from collections import defaultdict
 from concurrent.futures import ThreadPoolExecutor
 from datetime import date
+from functools import partial
 
 import estaduais_comum as comum
 
@@ -54,10 +54,7 @@ TITULOS = {"agente", "federal", "major", "coronel", "delegado", "delegada", "dr"
 SITUACAO_PRESENCA = {"presente": 0, "nao justificada": 2, "ausencia em sessao extraordinaria": 2}
 
 
-def baixar(sessao, url: str) -> bytes:
-    r = sessao.get(url, timeout=300)
-    r.raise_for_status()
-    return r.content
+baixar = partial(comum.baixar, timeout=300)
 
 
 # ---------------------------------------------------------------- deputados
@@ -201,8 +198,8 @@ def meses_da_folha(indice: str) -> list[tuple[int, int]]:
 
 def itens_folha(linhas: list[dict], ligados: dict, ano: int, mes: int) -> list[dict]:
     url = FOLHA.format(ano=ano, mes=mes)
-    return [{"idDeputado": ligados[l["nome"]], "mes": mes, "bruto": l["bruto"], "liquido": l["liquido"],
-             "componentes": {"Tributos": l["tributos"]}, "fonte": url} for l in linhas if l["nome"] in ligados]
+    return [{"idDeputado": ligados[lin["nome"]], "mes": mes, "bruto": lin["bruto"], "liquido": lin["liquido"],
+             "componentes": {"Tributos": lin["tributos"]}, "fonte": url} for lin in linhas if lin["nome"] in ligados]
 
 
 # ---------------------------------------------------------------- presença
@@ -253,8 +250,7 @@ def presenca_do_ano(sessao, deputados: list[dict], ano: int, existentes: list[di
         return par, contar_presenca(presenca_do_mes(sessao, id_dep, int(periodo[5:]), ano))
 
     with ThreadPoolExecutor(max_workers=2) as pool:
-        for par, conta in pool.map(um, pendentes):
-            guardados[par] = conta
+        guardados.update(pool.map(um, pendentes))
     return itens_presenca({k: v for k, v in guardados.items() if k[1][:4] == str(ano) and sum(v)})
 
 
@@ -289,7 +285,7 @@ def coletar() -> None:
         r = s.get(FOLHA.format(ano=ano, mes=mes), timeout=60)
         r.raise_for_status()
         folhas[(ano, mes)] = parse_folha(r.content.decode("latin-1"))
-    nomes_civis = {l["nome"] for linhas in folhas.values() for l in linhas}
+    nomes_civis = {lin["nome"] for linhas in folhas.values() for lin in linhas}
     ligados = ligar_civis(nomes_civis, deputados)
     arq_tse = comum.RAIZ / "dados" / "tse" / "2022" / f"{UF}.json"
     if arq_tse.exists() and len(ligados) < len(deputados):
@@ -361,9 +357,7 @@ def _conferir_deputados(registro):
     achados = parse_deputados(registro["xml"].encode("utf-8"))
     falhas = [] if achados else ["nenhum deputado em exercício"]
     for d in achados:
-        for campo in ("id", "nome", "partido", "idAutor"):
-            if not d[campo]:
-                falhas.append(f"deputado sem {campo}")
+        falhas += comum.campos_vazios(d, ("id", "nome", "partido", "idAutor"), "deputado")
     if not fotos(registro["parlamentares"]):
         falhas.append("parlamentar-portal sem txFoto")
     return falhas, []
@@ -378,9 +372,7 @@ def _conferir_verba(registro):
     raiz = ET.fromstring(registro["xml"])
     falhas = [] if len(raiz) else ["nenhuma despesa"]
     for d in raiz:
-        for campo in ("Ano", "Matricula", "Mes", "Valor", "CNPJ", "Tipo", "Fornecedor"):
-            if not (d.findtext(campo) or "").strip():
-                falhas.append(f"despesa sem {campo}")
+        falhas += [f"despesa sem {campo}" for campo in ("Ano", "Matricula", "Mes", "Valor", "CNPJ", "Tipo", "Fornecedor") if not (d.findtext(campo) or "").strip()]
     itens = itens_verba(registro["xml"].encode("utf-8"), {(d.findtext("Matricula") or "").strip(): "x" for d in raiz})
     if len(itens) != len(raiz):
         falhas.append("despesa não virou item")
@@ -401,9 +393,7 @@ def _contrato_folha(ctx):
 def _conferir_folha(registro):
     linhas = parse_folha(registro["linhas"])
     falhas = [] if linhas else ["nenhuma linha de subsídio"]
-    for l in linhas:
-        if None in (l["bruto"], l["tributos"], l["liquido"]):
-            falhas.append("subsídio sem valor")
+    falhas += ["subsídio sem valor" for lin in linhas if None in (lin["bruto"], lin["tributos"], lin["liquido"])]
     if not meses_da_folha(" ".join(registro["indice"])):
         falhas.append("índice sem mês")
     return falhas, []
@@ -419,9 +409,7 @@ def _contrato_presenca(ctx):
 def _conferir_presenca(registro):
     falhas = [] if registro["registros"] else ["nenhuma sessão"]
     for r in registro["registros"]:
-        for campo in ("idSessaoPlenaria", "data", "situacao"):
-            if not r.get(campo):
-                falhas.append(f"presença sem {campo}")
+        falhas += comum.campos_vazios(r, ("idSessaoPlenaria", "data", "situacao"), "presença")
     return falhas, []
 
 
@@ -436,23 +424,20 @@ def _contrato_proposituras(ctx):
 def _conferir_proposituras(registro):
     falhas = [] if registro["proposituras"] else ["nenhuma propositura"]
     for doc, p in registro["proposituras"].items():
-        for campo in ("natureza", "ano", "numero", "ementa", "data"):
-            if not p.get(campo):
-                falhas.append(f"propositura sem {campo}")
+        falhas += comum.campos_vazios(p, ("natureza", "ano", "numero", "ementa", "data"), "propositura")
         if not registro["autores"].get(doc):
             falhas.append("propositura sem autor")
     return falhas, []
 
 
 CONTRATOS = [
-    dict(nome="estadual_sp_deputados", fonte=DEPUTADOS_XML, buscar=_contrato_deputados, html=_conferir_deputados),
-    dict(nome="estadual_sp_verba", fonte=f"{REPOSITORIO}/deputados/despesas_gabinetes_<ano>.xml", buscar=_contrato_verba, html=_conferir_verba),
-    dict(nome="estadual_sp_folha", fonte=FOLHA_INDICE, buscar=_contrato_folha, html=_conferir_folha),
-    dict(nome="estadual_sp_presenca", fonte=f"{API}/lista-presenca-parlamentar/<matrícula>/<mês>/<ano>", buscar=_contrato_presenca, html=_conferir_presenca),
-    dict(nome="estadual_sp_proposituras", fonte=PROPOSITURAS_ZIP, buscar=_contrato_proposituras, html=_conferir_proposituras),
+    {"nome": "estadual_sp_deputados", "fonte": DEPUTADOS_XML, "buscar": _contrato_deputados, "html": _conferir_deputados},
+    {"nome": "estadual_sp_verba", "fonte": f"{REPOSITORIO}/deputados/despesas_gabinetes_<ano>.xml", "buscar": _contrato_verba, "html": _conferir_verba},
+    {"nome": "estadual_sp_folha", "fonte": FOLHA_INDICE, "buscar": _contrato_folha, "html": _conferir_folha},
+    {"nome": "estadual_sp_presenca", "fonte": f"{API}/lista-presenca-parlamentar/<matrícula>/<mês>/<ano>", "buscar": _contrato_presenca, "html": _conferir_presenca},
+    {"nome": "estadual_sp_proposituras", "fonte": PROPOSITURAS_ZIP, "buscar": _contrato_proposituras, "html": _conferir_proposituras},
 ]
 
 
 if __name__ == "__main__":
-    coletar()
-    sys.exit(0)
+    comum.principal(coletar)

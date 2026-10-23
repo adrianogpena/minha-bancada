@@ -16,7 +16,6 @@ Não coletado: foto (a API não traz URL), comissões, pronunciamentos, reuniõe
 """
 
 import re
-import sys
 import time
 from datetime import date, timedelta
 
@@ -25,7 +24,6 @@ import estaduais_comum as comum
 UF = "MG"
 API = "https://dadosabertos.almg.gov.br/api/v2"
 EM_EXERCICIO_URL = f"{API}/deputados/em_exercicio?formato=json"
-LISTA_TELEFONICA_URL = f"{API}/deputados/lista_telefonica?formato=json"
 VERBA_PAGINA = "https://www.almg.gov.br/transparencia/prestacao-de-contas/deputados/verba-indenizatoria/"
 PROPOSICOES_PAGINA = "https://www.almg.gov.br/atividade-parlamentar/projetos-de-lei/texto/"
 PAUSA = 1.0
@@ -75,11 +73,10 @@ def itens_verba(registros: list[dict], id_deputado: str, mes: int) -> list[dict]
     for r in registros:
         categoria = r.get("descTipoDespesa") or f"Tipo {r.get('codTipoDespesa')}"
         notas = r.get("listaDetalheVerba") or []
-        for n in notas:
-            itens.append({"idDeputado": id_deputado, "mes": mes, "categoria": n.get("descTipoDespesa") or categoria,
-                          "fornecedor": n.get("nomeEmitente") or None, "cnpj": n.get("cpfCnpj") or None,
-                          "valor": comum.valor_br(n.get("valorReembolsado")), "data": data_iso(n.get("dataEmissao")),
-                          "documento": n.get("descDocumento") or None, "fonte": VERBA_PAGINA})
+        itens.extend({"idDeputado": id_deputado, "mes": mes, "categoria": n.get("descTipoDespesa") or categoria,
+                      "fornecedor": n.get("nomeEmitente") or None, "cnpj": n.get("cpfCnpj") or None,
+                      "valor": comum.valor_br(n.get("valorReembolsado")), "data": data_iso(n.get("dataEmissao")),
+                      "documento": n.get("descDocumento") or None, "fonte": VERBA_PAGINA} for n in notas)
         if not notas:
             itens.append({"idDeputado": id_deputado, "mes": mes, "categoria": categoria, "fornecedor": None, "cnpj": None,
                           "valor": comum.valor_br(r.get("valor")), "data": None, "documento": None, "fonte": VERBA_PAGINA})
@@ -288,21 +285,20 @@ def _contrato_proposicoes(ctx):
 
 
 CONTRATOS = [
-    dict(nome="estadual_mg_deputados", fonte=EM_EXERCICIO_URL, buscar=_contrato_deputados,
-         usados=["em_exercicio.list[].id", "em_exercicio.list[].nome", "em_exercicio.list[].partido",
-                 "lista_telefonica.list[].id", "lista_telefonica.list[].nomeServidor", "lista_telefonica.list[].email"]),
-    dict(nome="estadual_mg_verba", fonte=VERBA_PAGINA, buscar=_contrato_verba,
-         usados=["datas.listaFechamentoVerba[].dataReferencia", "mes.list[].descTipoDespesa", "mes.list[].valor",
+    {"nome": "estadual_mg_deputados", "fonte": EM_EXERCICIO_URL, "buscar": _contrato_deputados,
+         "usados": ["em_exercicio.list[].id", "em_exercicio.list[].nome", "em_exercicio.list[].partido",
+                 "lista_telefonica.list[].id", "lista_telefonica.list[].nomeServidor", "lista_telefonica.list[].email"]},
+    {"nome": "estadual_mg_verba", "fonte": VERBA_PAGINA, "buscar": _contrato_verba,
+         "usados": ["datas.listaFechamentoVerba[].dataReferencia", "mes.list[].descTipoDespesa", "mes.list[].valor",
                  "mes.list[].listaDetalheVerba[].valorReembolsado", "mes.list[].listaDetalheVerba[].nomeEmitente",
-                 "mes.list[].listaDetalheVerba[].cpfCnpj", "mes.list[].listaDetalheVerba[].dataEmissao"]),
-    dict(nome="estadual_mg_proposicoes", fonte=f"{API}/proposicoes/pesquisa/direcionada", buscar=_contrato_proposicoes,
-         usados=["resultado.noOcorrencias", "resultado.erro", "resultado.listaItem[].siglaTipoProjeto", "resultado.listaItem[].numero",
+                 "mes.list[].listaDetalheVerba[].cpfCnpj", "mes.list[].listaDetalheVerba[].dataEmissao"]},
+    {"nome": "estadual_mg_proposicoes", "fonte": f"{API}/proposicoes/pesquisa/direcionada", "buscar": _contrato_proposicoes,
+         "usados": ["resultado.noOcorrencias", "resultado.erro", "resultado.listaItem[].siglaTipoProjeto", "resultado.listaItem[].numero",
                  "resultado.listaItem[].ano", "resultado.listaItem[].autor", "resultado.listaItem[].ementa",
                  "resultado.listaItem[].dataPublicacao", "resultado.listaItem[].situacao", "resultado.listaItem[].dominio",
-                 "resultado.listaItem[].tipoProjeto"]),
+                 "resultado.listaItem[].tipoProjeto"]},
 ]
 
 
 if __name__ == "__main__":
-    coletar()
-    sys.exit(0)
+    comum.principal(coletar)

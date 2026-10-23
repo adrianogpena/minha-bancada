@@ -10,7 +10,7 @@ Uso:
     python scripts/coletar_eleitorado.py --anos 2024
 
 Cada resumo: {"total": total, "porGenero": [masculino, feminino], "porFaixaEtaria": [8 faixas etárias], "porEscolaridade": [8 graus de escolaridade]}.
-Faixas e graus: FAIXAS e ESCOLARIDADE, em app.js. "Inválida" (idade) e "não informado" (gênero) só entram no total.
+Faixas e graus: FAIXAS e ESCOLARIDADE, em site/assets/js. "Inválida" (idade) e "não informado" (gênero) só entram no total.
 
 Fonte: https://dadosabertos.tse.jus.br (Eleitorado: perfil do eleitorado)
 """
@@ -47,15 +47,15 @@ def novo() -> dict:
     return {"total": 0, "porGenero": [0, 0], "porFaixaEtaria": [0] * 8, "porEscolaridade": [0] * 8}
 
 
-def somar(r: dict, l: dict) -> None:
-    n = int(l["QT_ELEITORES"])
+def somar(r: dict, lin: dict) -> None:
+    n = int(lin["QT_ELEITORES"])
     r["total"] += n
-    if l["CD_GENERO"] in ("2", "4"):
-        r["porGenero"][0 if l["CD_GENERO"] == "2" else 1] += n
-    f = faixa(int(l["CD_FAIXA_ETARIA"]))
+    if lin["CD_GENERO"] in ("2", "4"):
+        r["porGenero"][0 if lin["CD_GENERO"] == "2" else 1] += n
+    f = faixa(int(lin["CD_FAIXA_ETARIA"]))
     if f is not None:
         r["porFaixaEtaria"][f] += n
-    e = int(l["CD_GRAU_ESCOLARIDADE"])
+    e = int(lin["CD_GRAU_ESCOLARIDADE"])
     if 1 <= e <= 8:
         r["porEscolaridade"][e - 1] += n
 
@@ -73,13 +73,13 @@ def coletar_ano(ano: int) -> None:
             uf = nome.rsplit("_", 1)[1][:2]
             mapa = defaultdict(novo)
             with z.open(nome) as f:
-                for l in csv.DictReader(io.TextIOWrapper(f, encoding="latin-1", newline=""), delimiter=";"):
-                    somar(mapa[l["CD_MUNICIPIO"]], l)
-                    somar(mapa["_uf"], l)
+                for lin in csv.DictReader(io.TextIOWrapper(f, encoding="latin-1", newline=""), delimiter=";"):
+                    somar(mapa[lin["CD_MUNICIPIO"]], lin)
+                    somar(mapa["_uf"], lin)
             (pasta / f"{uf}.json").write_text(json.dumps(mapa, ensure_ascii=False, separators=(",", ":")), encoding="utf-8")
             total += len(mapa) - 1
     (pasta / "_coleta.json").write_text(json.dumps({
-        "coletadoEm": dt.datetime.now(dt.timezone.utc).isoformat(timespec="seconds"), "versao": VERSAO}), encoding="utf-8")
+        "coletadoEm": dt.datetime.now(dt.UTC).isoformat(timespec="seconds"), "versao": VERSAO}), encoding="utf-8")
     print(f"TSE eleitorado {ano}: {total} municípios")
 
 

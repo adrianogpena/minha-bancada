@@ -100,7 +100,7 @@ def test_coletar_grava_deputados_remuneracao_e_diarias(tmp_path, monkeypatch):
     arquivo.write_text(json.dumps([{"cargo": "DEPUTADO ESTADUAL", "situacao": "eleito", **ELEITOS[0]}]), encoding="utf-8")
     monkeypatch.setattr(mt, "TSE_ARQUIVO", arquivo)
     monkeypatch.setattr(comum, "DADOS", tmp_path / "estaduais")
-    monkeypatch.setattr(comum, "sessao", lambda: Sessao())
+    monkeypatch.setattr(comum, "sessao", Sessao)
     mt.coletar()
     pasta = tmp_path / "estaduais" / "MT"
     deps = json.loads((pasta / "deputados.json").read_text(encoding="utf-8"))

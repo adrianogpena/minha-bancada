@@ -94,7 +94,7 @@ def test_precisa_coletar_ano_encerrado_em_cache(tmp_path, monkeypatch):
 
 
 def test_precisa_coletar_ano_em_andamento_depende_da_idade(tmp_path, monkeypatch):
-    agora = dt.datetime.now(dt.timezone.utc)
+    agora = dt.datetime.now(dt.UTC)
     marca(tmp_path, monkeypatch, t.ANO_EM_ANDAMENTO, versao=t.VERSAO, coletadoEm=agora.isoformat())
     assert not t.precisa_coletar(t.ANO_EM_ANDAMENTO, False)
     velho = agora - dt.timedelta(days=t.DIAS_ENTRE_ATUALIZACOES + 1)

@@ -35,7 +35,7 @@ INICIO_LEGISLATURA = "2023-02-01"  # 57ª legislatura
 LEGISLATURA = 57
 ARQUIVOS_CAMARA = "https://dadosabertos.camara.leg.br/arquivos"
 TRABALHADORES_SENADO = 2  # o Senado responde 503 quando apertado
-TRABALHADORES = int(os.environ.get("CAMARA_TRABALHADORES", 10))  # requisições em paralelo; seja gentil com a API pública (429 e 5xx são repetidos com espera)
+TRABALHADORES = int(os.environ.get("CAMARA_TRABALHADORES", "10"))  # requisições em paralelo; seja gentil com a API pública (429 e 5xx são repetidos com espera)
 
 
 def sessao() -> requests.Session:
@@ -82,7 +82,7 @@ def get_todos(caminho: str, **params) -> list:
     resp = get(caminho, **params)
     itens = list(resp.get("dados", []))
     while True:
-        prox = next((l["href"] for l in resp.get("links", []) if l.get("rel") == "next"), None)
+        prox = next((lin["href"] for lin in resp.get("links", []) if lin.get("rel") == "next"), None)
         if not prox:
             break
         resp = get(prox)
@@ -146,14 +146,14 @@ def coletar_cota_csv(ano: int) -> dict[int, list]:
     zf = zipfile.ZipFile(io.BytesIO(r.content))
     texto = zf.read(zf.namelist()[0]).decode("utf-8-sig")
     por_dep: dict[int, list] = {}
-    for l in csv.DictReader(io.StringIO(texto), delimiter=";"):
-        if not l.get("nuDeputadoId", "").isdigit() or l.get("numAno") != str(ano):
+    for lin in csv.DictReader(io.StringIO(texto), delimiter=";"):
+        if not lin.get("nuDeputadoId", "").isdigit() or lin.get("numAno") != str(ano):
             continue
-        por_dep.setdefault(int(l["nuDeputadoId"]), []).append({
-            "mes": int(l["numMes"]) if l.get("numMes", "").isdigit() else None,
-            "tipo": l.get("txtDescricao"), "valor": float(l["vlrLiquido"] or 0),
-            "fornecedor": l.get("txtFornecedor"), "cnpj": re.sub(r"\D", "", l.get("txtCNPJCPF") or ""),
-            "data": (l.get("datEmissao") or "")[:10] or None, "documento": l.get("urlDocumento") or None,
+        por_dep.setdefault(int(lin["nuDeputadoId"]), []).append({
+            "mes": int(lin["numMes"]) if lin.get("numMes", "").isdigit() else None,
+            "tipo": lin.get("txtDescricao"), "valor": float(lin["vlrLiquido"] or 0),
+            "fornecedor": lin.get("txtFornecedor"), "cnpj": re.sub(r"\D", "", lin.get("txtCNPJCPF") or ""),
+            "data": (lin.get("datEmissao") or "")[:10] or None, "documento": lin.get("urlDocumento") or None,
         })
     for lista in por_dep.values():
         lista.sort(key=lambda i: i["data"] or "", reverse=True)
@@ -212,7 +212,7 @@ def coletar_deputado(dep: dict, ano: int, cota: dict[int, list] | None = None) -
         ],
         "despesas": {"ano": ano, "itens": itens_cota},
         **({"frentes": frentes} if frentes is not None else {}),
-        "coletadoEm": dt.datetime.now(dt.timezone.utc).isoformat(timespec="seconds"),
+        "coletadoEm": dt.datetime.now(dt.UTC).isoformat(timespec="seconds"),
     }
 
 
@@ -322,7 +322,7 @@ def coletar_detalhes_proposicoes() -> None:
     print(f"Detalhes salvos: {feitos}, falhas: {falhas}, no cache: {len(cache)}")
 
 
-# mesmos tipos que o site trata como projeto (TIPOS_PROJETO em site/assets/app.js)
+# mesmos tipos que o site trata como projeto (TIPOS_PROJETO em site/assets/js)
 TIPOS_PROJETO = {"PL", "PLP", "PEC", "PDL", "PRC", "PLC", "PLS", "PRS", "PDS", "PLN", "PFC", "PLV", "MPV"}
 ORCAMENTO_AUTORES = int(os.environ.get("AUTORES_POR_EXECUCAO", "6000"))
 
@@ -404,10 +404,10 @@ def coletar_temas_proposicoes() -> None:
             avisar(f"temas das proposições de {ano}: {e}")
             continue
         novos: dict[str, list] = {}
-        for l in sorted(linhas, key=lambda x: -(x.get("relevancia") or 0)):
-            pid = id_da_uri(l.get("uriProposicao"))
-            if pid and l.get("siglaTipo") in TIPOS_PROJETO and l.get("tema") and l["tema"] not in novos.setdefault(pid, []):
-                novos[pid].append(l["tema"])
+        for lin in sorted(linhas, key=lambda x: -(x.get("relevancia") or 0)):
+            pid = id_da_uri(lin.get("uriProposicao"))
+            if pid and lin.get("siglaTipo") in TIPOS_PROJETO and lin.get("tema") and lin["tema"] not in novos.setdefault(pid, []):
+                novos[pid].append(lin["tema"])
         cache.update(novos)
         mudou = True
         print(f"Temas {ano}: {len(novos)} projetos")
@@ -419,13 +419,13 @@ def coletar_orgaos_deputados() -> None:
     """Comissões e outros órgãos de cada deputado na legislatura, do arquivo orgaosDeputados-L57.json.
     Guardado em dados/orgaos_deputados.json como {id do deputado: [órgãos]} (vai para o git)."""
     por_dep: dict[str, list] = {}
-    for l in baixar_arquivo_camara(f"orgaosDeputados/json/orgaosDeputados-L{LEGISLATURA}.json"):
-        m = re.search(r"/deputados/(\d+)$", l.get("uriDeputado") or "")
-        if not m or not l.get("siglaOrgao"):
+    for lin in baixar_arquivo_camara(f"orgaosDeputados/json/orgaosDeputados-L{LEGISLATURA}.json"):
+        m = re.search(r"/deputados/(\d+)$", lin.get("uriDeputado") or "")
+        if not m or not lin.get("siglaOrgao"):
             continue
         por_dep.setdefault(m.group(1), []).append({
-            "sigla": l["siglaOrgao"], "nome": (l.get("nomePublicacaoOrgao") or l.get("nomeOrgao") or "").strip(),
-            "cargo": l.get("cargo") or None, "inicio": l.get("dataInicio") or None, "fim": l.get("dataFim") or None,
+            "sigla": lin["siglaOrgao"], "nome": (lin.get("nomePublicacaoOrgao") or lin.get("nomeOrgao") or "").strip(),
+            "cargo": lin.get("cargo") or None, "inicio": lin.get("dataInicio") or None, "fim": lin.get("dataFim") or None,
         })
     if por_dep:
         salvar(DADOS / "orgaos_deputados.json", por_dep)
@@ -450,9 +450,9 @@ def coletar_orientacoes() -> None:
         except Exception as e:
             avisar(f"orientações das votações de {ano}: {e}")
             continue
-        for l in linhas:
-            if l.get("idVotacao") in ids and l.get("siglaBancada") and (l.get("orientacao") or "").strip():
-                cache.setdefault(l["idVotacao"], {})[l["siglaBancada"].strip()] = l["orientacao"].strip()
+        for lin in linhas:
+            if lin.get("idVotacao") in ids and lin.get("siglaBancada") and (lin.get("orientacao") or "").strip():
+                cache.setdefault(lin["idVotacao"], {})[lin["siglaBancada"].strip()] = lin["orientacao"].strip()
                 mudou = True
     if mudou:
         salvar(arquivo, cache)
@@ -491,13 +491,13 @@ def coletar_votacoes_proposicoes() -> None:
         except Exception as e:
             avisar(f"votações das proposições de {ano}: {e}")
             continue
-        for l in linhas:
-            pid = str((l.get("proposicao_") or l.get("proposicao") or {}).get("id") or "")
-            if pid not in meus or not l.get("idVotacao"):
+        for lin in linhas:
+            pid = str((lin.get("proposicao_") or lin.get("proposicao") or {}).get("id") or "")
+            if pid not in meus or not lin.get("idVotacao"):
                 continue
             lista = cache.setdefault(pid, [])
-            if not any(x["id"] == l["idVotacao"] for x in lista):
-                lista.append({"id": l["idVotacao"], "data": l.get("data"), "descricao": (l.get("descricao") or "").strip()[:300]})
+            if not any(x["id"] == lin["idVotacao"] for x in lista):
+                lista.append({"id": lin["idVotacao"], "data": lin.get("data"), "descricao": (lin.get("descricao") or "").strip()[:300]})
                 mudou = True
     if mudou:
         for lista in cache.values():
@@ -537,13 +537,13 @@ def coletar_presenca_eventos() -> None:
             continue
         vistos: set[tuple] = set()
         deputados: dict[str, dict] = {}
-        for l in presencas:
-            chave = (l.get("idEvento"), l.get("idDeputado"))
+        for lin in presencas:
+            chave = (lin.get("idEvento"), lin.get("idDeputado"))
             if None in chave or chave in vistos:
                 continue
             vistos.add(chave)
-            classe = tipo_evento((eventos.get(l["idEvento"]) or {}).get("descricaoTipo"))
-            d = deputados.setdefault(str(l["idDeputado"]), {"sessoes": 0, "comissoes": 0, "outros": 0})
+            classe = tipo_evento((eventos.get(lin["idEvento"]) or {}).get("descricaoTipo"))
+            d = deputados.setdefault(str(lin["idDeputado"]), {"sessoes": 0, "comissoes": 0, "outros": 0})
             d[classe] += 1
         sessoes = sum(1 for e in eventos.values() if tipo_evento(e.get("descricaoTipo")) == "sessoes" and (e.get("situacao") or "").startswith("Encerrada"))
         cache[str(ano)] = {"sessoesDeliberativas": sessoes, "deputados": deputados}
@@ -1013,7 +1013,7 @@ def main():
             except Exception as e:
                 avisar(f"{etapa.__name__}: {e}")
     salvar(DADOS / "meta.json", {
-        "atualizadoEm": dt.datetime.now(dt.timezone.utc).isoformat(timespec="seconds"),
+        "atualizadoEm": dt.datetime.now(dt.UTC).isoformat(timespec="seconds"),
         "fonte": "API de Dados Abertos da Câmara dos Deputados",
         "fonteUrl": "https://dadosabertos.camara.leg.br",
     })

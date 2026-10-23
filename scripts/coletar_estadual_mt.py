@@ -15,7 +15,6 @@ Não acessado: https://www.al.mt.gov.br (projetos, votações, presença, ficha)
 """
 
 import re
-import sys
 from datetime import date
 
 import estaduais_comum as comum
@@ -23,8 +22,8 @@ import estaduais_comum as comum
 UF = "MT"
 PORTAL = "https://almt.eloweb.net/portaltransparencia/1/"
 API = "https://almt.eloweb.net/portaltransparencia-api/api"
-TSE_ARQUIVO = comum.RAIZ / "dados" / "tse" / "2022" / "MT.json"
-TSE_FICHA = "https://divulgacandcontas.tse.jus.br/divulga/#/candidato/2022/2040602022/MT/{}"
+TSE_ARQUIVO = comum.arquivo_tse(UF)
+TSE_FICHA = comum.ficha_tse(UF)
 PRIMEIRO_ANO = 2023
 PAGINA = 500
 PEQUENAS = {"de", "da", "do", "das", "dos", "e"}
@@ -55,7 +54,7 @@ def deputados_ativos(servidores: list[dict]) -> list[dict]:
 
 
 def deputados_do_tse() -> list[dict]:
-    return [e for e in comum.ler(TSE_ARQUIVO, []) if e.get("cargo") == "DEPUTADO ESTADUAL" and e.get("situacao") == "eleito"]
+    return comum.eleitos_tse(TSE_ARQUIVO)
 
 
 def montar_deputados(servidores: list[dict], eleitos: list[dict]) -> list[dict]:
@@ -138,6 +137,8 @@ def coletar() -> None:
     comum.salvar(pasta / "deputados.json", {"fonte": f"{PORTAL}servidores", "host": None, "legislatura": "2023-2027", "deputados": deputados})
     print(f"MT: {len(deputados)} deputados")
     for ano in range(PRIMEIRO_ANO, hoje.year + 1):
+        if all(comum.ano_encerrado(ano, hoje, pasta / f"{nome}_{ano}.json") for nome in ("remuneracao", "diarias")):
+            continue
         remuneracao = []
         for sv in servidores:
             remuneracao += itens_remuneracao(_json(s, f"/servidores/{sv['matricula']}", ano, ignorar_404=True), str(sv["matricula"]), ano)
@@ -159,9 +160,7 @@ def _conferir_servidores(registro):
     if not registro["content"]:
         falhas.append("nenhum deputado ativo em /servidores?cargo=DEPUTADO")
     for s in registro["content"]:
-        for c in ("matricula", "nome", "descricaoCargo", "descricaoLotacao", "situacao"):
-            if not s.get(c):
-                falhas.append(f"servidor sem {c}")
+        falhas += comum.campos_vazios(s, ("matricula", "nome", "descricaoCargo", "descricaoLotacao", "situacao"), "servidor")
     return falhas, []
 
 
@@ -178,9 +177,7 @@ def _conferir_remuneracao(registro):
     itens = itens_remuneracao({"dadosFinanceiros": registro["dadosFinanceiros"]}, str(registro["matricula"]), registro["ano"])
     if not itens:
         falhas.append("/servidores/{matrícula} sem dadosFinanceiros do ano")
-    for i in itens:
-        if i["bruto"] is None or i["liquido"] is None:
-            falhas.append("folha sem vencimentos ou descontos")
+    falhas += ["folha sem vencimentos ou descontos" for i in itens if i["bruto"] is None or i["liquido"] is None]
     return falhas, []
 
 
@@ -195,19 +192,16 @@ def _conferir_diarias(registro):
     if not registro["content"]:
         falhas.append("/diarias sem registros no ano")
     for r in registro["content"]:
-        for c in ("nome", "dataSaida", "dataRetorno", "destino", "valorDiarias", "motivo"):
-            if r.get(c) in (None, ""):
-                falhas.append(f"diária sem {c}")
+        falhas += comum.campos_vazios(r, ("nome", "dataSaida", "dataRetorno", "destino", "valorDiarias", "motivo"), "diária", vazios=(None, ""))
     return falhas, []
 
 
 CONTRATOS = [
-    dict(nome="estadual_mt_servidores", fonte=f"{PORTAL}servidores", buscar=_contrato_servidores, html=_conferir_servidores),
-    dict(nome="estadual_mt_remuneracao", fonte=f"{PORTAL}servidores", buscar=_contrato_remuneracao, html=_conferir_remuneracao),
-    dict(nome="estadual_mt_diarias", fonte=f"{PORTAL}diarias", buscar=_contrato_diarias, html=_conferir_diarias),
+    {"nome": "estadual_mt_servidores", "fonte": f"{PORTAL}servidores", "buscar": _contrato_servidores, "html": _conferir_servidores},
+    {"nome": "estadual_mt_remuneracao", "fonte": f"{PORTAL}servidores", "buscar": _contrato_remuneracao, "html": _conferir_remuneracao},
+    {"nome": "estadual_mt_diarias", "fonte": f"{PORTAL}diarias", "buscar": _contrato_diarias, "html": _conferir_diarias},
 ]
 
 
 if __name__ == "__main__":
-    coletar()
-    sys.exit(0)
+    comum.principal(coletar)

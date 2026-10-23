@@ -13,7 +13,6 @@ token embutido no código do site, que não foi usado), votações de comissão 
 membro apareceria como ausente), remuneração dos deputados, diárias e emendas (não encontradas).
 """
 
-import sys
 from concurrent.futures import ThreadPoolExecutor
 from datetime import date, timedelta
 
@@ -153,12 +152,13 @@ def juntar_novos(atuais: dict[int, dict], novos: dict[int, dict]) -> dict[int, d
     """Matérias de cada ano: as já guardadas mais as lidas agora (autores somados, versão nova no resto)."""
     por_ano = {ano: dict(a["materias"]) for ano, a in atuais.items()}
     for ano, materias in novos.items():
-        for chave, m in materias.items():
+        for chave, nova in materias.items():
             antiga = por_ano.get(ano, {}).get(chave)
+            juntada = nova
             if antiga:
-                ids = sorted(set(antiga["idsDeputados"]) | set(m["idsDeputados"]))
-                m = {**m, "idsAutores": ids, "idsDeputados": ids}
-            por_ano.setdefault(ano, {})[chave] = m
+                ids = sorted(set(antiga["idsDeputados"]) | set(nova["idsDeputados"]))
+                juntada = {**nova, "idsAutores": ids, "idsDeputados": ids}
+            por_ano.setdefault(ano, {})[chave] = juntada
     return por_ano
 
 
@@ -237,7 +237,7 @@ def coletar_presenca(s, deputados: list[dict], sessoes: list[dict]) -> None:
             registros = pegar(s, f"reuniao/presenca/{r['id']}")["dados"]
         except comum.PrazoEsgotado:
             raise
-        except Exception as e:
+        except Exception:
             falhas.append(r["id"])
             return None
         return str(r["id"]), {"data": r["dataInicio"], "registros": [{"id": x["id"], "evento": {"chave": (x.get("evento") or {}).get("chave")}} for x in registros]}
@@ -301,7 +301,7 @@ def coletar_votacoes(s, deputados: list[dict], sessoes: list[dict]) -> None:
             return vid, None
         try:
             return vid, votacao(p, pegar(s, f"processo/{p['id']}/detalhamento-votacao/{p['resultadoVotacao']['reuniao']['id']}"), ids)
-        except Exception as e:
+        except Exception:
             sem_detalhe.append(vid)
             return vid, None
 
@@ -327,11 +327,7 @@ def coletar() -> None:
         comum.avisar(f"RN: lista de reuniões: {e}")
     etapas = [("projetos", lambda: coletar_projetos(s, deputados)), ("presença", lambda: coletar_presenca(s, deputados, sessoes)),
               ("votações", lambda: coletar_votacoes(s, deputados, sessoes))]
-    for nome, etapa in etapas:
-        try:
-            etapa()
-        except Exception as e:
-            comum.avisar(f"RN: {nome}: {e}")
+    comum.rodar_etapas(UF, etapas)
 
 
 # ---------------------------------------------------------------- contratos
@@ -354,9 +350,7 @@ def _conferir_deputados(registro):
         return ["parlamentar sem deputados"], []
     for p in registro["parlamentar"]:
         d = deputado(p)
-        for campo in ("id", "nome", "nomeCivil", "partido"):
-            if not d[campo]:
-                falhas.append(f"deputado sem {campo}")
+        falhas += comum.campos_vazios(d, ("id", "nome", "nomeCivil", "partido"), "deputado")
         if not d["iniciativas"]:
             falhas.append("deputado sem iniciativa PARLAMENTAR")
     return falhas, []
@@ -375,9 +369,7 @@ def _conferir_projetos(registro):
     falhas = []
     for p in projetos:
         _, m = materia(p, ["1"])
-        for campo in ("tipo", "numero", "ano", "ementa", "dataApresentacao"):
-            if not m[campo]:
-                falhas.append(f"projeto sem {campo}")
+        falhas += comum.campos_vazios(m, ("tipo", "numero", "ano", "ementa", "dataApresentacao"), "projeto")
     return falhas, []
 
 
@@ -422,22 +414,19 @@ def _conferir_votacao(registro):
         return ["votação de amostra sem votos reconhecidos"], []
     falhas = []
     v, m = r
-    for campo in ("data", "idMateria", "resultado", "sim"):
-        if v[campo] is None:
-            falhas.append(f"votação sem {campo}")
+    falhas += comum.campos_vazios(v, ("data", "idMateria", "resultado", "sim"), "votação", vazios=(None,))
     if not m["ementa"]:
         falhas.append("matéria votada sem ementa")
     return falhas, []
 
 
 CONTRATOS = [
-    dict(nome="estadual_rn_deputados", fonte=f"{API}/parlamentar", buscar=_contrato_deputados, html=_conferir_deputados),
-    dict(nome="estadual_rn_projetos", fonte=f"{API}/processo", buscar=_contrato_projetos, html=_conferir_projetos),
-    dict(nome="estadual_rn_presenca", fonte=f"{API}/reuniao", buscar=_contrato_presenca, html=_conferir_presenca),
-    dict(nome="estadual_rn_votacao", fonte=f"{API}/processo/ultimas-votacoes", buscar=_contrato_votacao, html=_conferir_votacao),
+    {"nome": "estadual_rn_deputados", "fonte": f"{API}/parlamentar", "buscar": _contrato_deputados, "html": _conferir_deputados},
+    {"nome": "estadual_rn_projetos", "fonte": f"{API}/processo", "buscar": _contrato_projetos, "html": _conferir_projetos},
+    {"nome": "estadual_rn_presenca", "fonte": f"{API}/reuniao", "buscar": _contrato_presenca, "html": _conferir_presenca},
+    {"nome": "estadual_rn_votacao", "fonte": f"{API}/processo/ultimas-votacoes", "buscar": _contrato_votacao, "html": _conferir_votacao},
 ]
 
 
 if __name__ == "__main__":
-    coletar()
-    sys.exit(0)
+    comum.principal(coletar)

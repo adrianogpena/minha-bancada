@@ -24,7 +24,7 @@ def amostra(nome):
 
 
 def odt(linhas):
-    corpo = "".join("<table:table-row>" + "".join(f"<table:table-cell><text:p>{c}</text:p></table:table-cell>" for c in l) + "</table:table-row>" for l in linhas)
+    corpo = "".join("<table:table-row>" + "".join(f"<table:table-cell><text:p>{c}</text:p></table:table-cell>" for c in linha) + "</table:table-row>" for linha in linhas)
     xml = (f'<?xml version="1.0"?><office:document-content xmlns:office="urn:oasis:names:tc:opendocument:xmlns:office:1.0" xmlns:table="{NS_TABELA}" '
            f'xmlns:text="{NS_TEXTO}"><office:body><office:text><table:table>{corpo}</table:table></office:text></office:body></office:document-content>')
     buf = BytesIO()
@@ -35,9 +35,9 @@ def odt(linhas):
 
 def xlsx(linhas):
     strings, celulas = [], []
-    for n, l in enumerate(linhas, 1):
+    for n, linha in enumerate(linhas, 1):
         cs = ""
-        for i, v in enumerate(l):
+        for i, v in enumerate(linha):
             if v == "":
                 continue
             strings.append(v)
@@ -168,7 +168,7 @@ def test_coletar_grava_deputados_verbas_e_diarias(tmp_path, monkeypatch):
     pastas = {f"Ano {ano}/": f'<li data-type="folder" data-name="02-Fevereiro" data-path="Ano {ano}/02-Fevereiro/"></li>'}
     arquivos_verba = (f'<li class="file_record" data-name="Dep. Joilma Teodora de Araujo Silva - Fevereiro {ano}.odt" data-file-type="odt"><a href="http://x/v.odt?wpdf_download=true&#038;i=1"></a></li>'
                       f'<li class="file_record" data-name="Dep. Joilma Teodora de Araujo Silva - Fevereiro {ano}.pdf" data-file-type="pdf"><a href="http://x/v.pdf?wpdf_download=true&#038;i=2"></a></li>')
-    arquivos_diaria = f'<li class="file_record" data-name="DEMONSTRATIVO FEV.xlsx" data-file-type="xlsx"><a href="http://x/d.xlsx?wpdf_download=true"></a></li>'
+    arquivos_diaria = '<li class="file_record" data-name="DEMONSTRATIVO FEV.xlsx" data-file-type="xlsx"><a href="http://x/d.xlsx?wpdf_download=true"></a></li>'
 
     class Resp:
         def __init__(self, texto=None, conteudo=None, dados=None):

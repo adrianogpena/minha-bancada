@@ -6,7 +6,6 @@ Uso:
     python scripts/gerar.py
 """
 
-import json
 import re
 import shutil
 import unicodedata
@@ -16,6 +15,7 @@ from pathlib import Path
 import gerar_estaduais
 import gerar_prefeituras
 import gerar_politicos
+from gerar_politicos import ler, salvar
 
 RAIZ = Path(__file__).resolve().parent.parent
 BRUTO = RAIZ / "dados"
@@ -23,17 +23,6 @@ SAIDA = RAIZ / "site" / "dados"
 
 VOTOS_NORMAIS = {"Sim": "sim", "Não": "nao", "Abstenção": "abstencao",
                  "Obstrução": "obstrucao", "Artigo 17": "art17"}
-
-
-def ler(caminho: Path, padrao=None):
-    if caminho.exists():
-        return json.loads(caminho.read_text(encoding="utf-8"))
-    return padrao
-
-
-def salvar(caminho: Path, obj) -> None:
-    caminho.parent.mkdir(parents=True, exist_ok=True)
-    caminho.write_text(json.dumps(obj, ensure_ascii=False, separators=(",", ":")), encoding="utf-8")
 
 
 def tipo_voto(v: str | None) -> str:
@@ -63,7 +52,7 @@ def juntar_autoria(p: dict, aut: dict | None, did: str, partidos: dict | None = 
         return p
     partidos = partidos or {}
     outros = []
-    for i, nome, *resto in aut["autores"]:
+    for i, nome, *_ in aut["autores"]:
         if str(i) == did:
             continue
         sigla = partidos.get(str(i))
@@ -87,7 +76,7 @@ TIPOS_PROJETO = {"PL", "PLP", "PEC", "PDL", "PRC", "PLC", "PLS", "PRS", "PDS", "
 
 
 def destino_projeto(situacao: str | None) -> str:
-    """Mesma classificação de `desfecho` em site/assets/app.js: aprovada, rejeitada, tramitando ou sem (sem desfecho conhecido)."""
+    """Mesma classificação de `desfecho` em site/assets/js/apis.js: aprovada, rejeitada, tramitando ou sem (sem desfecho conhecido)."""
     s = unicodedata.normalize("NFD", (situacao or "").lower())
     s = "".join(c for c in s if unicodedata.category(c) != "Mn")
     if not situacao or "tramitacao encerrada" in s:
@@ -250,7 +239,6 @@ def ordenar_orgaos(orgaos: list) -> list:
 
 
 # cota parlamentar mensal (CEAP) de cada UF, em reais: tabela "valores atuais" do guia para jornalistas da Câmara (verificada em 2026-10-22, sem data de vigência na página)
-FONTE_LIMITE_COTA = "https://www2.camara.leg.br/comunicacao/assessoria-de-imprensa/guia-para-jornalistas/cota-parlamentar"
 LIMITE_COTA_UF = {
     "AC": 57359.87, "AL": 53164.36, "AM": 56151.46, "AP": 55929.26, "BA": 50965.29, "CE": 54879.34, "DF": 41612.55, "ES": 49160.15,
     "GO": 46979.73, "MA": 54537.99, "MG": 47645.91, "MS": 52707.93, "MT": 51439.83, "PA": 54624.17, "PB": 54402.48, "PE": 53997.81,
@@ -292,16 +280,16 @@ def ranking_fornecedores(deputados: dict) -> list:
             f["total"] += i["valor"]
             f["notas"] += 1
             f["deps"][did] += i["valor"]
-    ranking = []
-    for f in sorted(por_cnpj.values(), key=lambda f: -f["total"])[:FORNECEDORES_NO_RANKING]:
-        ranking.append({
+    return [
+        {
             "cnpj": f["cnpj"], "nome": f["nomes"].most_common(1)[0][0], "total": round(f["total"], 2), "notas": f["notas"],
             "deputados": len(f["deps"]),
             "maioresDeputados": [{"id": did, "nome": deputados[did]["nome"], "partido": deputados[did]["partido"],
                                   "uf": deputados[did]["uf"], "valor": round(v, 2)}
                                  for did, v in f["deps"].most_common(DEPUTADOS_POR_FORNECEDOR)],
-        })
-    return ranking
+        }
+        for f in sorted(por_cnpj.values(), key=lambda f: -f["total"])[:FORNECEDORES_NO_RANKING]
+    ]
 
 
 def resumir_despesas(ano: int, itens: list) -> dict:

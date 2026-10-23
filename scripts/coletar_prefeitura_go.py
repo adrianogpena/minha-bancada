@@ -54,7 +54,7 @@ def pagina(ano: int, n: int) -> tuple[int, list[dict]]:
     total = int(m.group(1)) if m else 0
     itens = []
     for b in re.split(r'<div class="general-box">', h)[1:]:
-        def g(p: str) -> str:
+        def g(p: str, b: str = b) -> str:
             x = re.search(p, b, re.S)
             return html.unescape(re.sub(r"<[^>]+>", "", x.group(1))).strip() if x else ""
         uuid = re.search(r"visualizar_processo/([0-9a-f-]+)/", b)

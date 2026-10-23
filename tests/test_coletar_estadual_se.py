@@ -61,7 +61,7 @@ def test_coletar_grava_deputados(tmp_path, monkeypatch):
     (tmp_path / "SE.json").write_text(json.dumps(eleitos), encoding="utf-8")
     monkeypatch.setattr(se, "TSE_ARQUIVO", tmp_path / "SE.json")
     monkeypatch.setattr(comum, "DADOS", tmp_path)
-    monkeypatch.setattr(comum, "sessao", lambda: Sessao())
+    monkeypatch.setattr(comum, "sessao", Sessao)
     se.coletar()
     info = json.loads((tmp_path / "SE" / "deputados.json").read_text(encoding="utf-8"))
     assert info["host"] is None and info["fonte"] == se.HOME and len(info["deputados"]) == 3

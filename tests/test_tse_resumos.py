@@ -163,7 +163,7 @@ def test_baixar_descarta_arquivo_de_tamanho_errado(tmp_path, monkeypatch):
     destino = tmp_path / "a.zip"
     try:
         baixar_tse.baixar(FakeSessao({}), "http://cdn/a.zip", destino, 99)
-    except IOError:
+    except OSError:
         pass
     else:
         raise AssertionError("devia falhar")

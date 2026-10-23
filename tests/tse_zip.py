@@ -8,5 +8,5 @@ def zip_csv(caminho, arquivos):
     with zipfile.ZipFile(caminho, "w") as z:
         for nome, linhas in arquivos.items():
             cols = list(linhas[0])
-            texto = ";".join(cols) + "\n" + "\n".join(";".join(str(l[c]) for c in cols) for l in linhas) + "\n"
+            texto = ";".join(cols) + "\n" + "\n".join(";".join(str(lin[c]) for c in cols) for lin in linhas) + "\n"
             z.writestr(nome, texto.encode("latin-1"))

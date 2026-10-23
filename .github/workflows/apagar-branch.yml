@@ -11,7 +11,7 @@ jobs:
   apagar:
     # só PR que foi mesclado e veio deste repositório (nunca de fork), e nunca as branches principais
     if: github.event.pull_request.merged == true && github.event.pull_request.head.repo.full_name == github.repository && github.event.pull_request.head.ref != 'master' && github.event.pull_request.head.ref != 'main'
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - name: Apagar a branch pela API (o job não faz checkout)
         env:

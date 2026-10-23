@@ -1,7 +1,5 @@
 """Coletor da Assembleia do Ceará (scripts/coletar_estadual_ce.py) contra amostras reais em tests/fixtures/contratos/."""
-import io
 import json
-import zipfile
 
 import pytest
 
@@ -56,7 +54,7 @@ def test_ligar_ignora_pontos():
 
 def test_vdp_itens():
     linhas = ce.linhas_csv(amostra("estadual_ce_vdp")["csv"], "DEPUTADO")
-    ligacao = ce.ligar({l["DEPUTADO"] for l in linhas}, DEPUTADOS)
+    ligacao = ce.ligar({linha["DEPUTADO"] for linha in linhas}, DEPUTADOS)
     itens, sem_par = ce.itens_vdp(linhas, ligacao, "http://fonte")
     assert itens[0]["idDeputado"] == "agenor-neto" and itens[0]["mes"] == 10 and itens[0]["valor"] == 4000.0
     assert itens[0]["categoria"] == "Alimentação e refeição" and itens[0]["cnpj"] == "47866934000174" and itens[0]["fonte"] == "http://fonte"
@@ -71,7 +69,7 @@ def test_vdp_sem_par_e_cabecalho_sem_dados():
 
 def test_remuneracao_so_deputados():
     linhas = ce.linhas_csv(amostra("estadual_ce_pessoal")["csv"], "NOME")
-    ligacao = ce.ligar({l["NOME"] for l in linhas}, DEPUTADOS)
+    ligacao = ce.ligar({linha["NOME"] for linha in linhas}, DEPUTADOS)
     itens, _ = ce.itens_remuneracao(linhas, ligacao, 2026, 9)
     assert itens[0]["idDeputado"] == "agenor-neto" and itens[0]["bruto"] == 39993.14 and itens[0]["liquido"] == 30621.93
     assert itens[0]["componentes"]["descontosLegais"] == 9371.21 and itens[0]["mes"] == 9
@@ -83,7 +81,7 @@ def test_diarias():
     nome = linhas[0]["BENEFICIARIO"]
     itens, sem_par = ce.itens_diarias(linhas, {nome: "agenor-neto"}, 2026)
     assert itens[0]["idDeputado"] == "agenor-neto" and itens[0]["data"] == "2026-10-19" and itens[0]["valor"] == 360.0
-    assert nome not in sem_par and len(sem_par) == len({l["BENEFICIARIO"] for l in linhas}) - 1
+    assert nome not in sem_par and len(sem_par) == len({linha["BENEFICIARIO"] for linha in linhas}) - 1
 
 
 def test_votacoes_da_pagina():
@@ -108,16 +106,6 @@ def test_votacao_data_com_espacos():
     dados = ce.votacao_do_xlsx(linhas)
     assert dados["data"] == "2026-03-03" and dados["aprovada"] is False and dados["tipo"] == "PLC"
     assert ce.votacao_do_xlsx(linhas[:3]) is None
-
-
-def test_ler_xlsx():
-    mini = io.BytesIO()
-    ns = 'xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"'
-    with zipfile.ZipFile(mini, "w") as z:
-        z.writestr("xl/sharedStrings.xml", f'<sst {ns}><si><t>Olá</t></si></sst>')
-        z.writestr("xl/worksheets/sheet1.xml", f'<worksheet {ns}><sheetData><row r="1"><c r="A1" t="s"><v>0</v></c><c r="C1"><v>7</v></c></row>'
-                                                f'<row r="2"><c r="B2"/></row></sheetData></worksheet>')
-    assert ce.ler_xlsx(mini.getvalue()) == [{"A": "Olá", "C": "7"}]
 
 
 @pytest.mark.parametrize("texto,esperado", [
@@ -180,7 +168,7 @@ def test_coletar_votacoes_grava_votos_ligados(tmp_path, monkeypatch):
     monkeypatch.setattr(ce, "PASTA", tmp_path)
     lista_html = amostra("estadual_ce_votacoes_lista")["html"] + "</td></tr>"
     primeira = ce.votacoes_da_pagina(lista_html)[0]
-    monkeypatch.setattr(ce, "ler_xlsx", lambda conteudo: amostra("estadual_ce_votacao_xlsx")["linhas"])
+    monkeypatch.setattr(ce.comum, "xlsx_linhas", lambda conteudo: amostra("estadual_ce_votacao_xlsx")["linhas"])
     s = SessaoFalsa({ce.VOTACOES_URL: lista_html, **{v["xlsx"]: b"x" for v in ce.votacoes_da_pagina(lista_html)}})
     ce.coletar_votacoes(s, DEPUTADOS)
     votacoes = json.loads((tmp_path / "votacoes.json").read_text(encoding="utf-8"))["votacoes"]

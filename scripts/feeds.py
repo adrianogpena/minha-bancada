@@ -18,7 +18,7 @@ import argparse
 import html
 import json
 from collections import defaultdict
-from datetime import datetime, timezone
+from datetime import datetime, UTC
 from email.utils import format_datetime
 
 import resumo_email as r
@@ -117,7 +117,7 @@ def dias(n: int) -> list[tuple[str, str]]:
 
 def item(titulo: str, data: str, codigo: str, corpo: str) -> str:
     """Um dia do feed; o link leva à página do histórico daquele dia, já filtrada pelo local ou político do feed."""
-    quando = datetime.fromisoformat(data).replace(hour=12, tzinfo=timezone.utc)
+    quando = datetime.fromisoformat(data).replace(hour=12, tzinfo=UTC)
     return (f"<item><title>{html.escape(titulo)}</title><link>{html.escape(r.link_historico(data, [codigo]))}</link>"
             f"<guid isPermaLink=\"false\">minha-bancada-{html.escape(codigo)}-{data}</guid>"
             f"<pubDate>{format_datetime(quando)}</pubDate><description>{html.escape(corpo)}</description></item>")

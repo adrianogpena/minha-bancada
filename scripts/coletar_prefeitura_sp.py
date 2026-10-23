@@ -72,7 +72,7 @@ def coletar() -> None:
         novos = [p for p in projetos if chave(p) not in vistos]
         with ThreadPoolExecutor(8) as ex:
             do_prefeito = list(ex.map(lambda p: e_do_prefeito(p["tipo"], p["numero"], p["ano"], pid), novos))
-        for p, sim in zip(novos, do_prefeito):
+        for p, sim in zip(novos, do_prefeito, strict=True):
             vistos.add(chave(p))
             if sim:
                 itens_ant[f"{p['tipo']}-{p['numero']}-{p['ano']}"] = {"tipo": p["tipo"], "numero": p["numero"], "ano": p["ano"],

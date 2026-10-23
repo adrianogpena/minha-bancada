@@ -1,0 +1,68 @@
+/* Senador: presença, recursos e abas. */
+import { esc, reais, reaisCentavos, pct, data, carregar, numeroBr, urlSegura } from "./util.js";
+import { itemFicha } from "./comum.js";
+import { TIPOS_PROJETO, fontes, UFS, SENADO_API, SENADO_ADM_API, linkMateriaSenado } from "./apis.js";
+import { painelGastos } from "./deputado.js";
+import { montarParlamentar } from "./parlamentar.js";
+import { painelEleicaoDe } from "./eleicao.js";
+
+/* Comparecimento do senador às votações nominais (gerar.py: categoria_presenca). */
+function painelPresenca(pr) {
+  const faltas = [pr.naoCompareceu && `não compareceu a ${pr.naoCompareceu}`, pr.licenca && `${pr.licenca} em licença`,
+    pr.missao && `${pr.missao} em missão oficial ou atividade parlamentar`, pr.outros && `${pr.outros} por outros motivos`].filter(Boolean);
+  return `<h2>Comparecimento às votações</h2>
+    <p>Compareceu a <b>${numeroBr(pr.compareceu || 0)}</b> de ${numeroBr(pr.votacoes)} votações nominais (<b>${pct(pr.compareceu || 0, pr.votacoes)}</b>), contando como presença quem votou ou registrou presença sem votar.
+    ${faltas.length ? `Nas demais: ${faltas.join("; ")}.` : "Não faltou a nenhuma."} Fonte: <a href="${SENADO_API}/votacao" rel="noopener">votações nominais do Senado (Dados Abertos)</a>.</p>`;
+}
+
+/* Recursos e benefícios do senador (coletar.py: coletar_recursos_senado). */
+function painelRecursos(rec) {
+  const selos = (rec.beneficios || []).length
+    ? `<p>${(rec.beneficios).map(([b, u]) => `<span class="selo">${esc(b)}: ${u === "Utilizou" ? "usa" : "não usa"}</span>`).join(" ")}</p>` : "";
+  const pessoal = (rec.pessoal || []).filter(([, n]) => n);
+  return `<h2>Recursos e benefícios em ${rec.ano}</h2>
+    ${selos}
+    ${pessoal.length ? `<p>Pessoal: ${pessoal.map(([l, n]) => `<b>${numeroBr(n)}</b> no ${esc(l.toLowerCase().replace("escritório(s) de apoio", "escritório de apoio"))}`).join("; ")}.</p>` : ""}
+    ${rec.foraCota?.length ? `<h3>Gastos fora da cota: ${reaisCentavos(rec.totalForaCota)}</h3>
+      <div class="rolagem"><table class="tabela"><thead><tr><th>Recurso</th><th>Valor</th></tr></thead><tbody>
+      ${rec.foraCota.map(([r, v]) => `<tr><td>${esc(r)}</td><td>${reais(v)}</td></tr>`).join("")}</tbody></table></div>
+      <p class="vazio">Diárias, correios e material pagos pelo Senado, que não entram na cota (CEAPS).</p>` : ""}
+    ${rec.escritorios?.length ? `<h3>Escritório${rec.escritorios.length > 1 ? "s" : ""} de apoio no estado</h3>
+      <ul>${rec.escritorios.map((e) => `<li>${esc(e.endereco || e.nome || "")}${e.telefone ? ` · ${esc(e.telefone)}` : ""}</li>`).join("")}</ul>` : ""}`;
+}
+
+export async function montarSenador(alvo, p, nome, ficha) {
+  let sen, lista;
+  try { [sen, lista] = await Promise.all([carregar(`dados/senador/${encodeURIComponent(p.id)}.json`), carregar("dados/votacoes_senado.json")]); } catch { return false; }
+  const meus = new Map(sen.votos.map((v) => [v.id, v.voto]));
+  const linhaDoTempo = lista.filter((v) => meus.has(v.id)).map((v) => ({ ...v, voto: meus.get(v.id) }));
+  const situacao = p.fimMandato ? `Mandato até ${data(p.fimMandato, true)}.` : "";
+  const apiVotacao = (v) => `${SENADO_API}/votacao?dataInicio=${v.data.replaceAll("-", "")}&dataFim=${v.data.replaceAll("-", "")}`;
+  montarParlamentar(alvo, {
+    nome, foto: { nome, foto: p.foto }, painelEleicao: painelEleicaoDe(p, nome),
+    subtitulo: `<span class="selo">${esc(p.partido || "")}/${esc(p.uf)}</span> ${esc(p.cargo)}${p.participacao && p.participacao !== "Titular" ? `, ${esc(p.participacao.toLowerCase())}` : ""}`,
+    painelPerfil: `<p class="situacao">${esc(situacao)}</p>
+      <h2>Ficha</h2>
+      <dl class="ficha">${ficha.map(itemFicha).join("")}
+        <dt>Onde atua</dt><dd>${esc(UFS[p.uf] || p.uf)}</dd>
+        ${urlSegura(p.pagina) ? `<dt>Página oficial</dt><dd><a href="${esc(p.pagina)}" rel="noopener">Perfil no Senado Federal</a></dd>` : ""}
+      </dl>
+      ${sen.presenca ? painelPresenca(sen.presenca) : ""}
+      ${sen.despesas ? painelGastos(sen.despesas, "A cota (CEAPS) reembolsa despesas do mandato, como passagens, aluguel de escritório e divulgação. Os valores são os reembolsados pelo Senado.")
+        : `<p class="aviso">Os gastos da cota (CEAPS) não puderam ser carregados agora. Veja no <a href="https://www12.senado.leg.br/transparencia/sen/${encodeURIComponent(p.id)}" rel="noopener">Portal da Transparência do Senado</a>.</p>`}
+      ${sen.recursos ? painelRecursos(sen.recursos) : ""}
+      ${fontes([["Dados Abertos do Senado", `${SENADO_API}/senador/${encodeURIComponent(p.id)}`], sen.despesas ? ["Cota parlamentar (CEAPS)", `${SENADO_ADM_API}/senadores/despesas_ceaps/${sen.despesas.ano}`] : null, sen.recursos ? ["Recursos utilizados", `${SENADO_ADM_API}/senadores/${encodeURIComponent(p.id)}/recursos-utilizados?ano=${sen.recursos.ano}`] : null, sen.recursos?.escritorios ? ["Escritórios de apoio", `${SENADO_ADM_API}/senadores/escritorios-apoio`] : null, ["Portal da Transparência do Senado", `https://www12.senado.leg.br/transparencia/sen/${encodeURIComponent(p.id)}`]])}`,
+    rotuloPerfil: sen.despesas ? "Perfil e gastos" : "Perfil",
+    linhaDoTempo, proposicoes: sen.proposicoes, tipoProjeto: (x) => !!TIPOS_PROJETO[x.tipo],
+    textoLegislatura: "como autor ou coautor desde 2019",
+    papel: (x) => x.principal ? "<b>autor principal</b> (o primeiro a assinar)." : "<b>coautor</b> (assinou depois do autor principal).",
+    aviso: "A situação vem da tramitação no Senado e é atualizada aos poucos todo dia.",
+    fonteTramitacao: "Tramitação (Senado)",
+    fonteEmenta: "Senado",
+    linkTramitacao: (x) => linkMateriaSenado(x.id),
+    linkApi: (x) => `${SENADO_API}/processo/${encodeURIComponent(x.proc)}`,
+    hrefVotacao: (v) => `votacao.html?casa=senado&id=${encodeURIComponent(v.id)}`,
+    fontesVotacao: (v) => [["Votos de cada senador (API do Senado)", apiVotacao(v)], v.propId ? ["Tramitação da matéria", linkMateriaSenado(v.propId)] : null],
+  });
+  return true;
+}

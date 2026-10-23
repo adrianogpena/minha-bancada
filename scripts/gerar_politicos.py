@@ -51,12 +51,12 @@ MANDATOS = {
     2022: {"PRESIDENTE": ("2023-01-01", "2027-01-04"), "VICE-PRESIDENTE": ("2023-01-01", "2027-01-04"),
            "GOVERNADOR": ("2023-01-01", "2027-01-05"), "VICE-GOVERNADOR": ("2023-01-01", "2027-01-05"),
            "SENADOR": ("2023-02-01", "2031-01-31"),
-           **{c: ("2023-02-01", "2027-01-31") for c in ("DEPUTADO FEDERAL", "DEPUTADO ESTADUAL", "DEPUTADO DISTRITAL")}},
-    2024: {c: ("2025-01-01", "2028-12-31") for c in ("PREFEITO", "VICE-PREFEITO", "VEREADOR")},
+           **dict.fromkeys(("DEPUTADO FEDERAL", "DEPUTADO ESTADUAL", "DEPUTADO DISTRITAL"), ("2023-02-01", "2027-01-31"))},
+    2024: dict.fromkeys(("PREFEITO", "VICE-PREFEITO", "VEREADOR"), ("2025-01-01", "2028-12-31")),
     2026: {"PRESIDENTE": ("2027-01-05", "2031-01-04"), "VICE-PRESIDENTE": ("2027-01-05", "2031-01-04"),
            "GOVERNADOR": ("2027-01-06", "2031-01-05"), "VICE-GOVERNADOR": ("2027-01-06", "2031-01-05"),
            "SENADOR": ("2027-02-01", "2035-01-31"),
-           **{c: ("2027-02-01", "2031-01-31") for c in ("DEPUTADO FEDERAL", "DEPUTADO ESTADUAL", "DEPUTADO DISTRITAL")}},
+           **dict.fromkeys(("DEPUTADO FEDERAL", "DEPUTADO ESTADUAL", "DEPUTADO DISTRITAL"), ("2027-02-01", "2031-01-31"))},
 }
 
 
@@ -188,7 +188,7 @@ def alianca_de(ano: int, e: dict):
     (dados/tse/coligacoes/<ano>/<UF>.json), ou None."""
     local = resumo_tse("coligacoes", ano, e["uf"]).get(f"{e['cargo']}|{e['unidadeEleitoral']}")
     i = local and local["coligacaoDoPartido"].get(e.get("partido"))
-    return dict(zip(("tipo", "nome", "composicao", "situacao"), local["coligacoes"][i])) if i is not None else None
+    return dict(zip(("tipo", "nome", "composicao", "situacao"), local["coligacoes"][i], strict=False)) if i is not None else None
 
 
 def eleitos_por_nome(cargo_tse: str) -> dict:
@@ -296,7 +296,9 @@ def gerar_perfil_casas() -> None:
         uf = arq.stem
         if uf == "BR":
             continue
-        eleitos = lambda ano, cargos: [e for e in ler(BRUTO / "tse" / str(ano) / f"{uf}.json", []) if e["cargo"] in cargos and e.get("situacao") == "eleito"]
+        def eleitos(ano: int, cargos: set, uf: str = uf) -> list:
+            return [e for e in ler(BRUTO / "tse" / str(ano) / f"{uf}.json", []) if e["cargo"] in cargos and e.get("situacao") == "eleito"]
+
         vereadores = defaultdict(list)
         for e in eleitos(2024, {"VEREADOR"}):
             vereadores[e["unidadeEleitoral"]].append(e)

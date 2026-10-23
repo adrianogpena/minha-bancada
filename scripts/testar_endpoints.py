@@ -13,7 +13,6 @@ Código de saída 1 se algum endpoint estiver com erro.
 
 import argparse
 import datetime as dt
-import json
 import sys
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
@@ -24,15 +23,15 @@ RAIZ = Path(__file__).resolve().parent.parent
 ARQUIVO = RAIZ / "ENDPOINTS.md"
 UA = "Mozilla/5.0 (compatible; minha-bancada; projeto de transparencia; teste de endpoints)"
 LIMITE_JSON = 2_000_000   # só confere o JSON se couber nisso
-OK, ERRO, NAO_TESTADO = "✅ OK", "❌ ERRO", "❔"
+OK, ERRO = "✅ OK", "❌ ERRO"
 
 
 def ler_tabela(linhas: list[str]) -> list[tuple[int, list[str]]]:
     """(índice da linha, células) de cada endpoint da tabela."""
     saida = []
-    for i, l in enumerate(linhas):
-        if l.startswith("| ") and not l.startswith("| Nome") and not l.startswith("|---"):
-            saida.append((i, [c.strip() for c in l.strip().strip("|").split(" | ")]))
+    for i, lin in enumerate(linhas):
+        if lin.startswith("| ") and not lin.startswith("| Nome") and not lin.startswith("|---"):
+            saida.append((i, [c.strip() for c in lin.strip().strip("|").split(" | ")]))
     return saida
 
 
@@ -94,7 +93,7 @@ def main() -> int:
 
     hoje = dt.date.today().isoformat()
     erros = []
-    for (i, c), (ok, detalhe) in zip(alvo, resultados):
+    for (i, c), (ok, detalhe) in zip(alvo, resultados, strict=True):
         c[4:7] = [OK if ok else ERRO, hoje, detalhe]
         linhas[i] = "| " + " | ".join(c) + " |"
         print(f"{'OK  ' if ok else 'ERRO'} {c[0]:32} {detalhe}")

@@ -16,7 +16,7 @@ XML_DEPUTADOS = (
     "<NomeParlamentar>Letícia Aguiar</NomeParlamentar><Partido>PP</Partido></Deputado>"
     "<Deputado><IdSPL>9</IdSPL><Situacao>LIC</Situacao><Matricula>300002</Matricula><NomeParlamentar>Fora</NomeParlamentar><Partido>PT</Partido></Deputado>"
     "</Deputados>"
-).encode("utf-8")
+).encode()
 
 
 def amostra(nome):
@@ -92,10 +92,10 @@ def test_proposituras_do_contrato():
 
 
 def test_itens_verba_so_dos_deputados_em_exercicio():
-    xml = ("<despesas><despesa><Ano>2025</Ano><Matricula>300607</Matricula><Mes>3</Mes><Valor>9200.0</Valor><CNPJ>00192198000152</CNPJ>"
-           "<Deputado>Danilo</Deputado><Tipo>D - MATERIAIS</Tipo><Fornecedor>GRAFICA  PARATODOS</Fornecedor></despesa>"
-           "<despesa><Ano>2025</Ano><Matricula>999</Matricula><Mes>3</Mes><Valor>1.0</Valor><CNPJ>1</CNPJ><Deputado>X</Deputado><Tipo>A</Tipo>"
-           "<Fornecedor>F</Fornecedor></despesa></despesas>").encode("utf-8")
+    xml = (b"<despesas><despesa><Ano>2025</Ano><Matricula>300607</Matricula><Mes>3</Mes><Valor>9200.0</Valor><CNPJ>00192198000152</CNPJ>"
+           b"<Deputado>Danilo</Deputado><Tipo>D - MATERIAIS</Tipo><Fornecedor>GRAFICA  PARATODOS</Fornecedor></despesa>"
+           b"<despesa><Ano>2025</Ano><Matricula>999</Matricula><Mes>3</Mes><Valor>1.0</Valor><CNPJ>1</CNPJ><Deputado>X</Deputado><Tipo>A</Tipo>"
+           b"<Fornecedor>F</Fornecedor></despesa></despesas>")
     itens = sp.itens_verba(xml, {"300607": "300607"})
     assert itens == [{"idDeputado": "300607", "mes": 3, "categoria": "D - MATERIAIS", "fornecedor": "GRAFICA PARATODOS", "cnpj": "00192198000152",
                       "valor": 9200.0, "fonte": sp.DESPESAS_PAGINA}]

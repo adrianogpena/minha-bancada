@@ -32,12 +32,7 @@ def test_arquivos_por_ano_ignora_layout_pdf():
 
 def test_linhas_da_assembleia_filtra_orgao():
     texto = "Orgao;Favorecido\nASSEMBLEIA LEGISLATIVA;A\nSECRETARIA DA SAUDE;B\n"
-    assert [l["Favorecido"] for l in rs.linhas_da_assembleia(texto)] == ["A"]
-
-
-def test_data_iso():
-    assert rs.data_iso("04/12/2025") == "2025-12-04"
-    assert rs.data_iso("") is None
+    assert [linha["Favorecido"] for linha in rs.linhas_da_assembleia(texto)] == ["A"]
 
 
 def test_itens_diarias_so_de_deputados_do_contrato():
@@ -91,7 +86,7 @@ def test_coletar_grava_deputados_e_diarias(tmp_path, monkeypatch):
     arquivo.write_text(json.dumps(tse), encoding="utf-8")
     monkeypatch.setattr(rs, "TSE_ARQUIVO", arquivo)
     monkeypatch.setattr(comum, "DADOS", tmp_path / "estaduais")
-    monkeypatch.setattr(comum, "sessao", lambda: Sessao())
+    monkeypatch.setattr(comum, "sessao", Sessao)
     rs.coletar()
     pasta = tmp_path / "estaduais" / "RS"
     deps = json.loads((pasta / "deputados.json").read_text(encoding="utf-8"))

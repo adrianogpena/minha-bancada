@@ -150,7 +150,10 @@ def comparar(gravada: dict, viva: dict, usados: list[str]) -> tuple[list[str], l
 def descontinuacao(resp) -> list[str]:
     """Avisos de endpoints que a própria API marca como descontinuados (Metadados.Descontinuacao do Senado)."""
     saida = []
-    achado = lambda o, k: next(iter(iterar(o, k)), None)
+
+    def achado(o, k):
+        return next(iter(iterar(o, k)), None)
+
     if achado(resp, "DataDesativacaoCompleta"):
         saida.append(f"endpoint descontinuado: desativação completa em {achado(resp, 'DataDesativacaoCompleta')}"
                      f"{', substituto: ' + achado(resp, 'UrlServicoSubstituto') if achado(resp, 'UrlServicoSubstituto') else ''}")
@@ -496,9 +499,7 @@ def _go_conferir(registro):
     if not registro["itens"]:
         falhas.append("nenhum processo reconhecido na página do SUAP")
     for i in registro["itens"]:
-        for c in ("uuid", "assunto", "interessados", "criado", "situacao"):
-            if not i.get(c):
-                avisos.append(f"processo sem {c}")
+        avisos.extend(f"processo sem {c}" for c in ("uuid", "assunto", "interessados", "criado", "situacao") if not i.get(c))
     return falhas, avisos
 
 

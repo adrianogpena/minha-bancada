@@ -119,7 +119,7 @@ def test_item_remuneracao_soma_componentes():
 
 
 def test_ligacao_da_remuneracao_pelo_nome_civil():
-    ligados = go.comum.ligar_nomes({"ALESSANDRO MOREIRA DOS SANTOS", "CHARLES BENTO EVANGELISTA", "FULANO"}, DEPUTADOS)
+    ligados = go.identidades.ligar_nomes({"ALESSANDRO MOREIRA DOS SANTOS", "CHARLES BENTO EVANGELISTA", "FULANO"}, DEPUTADOS)
     assert ligados == {"ALESSANDRO MOREIRA DOS SANTOS": "808", "CHARLES BENTO EVANGELISTA": "117"}
 
 
@@ -142,7 +142,7 @@ def test_montar_votacoes_agrupa_por_pauta_e_ignora_secreto():
     linhas = [linha(1, "Charles Bento", "SIM"), linha(1, "CRISTÓVÃO TORMIN", "NAO"), linha(1, "Fulano", "SIM"),
               linha(1, "Alessandro Moreira", "ABSTENCAO"), linha(2, "Charles Bento", "SECRETO", tipo="SECRETA"),
               linha(3, "Charles Bento", "SIM", resultado="REJEITADO")]
-    ligacao = go.comum.ligar_nomes({lin["parlamentar"] for lin in linhas}, DEPUTADOS)
+    ligacao = go.identidades.ligar_nomes({lin["parlamentar"] for lin in linhas}, DEPUTADOS)
     votacoes, materias = go.montar_votacoes(linhas, ligacao, 2025)
     assert set(votacoes) == {"1", "3"}
     v = votacoes["1"]
@@ -156,7 +156,7 @@ def test_itens_requerimentos_so_de_deputado_ligado():
     registros = [{"id": 34455, "numero": 1815, "deputado": {"nome": "Charles Bento Evangelista"}, "tipo_requerimento": {"descricao": "Conhecimento e Providência"},
                   "etapa": {"descricao": "Aprovado"}, "url_download": "https://saba.al.go.leg.br/x"},
                  {"id": 2, "numero": 1, "deputado": {"nome": "Ex Deputado"}, "tipo_requerimento": None, "etapa": None, "url_download": None}]
-    ligacao = go.comum.ligar_nomes({r["deputado"]["nome"] for r in registros}, DEPUTADOS)
+    ligacao = go.identidades.ligar_nomes({r["deputado"]["nome"] for r in registros}, DEPUTADOS)
     materias = go.itens_requerimentos(registros, ligacao, 2023)
     assert list(materias) == ["34455"]
     m = materias["34455"]

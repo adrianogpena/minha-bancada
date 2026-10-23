@@ -20,6 +20,7 @@ import time
 from datetime import date, timedelta
 
 import estaduais_comum as comum
+import identidades
 
 UF = "MG"
 API = "https://dadosabertos.almg.gov.br/api/v2"
@@ -134,7 +135,7 @@ def proposicao_url(item: dict) -> str:
 
 
 def materias(itens: list[dict], deputados: list[dict]) -> dict:
-    ids = comum.ligar_nomes({a for i in itens for a in autores_deputados(i.get("autor"))}, deputados)
+    ids = identidades.ligar_nomes({a for i in itens for a in autores_deputados(i.get("autor"))}, deputados, UF)
     achadas = {}
     for i in itens:
         autores = sorted({ids[a] for a in autores_deputados(i.get("autor")) if a in ids})

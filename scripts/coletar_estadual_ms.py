@@ -13,10 +13,11 @@ não contornado), presença e emendas (não encontradas).
 
 import csv
 import io
-import re
 from datetime import date
+from functools import partial
 
 import estaduais_comum as comum
+import identidades
 
 UF = "MS"
 PASTA = comum.DADOS / UF
@@ -29,8 +30,6 @@ TSE_ARQUIVO = comum.arquivo_tse(UF)
 TSE_FICHA = comum.ficha_tse(UF)
 ANO_INICIAL = 2023
 TIMEOUT = 90
-APELIDOS = {"hashioka": "Roberto Hashioka", "cel david": "Coronel David", "professor rinaldo": "Professor Rinaldo Modesto",
-            "lucas de lima": "Lucas de Lima do Amor Sem Fim", "zeca do pt": "Zeca do Pt"}
 
 
 def deputados_do_tse() -> list[dict]:
@@ -47,15 +46,7 @@ def linhas_csv(texto: str, cabecalho_em: str) -> list[dict]:
     return [dict(zip(cab, linha, strict=False)) for linha in todas[inicio + 1:] if any(c.strip() for c in linha)]
 
 
-def ligar(nomes, deputados: list[dict]) -> dict:
-    """Como comum.ligar_nomes, aceitando "Dep.Fulano" sem espaço, "Cel." por "Coronel" e os apelidos de APELIDOS."""
-    def normal(n):
-        n = comum.sem_acento(comum.nome_limpo(re.sub(r"^\s*dep\.(?=\S)", "dep. ", n or "", flags=re.I)))
-        n = n.replace(".", "")
-        return comum.sem_acento(APELIDOS.get(n, n))
-
-    achados = comum.ligar_nomes({normal(n) for n in nomes}, deputados)
-    return {n: achados[normal(n)] for n in nomes if normal(n) in achados}
+ligar = partial(identidades.ligar_nomes, uf=UF)
 
 
 def itens_ceap(linhas: list[dict], ligacao: dict, fonte: str) -> tuple[list[dict], set]:

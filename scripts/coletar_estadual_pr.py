@@ -13,7 +13,6 @@ Não coletado: ressarcimento (cota parlamentar) exige token reCAPTCHA, bloqueado
 (/api/votacoes devolve o PDF da sessão); passagens aéreas e cartões não trazem o deputado.
 """
 
-import difflib
 import html as html_lib
 import re
 import time
@@ -23,6 +22,7 @@ from functools import partial
 import requests
 
 import estaduais_comum as comum
+import identidades
 
 UF = "PR"
 PORTAL = "https://transparencia.assembleia.pr.leg.br"
@@ -43,8 +43,6 @@ SIGLAS = {"PROJETO DE LEI": "PRO", "PROJETO DE LEI COMPLEMENTAR": "PLC", "PROJET
           "PROJETO DE RESOLUÇÃO": "RES", "INDICAÇÃO": "IND", "PROPOSTA DE EMENDA À CONSTITUIÇÃO": "PEC", "PROPOSIÇÃO": "PRP",
           "REQUERIMENTO": "REQ", "EMENDA DE PLENÁRIO": "EPL", "VETO": "VET", "EMENDA DE DEPUTADO": "EDEP",
           "PROCESSO DISCIPLINAR": "PDISC", "SUBSTITUTIVO GERAL": "SUBG"}
-EXPANSAO = {"del": "delegado", "delegada": "delegado", "prof": "professor"}
-TITULOS = {"dr", "dra", "doutor", "doutora", "secretaria"}
 TOTAIS = {"Total Bruto": "bruto", "Valor Bruto (- Descontos Obrigatórios)": "liquido"}
 
 
@@ -54,39 +52,7 @@ def get_json(sessao, url: str, **params):
     return r.json()
 
 
-# ---------------------------------------------------------------- nomes
-
-def tokens(nome: str) -> list[str]:
-    t = re.sub(r"\(.*?\)", " ", nome or "")
-    t = comum.sem_acento(comum.nome_limpo(t)).replace(".", " ")
-    return [EXPANSAO.get(p, p) for p in t.split() if p not in TITULOS]
-
-
-def aliases(d: dict) -> list[list[str]]:
-    achados = [tokens(d["nome"]), tokens(d.get("nomeCivil") or ""), d["id"].split("-")]
-    return [a for a in achados if a]
-
-
-def ligar(nomes, deputados: list[dict]) -> dict:
-    """{nome da fonte: id}. Tenta o nome inteiro (nome, nome civil, ficha); depois "ANA JÚLIA DO PT" sem o partido e, por fim,
-    o nome contido em um único deputado ("BAZANA" em "PEDRO PAULO BAZANA"). Ambíguo fica de fora."""
-    partidos = {comum.sem_acento(d["partido"]) for d in deputados if d.get("partido")}
-    por_alias = [(a, d["id"]) for d in deputados for a in aliases(d)]
-    ligados = {}
-    for n in nomes:
-        t = tokens(n)
-        if len(t) > 2 and t[-2] in ("do", "da") and t[-1] in partidos:
-            t = t[:-2]
-        if not t:
-            continue
-        ids = {i for a, i in por_alias if a == t}
-        if not ids:
-            ids = {i for a, i in por_alias if set(t) <= set(a) or set(a) <= set(t)}
-        if not ids:
-            ids = {i for a, i in por_alias if difflib.SequenceMatcher(None, " ".join(a), " ".join(t)).ratio() >= 0.9}
-        if len(ids) == 1:
-            ligados[n] = next(iter(ids))
-    return ligados
+ligar = partial(identidades.ligar_nomes, uf=UF)
 
 
 # ---------------------------------------------------------------- deputados

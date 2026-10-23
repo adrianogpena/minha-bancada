@@ -5,6 +5,11 @@ Regra: toda fonte nova ou mudança de coleta ganha uma entrada aqui, no mesmo co
 Datas dos conjuntos que já existiam vêm do primeiro commit que os trouxe (`git log --diff-filter=A`).
 Todas as coletas rodam sozinhas no GitHub Actions (`.github/workflows/atualizar.yml`, todo dia às 05:00 de Brasília), salvo onde indicado.
 
+## Ligação de nomes das Assembleias só em `identidades.py` (2026-10-23)
+- **De onde:** nenhuma fonte nova; mudança de código nos 17 coletores estaduais com ligação de nome (BA, CE, ES, GO, MG, MS, MT, PA, PE, PR, RJ, RR, RS, SC, SE, SP).
+- **Como:** `identidades.ligar_nomes(nomes, deputados, uf)` substitui `estaduais_comum.ligar_nomes`/`ligar_por_palavras` e as funções `ligar` de cada UF (regra de cada UF em `identidades.ESTRATEGIAS`; apelidos de MS em `scripts/ligacoes_manuais.json`). Cada coleta grava `dados/estaduais/<UF>/ligacoes.json` (`nomes`: nome -> [id, método, confiança], `ambiguos`, `semPar`), e o `gerar.py` junta tudo em `site/dados/nucleo/ligacoes.json` (`registros`, `resumoRegistros`), com a pessoa do núcleo. Os arquivos de dados dos coletores não mudam de formato. `ligacoes.json` por UF só passa a existir na próxima coleta de cada UF.
+- **Conferido:** os testes de cada UF sobre `ligar` seguem iguais; nenhuma chamada à internet.
+
 ## Fichas do TSE sem repetir a disputa em cada candidato (2026-10-23)
 - **De onde:** nenhuma fonte nova; mesmos arquivos de `dados/tse/disputa`, `partidos` e `coligacoes`.
 - **Como:** em `site/dados/p/t/<ano>/<arquivo>.json`, a chave `_disputas` traz uma vez só o que os eleitos do mesmo cargo e local têm em comum (comparecimento e vagas, votos por partido, coligações). A ficha de cada candidato deixou de carregar `disputa`, `partidoVotos` e `alianca`; `completarEleicao` (`site/assets/js/ficha.js`, chamada em `politico.js`) monta os três ao abrir a página, com as mesmas regras que `gerar_politicos.py` usava (o vice disputa com o titular; as federações somam os partidos do grupo). Fichas aninhadas (eleição de senador e de deputado federal) seguem completas.

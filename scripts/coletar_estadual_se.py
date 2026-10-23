@@ -16,13 +16,12 @@ import re
 from html import unescape
 
 import estaduais_comum as comum
+import identidades
 
 UF = "SE"
 HOME = "https://al.se.leg.br/"
 FICHA = "https://aleselegis.al.se.leg.br/spl/parlamentar.aspx?id={}"
 TSE_ARQUIVO = comum.arquivo_tse(UF)
-TITULOS = {"dr", "dra", "prof", "profa", "dep"}
-SINONIMOS = {"junior": "jr", "jr": "jr"}
 
 
 def deputados_da_pagina(html: str) -> list[dict]:
@@ -42,23 +41,12 @@ def deputados_da_pagina(html: str) -> list[dict]:
     return sorted(achados.values(), key=lambda d: comum.sem_acento(d["nome"]))
 
 
-def _palavras(nome: str) -> list[str]:
-    return [SINONIMOS.get(p, p) for p in re.sub(r"[^a-z ]", " ", comum.sem_acento(nome)).split() if p not in TITULOS]
-
-
-def _casam(nome_alese: str, nome_tse: str) -> bool:
-    a, b = _palavras(nome_alese), _palavras(nome_tse)
-    if not a or not b:
-        return False
-    return "".join(a) == "".join(b) or set(b) <= set(a) or set(a) <= set(b)
-
-
 def completar_com_tse(deputados: list[dict], eleitos: list[dict]) -> None:
     """Preenche `nomeCivil` com o nome do TSE quando um só eleito de 2022 casa com o nome da Alese (a Alese não publica o nome civil)."""
     for d in deputados:
-        achados = [e for e in eleitos if _casam(d["nome"], e.get("urna") or "") or _casam(d["nome"], e["nome"])]
-        if len(achados) == 1:
-            d["nomeCivil"] = achados[0]["nome"]
+        achado = identidades.eleito_do_tse(UF, d["nome"], eleitos)
+        if achado:
+            d["nomeCivil"] = achado["nome"]
 
 
 def eleitos_do_tse() -> list[dict]:

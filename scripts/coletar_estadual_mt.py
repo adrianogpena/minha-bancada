@@ -18,6 +18,7 @@ import re
 from datetime import date
 
 import estaduais_comum as comum
+import identidades
 
 UF = "MT"
 PORTAL = "https://almt.eloweb.net/portaltransparencia/1/"
@@ -59,7 +60,7 @@ def deputados_do_tse() -> list[dict]:
 
 def montar_deputados(servidores: list[dict], eleitos: list[dict]) -> list[dict]:
     tse = [{"id": e["sequencial"], "nome": e.get("urna") or e["nome"], "nomeCivil": e["nome"], "e": e} for e in eleitos]
-    ligados = comum.ligar_nomes([s["nome"] for s in servidores], tse)
+    ligados = identidades.ligar_nomes([s["nome"] for s in servidores], tse, UF)
     por_id = {t["id"]: t["e"] for t in tse}
     lista = []
     for s in servidores:
@@ -85,7 +86,7 @@ def itens_remuneracao(detalhe: dict, id_deputado: str, ano: int) -> list[dict]:
 
 
 def itens_diarias(registros: list[dict], deputados: list[dict]) -> list[dict]:
-    ligados = comum.ligar_nomes({r["nome"] for r in registros if r.get("nome")}, deputados)
+    ligados = identidades.ligar_nomes({r["nome"] for r in registros if r.get("nome")}, deputados, UF)
     itens = []
     for r in registros:
         if r.get("nome") not in ligados:

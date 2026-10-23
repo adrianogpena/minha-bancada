@@ -22,6 +22,7 @@ from datetime import date
 from html import unescape
 
 import estaduais_comum as comum
+import identidades
 
 UF = "GO"
 PASTA = comum.DADOS / UF
@@ -232,7 +233,7 @@ def coletar_remuneracao(s, deputados: list[dict]) -> None:
         itens = [i for i in existentes if i["mes"] not in ler]
         for mes in ler:
             regs = paginar(s, "remuneracoes", ano=ano, mes=mes, categoria=7)
-            ligacao = comum.ligar_nomes({r["nome"] for r in regs}, deputados)
+            ligacao = identidades.ligar_nomes({r["nome"] for r in regs}, deputados, UF)
             for r in regs:
                 if r["nome"] in ligacao:
                     itens.append(item_remuneracao(r, ligacao[r["nome"]], ano, mes))
@@ -313,7 +314,7 @@ def coletar_votacoes(s, deputados: list[dict]) -> None:
     sem_par = set()
     for ano in range(hoje.year - 1 if votacoes else ANO_INICIAL, hoje.year + 1):
         linhas = pegar_json(s, "votacoes.json", tipo="detalhes", ano=ano)
-        ligacao = comum.ligar_nomes({lin["parlamentar"] for lin in linhas}, deputados)
+        ligacao = identidades.ligar_nomes({lin["parlamentar"] for lin in linhas}, deputados, UF)
         sem_par |= {lin["parlamentar"] for lin in linhas if lin["parlamentar"] not in ligacao}
         v, m = montar_votacoes(linhas, ligacao, ano)
         votacoes.update(v)
@@ -347,7 +348,7 @@ def coletar_requerimentos(s, deputados: list[dict]) -> None:
         if destino.exists():
             continue
         registros = paginar(s, "requerimentos", ano=ano)
-        ligacao = comum.ligar_nomes({(r.get("deputado") or {}).get("nome") for r in registros}, deputados)
+        ligacao = identidades.ligar_nomes({(r.get("deputado") or {}).get("nome") for r in registros}, deputados, UF)
         materias = itens_requerimentos(registros, ligacao, ano)
         comum.salvar(destino, {"coletadoEm": hoje, "fonte": f"{REQUERIMENTOS_PAGINA}?ano={ano}", "materias": materias})
         print(f"GO: requerimentos {ano}: {len(materias)} de {len(registros)}")

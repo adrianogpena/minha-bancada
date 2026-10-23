@@ -20,6 +20,7 @@ from html import unescape
 from functools import partial
 
 import estaduais_comum as comum
+import identidades
 
 UF = "SC"
 TRANSPARENCIA = "https://transparencia.alesc.sc.gov.br"
@@ -33,38 +34,7 @@ CABECALHO_AJAX = {"X-Requested-With": "XMLHttpRequest"}
 PRIMEIRO_ANO = 2023
 ANOS_REMUNERACAO = 2
 MESES_RECENTES = 2
-TITULOS = {"dr", "dra", "prof", "profa", "delegado", "delegada", "dep", "deputado", "deputada", "da", "de", "do", "dos", "das", "e"}
-tokens = partial(comum.palavras, ignorar=TITULOS)
-CAMPOS_NOME = ("nome", "nomeCivil", "nomeFonte")
-
-
-def _cabe(a: list, b: list) -> bool:
-    """Toda palavra de `a` está em `b`, igual ou como começo de palavra de 4 letras ou mais ("alex" em "alexander")."""
-    return bool(a) and all(any(x == y or (len(x) >= 4 and y.startswith(x)) for y in b) for x in a)
-
-
-def _unico(alvo: list, candidatos: list[tuple]):
-    """Chave do único candidato que casa com `alvo` (um contém o outro); None se houver zero ou mais de um."""
-    achados = {k for k, toks in candidatos if _cabe(alvo, toks) or (len(toks) >= 2 and _cabe(toks, alvo))}
-    if len(achados) > 1:
-        achados = {k for k, toks in candidatos if sorted(toks) == sorted(alvo)} or achados
-    return next(iter(achados)) if len(achados) == 1 else None
-
-
-def ligar(nomes, deputados: list[dict]) -> dict:
-    """Como `ligar_nomes`; o nome que não casa inteiro casa pelas palavras (sem "da", "de"...) com um só nome de deputado.
-    "Ana Paula da Silva (Paulinha)" também tenta só o apelido entre parênteses."""
-    ligados = comum.ligar_nomes(nomes, deputados)
-    candidatos = [(d["id"], t) for d in deputados for c in CAMPOS_NOME if d.get(c) and (t := tokens(d[c]))]
-    for n in nomes:
-        if n in ligados:
-            continue
-        for v in [re.sub(r"\([^)]*\)", " ", n)] + re.findall(r"\(([^)]*)\)", n):
-            achado = _unico(tokens(v), candidatos)
-            if achado is not None:
-                ligados[n] = achado
-                break
-    return ligados
+ligar = partial(identidades.ligar_nomes, uf=UF)
 
 
 def mes_anterior(ano: int, mes: int) -> tuple[int, int]:
@@ -84,11 +54,9 @@ def parse_deputados(html: str) -> list[dict]:
 def deputados_com_tse(lista: list[dict]) -> list[dict]:
     """O nome civil da fonte casa com o do TSE por palavras; o casado leva nome de urna, nome do TSE e partido."""
     eleitos = comum.eleitos_tse(TSE_ARQUIVO)
-    candidatos = [(e["sequencial"], t) for e in eleitos for campo in ("nome", "urna") if e.get(campo) and (t := tokens(e[campo]))]
-    por_id = {e["sequencial"]: e for e in eleitos}
     saida = []
     for d in lista:
-        e = por_id.get(_unico(tokens(d["nomeCivil"]), candidatos))
+        e = identidades.eleito_do_tse(UF, d["nomeCivil"], eleitos)
         saida.append({"id": d["idContracheque"], "nome": e["urna"] if e and e.get("urna") else d["nomeCivil"].title(),
                       "nomeCivil": e["nome"] if e else d["nomeCivil"].title(), "nomeFonte": d["nomeCivil"].title(), "foto": None,
                       "email": e.get("email") if e else None, "titular": True, "partido": e.get("partido") if e else None, "fonte": DEPUTADOS_URL})

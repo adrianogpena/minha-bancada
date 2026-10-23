@@ -34,15 +34,6 @@ def test_sem_acento():
     assert ec.sem_acento("  JOSÉ  da Conceição ") == "jose da conceicao"
 
 
-def test_ligar_nomes_por_nome_e_nome_civil_sem_ambiguidade():
-    deps = [{"id": 1, "nome": "Zé Maria", "nomeCivil": "José Maria da Silva"},
-            {"id": 2, "nome": "Ana Souza", "nomeCivil": None},
-            {"id": 3, "nome": "Ana Souza", "nomeCivil": None},
-            {"id": 4, "nome": "João", "nomeCivil": "João Pereira"}]
-    r = ec.ligar_nomes(["DEP ZÉ MARIA", "José Maria da Silva", "Ana Souza", "Fulano", "joao pereira"], deps)
-    assert r == {"DEP ZÉ MARIA": 1, "José Maria da Silva": 1, "joao pereira": 4}
-
-
 def test_salvar_e_ler_ida_e_volta(tmp_path):
     arq = tmp_path / "a" / "x.json"
     ec.salvar(arq, {"b": "ç", "a": 1})
@@ -137,11 +128,9 @@ def test_limpar_e_compactar():
     assert ec.compactar("  a   b ") == "a b" and ec.compactar("  ") is None
 
 
-def test_ligar_por_palavras():
-    deputados = [{"id": "1", "nome": "Ana", "nomeCivil": "Ana Paula Souza"}, {"id": "2", "nome": "Beto", "nomeCivil": "Beto Lima"}]
-    assert ec.ligar_por_palavras(["Dep. Souza Ana", "Lima", "Ana", "Zé"], deputados, ignorar={"dep"}) == {"Dep. Souza Ana": "1", "Lima": "2", "Ana": "1"}
-    assert ec.ligar_por_palavras(["Zé"], deputados, extra=lambda nome, deps: {"2"}) == {"Zé": "2"}
+def test_palavras():
     assert ec.palavras("Dr. João Paulo", {"dr"}) == ["joao", "paulo"]
+
 
 
 def test_deputados_do_tse(tmp_path):

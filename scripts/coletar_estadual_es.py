@@ -27,6 +27,7 @@ import re
 from datetime import date
 
 import estaduais_comum as comum
+import identidades
 
 UF = "ES"
 TSE_ARQUIVO = comum.arquivo_tse(UF)
@@ -111,7 +112,7 @@ def _pagas(linhas: list[dict], deputados: list[dict], filtro) -> list:
     def limpo(nome):  # a fonte traz "COUTINHO_SANTOS"
         return (nome or "").replace("_", " ")
 
-    ligados = comum.ligar_nomes({limpo(lin["Favorecido"]) for lin in escolhidas}, deputados)
+    ligados = identidades.ligar_nomes({limpo(lin["Favorecido"]) for lin in escolhidas}, deputados, UF)
     return [(ligados[limpo(lin["Favorecido"])], lin) for lin in escolhidas if limpo(lin["Favorecido"]) in ligados]
 
 

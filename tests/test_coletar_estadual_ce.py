@@ -5,6 +5,7 @@ import pytest
 
 import coletar_estadual_ce as ce
 import estaduais_comum as comum
+import identidades
 from conftest import RAIZ
 
 FIX = RAIZ / "tests" / "fixtures" / "contratos"
@@ -161,7 +162,7 @@ def test_coletar_deputados_grava_no_formato_comum(tmp_path, monkeypatch):
     assert gravado["host"] is None and gravado["fonte"] == ce.LISTA_URL and len(gravado["deputados"]) == len(deputados) == 5
     primeiro = gravado["deputados"][0]
     assert primeiro["id"] == "agenor-neto" and primeiro["nomeCivil"] == "Agenor Gomes de Araújo Neto" and primeiro["fonte"].endswith("/deputados/agenor-neto")
-    assert comum.ligar_nomes(["DEP AGENOR NETO"], gravado["deputados"]) == {"DEP AGENOR NETO": "agenor-neto"}
+    assert identidades.ligar_nomes(["DEP AGENOR NETO"], gravado["deputados"]) == {"DEP AGENOR NETO": "agenor-neto"}
 
 
 def test_coletar_votacoes_grava_votos_ligados(tmp_path, monkeypatch):

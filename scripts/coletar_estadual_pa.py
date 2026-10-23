@@ -20,6 +20,7 @@ from html import unescape
 from functools import partial
 
 import estaduais_comum as comum
+import identidades
 
 UF = "PA"
 ALEPA = "https://alepa.pa.gov.br"
@@ -37,8 +38,7 @@ PRIMEIRO_MES = (2023, 2)
 MESES_RECENTES = 2
 
 
-TITULOS = {"dr", "dra", "prof", "profa", "deleg", "delegado", "delegada", "dep", "deputado", "deputada"}
-ligar = partial(comum.ligar_por_palavras, ignorar=TITULOS)
+ligar = partial(identidades.ligar_nomes, uf=UF)
 
 
 def mes_anterior(ano: int, mes: int) -> tuple[int, int]:

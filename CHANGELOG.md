@@ -5,6 +5,11 @@ Regra: toda fonte nova ou mudança de coleta ganha uma entrada aqui, no mesmo co
 Datas dos conjuntos que já existiam vêm do primeiro commit que os trouxe (`git log --diff-filter=A`).
 Todas as coletas rodam sozinhas no GitHub Actions (`.github/workflows/atualizar.yml`, todo dia às 05:00 de Brasília), salvo onde indicado.
 
+## Ids estáveis, com hash da fonte (2026-10-23)
+- **De onde:** nenhuma fonte nova; mudança no jeito de gerar os ids do núcleo (`site/dados/nucleo/`).
+- **Como:** `scripts/ids.py` (`gerar_id`) passa a ser o único gerador: `pes_` (os mesmos ids de antes), `man_`, `can_`, `dsp_`, `for_pf_` e `for_n_`. O id de mandato deixa de depender da pessoa e da data de início e sai do registro da fonte que o criou (sequencial do TSE ou id da Casa); candidaturas guardam `eleicao` e `sequencial`. **Mudam de valor** os ids `man_`, `can_`, `dsp_`, `for_pf_` e `for_n_` (nada deles é salvo em `dados/` nem usado pelas páginas); os `pes_` e `for_<CNPJ>` ficam iguais.
+- **Conferido:** teste com a mesma duplicata do TSE em duas ordens de arquivo dá o mesmo id de mandato; `pes_` bate com o sha1 de antes.
+
 ## Lista fixa de categorias de despesa (2026-10-23)
 - **De onde:** nenhuma fonte nova; mesmos rótulos de despesa da Câmara (`tipoDespesa`), do Senado (CEAPS) e das verbas das Assembleias.
 - **Como:** `scripts/categorias.py` define 16 categorias e as regras que ligam o rótulo de cada fonte a uma delas. `gerar.py` e `gerar_estaduais.py` agrupam por categoria: `despesas.porCategoria` (Câmara e Senado, no lugar de `porTipo`) e `verba.anos[].categorias` (Assembleias) trazem `id`, `categoria`, `total` e `originais` (rótulo da fonte e valor). Os arquivos de `dados/` não mudam (rótulo original), então vale para o que já foi coletado. Rótulo novo sem regra vai para `outros` e `gerar.py` avisa.

@@ -21,12 +21,12 @@ Campos:
 """
 
 import datetime as dt
-import hashlib
 from collections import Counter, defaultdict
 from pathlib import Path
 
 import identidades
 from gerar_politicos import ler, periodo, salvar
+from ids import gerar_id
 
 CASAS = {
     "PRESIDENTE": "presidencia", "VICE-PRESIDENTE": "presidencia", "GOVERNADOR": "governo_estadual", "VICE-GOVERNADOR": "governo_estadual",
@@ -46,8 +46,9 @@ def vigente(par: str | None) -> str | None:
     return "par_" + identidades._atual(chave).lower() if chave in identidades.PARTIDOS else par
 
 
-def _id(pessoa: str, cargo: str, inicio: str, uf: str | None, municipio: str | None) -> str:
-    return "man_" + hashlib.sha1(f"{pessoa}|{cargo}|{inicio}|{uf}|{municipio}".encode("utf-8")).hexdigest()[:12]
+def _id(origem: tuple) -> str:
+    """Id do mandato a partir do registro da fonte que o criou: ("tse:2022", sequencial) ou ("camara", id) etc. (ids.py)."""
+    return gerar_id("man", *origem)
 
 
 def _status(m: dict, hoje: str) -> str:
@@ -65,16 +66,28 @@ def construir(deputados: dict, bruto: Path, nucleo: dict, hoje: str | None = Non
     mandatos: list[dict] = []
     por_pessoa_cargo = defaultdict(list)       # (pessoa, cargo) -> mandatos
     stats = Counter()
-    por_id: dict = {}
+    por_chave: dict = {}     # (pessoa, cargo, início, uf, município) -> mandato
+    origens: dict = {}       # id do mandato -> (fonte, id original) que o gerou
 
-    def novo(pessoa, cargo, ini, fim, uf, municipio=None, **extra) -> dict:
-        if _id(pessoa, cargo, ini, uf, municipio) in por_id:    # a mesma pessoa duas vezes no mesmo cargo e local (registro repetido no TSE)
+    def novo(origem, pessoa, cargo, ini, fim, uf, municipio=None, **extra) -> dict:
+        """`origem`: (fonte, id original) do registro que cria o mandato; dele sai o id. A mesma pessoa duas vezes no mesmo cargo e
+        local (registro repetido no TSE) é um mandato só, com o id do registro de menor id original: não depende da ordem dos arquivos."""
+        chave = (pessoa, cargo, ini, uf, municipio)
+        if chave in por_chave:
             stats["repetido"] += 1
-            return por_id[_id(pessoa, cargo, ini, uf, municipio)]
-        m = {"id": _id(pessoa, cargo, ini, uf, municipio), "pessoa": pessoa, "cargo": cargo, "uf": uf,
+            m = por_chave[chave]
+            if origem[0] == origens[m["id"]][0] and str(origem[1]) < str(origens[m["id"]][1]):
+                del origens[m["id"]]
+                m["id"] = _id(origem)
+                origens[m["id"]] = origem
+                if "tse" in extra.get("fontes", {}):
+                    m["fontes"]["tse"] = extra["fontes"]["tse"]
+            return m
+        m = {"id": _id(origem), "pessoa": pessoa, "cargo": cargo, "uf": uf,
              **({"municipio": municipio} if municipio else {}), "inicio": ini, "fim": fim, "condicao": "titular", **extra}
         mandatos.append(m)
-        por_id[m["id"]] = m
+        por_chave[chave] = m
+        origens[m["id"]] = origem
         por_pessoa_cargo[(pessoa, cargo)].append(m)
         return m
 
@@ -90,7 +103,7 @@ def construir(deputados: dict, bruto: Path, nucleo: dict, hoje: str | None = Non
                     continue
                 uf = "BR" if e["uf"] in ("BR", "BRASIL") else e["uf"]
                 par = identidades.partido_id(e.get("partido"))
-                m = novo(pessoa, e["cargo"], ini, fim, uf, e["unidadeEleitoral"] if e["cargo"] in MUNICIPAIS else None,
+                m = novo((f"tse:{ano}", e["sequencial"]), pessoa, e["cargo"], ini, fim, uf, e["unidadeEleitoral"] if e["cargo"] in MUNICIPAIS else None,
                          eleicao=ano, partidoEleicao=par, partido=par, fontes={"tse": e["sequencial"]},
                          **({"titularDe": e["titular"]} if e["cargo"].startswith("VICE-") and e.get("titular") else {}))
                 m.setdefault("status", _status(m, hoje))
@@ -105,7 +118,9 @@ def construir(deputados: dict, bruto: Path, nucleo: dict, hoje: str | None = Non
         m = achar(pessoa, cargo)
         if m is None or not m["inicio"] <= hoje <= m["fim"]:
             ini = inicio_extra or INICIO_LEGISLATURA
-            m = novo(pessoa, cargo, ini, fim_extra or FIM_LEGISLATURA, casa_uf, condicao="suplente" if condicao == "suplente" else "titular",
+            estadual = fonte == "estadual"     # chave_fonte "UF:id"
+            origem = (f"estadual:{casa_uf}" if estadual else fonte, f"{chave_fonte.split(':', 1)[1] if estadual else chave_fonte}|{cargo}")
+            m = novo(origem, pessoa, cargo, ini, fim_extra or FIM_LEGISLATURA, casa_uf, condicao="suplente" if condicao == "suplente" else "titular",
                      eleicao=None, partidoEleicao=None, inicioAproximado=True if not inicio_extra else None, fontes={}, **extra)
             m["status"] = _status(m, hoje)
             stats["mandatoSemTse"] += 1

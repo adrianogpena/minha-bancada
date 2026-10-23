@@ -28,7 +28,6 @@ tudo em `ligacoes.json` do núcleo, com a pessoa. Correção manual: scripts/lig
 """
 
 import difflib
-import hashlib
 import re
 import unicodedata
 from collections import Counter, defaultdict
@@ -36,6 +35,7 @@ from pathlib import Path
 
 import estaduais_comum as comum
 from gerar_politicos import ler, salvar
+from ids import gerar_id
 
 # chave -> (sigla, nome, número, outras grafias, sucessor). Renomeação é grafia; fusão ou extinção tem sucessor.
 PARTIDOS = {
@@ -141,17 +141,16 @@ SENADORES = {"SENADOR"}
 ESTADUAIS = {"DEPUTADO ESTADUAL", "DEPUTADO DISTRITAL"}
 
 
-def _id_pessoa(ancora: str) -> str:
-    return "pes_" + hashlib.sha1(ancora.encode("utf-8")).hexdigest()[:12]
-
-
 class _Registro:
     def __init__(self):
         self.por_id = {}
         self.ancoras = {}
 
-    def obter(self, ancora: str) -> dict:
-        pid = _id_pessoa(ancora)
+    def obter(self, fonte: str, id_original) -> dict:
+        """A pessoa de `gerar_id("pes", fonte, id_original)`: fonte "nn" (id "nome|nascimento"), "tse" ("ano|sequencial"), "camara",
+        "senado" ou "estadual" ("UF|id"). Ver ids.py."""
+        ancora = (fonte, str(id_original))
+        pid = gerar_id("pes", fonte, id_original)
         if pid in self.por_id:
             if self.ancoras[pid] != ancora:
                 raise RuntimeError(f"colisão de id de pessoa: {ancora!r} e {self.ancoras[pid]!r}")
@@ -532,7 +531,7 @@ def construir(deputados: dict, bruto: Path) -> dict:
         for arq in sorted(pasta.glob("[A-Z][A-Z].json")):
             for e in ler(arq, []):
                 nome, nasc = e.get("nome"), e.get("nascimento")
-                p = reg.obter(f"nn|{norm_nome(nome)}|{nasc}" if nome and nasc else f"tse|{ano}|{e['sequencial']}")
+                p = reg.obter(*(("nn", f"{norm_nome(nome)}|{nasc}") if nome and nasc else ("tse", f"{ano}|{e['sequencial']}")))
                 _preencher(p, nome, nasc, e.get("genero"))
                 _guardar_nome(p, e.get("urna"))
                 par = partido(e.get("partido"))
@@ -546,7 +545,7 @@ def construir(deputados: dict, bruto: Path) -> dict:
                     federacoes.setdefault(fed, 0)
                     federacoes[fed] += 1
 
-    def ligar(fonte, ident, uf, civis, urnas, cargos, nome, nascimento=None, ancora_propria=None, sequencial=None):
+    def ligar(fonte, ident, uf, civis, urnas, cargos, nome, nascimento=None, ancora_propria=None, sequencial=None):   # ancora_propria: (fonte, id)
         """Acha (ou cria) a pessoa da fonte e anota o método da ligação. Devolve a pessoa."""
         achado = None
         if nascimento and civis and (norm_nome(civis[0]), nascimento) in indice.por_nome_nasc:
@@ -565,13 +564,13 @@ def construir(deputados: dict, bruto: Path) -> dict:
             resumo[fonte][achado[1]] += 1
             return p
         sem_ligacao[fonte] += 1
-        return reg.obter(ancora_propria)
+        return reg.obter(*ancora_propria)
 
     # --- Câmara
     for did, d in deputados.items():
         civil, nasc = d.get("nomeCivil"), d.get("nascimento")
         p = ligar("camara", did, d["uf"], [civil] if civil else [], [d.get("nome")], FEDERAIS, d.get("nome"), nasc,
-                  ancora_propria=f"nn|{norm_nome(civil)}|{nasc}" if civil and nasc else f"camara|{did}")
+                  ancora_propria=("nn", f"{norm_nome(civil)}|{nasc}") if civil and nasc else ("camara", did))
         _preencher(p, civil or d.get("nome"), nasc)
         _guardar_nome(p, d.get("nome"))
         p["camara"] = d["id"]
@@ -582,7 +581,7 @@ def construir(deputados: dict, bruto: Path) -> dict:
     for s in ler(bruto / "senado.json", []) or []:
         civil = s.get("nomeCivil")
         p = ligar("senado", s["id"], s["uf"], [civil] if civil else [], [s.get("nome")], SENADORES, s.get("nome"),
-                  ancora_propria=f"senado|{s['id']}")
+                  ancora_propria=("senado", s["id"]))
         _preencher(p, civil or s.get("nome"), None, s.get("genero") and sem_acento(s["genero"]))
         _guardar_nome(p, s.get("nome"))
         p["senado"] = str(s["id"])
@@ -595,7 +594,7 @@ def construir(deputados: dict, bruto: Path) -> dict:
         for d in (ler(pasta / "deputados.json", {}) or {}).get("deputados", []):
             civil = d.get("nomeCivil")
             p = ligar("estadual", f"{uf}:{d['id']}", uf, [civil] if civil else [], [d.get("nome")], ESTADUAIS, d.get("nome"),
-                      ancora_propria=f"estadual|{uf}|{d['id']}", sequencial=d["id"])
+                      ancora_propria=("estadual", f"{uf}|{d['id']}"), sequencial=d["id"])
             _preencher(p, civil or d.get("nome"))
             _guardar_nome(p, d.get("nome"))
             if [uf, str(d["id"])] not in p["estadual"]:

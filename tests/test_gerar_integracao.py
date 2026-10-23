@@ -6,6 +6,7 @@ import re
 import pytest
 
 import dados_minimos
+from ids import gerar_id
 from conftest import RAIZ
 
 
@@ -107,8 +108,8 @@ def test_mandatos_ligam_pessoa_e_exercicio(site):
 def test_nucleo_gera_candidaturas_e_disputas(site):
     cands = {c["id"]: c for c in ler(site / "nucleo" / "candidaturas" / "2024.json")}
     pessoas = {p["id"] for p in ler(site / "nucleo" / "pessoas.json")}
-    assert cands["can_2024_500"]["pessoa"] in pessoas and cands["can_2024_500"]["federacao"] == "fed_pcdob_pt_pv"
-    disputa = ler(site / "nucleo" / "disputas" / "2024.json")["dsp_2024_vereador_71072"]
+    assert cands[gerar_id("can", "tse:2024", "500")]["pessoa"] in pessoas and cands[gerar_id("can", "tse:2024", "500")]["federacao"] == "fed_pcdob_pt_pv"
+    disputa = ler(site / "nucleo" / "disputas" / "2024.json")[gerar_id("dsp", "tse:2024", "vereador|71072")]
     assert disputa["vagas"] == 55 and disputa["partidos"]["par_pt"] == [100, 300, "fed_pcdob_pt_pv"]
 
 

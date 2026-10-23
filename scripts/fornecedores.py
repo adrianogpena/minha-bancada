@@ -14,16 +14,17 @@ Normalização:
   nome        sem acento, caixa, pontuação nem forma jurídica (S/A, LTDA, ME…); serve para achar o documento de uma
               despesa sem CNPJ quando o mesmo nome aparece com um único documento em outra linha
   PF          CPF não aparece inteiro: id por hash e documento mascarado (***.123.456-**)
-Id: "for_<8 dígitos do CNPJ>", "for_pf_<hash do CPF>" ou, sem documento, "for_n_<hash do nome>".
+Id (ids.py): "for_<8 dígitos do CNPJ>" (o próprio identificador público), "for_pf_<hash do CPF>" ou, sem documento, "for_n_<hash do
+nome padronizado>". O CPF e o nome-chave não são guardados inteiros no registro: ficam o documento mascarado e os nomes como vieram.
 """
 
-import hashlib
 import re
 import unicodedata
 from collections import Counter, defaultdict
 from pathlib import Path
 
 from gerar_politicos import ler, salvar
+from ids import gerar_id
 
 FORNECEDORES_NO_RANKING = 300
 POLITICOS_POR_FORNECEDOR = 5
@@ -87,10 +88,6 @@ def nome_exibido(variantes: Counter) -> str:
         return n.title() if n and n == n.lower() else n
     ordem = sorted(variantes.items(), key=lambda kv: (kv[0].strip().islower(), -kv[1], -len(kv[0])))
     return limpo(ordem[0][0]) if ordem else ""
-
-
-def _id_hash(prefixo: str, texto: str) -> str:
-    return prefixo + hashlib.sha1(texto.encode("utf-8")).hexdigest()[:10]
 
 
 def _linhas(deputados: dict, bruto: Path, nucleo: dict):
@@ -167,10 +164,10 @@ def construir(deputados: dict, bruto: Path, nucleo: dict) -> dict:
             ident = next(iter(docs_do_nome[chave_n]))
             stats["documentoPeloNome"] += 1
         if ident:
-            id_ = "for_" + ident[1] if ident[0] == "cnpj" else _id_hash("for_pf_", ident[1])
+            id_ = "for_" + ident[1] if ident[0] == "cnpj" else gerar_id("for_pf", "cpf", ident[1])
             tipo = "PJ" if ident[0] == "cnpj" else "PF"
         elif chave_n:
-            ident, id_, tipo = ("n", chave_n), _id_hash("for_n_", chave_n), None
+            ident, id_, tipo = ("n", chave_n), gerar_id("for_n", "nome", chave_n), None
             stats["semDocumento"] += 1
         else:
             stats["semNome"] += 1

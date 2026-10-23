@@ -21,6 +21,9 @@ todo `fonte` é a URL que a pessoa abre para conferir o dado):
       votos:[[idDeputado, voto]], fonte}}}
   materias_votadas.json  {idMateria:{tipo, tipoDescricao, numero, ano, ementa}}
 
+  ligacoes.json  {nomes:{nome da fonte:[id, método, confiança]}, ambiguos:{nome:[ids]}, semPar:[nomes]}
+      gravado por `identidades.gravar_ligacoes` depois da coleta; o coletor só chama `identidades.ligar_nomes(nomes, deputados, UF)`.
+
   Opcionais, todos com `coletadoEm` e `fonte` no topo e `fonte` por item:
   verbas_<ano>.json  {coletadoEm, fonte, itens:[{idDeputado, mes, categoria, fornecedor, cnpj, valor, fonte}]}
       verba indenizatória / cota parlamentar; mes de 1 a 12; valor em reais (float).
@@ -31,7 +34,7 @@ todo `fonte` é a URL que a pessoa abre para conferir o dado):
   emendas_<ano>.json  {coletadoEm, fonte, itens:[{idDeputado, ano, objeto, orgao, empenhado, pago, fonte}]}
 
 Helpers: `sessao`, `get`, `baixar`, `ler`, `salvar`, `avisar`, `sem_acento`, `nome_limpo`, `limpar`, `compactar`, `valor_br`,
-`mes_numero`, `data_br_iso`, `ligar_nomes`, `ligar_por_palavras`, `palavras`, `meses_recentes`, `ano_encerrado`,
+`mes_numero`, `data_br_iso`, `palavras`, `meses_recentes`, `ano_encerrado`,
 `arquivo_tse`, `ficha_tse`, `eleitos_tse`, `deputados_do_tse` (eleitos de 2022 do TSE como lista de deputados),
 `xlsx_linhas` e `xlsx_abas` (XLSX só com biblioteca padrão), `contrato_json`, `campos_vazios`, `faltando`, `tentar`, `rodar_etapas`, `principal`.
 """
@@ -142,7 +145,10 @@ def rodar_etapas(uf: str, etapas) -> None:
 
 def principal(coletar) -> None:
     """Rodapé dos módulos de UF: `if __name__ == "__main__": comum.principal(coletar)`."""
+    import identidades   # aqui dentro: identidades importa este módulo
+
     coletar()
+    identidades.gravar_ligacoes()
     sys.exit(0)
 
 
@@ -235,41 +241,9 @@ def ano_encerrado(ano: int, hoje, arquivo: Path) -> bool:
     return ano < hoje.year - 1 and arquivo.exists()
 
 
-def ligar_nomes(nomes_fonte, deputados: list[dict]) -> dict:
-    """{nome como veio da fonte: id do deputado}, comparando sem acento, maiúsculas e prefixo "DEP".
-    Tenta `nome` e depois `nomeCivil`; nome ambíguo ou sem par fica de fora."""
-    por_nome: dict[str, set] = {}
-    for campo in ("nome", "nomeCivil"):
-        for d in deputados:
-            if d.get(campo):
-                por_nome.setdefault(sem_acento(d[campo]), set()).add(d["id"])
-    ligados = {}
-    for n in nomes_fonte:
-        ids = por_nome.get(sem_acento(nome_limpo(n)), set())
-        if len(ids) == 1:
-            ligados[n] = next(iter(ids))
-    return ligados
-
-
 def palavras(nome: str, ignorar=()) -> list[str]:
     """Palavras do nome sem acento, só letras, na ordem e sem as de `ignorar`."""
     return [t for t in re.sub(r"[^a-z ]", " ", sem_acento(nome)).split() if t not in ignorar]
-
-
-def ligar_por_palavras(nomes, deputados: list[dict], ignorar=(), extra=None) -> dict:
-    """Como `ligar_nomes`; o nome que não casa inteiro casa quando todas as suas palavras estão em um só nome do deputado
-    (nome ou nomeCivil). `extra(nome, deputados)` devolve ids de uma segunda tentativa quando a primeira não achou um só."""
-    ligados = ligar_nomes(nomes, deputados)
-    for n in nomes:
-        alvo = set(palavras(n, ignorar))
-        if n in ligados or not alvo:
-            continue
-        ids = {d["id"] for d in deputados if any(d.get(c) and alvo <= set(palavras(d[c], ignorar)) for c in ("nome", "nomeCivil"))}
-        if len(ids) != 1 and extra:
-            ids = extra(n, deputados)
-        if len(ids) == 1:
-            ligados[n] = next(iter(ids))
-    return ligados
 
 
 def campos_vazios(obj, campos, rotulo: str, vazios=None) -> list[str]:

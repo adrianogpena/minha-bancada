@@ -25,6 +25,7 @@ from datetime import date
 from functools import partial
 
 import estaduais_comum as comum
+import identidades
 
 UF = "SP"
 SITE = "https://www.al.sp.gov.br"
@@ -48,9 +49,6 @@ PAUSA = 0.1
 NATUREZAS = {"1": ("PL", "Projeto de lei"), "2": ("PLC", "Projeto de lei complementar"), "3": ("PR", "Projeto de resolução"),
              "4": ("PDL", "Projeto de decreto legislativo"), "5": ("PEC", "Proposta de emenda à Constituição"),
              "10": ("PCONST", "Projeto de Constituição")}
-TITULOS = {"agente", "federal", "major", "coronel", "delegado", "delegada", "dr", "dra", "doutor", "doutora", "professor", "professora",
-           "pastor", "pastora", "capitao", "sargento", "tenente", "cabo", "soldado", "padre", "bispo", "enfermeira", "enfermeiro",
-           "do", "da", "de", "dos", "das", "e"}
 SITUACAO_PRESENCA = {"presente": 0, "nao justificada": 2, "ausencia em sessao extraordinaria": 2}
 
 
@@ -76,44 +74,8 @@ def fotos(parlamentares: list[dict]) -> dict:
     return {str(p["nuMatricula"]): "https://www3.al.sp.gov.br/legis/" + p["txFoto"].lstrip("/") for p in parlamentares if p.get("txFoto")}
 
 
-def tokens(nome: str) -> list[str]:
-    return comum.sem_acento(re.sub(r"[^\w\s]", " ", nome or "")).split()
-
-
-def ligar_civis(civis, deputados: list[dict]) -> dict:
-    """{nome civil: id}: os nomes do nome parlamentar (sem títulos como "Agente Federal") estão todos no nome civil, e só um
-    deputado serve ao nome civil e só um nome civil serve ao deputado."""
-    chaves = {}
-    for d in deputados:
-        t = [p for p in tokens(d["nome"]) if p not in TITULOS] or tokens(d["nome"])
-        chaves[d["id"]] = set(t)
-    por_civil = {}
-    for civil in civis:
-        achados = {i for i, t in chaves.items() if t and t <= set(tokens(civil))}
-        if len(achados) == 1:
-            por_civil[civil] = next(iter(achados))
-    contagem: dict = defaultdict(int)
-    for i in por_civil.values():
-        contagem[i] += 1
-    return {c: i for c, i in por_civil.items() if contagem[i] == 1}
-
-
-def ligar_civis_pelo_tse(civis, deputados: list[dict], candidatos: list[dict]) -> dict:
-    """Para quem sobrou: o nome de urna do TSE (2022) casa com o nome parlamentar e o nome civil do TSE com o do subsídio
-    (igual ou com os nomes de um dentro do outro)."""
-    por_urna: dict = defaultdict(list)
-    for c in candidatos:
-        por_urna[comum.sem_acento(c.get("urna"))].append(c)
-    ligados: dict = {}
-    for d in deputados:
-        achados = por_urna.get(comum.sem_acento(d["nome"])) or []
-        if len(achados) != 1:
-            continue
-        civil_tse = set(tokens(achados[0].get("nome")))
-        serve = [c for c in civis if civil_tse <= set(tokens(c)) or set(tokens(c)) <= civil_tse]
-        if len(serve) == 1:
-            ligados[serve[0]] = d["id"]
-    return ligados
+ligar_civis = partial(identidades.ligar_civis, uf=UF)
+ligar_civis_pelo_tse = partial(identidades.ligar_civis_pelo_tse, uf=UF)
 
 
 # ---------------------------------------------------------------- proposituras
@@ -149,7 +111,7 @@ def materias_por_ano(proposituras: dict, autores: dict, deputados: list[dict]) -
     """{ano: {id: matéria}}, só com autores que são deputados em exercício (pelo IdAutor ou, sem ele, pelo nome)."""
     por_autor = {d["idAutor"]: d["id"] for d in deputados if d.get("idAutor")}
     nomes = {n for v in autores.values() for i, n in v if i not in por_autor}
-    por_nome = comum.ligar_nomes(nomes, deputados)
+    por_nome = identidades.ligar_nomes(nomes, deputados, UF)
     anos: dict = defaultdict(dict)
     for doc, p in proposituras.items():
         ids = sorted({por_autor.get(i) or por_nome.get(n) for i, n in autores.get(doc, ()) if por_autor.get(i) or por_nome.get(n)})

@@ -292,9 +292,12 @@ def main() -> None:
         if uf not in ASSEMBLEIAS and uf not in modulos:
             avisar(f"{uf}: sem coletor")
 
+    import identidades   # aqui dentro: identidades chega a este módulo por gerar_politicos e coletar_prefeituras
+
     def uma(uf):
         if uf in modulos:
             modulos[uf].coletar()
+            identidades.gravar_ligacoes(uf)
         elif uf in ASSEMBLEIAS:
             coletar_assembleia(uf, ASSEMBLEIAS[uf])
 

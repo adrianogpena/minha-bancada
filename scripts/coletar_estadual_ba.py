@@ -26,6 +26,7 @@ import requests
 import urllib3
 
 import estaduais_comum as comum
+import identidades
 
 UF = "BA"
 PASTA = comum.DADOS / UF
@@ -150,7 +151,7 @@ def itens_verba(linhas: list[dict], deputados: list[dict], ano: int) -> tuple[li
     col = {v: k for k, v in cab.items()}
     dados = linhas[linhas.index(cab) + 1:]
     nomes = {sem_espacos(linha.get(col["DEPUTADO (A)"], "")) for linha in dados}
-    ligacao = comum.ligar_nomes(nomes, deputados)
+    ligacao = identidades.ligar_nomes(nomes, deputados, UF)
     itens, sem_par = [], set()
     for linha in dados:
         nome = sem_espacos(linha.get(col["DEPUTADO (A)"], ""))
@@ -282,7 +283,7 @@ def coletar_proposicoes(s, deputados: list[dict]) -> None:
 
     with ThreadPoolExecutor(EM_PARALELO) as ex:
         detalhes = dict(ex.map(detalhe, sem_cache.items()))
-    ligacao = comum.ligar_nomes({a for d in detalhes.values() if d for a in autores(d["autor"])}, deputados)
+    ligacao = identidades.ligar_nomes({a for d in detalhes.values() if d for a in autores(d["autor"])}, deputados, UF)
     por_ano: dict[int, dict] = {}
     vistas_ano: dict[int, dict] = {}
     sem_par = set()
@@ -329,7 +330,7 @@ def itens_emendas(texto: str, deputados: list[dict]) -> tuple[dict, set]:
     def campo(linha, nome):
         return linha.get(next((orig for sem, orig in cab.items() if sem.startswith(nome)), ""), "")
 
-    ligacao = comum.ligar_nomes({sem_espacos(campo(linha, "nome do deputado")) for linha in linhas}, deputados)
+    ligacao = identidades.ligar_nomes({sem_espacos(campo(linha, "nome do deputado")) for linha in linhas}, deputados, UF)
     por_ano: dict[int, list] = {}
     sem_par = set()
     for linha in linhas:

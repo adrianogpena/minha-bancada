@@ -17,6 +17,7 @@ from html import unescape
 from functools import partial
 
 import estaduais_comum as comum
+import identidades
 
 UF = "RJ"
 TSE_ARQUIVO = comum.arquivo_tse(UF)
@@ -40,8 +41,7 @@ def texto(resposta) -> str:
 
 # ---------------------------------------------------------------- deputados
 
-TITULOS = {"dr", "dra", "prof", "profa", "delegado", "delegada", "dep"}
-ligar = partial(comum.ligar_por_palavras, ignorar=TITULOS)
+ligar = partial(identidades.ligar_nomes, uf=UF)
 
 
 # ---------------------------------------------------------------- presença (Ordem do Dia)

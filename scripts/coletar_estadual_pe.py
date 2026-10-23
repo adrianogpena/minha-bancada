@@ -19,10 +19,12 @@ import re
 from defusedxml import ElementTree as ET
 from concurrent.futures import ThreadPoolExecutor
 from datetime import date
+from functools import partial
 
 import requests
 
 import estaduais_comum as comum
+import identidades
 
 UF = "PE"
 PORTAL = "https://www.alepe.pe.gov.br/servicos/transparencia"
@@ -54,19 +56,7 @@ def get_json_utf8(sessao, url: str, **params):
 
 # ---------------------------------------------------------------- deputados
 
-def ligar(nomes, deputados: list[dict]) -> dict:
-    """Como `ligar_nomes`; "João Paulo do PT" também tenta "João Paulo" quando "PT" é o partido de um deputado."""
-    ligados = comum.ligar_nomes(nomes, deputados)
-    partidos = {comum.sem_acento(d["partido"]) for d in deputados if d.get("partido")}
-    for n in nomes:
-        if n in ligados:
-            continue
-        m = re.match(r"^(.*\S)\s+d[oa]\s+(\S+)\s*$", n, re.I)
-        if m and comum.sem_acento(m.group(2)) in partidos:
-            achado = comum.ligar_nomes([m.group(1)], [d for d in deputados if comum.sem_acento(d.get("partido")) == comum.sem_acento(m.group(2))])
-            if m.group(1) in achado:
-                ligados[n] = achado[m.group(1)]
-    return ligados
+ligar = partial(identidades.ligar_nomes, uf=UF)
 
 
 def montar_deputados(lista: list[dict], parlamentares: list[dict]) -> list[dict]:

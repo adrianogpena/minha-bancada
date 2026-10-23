@@ -133,3 +133,58 @@ def test_salvar_nucleo(tmp_path):
     ident.salvar_nucleo(n, tmp_path / "saida")
     assert json.loads((tmp_path / "saida" / "pessoas.json").read_text(encoding="utf-8")) == n["pessoas"]
     assert (tmp_path / "saida" / "partidos.json").exists() and (tmp_path / "saida" / "ligacoes.json").exists()
+
+
+# ---------------------------------------------------------------- nome em registro -> deputado da Assembleia
+
+def test_ligar_nomes_por_nome_e_nome_civil_sem_ambiguidade():
+    deps = [{"id": 1, "nome": "Zé Maria", "nomeCivil": "José Maria da Silva"},
+            {"id": 2, "nome": "Ana Souza", "nomeCivil": None},
+            {"id": 3, "nome": "Ana Souza", "nomeCivil": None},
+            {"id": 4, "nome": "João", "nomeCivil": "João Pereira"}]
+    r = ident.ligar_nomes(["DEP ZÉ MARIA", "José Maria da Silva", "Ana Souza", "Fulano", "joao pereira"], deps)
+    assert r == {"DEP ZÉ MARIA": 1, "José Maria da Silva": 1, "joao pereira": 4}
+
+
+def test_ligar_nomes_por_palavras_com_titulos_da_uf():
+    deputados = [{"id": "1", "nome": "Ana", "nomeCivil": "Ana Paula Souza"}, {"id": "2", "nome": "Beto", "nomeCivil": "Beto Lima"}]
+    assert ident.ligar_nomes(["Dep. Souza Ana", "Lima", "Ana", "Zé"], deputados, "RJ") == {"Dep. Souza Ana": "1", "Lima": "2", "Ana": "1"}
+    assert ident.ligar_nomes(["Lima"], deputados) == {}   # sem a regra da UF, só o nome inteiro
+
+
+def test_ligar_nomes_manual_vem_de_arquivo_versionado():
+    deputados = [{"id": "1", "nome": "Roberto Hashioka", "nomeCivil": None}]
+    assert ident.MANUAIS["MS"]["hashioka"] == "Roberto Hashioka"
+    assert ident.ligar_nomes(["DEP. HASHIOKA"], deputados, "MS") == {"DEP. HASHIOKA": "1"}
+    assert ident._LOG["MS"]["nomes"]["DEP. HASHIOKA"][1:] == ["manual", "alta"]
+
+
+def test_gravar_ligacoes_guarda_metodo_ambiguos_e_sem_par_e_junta_com_o_anterior(tmp_path):
+    ident._LOG.clear()
+    deputados = [{"id": "1", "nome": "Ana Souza", "nomeCivil": None}, {"id": "2", "nome": "Beto Lima", "nomeCivil": None},
+                 {"id": "3", "nome": "Beto Lima", "nomeCivil": None}]
+    ident.ligar_nomes(["Ana Souza", "Beto Lima", "Fulano"], deputados, "XX")
+    ident.gravar_ligacoes(raiz=tmp_path)
+    arq = tmp_path / "XX" / "ligacoes.json"
+    assert json.loads(arq.read_text(encoding="utf-8")) == {"nomes": {"Ana Souza": ["1", "nome", "média"]},
+                                                          "ambiguos": {"Beto Lima": ["2", "3"]}, "semPar": ["Fulano"]}
+    assert "XX" not in ident._LOG
+    ident.ligar_nomes(["Fulano"], [{"id": "9", "nome": "Fulano", "nomeCivil": None}], "XX")   # agora existe
+    ident.gravar_ligacoes("XX", tmp_path)
+    tabela = json.loads(arq.read_text(encoding="utf-8"))
+    assert tabela["nomes"] == {"Ana Souza": ["1", "nome", "média"], "Fulano": ["9", "nome", "média"]} and tabela["semPar"] == []
+
+
+def test_construir_junta_a_tabela_de_registros_com_a_pessoa(tmp_path):
+    montar(tmp_path)
+    gravar(tmp_path / "estaduais" / "RJ" / "ligacoes.json", {"nomes": {"DANI": ["501", "nome", "média"]}, "ambiguos": {}, "semPar": ["Ninguém"]})
+    # sem deputados.json da UF a pessoa não existe, mas a linha da tabela continua lá
+    registros = ident.construir({}, tmp_path)["ligacoes"]["registros"]
+    assert registros["RJ"]["nomes"]["DANI"][:3] == ["501", "nome", "média"] and registros["RJ"]["semPar"] == ["Ninguém"]
+
+
+def test_eleito_do_tse_por_palavras():
+    eleitos = [{"sequencial": "1", "nome": "Ana Paula da Silva", "urna": "Paulinha"}, {"sequencial": "2", "nome": "Dr. João Júnior", "urna": "Dr João"}]
+    assert ident.eleito_do_tse("SC", "Ana Paula Silva", eleitos)["sequencial"] == "1"
+    assert ident.eleito_do_tse("SE", "Joao Jr", eleitos)["sequencial"] == "2"
+    assert ident.eleito_do_tse("SE", "Zé", eleitos) is None

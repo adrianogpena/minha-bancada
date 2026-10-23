@@ -22,6 +22,7 @@ from functools import partial
 from defusedxml import ElementTree
 
 import estaduais_comum as comum
+import identidades
 
 UF = "RR"
 SITE = "https://al.rr.leg.br"
@@ -32,7 +33,6 @@ DIARIAS_PAGINA = f"{TRANSP}/execucao-orcamentaria-e-financeira/diarias-e-passage
 AJAX = f"{TRANSP}/wp-admin/admin-ajax.php"
 MESES_REVISTOS = 2
 NS_ODF = {"t": "urn:oasis:names:tc:opendocument:xmlns:table:1.0"}
-TITULOS = {"dr", "dra", "prof", "profa", "coronel", "dep", "de", "da", "do", "dos", "das"}
 
 GRUPOS = {"1": "Apoio à atividade parlamentar", "2": "Manutenção de escritório", "3": "Serviços postais", "4": "Apoio técnico",
           "5": "Assinatura de publicações", "6": "Divulgação de atividades parlamentares", "7": "Serviços de segurança",
@@ -53,16 +53,7 @@ CATEGORIAS = {
 }
 
 
-def _extremos(nome: str) -> tuple:
-    palavras = comum.palavras(nome, TITULOS)
-    return (palavras[0], palavras[-1]) if len(palavras) >= 2 else ()
-
-
-def _por_extremos(nome: str, deputados: list[dict]) -> set:
-    return {d["id"] for d in deputados if _extremos(nome) and any(d.get(c) and _extremos(nome) == _extremos(d[c]) for c in ("nome", "nomeCivil"))}
-
-
-ligar = partial(comum.ligar_por_palavras, ignorar=TITULOS, extra=_por_extremos)
+ligar = partial(identidades.ligar_nomes, uf=UF)
 
 
 # ---------------------------------------------------------------- deputados

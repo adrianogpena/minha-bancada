@@ -20,14 +20,21 @@ Ligação com o TSE, da mais para a menos segura (`ligacao[fonte] = [método, co
 Se mais de uma pessoa casa, ou as datas de nascimento divergem, não liga: a fonte fica com id próprio e entra em
 `ambiguos`. Partidos: `partido_id` unifica grafias (PC do B, PCdoB; União Brasil, UB) e `PARTIDOS` guarda
 renomeações (alias) e fusões (sucessor).
+
+Nome em registro (autor de projeto, favorecido de diária, gabinete, voto...) -> deputado da Assembleia: `ligar_nomes(nomes,
+deputados, uf)` é o único lugar que compara nomes de registros das Assembleias; os coletores só chamam. `ESTRATEGIAS[uf]` guarda
+a regra de cada UF. O resultado de cada coleta vai para dados/estaduais/<UF>/ligacoes.json (`gravar_ligacoes`) e `construir` junta
+tudo em `ligacoes.json` do núcleo, com a pessoa. Correção manual: scripts/ligacoes_manuais.json.
 """
 
+import difflib
 import hashlib
 import re
 import unicodedata
 from collections import Counter, defaultdict
 from pathlib import Path
 
+import estaduais_comum as comum
 from gerar_politicos import ler, salvar
 
 # chave -> (sigla, nome, número, outras grafias, sucessor). Renomeação é grafia; fusão ou extinção tem sucessor.
@@ -205,6 +212,301 @@ class _IndiceTse:
         return ("ambiguo", ambiguos) if ambiguos else None
 
 
+# ---------------------------------------------------------------- nome em registro -> deputado da Assembleia
+
+MANUAIS = ler(Path(__file__).with_name("ligacoes_manuais.json"), {}) or {}   # {uf: {nome da fonte, como em `chave_manual`: nome do deputado}}
+CAMPOS_NOME = ("nome", "nomeCivil")
+_LOG: dict = defaultdict(lambda: {"nomes": {}, "ambiguos": {}, "semPar": set()})   # uf -> o que `ligar_nomes` decidiu neste processo
+
+TITULOS_UF = {
+    "PA": {"dr", "dra", "prof", "profa", "deleg", "delegado", "delegada", "dep", "deputado", "deputada"},
+    "PR": {"dr", "dra", "doutor", "doutora", "secretaria"},
+    "RJ": {"dr", "dra", "prof", "profa", "delegado", "delegada", "dep"},
+    "RR": {"dr", "dra", "prof", "profa", "coronel", "dep", "de", "da", "do", "dos", "das"},
+    "SC": {"dr", "dra", "prof", "profa", "delegado", "delegada", "dep", "deputado", "deputada", "da", "de", "do", "dos", "das", "e"},
+    "SE": {"dr", "dra", "prof", "profa", "dep"},
+    "SP": {"agente", "federal", "major", "coronel", "delegado", "delegada", "dr", "dra", "doutor", "doutora", "professor", "professora",
+           "pastor", "pastora", "capitao", "sargento", "tenente", "cabo", "soldado", "padre", "bispo", "enfermeira", "enfermeiro",
+           "do", "da", "de", "dos", "das", "e"},
+}
+EXPANSAO_PR = {"del": "delegado", "delegada": "delegado", "prof": "professor"}
+SINONIMOS_SE = {"junior": "jr", "jr": "jr"}
+
+
+def _indice_nomes(deputados: list[dict], prep=None) -> dict:
+    por_nome: dict[str, set] = {}
+    for campo in CAMPOS_NOME:
+        for d in deputados:
+            if d.get(campo):
+                por_nome.setdefault(comum.sem_acento(prep(d[campo]) if prep else d[campo]), set()).add(d["id"])
+    return por_nome
+
+
+def _casar_exato(nomes, deputados: list[dict], prep=None):
+    """Nome da fonte (sem prefixo "DEP", sem acento e caixa) igual ao nome ou ao nome civil de um só deputado."""
+    por_nome = _indice_nomes(deputados, prep)
+    ligados, ambiguos = {}, {}
+    for n in nomes:
+        ids = por_nome.get(comum.sem_acento(comum.nome_limpo(prep(n) if prep else n)), set())
+        if len(ids) == 1:
+            ligados[n] = (next(iter(ids)), "nome", "média")
+        elif ids:
+            ambiguos[n] = sorted(map(str, ids))
+    return ligados, ambiguos
+
+
+def _decidir(n: str, ids: set, metodo: str, confianca: str, ligados: dict, ambiguos: dict) -> bool:
+    if len(ids) == 1:
+        ligados[n] = (next(iter(ids)), metodo, confianca)
+        ambiguos.pop(n, None)
+        return True
+    if ids:
+        ambiguos[n] = sorted(map(str, ids))
+    return False
+
+
+def _por_palavras(nomes, deputados: list[dict], ligados: dict, ambiguos: dict, ignorar, extra=None) -> None:
+    """Quem não casou inteiro casa quando todas as suas palavras estão em um só nome do deputado. `extra`: [(método, confiança,
+    função(nome, deputados) -> ids)] tentadas quando as palavras não acharam um só."""
+    for n in nomes:
+        alvo = set(comum.palavras(n, ignorar))
+        if n in ligados or not alvo:
+            continue
+        ids = {d["id"] for d in deputados if any(d.get(c) and alvo <= set(comum.palavras(d[c], ignorar)) for c in CAMPOS_NOME)}
+        if _decidir(n, ids, "palavras", "baixa", ligados, ambiguos):
+            continue
+        for metodo, confianca, fn in extra or ():
+            if _decidir(n, fn(n, deputados), metodo, confianca, ligados, ambiguos):
+                break
+
+
+def _sem_ponto(nome) -> str:
+    return " ".join((nome or "").replace(".", " ").split())
+
+
+def _chave_manual(uf: str, n: str) -> str:
+    """"Dep.Fulano" sem espaço, sem pontos e sem acento: a chave de `MANUAIS[uf]`."""
+    n = comum.sem_acento(comum.nome_limpo(re.sub(r"^\s*dep\.(?=\S)", "dep. ", n or "", flags=re.I)))
+    return n.replace(".", "")
+
+
+def _estrategia_ms(nomes, deputados, uf):
+    manuais = MANUAIS.get(uf, {})
+    ligados, ambiguos = _casar_exato(nomes, deputados, prep=lambda n: manuais.get(_chave_manual(uf, n), _chave_manual(uf, n)))
+    ligados = {n: (i, "manual", "alta") if _chave_manual(uf, n) in manuais else (i, m, c) for n, (i, m, c) in ligados.items()}
+    return ligados, ambiguos
+
+
+def _estrategia_pe(nomes, deputados, uf):
+    """"João Paulo do PT" também tenta "João Paulo" entre os deputados do PT, quando "PT" é partido de um deputado."""
+    ligados, ambiguos = _casar_exato(nomes, deputados)
+    partidos = {comum.sem_acento(d["partido"]) for d in deputados if d.get("partido")}
+    for n in nomes:
+        m = re.match(r"^(.*\S)\s+d[oa]\s+(\S+)\s*$", n, re.I)
+        if n in ligados or not m or comum.sem_acento(m.group(2)) not in partidos:
+            continue
+        do_partido = [d for d in deputados if comum.sem_acento(d.get("partido")) == comum.sem_acento(m.group(2))]
+        achado, _ = _casar_exato([m.group(1)], do_partido)
+        if m.group(1) in achado:
+            ligados[n] = (achado[m.group(1)][0], "nome+partido", "média")
+    return ligados, ambiguos
+
+
+def _extremos(nome: str, ignorar) -> tuple:
+    p = comum.palavras(nome, ignorar)
+    return (p[0], p[-1]) if len(p) >= 2 else ()
+
+
+def _estrategia_rr(nomes, deputados, uf):
+    ignorar = TITULOS_UF[uf]
+
+    def por_extremos(nome, deps):
+        return {d["id"] for d in deps if _extremos(nome, ignorar) and any(d.get(c) and _extremos(nome, ignorar) == _extremos(d[c], ignorar) for c in CAMPOS_NOME)}
+
+    ligados, ambiguos = _casar_exato(nomes, deputados)
+    _por_palavras(nomes, deputados, ligados, ambiguos, ignorar, extra=[("extremos", "baixa", por_extremos)])
+    return ligados, ambiguos
+
+
+def _estrategia_palavras(nomes, deputados, uf):
+    ligados, ambiguos = _casar_exato(nomes, deputados)
+    _por_palavras(nomes, deputados, ligados, ambiguos, TITULOS_UF[uf])
+    return ligados, ambiguos
+
+
+def _cabe(a: list, b: list) -> bool:
+    """Toda palavra de `a` está em `b`, igual ou como começo de palavra de 4 letras ou mais ("alex" em "alexander")."""
+    return bool(a) and all(any(x == y or (len(x) >= 4 and y.startswith(x)) for y in b) for x in a)
+
+
+def _unico(alvo: list, candidatos: list[tuple]):
+    """(chave, conflito) do único candidato que casa com `alvo` (um contém o outro); (None, ids) se houver zero ou mais de um."""
+    achados = {k for k, toks in candidatos if _cabe(alvo, toks) or (len(toks) >= 2 and _cabe(toks, alvo))}
+    if len(achados) > 1:
+        achados = {k for k, toks in candidatos if sorted(toks) == sorted(alvo)} or achados
+    return (next(iter(achados)), achados) if len(achados) == 1 else (None, achados)
+
+
+def _estrategia_sc(nomes, deputados, uf):
+    """O que não casa inteiro casa pelas palavras (sem "da", "de"...) com um só nome; "Ana (Paulinha)" também tenta o apelido."""
+    ligados, ambiguos = _casar_exato(nomes, deputados)
+    tokens = lambda t: comum.palavras(t, TITULOS_UF[uf])  # noqa: E731
+    candidatos = [(d["id"], t) for d in deputados for c in (*CAMPOS_NOME, "nomeFonte") if d.get(c) and (t := tokens(d[c]))]
+    for n in nomes:
+        if n in ligados:
+            continue
+        for v in [re.sub(r"\([^)]*\)", " ", n)] + re.findall(r"\(([^)]*)\)", n):
+            achado, conflito = _unico(tokens(v), candidatos)
+            if achado is not None:
+                ligados[n] = (achado, "palavras", "baixa")
+                ambiguos.pop(n, None)
+                break
+            if conflito:
+                ambiguos[n] = sorted(map(str, conflito))
+    return ligados, ambiguos
+
+
+def _tokens_pr(nome: str) -> list[str]:
+    t = re.sub(r"\(.*?\)", " ", nome or "")
+    t = comum.sem_acento(comum.nome_limpo(t)).replace(".", " ")
+    return [EXPANSAO_PR.get(p, p) for p in t.split() if p not in TITULOS_UF["PR"]]
+
+
+def _estrategia_pr(nomes, deputados, uf):
+    """Nome inteiro (nome, nome civil, ficha); "ANA JÚLIA DO PT" sem o partido; o nome contido em um só deputado ("BAZANA" em
+    "PEDRO PAULO BAZANA"); por fim, nomes quase iguais."""
+    partidos = {comum.sem_acento(d["partido"]) for d in deputados if d.get("partido")}
+    por_alias = [(a, d["id"]) for d in deputados for a in
+                 [x for x in (_tokens_pr(d["nome"]), _tokens_pr(d.get("nomeCivil") or ""), d["id"].split("-")) if x]]
+    ligados, ambiguos = {}, {}
+    for n in nomes:
+        t = _tokens_pr(n)
+        if len(t) > 2 and t[-2] in ("do", "da") and t[-1] in partidos:
+            t = t[:-2]
+        if not t:
+            continue
+        etapas = [("nome", "média", lambda a: a == t), ("palavras", "baixa", lambda a: set(t) <= set(a) or set(a) <= set(t)),
+                  ("similaridade", "baixa", lambda a: difflib.SequenceMatcher(None, " ".join(a), " ".join(t)).ratio() >= 0.9)]
+        for metodo, confianca, casa in etapas:
+            ids = {i for a, i in por_alias if casa(a)}
+            if ids:
+                _decidir(n, ids, metodo, confianca, ligados, ambiguos)
+                break
+    return ligados, ambiguos
+
+
+def _estrategia_ce(nomes, deputados, uf):
+    """Sem diferenciar pontos: "AP. LUIZ HENRIQUE" e "Ap Luiz Henrique"."""
+    return _casar_exato(nomes, deputados, prep=_sem_ponto)
+
+
+ESTRATEGIAS = {"CE": _estrategia_ce, "MS": _estrategia_ms, "PA": _estrategia_palavras, "PE": _estrategia_pe, "PR": _estrategia_pr,
+               "RJ": _estrategia_palavras, "RR": _estrategia_rr, "SC": _estrategia_sc}
+
+
+def ligar_nomes(nomes, deputados: list[dict], uf: str | None = None) -> dict:
+    """{nome como veio da fonte: id do deputado}. Nome ambíguo ou sem par fica de fora (e entra em `ambiguos` ou `semPar` do log).
+    `uf` escolhe a regra em `ESTRATEGIAS` (padrão: nome ou nome civil igual, sem acento nem prefixo "DEP") e identifica o log."""
+    nomes = [n for n in dict.fromkeys(nomes) if isinstance(n, str)]
+    ligados, ambiguos = ESTRATEGIAS.get(uf, lambda n, d, u: _casar_exato(n, d))(nomes, deputados, uf)
+    if uf:
+        log = _LOG[uf]
+        for n in nomes:
+            if not n.strip():
+                continue
+            if n in ligados:
+                log["nomes"][n] = list(ligados[n])
+                log["ambiguos"].pop(n, None)
+                log["semPar"].discard(n)
+            elif n in ambiguos:
+                log["ambiguos"][n] = ambiguos[n]
+            else:
+                log["semPar"].add(n)
+    return {n: i for n, (i, _, _) in ligados.items()}
+
+
+def _tokens_sp(nome: str) -> list[str]:
+    return comum.sem_acento(re.sub(r"[^\w\s]", " ", nome or "")).split()
+
+
+def ligar_civis(civis, deputados: list[dict], uf: str = "SP") -> dict:
+    """{nome civil: id}: as palavras do nome parlamentar (sem títulos como "Agente Federal") estão todas no nome civil, e só um
+    deputado serve ao nome civil e só um nome civil serve ao deputado."""
+    chaves = {}
+    for d in deputados:
+        t = [p for p in _tokens_sp(d["nome"]) if p not in TITULOS_UF[uf]] or _tokens_sp(d["nome"])
+        chaves[d["id"]] = set(t)
+    por_civil = {}
+    for civil in civis:
+        achados = {i for i, t in chaves.items() if t and t <= set(_tokens_sp(civil))}
+        if len(achados) == 1:
+            por_civil[civil] = next(iter(achados))
+    contagem: dict = defaultdict(int)
+    for i in por_civil.values():
+        contagem[i] += 1
+    ligados = {c: i for c, i in por_civil.items() if contagem[i] == 1}
+    _LOG[uf]["nomes"].update({c: [i, "palavras", "baixa"] for c, i in ligados.items()})
+    return ligados
+
+
+def ligar_civis_pelo_tse(civis, deputados: list[dict], candidatos: list[dict], uf: str = "SP") -> dict:
+    """Para quem sobrou: o nome de urna do TSE casa com o nome parlamentar e o nome civil do TSE com o do subsídio
+    (igual ou com os nomes de um dentro do outro)."""
+    por_urna: dict = defaultdict(list)
+    for c in candidatos:
+        por_urna[comum.sem_acento(c.get("urna"))].append(c)
+    ligados: dict = {}
+    for d in deputados:
+        achados = por_urna.get(comum.sem_acento(d["nome"])) or []
+        if len(achados) != 1:
+            continue
+        civil_tse = set(_tokens_sp(achados[0].get("nome")))
+        serve = [c for c in civis if civil_tse <= set(_tokens_sp(c)) or set(_tokens_sp(c)) <= civil_tse]
+        if len(serve) == 1:
+            ligados[serve[0]] = d["id"]
+    _LOG[uf]["nomes"].update({c: [i, "urna+tse", "média"] for c, i in ligados.items()})
+    return ligados
+
+
+def _tokens_se(nome: str) -> list[str]:
+    return [SINONIMOS_SE.get(p, p) for p in re.sub(r"[^a-z ]", " ", comum.sem_acento(nome)).split() if p not in TITULOS_UF["SE"]]
+
+
+def _casam_se(a: str, b: str) -> bool:
+    a, b = _tokens_se(a), _tokens_se(b)
+    if not a or not b:
+        return False
+    return "".join(a) == "".join(b) or set(b) <= set(a) or set(a) <= set(b)
+
+
+def eleito_do_tse(uf: str, nome: str, eleitos: list[dict]) -> dict | None:
+    """O único eleito do TSE (de `comum.eleitos_tse`) cujo nome de urna ou nome civil casa com `nome`, da Assembleia, ou None.
+    SC compara por palavras (começo de palavra vale); SE, pelas palavras sem "Dr.", "Prof." e com "Júnior" = "Jr"."""
+    if uf == "SC":
+        tokens = lambda t: comum.palavras(t, TITULOS_UF["SC"])  # noqa: E731
+        candidatos = [(e["sequencial"], t) for e in eleitos for campo in ("nome", "urna") if e.get(campo) and (t := tokens(e[campo]))]
+        achado, _ = _unico(tokens(nome), candidatos)
+        return next((e for e in eleitos if e["sequencial"] == achado), None) if achado is not None else None
+    achados = [e for e in eleitos if _casam_se(nome, e.get("urna") or "") or _casam_se(nome, e["nome"])]
+    return achados[0] if len(achados) == 1 else None
+
+
+def gravar_ligacoes(uf: str | None = None, raiz: Path | None = None) -> None:
+    """Junta o que `ligar_nomes` decidiu neste processo ao dados/estaduais/<UF>/ligacoes.json, de cada UF, para o cache do CI não perdê-lo:
+    {nomes: {nome: [id, método, confiança]}, ambiguos: {nome: [ids]}, semPar: [nomes]}.
+    `uf` grava só a dela."""
+    raiz = raiz or comum.DADOS
+    for uf, log in sorted((u, _LOG.pop(u)) for u in ([uf] if uf else list(_LOG)) if u in _LOG):
+        if not (log["nomes"] or log["ambiguos"] or log["semPar"]):
+            continue
+        arq = raiz / uf / "ligacoes.json"
+        antes = ler(arq, {}) or {}
+        nomes = {**antes.get("nomes", {}), **log["nomes"]}
+        ambiguos = {n: v for n, v in {**antes.get("ambiguos", {}), **log["ambiguos"]}.items() if n not in nomes}
+        sem_par = {n for n in [*antes.get("semPar", []), *log["semPar"]] if n not in nomes and n not in ambiguos}
+        salvar(arq, {"nomes": nomes, "ambiguos": ambiguos, "semPar": sorted(sem_par)})
+
+
 def construir(deputados: dict, bruto: Path) -> dict:
     """Devolve {pessoas, partidos, ligacoes, chaves}. `chaves` liga a fonte à pessoa, em memória:
     ("tse", ano, sequencial), ("camara", id), ("senado", id) e ("estadual", uf, id) -> id da pessoa."""
@@ -301,6 +603,17 @@ def construir(deputados: dict, bruto: Path) -> dict:
             p["partidoFonte"] = partido(d.get("partido")) or p["partidoFonte"]
             chaves[("estadual", uf, str(d["id"]))] = p["id"]
 
+    # --- nomes em registros das Assembleias (dados/estaduais/<UF>/ligacoes.json, gravado pelos coletores)
+    registros, resumo_registros = {}, {}
+    for pasta in sorted(x for x in (bruto / "estaduais").glob("*") if x.is_dir()):
+        tabela = ler(pasta / "ligacoes.json", None)
+        if not tabela:
+            continue
+        uf = pasta.name
+        registros[uf] = {"nomes": {n: [*v, chaves.get(("estadual", uf, str(v[0])))] for n, v in tabela.get("nomes", {}).items()},
+                         "ambiguos": tabela.get("ambiguos", {}), "semPar": tabela.get("semPar", [])}
+        resumo_registros[uf] = dict(Counter(v[1] for v in tabela.get("nomes", {}).values()))
+
     pessoas = []
     for pid in sorted(reg.por_id):
         p = reg.por_id[pid]
@@ -328,7 +641,8 @@ def construir(deputados: dict, bruto: Path) -> dict:
         "pessoas": pessoas,
         "partidos": {"partidos": linhas, "federacoes": fed_saida},
         "ligacoes": {"resumo": {f: dict(c) for f, c in resumo.items()}, "semLigacao": dict(sem_ligacao),
-                     "ambiguos": ambiguos, "partidosDesconhecidos": sorted(desconhecidas)},
+                     "ambiguos": ambiguos, "partidosDesconhecidos": sorted(desconhecidas),
+                     "registros": registros, "resumoRegistros": resumo_registros},
         "chaves": chaves,
     }
 

@@ -19,6 +19,7 @@ from datetime import date
 from io import BytesIO, StringIO
 
 import estaduais_comum as comum
+import identidades
 
 UF = "RS"
 TSE_ARQUIVO = comum.arquivo_tse(UF)
@@ -49,7 +50,7 @@ def linhas_da_assembleia(texto_csv: str) -> list[dict]:
 
 
 def itens_diarias(linhas: list[dict], deputados: list[dict]) -> list[dict]:
-    ligados = comum.ligar_nomes({linha["Favorecido"] for linha in linhas}, deputados)
+    ligados = identidades.ligar_nomes({linha["Favorecido"] for linha in linhas}, deputados, UF)
     itens = []
     for linha in linhas:
         if linha["Favorecido"] not in ligados:

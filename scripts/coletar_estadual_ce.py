@@ -21,6 +21,7 @@ from datetime import date, datetime
 from functools import partial
 
 import estaduais_comum as comum
+import identidades
 
 UF = "CE"
 PASTA = comum.DADOS / UF
@@ -57,15 +58,7 @@ CATEGORIAS_VDP = [
 ]
 
 
-def sem_ponto(nome: str) -> str:
-    return " ".join((nome or "").replace(".", " ").split())
-
-
-def ligar(nomes, deputados: list[dict]) -> dict:
-    """Como comum.ligar_nomes, sem diferenciar pontos ("AP. LUIZ HENRIQUE" e "Ap Luiz Henrique")."""
-    sem = [{**d, "nome": sem_ponto(d.get("nome")), "nomeCivil": sem_ponto(d.get("nomeCivil"))} for d in deputados]
-    achados = comum.ligar_nomes({sem_ponto(n) for n in nomes}, sem)
-    return {n: achados[sem_ponto(n)] for n in nomes if sem_ponto(n) in achados}
+ligar = partial(identidades.ligar_nomes, uf=UF)
 
 
 def decodificar(conteudo: bytes, codificacao: str | None = None) -> str:

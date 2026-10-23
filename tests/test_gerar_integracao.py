@@ -96,3 +96,9 @@ def test_autorias_ligam_proposicao_e_pessoa(site):
     quem = ler(site / "deputado" / "101.json")["pessoa"]
     assert [k for k, _ in aut["porPessoa"][quem]] == ["c-900"]
     assert any(i["k"] == "c-900" for i in ler(site / "proposicoes.json"))
+
+
+def test_mandatos_ligam_pessoa_e_exercicio(site):
+    quem = ler(site / "deputado" / "101.json")["pessoa"]
+    (m,) = [m for m in ler(site / "nucleo" / "mandatos.json") if m["pessoa"] == quem]
+    assert m["cargo"] == "DEPUTADO FEDERAL" and m["status"] == "atual" and m["confirmado"] is True and m["fontes"] == {"camara": 101}

@@ -15,6 +15,7 @@ from pathlib import Path
 import gerar_estaduais
 import fornecedores as nucleo_fornecedores
 import identidades
+import mandatos
 import gerar_prefeituras
 import gerar_politicos
 import gerar_proposicoes
@@ -539,6 +540,7 @@ def main():
                                     votacoes_senado, TIPOS_PROJETO, destino_projeto, nucleo["chaves"])
     print(f"Gerado: {total} proposições para a busca")
     identidades.salvar_nucleo(nucleo, SAIDA / "nucleo")
+    mandatos.salvar_mandatos(mandatos.construir(deputados, BRUTO, nucleo), SAIDA)
     nucleo_fornecedores.salvar_fornecedores(nucleo_fornecedores.construir(deputados, BRUTO, nucleo), SAIDA)
     gerar_politicos.gerar(deputados, gerar_estaduais.gerar(), nucleo["chaves"])
     gerar_prefeituras.gerar()

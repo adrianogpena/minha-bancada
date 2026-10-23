@@ -31,7 +31,7 @@ def test_resumir_pega_so_as_contas_e_colunas_usadas():
 def test_resumir_separa_instituicoes_e_ignora_item_sem_valor():
     outro = [item("DespesaComPessoalTotal", "Valor", 5.0, instituicao="Tribunal de Contas"), item("DespesaComPessoalTotal", "Valor", None)]
     linhas = sic.resumir(AMOSTRA + outro, "f")
-    assert [l["instituicao"] for l in linhas] == ["Assembleia Legislativa do Estado do Amapá", "Tribunal de Contas"]
+    assert [lin["instituicao"] for lin in linhas] == ["Assembleia Legislativa do Estado do Amapá", "Tribunal de Contas"]
     assert linhas[1]["dtp"] == 5.0
 
 

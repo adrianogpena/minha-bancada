@@ -48,7 +48,10 @@ def test_sp_e_do_prefeito(monkeypatch):
 
 
 def ws_sp(a):
-    proj = lambda t, n: {"tipo": t, "numero": n, "ano": a}
+
+    def proj(t, n):
+        return {"tipo": t, "numero": n, "ano": a}
+
     dados = {
         "PromoventesCMSPJSON": [{"chave": 3, "nome": "Ricardo Nunes", "tipo": {"nome": "EXECUTIVO"}}],
         "ProjetosEmTramitacaoPorPromoventeJSON": [proj("PL", 2)],

@@ -88,7 +88,7 @@ def test_janelas_cobrem_periodo_sem_buracos_nem_sobreposicao():
     ini, fim = dt.date(2024, 1, 1), dt.date(2024, 4, 15)
     js = list(coletar.janelas(ini, fim))
     assert js[0][0] == ini and js[-1][1] == fim
-    for (_, f1), (i2, _) in zip(js, js[1:]):
+    for (_, f1), (i2, _) in zip(js, js[1:], strict=False):
         assert i2 == f1 + dt.timedelta(days=1)
     assert all((f - i).days <= 29 for i, f in js)
 

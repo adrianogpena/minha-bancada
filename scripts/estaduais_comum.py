@@ -4,7 +4,7 @@ Base comum dos coletores de deputados estaduais (um módulo `coletar_estadual_<u
 Cada módulo de UF expõe:
     UF = "GO"
     def coletar() -> None            # grava em dados/estaduais/<UF>/
-    CONTRATOS = [dict(nome="estadual_go_x", fonte="https://...", buscar=fn(ctx), usados=["a.b"], html=None)]
+    CONTRATOS = [{"nome": "estadual_go_x", "fonte": "https://...", "buscar": fn(ctx), "usados": ["a.b"], "html": None}]
         (opcional; sem importar `contrato_apis`; os endpoints são independentes entre si, sem usar o `ctx`
         de outros; `--gravar estadual_go_x` grava tests/fixtures/contratos/estadual_go_x.json)
 
@@ -30,20 +30,26 @@ todo `fonte` é a URL que a pessoa abre para conferir o dado):
   diarias_<ano>.json  {coletadoEm, fonte, itens:[{idDeputado, data (AAAA-MM-DD), destino, motivo, valor, fonte}]}
   emendas_<ano>.json  {coletadoEm, fonte, itens:[{idDeputado, ano, objeto, orgao, empenhado, pago, fonte}]}
 
-Helpers: `sessao`, `ler`, `salvar`, `avisar`, `sem_acento`, `nome_limpo`, `valor_br`, `mes_numero`, `ligar_nomes`,
-`meses_recentes`, `ano_encerrado`.
+Helpers: `sessao`, `get`, `baixar`, `ler`, `salvar`, `avisar`, `sem_acento`, `nome_limpo`, `limpar`, `compactar`, `valor_br`,
+`mes_numero`, `data_br_iso`, `ligar_nomes`, `ligar_por_palavras`, `palavras`, `meses_recentes`, `ano_encerrado`,
+`arquivo_tse`, `ficha_tse`, `eleitos_tse`, `deputados_do_tse` (eleitos de 2022 do TSE como lista de deputados),
+`xlsx_linhas` e `xlsx_abas` (XLSX só com biblioteca padrão), `contrato_json`, `campos_vazios`, `faltando`, `tentar`, `rodar_etapas`, `principal`.
 """
 
+import io
 import json
 import os
 import re
 import sys
 import time
 import unicodedata
+import zipfile
+from html import unescape
 from pathlib import Path
 from urllib.parse import urlsplit
 
 import requests
+from defusedxml import ElementTree
 from requests.adapters import HTTPAdapter
 from urllib3.util.retry import Retry
 
@@ -60,6 +66,7 @@ PRAZO_FIM = time.monotonic() + float(os.environ["ESTADUAIS_PRAZO_MIN"]) * 60 if 
 
 MESES = {"janeiro": 1, "fevereiro": 2, "marco": 3, "abril": 4, "maio": 5, "junho": 6, "julho": 7, "agosto": 8,
          "setembro": 9, "outubro": 10, "novembro": 11, "dezembro": 12}
+NS_XLSX = {"m": "http://schemas.openxmlformats.org/spreadsheetml/2006/main"}
 _PREFIXO_DEP = re.compile(r"^\s*(deputad[oa]\s*\(a\)|deputad[oa]|dep\.?)\s+", re.I)
 
 
@@ -103,6 +110,42 @@ def sessao() -> requests.Session:
     return s
 
 
+def get(s, url: str, timeout: int = TIMEOUT_PADRAO, **kw):
+    """GET que levanta em erro HTTP; `kw` vai para `requests` (params, headers)."""
+    r = s.get(url, timeout=timeout, **kw)
+    r.raise_for_status()
+    return r
+
+
+def baixar(s, url: str, params: dict | None = None, timeout: int = TIMEOUT_PADRAO) -> bytes:
+    return get(s, url, timeout, **({"params": params} if params else {})).content
+
+
+def contrato_json(url: str, timeout: int = 30):
+    """`buscar` de contrato para uma API JSON simples."""
+    return sessao().get(url, timeout=timeout).json()
+
+
+def tentar(uf: str, rotulo: str, fn) -> None:
+    """Roda uma etapa da coleta; se falhar, só avisa, para não derrubar as outras."""
+    try:
+        fn()
+    except Exception as e:  # noqa: BLE001
+        avisar(f"{uf}: {rotulo}: {e}")
+
+
+def rodar_etapas(uf: str, etapas) -> None:
+    """`etapas`: [(rótulo, função sem argumentos)], cada uma isolada por `tentar`."""
+    for rotulo, fn in etapas:
+        tentar(uf, rotulo, fn)
+
+
+def principal(coletar) -> None:
+    """Rodapé dos módulos de UF: `if __name__ == "__main__": comum.principal(coletar)`."""
+    coletar()
+    sys.exit(0)
+
+
 def avisar(msg: str) -> None:
     print(f"AVISO: {msg}", file=sys.stderr)
 
@@ -126,6 +169,23 @@ def sem_acento(s: str) -> str:
 def nome_limpo(nome: str) -> str:
     """Tira o prefixo "DEP ", "DEP. " ou "DEPUTADO(A) " do nome."""
     return " ".join(_PREFIXO_DEP.sub("", nome or "").split())
+
+
+def limpar(html: str | None) -> str:
+    """Texto de um trecho de HTML: sem tags, entidades resolvidas e espaços compactados."""
+    return " ".join(unescape(re.sub(r"<[^>]+>", " ", html or "")).split())
+
+
+def compactar(texto) -> str | None:
+    """Espaços compactados; vazio vira None."""
+    return " ".join((texto or "").split()) or None
+
+
+def data_br_iso(texto: str | None, inteiro: bool = False) -> str | None:
+    """"31/12/2024" (com espaços nas pontas) -> "2024-12-31". `inteiro`: recusa texto depois da data (hora)."""
+    padrao = r"\s*(\d\d)/(\d\d)/(\d{4})" + (r"\s*" if inteiro else "")
+    m = (re.fullmatch if inteiro else re.match)(padrao, texto or "")
+    return f"{m.group(3)}-{m.group(2)}-{m.group(1)}" if m else None
 
 
 def valor_br(texto) -> float | None:
@@ -189,3 +249,98 @@ def ligar_nomes(nomes_fonte, deputados: list[dict]) -> dict:
         if len(ids) == 1:
             ligados[n] = next(iter(ids))
     return ligados
+
+
+def palavras(nome: str, ignorar=()) -> list[str]:
+    """Palavras do nome sem acento, só letras, na ordem e sem as de `ignorar`."""
+    return [t for t in re.sub(r"[^a-z ]", " ", sem_acento(nome)).split() if t not in ignorar]
+
+
+def ligar_por_palavras(nomes, deputados: list[dict], ignorar=(), extra=None) -> dict:
+    """Como `ligar_nomes`; o nome que não casa inteiro casa quando todas as suas palavras estão em um só nome do deputado
+    (nome ou nomeCivil). `extra(nome, deputados)` devolve ids de uma segunda tentativa quando a primeira não achou um só."""
+    ligados = ligar_nomes(nomes, deputados)
+    for n in nomes:
+        alvo = set(palavras(n, ignorar))
+        if n in ligados or not alvo:
+            continue
+        ids = {d["id"] for d in deputados if any(d.get(c) and alvo <= set(palavras(d[c], ignorar)) for c in ("nome", "nomeCivil"))}
+        if len(ids) != 1 and extra:
+            ids = extra(n, deputados)
+        if len(ids) == 1:
+            ligados[n] = next(iter(ids))
+    return ligados
+
+
+def campos_vazios(obj, campos, rotulo: str, vazios=None) -> list[str]:
+    """Falhas de contrato "<rotulo> sem <campo>" para cada campo de `obj` vazio; `vazios` lista os valores que contam como
+    vazio (padrão: qualquer valor falso)."""
+    return [f"{rotulo} sem {c}" for c in campos if (not obj.get(c) if vazios is None else obj.get(c) in vazios)]
+
+
+def faltando(presentes, esperadas, rotulo: str) -> list[str]:
+    """Falhas de contrato "<rotulo> sem a coluna X" para cada coluna esperada que não está em `presentes`."""
+    return [f"{rotulo} sem a coluna {c}" for c in esperadas if c not in presentes]
+
+
+def arquivo_tse(uf: str) -> Path:
+    return RAIZ / "dados" / "tse" / "2022" / f"{uf}.json"
+
+
+def ficha_tse(uf: str) -> str:
+    return f"https://divulgacandcontas.tse.jus.br/divulga/#/candidato/2022/2040602022/{uf}/{{}}"
+
+
+def eleitos_tse(arquivo: Path) -> list[dict]:
+    """Candidatos eleitos a deputado estadual em 2022 (dados/tse/2022/<UF>.json)."""
+    return [e for e in ler(arquivo, []) if e.get("cargo") == "DEPUTADO ESTADUAL" and e.get("situacao") == "eleito"]
+
+
+def deputados_do_tse(arquivo: Path, ficha: str) -> list[dict]:
+    """Eleitos de 2022 no formato de deputados.json, em ordem alfabética; `ficha` é a URL com `{}` para o sequencial."""
+    lista = [{"id": e["sequencial"], "nome": e.get("urna") or e["nome"], "nomeCivil": e["nome"], "foto": None, "email": e.get("email"),
+              "titular": True, "partido": e.get("partido"), "fonte": ficha.format(e["sequencial"])} for e in eleitos_tse(arquivo)]
+    return sorted(lista, key=lambda d: sem_acento(d["nome"]))
+
+
+def _celulas_xlsx(z: zipfile.ZipFile, caminho: str, textos: list[str]) -> list[dict]:
+    linhas = []
+    for row in ElementTree.fromstring(z.read(caminho)).iter(f"{{{NS_XLSX['m']}}}row"):
+        celulas = {}
+        for c in row.findall("m:c", NS_XLSX):
+            v = c.find("m:v", NS_XLSX)
+            if v is None or v.text is None:
+                continue
+            celulas[re.match(r"[A-Z]+", c.get("r")).group(0)] = textos[int(v.text)] if c.get("t") == "s" else v.text
+        if celulas:
+            linhas.append(celulas)
+    return linhas
+
+
+def _textos_xlsx(z: zipfile.ZipFile) -> list[str]:
+    if "xl/sharedStrings.xml" not in z.namelist():
+        return []
+    raiz = ElementTree.fromstring(z.read("xl/sharedStrings.xml"))
+    return ["".join(t.text or "" for t in si.iter(f"{{{NS_XLSX['m']}}}t")) for si in raiz.findall("m:si", NS_XLSX)]
+
+
+def xlsx_linhas(conteudo: bytes, aparar: bool = True) -> list[dict]:
+    """Primeira planilha como lista de linhas {coluna (A, B...): texto}. `aparar`: tira espaços e descarta células vazias."""
+    z = zipfile.ZipFile(io.BytesIO(conteudo))
+    linhas = _celulas_xlsx(z, "xl/worksheets/sheet1.xml", _textos_xlsx(z))
+    if not aparar:
+        return linhas
+    aparadas = ({c: v.strip() for c, v in linha.items() if v.strip()} for linha in linhas)
+    return [linha for linha in aparadas if linha]
+
+
+def xlsx_abas(conteudo: bytes) -> dict[str, list[dict]]:
+    """{nome da aba: linhas {coluna: texto}}."""
+    z = zipfile.ZipFile(io.BytesIO(conteudo))
+    textos = _textos_xlsx(z)
+    rels = {r.get("Id"): r.get("Target") for r in ElementTree.fromstring(z.read("xl/_rels/workbook.xml.rels"))}
+    abas = {}
+    for aba in ElementTree.fromstring(z.read("xl/workbook.xml")).find("m:sheets", NS_XLSX):
+        alvo = rels[aba.get("{http://schemas.openxmlformats.org/officeDocument/2006/relationships}id")].lstrip("/")
+        abas[aba.get("name")] = _celulas_xlsx(z, alvo if alvo.startswith("xl/") else f"xl/{alvo}", textos)
+    return abas

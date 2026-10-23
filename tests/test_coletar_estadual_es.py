@@ -17,7 +17,7 @@ def linhas_do_contrato():
 
 
 def deputados_do_contrato(filtro):
-    nomes = sorted({l["Favorecido"] for l in linhas_do_contrato() if filtro(l)})
+    nomes = sorted({linha["Favorecido"] for linha in linhas_do_contrato() if filtro(linha)})
     return [{"id": str(i), "nome": n.title(), "nomeCivil": n} for i, n in enumerate(nomes, 1)]
 
 
@@ -39,7 +39,7 @@ def test_linhas_da_assembleia_filtra_unidade_gestora():
               "ASSEMBLEIA LEGISLATIVA DO ESTADO DO ESPÍRITO SANTO;A;x".encode(),
               "SECRETARIA DA SAUDE;B;PAGO A ASSEMBLEIA LEGISLATIVA",
               "ASSEMBLEIA LEGISLATIVA;C"]
-    assert [l["Favorecido"] for l in es.linhas_da_assembleia(linhas)] == ["A"]
+    assert [linha["Favorecido"] for linha in es.linhas_da_assembleia(linhas)] == ["A"]
 
 
 def test_referencia_e_periodo():
@@ -135,7 +135,7 @@ class Sessao:
 
 
 def preparar(tmp_path, monkeypatch, sessao):
-    nome = next(l["Favorecido"] for l in linhas_do_contrato() if es.e_cota(l))
+    nome = next(linha["Favorecido"] for linha in linhas_do_contrato() if es.e_cota(linha))
     tse = [{"cargo": "DEPUTADO ESTADUAL", "situacao": "eleito", "sequencial": "80", "urna": "Fulano", "nome": nome, "partido": "PDT", "email": None},
            {"cargo": "DEPUTADO FEDERAL", "situacao": "eleito", "sequencial": "9", "urna": "X", "nome": "X"}]
     arquivo = tmp_path / "ES.json"

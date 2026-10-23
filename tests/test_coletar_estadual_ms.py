@@ -36,7 +36,7 @@ def test_linhas_csv_pula_metadados():
 
 def test_itens_ceap():
     linhas = ms.linhas_csv(amostra("estadual_ms_ceap")["csv"], "DEPUTADO")
-    ligacao = ms.ligar({l["DEPUTADO"] for l in linhas}, DEPUTADOS)
+    ligacao = ms.ligar({linha["DEPUTADO"] for linha in linhas}, DEPUTADOS)
     itens, sem_par = ms.itens_ceap(linhas, ligacao, "http://pagina")
     assert itens[0]["idDeputado"] == "1" and itens[0]["mes"] == 1 and itens[0]["valor"] == 99.9
     assert itens[0]["cnpj"] == "16551514000175" and itens[0]["emissao"] == "2026-01-10"
@@ -56,7 +56,7 @@ def test_sem_par_e_sem_comprovante():
 def test_diarias_sem_despesa():
     assert ms.linhas_diarias(amostra("estadual_ms_diarias")["csv"]) == []
     texto = "Mês;Ano;Informação\nJaneiro;2024;Viagem a Brasília\nFevereiro;2024;\"Não houve despesa com a concessão de diárias nesse período.\"\n"
-    assert [l["MES"] for l in ms.linhas_diarias(texto)] == ["Janeiro"]
+    assert [linha["MES"] for linha in ms.linhas_diarias(texto)] == ["Janeiro"]
 
 
 def test_emissao_iso():

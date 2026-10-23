@@ -24,6 +24,8 @@ import zipfile
 from collections import defaultdict
 from pathlib import Path
 
+from coletar_disputa import inteiro
+
 RAIZ = Path(__file__).resolve().parent.parent
 BRUTO = RAIZ / "dados" / "tse_bruto" / "votacao_partido_munzona"
 SAIDA = RAIZ / "dados" / "tse" / "partidos"
@@ -32,13 +34,6 @@ VERSAO = 1
 PROPORCIONAIS = {"DEPUTADO FEDERAL", "DEPUTADO ESTADUAL", "DEPUTADO DISTRITAL", "VEREADOR"}
 
 csv.field_size_limit(1 << 24)
-
-
-def inteiro(v: str) -> int:
-    try:
-        return int(v)
-    except (TypeError, ValueError):
-        return 0
 
 
 def coletar_ano(ano: int) -> None:
@@ -53,14 +48,14 @@ def coletar_ano(ano: int) -> None:
                 continue
             mapa = defaultdict(lambda: {"totalVotos": 0, "partidos": {}})
             with z.open(nome) as f:
-                for l in csv.DictReader(io.TextIOWrapper(f, encoding="latin-1", newline=""), delimiter=";"):
-                    cargo = l["DS_CARGO"].upper()
+                for lin in csv.DictReader(io.TextIOWrapper(f, encoding="latin-1", newline=""), delimiter=";"):
+                    cargo = lin["DS_CARGO"].upper()
                     if cargo not in PROPORCIONAIS:
                         continue
-                    leg, nom = inteiro(l["QT_TOTAL_VOTOS_LEG_VALIDOS"]), inteiro(l["QT_VOTOS_NOMINAIS_VALIDOS"])
-                    d = mapa[f"{cargo}|{l['SG_UE']}"]
+                    leg, nom = inteiro(lin["QT_TOTAL_VOTOS_LEG_VALIDOS"]), inteiro(lin["QT_VOTOS_NOMINAIS_VALIDOS"])
+                    d = mapa[f"{cargo}|{lin['SG_UE']}"]
                     d["totalVotos"] += leg + nom
-                    p = d["partidos"].setdefault(l["SG_PARTIDO"], [0, 0, "" if l["SG_FEDERACAO"] == "#NULO" else l["SG_FEDERACAO"]])
+                    p = d["partidos"].setdefault(lin["SG_PARTIDO"], [0, 0, "" if lin["SG_FEDERACAO"] == "#NULO" else lin["SG_FEDERACAO"]])
                     p[0] += leg
                     p[1] += nom
             if mapa:

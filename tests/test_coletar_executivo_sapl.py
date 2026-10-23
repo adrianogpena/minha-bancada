@@ -220,7 +220,7 @@ def test_coletar_deputados_so_mandatos_em_vigor_e_pula_erro(sapl):
     def parlamentar(pid):
         raise RuntimeError("HTTP 404")
 
-    s = sapl(**{
+    sapl(**{
         "parlamentares/mandato": [
             {"parlamentar": 1, "data_inicio_mandato": "2023-02-01", "data_fim_mandato": amanha, "titular": True},
             {"parlamentar": 2, "data_inicio_mandato": "2023-02-01", "data_fim_mandato": ontem, "titular": True},   # expirado

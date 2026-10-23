@@ -81,7 +81,7 @@ def resumir(itens: list[dict], fonte: str) -> list[dict]:
             continue
         linha = por_instituicao.setdefault(i["instituicao"], {"poder": i["co_poder"], "instituicao": i["instituicao"], "fonte": fonte})
         linha[campo] = float(i["valor"])
-    return [l for l in sorted(por_instituicao.values(), key=lambda l: l["instituicao"]) if "dtp" in l or "despesaBruta" in l]
+    return [lin for lin in sorted(por_instituicao.values(), key=lambda lin: lin["instituicao"]) if "dtp" in lin or "despesaBruta" in lin]
 
 
 def ano_do_poder(s, uf: str, ano: int, poder: str) -> list[dict]:
@@ -90,7 +90,7 @@ def ano_do_poder(s, uf: str, ano: int, poder: str) -> list[dict]:
         for periodo in periodos:
             linhas = resumir(baixar(s, uf, ano, periodicidade, periodo, poder), url(uf, ano, periodicidade, periodo, poder))
             if linhas:
-                return [{**l, "periodicidade": periodicidade, "periodo": periodo} for l in linhas]
+                return [{**lin, "periodicidade": periodicidade, "periodo": periodo} for lin in linhas]
     return []
 
 
@@ -102,7 +102,7 @@ def coletar_uf(s, uf: str, hoje: dt.date) -> None:
         if comum.ano_encerrado(ano, hoje, arq) and str(ano) in anteriores:
             anos[str(ano)] = anteriores[str(ano)]
             continue
-        poderes = [l for poder in PODERES for l in ano_do_poder(s, uf, ano, poder)]
+        poderes = [lin for poder in PODERES for lin in ano_do_poder(s, uf, ano, poder)]
         if poderes:
             anos[str(ano)] = {"poderes": poderes}
         elif str(ano) in anteriores:

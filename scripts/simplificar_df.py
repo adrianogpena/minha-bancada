@@ -25,7 +25,7 @@ ROMANOS = {"I": 1, "V": 5, "X": 10, "L": 50}
 
 def romano(r):
     n = 0
-    for a, b in zip(r, r[1:] + " "):
+    for a, b in zip(r, r[1:] + " ", strict=True):
         n += -ROMANOS[a] if ROMANOS.get(b, 0) > ROMANOS[a] else ROMANOS[a]
     return n
 

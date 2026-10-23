@@ -87,7 +87,7 @@ def xlsx(linhas):
 
 
 def test_ler_xlsx():
-    abas = rj.ler_xlsx(xlsx([{"A": "Emenda", "B": "Autor"}, {"A": "7", "B": "Alan Lopes"}]))
+    abas = comum.xlsx_abas(xlsx([{"A": "Emenda", "B": "Autor"}, {"A": "7", "B": "Alan Lopes"}]))
     assert abas == {"Impositivas": [{"A": "Emenda", "B": "Autor"}, {"A": "7", "B": "Alan Lopes"}]}
 
 

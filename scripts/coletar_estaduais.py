@@ -107,9 +107,9 @@ def sem_acento(s: str) -> str:
 # ---------------------------------------------------------------- por Assembleia
 def legislatura_atual(host: str) -> dict:
     hoje = dt.date.today().isoformat()
-    for l in get(host, "parlamentares/legislatura", page_size=10)["results"]:
-        if l["data_inicio"] <= hoje <= l["data_fim"]:
-            return l
+    for linha in get(host, "parlamentares/legislatura", page_size=10)["results"]:
+        if linha["data_inicio"] <= hoje <= linha["data_fim"]:
+            return linha
     raise RuntimeError("legislatura atual não encontrada")
 
 

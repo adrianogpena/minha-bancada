@@ -63,7 +63,7 @@ Os testes não acessam a internet: as respostas das APIs (Câmara, Senado, TSE, 
 ```bash
 pip install -r requirements-dev.txt
 python -m pytest                       # scripts de coleta/geração + sanidade dos arquivos em dados/
-node --test tests/js/app.test.js       # utilidades do site/assets/app.js
+node --test tests/js/app.test.js       # módulos de site/assets/js
 node --test tests/e2e/fumaca.test.js   # abre cada página no Chromium sobre dados mínimos (precisa de `npm i --no-save playwright`)
 ```
 
@@ -117,7 +117,7 @@ Sem `--limite` a coleta pega todos os deputados em exercício. `--dias` só vale
 | `dados/municipais/` | Cache dessas coletas, um arquivo por ano e capital. |
 | `dados/tse/` | Eleitos de cada eleição, um arquivo por estado. |
 | `dados/proposicoes/` | Proposições já coletadas de cada deputado. A API só aceita 3 meses por consulta, então a primeira coleta é longa e as seguintes buscam só o período novo. |
-| `site/` | O site: HTML, CSS e um único `assets/app.js`, sem framework nem etapa de build. |
+| `site/` | O site: HTML, CSS e módulos ES em `assets/js/` (entrada `assets/app.js`), sem framework nem etapa de build. |
 | `.github/workflows/atualizar.yml` | Agenda diária: coletas em jobs paralelos, depois gera o site, salva o histórico e publica. |
 
 ## Endpoints desativados

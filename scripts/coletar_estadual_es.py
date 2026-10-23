@@ -24,14 +24,13 @@ Não coletado: folha, presença, proposições e votações (não estão no port
 
 import csv
 import re
-import sys
 from datetime import date
 
 import estaduais_comum as comum
 
 UF = "ES"
-TSE_ARQUIVO = comum.RAIZ / "dados" / "tse" / "2022" / "ES.json"
-TSE_FICHA = "https://divulgacandcontas.tse.jus.br/divulga/#/candidato/2022/2040602022/ES/{}"
+TSE_ARQUIVO = comum.arquivo_tse(UF)
+TSE_FICHA = comum.ficha_tse(UF)
 PACOTE = "portal-da-transparencia-despesas-execucao-orcamentaria-e-financeira"
 CKAN = f"https://dados.es.gov.br/api/3/action/package_show?id={PACOTE}"
 PAGINA = f"https://dados.es.gov.br/dataset/{PACOTE}"
@@ -43,13 +42,7 @@ CAMPOS = ("Data", "ValorPago", "Favorecido", "Documento", "HistoricoDocumento", 
 
 
 def deputados_do_tse() -> list[dict]:
-    lista = []
-    for e in comum.ler(TSE_ARQUIVO, []):
-        if e.get("cargo") != "DEPUTADO ESTADUAL" or e.get("situacao") != "eleito":
-            continue
-        lista.append({"id": e["sequencial"], "nome": e.get("urna") or e["nome"], "nomeCivil": e["nome"], "foto": None,
-                      "email": e.get("email"), "titular": True, "partido": e.get("partido"), "fonte": TSE_FICHA.format(e["sequencial"])})
-    return sorted(lista, key=lambda d: comum.sem_acento(d["nome"]))
+    return comum.deputados_do_tse(TSE_ARQUIVO, TSE_FICHA)
 
 
 def arquivos_por_ano(pacote: dict) -> dict:
@@ -73,8 +66,8 @@ def linha_da_assembleia(bruta: bytes, cabecalho: list[str]) -> dict | None:
     campos = next(csv.reader([bruta.decode("utf-8", errors="replace")], delimiter=";"), [])
     if len(campos) != len(cabecalho):
         return None
-    l = dict(zip(cabecalho, campos))
-    return l if (l.get("UnidadeGestora") or "").strip().upper().startswith("ASSEMBLEIA LEGISLATIVA") else None
+    lin = dict(zip(cabecalho, campos, strict=False))
+    return lin if (lin.get("UnidadeGestora") or "").strip().upper().startswith("ASSEMBLEIA LEGISLATIVA") else None
 
 
 def linhas_da_assembleia(linhas) -> list[dict]:
@@ -84,22 +77,17 @@ def linhas_da_assembleia(linhas) -> list[dict]:
         bruta = linha if isinstance(linha, bytes) else linha.encode("utf-8")
         if cabecalho is None:
             cabecalho = cabecalho_csv(bruta)
-        elif (l := linha_da_assembleia(bruta, cabecalho)) is not None:
-            achadas.append(l)
+        elif (lin := linha_da_assembleia(bruta, cabecalho)) is not None:
+            achadas.append(lin)
     return achadas
 
 
-def e_cota(l: dict) -> bool:
-    return "cotas parlamentares" in comum.sem_acento(l.get("SubelementoDespesa"))
+def e_cota(lin: dict) -> bool:
+    return "cotas parlamentares" in comum.sem_acento(lin.get("SubelementoDespesa"))
 
 
-def e_diaria(l: dict) -> bool:
-    return comum.sem_acento(l.get("ElementoDespesa")).startswith("diaria")
-
-
-def data_iso(texto: str) -> str | None:
-    m = re.match(r"\s*(\d\d)/(\d\d)/(\d{4})", texto or "")
-    return f"{m.group(3)}-{m.group(2)}-{m.group(1)}" if m else None
+def e_diaria(lin: dict) -> bool:
+    return comum.sem_acento(lin.get("ElementoDespesa")).startswith("diaria")
 
 
 def referencia(historico: str, pago_em: str | None) -> str | None:
@@ -115,37 +103,39 @@ def referencia(historico: str, pago_em: str | None) -> str | None:
 def periodo(historico: str) -> tuple:
     """(início, fim) em AAAA-MM-DD do trecho "PERÍODO DE 02/07/2026 a 03/07/2026" do histórico."""
     m = re.search(r"(\d\d/\d\d/\d{4})\s*(?:a|à|ate|até)\s*(\d\d/\d\d/\d{4})", historico or "", re.I)
-    return (data_iso(m.group(1)), data_iso(m.group(2))) if m else (None, None)
+    return (comum.data_br_iso(m.group(1)), comum.data_br_iso(m.group(2))) if m else (None, None)
 
 
 def _pagas(linhas: list[dict], deputados: list[dict], filtro) -> list:
-    escolhidas = [l for l in linhas if filtro(l) and comum.valor_br(l.get("ValorPago"))]
-    limpo = lambda nome: (nome or "").replace("_", " ")  # a fonte traz "COUTINHO_SANTOS"
-    ligados = comum.ligar_nomes({limpo(l["Favorecido"]) for l in escolhidas}, deputados)
-    return [(ligados[limpo(l["Favorecido"])], l) for l in escolhidas if limpo(l["Favorecido"]) in ligados]
+    escolhidas = [lin for lin in linhas if filtro(lin) and comum.valor_br(lin.get("ValorPago"))]
+    def limpo(nome):  # a fonte traz "COUTINHO_SANTOS"
+        return (nome or "").replace("_", " ")
+
+    ligados = comum.ligar_nomes({limpo(lin["Favorecido"]) for lin in escolhidas}, deputados)
+    return [(ligados[limpo(lin["Favorecido"])], lin) for lin in escolhidas if limpo(lin["Favorecido"]) in ligados]
 
 
 def itens_cota(linhas: list[dict], deputados: list[dict]) -> list[dict]:
     itens = []
-    for pid, l in _pagas(linhas, deputados, e_cota):
-        pago_em = data_iso(l.get("Data"))
+    for pid, lin in _pagas(linhas, deputados, e_cota):
+        pago_em = comum.data_br_iso(lin.get("Data"))
         itens.append({"idDeputado": pid, "mes": int(pago_em[5:7]) if pago_em else None, "data": pago_em,
-                      "referencia": referencia(l.get("HistoricoDocumento"), pago_em), "categoria": "Cota parlamentar (reembolso)",
-                      "fornecedor": None, "cnpj": None, "documento": (l.get("Documento") or "").strip() or None,
-                      "valor": comum.valor_br(l.get("ValorPago")), "fonte": PAGINA})
+                      "referencia": referencia(lin.get("HistoricoDocumento"), pago_em), "categoria": "Cota parlamentar (reembolso)",
+                      "fornecedor": None, "cnpj": None, "documento": (lin.get("Documento") or "").strip() or None,
+                      "valor": comum.valor_br(lin.get("ValorPago")), "fonte": PAGINA})
     itens.sort(key=lambda i: (i["data"] or "", i["idDeputado"], i["documento"] or ""))
     return itens
 
 
 def itens_diarias(linhas: list[dict], deputados: list[dict]) -> list[dict]:
     itens = []
-    for pid, l in _pagas(linhas, deputados, e_diaria):
-        pago_em = data_iso(l.get("Data"))
-        inicio, fim = periodo(l.get("HistoricoDocumento"))
+    for pid, lin in _pagas(linhas, deputados, e_diaria):
+        pago_em = comum.data_br_iso(lin.get("Data"))
+        inicio, fim = periodo(lin.get("HistoricoDocumento"))
         itens.append({"idDeputado": pid, "data": inicio or pago_em, "dataFim": fim, "pagoEm": pago_em,
                       "mes": int(pago_em[5:7]) if pago_em else None, "destino": None,
-                      "motivo": " ".join((l.get("HistoricoDocumento") or "").split()) or None,
-                      "documento": (l.get("Documento") or "").strip() or None, "valor": comum.valor_br(l.get("ValorPago")), "fonte": PAGINA})
+                      "motivo": " ".join((lin.get("HistoricoDocumento") or "").split()) or None,
+                      "documento": (lin.get("Documento") or "").strip() or None, "valor": comum.valor_br(lin.get("ValorPago")), "fonte": PAGINA})
     itens.sort(key=lambda i: (i["data"] or "", i["idDeputado"], i["documento"] or ""))
     return itens
 
@@ -169,9 +159,9 @@ def _guardar(linha: bytes, parcial: dict) -> None:
     if parcial["cabecalho"] is None:
         parcial["cabecalho"] = cabecalho_csv(linha)
         return
-    l = linha_da_assembleia(linha, parcial["cabecalho"])
-    if l is not None and (e_cota(l) or e_diaria(l)) and comum.valor_br(l.get("ValorPago")):
-        parcial["linhas"].append({c: l.get(c) for c in CAMPOS})
+    lin = linha_da_assembleia(linha, parcial["cabecalho"])
+    if lin is not None and (e_cota(lin) or e_diaria(lin)) and comum.valor_br(lin.get("ValorPago")):
+        parcial["linhas"].append({c: lin.get(c) for c in CAMPOS})
 
 
 def ler_csv(s, url: str, parcial: dict) -> None:
@@ -249,12 +239,12 @@ def _contrato_despesas(ctx):
                 cabecalho = linha.decode("utf-8-sig")
                 colunas = cabecalho_csv(linha)
                 continue
-            l = linha_da_assembleia(linha, colunas)
-            if l is None or not comum.valor_br(l.get("ValorPago")):
+            lin = linha_da_assembleia(linha, colunas)
+            if lin is None or not comum.valor_br(lin.get("ValorPago")):
                 continue
-            if e_cota(l) and len(cota) < 4:
+            if e_cota(lin) and len(cota) < 4:
                 cota.append(linha.decode("utf-8", errors="replace"))
-            elif e_diaria(l) and len(diarias) < 4:
+            elif e_diaria(lin) and len(diarias) < 4:
                 diarias.append(linha.decode("utf-8", errors="replace"))
             if len(cota) >= 4 and len(diarias) >= 4:
                 break
@@ -264,27 +254,24 @@ def _contrato_despesas(ctx):
 def _conferir_despesas(registro):
     falhas = []
     colunas = next(csv.reader([registro["csv"].split("\n", 1)[0]], delimiter=";"))
-    for c in CAMPOS:
-        if c not in colunas:
-            falhas.append(f"CSV de despesas sem a coluna {c}")
+    falhas += comum.faltando(colunas, CAMPOS, "CSV de despesas")
     linhas = linhas_da_assembleia(registro["csv"].split("\n"))
-    if not any(e_cota(l) for l in linhas):
+    if not any(e_cota(lin) for lin in linhas):
         falhas.append("nenhuma linha de cota parlamentar da Assembleia no CSV")
-    if not any(e_diaria(l) for l in linhas):
+    if not any(e_diaria(lin) for lin in linhas):
         falhas.append("nenhuma linha de diárias da Assembleia no CSV")
-    for l in linhas:
-        if not data_iso(l.get("Data")) or comum.valor_br(l.get("ValorPago")) is None:
+    for lin in linhas:
+        if not comum.data_br_iso(lin.get("Data")) or comum.valor_br(lin.get("ValorPago")) is None:
             falhas.append("linha sem data ou valor pago legível")
     return falhas, []
 
 
 CONTRATOS = [
-    dict(nome="estadual_es_ckan", fonte=CKAN, buscar=lambda ctx: comum.sessao().get(CKAN, timeout=30).json(),
-         usados=["result.resources[].name", "result.resources[].url", "result.resources[].last_modified"]),
-    dict(nome="estadual_es_despesas", fonte=PAGINA, buscar=_contrato_despesas, html=_conferir_despesas),
+    {"nome": "estadual_es_ckan", "fonte": CKAN, "buscar": lambda ctx: comum.contrato_json(CKAN),
+         "usados": ["result.resources[].name", "result.resources[].url", "result.resources[].last_modified"]},
+    {"nome": "estadual_es_despesas", "fonte": PAGINA, "buscar": _contrato_despesas, "html": _conferir_despesas},
 ]
 
 
 if __name__ == "__main__":
-    coletar()
-    sys.exit(0)
+    comum.principal(coletar)

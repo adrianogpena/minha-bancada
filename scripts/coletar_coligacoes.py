@@ -60,18 +60,18 @@ def coletar_ano(ano: int) -> None:
             quero = eleitos(ano, uf)
             mapa = defaultdict(lambda: {"coligacoes": [], "coligacaoDoPartido": {}})
             with z.open(nome) as f:
-                for l in csv.DictReader(io.TextIOWrapper(f, encoding="latin-1", newline=""), delimiter=";"):
-                    cargo = l["DS_CARGO"].upper()
+                for lin in csv.DictReader(io.TextIOWrapper(f, encoding="latin-1", newline=""), delimiter=";"):
+                    cargo = lin["DS_CARGO"].upper()
                     if "SUPLENTE" in cargo:
                         continue
-                    if (cargo, l["SG_UE"], l["SG_PARTIDO"]) not in quero:
+                    if (cargo, lin["SG_UE"], lin["SG_PARTIDO"]) not in quero:
                         continue
-                    d = mapa[f"{cargo}|{l['SG_UE']}"]
-                    c = [TIPOS.get(l["TP_AGREMIACAO"].upper(), "I"), limpo(l["NM_COLIGACAO"]),
-                         limpo(l["DS_COMPOSICAO_COLIGACAO"]), l["DS_SITUACAO"].capitalize()]
+                    d = mapa[f"{cargo}|{lin['SG_UE']}"]
+                    c = [TIPOS.get(lin["TP_AGREMIACAO"].upper(), "I"), limpo(lin["NM_COLIGACAO"]),
+                         limpo(lin["DS_COMPOSICAO_COLIGACAO"]), lin["DS_SITUACAO"].capitalize()]
                     if c not in d["coligacoes"]:
                         d["coligacoes"].append(c)
-                    d["coligacaoDoPartido"][l["SG_PARTIDO"]] = d["coligacoes"].index(c)
+                    d["coligacaoDoPartido"][lin["SG_PARTIDO"]] = d["coligacoes"].index(c)
             (pasta / f"{uf}.json").write_text(json.dumps(mapa, ensure_ascii=False, separators=(",", ":")), encoding="utf-8")
             locais += len(mapa)
     (pasta / "_coleta.json").write_text(json.dumps({

@@ -76,50 +76,50 @@ def coletar_ano(ano: int) -> None:
     repasse = {}  # SQ_RECEITA de repasse de partido/outro candidato -> SQ_CANDIDATO
     por_origem = defaultdict(lambda: defaultdict(float))
     doadores = defaultdict(dict)  # sq -> chave do doador -> [nome, origem, valor]
-    for l in linhas(zip_path, f"receitas_candidatos_{ano}_BRASIL.csv"):
-        sq = l["SQ_CANDIDATO"]
+    for lin in linhas(zip_path, f"receitas_candidatos_{ano}_BRASIL.csv"):
+        sq = lin["SQ_CANDIDATO"]
         if sq not in alvo:
             continue
-        v = valor(l["VR_RECEITA"])
-        origem = nulo(l["DS_ORIGEM_RECEITA"]) or "Não informada"
+        v = valor(lin["VR_RECEITA"])
+        origem = nulo(lin["DS_ORIGEM_RECEITA"]) or "Não informada"
         receita[sq] += v
         por_origem[sq][origem] += v
         if any(r in origem.lower() for r in REPASSES):
-            repasse[l["SQ_RECEITA"]] = sq
+            repasse[lin["SQ_RECEITA"]] = sq
         if origem == "Recursos próprios" or "próprios" in origem:
             continue
-        nome = nulo(l["NM_DOADOR_RFB"]) or nulo(l["NM_DOADOR"])
+        nome = nulo(lin["NM_DOADOR_RFB"]) or nulo(lin["NM_DOADOR"])
         if nome:
-            d = doadores[sq].setdefault(nulo(l["NR_CPF_CNPJ_DOADOR"]) or nome, [nome, origem, 0.0])
+            d = doadores[sq].setdefault(nulo(lin["NR_CPF_CNPJ_DOADOR"]) or nome, [nome, origem, 0.0])
             d[2] += v
 
     originarios = defaultdict(dict)  # sq -> chave do doador -> [nome, valor]
-    for l in linhas(zip_path, f"receitas_candidatos_doador_originario_{ano}_BRASIL.csv"):
-        sq = repasse.get(l["SQ_RECEITA"])
-        nome = sq and (nulo(l["NM_DOADOR_ORIGINARIO_RFB"]) or nulo(l["NM_DOADOR_ORIGINARIO"]))
+    for lin in linhas(zip_path, f"receitas_candidatos_doador_originario_{ano}_BRASIL.csv"):
+        sq = repasse.get(lin["SQ_RECEITA"])
+        nome = sq and (nulo(lin["NM_DOADOR_ORIGINARIO_RFB"]) or nulo(lin["NM_DOADOR_ORIGINARIO"]))
         if nome:
-            d = originarios[sq].setdefault(nulo(l["NR_CPF_CNPJ_DOADOR_ORIGINARIO"]) or nome, [nome, 0.0])
-            d[1] += valor(l["VR_RECEITA"])
+            d = originarios[sq].setdefault(nulo(lin["NR_CPF_CNPJ_DOADOR_ORIGINARIO"]) or nome, [nome, 0.0])
+            d[1] += valor(lin["VR_RECEITA"])
 
     despesa = defaultdict(float)
     por_gasto = defaultdict(lambda: defaultdict(float))
-    for l in linhas(zip_path, f"despesas_contratadas_candidatos_{ano}_BRASIL.csv"):
-        sq = l["SQ_CANDIDATO"]
+    for lin in linhas(zip_path, f"despesas_contratadas_candidatos_{ano}_BRASIL.csv"):
+        sq = lin["SQ_CANDIDATO"]
         if sq not in alvo:
             continue
-        v = valor(l["VR_DESPESA_CONTRATADA"])
+        v = valor(lin["VR_DESPESA_CONTRATADA"])
         despesa[sq] += v
-        por_gasto[sq][nulo(l["DS_ORIGEM_DESPESA"]) or "Não informada"] += v
+        por_gasto[sq][nulo(lin["DS_ORIGEM_DESPESA"]) or "Não informada"] += v
 
     pago = defaultdict(float)
     dono = {}  # SQ_DESPESA -> SQ_CANDIDATO (o arquivo de pagamentos não traz o candidato)
-    for l in linhas(zip_path, f"despesas_contratadas_candidatos_{ano}_BRASIL.csv"):
-        if l["SQ_CANDIDATO"] in alvo:
-            dono[l["SQ_DESPESA"]] = l["SQ_CANDIDATO"]
-    for l in linhas(zip_path, f"despesas_pagas_candidatos_{ano}_BRASIL.csv"):
-        sq = dono.get(l["SQ_DESPESA"])
+    for lin in linhas(zip_path, f"despesas_contratadas_candidatos_{ano}_BRASIL.csv"):
+        if lin["SQ_CANDIDATO"] in alvo:
+            dono[lin["SQ_DESPESA"]] = lin["SQ_CANDIDATO"]
+    for lin in linhas(zip_path, f"despesas_pagas_candidatos_{ano}_BRASIL.csv"):
+        sq = dono.get(lin["SQ_DESPESA"])
         if sq:
-            pago[sq] += valor(l["VR_PAGTO_DESPESA"])
+            pago[sq] += valor(lin["VR_PAGTO_DESPESA"])
 
     por_uf = defaultdict(dict)
     for sq, uf in alvo.items():

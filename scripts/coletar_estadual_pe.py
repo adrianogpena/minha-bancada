@@ -16,7 +16,6 @@ o sistema legislativo https://legis.alepe.pe.gov.br pede login).
 import html as html_lib
 import json
 import re
-import sys
 from defusedxml import ElementTree as ET
 from concurrent.futures import ThreadPoolExecutor
 from datetime import date
@@ -119,9 +118,9 @@ def rubricas_do_ano(sessao, ano: int) -> dict:
 
 def verba_do_mes(sessao, id_deputado: str, ano: int, mes: int, rubricas: dict) -> list[dict]:
     itens = []
-    for l in get_json_utf8(sessao, LANCAMENTOS_URL, dep=id_deputado, ano=ano, mes=mes):
-        notas = get_json_utf8(sessao, NOTAS_URL, docid=l["docid"])
-        itens += itens_verba(l, notas, id_deputado, ano, mes, rubricas)
+    for linha in get_json_utf8(sessao, LANCAMENTOS_URL, dep=id_deputado, ano=ano, mes=mes):
+        notas = get_json_utf8(sessao, NOTAS_URL, docid=linha["docid"])
+        itens += itens_verba(linha, notas, id_deputado, ano, mes, rubricas)
     return itens
 
 
@@ -251,13 +250,9 @@ def _contrato_deputados(ctx):
 def _conferir_deputados(registro):
     falhas = []
     for d in registro["lista"]:
-        for campo in ("id", "nome", "partido", "email", "foto"):
-            if campo not in d:
-                falhas.append(f"deputados.php sem {campo}")
+        falhas += [f"deputados.php sem {campo}" for campo in ("id", "nome", "partido", "email", "foto") if campo not in d]
     for p in registro["parlamentares"]:
-        for campo in ("nomeParlamentar", "partido"):
-            if not p.get(campo):
-                falhas.append(f"parlamentares sem {campo}")
+        falhas += comum.campos_vazios(p, ("nomeParlamentar", "partido"), "parlamentares")
     return falhas or ([] if registro["lista"] and registro["parlamentares"] else ["lista vazia"]), []
 
 
@@ -275,22 +270,16 @@ def _conferir_verba(registro):
     falhas = []
     if not registro["meses"] or "mes" not in registro["meses"][0]:
         falhas.append("dep-meses sem mes")
-    for l in registro["lancamentos"]:
-        for campo in ("docid", "numero", "tipo", "total"):
-            if l.get(campo) in (None, ""):
-                falhas.append(f"lançamento sem {campo}")
-        if l.get("tipo") not in TIPOS_LANCAMENTO:
-            falhas.append(f"tipo de lançamento novo: {l.get('tipo')}")
+    for linha in registro["lancamentos"]:
+        falhas += comum.campos_vazios(linha, ("docid", "numero", "tipo", "total"), "lançamento", vazios=(None, ""))
+        if linha.get("tipo") not in TIPOS_LANCAMENTO:
+            falhas.append(f"tipo de lançamento novo: {linha.get('tipo')}")
     if not registro["lancamentos"]:
         falhas.append("nenhum lançamento")
     for n in registro["notas"]:
-        for campo in ("rubrica", "data", "cnpj", "empresa", "valor"):
-            if n.get(campo) in (None, ""):
-                falhas.append(f"nota sem {campo}")
+        falhas += comum.campos_vazios(n, ("rubrica", "data", "cnpj", "empresa", "valor"), "nota", vazios=(None, ""))
     for r in registro["rubricas"]:
-        for campo in ("numero_categoria", "nome_categoria"):
-            if r.get(campo) in (None, ""):
-                falhas.append(f"rubrica sem {campo}")
+        falhas += comum.campos_vazios(r, ("numero_categoria", "nome_categoria"), "rubrica", vazios=(None, ""))
     return falhas, []
 
 
@@ -303,7 +292,7 @@ def _contrato_proposicoes(tipo):
         tag = TAG_PROPOSICAO[tipo]
         achados = re.findall(rf"<{tag} .*?</{tag}>", texto, re.S)
         com_deputado = [a for a in achados if 'tipo="DEPUTADO"' in a]
-        return {"xml": "<?xml version='1.0' encoding='utf-8'?>\n<%ss>%s</%ss>" % (tag, "".join(com_deputado[:2]), tag)}
+        return {"xml": "<?xml version='1.0' encoding='utf-8'?>\n<{}s>{}</{}s>".format(tag, "".join(com_deputado[:2]), tag)}
     return buscar
 
 
@@ -312,9 +301,7 @@ def _conferir_proposicoes(tipo):
         itens = parse_proposicoes(registro["xml"].encode("utf-8"), tipo)
         falhas = [] if itens else ["nenhuma proposição"]
         for i in itens:
-            for campo in ("docid", "numero", "ano", "ementa", "data"):
-                if not i[campo]:
-                    falhas.append(f"proposição sem {campo}")
+            falhas += comum.campos_vazios(i, ("docid", "numero", "ano", "ementa", "data"), "proposição")
             if not i["autores"]:
                 falhas.append("proposição sem autor deputado")
         return falhas, []
@@ -322,14 +309,13 @@ def _conferir_proposicoes(tipo):
 
 
 CONTRATOS = [
-    dict(nome="estadual_pe_deputados", fonte=DEPUTADOS_URL, buscar=_contrato_deputados, html=_conferir_deputados),
-    dict(nome="estadual_pe_verba", fonte=VERBA_PAGINA, buscar=_contrato_verba, html=_conferir_verba),
-    dict(nome="estadual_pe_projetos", fonte=f"{API}/proposicoes/projetos/", buscar=_contrato_proposicoes("projetos"), html=_conferir_proposicoes("projetos")),
-    dict(nome="estadual_pe_indicacoes", fonte=f"{API}/proposicoes/indicacoes/", buscar=_contrato_proposicoes("indicacoes"), html=_conferir_proposicoes("indicacoes")),
-    dict(nome="estadual_pe_requerimentos", fonte=f"{API}/proposicoes/requerimentos/", buscar=_contrato_proposicoes("requerimentos"), html=_conferir_proposicoes("requerimentos")),
+    {"nome": "estadual_pe_deputados", "fonte": DEPUTADOS_URL, "buscar": _contrato_deputados, "html": _conferir_deputados},
+    {"nome": "estadual_pe_verba", "fonte": VERBA_PAGINA, "buscar": _contrato_verba, "html": _conferir_verba},
+    {"nome": "estadual_pe_projetos", "fonte": f"{API}/proposicoes/projetos/", "buscar": _contrato_proposicoes("projetos"), "html": _conferir_proposicoes("projetos")},
+    {"nome": "estadual_pe_indicacoes", "fonte": f"{API}/proposicoes/indicacoes/", "buscar": _contrato_proposicoes("indicacoes"), "html": _conferir_proposicoes("indicacoes")},
+    {"nome": "estadual_pe_requerimentos", "fonte": f"{API}/proposicoes/requerimentos/", "buscar": _contrato_proposicoes("requerimentos"), "html": _conferir_proposicoes("requerimentos")},
 ]
 
 
 if __name__ == "__main__":
-    coletar()
-    sys.exit(0)
+    comum.principal(coletar)

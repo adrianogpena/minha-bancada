@@ -15,9 +15,9 @@ busca por nome), emendas estaduais (portal do Estado em www.sistemas.pa.gov.br),
 
 import json
 import re
-import sys
 from datetime import date
 from html import unescape
+from functools import partial
 
 import estaduais_comum as comum
 
@@ -37,28 +37,8 @@ PRIMEIRO_MES = (2023, 2)
 MESES_RECENTES = 2
 
 
-def limpar(html: str) -> str:
-    return " ".join(unescape(re.sub(r"<[^>]+>", " ", html)).split())
-
-
 TITULOS = {"dr", "dra", "prof", "profa", "deleg", "delegado", "delegada", "dep", "deputado", "deputada"}
-
-
-def _tokens(nome: str) -> set:
-    return {t for t in re.sub(r"[^a-z ]", " ", comum.sem_acento(nome)).split() if t not in TITULOS}
-
-
-def ligar(nomes, deputados: list[dict]) -> dict:
-    """Como `ligar_nomes`; o nome que não casa inteiro casa quando todas as suas palavras estão em um só nome (nome ou civil)."""
-    ligados = comum.ligar_nomes(nomes, deputados)
-    for n in nomes:
-        alvo = _tokens(n)
-        if n in ligados or not alvo:
-            continue
-        ids = {d["id"] for d in deputados if any(d.get(c) and alvo <= _tokens(d[c]) for c in ("nome", "nomeCivil"))}
-        if len(ids) == 1:
-            ligados[n] = next(iter(ids))
-    return ligados
+ligar = partial(comum.ligar_por_palavras, ignorar=TITULOS)
 
 
 def mes_anterior(ano: int, mes: int) -> tuple[int, int]:
@@ -75,7 +55,7 @@ def parse_cartoes(html: str) -> dict:
         h3 = re.search(r"<h3><b>(.*?)</b></h3>", bloco, re.S)
         if not h3:
             continue
-        nome_partido = limpar(h3.group(1))
+        nome_partido = comum.limpar(h3.group(1))
         m = re.match(r"(.*?)\s*\(([^()]*)\)$", nome_partido)
         nome, partido = (m.group(1), m.group(2)) if m else (nome_partido, None)
         link = re.search(r"href='/Institucional/Deputado/(\d+)'", bloco)
@@ -128,11 +108,11 @@ def linhas_dashboard(dto: dict) -> list[dict]:
         chaves = fatia["KeyIds"]
         for chave, valores in fatia["Data"].items():
             indices = json.loads(chave)
-            r = {c: mapas[c][i] for c, i in zip(chaves, indices)}
+            r = {c: mapas[c][i] for c, i in zip(chaves, indices, strict=False)}
             valor = valores.get("0")
             linhas.append({"data": (r.get("DataItem1") or "")[:10], "deputado": r.get("DataItem0"), "conta": r.get("DataItem5"),
                            "descricao": r.get("DataItem2"), "valor": valor})
-    return sorted(linhas, key=lambda l: (l["data"], l["deputado"] or "", l["descricao"] or ""))
+    return sorted(linhas, key=lambda lin: (lin["data"], lin["deputado"] or "", lin["descricao"] or ""))
 
 
 def recortar_dto(dto: dict, n: int = 2) -> dict:
@@ -143,7 +123,7 @@ def recortar_dto(dto: dict, n: int = 2) -> dict:
     dados = {}
     for chave in chaves:
         indices = []
-        for c, i in zip(fatia["KeyIds"], json.loads(chave)):
+        for c, i in zip(fatia["KeyIds"], json.loads(chave), strict=False):
             valor = dto["EncodeMaps"][c][i]
             if valor not in novos[c]:
                 novos[c].append(valor)
@@ -154,21 +134,21 @@ def recortar_dto(dto: dict, n: int = 2) -> dict:
 
 def itens_verba(linhas: list[dict], ids: dict, ano: int) -> list[dict]:
     itens = []
-    for l in linhas:
-        if l["deputado"] not in ids or not l["data"]:
+    for lin in linhas:
+        if lin["deputado"] not in ids or not lin["data"]:
             continue
-        itens.append({"idDeputado": ids[l["deputado"]], "mes": int(l["data"][5:7]), "categoria": l["conta"], "fornecedor": None, "cnpj": None,
-                      "valor": l["valor"], "data": l["data"], "descricao": l["descricao"], "fonte": VERBA_PAGINA})
+        itens.append({"idDeputado": ids[lin["deputado"]], "mes": int(lin["data"][5:7]), "categoria": lin["conta"], "fornecedor": None, "cnpj": None,
+                      "valor": lin["valor"], "data": lin["data"], "descricao": lin["descricao"], "fonte": VERBA_PAGINA})
     return [i for i in itens if i["data"].startswith(str(ano))]
 
 
 def itens_diarias(linhas: list[dict], ids: dict, ano: int) -> list[dict]:
     itens = []
-    for l in linhas:
-        if l["deputado"] not in ids or not l["data"] or not l["data"].startswith(str(ano)):
+    for lin in linhas:
+        if lin["deputado"] not in ids or not lin["data"] or not lin["data"].startswith(str(ano)):
             continue
-        itens.append({"idDeputado": ids[l["deputado"]], "data": l["data"], "destino": None, "motivo": l["descricao"], "valor": l["valor"],
-                      "categoria": l["conta"], "fonte": DIARIAS_PAGINA})
+        itens.append({"idDeputado": ids[lin["deputado"]], "data": lin["data"], "destino": None, "motivo": lin["descricao"], "valor": lin["valor"],
+                      "categoria": lin["conta"], "fonte": DIARIAS_PAGINA})
     return itens
 
 
@@ -178,7 +158,7 @@ def parse_gabinetes(html: str) -> list[dict]:
     """[{gabinete, referencia, assessores, total}] da tabela mensal; gabinete sem o prefixo "GAB. DEP."."""
     itens = []
     for linha in re.findall(r"<tr>\s*<td>\s*GAB\..*?</tr>", html, re.S):
-        celulas = [limpar(c) for c in re.findall(r"<td[^>]*>(.*?)</td>", linha, re.S)]
+        celulas = [comum.limpar(c) for c in re.findall(r"<td[^>]*>(.*?)</td>", linha, re.S)]
         if len(celulas) < 4:
             continue
         nome = re.sub(r"^GAB\.\s*(DEP\.?)?\s*", "", celulas[0])
@@ -262,14 +242,14 @@ def coletar() -> None:
         if all(comum.ano_encerrado(ano, hoje, pasta / f"{nome}_{ano}.json") for nome in ("verbas", "diarias")):
             continue
         linhas = linhas_dashboard(consulta_dashboard(s, DASHBOARD_VERBA, ano))
-        verba = itens_verba(linhas, ligar({l["deputado"] for l in linhas}, deputados), ano)
+        verba = itens_verba(linhas, ligar({lin["deputado"] for lin in linhas}, deputados), ano)
         gabinete = []
         for mes in range(1, 13 if ano < hoje.year else hoje.month + 1):
             gabs = parse_gabinetes(consulta_gabinete(s, ano, mes))
             gabinete += itens_gabinete(gabs, ligar({g["gabinete"] for g in gabs}, deputados), ano, mes)
         comum.salvar(pasta / f"verbas_{ano}.json", {"coletadoEm": agora, "fonte": VERBA_PAGINA, "itens": verba + gabinete})
         linhas = linhas_dashboard(consulta_dashboard(s, DASHBOARD_DIARIAS, ano))
-        diarias = itens_diarias(linhas, ligar({l["deputado"] for l in linhas}, deputados), ano)
+        diarias = itens_diarias(linhas, ligar({lin["deputado"] for lin in linhas}, deputados), ano)
         comum.salvar(pasta / f"diarias_{ano}.json", {"coletadoEm": agora, "fonte": DIARIAS_PAGINA, "itens": diarias})
         print(f"PA: {ano} verbas {len(verba)} + gabinete {len(gabinete)}, diárias {len(diarias)}")
     print(f"PA: {len(deputados)} deputados")
@@ -300,9 +280,7 @@ def _conferir_frequencia(registro):
     if not pagina["deputados"]:
         falhas.append("nenhum cartão de deputado")
     for d in pagina["deputados"]:
-        for campo in ("id", "nome", "partido", "foto", "presente", "ausente"):
-            if d[campo] is None:
-                falhas.append(f"deputado sem {campo}")
+        falhas += comum.campos_vazios(d, ("id", "nome", "partido", "foto", "presente", "ausente"), "deputado", vazios=(None,))
     return falhas, []
 
 
@@ -329,10 +307,8 @@ def _contrato_dashboard(dashboard):
 def _conferir_dashboard(registro):
     linhas = linhas_dashboard(registro["DataStorageDTO"])
     falhas = [] if linhas else ["grade do dashboard sem linhas"]
-    for l in linhas:
-        for campo in ("data", "deputado", "descricao", "valor"):
-            if l[campo] in (None, ""):
-                falhas.append(f"linha sem {campo}")
+    for lin in linhas:
+        falhas += comum.campos_vazios(lin, ("data", "deputado", "descricao", "valor"), "linha", vazios=(None, ""))
     return falhas, []
 
 
@@ -352,21 +328,18 @@ def _conferir_gabinete(registro):
     itens = parse_gabinetes(registro["html"])
     falhas = [] if itens else ["tabela de verba de gabinete sem linhas"]
     for i in itens:
-        for campo in ("gabinete", "referencia", "assessores", "total"):
-            if i[campo] is None:
-                falhas.append(f"gabinete sem {campo}")
+        falhas += comum.campos_vazios(i, ("gabinete", "referencia", "assessores", "total"), "gabinete", vazios=(None,))
     return falhas, []
 
 
 CONTRATOS = [
-    dict(nome="estadual_pa_frequencia", fonte=FREQUENCIA_URL, buscar=_contrato_frequencia, html=_conferir_frequencia),
-    dict(nome="estadual_pa_ficha", fonte=FICHA_URL.format(1024), buscar=_contrato_ficha, html=_conferir_ficha),
-    dict(nome="estadual_pa_verba_indenizatoria", fonte=VERBA_PAGINA, buscar=_contrato_dashboard(DASHBOARD_VERBA), html=_conferir_dashboard),
-    dict(nome="estadual_pa_diarias", fonte=DIARIAS_PAGINA, buscar=_contrato_dashboard(DASHBOARD_DIARIAS), html=_conferir_dashboard),
-    dict(nome="estadual_pa_verba_gabinete", fonte=GABINETE_PAGINA, buscar=_contrato_gabinete, html=_conferir_gabinete),
+    {"nome": "estadual_pa_frequencia", "fonte": FREQUENCIA_URL, "buscar": _contrato_frequencia, "html": _conferir_frequencia},
+    {"nome": "estadual_pa_ficha", "fonte": FICHA_URL.format(1024), "buscar": _contrato_ficha, "html": _conferir_ficha},
+    {"nome": "estadual_pa_verba_indenizatoria", "fonte": VERBA_PAGINA, "buscar": _contrato_dashboard(DASHBOARD_VERBA), "html": _conferir_dashboard},
+    {"nome": "estadual_pa_diarias", "fonte": DIARIAS_PAGINA, "buscar": _contrato_dashboard(DASHBOARD_DIARIAS), "html": _conferir_dashboard},
+    {"nome": "estadual_pa_verba_gabinete", "fonte": GABINETE_PAGINA, "buscar": _contrato_gabinete, "html": _conferir_gabinete},
 ]
 
 
 if __name__ == "__main__":
-    coletar()
-    sys.exit(0)
+    comum.principal(coletar)

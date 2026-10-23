@@ -188,7 +188,7 @@ def alianca_de(ano: int, e: dict):
     (dados/tse/coligacoes/<ano>/<UF>.json), ou None."""
     local = resumo_tse("coligacoes", ano, e["uf"]).get(f"{e['cargo']}|{e['unidadeEleitoral']}")
     i = local and local["coligacaoDoPartido"].get(e.get("partido"))
-    return dict(zip(("tipo", "nome", "composicao", "situacao"), local["coligacoes"][i])) if i is not None else None
+    return dict(zip(("tipo", "nome", "composicao", "situacao"), local["coligacoes"][i], strict=False)) if i is not None else None
 
 
 def eleitos_por_nome(cargo_tse: str) -> dict:
@@ -296,7 +296,9 @@ def gerar_perfil_casas() -> None:
         uf = arq.stem
         if uf == "BR":
             continue
-        eleitos = lambda ano, cargos: [e for e in ler(BRUTO / "tse" / str(ano) / f"{uf}.json", []) if e["cargo"] in cargos and e.get("situacao") == "eleito"]
+        def eleitos(ano: int, cargos: set, uf: str = uf) -> list:
+            return [e for e in ler(BRUTO / "tse" / str(ano) / f"{uf}.json", []) if e["cargo"] in cargos and e.get("situacao") == "eleito"]
+
         vereadores = defaultdict(list)
         for e in eleitos(2024, {"VEREADOR"}):
             vereadores[e["unidadeEleitoral"]].append(e)

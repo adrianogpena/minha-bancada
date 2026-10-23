@@ -24,7 +24,7 @@ def amostra(nome):
 
 
 def odt(linhas):
-    corpo = "".join("<table:table-row>" + "".join(f"<table:table-cell><text:p>{c}</text:p></table:table-cell>" for c in l) + "</table:table-row>" for l in linhas)
+    corpo = "".join("<table:table-row>" + "".join(f"<table:table-cell><text:p>{c}</text:p></table:table-cell>" for c in linha) + "</table:table-row>" for linha in linhas)
     xml = (f'<?xml version="1.0"?><office:document-content xmlns:office="urn:oasis:names:tc:opendocument:xmlns:office:1.0" xmlns:table="{NS_TABELA}" '
            f'xmlns:text="{NS_TEXTO}"><office:body><office:text><table:table>{corpo}</table:table></office:text></office:body></office:document-content>')
     buf = BytesIO()
@@ -35,9 +35,9 @@ def odt(linhas):
 
 def xlsx(linhas):
     strings, celulas = [], []
-    for n, l in enumerate(linhas, 1):
+    for n, linha in enumerate(linhas, 1):
         cs = ""
-        for i, v in enumerate(l):
+        for i, v in enumerate(linha):
             if v == "":
                 continue
             strings.append(v)

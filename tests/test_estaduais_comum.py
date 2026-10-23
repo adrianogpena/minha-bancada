@@ -1,4 +1,7 @@
 """Helpers comuns dos coletores estaduais (scripts/estaduais_comum.py)."""
+import io
+import zipfile
+
 import pytest
 
 import estaduais_comum as ec
@@ -118,3 +121,59 @@ def test_ano_encerrado_so_com_arquivo_e_antes_do_ano_passado(tmp_path):
     arq.write_text("{}")
     assert ec.ano_encerrado(2024, hoje, arq)
     assert not ec.ano_encerrado(2025, hoje, arq)
+
+
+def test_data_br_iso():
+    assert ec.data_br_iso("04/12/2025") == "2025-12-04"
+    assert ec.data_br_iso(" 04/12/2025 10:00") == "2025-12-04"
+    assert ec.data_br_iso("04/12/2025 10:00", inteiro=True) is None
+    assert ec.data_br_iso(" 04/12/2025 ", inteiro=True) == "2025-12-04"
+    assert ec.data_br_iso("") is None and ec.data_br_iso(None) is None
+
+
+def test_limpar_e_compactar():
+    assert ec.limpar("<p>A&amp;B  <b>c</b></p>") == "A&B c"
+    assert ec.limpar(None) == ""
+    assert ec.compactar("  a   b ") == "a b" and ec.compactar("  ") is None
+
+
+def test_ligar_por_palavras():
+    deputados = [{"id": "1", "nome": "Ana", "nomeCivil": "Ana Paula Souza"}, {"id": "2", "nome": "Beto", "nomeCivil": "Beto Lima"}]
+    assert ec.ligar_por_palavras(["Dep. Souza Ana", "Lima", "Ana", "Zé"], deputados, ignorar={"dep"}) == {"Dep. Souza Ana": "1", "Lima": "2", "Ana": "1"}
+    assert ec.ligar_por_palavras(["Zé"], deputados, extra=lambda nome, deps: {"2"}) == {"Zé": "2"}
+    assert ec.palavras("Dr. João Paulo", {"dr"}) == ["joao", "paulo"]
+
+
+def test_deputados_do_tse(tmp_path):
+    arquivo = tmp_path / "XX.json"
+    ec.salvar(arquivo, [
+        {"cargo": "DEPUTADO ESTADUAL", "situacao": "eleito", "sequencial": "9", "nome": "Zeca Silva", "urna": "Zeca", "partido": "PT", "email": None},
+        {"cargo": "DEPUTADO ESTADUAL", "situacao": "eleito", "sequencial": "8", "nome": "Ana Lima", "urna": None, "partido": "PL", "email": "a@x"},
+        {"cargo": "DEPUTADO ESTADUAL", "situacao": "suplente", "sequencial": "7", "nome": "Fulano"},
+        {"cargo": "DEPUTADO FEDERAL", "situacao": "eleito", "sequencial": "6", "nome": "Beltrano"},
+    ])
+    deputados = ec.deputados_do_tse(arquivo, ec.ficha_tse("XX"))
+    assert [d["id"] for d in deputados] == ["8", "9"]
+    assert deputados[1]["nome"] == "Zeca" and deputados[1]["nomeCivil"] == "Zeca Silva"
+    assert deputados[0]["fonte"].endswith("/XX/8") and deputados[0]["email"] == "a@x"
+    assert len(ec.eleitos_tse(arquivo)) == 2 and ec.eleitos_tse(tmp_path / "nao.json") == []
+
+
+def test_xlsx_linhas_e_abas():
+    ns = 'xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"'
+    mini = io.BytesIO()
+    with zipfile.ZipFile(mini, "w") as z:
+        z.writestr("xl/sharedStrings.xml", f'<sst {ns}><si><t>Olá </t></si><si><t> </t></si></sst>')
+        z.writestr("xl/worksheets/sheet1.xml", f'<worksheet {ns}><sheetData><row r="1"><c r="A1" t="s"><v>0</v></c><c r="B1" t="s"><v>1</v></c>'
+                                                f'<c r="C1"><v>7</v></c></row><row r="2"><c r="B2"/></row></sheetData></worksheet>')
+        z.writestr("xl/workbook.xml", f'<workbook {ns} xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">'
+                                      '<sheets><sheet name="Aba1" sheetId="1" r:id="rId1"/></sheets></workbook>')
+        z.writestr("xl/_rels/workbook.xml.rels", '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">'
+                                                 '<Relationship Id="rId1" Target="worksheets/sheet1.xml"/></Relationships>')
+    assert ec.xlsx_linhas(mini.getvalue()) == [{"A": "Olá", "C": "7"}]
+    assert ec.xlsx_linhas(mini.getvalue(), aparar=False) == [{"A": "Olá ", "B": " ", "C": "7"}]
+    assert ec.xlsx_abas(mini.getvalue()) == {"Aba1": [{"A": "Olá ", "B": " ", "C": "7"}]}
+
+
+def test_faltando():
+    assert ec.faltando({"A", "B"}, ["A", "C"], "CSV") == ["CSV sem a coluna C"]

@@ -1,4 +1,4 @@
-"""Roda o gerar.py inteiro sobre um dados/ mínimo e confere o que o front (site/assets/app.js) vai ler:
+"""Roda o gerar.py inteiro sobre um dados/ mínimo e confere o que o front (site/assets/js) vai ler:
 quais arquivos existem e quais campos cada página usa. Um campo renomeado aqui, sem ajustar o front, falha no CI."""
 import json
 import re
@@ -63,10 +63,10 @@ def test_meta_traz_ano_e_periodo(site):
 
 
 def test_tudo_que_o_front_busca_com_caminho_fixo_e_gerado_ou_conhecido(site):
-    """Todo `carregar("dados/…")` com caminho literal em app.js/HTML aponta para algo que o gerar.py produz.
+    """Todo `carregar("dados/…")` com caminho literal nos módulos JS/HTML aponta para algo que o gerar.py produz.
     Os que dependem de coletas opcionais (executivo, histórico, eleitorado…) ficam em OPCIONAIS."""
     opcionais = {"dados/executivo.json", "dados/municipios_ibge.json", "dados/historico/indice.json", "dados/indice/BR.json"}
-    fontes = [RAIZ / "site" / "assets" / "app.js", *(RAIZ / "site").glob("*.html")]
+    fontes = [*(RAIZ / "site" / "assets" / "js").glob("*.js"), *(RAIZ / "site").glob("*.html")]
     achados = set()
     for f in fontes:
         achados |= set(re.findall(r'carregar\("(dados/[^"$`]+\.json)"\)', f.read_text(encoding="utf-8")))

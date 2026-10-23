@@ -75,11 +75,10 @@ def municipios_tse() -> dict:
                     texto = bruto.decode("utf-8")
                 except UnicodeDecodeError:
                     texto = bruto.decode("latin-1")
-                if True:
-                    for l in csv.DictReader(io.StringIO(texto, newline=""), delimiter=";"):
-                        if l["SG_UF"] == "ZZ":
-                            continue
-                        achados.setdefault((l["SG_UF"], l["NM_MUNICIPIO"].strip()), l["CD_MUNICIPIO"].zfill(5))
+                for lin in csv.DictReader(io.StringIO(texto, newline=""), delimiter=";"):
+                    if lin["SG_UF"] == "ZZ":
+                        continue
+                    achados.setdefault((lin["SG_UF"], lin["NM_MUNICIPIO"].strip()), lin["CD_MUNICIPIO"].zfill(5))
     return achados
 
 

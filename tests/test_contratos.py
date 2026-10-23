@@ -295,8 +295,11 @@ def test_lista_real_de_senadores(monkeypatch, tmp_path):
 
     class R:
         ok, status_code = True, 200
-        raise_for_status = lambda self: None
-        json = lambda self: amostra("senado_lista")
+        def raise_for_status(self):
+            pass
+
+        def json(self):
+            return amostra("senado_lista")
 
     monkeypatch.setattr(coletar, "DADOS", tmp_path)
     monkeypatch.setattr(coletar.S, "get", lambda *a, **k: R())
@@ -320,8 +323,11 @@ def test_ceaps_real(monkeypatch, tmp_path):
 
     class R:
         ok = True
-        raise_for_status = lambda self: None
-        json = lambda self: amostra("senado_ceaps")
+        def raise_for_status(self):
+            pass
+
+        def json(self):
+            return amostra("senado_ceaps")
 
     monkeypatch.setattr(coletar, "DADOS", tmp_path)
     monkeypatch.setattr(coletar.S, "get", lambda *a, **k: R())
@@ -335,8 +341,11 @@ def test_recursos_senado_real(monkeypatch, tmp_path):
 
     class R:
         ok = True
-        raise_for_status = lambda self: None
-        json = lambda self: amostra("senado_escritorios") if "escritorios" in self.url else amostra("senado_recursos")
+        def raise_for_status(self):
+            pass
+
+        def json(self):
+            return amostra("senado_escritorios") if "escritorios" in self.url else amostra("senado_recursos")
 
         def __init__(self, url):
             self.url = url

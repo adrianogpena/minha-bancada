@@ -14,7 +14,6 @@ não contornado), presença e emendas (não encontradas).
 import csv
 import io
 import re
-import sys
 from datetime import date
 
 import estaduais_comum as comum
@@ -26,8 +25,8 @@ CEAP_PAGINA = f"{TRANSP}/ceap"
 CEAP_CSV = f"{TRANSP}/ceap/notas/exportar-csv?ano={{ano}}"
 DIARIAS_PAGINA = f"{TRANSP}/consulta-diarias"
 DIARIAS_CSV = f"{TRANSP}/consulta-diarias/exportar-csv?ano={{ano}}"
-TSE_ARQUIVO = comum.RAIZ / "dados" / "tse" / "2022" / "MS.json"
-TSE_FICHA = "https://divulgacandcontas.tse.jus.br/divulga/#/candidato/2022/2040602022/MS/{}"
+TSE_ARQUIVO = comum.arquivo_tse(UF)
+TSE_FICHA = comum.ficha_tse(UF)
 ANO_INICIAL = 2023
 TIMEOUT = 90
 APELIDOS = {"hashioka": "Roberto Hashioka", "cel david": "Coronel David", "professor rinaldo": "Professor Rinaldo Modesto",
@@ -35,23 +34,17 @@ APELIDOS = {"hashioka": "Roberto Hashioka", "cel david": "Coronel David", "profe
 
 
 def deputados_do_tse() -> list[dict]:
-    lista = []
-    for e in comum.ler(TSE_ARQUIVO, []):
-        if e.get("cargo") != "DEPUTADO ESTADUAL" or e.get("situacao") != "eleito":
-            continue
-        lista.append({"id": e["sequencial"], "nome": e.get("urna") or e["nome"], "nomeCivil": e["nome"], "foto": None,
-                      "email": e.get("email"), "titular": True, "partido": e.get("partido"), "fonte": TSE_FICHA.format(e["sequencial"])})
-    return sorted(lista, key=lambda d: comum.sem_acento(d["nome"]))
+    return comum.deputados_do_tse(TSE_ARQUIVO, TSE_FICHA)
 
 
 def linhas_csv(texto: str, cabecalho_em: str) -> list[dict]:
     """Linhas do CSV com ';' como dicts de cabeçalho sem acento; ignora o que vem antes da linha com `cabecalho_em`."""
     todas = list(csv.reader(io.StringIO(texto.lstrip("﻿")), delimiter=";"))
-    inicio = next((i for i, l in enumerate(todas) if cabecalho_em in [comum.sem_acento(c).upper() for c in l]), None)
+    inicio = next((i for i, linha in enumerate(todas) if cabecalho_em in [comum.sem_acento(c).upper() for c in linha]), None)
     if inicio is None:
         return []
     cab = [comum.sem_acento(c).upper() for c in todas[inicio]]
-    return [dict(zip(cab, l)) for l in todas[inicio + 1:] if any(c.strip() for c in l)]
+    return [dict(zip(cab, linha, strict=False)) for linha in todas[inicio + 1:] if any(c.strip() for c in linha)]
 
 
 def ligar(nomes, deputados: list[dict]) -> dict:
@@ -67,17 +60,17 @@ def ligar(nomes, deputados: list[dict]) -> dict:
 
 def itens_ceap(linhas: list[dict], ligacao: dict, fonte: str) -> tuple[list[dict], set]:
     itens, sem_par = [], set()
-    for l in linhas:
-        nome = l.get("DEPUTADO", "")
+    for linha in linhas:
+        nome = linha.get("DEPUTADO", "")
         pid = ligacao.get(nome)
         if not pid:
             sem_par.add(comum.nome_limpo(nome))
             continue
-        cnpj = "".join(c for c in (l.get("CPF/CNPJ") or "") if c.isdigit())
-        itens.append({"idDeputado": pid, "mes": comum.mes_numero(l.get("MES")), "categoria": " ".join((l.get("CATEGORIA") or "").split()) or None,
-                      "fornecedor": " ".join((l.get("FORNECEDOR") or "").split()) or None, "cnpj": cnpj or None,
-                      "valor": comum.valor_br(l.get("VALOR (R$)")), "documento": l.get("DOCUMENTO") or None,
-                      "emissao": emissao_iso(l.get("EMISSAO")), "fonte": (l.get("COMPROVANTE") or "").strip() or fonte})
+        cnpj = "".join(c for c in (linha.get("CPF/CNPJ") or "") if c.isdigit())
+        itens.append({"idDeputado": pid, "mes": comum.mes_numero(linha.get("MES")), "categoria": " ".join((linha.get("CATEGORIA") or "").split()) or None,
+                      "fornecedor": " ".join((linha.get("FORNECEDOR") or "").split()) or None, "cnpj": cnpj or None,
+                      "valor": comum.valor_br(linha.get("VALOR (R$)")), "documento": linha.get("DOCUMENTO") or None,
+                      "emissao": emissao_iso(linha.get("EMISSAO")), "fonte": (linha.get("COMPROVANTE") or "").strip() or fonte})
     return itens, sem_par
 
 
@@ -89,9 +82,7 @@ def emissao_iso(texto) -> str | None:
 
 
 def baixar(s, url: str) -> str:
-    r = s.get(url, timeout=TIMEOUT)
-    r.raise_for_status()
-    return r.content.decode("utf-8-sig", errors="replace")
+    return comum.baixar(s, url, timeout=TIMEOUT).decode("utf-8-sig", errors="replace")
 
 
 def coletar_ceap(s, deputados: list[dict]) -> None:
@@ -103,7 +94,7 @@ def coletar_ceap(s, deputados: list[dict]) -> None:
             continue
         url = CEAP_CSV.format(ano=ano)
         linhas = linhas_csv(baixar(s, url), "DEPUTADO")
-        ligacao = ligar({l["DEPUTADO"] for l in linhas}, deputados)
+        ligacao = ligar({linha["DEPUTADO"] for linha in linhas}, deputados)
         itens, sp = itens_ceap(linhas, ligacao, f"{CEAP_PAGINA}")
         sem_par |= sp
         if itens or ano == hoje.year:
@@ -115,7 +106,7 @@ def coletar_ceap(s, deputados: list[dict]) -> None:
 
 def linhas_diarias(texto: str) -> list[dict]:
     """Linhas de diárias com dados; o portal devolve uma linha "Não houve despesa" por mês quando não há."""
-    return [l for l in linhas_csv(texto, "MES") if "nao houve" not in comum.sem_acento(l.get("INFORMACAO", ""))]
+    return [linha for linha in linhas_csv(texto, "MES") if "nao houve" not in comum.sem_acento(linha.get("INFORMACAO", ""))]
 
 
 def coletar_diarias(s) -> None:
@@ -136,11 +127,7 @@ def coletar() -> None:
     comum.salvar(PASTA / "deputados.json", {"fonte": "https://divulgacandcontas.tse.jus.br/divulga/#/home", "host": None,
                                             "legislatura": "2023-2027", "deputados": deputados})
     print(f"MS: {len(deputados)} deputados")
-    for nome, etapa in [("CEAP", lambda: coletar_ceap(s, deputados)), ("diárias", lambda: coletar_diarias(s))]:
-        try:
-            etapa()
-        except Exception as e:
-            comum.avisar(f"MS: {nome}: {e}")
+    comum.rodar_etapas(UF, [("CEAP", lambda: coletar_ceap(s, deputados)), ("diárias", lambda: coletar_diarias(s))])
 
 
 def _contrato_ceap(ctx):
@@ -153,9 +140,7 @@ def _conferir_ceap(registro):
     if not linhas:
         return ["CSV da CEAP sem cabeçalho Deputado ou sem linhas"], []
     falhas = []
-    for coluna in ("ANO", "MES", "CATEGORIA", "CPF/CNPJ", "FORNECEDOR", "DOCUMENTO", "EMISSAO", "VALOR (R$)", "COMPROVANTE"):
-        if coluna not in linhas[0]:
-            falhas.append(f"CSV da CEAP sem a coluna {coluna}")
+    falhas += comum.faltando(linhas[0], ("ANO", "MES", "CATEGORIA", "CPF/CNPJ", "FORNECEDOR", "DOCUMENTO", "EMISSAO", "VALOR (R$)", "COMPROVANTE"), "CSV da CEAP")
     if comum.valor_br(linhas[0].get("VALOR (R$)")) is None:
         falhas.append("valor da CEAP ilegível")
     if comum.mes_numero(linhas[0].get("MES")) is None:
@@ -176,11 +161,10 @@ def _conferir_diarias(registro):
 
 
 CONTRATOS = [
-    dict(nome="estadual_ms_ceap", fonte=CEAP_PAGINA, buscar=_contrato_ceap, html=_conferir_ceap),
-    dict(nome="estadual_ms_diarias", fonte=DIARIAS_PAGINA, buscar=_contrato_diarias, html=_conferir_diarias),
+    {"nome": "estadual_ms_ceap", "fonte": CEAP_PAGINA, "buscar": _contrato_ceap, "html": _conferir_ceap},
+    {"nome": "estadual_ms_diarias", "fonte": DIARIAS_PAGINA, "buscar": _contrato_diarias, "html": _conferir_diarias},
 ]
 
 
 if __name__ == "__main__":
-    coletar()
-    sys.exit(0)
+    comum.principal(coletar)

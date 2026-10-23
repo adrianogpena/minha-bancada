@@ -7,7 +7,7 @@ Site estático (GitHub Pages) com os políticos do Brasil. Scripts Python coleta
 ```bash
 pip install -r requirements-dev.txt   # já roda sozinho no início das sessões na nuvem
 python -m pytest -q                   # testes Python, offline, poucos segundos
-node --test tests/js/app.test.js      # testes de site/assets/app.js
+node --test tests/js/app.test.js      # testes dos módulos de site/assets/js
 node --test tests/e2e/fumaca.test.js  # fumaça no navegador (Playwright + Chromium) sobre dados mínimos gerados
 python scripts/gerar.py               # gera site/dados/ a partir de dados/
 python -m http.server 8000 -d site    # servir o site local

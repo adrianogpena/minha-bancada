@@ -16,9 +16,9 @@ Não coletado: ressarcimento (cota parlamentar) exige token reCAPTCHA, bloqueado
 import difflib
 import html as html_lib
 import re
-import sys
 import time
 from datetime import date
+from functools import partial
 
 import requests
 
@@ -125,7 +125,7 @@ def componentes(detalhe: dict) -> tuple[dict, float | None, float | None]:
     for bloco in ("valores", "valores_eventuais"):
         tabela = detalhe.get(bloco) or []
         if len(tabela) == 2:
-            for rotulo, v in zip(*tabela):
+            for rotulo, v in zip(*tabela, strict=False):
                 valores[re.sub(r"\s*\(\d+\)\s*$", "", rotulo)] = comum.valor_br(v)
     bruto = valores.get("Total Bruto")
     liquido = valores.get("Valor Bruto (- Descontos Obrigatórios)")
@@ -144,6 +144,7 @@ def detalhe_remuneracao(sessao, r: dict, mes: int, ano: int, cabecalho: dict) ->
             return resp.json()
         time.sleep(5 * (tentativa + 1))
     resp.raise_for_status()
+    return None
 
 
 def remuneracao_do_mes(sessao, ano: int, mes: int, deputados: list[dict]) -> list[dict]:
@@ -198,15 +199,15 @@ def data_br(texto) -> str | None:
 
 
 def itens_diarias(linhas: list[dict], deputados: list[dict]) -> list[dict]:
-    do_cargo = [l for l in linhas if "DEPUTAD" in (l.get("cargo_funcao") or "").upper()]
-    ligados = ligar({l["emitido"] for l in do_cargo}, [{**d, "nome": d["nomeCivil"] or d["nome"]} for d in deputados])
+    do_cargo = [lin for lin in linhas if "DEPUTAD" in (lin.get("cargo_funcao") or "").upper()]
+    ligados = ligar({lin["emitido"] for lin in do_cargo}, [{**d, "nome": d["nomeCivil"] or d["nome"]} for d in deputados])
     itens = []
-    for l in do_cargo:
-        if l["emitido"] not in ligados:
+    for lin in do_cargo:
+        if lin["emitido"] not in ligados:
             continue
-        itens.append({"idDeputado": ligados[l["emitido"]], "data": data_br(l.get("data_saida")), "dataRetorno": data_br(l.get("data_retorno")),
-                      "destino": l.get("destino"), "motivo": l.get("motivo"), "valor": comum.valor_br(l.get("valor")),
-                      "quantidade": l.get("quantidade_autorizada"), "protocolo": l.get("protocolo"), "fonte": DIARIAS_PAGINA})
+        itens.append({"idDeputado": ligados[lin["emitido"]], "data": data_br(lin.get("data_saida")), "dataRetorno": data_br(lin.get("data_retorno")),
+                      "destino": lin.get("destino"), "motivo": lin.get("motivo"), "valor": comum.valor_br(lin.get("valor")),
+                      "quantidade": lin.get("quantidade_autorizada"), "protocolo": lin.get("protocolo"), "fonte": DIARIAS_PAGINA})
     return itens
 
 
@@ -323,11 +324,7 @@ def coletar() -> None:
     comum.salvar(pasta / "deputados.json", {"fonte": DEPUTADOS_URL, "host": None, "legislatura": "2023-2027", "deputados": deputados})
     print(f"PR: {len(deputados)} deputados")
 
-    def tentar(rotulo, fn):
-        try:
-            fn()
-        except Exception as e:
-            comum.avisar(f"PR: {rotulo}: {e}")
+    tentar = partial(comum.tentar, UF)
 
     def proposicoes(ano):
         if comum.ano_encerrado(ano, hoje, pasta / f"materias_{ano}.json"):
@@ -362,10 +359,10 @@ def coletar() -> None:
         print(f"PR: presença {len(itens)} linhas")
 
     for ano in range(PRIMEIRO_ANO, hoje.year + 1):
-        tentar(f"proposições {ano}", lambda: proposicoes(ano))
-        tentar(f"diárias {ano}", lambda: diarias(ano))
+        tentar(f"proposições {ano}", partial(proposicoes, ano))
+        tentar(f"diárias {ano}", partial(diarias, ano))
         if ano == hoje.year:
-            tentar(f"remuneração {ano}", lambda: remuneracao(ano))
+            tentar(f"remuneração {ano}", partial(remuneracao, ano))
     tentar("presença", presenca)
 
 
@@ -382,9 +379,7 @@ def _conferir_deputados(registro):
     achados = parse_deputados(registro["html"])
     falhas = [] if achados else ["nenhum deputado na página"]
     for d in achados:
-        for campo in ("id", "nome", "partido", "foto"):
-            if not d[campo]:
-                falhas.append(f"deputado sem {campo}")
+        falhas += comum.campos_vazios(d, ("id", "nome", "partido", "foto"), "deputado")
     return falhas, []
 
 
@@ -406,9 +401,7 @@ def _contrato_remuneracao(ctx):
 def _conferir_remuneracao(registro):
     falhas = []
     for r in registro["remuneracoes"]:
-        for campo in ("id", "matricula", "nome", "lotacao", "valor"):
-            if r.get(campo) in (None, ""):
-                falhas.append(f"remuneração sem {campo}")
+        falhas += comum.campos_vazios(r, ("id", "matricula", "nome", "lotacao", "valor"), "remuneração", vazios=(None, ""))
     itens, bruto, liquido = componentes(registro["detalhe"])
     if bruto is None or liquido is None:
         falhas.append("detalhe sem Total Bruto ou Valor Bruto (- Descontos)")
@@ -422,7 +415,7 @@ def _contrato_diarias(ctx):
     achados = []
     for mes in sorted((int(m) for m in meses["meses"]), reverse=True):
         linhas = get_json(s, f"{PORTAL}/api/diarias", ano=ano, mes=mes)
-        achados += [l for l in linhas if "DEPUTAD" in (l.get("cargo_funcao") or "").upper()]
+        achados += [lin for lin in linhas if "DEPUTAD" in (lin.get("cargo_funcao") or "").upper()]
         if len(achados) >= 2:
             break
     return {"meses": meses, "linhas": achados[:2]}
@@ -430,10 +423,8 @@ def _contrato_diarias(ctx):
 
 def _conferir_diarias(registro):
     falhas = [] if registro["linhas"] else ["nenhuma diária de deputado"]
-    for l in registro["linhas"]:
-        for campo in ("emitido", "data_saida", "valor", "destino", "motivo", "cargo_funcao"):
-            if l.get(campo) in (None, ""):
-                falhas.append(f"diária sem {campo}")
+    for lin in registro["linhas"]:
+        falhas += comum.campos_vazios(lin, ("emitido", "data_saida", "valor", "destino", "motivo", "cargo_funcao"), "diária", vazios=(None, ""))
     return falhas, []
 
 
@@ -464,23 +455,20 @@ def _contrato_proposicoes(ctx):
 def _conferir_proposicoes(registro):
     falhas = [] if registro["lista"] else ["nenhuma proposição"]
     for p in registro["lista"]:
-        for campo in ("codigo", "numero", "ano", "autor", "dataRecebimento", "tipoProposicao", "ementa", "status"):
-            if p.get(campo) in (None, ""):
-                falhas.append(f"proposição sem {campo}")
+        falhas += comum.campos_vazios(p, ("codigo", "numero", "ano", "autor", "dataRecebimento", "tipoProposicao", "ementa", "status"), "proposição", vazios=(None, ""))
         if (p.get("tipoProposicao") or "").strip() not in SIGLAS:
             falhas.append(f"tipo de proposição novo: {p.get('tipoProposicao')}")
     return falhas, []
 
 
 CONTRATOS = [
-    dict(nome="estadual_pr_deputados", fonte=DEPUTADOS_URL, buscar=_contrato_deputados, html=_conferir_deputados),
-    dict(nome="estadual_pr_remuneracao", fonte=f"{PORTAL}/api/remuneracao", buscar=_contrato_remuneracao, html=_conferir_remuneracao),
-    dict(nome="estadual_pr_diarias", fonte=f"{PORTAL}/api/diarias", buscar=_contrato_diarias, html=_conferir_diarias),
-    dict(nome="estadual_pr_presenca", fonte=f"{PORTAL}/api/presenca/ano", buscar=_contrato_presenca, html=_conferir_presenca),
-    dict(nome="estadual_pr_proposicoes", fonte=f"{API_PROPOSICOES}/proposicao/filtrar", buscar=_contrato_proposicoes, html=_conferir_proposicoes),
+    {"nome": "estadual_pr_deputados", "fonte": DEPUTADOS_URL, "buscar": _contrato_deputados, "html": _conferir_deputados},
+    {"nome": "estadual_pr_remuneracao", "fonte": f"{PORTAL}/api/remuneracao", "buscar": _contrato_remuneracao, "html": _conferir_remuneracao},
+    {"nome": "estadual_pr_diarias", "fonte": f"{PORTAL}/api/diarias", "buscar": _contrato_diarias, "html": _conferir_diarias},
+    {"nome": "estadual_pr_presenca", "fonte": f"{PORTAL}/api/presenca/ano", "buscar": _contrato_presenca, "html": _conferir_presenca},
+    {"nome": "estadual_pr_proposicoes", "fonte": f"{API_PROPOSICOES}/proposicao/filtrar", "buscar": _contrato_proposicoes, "html": _conferir_proposicoes},
 ]
 
 
 if __name__ == "__main__":
-    coletar()
-    sys.exit(0)
+    comum.principal(coletar)

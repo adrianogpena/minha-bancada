@@ -142,7 +142,7 @@ def test_montar_votacoes_agrupa_por_pauta_e_ignora_secreto():
     linhas = [linha(1, "Charles Bento", "SIM"), linha(1, "CRISTÓVÃO TORMIN", "NAO"), linha(1, "Fulano", "SIM"),
               linha(1, "Alessandro Moreira", "ABSTENCAO"), linha(2, "Charles Bento", "SECRETO", tipo="SECRETA"),
               linha(3, "Charles Bento", "SIM", resultado="REJEITADO")]
-    ligacao = go.comum.ligar_nomes({l["parlamentar"] for l in linhas}, DEPUTADOS)
+    ligacao = go.comum.ligar_nomes({lin["parlamentar"] for lin in linhas}, DEPUTADOS)
     votacoes, materias = go.montar_votacoes(linhas, ligacao, 2025)
     assert set(votacoes) == {"1", "3"}
     v = votacoes["1"]
@@ -180,7 +180,10 @@ def test_verbas_le_so_meses_que_faltam_e_os_recentes(monkeypatch, tmp_path):
         return [{"deputado": {"id": 117}, "valor_indenizado": "10,00", "valor_apresentado": "10,00"}]
 
     monkeypatch.setattr(go, "paginar", paginar)
-    guardado = lambda ano, meses: {"itens": [{"idDeputado": "117", "mes": m, "valor": 1.0} for m in meses]}
+
+    def guardado(ano, meses):
+        return {"itens": [{"idDeputado": "117", "mes": m, "valor": 1.0} for m in meses]}
+
     go.comum.salvar(tmp_path / "verbas_2024.json", guardado(2024, [1]))
     go.comum.salvar(tmp_path / "verbas_2025.json", guardado(2025, range(1, 13)))
     go.comum.salvar(tmp_path / "verbas_2026.json", guardado(2026, range(1, 11)))

@@ -51,7 +51,7 @@ def test_data_serial():
 
 def test_itens_verba():
     linhas = amostra("estadual_ba_verba")["linhas"]
-    itens, sem_par = ba.itens_verba(linhas, [{"id": "7", "nome": n, "nomeCivil": None} for n in {l.get("F") for l in linhas}], 2026)
+    itens, sem_par = ba.itens_verba(linhas, [{"id": "7", "nome": n, "nomeCivil": None} for n in {linha.get("F") for linha in linhas}], 2026)
     assert itens and sem_par == set()
     primeiro = itens[0]
     assert primeiro["valor"] > 0 and 1 <= primeiro["mes"] <= 12 and primeiro["categoria"]
@@ -117,8 +117,8 @@ def test_coletar_verba_grava_por_ano(tmp_path, monkeypatch):
     monkeypatch.setattr(ba, "ANO_VERBA", date.today().year)
     monkeypatch.setattr(ba, "baixar", lambda *a, **k: b"")
     linhas = amostra("estadual_ba_verba")["linhas"]
-    monkeypatch.setattr(ba, "ler_xlsx", lambda conteudo: linhas)
-    deputados = [{"id": "7", "nome": n, "nomeCivil": None} for n in {l.get("F") for l in linhas}]
+    monkeypatch.setattr(ba.comum, "xlsx_linhas", lambda conteudo: linhas)
+    deputados = [{"id": "7", "nome": n, "nomeCivil": None} for n in {linha.get("F") for linha in linhas}]
     ba.coletar_verba(None, deputados)
     gravado = comum.ler(tmp_path / f"verbas_{date.today().year}.json")
     assert gravado["itens"] and gravado["fonte"].endswith(f"?ano={date.today().year}")
@@ -154,7 +154,10 @@ def test_coletar_proposicoes_nao_rele_o_que_ja_viu(tmp_path, monkeypatch):
 
     hoje = date.today()
     a = amostra("estadual_ba_proposicoes")
-    item = lambda n, ano: {"slug": f"PL.-{n}-{ano}", "sigla": "PL", "numero": n, "ano": ano, "ementa": "e", "linkTexto": None}
+
+    def item(n, ano):
+        return {"slug": f"PL.-{n}-{ano}", "sigla": "PL", "numero": n, "ano": ano, "ementa": "e", "linkTexto": None}
+
     lista = {i["slug"]: i for i in (item(1, 2025), item(2, 2025), item(3, hoje.year))}
     lidos = []
     monkeypatch.setattr(ba, "PASTA", tmp_path)

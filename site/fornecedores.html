@@ -3,8 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Fornecedores da cota | Minha Bancada</title>
-<meta name="description" content="Quem mais recebe da cota parlamentar da Câmara e quantos deputados usam cada fornecedor, com dados oficiais.">
+<title>Fornecedores | Minha Bancada</title>
+<meta name="description" content="Quem mais recebe das cotas e verbas de deputados, senadores e deputados estaduais, e quantos políticos usam cada fornecedor, com dados oficiais.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Bricolage+Grotesque:opsz,wght@12..96,700;12..96,800&display=swap" rel="stylesheet">
@@ -14,14 +14,15 @@
 <body data-pagina="fornecedores">
 <main class="recipiente">
 <section class="abertura">
-  <h1>Fornecedores da cota parlamentar</h1>
-  <p>As empresas e pessoas que mais receberam da cota dos deputados federais no ano, somando todos os gabinetes. Cada fornecedor é identificado pelo CNPJ ou CPF, não pelo nome, e mostra quantos deputados o usaram.</p>
+  <h1>Fornecedores das cotas e verbas</h1>
+  <p>As empresas e pessoas que mais receberam, no ano, da cota dos deputados federais, da cota dos senadores e das verbas dos deputados estaduais, somando todos os gabinetes. Cada fornecedor é identificado pelo CNPJ (matriz e filiais juntas) ou CPF, não pelo nome, e mostra quantos políticos o usaram.</p>
 </section>
 <form class="filtros" role="search" onsubmit="return false">
   <label class="campo">Fornecedor ou CNPJ<input id="busca" type="search" placeholder="Ex.: companhia aérea" autocomplete="off"></label>
+  <label class="campo">Origem<select id="casa"><option value="">Todas</option><option value="camara">Câmara</option><option value="senado">Senado</option><option value="estadual">Assembleias</option></select></label>
 </form>
 <p class="contagem" id="contagem" aria-live="polite">Carregando…</p>
-<p class="nota-lista">Valores líquidos das notas lançadas na cota no ano, pelo arquivo anual da Câmara; o CNPJ ou CPF vem como a Câmara o publica e pode estar incompleto. Despesas sem CNPJ ou CPF identificável não entram. Fonte: <a id="fonte-csv" href="https://www.camara.leg.br/cotas/" rel="noopener">arquivo anual da cota parlamentar (Câmara)</a>.</p>
+<p class="nota-lista">Valores das notas lançadas no ano. O CNPJ ou CPF vem como cada fonte publica; documento com dígito verificador inválido é ignorado e, quando o mesmo nome aparece com um único CNPJ em outra nota, a nota entra nesse fornecedor. Fornecedor sem documento aparece pelo nome. Fontes: <a href="https://www.camara.leg.br/cotas/" rel="noopener">cota parlamentar (Câmara)</a>, <a href="https://adm.senado.gov.br/adm-dadosabertos" rel="noopener">CEAPS (Senado)</a> e os portais de transparência das Assembleias, que cada ficha de deputado estadual cita.</p>
 <div id="resultado"></div>
 </main>
 <script type="module" src="assets/app.js"></script>

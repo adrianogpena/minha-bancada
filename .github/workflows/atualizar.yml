@@ -48,7 +48,7 @@ jobs:
 
       - name: Empacotar o resultado
         if: always()
-        run: scripts/empacotar.sh "$RUNNER_TEMP/camara.tgz" "$RUNNER_TEMP/inicio" dados/deputados dados/deputados.json dados/proposicoes dados/proposicoes_detalhe.json dados/proposicoes_autores.json dados/proposicoes_temas.json dados/orgaos_deputados.json dados/orientacoes.json dados/blocos.json dados/proposicoes_votacoes.json dados/presenca_eventos.json dados/votacoes dados/meta.json
+        run: scripts/empacotar.sh "$RUNNER_TEMP/camara.tgz" "$RUNNER_TEMP/inicio" dados/deputados dados/deputados.json dados/proposicoes dados/proposicoes_cadastro dados/proposicoes_detalhe.json dados/proposicoes_autores.json dados/proposicoes_temas.json dados/orgaos_deputados.json dados/orientacoes.json dados/blocos.json dados/proposicoes_votacoes.json dados/presenca_eventos.json dados/votacoes dados/meta.json
 
       - uses: actions/upload-artifact@v7
         if: always()
@@ -359,7 +359,7 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           # só adiciona o que existe; um caminho ausente (coleta que falhou) derrubaria o passo
-          for f in dados/votacoes dados/proposicoes dados/proposicoes_detalhe.json dados/proposicoes_autores.json dados/proposicoes_temas.json dados/orgaos_deputados.json dados/orientacoes.json dados/blocos.json dados/proposicoes_votacoes.json dados/presenca_eventos.json dados/senado_votacoes dados/senado_materias.json dados/executivo.json dados/estaduais dados/siconfi dados/municipais dados/tse; do
+          for f in dados/votacoes dados/proposicoes dados/proposicoes_cadastro dados/proposicoes_detalhe.json dados/proposicoes_autores.json dados/proposicoes_temas.json dados/orgaos_deputados.json dados/orientacoes.json dados/blocos.json dados/proposicoes_votacoes.json dados/presenca_eventos.json dados/senado_votacoes dados/senado_materias.json dados/executivo.json dados/estaduais dados/siconfi dados/municipais dados/tse; do
             if [ -e "$f" ]; then git add "$f"; fi
           done
           git diff --cached --quiet || git commit -m "Dados atualizados em $(date -u +%Y-%m-%d)"

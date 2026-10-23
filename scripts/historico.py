@@ -37,6 +37,7 @@ from pathlib import Path
 
 import feeds
 import nomes_legados
+import cadastro_proposicoes
 import resumo_email as r
 
 PASTA = r.RAIZ / "dados" / "historico"
@@ -54,7 +55,7 @@ DESCRICAO_PROJETO = ("projeto de", "proposta de emenda", "medida provisória")
 MARCO_SITUACAO = re.compile(r"aprovad|sancionad|vetad|promulgad|arquivad|rejeitad|retirad|transformad|prejudicad", re.I)
 LIMITE_ANTIGO_DIAS = 30   # projeto "novo" com data do ato mais antiga que isso é carga de backlog, não novidade
 LIMITE_LOTE = 40          # por local: acima disso, os eventos de baixa relevância viram um evento só
-PREFIXOS_BR = ("dados/proposicoes", "dados/proposicoes_detalhe.json", "dados/votacoes", "dados/senado_materias.json",
+PREFIXOS_BR = ("dados/proposicoes", "dados/proposicoes_cadastro", "dados/proposicoes_detalhe.json", "dados/votacoes", "dados/senado_materias.json",
                "dados/senado_votacoes", "dados/executivo.json")
 LIMITE_ELEICAO = 200   # por arquivo do TSE; acima disso é carga em lote (eleição nova, recoleta), resumida em um evento só
 
@@ -200,12 +201,12 @@ def camara(ctx: Contexto, antes: str, depois: str) -> list:
         return []   # primeira coleta: tudo seria "novo"
     arquivos_ = r.arquivos(antes, depois, "dados/proposicoes")
     a, b = ler_lote(antes, arquivos_), ler_lote(depois, arquivos_)
-    novas = {}
+    novas = defaultdict(list)    # id -> deputados que passaram a constar como autores
     for f in arquivos_:
-        ids = {i["id"] for i in (a.get(f) or {}).get("itens", [])}
-        for i in (b.get(f) or {}).get("itens", []):
-            if i["id"] not in ids:
-                novas.setdefault(i["id"], {**i, "idsDeputados": []})["idsDeputados"].append(int(Path(f).stem))
+        ids = set(cadastro_proposicoes.ids_de(a.get(f)))
+        for pid in cadastro_proposicoes.ids_de(b.get(f)):
+            if pid not in ids:
+                novas[pid].append(int(Path(f).stem))
     det_a = ler_lote(antes, ["dados/proposicoes_detalhe.json"]).get("dados/proposicoes_detalhe.json") or {}
     det_b = ler_lote(depois, ["dados/proposicoes_detalhe.json"]).get("dados/proposicoes_detalhe.json") or {}
     saida = []
@@ -214,19 +215,23 @@ def camara(ctx: Contexto, antes: str, depois: str) -> list:
         ps = [ctx.deputado(d) for d in sorted(deps)]
         return ps, next((p["uf"] for p in ps if p.get("uf")), None)
 
-    for i in novas.values():
+    meta_depois = r.objetos_em(depois, b) if novas else {}
+    for pid, deps in novas.items():
+        if pid not in meta_depois:
+            continue
+        i = {**meta_depois[pid], "idsDeputados": deps}
         ps, uf = autores(i["idsDeputados"])
         det = det_b.get(str(i["id"])) or {}
         saida.append(evento("BR", "nova", f"{i['siglaTipo']} {i['numero']}/{i['ano']}", uf=uf, politicos=ps, texto=i.get("ementa"),
                             data_do_ato=det.get("dataApresentacao"), fontes=fontes_camara(i["id"], det.get("inteiroTeor"))))
     mudancas = [pid for pid, y in det_b.items() if pid in det_a and (mudou(det_a[pid].get("situacao"), y.get("situacao")) or mudou(det_a[pid].get("tramitacao"), y.get("tramitacao")))]
     if mudancas:
-        meta = {}
         todos = ler_lote(depois, listar(depois, "dados/proposicoes"))
+        meta = {str(pid): {**i, "idsDeputados": []} for pid, i in r.objetos_em(depois, todos).items()}
         for f, d in todos.items():
-            for i in d.get("itens", []):
-                m = meta.setdefault(str(i["id"]), {**i, "idsDeputados": []})
-                m["idsDeputados"].append(int(Path(f).stem))
+            for pid in cadastro_proposicoes.ids_de(d):
+                if str(pid) in meta:
+                    meta[str(pid)]["idsDeputados"].append(int(Path(f).stem))
         for pid in mudancas:
             i, y, x = meta.get(pid), det_b[pid], det_a[pid]
             if not i or i["siglaTipo"] not in PROJETOS:

@@ -22,6 +22,7 @@ from email.message import EmailMessage
 from pathlib import Path
 from urllib.parse import quote
 
+import cadastro_proposicoes
 import nomes_legados
 
 RAIZ = Path(__file__).resolve().parent.parent
@@ -75,16 +76,33 @@ def materias(antes: str, depois: str, prefixo: str, nome_arquivo: str):
     return novas, mudou
 
 
+def objetos_em(rev: str, arquivos_deputados: dict | None = None) -> dict:
+    """{id: {id, siglaTipo, numero, ano, ementa}} das proposições da Câmara em `rev`: o cadastro (dados/proposicoes_cadastro/)
+    e, para commits antigos, os objetos que os arquivos de deputado ainda traziam (`arquivos_deputados`: {caminho: conteúdo})."""
+    try:
+        caminhos = git("ls-tree", "-r", "--name-only", rev, "--", "dados/proposicoes_cadastro").split()
+    except subprocess.CalledProcessError:
+        caminhos = []
+    anos = {int(Path(c).stem) if Path(c).stem.isdigit() else None: carregar(rev, c) for c in caminhos}
+    meta = cadastro_proposicoes.ler_anos(anos)
+    for conteudo in (arquivos_deputados or {}).values():
+        for p in cadastro_proposicoes.itens_legados(conteudo):
+            meta.setdefault(p["id"], p)
+    return meta
+
+
 def camara(antes: str, depois: str):
     """Proposições novas, sem repetir as de vários autores; "idsDeputados" lista os deputados (ids da Câmara) que constam como autores."""
-    novas = {}
+    novas, depois_ = {}, {}
     for f in arquivos(antes, depois, "dados/proposicoes"):
         x, y = carregar(antes, f), carregar(depois, f)
-        ids = {i["id"] for i in (x or {}).get("itens", [])}
-        for i in (y or {}).get("itens", []):
-            if i["id"] not in ids:
-                novas.setdefault(i["id"], {**i, "idsDeputados": []})["idsDeputados"].append(int(Path(f).stem))
-    return list(novas.values())
+        depois_[f] = y
+        ids = set(cadastro_proposicoes.ids_de(x))
+        for pid in cadastro_proposicoes.ids_de(y):
+            if pid not in ids:
+                novas.setdefault(pid, []).append(int(Path(f).stem))
+    meta = objetos_em(depois, depois_) if novas else {}
+    return [{**meta[pid], "idsDeputados": deps} for pid, deps in novas.items() if pid in meta]
 
 
 def contar(antes: str, depois: str, caminho: str):

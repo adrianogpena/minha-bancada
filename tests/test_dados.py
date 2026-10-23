@@ -42,3 +42,18 @@ def test_executivo_tem_campos_essenciais():
 def test_mandatos_cobrem_anos_coletados_do_tse():
     pastas = {p.name for p in (DADOS / "tse").iterdir() if p.name.isdigit()}
     assert pastas <= {str(a) for a in __import__("gerar_politicos").MANDATOS}
+
+
+def test_proposicoes_dos_deputados_tem_cadastro_quando_no_formato_novo():
+    """`ids` (formato novo) só vale com a ementa no cadastro; `itens` (formato antigo) carrega os objetos."""
+    import cadastro_proposicoes as cp
+    arquivos = sorted((DADOS / "proposicoes").glob("*.json"))
+    cadastro = cp.Cadastro(DADOS / "proposicoes_cadastro")
+    for arq in arquivos:
+        conteudo = json.loads(arq.read_text(encoding="utf-8"))
+        ids = cp.ids_de(conteudo)
+        assert all(isinstance(i, int) for i in ids), arq.name
+        if "ids" in conteudo:
+            assert all(cadastro.get(i) for i in ids), arq.name
+        else:
+            assert len(cp.itens_legados(conteudo)) == len(ids), arq.name

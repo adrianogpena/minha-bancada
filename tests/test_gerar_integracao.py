@@ -21,7 +21,7 @@ def ler(caminho):
 
 def test_arquivos_basicos_do_site_existem(site):
     for rel in ("meta.json", "deputados.json", "votacoes.json", "votacao/1-1.json", "deputado/101.json",
-                "senador/7.json", "votacoes_senado.json", "votacao_senado/9.json", "fornecedores_cota.json", "cobertura.json"):
+                "senador/7.json", "votacoes_senado.json", "votacao_senado/9.json", "fornecedores.json", "nucleo/fornecedores.json", "cobertura.json"):
         assert (site / rel).is_file(), rel
 
 
@@ -81,3 +81,41 @@ def test_proposicoes_ligam_indice_ficha_autores_e_votacao(site):
     ficha = ler(site / "proposicao" / "c-2026.json")["900"]
     assert ficha["au"] == [{"id": "101"}]
     assert "v" not in ficha   # a votação 1-1 tem propId 900 mas só entra por proposicoes_votacoes.json (coleta da Câmara)
+
+
+def test_nucleo_de_identidades_e_o_id_da_pessoa_nas_fichas(site):
+    pessoas = ler(site / "nucleo" / "pessoas.json")
+    assert (site / "nucleo" / "partidos.json").is_file() and (site / "nucleo" / "ligacoes.json").is_file()
+    por_id = {p["id"]: p for p in pessoas}
+    assert por_id[ler(site / "deputado" / "101.json")["pessoa"]]["fontes"]["camara"] == 101
+    assert por_id[ler(site / "p" / "senado.json")["7"]["pessoa"]]["fontes"]["senado"] == "7"
+
+
+def test_autorias_ligam_proposicao_e_pessoa(site):
+    aut = ler(site / "nucleo" / "autorias.json")
+    quem = ler(site / "deputado" / "101.json")["pessoa"]
+    assert [k for k, _ in aut["porPessoa"][quem]] == ["c-900"]
+    assert any(i["k"] == "c-900" for i in ler(site / "proposicoes.json"))
+
+
+def test_mandatos_ligam_pessoa_e_exercicio(site):
+    quem = ler(site / "deputado" / "101.json")["pessoa"]
+    (m,) = [m for m in ler(site / "nucleo" / "mandatos.json") if m["pessoa"] == quem]
+    assert m["cargo"] == "DEPUTADO FEDERAL" and m["status"] == "atual" and m["confirmado"] is True and m["fontes"] == {"camara": 101}
+
+
+def test_nucleo_gera_candidaturas_e_disputas(site):
+    cands = {c["id"]: c for c in ler(site / "nucleo" / "candidaturas" / "2024.json")}
+    pessoas = {p["id"] for p in ler(site / "nucleo" / "pessoas.json")}
+    assert cands["can_2024_500"]["pessoa"] in pessoas and cands["can_2024_500"]["federacao"] == "fed_pcdob_pt_pv"
+    disputa = ler(site / "nucleo" / "disputas" / "2024.json")["dsp_2024_vereador_71072"]
+    assert disputa["vagas"] == 55 and disputa["partidos"]["par_pt"] == [100, 300, "fed_pcdob_pt_pv"]
+
+
+def test_fichas_do_tse_trazem_o_que_o_local_tem_em_comum_uma_vez_so(site):
+    arq = ler(site / "p" / "t" / "2024" / "71072.json")
+    comuns = arq["_disputas"]
+    assert sorted(comuns) == ["coligacoes", "disputa", "partidos"] and list(comuns["disputa"]) == ["VEREADOR|71072"]
+    for seq in ("500", "501"):
+        assert not {"disputa", "partidoVotos", "alianca"} & set(arq[seq])           # nada repetido em cada ficha
+    assert comuns["partidos"]["VEREADOR|71072"]["partidos"]["PT"] == [100, 300, "PT/PC do B/PV"]

@@ -100,6 +100,10 @@ Sem `--limite` a coleta pega todos os deputados em exercício. `--dias` só vale
 | `scripts/historico.py` | Histórico diário: compara os dados do dia com os do dia anterior (pelo git) e grava em `dados/historico/AAAA-MM-DD.json` todos os detalhes, por local e por político, com a fonte de cada item. A página `site/historico.html` lê esses arquivos. Cada item recebe uma relevância (3 marco, 2 projeto de verdade, 1 o resto); o excesso de baixa relevância por local vira um evento "lote"; o dia traz a cobertura de todos os locais acompanhados, com ou sem novidade. A página mostra tudo por padrão e filtra por importância. Também refaz dias passados: `python scripts/historico.py --dias 7`. |
 | `scripts/feeds.py` | Feeds RSS da página Fique informado (um por local e por político acompanhável), em `site/feeds/`, a partir do histórico git. Sem cadastro de leitores. |
 | `scripts/gerar_municipios_ibge.py`, `scripts/simplificar_df.py` | Refazem `dados/municipios_ibge.json` (código TSE → IBGE) e `site/geo/df_ras.json` (regiões administrativas do DF) a partir das fontes oficiais. Rodar só se mudarem. |
+| `scripts/identidades.py` | Núcleo de identidades: id próprio de pessoa e de partido ligando TSE, Câmara, Senado e Assembleias (`site/dados/nucleo/`), com o método e a confiança de cada ligação. Chamado pelo `gerar.py`. |
+| `scripts/fornecedores.py` | Núcleo de fornecedores: normaliza CNPJ/CPF e nome e gera o ranking nacional das cotas e verbas (Câmara, Senado e Assembleias) em `site/dados/fornecedores.json` e `site/dados/nucleo/fornecedores.json`. Chamado pelo `gerar.py`. |
+| `scripts/mandatos.py` | Núcleo de mandatos: cargo, local, período, partido na eleição e hoje, condição (titular ou suplente) e se a pessoa está em exercício, em `site/dados/nucleo/mandatos.json`. Chamado pelo `gerar.py`. |
+| `scripts/candidaturas.py` | Núcleo de candidaturas e disputas: liga cada eleito do TSE à pessoa, ao partido, às contas de campanha e à disputa (comparecimento, votos por partido e coligações), em `site/dados/nucleo/candidaturas/` e `disputas/`. Chamado pelo `gerar.py`. |
 | `scripts/gerar.py` | Monta os JSONs enxutos que o site lê. Não acessa a internet. |
 | `scripts/gerar_politicos.py` | Junta TSE, Câmara e Senado no índice de todos os políticos (chamado pelo `gerar.py`). |
 | `dados/proposicoes_detalhe.json` | Situação atual de cada projeto (aprovado, arquivado, em tramitação), da API da Câmara. Cada execução consulta até 4000 projetos (`DETALHES_POR_EXECUCAO`), então o cache se completa em alguns dias. |
@@ -116,7 +120,7 @@ Sem `--limite` a coleta pega todos os deputados em exercício. `--dias` só vale
 | `scripts/coletar_prefeitura_go.py` | O mesmo para Goiânia: consulta pública de processos do SUAP da Câmara, filtrada pelo interessado "Prefeito de Goiânia"; o link de cada projeto é a página pública do processo. Usa o certificado intermediário de `scripts/certs/`, que o servidor não envia. |
 | `dados/municipais/` | Cache dessas coletas, um arquivo por ano e capital. |
 | `dados/tse/` | Eleitos de cada eleição, um arquivo por estado. |
-| `dados/proposicoes/` | Proposições já coletadas de cada deputado. A API só aceita 3 meses por consulta, então a primeira coleta é longa e as seguintes buscam só o período novo. |
+| `dados/proposicoes/`, `dados/proposicoes_cadastro/` | Ids das proposições de cada deputado e, uma vez só por proposição, tipo, número e ementa (por ano). A API só aceita 3 meses por consulta, então a primeira coleta é longa e as seguintes buscam só o período novo. |
 | `site/` | O site: HTML, CSS e módulos ES em `assets/js/` (entrada `assets/app.js`), sem framework nem etapa de build. |
 | `.github/workflows/atualizar.yml` | Agenda diária: coletas em jobs paralelos, depois gera o site, salva o histórico e publica. |
 

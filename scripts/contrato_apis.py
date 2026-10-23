@@ -320,7 +320,7 @@ def _(ctx):
 
 
 @ep("senado_ceaps", f"{SENADO_ADM}/senadores/despesas_ceaps/{{ano}}",
-    campos("[]", "codSenador", "mes", "tipoDespesa", "valorReembolsado", "fornecedor", "data"))
+    campos("[]", "codSenador", "mes", "tipoDespesa", "valorReembolsado", "fornecedor", "cpfCnpj", "data"))
 def _(ctx):
     return http_json(f"{SENADO_ADM}/senadores/despesas_ceaps/{HOJE.year}")
 

@@ -24,6 +24,7 @@ import zipfile
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
 
+import cadastro_proposicoes
 import requests
 from requests.adapters import HTTPAdapter
 from urllib3.util.retry import Retry
@@ -105,17 +106,43 @@ def ler(caminho: Path, padrao):
 
 # ---------------------------------------------------------------- deputados
 
+_CADASTROS: dict = {}
+
+
+def cadastro() -> cadastro_proposicoes.Cadastro:
+    """Cadastro de proposições (dados/proposicoes_cadastro/), carregado uma vez por pasta de dados."""
+    pasta = DADOS / "proposicoes_cadastro"
+    if pasta not in _CADASTROS:
+        _CADASTROS[pasta] = cadastro_proposicoes.Cadastro(pasta)
+    return _CADASTROS[pasta]
+
+
+def ids_de_projetos(tipos) -> set:
+    """Ids (texto) das proposições dos deputados cujo tipo está em `tipos`: o cadastro e, até a migração terminar,
+    os arquivos de deputado ainda no formato antigo."""
+    ids = {str(p["id"]) for p in cadastro().todos() if p["siglaTipo"] in tipos}
+    for arq in (DADOS / "proposicoes").glob("*.json"):
+        ids |= {str(p["id"]) for p in cadastro_proposicoes.itens_legados(ler(arq, {})) if p.get("siglaTipo") in tipos}
+    return ids
+
+
 def coletar_proposicoes(dep: dict) -> list:
-    """A API aceita no máximo 3 meses por consulta. Guardamos o que já foi
-    coletado em dados/proposicoes/ (salvo no git) e, nas execuções seguintes,
-    buscamos só o período novo."""
+    """A API aceita no máximo 3 meses por consulta. Guardamos o que já foi coletado em dados/proposicoes/ (só os ids
+    de cada deputado) e dados/proposicoes_cadastro/ (tipo, número e ementa de cada proposição, uma vez só); ambos
+    vão para o git. Nas execuções seguintes, buscamos só o período novo."""
     did = dep["id"]
     arquivo = DADOS / "proposicoes" / f"{did}.json"
-    cache = ler(arquivo, {"ate": None, "itens": []})
+    cache = ler(arquivo, {"ate": None, "ids": []})
+    cad = cadastro()
+    for p in cadastro_proposicoes.itens_legados(cache):     # arquivo no formato antigo: a ementa passa para o cadastro
+        cad.registrar(p)
+    ids = cadastro_proposicoes.ids_de(cache)
     hoje = dt.date.today()
-    inicio = (dt.date.fromisoformat(cache["ate"]) - dt.timedelta(days=10)) if cache["ate"] \
+    # id sem entrada no cadastro (execução interrompida antes de gravá-lo): relê desde o começo da legislatura
+    perdido = any(cad.get(i) is None for i in ids)
+    inicio = (dt.date.fromisoformat(cache["ate"]) - dt.timedelta(days=10)) if cache["ate"] and not perdido \
         else dt.date.fromisoformat(INICIO_LEGISLATURA)
-    por_id = {p["id"]: p for p in cache["itens"]}
+    por_id = {i: cad.get(i) for i in ids if cad.get(i) is not None}
     completo = True
     atual = inicio
     while atual <= hoje:
@@ -133,8 +160,11 @@ def coletar_proposicoes(dep: dict) -> list:
             completo = False
         atual = fim + dt.timedelta(days=1)
     itens = sorted(por_id.values(), key=lambda p: p["id"], reverse=True)
+    for p in itens:
+        cad.registrar(p)
+    cad.gravar()
     # só avança a data se tudo deu certo, para tentar de novo o que falhou
-    salvar(arquivo, {"ate": hoje.isoformat() if completo else cache["ate"], "itens": itens})
+    salvar(arquivo, {"ate": hoje.isoformat() if completo else cache["ate"], "ids": [p["id"] for p in itens]})
     return itens
 
 
@@ -241,6 +271,7 @@ def coletar_deputados(limite: int | None) -> list:
                 avisar(f"deputado {dep.get('nome')} ({dep['id']}): {e}")
             if i % 50 == 0:
                 print(f"  {i}/{len(lista)}")
+    cadastro().gravar(forcar=True)
     salvar(DADOS / "deputados.json", sorted(resumo))
     print(f"Deputados salvos: {len(resumo)}, falhas: {falhas}")
     if lista and falhas > len(lista) * 0.2:
@@ -269,11 +300,7 @@ def coletar_detalhes_proposicoes() -> None:
     que ainda tramitam. Com os dias o cache se completa."""
     arquivo = DADOS / "proposicoes_detalhe.json"
     cache = ler(arquivo, {})
-    todos = set()
-    for arq in (DADOS / "proposicoes").glob("*.json"):
-        for p in ler(arq, {"itens": []})["itens"]:
-            if p.get("siglaTipo") in TIPOS_PRINCIPAIS:
-                todos.add(str(p["id"]))
+    todos = ids_de_projetos(TIPOS_PRINCIPAIS)
     hoje = dt.date.today()
     limite_velho = (hoje - dt.timedelta(days=RENOVAR_APOS_DIAS)).isoformat()
     novos = sorted(todos - cache.keys(), reverse=True)
@@ -353,11 +380,7 @@ def coletar_autores_proposicoes() -> None:
     máximo ORCAMENTO_AUTORES (os mais novos primeiro) e com os dias o arquivo se completa."""
     arquivo = DADOS / "proposicoes_autores.json"
     cache = ler(arquivo, {})
-    todos = set()
-    for arq in (DADOS / "proposicoes").glob("*.json"):
-        for p in ler(arq, {"itens": []})["itens"]:
-            if p.get("siglaTipo") in TIPOS_PROJETO:
-                todos.add(str(p["id"]))
+    todos = ids_de_projetos(TIPOS_PROJETO)
     faltam = todos - cache.keys()
     fila = sorted(faltam, key=int, reverse=True)[:ORCAMENTO_AUTORES]
     print(f"Autores de proposições: {len(todos)} projetos, {len(faltam)} sem autoria; consultando {len(fila)}")
@@ -479,11 +502,7 @@ def coletar_votacoes_proposicoes() -> None:
     o que já estava guardado."""
     arquivo = DADOS / "proposicoes_votacoes.json"
     cache = ler(arquivo, {})
-    meus = set()
-    for arq in (DADOS / "proposicoes").glob("*.json"):
-        for p in ler(arq, {"itens": []})["itens"]:
-            if p.get("siglaTipo") in TIPOS_PROJETO:
-                meus.add(str(p["id"]))
+    meus = ids_de_projetos(TIPOS_PROJETO)
     mudou = False
     for ano in range(int(INICIO_LEGISLATURA[:4]), dt.date.today().year + 1):
         try:
@@ -761,7 +780,7 @@ def coletar_ceaps_senado() -> None:
             continue
         itens.setdefault(str(d["codSenador"]), []).append({
             "mes": d.get("mes"), "tipo": d.get("tipoDespesa"), "valor": d.get("valorReembolsado") or 0,
-            "fornecedor": d.get("fornecedor"), "data": d.get("data"),
+            "fornecedor": d.get("fornecedor"), "cnpj": re.sub(r"\D", "", d.get("cpfCnpj") or ""), "data": d.get("data"),
         })
     for lista in itens.values():
         lista.sort(key=lambda i: i["data"] or "", reverse=True)

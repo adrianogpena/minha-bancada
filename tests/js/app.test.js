@@ -107,3 +107,31 @@ test("resumosEstadual mostra cada seção com fonte e avisa quando falta", () =>
   assert.match(html, /Diárias[\s\S]*sem-fonte/);
   assert.doesNotMatch(html, /Presença|Emendas/);
 });
+
+test("completarEleicao monta disputa, votos do partido e aliança a partir do que o local tem em comum", () => {
+  const { completarEleicao } = js("ficha.js");
+  const comuns = {
+    disputa: { "VEREADOR|71072": { vagas: 55, turnos: { 1: { aptos: 10 } } }, "GOVERNADOR|SP": { vagas: 1, turnos: {} } },
+    partidos: { "VEREADOR|71072": { totalVotos: 770, partidos: { PT: [100, 300, "PT/PC do B/PV"], "PC do B": [10, 20, "PT/PC do B/PV"], PL: [50, 290, ""] } } },
+    coligacoes: { "VEREADOR|71072": { coligacoes: [["F", "", "Federação X", "Deferido"], ["I", "", "PL", "Deferido"]], coligacaoDoPartido: { PT: 0, "PC do B": 0, PL: 1 } } },
+  };
+  const pt = completarEleicao({ cargoTse: "VEREADOR", unidadeEleitoral: "71072", partido: "PT" }, comuns);
+  assert.deepEqual(pt.disputa, comuns.disputa["VEREADOR|71072"]);
+  assert.deepEqual(pt.partidoVotos, { votosLegenda: 100, votosNominais: 300, totalVotosPartidos: 770, federacao: "PT/PC do B/PV", votosLegendaFederacao: 110, votosNominaisFederacao: 320 });
+  assert.deepEqual(pt.alianca, { tipo: "F", nome: "", composicao: "Federação X", situacao: "Deferido" });
+  const pl = completarEleicao({ cargoTse: "VEREADOR", unidadeEleitoral: "71072", partido: "PL" }, comuns);
+  assert.deepEqual(pl.partidoVotos, { votosLegenda: 50, votosNominais: 290, totalVotosPartidos: 770 });   // sem federação: só os do partido
+  assert.equal(pl.alianca.tipo, "I");
+  // o vice disputa com o titular; votos por partido e coligações usam o cargo do próprio vice
+  const vice = completarEleicao({ cargoTse: "VICE-GOVERNADOR", unidadeEleitoral: "SP", partido: "PT" }, comuns);
+  assert.equal(vice.disputa.vagas, 1);
+  assert.equal(vice.partidoVotos, undefined);
+  assert.equal(vice.alianca, undefined);
+  // partido sem votos no local, ficha sem `_disputas` e ficha que já traz os campos ficam como estão
+  assert.equal(completarEleicao({ cargoTse: "VEREADOR", unidadeEleitoral: "71072", partido: "NOVO" }, comuns).partidoVotos, undefined);
+  const solta = { cargoTse: "SENADOR", unidadeEleitoral: "SP" };
+  assert.equal(completarEleicao(solta, undefined), solta);
+  const pronta = { cargoTse: "VEREADOR", unidadeEleitoral: "71072", partido: "PT", disputa: { vagas: 1 } };
+  assert.deepEqual(completarEleicao(pronta, comuns).disputa, { vagas: 1 });
+  assert.equal(pronta.partidoVotos, undefined);
+});

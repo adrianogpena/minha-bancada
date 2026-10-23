@@ -147,6 +147,33 @@ def test_item_do_feed_aponta_para_o_historico_do_dia_e_do_local():
     assert f"<link>{r.SITE}historico.html?dia=2026-01-02&amp;locais=UF:SP</link>" in it
 
 
+def test_formato_novo_dos_arquivos_de_proposicoes_nao_vira_tudo_novo(repo, tmp_path):
+    """Migração (ids + cadastro) e um dia seguinte: só a proposição realmente nova vira evento."""
+    def gravar(caminho, obj):
+        arq = tmp_path / caminho
+        arq.parent.mkdir(parents=True, exist_ok=True)
+        arq.write_text(json.dumps(obj), encoding="utf-8")
+
+    def commitar(msg):
+        subprocess.run(["git", "add", "-A"], cwd=tmp_path, check=True)
+        subprocess.run(["git", "commit", "-qm", msg], cwd=tmp_path, check=True)
+
+    gravar("dados/proposicoes/1.json", {"ate": "2026-01-02", "ids": [11, 10]})
+    gravar("dados/proposicoes_cadastro/2026.json", {"11": ["REQ", 2, "Requerimento novo"], "10": ["PL", 1, "Antiga"]})
+    commitar("migração")
+    migracao = h.dia("2026-01-03", "HEAD~1", "HEAD")["eventos"]
+    assert not por(migracao, categoria="nova")
+    gravar("dados/proposicoes/1.json", {"ate": "2026-01-03", "ids": [12, 11, 10]})
+    gravar("dados/proposicoes/2.json", {"ate": "2026-01-03", "ids": [12]})
+    gravar("dados/proposicoes_cadastro/2026.json", {"12": ["PL", 3, "Projeto depois da migração"], "11": ["REQ", 2, "Requerimento novo"], "10": ["PL", 1, "Antiga"]})
+    commitar("dia seguinte")
+    nova, = por(h.dia("2026-01-04", "HEAD~1", "HEAD")["eventos"], categoria="nova")
+    assert nova["titulo"] == "PL 3/2026" and nova["texto"] == "Projeto depois da migração"
+    assert sorted(p["codigo"] for p in nova["politicos"]) == ["dep:1", "dep:2"]
+    d = r.coletar("HEAD~1", "HEAD")
+    assert [(i["siglaTipo"], i["numero"], sorted(i["idsDeputados"])) for i in d["camara"]] == [("PL", 3, [1, 2])]
+
+
 def test_relevancia_separa_projeto_de_verdade_do_resto(repo):
     ev = h.dia("2026-01-02", "HEAD~1", "HEAD")["eventos"]
     assert por(ev, titulo="REQ 2/2026")[0]["relevancia"] == 1                                       # requerimento

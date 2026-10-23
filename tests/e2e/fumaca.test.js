@@ -43,7 +43,7 @@ after(async () => {
   if (pasta) fs.rmSync(pasta, { recursive: true, force: true });
 });
 
-// [página, texto que precisa aparecer quando os dados carregam]
+// [página, texto que precisa aparecer quando os dados carregam, estado do elemento (padrão: visible)]
 const PAGINAS = [
   ["index.html", "Minha Bancada"],
   ["camara.html", "Ana Souza"],
@@ -53,12 +53,16 @@ const PAGINAS = [
   ["votacoes.html", "PL 1/2026"],
   ["votacao.html?id=1-1", "PL 1/2026"],
   ["fornecedores.html", "Cia Aérea"],
+  // blocos montados a partir de `_disputas` (ficam numa aba fechada: basta estarem na página)
+  ["politico.html?f=t/2024/71072&i=500", "Comparecimento e vagas", "attached"],
+  ["politico.html?f=t/2024/71072&i=500", "Quociente eleitoral", "attached"],
+  ["politico.html?f=t/2024/71072&i=501", "concorreu sozinho", "attached"],
   ["sobre.html", "Sobre"],
   ["informado.html", "Minha Bancada"],
   ["historico.html", "Minha Bancada"],
 ];
 
-for (const [pagina, texto] of PAGINAS) {
+for (const [pagina, texto, estado = "visible"] of PAGINAS) {
   test(`${pagina} abre sem erros e mostra "${texto}"`, async () => {
     const contexto = await navegador.newContext();
     const aba = await contexto.newPage();
@@ -72,7 +76,7 @@ for (const [pagina, texto] of PAGINAS) {
     // nada de internet no teste: fontes, imagens e APIs externas são cortadas
     await aba.route((u) => !u.href.startsWith(base), (rota) => rota.abort());
     await aba.goto(`${base}/${pagina}`, { waitUntil: "networkidle" });
-    await aba.getByText(texto, { exact: false }).first().waitFor({ timeout: 10000 });
+    await aba.getByText(texto, { exact: false }).first().waitFor({ timeout: 10000, state: estado });
     await contexto.close();
     assert.deepEqual(problemas, []);
   });

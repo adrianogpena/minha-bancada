@@ -35,7 +35,7 @@ TSE_FICHA = "https://divulgacandcontas.tse.jus.br/divulga/#/candidato/2022/20406
 PACOTE = "portal-da-transparencia-despesas-execucao-orcamentaria-e-financeira"
 CKAN = f"https://dados.es.gov.br/api/3/action/package_show?id={PACOTE}"
 PAGINA = f"https://dados.es.gov.br/dataset/{PACOTE}"
-PRIMEIRO_ANO = 2023
+PRIMEIRO_ANO = 2026  # anos anteriores ficam de fora: cada CSV tem 1,2 a 1,5 GB e a carga deles levaria dias de job
 MES_FECHA_ANO_ANTERIOR = 3  # a partir deste mês o arquivo do ano passado, se já lido no ano corrente, não é baixado de novo
 BLOCO = 1 << 20
 _MARCA = b"ASSEMBLEIA LEGISLATIVA"

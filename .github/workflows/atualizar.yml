@@ -50,7 +50,7 @@ jobs:
         if: always()
         run: scripts/empacotar.sh "$RUNNER_TEMP/camara.tgz" "$RUNNER_TEMP/inicio" dados/deputados dados/deputados.json dados/proposicoes dados/proposicoes_detalhe.json dados/proposicoes_autores.json dados/proposicoes_temas.json dados/orgaos_deputados.json dados/orientacoes.json dados/blocos.json dados/proposicoes_votacoes.json dados/presenca_eventos.json dados/votacoes dados/meta.json
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         if: always()
         with:
           name: pacote-camara
@@ -82,7 +82,7 @@ jobs:
         if: always()
         run: scripts/empacotar.sh "$RUNNER_TEMP/senado.tgz" "$RUNNER_TEMP/inicio" dados/senado.json dados/senado_votacoes dados/senado_materias.json dados/senado_autorias.json dados/senado_ceaps.json dados/senado_recursos.json
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         if: always()
         with:
           name: pacote-senado
@@ -114,7 +114,7 @@ jobs:
         if: always()
         run: scripts/empacotar.sh "$RUNNER_TEMP/tse.tgz" "$RUNNER_TEMP/inicio" dados/tse site/fotos
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         if: always()
         with:
           name: pacote-tse
@@ -147,7 +147,7 @@ jobs:
         if: always()
         run: scripts/empacotar.sh "$RUNNER_TEMP/executivo.tgz" "$RUNNER_TEMP/inicio" dados/executivo.json
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         if: always()
         with:
           name: pacote-executivo
@@ -206,7 +206,7 @@ jobs:
         if: always()
         run: scripts/empacotar.sh "$RUNNER_TEMP/estaduais-${{ matrix.id }}.tgz" "$RUNNER_TEMP/inicio" dados/estaduais
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         if: always()
         with:
           name: pacote-estaduais-${{ matrix.id }}
@@ -240,7 +240,7 @@ jobs:
         if: always()
         run: scripts/empacotar.sh "$RUNNER_TEMP/governadores.tgz" "$RUNNER_TEMP/inicio" dados/estaduais
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         if: always()
         with:
           name: pacote-governadores
@@ -274,7 +274,7 @@ jobs:
         if: always()
         run: scripts/empacotar.sh "$RUNNER_TEMP/prefeituras.tgz" "$RUNNER_TEMP/inicio" dados/municipais
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         if: always()
         with:
           name: pacote-prefeituras
@@ -302,7 +302,7 @@ jobs:
 
       - run: pip install -r requirements.txt
 
-      - uses: actions/download-artifact@v5
+      - uses: actions/download-artifact@v8
         with:
           pattern: pacote-*
           path: ${{ runner.temp }}/pacotes

@@ -13,7 +13,8 @@ coligações e federações), uma vez só, em vez de repetido na ficha de cada c
 `id_disputa(ano, cargo, local)` (não vai no registro, para não repetir o que já se deduz). `coligacoes[].comEleitos` lista só
 os partidos da coligação que elegeram alguém (o arquivo de origem guarda só esses); `composicao` traz todos, como o TSE escreve.
 
-Ids: "can_<ano>_<sequencial do TSE>" e "dsp_<ano>_<cargo>_<local>" (cargo sem acento nem "VICE-": o vice disputa com o titular).
+Ids (ids.py): "can_" + hash de ("tse:<ano>", sequencial do TSE), guardados em `eleicao` e `sequencial`; "dsp_" + hash de ("tse:<ano>",
+"<cargo>|<local>"), com o cargo sem acento nem "VICE-" (o vice disputa com o titular) e o local no próprio registro.
 Campos omitidos quando se deduzem: `local` quando é a própria UF (cargos estaduais e federais), `situacao` quando é "eleito".
 O detalhe das contas (doadores, gastos por categoria) e a votação por seção seguem nas fichas; aqui entra só o que liga e compara.
 Não acessa a internet; chamado pelo scripts/gerar.py.
@@ -25,6 +26,7 @@ from pathlib import Path
 
 import identidades
 from gerar_politicos import custo_do_voto, ler, salvar
+from ids import gerar_id
 
 ORIGENS = {   # origem da receita (TSE) -> chave curta
     "Recursos de pessoas físicas": "pessoasFisicas", "Recursos próprios": "proprios", "Recursos de outros candidatos": "outrosCandidatos",
@@ -40,7 +42,11 @@ def _slug(texto: str) -> str:
 
 
 def id_disputa(ano: int, cargo: str, local: str) -> str:
-    return f"dsp_{ano}_{_slug(cargo.replace('VICE-', ''))}_{local}"
+    return gerar_id("dsp", f"tse:{ano}", f"{_slug(cargo.replace('VICE-', ''))}|{local}")
+
+
+def id_candidatura(ano: int, sequencial) -> str:
+    return gerar_id("can", f"tse:{ano}", sequencial)
 
 
 def _origem(rotulo: str) -> str:
@@ -107,12 +113,12 @@ def construir(bruto: Path, nucleo: dict) -> dict:
                 if chave not in locais and ano < 2026:
                     sem["semDisputa"] += 1
                 cand = {
-                    "id": f"can_{ano}_{e['sequencial']}", "pessoa": pessoa, "cargo": e["cargo"], "uf": "BR" if e["uf"] in ("BR", "BRASIL") else e["uf"],
+                    "id": id_candidatura(ano, e["sequencial"]), "eleicao": ano, "sequencial": e["sequencial"], "pessoa": pessoa, "cargo": e["cargo"], "uf": "BR" if e["uf"] in ("BR", "BRASIL") else e["uf"],
                     "local": e["unidadeEleitoral"] if e["unidadeEleitoral"] != e["uf"] else None, "partido": par, "federacao": identidades.federacao_id(fed) if fed else None,
                     "numero": e.get("numero"), "resultado": e.get("resultado"), "situacao": e.get("situacao") if e.get("situacao") != "eleito" else None,
                     "votos": sum(v.get("votos") or 0 for v in votos) or None, "percentual": votos[-1].get("percentual") if votos else None,
                     "bens": e.get("totalBens") or None,
-                    "chapa": f"can_{ano}_{e['sequencialChapa']}" if vice and e.get("sequencialChapa") else None,
+                    "chapa": id_candidatura(ano, e["sequencialChapa"]) if vice and e.get("sequencialChapa") else None,
                 }
                 if c and not vice:
                     custo = custo_do_voto(e, c)
@@ -129,7 +135,7 @@ def construir(bruto: Path, nucleo: dict) -> dict:
 def salvar_candidaturas(res: dict, saida: Path) -> None:
     por_ano = {}
     for c in res["candidaturas"]:
-        por_ano.setdefault(c["id"].split("_")[1], []).append(c)
+        por_ano.setdefault(c["eleicao"], []).append(c)
     for ano, lista in por_ano.items():
         salvar(saida / "nucleo" / "candidaturas" / f"{ano}.json", lista)
     for ano, mapa in res["disputas"].items():

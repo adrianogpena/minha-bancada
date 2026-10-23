@@ -15,6 +15,8 @@ import re
 from collections import defaultdict
 from pathlib import Path
 
+import categorias
+
 RAIZ = Path(__file__).resolve().parent.parent
 BRUTO = RAIZ / "dados" / "estaduais"
 SAIDA = RAIZ / "site" / "dados"
@@ -64,7 +66,7 @@ def resumo_verba(itens: list, fonte) -> dict:
         v = numero(it.get("valor"))
         a["total"] += v
         a["meses"][it.get("mes")] += v
-        a["categorias"][it.get("categoria") or "Sem categoria"] += v
+        a["categorias"][it.get("categoria")] += v
         if it.get("fornecedor"):
             a["fornecedores"][(it["fornecedor"], it.get("cnpj"))] += v
     out = []
@@ -73,7 +75,7 @@ def resumo_verba(itens: list, fonte) -> dict:
         forn = sorted(a["fornecedores"].items(), key=lambda kv: -kv[1])[:TOP_FORNECEDORES]
         out.append({"ano": ano, "total": round(a["total"], 2),
                     "meses": [{"mes": m, "total": round(t, 2)} for m, t in sorted(a["meses"].items(), key=lambda kv: str(kv[0]))],
-                    "categorias": [{"categoria": c, "total": round(t, 2)} for c, t in sorted(a["categorias"].items(), key=lambda kv: -kv[1])],
+                    "categorias": categorias.agrupar(a["categorias"]),
                     "fornecedores": [{"fornecedor": f, "cnpj": c, "total": round(t, 2)} for (f, c), t in forn]})
     return {"fonte": fonte, "anos": out}
 

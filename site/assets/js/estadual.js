@@ -22,7 +22,7 @@ export function resumosEstadual(dep) {
     html += secaoEstadual("Verba/cota", "Gastos com a verba de gabinete ou cota parlamentar, por ano.", dep.verba.anos.map((a) => `
       <h3>${esc(a.ano ?? "")}: ${reaisCentavos(a.total)}</h3>
       <p>Por mês: ${a.meses.map((m) => `${esc(rotuloMes(m.mes))} ${reais(m.total)}`).join(", ")}.</p>
-      ${tabela(["Categoria", "Total"], a.categorias.map((c) => [esc(c.categoria), reais(c.total)]))}
+      ${tabela(["Categoria", "Total"], a.categorias.map((c) => [`<span title="${esc(c.originais.map(([r, v]) => `${r}: ${reais(v)}`).join("\n"))}">${esc(c.categoria)}</span>`, reais(c.total)]))}
       ${a.fornecedores.length ? tabela(["Maiores fornecedores", "CNPJ", "Total"], a.fornecedores.map((f) => [esc(f.fornecedor), esc(f.cnpj || ""), reais(f.total)])) : ""}`).join(""), dep.verba.fonte, "Verba/cota (Assembleia)");
   }
   if (dep.remuneracao) {

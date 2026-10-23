@@ -36,7 +36,7 @@ def test_ficha_do_deputado_tem_os_campos_da_pagina(site):
     d = ler(site / "deputado" / "101.json")
     for campo in ("id", "nome", "partido", "uf", "proposicoes", "autoria", "votos", "despesas", "totalVotacoes", "presenca", "orgaos"):
         assert campo in d, campo
-    for campo in ("ano", "total", "porTipo", "porMes", "fornecedores", "recentes", "mediaUF"):
+    for campo in ("ano", "total", "porCategoria", "porMes", "fornecedores", "recentes", "mediaUF"):
         assert campo in d["despesas"], campo
     assert d["votos"][0]["voto"] == "sim" and d["votos"][0]["id"] == "1-1"
 

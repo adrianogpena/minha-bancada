@@ -41,7 +41,7 @@ Valem para todo código novo e para qualquer arquivo que você tocar. Onde o có
    - CNPJ/CPF só dígitos, com zero à esquerda restaurado e dígito verificador conferido; inválido, zerado ou mascarado vale como ausente (`fornecedores.documento`). Reuse, não reimplemente.
    - Nome de fornecedor padronizado por `fornecedores.nome_chave` (sem acento, caixa, pontuação nem forma jurídica); `estaduais_comum.sem_acento`/`nome_limpo` para nomes de pessoa.
    - Datas em ISO `AAAA-MM-DD` (`estaduais_comum.data_br_iso`); valores em número (`valor_br`), mês como inteiro.
-   - Categoria de despesa mapeada para uma lista fixa única. Ainda não existe: cada UF tem a sua (`CATEGORIAS` em RR, `CATEGORIAS_VDP` em CE etc.). Ao criar ou mexer em categoria, defina a lista fixa em módulo comum, mapeie a categoria da fonte para ela e mantenha o rótulo original em outro campo. Categoria sem mapeamento vai para `outros` e dispara `comum.avisar`, nunca é inventada nem descartada.
+   - Categoria de despesa: lista fixa única em `scripts/categorias.py` (`CATEGORIAS`, regras em `REGRAS`, `categoria_id`, `agrupar`), para Câmara, Senado e Assembleias. O coletor grava o rótulo da fonte como veio (`categoria`/`tipo`); o `gerar*` agrupa por id e guarda os rótulos originais em `originais`. Rótulo sem regra vira `outros` e `gerar.py` avisa (`categorias.DESCONHECIDAS`): acrescente a palavra em `REGRAS` e um caso em `tests/test_categorias.py`. Não crie lista de categorias por UF nem reagrupe no front.
 
 ## Coletores de Assembleias estaduais (novo estado)
 
@@ -54,4 +54,4 @@ Um `scripts/coletar_estadual_<uf>.py` por UF fora do SAPL, com job próprio na m
 - **Ritmo da fonte.** Respeite pausa e conexões simultâneas (`CONEXOES_POR_HOST` e `PAUSA`); não paralelize além, o bloqueio costuma vir sem aviso.
 - **Prazo.** O job tem `ESTADUAIS_PRAZO_MIN` (25 min): o coletor guarda o que leu e termina. Grave o arquivo ao fim de cada etapa (ano, deputado) e faça cada etapa falhar com `comum.avisar` sem derrubar as outras.
 - **Teste offline** em `tests/test_coletar_estadual_<uf>.py`: caminho incremental (lê só o novo, junta com o guardado, completa velha lê tudo) e amostra real em `tests/fixtures/contratos/` (`CONTRATOS` no coletor). Todo `monkeypatch` deve cobrir a função que o código realmente chama (na BA, `baixar_ckan` e não `baixar`), senão o teste vai à internet.
-- Os itens que o coletor grava obedecem à seção "Dados sem duplicação" (documento, nome, data e categoria normalizados; ligação de deputado pelo núcleo).
+- Os itens que o coletor grava obedecem à seção "Dados sem duplicação" (documento, nome e data normalizados; ligação de deputado pelo núcleo; categoria só como a fonte publica, o `gerar*` mapeia).

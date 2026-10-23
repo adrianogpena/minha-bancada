@@ -33,16 +33,16 @@ function listaMaioresNotas(desp) {
 }
 
 export function painelGastos(desp, explicacao) {
-  const maxTipo = desp.porTipo[0]?.[1] || 1;
+  const maxTipo = desp.porCategoria[0]?.total || 1;
   return `
     <h2>Gastos da cota parlamentar em ${desp.ano}</h2>
     <p>Total no ano: <b>${reaisCentavos(desp.total)}</b>. ${esc(explicacao)}</p>
     ${comparativoCota(desp)}
     <div class="duas-colunas">
       <div>
-        <h3>Por tipo de despesa</h3>
-        ${desp.porTipo.length ? `<div class="barras">${desp.porTipo.map(([t, v]) => `
-          <div><div class="barra-rotulo"><span>${esc(t)}</span><b>${reais(v)}</b></div><div class="barra"><i style="width:${(v / maxTipo) * 100}%"></i></div></div>`).join("")}</div>`
+        <h3>Por categoria de despesa</h3>
+        ${desp.porCategoria.length ? `<div class="barras">${desp.porCategoria.map((c) => `
+          <div><div class="barra-rotulo"><span title="${esc(c.originais.map(([r, v]) => `${r}: ${reais(v)}`).join("\n"))}">${esc(c.categoria)}</span><b>${reais(c.total)}</b></div><div class="barra"><i style="width:${(c.total / maxTipo) * 100}%"></i></div></div>`).join("")}</div>`
           : `<p class="vazio">Nenhuma despesa registrada neste ano.</p>`}
       </div>
       <div>

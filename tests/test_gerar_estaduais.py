@@ -61,7 +61,8 @@ def test_uf_com_todos_os_arquivos_novos(tmp_path, monkeypatch):
     assert [a["ano"] for a in verba["anos"]] == [2024]
     a = verba["anos"][0]
     assert len(a["fornecedores"]) == 10 and a["fornecedores"][0]["fornecedor"] == "F11"
-    assert a["categorias"][0]["categoria"] == "Combustível"
+    assert a["categorias"][0]["id"] == "combustivel" and a["categorias"][0]["categoria"] == "Combustíveis e lubrificantes"
+    assert a["categorias"][0]["originais"][0][0] == "Combustível" and a["categorias"][1]["id"] == "imovel"
     assert [m["mes"] for m in a["meses"]] == [1, 2]
     assert s["remuneracao"]["mes"] == 3 and s["remuneracao"]["bruto"] == 120
     assert s["presenca"]["periodos"][0]["presente"] == 10

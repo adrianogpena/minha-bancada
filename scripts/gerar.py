@@ -12,6 +12,7 @@ import unicodedata
 from collections import Counter, defaultdict
 from pathlib import Path
 
+import categorias
 import gerar_estaduais
 import fornecedores as nucleo_fornecedores
 import candidaturas
@@ -271,12 +272,12 @@ def resumir_despesas(ano: int, itens: list) -> dict:
     """Totais por tipo, mês e fornecedor, no formato que o site usa para deputados e senadores."""
     por_tipo, por_mes, fornecedores = Counter(), Counter(), Counter()
     for i in itens:
-        por_tipo[i["tipo"] or "Outros"] += i["valor"]
+        por_tipo[i["tipo"]] += i["valor"]
         por_mes[i["mes"]] += i["valor"]
         fornecedores[i["fornecedor"] or "Não informado"] += i["valor"]
     return {
         "ano": ano, "total": round(sum(por_tipo.values()), 2),
-        "porTipo": sorted(([k, round(v, 2)] for k, v in por_tipo.items()), key=lambda x: -x[1]),
+        "porCategoria": categorias.agrupar(por_tipo),
         "porMes": sorted(([k, round(v, 2)] for k, v in por_mes.items())),
         "fornecedores": [[k, round(v, 2)] for k, v in fornecedores.most_common(10)],
         "recentes": itens[:30],
@@ -482,7 +483,7 @@ def main():
         por_mes = Counter()
         fornecedores = Counter()
         for i in itens:
-            por_tipo[i["tipo"] or "Outros"] += i["valor"]
+            por_tipo[i["tipo"]] += i["valor"]
             por_mes[i["mes"]] += i["valor"]
             fornecedores[i["fornecedor"] or "Não informado"] += i["valor"]
         total_gasto = totais_gasto[did]
@@ -513,7 +514,7 @@ def main():
             "totalVotacoes": total_nominais, "eleicao": eleicoes_deps.get(did), "condicao": d.get("condicaoEleitoral"),
             "despesas": {
                 "ano": d["despesas"]["ano"], "total": total_gasto,
-                "porTipo": sorted(([k, round(v, 2)] for k, v in por_tipo.items()), key=lambda x: -x[1]),
+                "porCategoria": categorias.agrupar(por_tipo),
                 "porMes": sorted(([k, round(v, 2)] for k, v in por_mes.items())),
                 "fornecedores": [[k, round(v, 2)] for k, v in fornecedores.most_common(10)],
                 "recentes": itens[:30],
@@ -556,6 +557,9 @@ def main():
     meta["ano"] = next(iter(deputados.values()))["despesas"]["ano"] if deputados else None
     meta["periodoVotacoes"] = [votacoes[-1]["data"], votacoes[0]["data"]] if votacoes else None
     salvar(SAIDA / "meta.json", meta)
+    if categorias.DESCONHECIDAS:
+        print(f"AVISO: {len(categorias.DESCONHECIDAS)} categorias de despesa sem regra em categorias.py (entraram em 'outros'): "
+              + "; ".join(sorted(categorias.DESCONHECIDAS)[:20]))
     print(f"Gerado: {len(resumo_deps)} deputados, {len(lista_votacoes)} votações nominais -> {SAIDA}")
 
 

@@ -14,6 +14,7 @@ import argparse
 import html
 import json
 import os
+import shutil
 import smtplib
 import subprocess
 from collections import Counter, defaultdict
@@ -24,6 +25,7 @@ from urllib.parse import quote
 import nomes_legados
 
 RAIZ = Path(__file__).resolve().parent.parent
+GIT = shutil.which("git") or "git"
 SITE = "https://adrianogpena.github.io/minha-bancada/"
 LIMITE = 12  # itens listados por seção; o resto vira "e mais N"
 TIPOS_DESTAQUE = ("PL", "PLP", "PEC", "PDL", "MPV")
@@ -35,7 +37,7 @@ def link_historico(data: str, locais=None) -> str:
 
 
 def git(*args: str) -> str:
-    return subprocess.check_output(["git", *args], cwd=RAIZ, text=True)
+    return subprocess.check_output([GIT, *args], cwd=RAIZ, text=True)
 
 
 def carregar(rev: str, caminho: str):

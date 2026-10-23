@@ -21,7 +21,7 @@ import zipfile
 from concurrent.futures import ThreadPoolExecutor
 from datetime import date, datetime
 from html import unescape
-from xml.etree import ElementTree
+from defusedxml import ElementTree
 
 import estaduais_comum as comum
 

@@ -22,7 +22,7 @@ import zlib
 from concurrent.futures import ThreadPoolExecutor
 from datetime import date, datetime, timedelta
 from html import unescape
-from xml.etree import ElementTree
+from defusedxml import ElementTree
 
 import requests
 import urllib3

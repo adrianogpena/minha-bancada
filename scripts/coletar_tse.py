@@ -417,7 +417,7 @@ def salvar_ano(ano: int, pasta: Path, eleitos: dict) -> None:
         lista.sort(key=lambda e: (e["cargo"], e["municipio"] or "", e["urna"] or ""))
         (pasta / f"{uf}.json").write_text(json.dumps(lista, ensure_ascii=False, separators=(",", ":")), encoding="utf-8")
     (pasta / "_coleta.json").write_text(json.dumps({
-        "coletadoEm": dt.datetime.now(dt.timezone.utc).isoformat(timespec="seconds"),
+        "coletadoEm": dt.datetime.now(dt.UTC).isoformat(timespec="seconds"),
         "eleitos": len(eleitos),
         "versao": VERSAO,
     }), encoding="utf-8")
@@ -434,7 +434,7 @@ def precisa_coletar(ano: int, forcar: bool) -> bool:
     if ano != ANO_EM_ANDAMENTO:
         return False
     quando = dt.datetime.fromisoformat(info["coletadoEm"])
-    return dt.datetime.now(dt.timezone.utc) - quando > dt.timedelta(days=DIAS_ENTRE_ATUALIZACOES)
+    return dt.datetime.now(dt.UTC) - quando > dt.timedelta(days=DIAS_ENTRE_ATUALIZACOES)
 
 
 def main():

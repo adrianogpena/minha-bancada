@@ -1,4 +1,3 @@
-import pytest
 
 import gerar_politicos as g
 
@@ -42,7 +41,7 @@ def test_mandatos_nao_se_sobrepoem_para_o_mesmo_cargo_executivo():
 def test_cargos_atuais_existem():
     for cargos in g.MANDATO_ATUAL.values():
         assert cargos <= set(g.CARGOS)
-    assert g.MUNICIPAIS <= set(g.CARGOS)
+    assert set(g.CARGOS) >= g.MUNICIPAIS
 
 
 def test_perfil_eleitos_usa_as_mesmas_posicoes_do_eleitorado():

@@ -111,10 +111,10 @@ def test_coletar_grava_arquivos(tmp_path, monkeypatch):
     a = amostra("estadual_rj_presenca")
     doc_url = f"{rj.PRESENCA_BASE}/ordemdia.nsf/x/abc?OpenDocument"
     planilha = rj.TRANSPARENCIA + "/download-spic?file=planilha"
-    pagina_emendas = ('<div id="collapse-2026"><a href="/download-spic?file=planilha"><i><span>excel</span></i></a></div>').encode()
+    pagina_emendas = (b'<div id="collapse-2026"><a href="/download-spic?file=planilha"><i><span>excel</span></i></a></div>')
     cab = {"A": "Emenda", "B": "Autor", "D": "Valor", "M": "Objeto"}
     sessao = Sessao({
-        rj.PRESENCA_URL: f'<a href="/ordemdia.nsf/x/abc?OpenDocument">10/15/2026</a>'.encode(),
+        rj.PRESENCA_URL: b'<a href="/ordemdia.nsf/x/abc?OpenDocument">10/15/2026</a>',
         doc_url: a["html"].encode("utf-8"),
         rj.EMENDAS_URL: pagina_emendas,
         planilha: xlsx([cab, {"A": "1", "B": "Alan Lopes", "D": "1000", "M": "Obra"}]),

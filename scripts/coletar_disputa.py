@@ -70,7 +70,7 @@ def coletar_ano(ano: int) -> None:
     for uf, mapa in por_uf.items():
         (pasta / f"{uf}.json").write_text(json.dumps(mapa, ensure_ascii=False, separators=(",", ":")), encoding="utf-8")
     (pasta / "_coleta.json").write_text(json.dumps({
-        "coletadoEm": dt.datetime.now(dt.timezone.utc).isoformat(timespec="seconds"), "versao": VERSAO}), encoding="utf-8")
+        "coletadoEm": dt.datetime.now(dt.UTC).isoformat(timespec="seconds"), "versao": VERSAO}), encoding="utf-8")
     print(f"TSE disputa {ano}: {len(dados)} cargos/locais em {len(por_uf)} arquivos")
 
 

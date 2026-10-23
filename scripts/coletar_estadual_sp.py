@@ -18,7 +18,7 @@ import io
 import re
 import sys
 import time
-import xml.etree.ElementTree as ET
+from defusedxml import ElementTree as ET
 import zipfile
 from collections import defaultdict
 from concurrent.futures import ThreadPoolExecutor

@@ -31,7 +31,7 @@ import re
 import shutil
 import subprocess
 from collections import Counter, defaultdict
-from datetime import date, datetime, timezone
+from datetime import date
 from pathlib import Path
 
 import feeds
@@ -64,7 +64,7 @@ def ler_lote(rev: str, caminhos: list[str]) -> dict:
     """{caminho: JSON} dos arquivos que existem em `rev`, com um único processo git."""
     if not caminhos:
         return {}
-    p = subprocess.run(["git", "cat-file", "--batch"], cwd=r.RAIZ, check=True, capture_output=True,
+    p = subprocess.run([r.GIT, "cat-file", "--batch"], cwd=r.RAIZ, check=True, capture_output=True,
                        input="".join(f"{rev}:{c}\n" for c in caminhos).encode())
     saida, buf, pos = {}, p.stdout, 0
     for c in caminhos:

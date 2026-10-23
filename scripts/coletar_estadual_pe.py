@@ -17,7 +17,7 @@ import html as html_lib
 import json
 import re
 import sys
-import xml.etree.ElementTree as ET
+from defusedxml import ElementTree as ET
 from concurrent.futures import ThreadPoolExecutor
 from datetime import date
 

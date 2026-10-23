@@ -1,7 +1,6 @@
 import xml.etree.ElementTree as ET
 from collections import defaultdict
 
-import pytest
 
 import feeds
 import resumo_email as r

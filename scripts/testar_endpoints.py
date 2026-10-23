@@ -13,7 +13,6 @@ Código de saída 1 se algum endpoint estiver com erro.
 
 import argparse
 import datetime as dt
-import json
 import sys
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path

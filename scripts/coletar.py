@@ -212,7 +212,7 @@ def coletar_deputado(dep: dict, ano: int, cota: dict[int, list] | None = None) -
         ],
         "despesas": {"ano": ano, "itens": itens_cota},
         **({"frentes": frentes} if frentes is not None else {}),
-        "coletadoEm": dt.datetime.now(dt.timezone.utc).isoformat(timespec="seconds"),
+        "coletadoEm": dt.datetime.now(dt.UTC).isoformat(timespec="seconds"),
     }
 
 
@@ -1013,7 +1013,7 @@ def main():
             except Exception as e:
                 avisar(f"{etapa.__name__}: {e}")
     salvar(DADOS / "meta.json", {
-        "atualizadoEm": dt.datetime.now(dt.timezone.utc).isoformat(timespec="seconds"),
+        "atualizadoEm": dt.datetime.now(dt.UTC).isoformat(timespec="seconds"),
         "fonte": "API de Dados Abertos da Câmara dos Deputados",
         "fonteUrl": "https://dadosabertos.camara.leg.br",
     })

@@ -68,7 +68,7 @@ def coletar_ano(ano: int) -> None:
                 (pasta / f"{uf}.json").write_text(json.dumps(mapa, ensure_ascii=False, separators=(",", ":")), encoding="utf-8")
                 locais += len(mapa)
     (pasta / "_coleta.json").write_text(json.dumps({
-        "coletadoEm": dt.datetime.now(dt.timezone.utc).isoformat(timespec="seconds"), "versao": VERSAO}), encoding="utf-8")
+        "coletadoEm": dt.datetime.now(dt.UTC).isoformat(timespec="seconds"), "versao": VERSAO}), encoding="utf-8")
     print(f"TSE partidos {ano}: {locais} cargos/locais")
 
 

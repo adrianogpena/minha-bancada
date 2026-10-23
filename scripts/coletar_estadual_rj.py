@@ -17,8 +17,7 @@ import zipfile
 from datetime import date
 from html import unescape
 from io import BytesIO
-from urllib.parse import quote
-from xml.etree import ElementTree
+from defusedxml import ElementTree
 
 import estaduais_comum as comum
 

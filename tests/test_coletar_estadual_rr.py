@@ -168,7 +168,7 @@ def test_coletar_grava_deputados_verbas_e_diarias(tmp_path, monkeypatch):
     pastas = {f"Ano {ano}/": f'<li data-type="folder" data-name="02-Fevereiro" data-path="Ano {ano}/02-Fevereiro/"></li>'}
     arquivos_verba = (f'<li class="file_record" data-name="Dep. Joilma Teodora de Araujo Silva - Fevereiro {ano}.odt" data-file-type="odt"><a href="http://x/v.odt?wpdf_download=true&#038;i=1"></a></li>'
                       f'<li class="file_record" data-name="Dep. Joilma Teodora de Araujo Silva - Fevereiro {ano}.pdf" data-file-type="pdf"><a href="http://x/v.pdf?wpdf_download=true&#038;i=2"></a></li>')
-    arquivos_diaria = f'<li class="file_record" data-name="DEMONSTRATIVO FEV.xlsx" data-file-type="xlsx"><a href="http://x/d.xlsx?wpdf_download=true"></a></li>'
+    arquivos_diaria = '<li class="file_record" data-name="DEMONSTRATIVO FEV.xlsx" data-file-type="xlsx"><a href="http://x/d.xlsx?wpdf_download=true"></a></li>'
 
     class Resp:
         def __init__(self, texto=None, conteudo=None, dados=None):

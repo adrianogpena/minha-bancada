@@ -36,7 +36,7 @@ def test_arquivos_por_ano_ignora_semestres_e_outros():
 
 def test_linhas_da_assembleia_filtra_unidade_gestora():
     linhas = ["﻿UnidadeGestora;Favorecido;HistoricoDocumento",
-              "ASSEMBLEIA LEGISLATIVA DO ESTADO DO ESPÍRITO SANTO;A;x".encode("utf-8"),
+              "ASSEMBLEIA LEGISLATIVA DO ESTADO DO ESPÍRITO SANTO;A;x".encode(),
               "SECRETARIA DA SAUDE;B;PAGO A ASSEMBLEIA LEGISLATIVA",
               "ASSEMBLEIA LEGISLATIVA;C"]
     assert [l["Favorecido"] for l in es.linhas_da_assembleia(linhas)] == ["A"]

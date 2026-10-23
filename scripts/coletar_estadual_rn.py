@@ -237,7 +237,7 @@ def coletar_presenca(s, deputados: list[dict], sessoes: list[dict]) -> None:
             registros = pegar(s, f"reuniao/presenca/{r['id']}")["dados"]
         except comum.PrazoEsgotado:
             raise
-        except Exception as e:
+        except Exception:
             falhas.append(r["id"])
             return None
         return str(r["id"]), {"data": r["dataInicio"], "registros": [{"id": x["id"], "evento": {"chave": (x.get("evento") or {}).get("chave")}} for x in registros]}
@@ -301,7 +301,7 @@ def coletar_votacoes(s, deputados: list[dict], sessoes: list[dict]) -> None:
             return vid, None
         try:
             return vid, votacao(p, pegar(s, f"processo/{p['id']}/detalhamento-votacao/{p['resultadoVotacao']['reuniao']['id']}"), ids)
-        except Exception as e:
+        except Exception:
             sem_detalhe.append(vid)
             return vid, None
 

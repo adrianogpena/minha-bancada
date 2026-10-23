@@ -212,6 +212,8 @@ def coletar() -> None:
     r = s.get(EMENDAS_URL, timeout=20)
     r.raise_for_status()
     for ano, url in links_emendas(texto(r)).items():
+        if comum.ano_encerrado(ano, date.today(), pasta / f"emendas_{ano}.json"):
+            continue
         resp = s.get(url, timeout=60)
         resp.raise_for_status()
         registros = emendas_da_aba(ler_xlsx(resp.content).get("Impositivas", []))

@@ -120,7 +120,7 @@ def linhas_diarias(texto: str) -> list[dict]:
 
 def coletar_diarias(s) -> None:
     hoje = date.today()
-    for ano in range(ANO_INICIAL, hoje.year + 1):
+    for ano in range(max(ANO_INICIAL, hoje.year - 1), hoje.year + 1):  # só conta e avisa, nada é gravado: anos encerrados não precisam
         n = len(linhas_diarias(baixar(s, DIARIAS_CSV.format(ano=ano))))
         print(f"MS: diárias {ano}: {n} lançamentos" + (" (portal: sem despesa)" if not n else ""))
         if n:

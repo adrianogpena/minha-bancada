@@ -259,6 +259,8 @@ def coletar() -> None:
     print(f"PA: presença {len(itens)} registros")
 
     for ano in range(PRIMEIRO_ANO, hoje.year + 1):
+        if all(comum.ano_encerrado(ano, hoje, pasta / f"{nome}_{ano}.json") for nome in ("verbas", "diarias")):
+            continue
         linhas = linhas_dashboard(consulta_dashboard(s, DASHBOARD_VERBA, ano))
         verba = itens_verba(linhas, ligar({l["deputado"] for l in linhas}, deputados), ano)
         gabinete = []

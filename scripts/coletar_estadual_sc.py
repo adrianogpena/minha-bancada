@@ -280,6 +280,8 @@ def coletar() -> None:
     comum.salvar(pasta / "deputados.json", {"fonte": DEPUTADOS_URL, "host": None, "legislatura": "2023-2027", "deputados": deputados})
 
     for ano in range(PRIMEIRO_ANO, hoje.year + 1):
+        if all(comum.ano_encerrado(ano, hoje, pasta / f"{nome}_{ano}.json") for nome in ("verbas", "diarias")):
+            continue
         gab = itens_gabinetes(ler_csv(baixar(s, f"{GABINETES_PAGINA}/csv/{ano}").content.decode("utf-8-sig")), deputados)
         comum.salvar(pasta / f"verbas_{ano}.json", {"coletadoEm": agora, "fonte": GABINETES_PAGINA, "itens": gab})
         dia = itens_diarias(ler_csv(baixar(s, f"{DIARIAS_PAGINA}/csv/{ano}").content.decode("utf-8-sig")), deputados)

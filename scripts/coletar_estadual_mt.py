@@ -138,6 +138,8 @@ def coletar() -> None:
     comum.salvar(pasta / "deputados.json", {"fonte": f"{PORTAL}servidores", "host": None, "legislatura": "2023-2027", "deputados": deputados})
     print(f"MT: {len(deputados)} deputados")
     for ano in range(PRIMEIRO_ANO, hoje.year + 1):
+        if all(comum.ano_encerrado(ano, hoje, pasta / f"{nome}_{ano}.json") for nome in ("remuneracao", "diarias")):
+            continue
         remuneracao = []
         for sv in servidores:
             remuneracao += itens_remuneracao(_json(s, f"/servidores/{sv['matricula']}", ano, ignorar_404=True), str(sv["matricula"]), ano)

@@ -368,7 +368,10 @@ def coletar_diarias(s, deputados: list[dict], pasta, hoje: date) -> None:
     lista = Lista(s, DIARIAS_PAGINA)
     baixar = _baixar(s)
     por_ano: dict[int, list] = {}
+    encerrado = lambda ano: comum.ano_encerrado(ano, hoje, pasta / f"diarias_{ano}.json")  # o arquivo gravado fica como está
     for ano, mes, caminho in _meses(lista):
+        if encerrado(ano):
+            continue
         arquivos = lista.pasta(caminho)[1]
         pdfs = [a for a in arquivos if a["tipo"] == "pdf" and not re.search(r"sem efeito", a["nome"], re.I)]
         planilhas = [a for a in arquivos if a["tipo"] in ("xlsx", "ods") and not re.search(r"sem efeito", a["nome"], re.I)]
@@ -377,6 +380,8 @@ def coletar_diarias(s, deputados: list[dict], pasta, hoje: date) -> None:
             for i in itens_diarias(registros, deputados, (pdfs[0] if pdfs else p)["url"]):
                 por_ano.setdefault(int((i["data"] or f"{ano}")[:4]), []).append(i)
     for ano, itens in sorted(por_ano.items()):
+        if encerrado(ano):
+            continue
         itens.sort(key=lambda i: (i["data"] or "", str(i["idDeputado"])))
         comum.salvar(pasta / f"diarias_{ano}.json", {"coletadoEm": hoje.isoformat(), "fonte": DIARIAS_PAGINA, "itens": itens})
         print(f"RR: diárias {ano} {len(itens)} registros")

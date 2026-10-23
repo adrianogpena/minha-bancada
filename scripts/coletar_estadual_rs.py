@@ -93,7 +93,7 @@ def coletar() -> None:
     r = s.get(CKAN, timeout=30)
     r.raise_for_status()
     for ano, url in sorted(arquivos_por_ano(r.json()).items()):
-        if ano < PRIMEIRO_ANO:
+        if ano < PRIMEIRO_ANO or comum.ano_encerrado(ano, date.today(), pasta / f"diarias_{ano}.json"):
             continue
         resp = s.get(url, timeout=300)
         resp.raise_for_status()

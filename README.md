@@ -103,6 +103,7 @@ Sem `--limite` a coleta pega todos os deputados em exercício. `--dias` só vale
 | `scripts/identidades.py` | Núcleo de identidades: id próprio de pessoa e de partido ligando TSE, Câmara, Senado e Assembleias (`site/dados/nucleo/`), com o método e a confiança de cada ligação. Chamado pelo `gerar.py`. |
 | `scripts/fornecedores.py` | Núcleo de fornecedores: normaliza CNPJ/CPF e nome e gera o ranking nacional das cotas e verbas (Câmara, Senado e Assembleias) em `site/dados/fornecedores.json` e `site/dados/nucleo/fornecedores.json`. Chamado pelo `gerar.py`. |
 | `scripts/mandatos.py` | Núcleo de mandatos: cargo, local, período, partido na eleição e hoje, condição (titular ou suplente) e se a pessoa está em exercício, em `site/dados/nucleo/mandatos.json`. Chamado pelo `gerar.py`. |
+| `scripts/candidaturas.py` | Núcleo de candidaturas e disputas: liga cada eleito do TSE à pessoa, ao partido, às contas de campanha e à disputa (comparecimento, votos por partido e coligações), em `site/dados/nucleo/candidaturas/` e `disputas/`. Chamado pelo `gerar.py`. |
 | `scripts/gerar.py` | Monta os JSONs enxutos que o site lê. Não acessa a internet. |
 | `scripts/gerar_politicos.py` | Junta TSE, Câmara e Senado no índice de todos os políticos (chamado pelo `gerar.py`). |
 | `dados/proposicoes_detalhe.json` | Situação atual de cada projeto (aprovado, arquivado, em tramitação), da API da Câmara. Cada execução consulta até 4000 projetos (`DETALHES_POR_EXECUCAO`), então o cache se completa em alguns dias. |

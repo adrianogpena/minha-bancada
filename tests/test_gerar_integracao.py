@@ -102,3 +102,8 @@ def test_mandatos_ligam_pessoa_e_exercicio(site):
     quem = ler(site / "deputado" / "101.json")["pessoa"]
     (m,) = [m for m in ler(site / "nucleo" / "mandatos.json") if m["pessoa"] == quem]
     assert m["cargo"] == "DEPUTADO FEDERAL" and m["status"] == "atual" and m["confirmado"] is True and m["fontes"] == {"camara": 101}
+
+
+def test_nucleo_gera_candidaturas_e_disputas_mesmo_sem_tse(site):
+    assert (site / "nucleo" / "mandatos.json").is_file()
+    assert not (site / "nucleo" / "candidaturas").exists()      # o dados/ mínimo não tem eleitos do TSE

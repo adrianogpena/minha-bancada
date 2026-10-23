@@ -124,6 +124,11 @@ def federacao_de(texto: str | None, desconhecidas: set | None = None) -> tuple |
     return tuple(sorted(ids)) if len(ids) > 1 else None
 
 
+def federacao_id(membros: tuple) -> str:
+    """"fed_<partidos em ordem alfabética>" de uma federação (membros no formato de `federacao_de`)."""
+    return "fed_" + "_".join(m[4:] for m in membros)
+
+
 FEDERAIS = {"DEPUTADO FEDERAL"}
 SENADORES = {"SENADOR"}
 ESTADUAIS = {"DEPUTADO ESTADUAL", "DEPUTADO DISTRITAL"}
@@ -315,7 +320,7 @@ def construir(deputados: dict, bruto: Path) -> dict:
     for pid in sorted(usadas - {x["id"] for x in linhas}):
         linhas.append({"id": pid, "sigla": pid[4:].upper(), "conhecido": False})
     nomes_partido = {x["id"]: x["sigla"] for x in linhas}
-    fed_saida = [{"id": "fed_" + "_".join(m[4:] for m in membros), "nome": "/".join(nomes_partido.get(m, m) for m in membros),
+    fed_saida = [{"id": federacao_id(membros), "nome": "/".join(nomes_partido.get(m, m) for m in membros),
                   "membros": list(membros), "eleitos": n}
                  for membros, n in sorted(federacoes.items())]
 

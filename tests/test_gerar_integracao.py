@@ -78,6 +78,6 @@ def test_tudo_que_o_front_busca_com_caminho_fixo_e_gerado_ou_conhecido(site):
 def test_proposicoes_ligam_indice_ficha_autores_e_votacao(site):
     (item,) = ler(site / "proposicoes.json")
     assert item["k"] == "c-900" and (item["t"], item["n"], item["a"]) == ("PL", 1, 2026)
-    ficha = ler(site / "proposicao" / "c-900.json")
-    assert [(a["id"], a["nome"], a["partido"]) for a in ficha["autores"]] == [("101", "Ana Souza", "PT")]
-    assert ficha["votacoes"] == []   # a votação 1-1 tem propId 900 mas só entra por proposicoes_votacoes.json (coleta da Câmara)
+    ficha = ler(site / "proposicao" / "c-2026.json")["900"]
+    assert ficha["au"] == [{"id": "101"}]
+    assert "v" not in ficha   # a votação 1-1 tem propId 900 mas só entra por proposicoes_votacoes.json (coleta da Câmara)

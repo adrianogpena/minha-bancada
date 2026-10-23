@@ -14,8 +14,12 @@ def test_camara_e_senado_ligam_autores_e_votacoes(tmp_path):
                                     sens, aut_sen, vot_sen, TIPOS_PROJETO, destino_projeto)
     assert total == 2   # o requerimento fica de fora
     import json
-    ficha = json.loads((tmp_path / "proposicao" / "c-5.json").read_text(encoding="utf-8"))
-    assert [(a["nome"], a.get("id"), a.get("principal")) for a in ficha["autores"]] == [("Ana", "101", True), ("Poder Executivo", None, None)]
-    assert ficha["votacoes"][0]["nominal"] and ficha["votacoes"][0]["placar"] == {"sim": 3}
-    sen = json.loads((tmp_path / "proposicao" / "s-88.json").read_text(encoding="utf-8"))
-    assert sen["autores"][0]["id"] == "7" and sen["votacoes"][0]["id"] == "9" and sen["d"] == "aprovada"
+    lido = lambda nome: json.loads((tmp_path / nome).read_text(encoding="utf-8"))
+    ficha = lido("proposicao/c-2019.json")["5"]
+    assert ficha["au"] == [{"id": "101", "p": 1}, {"nome": "Poder Executivo"}]   # nome e partido ficam em deputados.json
+    assert ficha["v"] == [{"id": "5-1", "data": "2023-01-01"}]                   # nominal: descrição e placar ficam em votacoes.json
+    assert "e" not in ficha and "s" not in ficha                                 # ementa e situação, só no índice
+    sen = lido("proposicao/s-2024.json")["88"]
+    assert sen["au"] == [{"id": "7", "p": 1}] and sen["v"] == [{"id": "9", "data": "2025-01-02"}]
+    assert [i["d"] for i in lido("proposicoes.json") if i["k"] == "s-88"] == ["aprovada"]
+    assert lido("senadores.json") == [{"id": "7", "nome": "Bia", "partido": "PL", "uf": "RJ"}]

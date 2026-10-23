@@ -32,27 +32,35 @@ export async function paginaProposicoes() {
 }
 
 /* ---------- ficha ---------- */
-const linkPolitico = (a) => (!a.id ? esc(a.nome) : `<a href="${a.casa === "s" ? `politico.html?f=senado&i=${encodeURIComponent(a.id)}` : `deputado.html?id=${encodeURIComponent(a.id)}`}">${esc(a.nome)}</a>`);
+const linkPolitico = (a, casa) => (!a.id ? esc(a.nome) : `<a href="${casa === "s" ? `politico.html?f=senado&i=${encodeURIComponent(a.id)}` : `deputado.html?id=${encodeURIComponent(a.id)}`}">${esc(a.nome)}</a>`);
 
+/* O cabeçalho vem do índice; autores e votações, do arquivo do ano; nome, partido e UF, das listas de políticos; placar, das listas de votações. */
 export async function paginaProposicao() {
   const alvo = $("#conteudo");
   const k = param("k") || "";
-  let p;
-  try { p = await carregar(`dados/proposicao/${encodeURIComponent(k)}.json`); } catch (e) { return semDadosLocais(alvo, e, null); }
+  let p, f, politicos, lista;
+  const casa = k[0] === "s" ? "s" : "c", id = k.slice(2), senado = casa === "s";
+  try {
+    p = (await carregar("dados/proposicoes.json")).find((x) => x.k === k);
+    if (!p) throw new Error(`proposição ${k} não encontrada`);
+    [f, politicos, lista] = await Promise.all([carregar(`dados/proposicao/${casa}-${p.a}.json`), carregar(senado ? "dados/senadores.json" : "dados/deputados.json"), carregar(senado ? "dados/votacoes_senado.json" : "dados/votacoes.json")]);
+  } catch (e) { return semDadosLocais(alvo, e, null); }
+  f = f[id] || {};
+  const quem = new Map(politicos.map((x) => [String(x.id), x]));
+  const nominais = new Map(lista.map((x) => [String(x.id), x]));
+  const autores = (f.au || []).map((a) => ({ ...a, ...(a.id ? quem.get(a.id) : {}), principal: !!a.p }));
+  const votacoes = (f.v || []).map((v) => ({ ...v, ...(nominais.get(v.id) || {}), nominal: nominais.has(v.id) }));
   document.title = `${rotulo(p)} | Minha Bancada`;
-  const senado = p.c === "s";
-  const id = k.slice(2);
-  const votacoes = p.votacoes || [];
   alvo.innerHTML = `
     <section class="abertura">
-      <p>${nomeCasa(p.c)}${p.apresentacao ? `, apresentada em ${data(p.apresentacao)}` : ""}</p>
+      <p>${nomeCasa(casa)}${f.ap ? `, apresentada em ${data(f.ap)}` : ""}</p>
       <h1 style="max-width:none;font-size:clamp(28px,4.5vw,44px)">${esc(rotulo(p))}</h1>
       ${TIPOS_PROJETO[p.t] ? `<p>${esc(TIPOS_PROJETO[p.t])}</p>` : ""}
       <p class="texto-longo">${esc(p.e)}</p>
-      <p class="texto-longo"><b>Situação:</b> ${esc(p.s || "ainda não consultada")}${p.orgao ? ` (${esc(p.orgao)})` : ""}</p>
+      <p class="texto-longo"><b>Situação:</b> ${esc(p.s || "ainda não consultada")}${f.o ? ` (${esc(f.o)})` : ""}</p>
     </section>
-    <h2>Autores (${p.autores.length})</h2>
-    ${p.autores.length ? `<ul class="itens">${p.autores.map((a) => `<li>${linkPolitico(a)}${a.principal ? ` <span class="quando">autor principal</span>` : ""}<span class="quando texto">${esc([a.partido, a.uf].filter(Boolean).join("/") || (a.id ? "" : "sem ficha no site"))}</span></li>`).join("")}</ul>` : `<p class="vazio">Autoria ainda não coletada.</p>`}
+    <h2>Autores (${autores.length})</h2>
+    ${autores.length ? `<ul class="itens">${autores.map((a) => `<li>${linkPolitico(a, casa)}${a.principal ? ` <span class="quando">autor principal</span>` : ""}<span class="quando texto">${esc([a.partido, a.uf].filter(Boolean).join("/") || (a.id ? "" : "sem ficha no site"))}</span></li>`).join("")}</ul>` : `<p class="vazio">Autoria ainda não coletada.</p>`}
     <h2>Votações (${votacoes.length})</h2>
     ${votacoes.length ? `<ul class="itens">${votacoes.map((v, i) => `<li>
       <span class="quando">${data(v.data)}${v.aprovada === 1 ? ", aprovada" : v.aprovada === 0 ? ", rejeitada" : ""}</span>
@@ -68,7 +76,7 @@ export async function paginaProposicao() {
     saida.textContent = "Carregando…";
     let det;
     try { det = await carregar(`dados/${senado ? "votacao_senado" : "votacao"}/${encodeURIComponent(v.id)}.json`); } catch (err) { return erro(saida, err); }
-    const render = (d) => `<li>${d.anterior || (senado && !d.id) ? esc(d.nome) : linkPolitico({ ...d, casa: p.c })}${selo(d.voto)}<span class="quando texto">${esc(d.partido)}${d.uf ? `/${esc(d.uf)}` : ""}</span></li>`;
+    const render = (d) => `<li>${d.anterior || (senado && !d.id) ? esc(d.nome) : linkPolitico(d, casa)}${selo(d.voto)}<span class="quando texto">${esc(d.partido)}${d.uf ? `/${esc(d.uf)}` : ""}</span></li>`;
     saida.innerHTML = `<div class="filtros" style="grid-template-columns:2fr 1fr"><label class="campo">Buscar<input type="search" class="b" placeholder="Nome, partido ou estado"></label>
       <label class="campo">Voto<select class="f"><option value="">Todos</option>${["sim", "nao", "abstencao", "obstrucao"].map((x) => `<option value="${x}">${VOTOS[x].rotulo}</option>`).join("")}</select></label></div><div class="l"></div>`;
     const desenhar = () => {

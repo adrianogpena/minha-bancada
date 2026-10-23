@@ -7,7 +7,7 @@ Todas as coletas rodam sozinhas no GitHub Actions (`.github/workflows/atualizar.
 
 ## Página Proposições: busca de projetos e PECs com os políticos ligados (2026-10-23)
 - **De onde:** nenhuma fonte nova; usa o que já é coletado (`proposicoes_autores.json`, `proposicoes_detalhe.json`, `proposicoes_votacoes.json`, `senado_autorias.json` e as votações nominais das duas casas).
-- **Como:** `scripts/gerar_proposicoes.py` (chamado pelo `gerar.py`) grava `site/dados/proposicoes.json` (índice dos projetos, PECs etc. da Câmara e do Senado) e `site/dados/proposicao/<c|s>-<id>.json` (autores com ficha no site e votações). A busca roda no navegador (`proposicoes.html`); a ficha (`proposicao.html?k=c-<id>`) lista os autores e, para cada votação nominal, quem votou como (lido de `votacao[_senado]/<id>.json`). Só entram proposições de deputados e senadores em exercício; requerimentos e emendas ficam de fora.
+- **Como:** `scripts/gerar_proposicoes.py` (chamado pelo `gerar.py`) grava `site/dados/proposicoes.json` (índice dos projetos, PECs etc. da Câmara e do Senado, com ementa e situação), `site/dados/proposicao/<c|s>-<ano>.json` (só autores e votações, por ano, sem repetir o que já está nas outras listas) e `site/dados/senadores.json`. A busca roda no navegador (`proposicoes.html`); a ficha (`proposicao.html?k=c-<id>`) junta esses arquivos com `deputados.json` e `votacoes[_senado].json` e lê o voto de cada político de `votacao[_senado]/<id>.json`. Só entram proposições de deputados e senadores em exercício; requerimentos e emendas ficam de fora.
 
 ## Anos encerrados não são baixados de novo em MS, MT, PA, RJ, RR, RS e SC (2026-10-23)
 - **De onde:** as mesmas fontes, sem endpoint novo.

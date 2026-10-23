@@ -203,6 +203,42 @@ def test_coletar_proposicoes_primeira_vez_comeca_na_legislatura(dados, monkeypat
         assert (fim - ini).days <= 88
 
 
+def test_coletar_proposicoes_migra_formato_antigo_e_guarda_a_ementa_uma_vez(dados, monkeypatch):
+    hoje = dt.date.today()
+    projeto = {"id": 1, "siglaTipo": "PL", "numero": 1, "ano": 2024, "ementa": "coletiva"}
+    for did in (7, 8):    # o mesmo projeto, assinado pelos dois deputados, repetido nos arquivos antigos
+        coletar.salvar(dados / "proposicoes" / f"{did}.json", {"ate": hoje.isoformat(), "itens": [projeto]})
+    monkeypatch.setattr(coletar, "get_todos", lambda c, **p: [])
+    assert [p["ementa"] for p in coletar.coletar_proposicoes({"id": 7, "nome": "A"})] == ["coletiva"]
+    coletar.coletar_proposicoes({"id": 8, "nome": "B"})
+    coletar.cadastro().gravar(forcar=True)
+    assert json.loads((dados / "proposicoes" / "7.json").read_text()) == {"ate": hoje.isoformat(), "ids": [1]}
+    assert json.loads((dados / "proposicoes_cadastro" / "2024.json").read_text(encoding="utf-8")) == {"1": ["PL", 1, "coletiva"]}
+    assert coletar.ids_de_projetos(coletar.TIPOS_PROJETO) == {"1"}
+    assert coletar.ids_de_projetos({"REQ"}) == set()
+
+
+def test_coletar_proposicoes_id_sem_cadastro_releia_desde_a_legislatura(dados, monkeypatch):
+    hoje = dt.date.today()
+    coletar.salvar(dados / "proposicoes" / "7.json", {"ate": hoje.isoformat(), "ids": [1]})     # execução interrompida antes de gravar o cadastro
+    chamadas = []
+    monkeypatch.setattr(coletar, "get_todos", lambda c, **p: chamadas.append(p) or [{"id": 1, "siglaTipo": "PL", "numero": 1, "ano": 2024, "ementa": "ok"}])
+    itens = coletar.coletar_proposicoes({"id": 7, "nome": "F"})
+    assert chamadas[0]["dataApresentacaoInicio"] == coletar.INICIO_LEGISLATURA and [p["ementa"] for p in itens] == ["ok"]
+
+
+def test_coletar_proposicoes_usa_o_cadastro_no_formato_novo(dados, monkeypatch):
+    hoje = dt.date.today()
+    coletar.salvar(dados / "proposicoes_cadastro" / "2024.json", {"1": ["PL", 1, "guardada"]})
+    coletar.salvar(dados / "proposicoes" / "7.json", {"ate": (hoje - dt.timedelta(days=20)).isoformat(), "ids": [1]})
+    chamadas = []
+    monkeypatch.setattr(coletar, "get_todos", lambda c, **p: chamadas.append(p) or [{"id": 2, "siglaTipo": "PEC", "numero": 5, "ano": 2025, "ementa": "nova"}])
+    itens = coletar.coletar_proposicoes({"id": 7, "nome": "F"})
+    assert [(p["id"], p["ementa"]) for p in itens] == [(2, "nova"), (1, "guardada")]
+    assert chamadas[0]["dataApresentacaoInicio"] == (hoje - dt.timedelta(days=30)).isoformat()      # incremental
+    assert json.loads((dados / "proposicoes" / "7.json").read_text())["ids"] == [2, 1]
+
+
 # ---------------------------------------------------------------- Câmara: detalhes das proposições
 
 def test_detalhes_proposicoes_prioriza_novas_e_marca_situacao_final(dados, monkeypatch):

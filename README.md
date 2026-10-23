@@ -118,7 +118,7 @@ Sem `--limite` a coleta pega todos os deputados em exercício. `--dias` só vale
 | `scripts/coletar_prefeitura_go.py` | O mesmo para Goiânia: consulta pública de processos do SUAP da Câmara, filtrada pelo interessado "Prefeito de Goiânia"; o link de cada projeto é a página pública do processo. Usa o certificado intermediário de `scripts/certs/`, que o servidor não envia. |
 | `dados/municipais/` | Cache dessas coletas, um arquivo por ano e capital. |
 | `dados/tse/` | Eleitos de cada eleição, um arquivo por estado. |
-| `dados/proposicoes/` | Proposições já coletadas de cada deputado. A API só aceita 3 meses por consulta, então a primeira coleta é longa e as seguintes buscam só o período novo. |
+| `dados/proposicoes/`, `dados/proposicoes_cadastro/` | Ids das proposições de cada deputado e, uma vez só por proposição, tipo, número e ementa (por ano). A API só aceita 3 meses por consulta, então a primeira coleta é longa e as seguintes buscam só o período novo. |
 | `site/` | O site: HTML, CSS e módulos ES em `assets/js/` (entrada `assets/app.js`), sem framework nem etapa de build. |
 | `.github/workflows/atualizar.yml` | Agenda diária: coletas em jobs paralelos, depois gera o site, salva o histórico e publica. |
 

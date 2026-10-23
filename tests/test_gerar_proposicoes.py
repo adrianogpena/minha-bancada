@@ -11,7 +11,8 @@ def test_camara_e_senado_ligam_autores_e_votacoes(tmp_path):
     aut_sen = {"7": [{"id": "88", "tipo": "PL", "numero": "10", "ano": 2024, "ementa": "Algo", "principal": True, "situacao": "Aprovada"}]}
     vot_sen = [{"id": "9", "propId": "88", "data": "2025-01-02", "descricao": "Plenário", "placar": {"sim": 1}, "aprovada": 1}]
     total = gerar_proposicoes.gerar(tmp_path, deps, {}, autorias, {"5": [{"id": "5-1", "data": "2023-01-01", "descricao": "d"}]}, nominais,
-                                    sens, aut_sen, vot_sen, TIPOS_PROJETO, destino_projeto)
+                                    sens, aut_sen, vot_sen, TIPOS_PROJETO, destino_projeto,
+                                    {("camara", "101"): "pes_ana", ("senado", "7"): "pes_bia"})
     assert total == 2   # o requerimento fica de fora
     import json
     lido = lambda nome: json.loads((tmp_path / nome).read_text(encoding="utf-8"))
@@ -23,3 +24,5 @@ def test_camara_e_senado_ligam_autores_e_votacoes(tmp_path):
     assert sen["au"] == [{"id": "7", "p": 1}] and sen["v"] == [{"id": "9", "data": "2025-01-02"}]
     assert [i["d"] for i in lido("proposicoes.json") if i["k"] == "s-88"] == ["aprovada"]
     assert lido("senadores.json") == [{"id": "7", "nome": "Bia", "partido": "PL", "uf": "RJ"}]
+    # relação proposição -> pessoa: só quem tem id no núcleo; o Executivo entra em semPessoa
+    assert lido("nucleo/autorias.json") == {"proposicoes": 2, "semPessoa": 1, "porPessoa": {"pes_ana": [["c-5", 1]], "pes_bia": [["s-88", 1]]}}

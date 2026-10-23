@@ -89,3 +89,10 @@ def test_nucleo_de_identidades_e_o_id_da_pessoa_nas_fichas(site):
     por_id = {p["id"]: p for p in pessoas}
     assert por_id[ler(site / "deputado" / "101.json")["pessoa"]]["fontes"]["camara"] == 101
     assert por_id[ler(site / "p" / "senado.json")["7"]["pessoa"]]["fontes"]["senado"] == "7"
+
+
+def test_autorias_ligam_proposicao_e_pessoa(site):
+    aut = ler(site / "nucleo" / "autorias.json")
+    quem = ler(site / "deputado" / "101.json")["pessoa"]
+    assert [k for k, _ in aut["porPessoa"][quem]] == ["c-900"]
+    assert any(i["k"] == "c-900" for i in ler(site / "proposicoes.json"))

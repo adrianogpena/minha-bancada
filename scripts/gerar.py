@@ -536,7 +536,7 @@ def main():
     votacoes_senado = gerar_senadores()
     total = gerar_proposicoes.gerar(SAIDA, deputados, detalhes, autorias, votacoes_projetos, nominais,
                                     ler(BRUTO / "senado.json", []) or [], ler(BRUTO / "senado_autorias.json", {}) or {},
-                                    votacoes_senado, TIPOS_PROJETO, destino_projeto)
+                                    votacoes_senado, TIPOS_PROJETO, destino_projeto, nucleo["chaves"])
     print(f"Gerado: {total} proposições para a busca")
     identidades.salvar_nucleo(nucleo, SAIDA / "nucleo")
     nucleo_fornecedores.salvar_fornecedores(nucleo_fornecedores.construir(deputados, BRUTO, nucleo), SAIDA)

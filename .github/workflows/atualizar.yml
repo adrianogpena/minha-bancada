@@ -156,7 +156,7 @@ jobs:
           retention-days: 1
 
   estaduais:
-    name: Coletar Assembleias (${{ matrix.id }})
+    name: Coletar Assembleia ${{ matrix.rotulo }}
     runs-on: ubuntu-latest
     timeout-minutes: 35
     strategy:
@@ -164,23 +164,23 @@ jobs:
       matrix:
         # cada Assembleia fora do SAPL tem site próprio e ritmo próprio: um job por UF, para uma lenta não segurar as outras
         include:
-          - { id: sapl, ufs: "PB AM AL RO AC PI TO" }   # Assembleias que usam o SAPL (API igual, coleta rápida)
-          - { id: ba, ufs: "BA" }
-          - { id: ce, ufs: "CE" }
-          - { id: go, ufs: "GO" }
-          - { id: mg, ufs: "MG" }
-          - { id: ms, ufs: "MS" }
-          - { id: mt, ufs: "MT" }
-          - { id: pa, ufs: "PA" }
-          - { id: pe, ufs: "PE" }
-          - { id: pr, ufs: "PR" }
-          - { id: rj, ufs: "RJ" }
-          - { id: rn, ufs: "RN" }
-          - { id: rr, ufs: "RR" }
-          - { id: rs, ufs: "RS" }
-          - { id: sc, ufs: "SC" }
-          - { id: se, ufs: "SE" }
-          - { id: sp, ufs: "SP" }
+          - { id: sapl, ufs: "PB AM AL RO AC PI TO", rotulo: "PB, AM, AL, RO, AC, PI e TO (SAPL)" }   # Assembleias que usam o SAPL (API igual, coleta rápida)
+          - { id: ba, ufs: "BA", rotulo: "BA" }
+          - { id: ce, ufs: "CE", rotulo: "CE" }
+          - { id: go, ufs: "GO", rotulo: "GO" }
+          - { id: mg, ufs: "MG", rotulo: "MG" }
+          - { id: ms, ufs: "MS", rotulo: "MS" }
+          - { id: mt, ufs: "MT", rotulo: "MT" }
+          - { id: pa, ufs: "PA", rotulo: "PA" }
+          - { id: pe, ufs: "PE", rotulo: "PE" }
+          - { id: pr, ufs: "PR", rotulo: "PR" }
+          - { id: rj, ufs: "RJ", rotulo: "RJ" }
+          - { id: rn, ufs: "RN", rotulo: "RN" }
+          - { id: rr, ufs: "RR", rotulo: "RR" }
+          - { id: rs, ufs: "RS", rotulo: "RS" }
+          - { id: sc, ufs: "SC", rotulo: "SC" }
+          - { id: se, ufs: "SE", rotulo: "SE" }
+          - { id: sp, ufs: "SP", rotulo: "SP" }
     steps:
       - uses: actions/checkout@v5
 
@@ -346,12 +346,12 @@ jobs:
           git fetch --shallow-since="20 days ago" -q origin master
           python scripts/feeds.py --dias 14
 
-      - uses: actions/configure-pages@v5
-      - uses: actions/upload-pages-artifact@v4
+      - uses: actions/configure-pages@v6
+      - uses: actions/upload-pages-artifact@v5
         with:
           path: site
       - id: deploy
-        uses: actions/deploy-pages@v4
+        uses: actions/deploy-pages@v5
 
       - name: Enviar resumo do que mudou por e-mail (com link para o histórico diário)
         # depois do deploy, para o link do histórico já estar no ar; só na execução agendada (pushes e execuções manuais não enviam); exige os segredos SMTP_* e EMAIL_PARA; falha aqui não derruba a publicação

@@ -1906,9 +1906,18 @@ function coberturaSemNovidade(dia, codigos, local, mostrar) {
   if (!dia.cobertura || !mostrar) return "";
   const lista = Object.entries(dia.cobertura).filter(([c, x]) => !x.itens && (local && local !== "__avisos" ? c === local : noEscopo({ local: c, uf: c.startsWith("UF:") ? c.slice(3) : null, politicos: [] }, codigos)));
   if (!lista.length) return "";
-  const motivo = (x) => x.mudou ? "os dados mudaram, mas sem item novo" : x.ultimaMudanca ? `sem alteração nos dados desde ${data(x.ultimaMudanca)}` : "sem alteração nos dados";
-  return `<section class="painel hist-sem"><h2>Acompanhados, sem novidade <small>${lista.length}</small></h2>
-    <ul>${lista.map(([c, x]) => `<li><b>${esc(x.nome)}</b>: ${esc(motivo(x))}</li>`).join("")}</ul></section>`;
+  const status = (x) => x.status || (x.mudou ? "irrelevante" : "parado");   // dias gravados antes dos status
+  const grupos = [
+    ["irrelevante", "Dados mudaram, mas nada relevante para o histórico", (x) => x.mudancas && x.mudancas.length ? `atualizou ${x.mudancas.join(", ")}` : "os arquivos foram atualizados, sem item para o histórico (detalhe não registrado neste dia)"],
+    ["parado", "Sem dados novos", (x) => x.ultimaMudanca ? `sem alteração desde ${data(x.ultimaMudanca)}` : "sem alteração nos dados"],
+    ["falha", "Coleta falhou ou não rodou neste dia", (x) => x.ultimaColeta ? `última coleta gravada em ${data(x.ultimaColeta)}` : "nenhum dado gravado neste dia"],
+    ["sem_cobertura", "Sem cobertura (ainda não coletamos este local)", () => "sem fonte conectada"],
+  ];
+  const bloco = ([chave, titulo, motivo]) => {
+    const itens = lista.filter(([, x]) => status(x) === chave);
+    return itens.length ? `<h3>${titulo} <small>${itens.length}</small></h3><ul>${itens.map(([, x]) => `<li><b>${esc(x.nome)}</b>: ${esc(motivo(x))}</li>`).join("")}</ul>` : "";
+  };
+  return `<section class="painel hist-sem"><h2>Acompanhados, sem novidade <small>${lista.length}</small></h2>${grupos.map(bloco).join("")}</section>`;
 }
 
 function itemHistorico(e) {

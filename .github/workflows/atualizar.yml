@@ -22,12 +22,12 @@ jobs:
   # Cada job entrega um pacote (.tgz) com o que gravou; o job `publicar` junta tudo, gera o site e publica.
   camara:
     name: Coletar Câmara dos Deputados
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 90
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
 
-      - uses: actions/setup-python@v6
+      - uses: actions/setup-python@v7
         with:
           python-version: "3.12"
           cache: pip
@@ -60,12 +60,12 @@ jobs:
 
   senado:
     name: Coletar Senado
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 90
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
 
-      - uses: actions/setup-python@v6
+      - uses: actions/setup-python@v7
         with:
           python-version: "3.12"
           cache: pip
@@ -92,12 +92,12 @@ jobs:
 
   tse:
     name: Coletar eleitos do TSE
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 60
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
 
-      - uses: actions/setup-python@v6
+      - uses: actions/setup-python@v7
         with:
           python-version: "3.12"
           cache: pip
@@ -124,12 +124,12 @@ jobs:
 
   executivo:
     name: Coletar o que o Presidente enviou ao Congresso
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 30
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
 
-      - uses: actions/setup-python@v6
+      - uses: actions/setup-python@v7
         with:
           python-version: "3.12"
           cache: pip
@@ -157,7 +157,7 @@ jobs:
 
   estaduais:
     name: Coletar Assembleia ${{ matrix.rotulo }}
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 35
     strategy:
       fail-fast: false
@@ -182,9 +182,9 @@ jobs:
           - { id: se, ufs: "SE", rotulo: "SE" }
           - { id: sp, ufs: "SP", rotulo: "SP" }
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
 
-      - uses: actions/setup-python@v6
+      - uses: actions/setup-python@v7
         with:
           python-version: "3.12"
           cache: pip
@@ -216,12 +216,12 @@ jobs:
 
   governadores:
     name: Coletar governadores (SAPL)
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 60
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
 
-      - uses: actions/setup-python@v6
+      - uses: actions/setup-python@v7
         with:
           python-version: "3.12"
           cache: pip
@@ -250,12 +250,12 @@ jobs:
 
   prefeituras:
     name: Coletar prefeitos das capitais (SAPL)
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 45
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
 
-      - uses: actions/setup-python@v6
+      - uses: actions/setup-python@v7
         with:
           python-version: "3.12"
           cache: pip
@@ -287,15 +287,15 @@ jobs:
     needs: [camara, senado, tse, executivo, estaduais, governadores, prefeituras]
     # Câmara, Senado e TSE são indispensáveis; as demais coletas falham sem impedir a publicação
     if: ${{ !cancelled() && needs.camara.result == 'success' && needs.senado.result == 'success' && needs.tse.result == 'success' }}
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 60
     environment:
       name: github-pages
       url: ${{ steps.deploy.outputs.page_url }}
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
 
-      - uses: actions/setup-python@v6
+      - uses: actions/setup-python@v7
         with:
           python-version: "3.12"
           cache: pip

@@ -41,6 +41,7 @@ import sys
 import time
 import unicodedata
 from pathlib import Path
+from urllib.parse import urlsplit
 
 import requests
 from requests.adapters import HTTPAdapter
@@ -52,6 +53,7 @@ CONEXOES_POR_HOST = 2
 USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36"
 
 TIMEOUT_PADRAO = 30   # segundos por requisição quando o coletor não define o seu
+TIMEOUT_CONEXAO = 15  # teto para abrir a conexão; o timeout do coletor vale para a leitura
 # Tempo total de coleta do processo, em minutos (variável ESTADUAIS_PRAZO_MIN; vazio = sem prazo). Esgotado, toda nova
 # requisição levanta PrazoEsgotado: cada etapa vira aviso, o que já foi gravado fica e o job termina no prazo, sem ser morto.
 PRAZO_FIM = time.monotonic() + float(os.environ["ESTADUAIS_PRAZO_MIN"]) * 60 if os.environ.get("ESTADUAIS_PRAZO_MIN") else None
@@ -71,10 +73,24 @@ def checar_prazo() -> None:
 
 
 class _Sessao(requests.Session):
-    def request(self, *args, **kwargs):
+    # Host que não aceitou conexão (ConnectTimeout depois das tentativas) fica fora do ar até o fim da coleta: as
+    # requisições seguintes a ele falham na hora, em vez de esperar timeout e tentativas de novo (PE: 21 min perdidos).
+    def __init__(self):
+        super().__init__()
+        self.fora_do_ar = set()
+
+    def request(self, method, url, *args, **kwargs):
         checar_prazo()
-        kwargs.setdefault("timeout", TIMEOUT_PADRAO)
-        return super().request(*args, **kwargs)
+        host = urlsplit(url).hostname
+        if host in self.fora_do_ar:
+            raise requests.ConnectTimeout(f"{host} não aceitou conexão antes nesta coleta")
+        t = kwargs.get("timeout", TIMEOUT_PADRAO)
+        kwargs["timeout"] = (min(TIMEOUT_CONEXAO, t), t) if isinstance(t, (int, float)) else t
+        try:
+            return super().request(method, url, *args, **kwargs)
+        except requests.ConnectTimeout:
+            self.fora_do_ar.add(host)
+            raise
 
 
 def sessao() -> requests.Session:

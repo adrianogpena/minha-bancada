@@ -68,9 +68,29 @@ def test_sessao_tem_timeout_padrao(monkeypatch):
     vistos = {}
     monkeypatch.setattr(ec.requests.Session, "request", lambda self, *a, **kw: vistos.update(kw))
     ec.sessao().get("https://exemplo.invalid/")
-    assert vistos["timeout"] == ec.TIMEOUT_PADRAO
+    assert vistos["timeout"] == (ec.TIMEOUT_CONEXAO, ec.TIMEOUT_PADRAO)
     ec.sessao().get("https://exemplo.invalid/", timeout=5)
-    assert vistos["timeout"] == 5
+    assert vistos["timeout"] == (5, 5)
+    ec.sessao().get("https://exemplo.invalid/", timeout=(3, 90))
+    assert vistos["timeout"] == (3, 90)
+
+
+def test_host_sem_conexao_falha_na_hora_no_resto_da_coleta(monkeypatch):
+    monkeypatch.setattr(ec, "PRAZO_FIM", None)
+    chamadas = []
+
+    def request(self, method, url, **kw):
+        chamadas.append(url)
+        if "fora" in url:
+            raise ec.requests.ConnectTimeout("sem conexão")
+        return "ok"
+    monkeypatch.setattr(ec.requests.Session, "request", request)
+    s = ec.sessao()
+    for _ in range(2):
+        with pytest.raises(ec.requests.ConnectTimeout):
+            s.get("https://fora.gov.br/a")
+    assert s.get("https://outro.gov.br/b") == "ok"
+    assert chamadas == ["https://fora.gov.br/a", "https://outro.gov.br/b"]
 
 
 def test_matriz_do_workflow_cobre_todas_as_ufs():
@@ -79,7 +99,7 @@ def test_matriz_do_workflow_cobre_todas_as_ufs():
     from conftest import RAIZ
     import coletar_estaduais
     texto = (RAIZ / ".github" / "workflows" / "atualizar.yml").read_text(encoding="utf-8")
-    no_workflow = {u for ufs in re.findall(r'\{ id: \w+, ufs: "([A-Z ]+)" \}', texto) for u in ufs.split()}
+    no_workflow = {u for ufs in re.findall(r'\{ id: \w+, ufs: "([A-Z ]+)"', texto) for u in ufs.split()}
     esperadas = set(coletar_estaduais.ASSEMBLEIAS) | set(coletar_estaduais.modulos_uf())
     assert no_workflow == esperadas
 

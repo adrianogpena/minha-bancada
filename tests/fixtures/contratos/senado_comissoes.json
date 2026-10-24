@@ -1,0 +1,145 @@
+{
+ "fonte": "https://legis.senado.leg.br/dadosabertos/senador/{id}/comissoes",
+ "capturadoEm": "2026-10-24",
+ "amostra": {
+  "MembroComissaoParlamentar": {
+   "noNamespaceSchemaLocation": "https://legis.senado.leg.br/dadosabertos/dados/MembroComissaoParlamentarv5.xsd",
+   "Metadados": {
+    "Versao": "24/10/2026 13:25:57",
+    "VersaoServico": "5",
+    "DataVersaoServico": "2021-09-09",
+    "DescricaoDataSet": "Retorna a relação das Comissões das quais um Senador é membro."
+   },
+   "Parlamentar": {
+    "Codigo": "5672",
+    "Nome": "Alan Rick",
+    "MembroComissoes": {
+     "Comissao": [
+      {
+       "IdentificacaoComissao": {
+        "CodigoComissao": "2040",
+        "SiglaComissao": "GPARGENTINA",
+        "NomeComissao": "Grupo Parlamentar Brasil - Argentina",
+        "SiglaCasaComissao": "CN"
+       },
+       "DescricaoParticipacao": "Titular",
+       "DataInicio": "2026-03-17"
+      },
+      {
+       "IdentificacaoComissao": {
+        "CodigoComissao": "2242",
+        "SiglaComissao": "GPPERU",
+        "NomeComissao": "Grupo Parlamentar Brasil - Peru",
+        "SiglaCasaComissao": "CN"
+       },
+       "DescricaoParticipacao": "Titular",
+       "DataInicio": "2023-11-07"
+      }
+     ]
+    }
+   }
+  }
+ },
+ "forma": {
+  "MembroComissaoParlamentar": {
+   "tipos": [
+    "dict"
+   ]
+  },
+  "MembroComissaoParlamentar.Metadados": {
+   "tipos": [
+    "dict"
+   ]
+  },
+  "MembroComissaoParlamentar.Metadados.DataVersaoServico": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "MembroComissaoParlamentar.Metadados.DescricaoDataSet": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "MembroComissaoParlamentar.Metadados.Versao": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "MembroComissaoParlamentar.Metadados.VersaoServico": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "MembroComissaoParlamentar.Parlamentar": {
+   "tipos": [
+    "dict"
+   ]
+  },
+  "MembroComissaoParlamentar.Parlamentar.Codigo": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "MembroComissaoParlamentar.Parlamentar.MembroComissoes": {
+   "tipos": [
+    "dict"
+   ]
+  },
+  "MembroComissaoParlamentar.Parlamentar.MembroComissoes.Comissao": {
+   "tipos": [
+    "list"
+   ]
+  },
+  "MembroComissaoParlamentar.Parlamentar.MembroComissoes.Comissao[]": {
+   "tipos": [
+    "dict"
+   ]
+  },
+  "MembroComissaoParlamentar.Parlamentar.MembroComissoes.Comissao[].DataInicio": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "MembroComissaoParlamentar.Parlamentar.MembroComissoes.Comissao[].DescricaoParticipacao": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "MembroComissaoParlamentar.Parlamentar.MembroComissoes.Comissao[].IdentificacaoComissao": {
+   "tipos": [
+    "dict"
+   ]
+  },
+  "MembroComissaoParlamentar.Parlamentar.MembroComissoes.Comissao[].IdentificacaoComissao.CodigoComissao": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "MembroComissaoParlamentar.Parlamentar.MembroComissoes.Comissao[].IdentificacaoComissao.NomeComissao": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "MembroComissaoParlamentar.Parlamentar.MembroComissoes.Comissao[].IdentificacaoComissao.SiglaCasaComissao": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "MembroComissaoParlamentar.Parlamentar.MembroComissoes.Comissao[].IdentificacaoComissao.SiglaComissao": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "MembroComissaoParlamentar.Parlamentar.Nome": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "MembroComissaoParlamentar.noNamespaceSchemaLocation": {
+   "tipos": [
+    "str"
+   ]
+  }
+ }
+}

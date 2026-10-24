@@ -1,0 +1,295 @@
+{
+ "fonte": "https://legis.senado.leg.br/dadosabertos/senador/{id}/mandatos",
+ "capturadoEm": "2026-10-24",
+ "amostra": {
+  "MandatoParlamentar": {
+   "noNamespaceSchemaLocation": "https://legis.senado.leg.br/dadosabertos/dados/MandatoParlamentarv5.xsd",
+   "Metadados": {
+    "Versao": "24/10/2026 12:59:13",
+    "VersaoServico": "5",
+    "DataVersaoServico": "2021-09-09",
+    "DescricaoDataSet": "Retorna a relação dos Mandatos do Senador informado no parâmetro."
+   },
+   "Parlamentar": {
+    "Codigo": "5672",
+    "Nome": "Alan Rick",
+    "Mandatos": {
+     "Mandato": [
+      {
+       "CodigoMandato": "596",
+       "UfParlamentar": "AC",
+       "PrimeiraLegislaturaDoMandato": {
+        "NumeroLegislatura": "57",
+        "DataInicio": "2023-02-01",
+        "DataFim": "2027-01-31"
+       },
+       "SegundaLegislaturaDoMandato": {
+        "NumeroLegislatura": "58",
+        "DataInicio": "2027-02-01",
+        "DataFim": "2031-01-31"
+       },
+       "DescricaoParticipacao": "Titular",
+       "Suplentes": {
+        "Suplente": [
+         {
+          "DescricaoParticipacao": "1º Suplente",
+          "CodigoParlamentar": "6343",
+          "NomeParlamentar": "Gemil Junior"
+         },
+         {
+          "DescricaoParticipacao": "2º Suplente",
+          "CodigoParlamentar": "6344",
+          "NomeParlamentar": "Coronel Casagrande"
+         }
+        ]
+       },
+       "Exercicios": {
+        "Exercicio": [
+         {
+          "CodigoExercicio": "3028",
+          "DataInicio": "2023-02-01"
+         }
+        ]
+       },
+       "Partidos": {
+        "Partido": [
+         {
+          "CodigoPartido": "521",
+          "Sigla": "REPUBLICANOS",
+          "Nome": "Republicanos",
+          "DataFiliacao": "2025-11-12"
+         },
+         {
+          "CodigoPartido": "582",
+          "Sigla": "UNIÃO",
+          "Nome": "União Brasil",
+          "DataFiliacao": "2022-02-24",
+          "DataDesfiliacao": "2025-11-10"
+         }
+        ]
+       }
+      }
+     ]
+    }
+   }
+  }
+ },
+ "forma": {
+  "MandatoParlamentar": {
+   "tipos": [
+    "dict"
+   ]
+  },
+  "MandatoParlamentar.Metadados": {
+   "tipos": [
+    "dict"
+   ]
+  },
+  "MandatoParlamentar.Metadados.DataVersaoServico": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "MandatoParlamentar.Metadados.DescricaoDataSet": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "MandatoParlamentar.Metadados.Versao": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "MandatoParlamentar.Metadados.VersaoServico": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "MandatoParlamentar.Parlamentar": {
+   "tipos": [
+    "dict"
+   ]
+  },
+  "MandatoParlamentar.Parlamentar.Codigo": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "MandatoParlamentar.Parlamentar.Mandatos": {
+   "tipos": [
+    "dict"
+   ]
+  },
+  "MandatoParlamentar.Parlamentar.Mandatos.Mandato": {
+   "tipos": [
+    "list"
+   ]
+  },
+  "MandatoParlamentar.Parlamentar.Mandatos.Mandato[]": {
+   "tipos": [
+    "dict"
+   ]
+  },
+  "MandatoParlamentar.Parlamentar.Mandatos.Mandato[].CodigoMandato": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "MandatoParlamentar.Parlamentar.Mandatos.Mandato[].DescricaoParticipacao": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "MandatoParlamentar.Parlamentar.Mandatos.Mandato[].Exercicios": {
+   "tipos": [
+    "dict"
+   ]
+  },
+  "MandatoParlamentar.Parlamentar.Mandatos.Mandato[].Exercicios.Exercicio": {
+   "tipos": [
+    "list"
+   ]
+  },
+  "MandatoParlamentar.Parlamentar.Mandatos.Mandato[].Exercicios.Exercicio[]": {
+   "tipos": [
+    "dict"
+   ]
+  },
+  "MandatoParlamentar.Parlamentar.Mandatos.Mandato[].Exercicios.Exercicio[].CodigoExercicio": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "MandatoParlamentar.Parlamentar.Mandatos.Mandato[].Exercicios.Exercicio[].DataInicio": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "MandatoParlamentar.Parlamentar.Mandatos.Mandato[].Partidos": {
+   "tipos": [
+    "dict"
+   ]
+  },
+  "MandatoParlamentar.Parlamentar.Mandatos.Mandato[].Partidos.Partido": {
+   "tipos": [
+    "list"
+   ]
+  },
+  "MandatoParlamentar.Parlamentar.Mandatos.Mandato[].Partidos.Partido[]": {
+   "tipos": [
+    "dict"
+   ]
+  },
+  "MandatoParlamentar.Parlamentar.Mandatos.Mandato[].Partidos.Partido[].CodigoPartido": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "MandatoParlamentar.Parlamentar.Mandatos.Mandato[].Partidos.Partido[].DataDesfiliacao": {
+   "tipos": [
+    "str"
+   ],
+   "opcional": true
+  },
+  "MandatoParlamentar.Parlamentar.Mandatos.Mandato[].Partidos.Partido[].DataFiliacao": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "MandatoParlamentar.Parlamentar.Mandatos.Mandato[].Partidos.Partido[].Nome": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "MandatoParlamentar.Parlamentar.Mandatos.Mandato[].Partidos.Partido[].Sigla": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "MandatoParlamentar.Parlamentar.Mandatos.Mandato[].PrimeiraLegislaturaDoMandato": {
+   "tipos": [
+    "dict"
+   ]
+  },
+  "MandatoParlamentar.Parlamentar.Mandatos.Mandato[].PrimeiraLegislaturaDoMandato.DataFim": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "MandatoParlamentar.Parlamentar.Mandatos.Mandato[].PrimeiraLegislaturaDoMandato.DataInicio": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "MandatoParlamentar.Parlamentar.Mandatos.Mandato[].PrimeiraLegislaturaDoMandato.NumeroLegislatura": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "MandatoParlamentar.Parlamentar.Mandatos.Mandato[].SegundaLegislaturaDoMandato": {
+   "tipos": [
+    "dict"
+   ]
+  },
+  "MandatoParlamentar.Parlamentar.Mandatos.Mandato[].SegundaLegislaturaDoMandato.DataFim": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "MandatoParlamentar.Parlamentar.Mandatos.Mandato[].SegundaLegislaturaDoMandato.DataInicio": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "MandatoParlamentar.Parlamentar.Mandatos.Mandato[].SegundaLegislaturaDoMandato.NumeroLegislatura": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "MandatoParlamentar.Parlamentar.Mandatos.Mandato[].Suplentes": {
+   "tipos": [
+    "dict"
+   ]
+  },
+  "MandatoParlamentar.Parlamentar.Mandatos.Mandato[].Suplentes.Suplente": {
+   "tipos": [
+    "list"
+   ]
+  },
+  "MandatoParlamentar.Parlamentar.Mandatos.Mandato[].Suplentes.Suplente[]": {
+   "tipos": [
+    "dict"
+   ]
+  },
+  "MandatoParlamentar.Parlamentar.Mandatos.Mandato[].Suplentes.Suplente[].CodigoParlamentar": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "MandatoParlamentar.Parlamentar.Mandatos.Mandato[].Suplentes.Suplente[].DescricaoParticipacao": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "MandatoParlamentar.Parlamentar.Mandatos.Mandato[].Suplentes.Suplente[].NomeParlamentar": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "MandatoParlamentar.Parlamentar.Mandatos.Mandato[].UfParlamentar": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "MandatoParlamentar.Parlamentar.Nome": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "MandatoParlamentar.noNamespaceSchemaLocation": {
+   "tipos": [
+    "str"
+   ]
+  }
+ }
+}

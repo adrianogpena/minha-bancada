@@ -24,11 +24,15 @@ def montar_bruto(bruto):
         "proposicoes": [{"id": 900, "tipo": "PL", "numero": 1, "ano": 2026, "ementa": "Dispõe sobre algo."}],
         "despesas": {"ano": 2026, "itens": [
             {"mes": 1, "tipo": "Passagens", "valor": 120.5, "fornecedor": "Cia Aérea", "cnpj": "12345678000195", "data": "2026-01-10", "documento": None}]},
-        "frentes": [{"id": 1, "titulo": "Frente X"}], "coletadoEm": "2026-10-01T00:00:00+00:00"})
+        "frentes": [{"id": 1, "titulo": "Frente X"}],
+        "profissoes": [{"titulo": "Advogada", "desde": "2019-02-06"}], "mandatosExternos": [], "historico": [{"data": "2023-02-01", "partido": "PT"}],
+        "discursos": [{"data": "2026-09-02", "tipo": "PELA ORDEM", "link": None}], "coletadoEm": "2026-10-01T00:00:00+00:00"})
     gravar(bruto / "votacoes" / "2026.json", {"1-1": {
         "id": "1-1", "data": "2026-08-12", "hora": "17:58", "orgao": "PLEN", "descricao": "Aprovado.", "proposicao": "PL 1/2026",
         "propId": 900, "ementa": "Dispõe sobre algo.", "aprovada": 1, "votos": [[101, "Sim"], [102, "Não"]]}})
     gravar(bruto / "senado.json", [{"id": "7", "nome": "Bia Lima", "partido": "PL", "uf": "RJ"}])
+    gravar(bruto / "senado_ficha.json", {"7": {"comissoes": [{"sigla": "CAE", "nome": "Assuntos Econômicos", "inicio": "2023-02-02", "fim": None}],
+                                               "mandatos": [{"uf": "RJ", "inicio": "2023-02-01", "fim": "2031-01-31", "partidos": []}]}})
     gravar(bruto / "senado_votacoes" / "2026.json", {"9": {
         "id": "9", "data": "2026-02-24", "descricao": "Votação X", "aprovada": 1, "votos": [["7", "sim", "Sim|"]]}})
     gravar(bruto / "tse" / "2024" / "SP.json", [

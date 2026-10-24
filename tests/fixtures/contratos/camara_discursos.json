@@ -1,0 +1,155 @@
+{
+ "fonte": "https://dadosabertos.camara.leg.br/api/v2/deputados/{id}/discursos",
+ "capturadoEm": "2026-10-24",
+ "amostra": {
+  "dados": [
+   {
+    "dataHoraInicio": "2026-09-02T11:36",
+    "dataHoraFim": null,
+    "uriEvento": "",
+    "faseEvento": {
+     "titulo": "Ordem do Dia",
+     "dataHoraInicio": null,
+     "dataHoraFim": null
+    },
+    "tipoDiscurso": "PELA ORDEM",
+    "urlTexto": null,
+    "urlAudio": null,
+    "urlVideo": null,
+    "keywords": "Orientação de bancada,Projeto de decreto legislativo,indicação,Senador,Cargo público,Ministro do Tribunal de Contas da União,Ex-,Presidente do Congresso Nacional,Atuação parlamentar,Presidente do Senado Federal,Pandemia do Coronavírus,Movimento Democrático Brasileiro (MDB),Voto favorável",
+    "sumario": "O Deputado orientou favoravelmente a bancada do Movimento Democrático Brasileiro (MDB) na votação do&nbsp;Projeto de Decreto Legislativo nº 995, de 2026, que indica o Senador Rodrigo Pacheco para o cargo de Ministro do Tribunal de Contas da União (TCU). Além disso, elogiou a trajetória do Senador no",
+    "transcricao": "O SR. ACÁCIO FAVACHO (Bloco/MDB - AP. Pela ordem. Sem revisão do orador.) - Presidente Deputado Hugo, quero iniciar aqui parabenizando o Senado Federal por fazer a brilhante escolha do Senador Rodrigo Pacheco. O Senador Rodrigo Pacheco tem uma história no Congresso Nacional, tem uma história na Câma"
+   },
+   {
+    "dataHoraInicio": "2026-04-09T11:00",
+    "dataHoraFim": null,
+    "uriEvento": "",
+    "faseEvento": {
+     "titulo": "Breves Comunicações",
+     "dataHoraInicio": null,
+     "dataHoraFim": null
+    },
+    "tipoDiscurso": "PELA ORDEM",
+    "urlTexto": "https://imagem.camara.gov.br/dc_20b.asp?largura=&altura=&tipoForm=diarios&selCodColecaoCsv=D&Datain=10%2F4%2F2026&txPagina=42&txSuplemento=&enviar=Pesquisar",
+    "urlAudio": null,
+    "urlVideo": null,
+    "keywords": "Aprovação,Medida provisória,Seguro-defeso,Pescador artesanal,Região Norte,Amapá (AP),fiscalização,Política pública,Câmara dos Deputados",
+    "sumario": "O Deputado agradeceu ao Plenário pela aprovação da Medida Provisória nº 1.323, de 2025, destacando seu impacto para pescadores artesanais, especialmente nas regiões Norte e no Amapá. Em seguida, ressaltou que o seguro-defeso representava proteção social para trabalhadores que dependem da pesca duran",
+    "transcricao": "O SR. ACÁCIO FAVACHO (Bloco/MDB - AP. Pela ordem. Sem revisão do orador.) - Peço licença ao Deputado Hildo Rocha, próximo orador, para fazer um registro. Quero agradecer a este Plenário, em nome do povo do Estado Amapá, do povo do Norte, a medida provisória que acaba de ser aprovada nesta Casa, a no"
+   }
+  ],
+  "links": [
+   {
+    "rel": "self",
+    "href": "https://dadosabertos.camara.leg.br/api/v2/deputados/204379/discursos?itens=2&dataInicio=2023-02-01&ordenarPor=dataHoraInicio&ordem=DESC"
+   },
+   {
+    "rel": "next",
+    "href": "https://dadosabertos.camara.leg.br/api/v2/deputados/204379/discursos?dataInicio=2023-02-01&ordenarPor=dataHoraInicio&ordem=DESC&pagina=2&itens=2"
+   }
+  ]
+ },
+ "forma": {
+  "dados": {
+   "tipos": [
+    "list"
+   ]
+  },
+  "dados[]": {
+   "tipos": [
+    "dict"
+   ]
+  },
+  "dados[].dataHoraFim": {
+   "tipos": [
+    "null"
+   ]
+  },
+  "dados[].dataHoraInicio": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "dados[].faseEvento": {
+   "tipos": [
+    "dict"
+   ]
+  },
+  "dados[].faseEvento.dataHoraFim": {
+   "tipos": [
+    "null"
+   ]
+  },
+  "dados[].faseEvento.dataHoraInicio": {
+   "tipos": [
+    "null"
+   ]
+  },
+  "dados[].faseEvento.titulo": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "dados[].keywords": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "dados[].sumario": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "dados[].tipoDiscurso": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "dados[].transcricao": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "dados[].uriEvento": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "dados[].urlAudio": {
+   "tipos": [
+    "null"
+   ]
+  },
+  "dados[].urlTexto": {
+   "tipos": [
+    "null",
+    "str"
+   ]
+  },
+  "dados[].urlVideo": {
+   "tipos": [
+    "null"
+   ]
+  },
+  "links": {
+   "tipos": [
+    "list"
+   ]
+  },
+  "links[]": {
+   "tipos": [
+    "dict"
+   ]
+  },
+  "links[].href": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "links[].rel": {
+   "tipos": [
+    "str"
+   ]
+  }
+ }
+}

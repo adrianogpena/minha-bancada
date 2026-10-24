@@ -63,7 +63,7 @@ export async function paginaProposicao() {
     ${autores.length ? `<ul class="itens">${autores.map((a) => `<li>${linkPolitico(a, casa)}${a.principal ? ` <span class="quando">autor principal</span>` : ""}<span class="quando texto">${esc([a.partido, a.uf].filter(Boolean).join("/") || (a.id ? "" : "sem ficha no site"))}</span></li>`).join("")}</ul>` : `<p class="vazio">Autoria ainda não coletada.</p>`}
     <h2>Votações (${votacoes.length})</h2>
     ${votacoes.length ? `<ul class="itens">${votacoes.map((v, i) => `<li>
-      <span class="quando">${data(v.data)}${v.aprovada === 1 ? ", aprovada" : v.aprovada === 0 ? ", rejeitada" : ""}</span>
+      <span class="quando">${data(v.data)}${v.orgao ? ` · ${esc(v.orgao)}` : ""}${v.aprovada === 1 ? ", aprovada" : v.aprovada === 0 ? ", rejeitada" : ""}</span>
       <span class="texto">${esc(v.descricao || "Votação")}${v.nominal ? barraPlacar(v.placar) : `<span class="quando">Votação simbólica ou em comissão: sem voto individual.</span>`}</span>
       ${v.nominal ? `<button type="button" class="mais" data-i="${i}">Ver quem votou</button><div id="votos-${i}"></div>` : ""}</li>`).join("")}</ul>` : `<p class="vazio">Nenhuma votação registrada no Plenário.</p>`}
     ${fontes([["Tramitação oficial", senado ? linkMateriaSenado(id) : linkTramitacao(id)]])}`;

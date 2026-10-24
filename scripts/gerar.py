@@ -218,6 +218,8 @@ def juntar_votacoes(p: dict, votacoes_projeto: list | None, nominais: dict, orie
         n = nominais.get(v["id"])
         if n:
             item.update(nominal=True, placar=n["placar"], aprovada=n["aprovada"])
+            if n.get("orgao"):
+                item["orgao"] = n["orgao"]
             if orientacoes.get(v["id"]):
                 item["orientacoes"] = orientacoes[v["id"]]
         saida.append(item)
@@ -326,6 +328,7 @@ def gerar_senadores() -> list:
     autorias = ler(BRUTO / "senado_autorias.json", {}) or {}
     ceaps = ler(BRUTO / "senado_ceaps.json", {}) or {}
     recursos = ler(BRUTO / "senado_recursos.json", {}) or {}
+    fichas = ler(BRUTO / "senado_ficha.json", {}) or {}
 
     por_id = {str(s["id"]): s for s in senadores}
     resumo, votos_por_sen, primeira = [], defaultdict(dict), {}
@@ -386,6 +389,7 @@ def gerar_senadores() -> list:
             **({"presenca": resumir_presenca(presenca[sid])} if presenca.get(sid) else {}),
             # sem o arquivo (coleta falhou) o site mostra só o link para o Portal da Transparência
             **({"despesas": resumir_despesas(ceaps["ano"], ceaps["itens"].get(sid, []))} if ceaps else {}),
+            **({k: fichas[sid][k] for k in ("comissoes", "mandatos") if k in fichas[sid]} if sid in fichas else {}),
             **({"recursos": {"ano": recursos["ano"], **recursos["recursos"][sid],
                              **({"escritorios": recursos["escritorios"][sid]} if sid in recursos.get("escritorios", {}) else {})}}
                if sid in recursos.get("recursos", {}) else {}),
@@ -462,6 +466,7 @@ def main():
             "descricao": v["descricao"], "proposicao": v.get("proposicao"),
             "propId": v.get("propId"), "ementa": v.get("ementa"),
             "aprovada": v.get("aprovada"), "placar": dict(placar),
+            **({"orgao": v["orgao"]} if v.get("orgao") else {}),
         }
         lista_votacoes.append(resumo)
         salvar(SAIDA / "votacao" / f"{v['id']}.json", {
@@ -512,6 +517,7 @@ def main():
             "proposicoes": proposicoes, "autoria": autoria,
             "temas": resumir_temas(proposicoes), "orgaos": ordenar_orgaos(orgaos.get(str(did), [])),
             "frentes": sorted(d["frentes"], key=lambda f: f["titulo"]) if d.get("frentes") is not None else None,
+            **{k: d[k] for k in ("profissoes", "mandatosExternos", "historico", "discursos") if k in d},
             "votos": votos, "comportamento": comportamento, "presenca": presenca_do_deputado(did, presenca, medianas),
             "totalVotacoes": total_nominais, "eleicao": eleicoes_deps.get(did), "condicao": d.get("condicaoEleitoral"),
             "despesas": {

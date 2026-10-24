@@ -1,0 +1,66 @@
+{
+ "fonte": "https://dadosabertos.camara.leg.br/api/v2/deputados/{id}/profissoes",
+ "capturadoEm": "2026-10-24",
+ "amostra": {
+  "dados": [
+   {
+    "dataHora": "2022-11-14T08:03",
+    "codTipoProfissao": 182,
+    "titulo": "Empresário"
+   }
+  ],
+  "links": [
+   {
+    "rel": "self",
+    "href": "https://dadosabertos.camara.leg.br/api/v2/deputados/220714/profissoes"
+   }
+  ]
+ },
+ "forma": {
+  "dados": {
+   "tipos": [
+    "list"
+   ]
+  },
+  "dados[]": {
+   "tipos": [
+    "dict"
+   ]
+  },
+  "dados[].codTipoProfissao": {
+   "tipos": [
+    "int"
+   ]
+  },
+  "dados[].dataHora": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "dados[].titulo": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "links": {
+   "tipos": [
+    "list"
+   ]
+  },
+  "links[]": {
+   "tipos": [
+    "dict"
+   ]
+  },
+  "links[].href": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "links[].rel": {
+   "tipos": [
+    "str"
+   ]
+  }
+ }
+}

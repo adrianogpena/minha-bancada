@@ -14,6 +14,7 @@ Documentação da API: https://dadosabertos.camara.leg.br/swagger/api.html
 import argparse
 import datetime as dt
 import csv
+import html
 import io
 import json
 import os
@@ -36,6 +37,8 @@ DADOS = RAIZ / "dados"
 INICIO_LEGISLATURA = "2023-02-01"  # 57ª legislatura
 LEGISLATURA = 57
 ARQUIVOS_CAMARA = "https://dadosabertos.camara.leg.br/arquivos"
+BLOCOS_COMPLEMENTO = ("profissoes", "mandatosExternos", "historico", "discursos")
+DISCURSOS_RECENTES = 5  # os discursos mais recentes do mandato atual que a ficha mostra
 TRABALHADORES_SENADO = 2  # o Senado responde 503 quando apertado
 TRABALHADORES = int(os.environ.get("CAMARA_TRABALHADORES", "10"))  # requisições em paralelo; seja gentil com a API pública (429 e 5xx são repetidos com espera)
 
@@ -192,6 +195,59 @@ def coletar_cota_csv(ano: int) -> dict[int, list]:
     return por_dep
 
 
+def _dia(texto: str | None) -> str | None:
+    return (texto or "")[:10] or None
+
+
+def coletar_complementos(dep: dict, anterior: dict, hoje: dt.date) -> dict:
+    """Profissões, mandatos fora da Câmara, histórico de partido/situação na legislatura e últimos discursos.
+    Cada bloco falha sozinho (mantém o que já havia). Só relê quando o anterior tem mais de 1 + id % 7 dias
+    (cada deputado em um dia, para espalhar as chamadas); `complementosEm` guarda a data da última leitura."""
+    did = dep["id"]
+    em = anterior.get("complementosEm")
+    if em and (hoje - dt.date.fromisoformat(em)).days < 1 + did % 7:
+        return {k: anterior[k] for k in (*BLOCOS_COMPLEMENTO, "complementosEm") if k in anterior}
+
+    def profissoes():
+        return [{"titulo": x["titulo"].strip(), "desde": _dia(x.get("dataHora"))}
+                for x in get(f"/deputados/{did}/profissoes").get("dados", []) if (x.get("titulo") or "").strip()]
+
+    def mandatos_externos():
+        return [{"cargo": x.get("cargo"), "uf": x.get("siglaUf"), "municipio": x.get("municipio") or None,
+                 "inicio": x.get("anoInicio"), "fim": x.get("anoFim"), "partido": x.get("siglaPartidoEleicao")}
+                for x in get(f"/deputados/{did}/mandatosExternos").get("dados", [])]
+
+    def historico():
+        return [{"data": _dia(x.get("dataHora")), "partido": (x.get("siglaPartido") or "").strip() or None,
+                 "situacao": x.get("situacao"), "condicao": x.get("condicaoEleitoral"),
+                 "descricao": (x.get("descricaoStatus") or "").strip() or None}
+                for x in get(f"/deputados/{did}/historico").get("dados", []) if x.get("idLegislatura") == LEGISLATURA]
+
+    def discursos():
+        r = get(f"/deputados/{did}/discursos", itens=DISCURSOS_RECENTES, ordem="DESC", ordenarPor="dataHoraInicio",
+                dataInicio=INICIO_LEGISLATURA)
+        return [{"data": _dia(x.get("dataHoraInicio")), "tipo": x.get("tipoDiscurso"),
+                 "fase": (x.get("faseEvento") or {}).get("titulo"),
+                 "sumario": " ".join(html.unescape(x.get("sumario") or "").split()) or None,
+                 "link": x.get("urlTexto") or x.get("urlVideo") or x.get("urlAudio")}
+                for x in r.get("dados", [])]
+
+    saida, falhou = {}, 0
+    for nome, f in zip(BLOCOS_COMPLEMENTO, (profissoes, mandatos_externos, historico, discursos)):
+        try:
+            saida[nome] = f()
+        except Exception as e:  # complemento da ficha: sem ele o perfil só não mostra o bloco
+            avisar(f"{nome} de {dep.get('nome')}: {e}")
+            falhou += 1
+            if nome in anterior:
+                saida[nome] = anterior[nome]
+    if falhou == 0:
+        saida["complementosEm"] = hoje.isoformat()
+    elif "complementosEm" in anterior:
+        saida["complementosEm"] = anterior["complementosEm"]
+    return saida
+
+
 def coletar_deputado(dep: dict, ano: int, cota: dict[int, list] | None = None) -> dict:
     did = dep["id"]
     detalhe = get(f"/deputados/{did}").get("dados", {})
@@ -218,6 +274,8 @@ def coletar_deputado(dep: dict, ano: int, cota: dict[int, list] | None = None) -
     except Exception as e:  # a frente é complemento: sem ela o perfil só não mostra o bloco
         avisar(f"frentes de {dep.get('nome')}: {e}")
 
+    complementos = coletar_complementos(dep, ler(DADOS / "deputados" / f"{did}.json", {}), dt.date.today())
+
     status = detalhe.get("ultimoStatus", {}) or {}
     return {
         "id": did,
@@ -243,6 +301,7 @@ def coletar_deputado(dep: dict, ano: int, cota: dict[int, list] | None = None) -
         ],
         "despesas": {"ano": ano, "itens": itens_cota},
         **({"frentes": frentes} if frentes is not None else {}),
+        **complementos,
         "coletadoEm": dt.datetime.now(dt.UTC).isoformat(timespec="seconds"),
     }
 
@@ -849,6 +908,59 @@ def coletar_recursos_senado() -> None:
     print(f"Recursos de {len(recursos)} senadores, escritórios de {len(escritorios)}, falhas: {falhas}")
 
 
+def _lista(x) -> list:
+    """A API do Senado devolve objeto no lugar de lista quando há um item só."""
+    return [x] if isinstance(x, dict) else (x or [])
+
+
+def ficha_senador(comissoes: dict, mandatos: dict) -> dict:
+    """Comissões (as atuais e as encerradas no mandato corrente) e mandatos do senador, com as filiações de cada um."""
+    membro = ((comissoes.get("MembroComissaoParlamentar") or {}).get("Parlamentar") or {}).get("MembroComissoes") or {}
+    comis = []
+    for c in _lista(membro.get("Comissao")):
+        ident, fim = c.get("IdentificacaoComissao") or {}, c.get("DataFim")
+        if fim and fim < INICIO_LEGISLATURA:
+            continue
+        comis.append({"codigo": ident.get("CodigoComissao"), "sigla": ident.get("SiglaComissao"), "nome": ident.get("NomeComissao"),
+                      "casa": ident.get("SiglaCasaComissao"), "cargo": c.get("DescricaoParticipacao"),
+                      "inicio": comum.data_iso(c.get("DataInicio")), "fim": comum.data_iso(fim)})
+    comis.sort(key=lambda c: (c["fim"] is not None, c["fim"] or "", c["sigla"] or ""))
+    mand = []
+    for m in _lista(((mandatos.get("MandatoParlamentar") or {}).get("Parlamentar") or {}).get("Mandatos", {}).get("Mandato")):
+        legs = [m.get(k) or {} for k in ("PrimeiraLegislaturaDoMandato", "SegundaLegislaturaDoMandato")]
+        partidos = [{"sigla": x.get("Sigla"), "filiacao": comum.data_iso(x.get("DataFiliacao")), "desfiliacao": comum.data_iso(x.get("DataDesfiliacao"))}
+                    for x in _lista((m.get("Partidos") or {}).get("Partido"))]
+        mand.append({"codigo": m.get("CodigoMandato"), "uf": m.get("UfParlamentar"), "cargo": m.get("DescricaoParticipacao"),
+                     "inicio": comum.data_iso(legs[0].get("DataInicio")), "fim": comum.data_iso(legs[1].get("DataFim") or legs[0].get("DataFim")),
+                     "partidos": sorted(partidos, key=lambda x: x["filiacao"] or "", reverse=True)})
+    mand.sort(key=lambda m: m["inicio"] or "", reverse=True)
+    return {"comissoes": comis, "mandatos": mand}
+
+
+def coletar_ficha_senado() -> None:
+    """Comissões e histórico de mandatos de cada senador em exercício. Fica em dados/senado_ficha.json (não vai para o git)."""
+    senadores = ler(DADOS / "senado.json", [])
+    if not senadores:
+        raise RuntimeError("lista de senadores vazia; fichas não coletadas")
+    fichas: dict[str, dict] = {}
+    falhas = 0
+
+    def buscar(s: dict) -> tuple[str, dict]:
+        return str(s["id"]), ficha_senador(get_senado(f"/senador/{s['id']}/comissoes.json"), get_senado(f"/senador/{s['id']}/mandatos.json"))
+
+    with ThreadPoolExecutor(TRABALHADORES_SENADO) as ex:
+        for f in as_completed([ex.submit(buscar, s) for s in senadores]):
+            try:
+                sid, ficha = f.result()
+                fichas[sid] = ficha
+            except Exception as e:
+                falhas += 1
+                if falhas <= 5:
+                    avisar(f"ficha de senador: {e}")
+    salvar(DADOS / "senado_ficha.json", fichas)
+    print(f"Fichas de {len(fichas)} senadores (comissões e mandatos), falhas: {falhas}")
+
+
 IDENTIFICACAO_SENADO = re.compile(r"^(?P<tipo>\S+)\s+(?P<numero>[\d.]+)/(?P<ano>\d{4})$")
 
 
@@ -1027,7 +1139,7 @@ def main():
             coletar_senado()
         except Exception as e:
             avisar(f"senado: {e}")
-        for etapa in (coletar_votacoes_senado, coletar_autorias_senado, coletar_ceaps_senado, coletar_recursos_senado):  # complementos: cada um falha sozinho
+        for etapa in (coletar_votacoes_senado, coletar_autorias_senado, coletar_ceaps_senado, coletar_recursos_senado, coletar_ficha_senado):  # complementos: cada um falha sozinho
             try:
                 etapa()
             except Exception as e:

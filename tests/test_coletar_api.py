@@ -602,6 +602,93 @@ def test_coletar_deputado_frentes_falham_sem_derrubar(dados, monkeypatch):
     assert any("frentes" in a for a in coletar.AVISOS)
 
 
+ROTAS_COMPLEMENTOS = {
+    "/deputados/7": DETALHE_DEP, "/deputados/7/despesas": {"dados": []}, "/deputados/7/frentes": {"dados": []},
+    "/deputados/7/profissoes": {"dados": [{"dataHora": "2019-02-06T18:58", "codTipoProfissao": 1, "titulo": " Empresário "},
+                                          {"dataHora": None, "codTipoProfissao": None, "titulo": None}]},
+    "/deputados/7/mandatosExternos": {"dados": [{"cargo": "Vereador(a)", "siglaUf": "AP", "municipio": "Macapá", "anoInicio": "2009",
+                                                 "anoFim": "2016", "siglaPartidoEleicao": "PMDB"}]},
+    "/deputados/7/historico": {"dados": [
+        {"idLegislatura": 56, "dataHora": "2019-02-01T11:45", "siglaPartido": "PR", "situacao": "Exercício"},
+        {"idLegislatura": 57, "dataHora": "2023-02-01T00:00", "siglaPartido": "ABC", "situacao": "Exercício", "condicaoEleitoral": "Titular",
+         "descricaoStatus": "Posse"}]},
+    "/deputados/7/discursos": {"dados": [{"dataHoraInicio": "2026-09-02T11:36", "tipoDiscurso": "PELA ORDEM", "faseEvento": {"titulo": "Ordem do Dia"},
+                                          "sumario": "Orientou&nbsp;a bancada.", "urlTexto": None, "urlVideo": "https://v/1", "transcricao": "longa"}]},
+}
+
+
+def test_coletar_deputado_grava_complementos_da_ficha(dados, monkeypatch):
+    monkeypatch.setattr(coletar, "coletar_proposicoes", lambda dep: [])
+    chamadas = roteador(monkeypatch, ROTAS_COMPLEMENTOS)
+    d = coletar.coletar_deputado({"id": 7, "nome": "F"}, 2025)
+    assert d["profissoes"] == [{"titulo": "Empresário", "desde": "2019-02-06"}]
+    assert d["mandatosExternos"] == [{"cargo": "Vereador(a)", "uf": "AP", "municipio": "Macapá", "inicio": "2009", "fim": "2016", "partido": "PMDB"}]
+    assert d["historico"] == [{"data": "2023-02-01", "partido": "ABC", "situacao": "Exercício", "condicao": "Titular", "descricao": "Posse"}]
+    assert d["discursos"] == [{"data": "2026-09-02", "tipo": "PELA ORDEM", "fase": "Ordem do Dia", "sumario": "Orientou a bancada.", "link": "https://v/1"}]
+    assert d["complementosEm"] == dt.date.today().isoformat()
+    discursos = next(p for c, p in chamadas if c == "/deputados/7/discursos")
+    assert discursos["itens"] == coletar.DISCURSOS_RECENTES and discursos["dataInicio"] == coletar.INICIO_LEGISLATURA
+
+
+def test_coletar_deputado_complementos_recentes_nao_consultam_de_novo(dados, monkeypatch):
+    monkeypatch.setattr(coletar, "coletar_proposicoes", lambda dep: [])
+    coletar.salvar(dados / "deputados" / "7.json", {"profissoes": [{"titulo": "Médico", "desde": None}], "mandatosExternos": [], "historico": [],
+                                                    "discursos": [], "complementosEm": dt.date.today().isoformat()})
+    chamadas = roteador(monkeypatch, ROTAS_COMPLEMENTOS)
+    d = coletar.coletar_deputado({"id": 7, "nome": "F"}, 2025)
+    assert d["profissoes"] == [{"titulo": "Médico", "desde": None}]
+    assert not any(c[0].endswith(("/profissoes", "/historico", "/discursos", "/mandatosExternos")) for c in chamadas)
+
+
+def test_coletar_deputado_complemento_que_falha_mantem_o_anterior(dados, monkeypatch):
+    monkeypatch.setattr(coletar, "coletar_proposicoes", lambda dep: [])
+    antigo = (dt.date.today() - dt.timedelta(days=30)).isoformat()
+    coletar.salvar(dados / "deputados" / "7.json", {"discursos": [{"data": "2026-01-01"}], "complementosEm": antigo})
+    chamadas = roteador(monkeypatch, {**ROTAS_COMPLEMENTOS, "/deputados/7/discursos": RuntimeError("fora")})
+    d = coletar.coletar_deputado({"id": 7, "nome": "F"}, 2025)
+    assert d["discursos"] == [{"data": "2026-01-01"}] and d["profissoes"]
+    assert d["complementosEm"] == antigo
+    assert any("discursos" in a for a in coletar.AVISOS) and chamadas
+
+
+def test_ficha_senador_filtra_comissoes_antigas_e_ordena_mandatos():
+    comissoes = {"MembroComissaoParlamentar": {"Parlamentar": {"MembroComissoes": {"Comissao": [
+        {"IdentificacaoComissao": {"CodigoComissao": "1", "SiglaComissao": "CAE", "NomeComissao": "Assuntos Econômicos", "SiglaCasaComissao": "SF"},
+         "DescricaoParticipacao": "Titular", "DataInicio": "2023-02-02"},
+        {"IdentificacaoComissao": {"CodigoComissao": "2", "SiglaComissao": "CCJ", "NomeComissao": "Justiça", "SiglaCasaComissao": "SF"},
+         "DescricaoParticipacao": "Titular", "DataInicio": "2015-03-04", "DataFim": "2018-12-28"}]}}}}
+    mandatos = {"MandatoParlamentar": {"Parlamentar": {"Mandatos": {"Mandato": [
+        {"CodigoMandato": "475", "UfParlamentar": "AP", "DescricaoParticipacao": "Titular",
+         "PrimeiraLegislaturaDoMandato": {"DataInicio": "2011-02-01", "DataFim": "2015-01-31"},
+         "SegundaLegislaturaDoMandato": {"DataInicio": "2015-02-01", "DataFim": "2019-01-31"},
+         "Partidos": {"Partido": {"Sigla": "PSOL", "DataFiliacao": "2011-01-28", "DataDesfiliacao": "2015-09-28"}}},
+        {"CodigoMandato": "522", "UfParlamentar": "AP", "DescricaoParticipacao": "Titular",
+         "PrimeiraLegislaturaDoMandato": {"DataInicio": "2019-02-01", "DataFim": "2023-01-31"},
+         "SegundaLegislaturaDoMandato": {"DataInicio": "2023-02-01", "DataFim": "2027-01-31"},
+         "Partidos": {"Partido": [{"Sigla": "REDE", "DataFiliacao": "2015-09-29", "DataDesfiliacao": "2024-01-23"},
+                                  {"Sigla": "PT", "DataFiliacao": "2024-07-18"}]}}]}}}}
+    ficha = coletar.ficha_senador(comissoes, mandatos)
+    assert ficha["comissoes"] == [{"codigo": "1", "sigla": "CAE", "nome": "Assuntos Econômicos", "casa": "SF", "cargo": "Titular", "inicio": "2023-02-02", "fim": None}]
+    assert [m["codigo"] for m in ficha["mandatos"]] == ["522", "475"]
+    assert ficha["mandatos"][0]["fim"] == "2027-01-31"
+    assert [x["sigla"] for x in ficha["mandatos"][0]["partidos"]] == ["PT", "REDE"]
+    assert ficha["mandatos"][1]["partidos"][0]["sigla"] == "PSOL"
+
+
+def test_coletar_ficha_senado_grava_por_senador_e_avisa_falha(dados, monkeypatch):
+    coletar.salvar(dados / "senado.json", [{"id": 1, "nome": "A"}, {"id": 2, "nome": "B"}])
+
+    def falso(caminho, **params):
+        if caminho.startswith("/senador/2/"):
+            raise RuntimeError("HTTP 503")
+        return {}
+
+    monkeypatch.setattr(coletar, "get_senado", falso)
+    coletar.coletar_ficha_senado()
+    assert json.loads((dados / "senado_ficha.json").read_text()) == {"1": {"comissoes": [], "mandatos": []}}
+    assert any("ficha de senador" in a for a in coletar.AVISOS)
+
+
 def test_coletar_temas_proposicoes_agrupa_por_projeto_e_ignora_requerimento(dados, monkeypatch):
     uri = "https://dadosabertos.camara.leg.br/api/v2/proposicoes/"
     linhas = [

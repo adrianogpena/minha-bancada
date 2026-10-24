@@ -258,7 +258,7 @@ def main() -> None:
     (saida / "resumo.txt").write_text(t, encoding="utf-8")
     print(t)
     if a.enviar:
-        enviar(f"{data[8:]}/{data[5:7]}: {resumo_curto(d)} — Minha Bancada" if linhas(d) else titulo, h, t)
+        enviar(titulo, h, t)
 
 
 if __name__ == "__main__":

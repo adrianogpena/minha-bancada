@@ -91,7 +91,7 @@ def nome_exibido(variantes: Counter) -> str:
 
 
 def _linhas(deputados: dict, bruto: Path, nucleo: dict):
-    """Despesas do ano como (casa, uf, id do político, nome, partido, valor, fornecedor, documento bruto, chave da pessoa).
+    """Despesas do ano como (casa, uf, id do político, nome, partido, valor, fornecedor, documento bruto, chave da pessoa, data ISO ou None).
     Devolve também o ano e quantas linhas cada casa trouxe."""
     chaves = nucleo["chaves"]
     ceaps = ler(bruto / "senado_ceaps.json", {}) or {}
@@ -103,14 +103,14 @@ def _linhas(deputados: dict, bruto: Path, nucleo: dict):
             continue
         for i in d["despesas"]["itens"]:
             linhas.append(("camara", d["uf"], str(did), d["nome"], d.get("partido"), i.get("valor") or 0, i.get("fornecedor"), i.get("cnpj"),
-                           chaves.get(("camara", str(did)))))
+                           chaves.get(("camara", str(did))), i.get("data")))
     if ceaps.get("ano") == ano:
         senadores = {str(s["id"]): s for s in ler(bruto / "senado.json", []) or []}
         for sid, itens in ceaps["itens"].items():
             s = senadores.get(sid, {})
             for i in itens:
                 linhas.append(("senado", s.get("uf"), sid, s.get("nome") or sid, s.get("partido"), i.get("valor") or 0, i.get("fornecedor"),
-                               i.get("cnpj"), chaves.get(("senado", sid))))
+                               i.get("cnpj"), chaves.get(("senado", sid)), i.get("data")))
     for pasta in sorted(p for p in (bruto / "estaduais").glob("*") if p.is_dir()):
         arq = pasta / f"verbas_{ano}.json"
         if not arq.exists():
@@ -122,7 +122,7 @@ def _linhas(deputados: dict, bruto: Path, nucleo: dict):
             if not isinstance(i.get("valor"), (int, float)):
                 continue
             linhas.append(("estadual", pasta.name, did, d.get("nome") or did, d.get("partido"), i["valor"], i.get("fornecedor"), i.get("cnpj"),
-                           chaves.get(("estadual", pasta.name, did))))
+                           chaves.get(("estadual", pasta.name, did)), i.get("data")))
     return ano, linhas
 
 
@@ -144,7 +144,7 @@ def construir(deputados: dict, bruto: Path, nucleo: dict) -> dict:
 
     # nome -> documento único (entre as despesas que têm documento), para recuperar as que vieram sem
     docs_do_nome = defaultdict(set)
-    for _, _, _, _, _, _, nome, bruto_doc, _ in linhas:
+    for _, _, _, _, _, _, nome, bruto_doc, _, _ in linhas:
         doc = documento(bruto_doc)
         if doc and nome_chave(nome):
             docs_do_nome[nome_chave(nome)].add(_raiz(doc))
@@ -152,7 +152,7 @@ def construir(deputados: dict, bruto: Path, nucleo: dict) -> dict:
     sem_identificacao = 0.0
     forn = {}
 
-    for casa, uf, did, pnome, ppartido, valor, nome, bruto_doc, pessoa in linhas:
+    for casa, uf, did, pnome, ppartido, valor, nome, bruto_doc, pessoa, data in linhas:
         doc = documento(bruto_doc)
         chave_n = nome_chave(nome)
         ident = _raiz(doc) if doc else None
@@ -176,12 +176,14 @@ def construir(deputados: dict, bruto: Path, nucleo: dict) -> dict:
         f = forn.get(ident)
         if f is None:
             f = forn[ident] = {"id": id_, "tipo": tipo, "nomes": Counter(), "docs": Counter(), "total": 0.0, "notas": 0,
-                               "casas": Counter(), "politicos": defaultdict(float), "info": {}}
+                               "casas": Counter(), "politicos": defaultdict(float), "info": {}, "datas": []}
         f["nomes"][nome or ""] += abs(valor) or 1
         if doc:
             f["docs"][doc[1]] += abs(valor) or 1
         f["total"] += valor
         f["notas"] += 1
+        if data:
+            f["datas"].append(data)
         f["casas"][casa] += valor
         quem = (casa, uf, did)
         f["politicos"][quem] += valor
@@ -219,6 +221,8 @@ def construir(deputados: dict, bruto: Path, nucleo: dict) -> dict:
         "entidades": entidades,
         # em memória, para scripts/doadores.py: id do fornecedor -> [(casa, uf, id na Casa, pessoa, valor)]; não vai para o site
         "recebimentos": {f["id"]: [(*q, f["info"][q][2], round(v, 2)) for q, v in f["politicos"].items()] for f, _, _ in ranking},
+        # id -> (data da primeira nota do ano, data da última), só dos que têm data; também só em memória (scripts/empresas.py)
+        "datas": {f["id"]: (min(f["datas"]), max(f["datas"])) for f, _, _ in ranking if f["datas"]},
         "ranking": {"ano": ano, "fornecedores": topo,
                     "resumo": {"total": round(sum(f["total"] for f, _, _ in ranking), 2), "fornecedores": len(entidades),
                                "porCasa": {c: round(v, 2) for c, v in por_casa.items()},

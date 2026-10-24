@@ -15,6 +15,7 @@ from pathlib import Path
 import categorias
 import gerar_estaduais
 import doadores
+import empresas
 import fornecedores as nucleo_fornecedores
 import candidaturas
 import identidades
@@ -550,6 +551,8 @@ def main():
     mandatos.salvar_mandatos(mandatos.construir(deputados, BRUTO, nucleo), SAIDA)
     nucleo_fornecedores.salvar_fornecedores(forn, SAIDA)
     doadores.salvar_doadores(cruzamento, SAIDA)
+    exibidos = {f["id"] for f in forn["ranking"]["fornecedores"]} | {c["fornecedor"] for c in cruzamento["cruzamentos"]}
+    empresas.salvar_empresas(empresas.construir(BRUTO, exibidos, forn["datas"]), SAIDA)
     gerar_politicos.gerar(deputados, gerar_estaduais.gerar(), nucleo["chaves"])
     gerar_prefeituras.gerar()
     gerar_eleitorado()

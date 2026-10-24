@@ -96,7 +96,7 @@ def https(url: str | None) -> str | None:
 
 
 def data_curta(texto: str | None) -> str | None:
-    return texto[:10] if texto else None
+    return comum.data_iso(texto)
 
 
 def sem_acento(s: str) -> str:

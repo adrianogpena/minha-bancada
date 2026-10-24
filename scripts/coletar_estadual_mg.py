@@ -56,17 +56,14 @@ def montar_deputados(em_exercicio: list[dict], telefonica: list[dict]) -> list[d
     for d in em_exercicio:
         t = por_id.get(d["id"], {})
         deputados.append({"id": str(d["id"]), "nome": comum.nome_limpo(d["nome"]), "nomeCivil": t.get("nomeServidor") or None, "foto": None,
-                          "email": t.get("email") or None, "titular": True, "partido": d.get("partido") or None, "fonte": ficha_url(d["id"])})
+                          "email": comum.email(t.get("email")), "titular": True, "partido": comum.sigla_partido(d.get("partido")), "fonte": ficha_url(d["id"])})
     return deputados
 
 
 # ---------------------------------------------------------------- verba indenizatória
 
 def data_iso(valor) -> str | None:
-    if isinstance(valor, dict):
-        valor = valor.get("$")
-    m = re.match(r"(\d{4}-\d{2}-\d{2})", valor or "")
-    return m.group(1) if m else None
+    return comum.data_iso(valor)
 
 
 def itens_verba(registros: list[dict], id_deputado: str, mes: int) -> list[dict]:
@@ -75,7 +72,7 @@ def itens_verba(registros: list[dict], id_deputado: str, mes: int) -> list[dict]
         categoria = r.get("descTipoDespesa") or f"Tipo {r.get('codTipoDespesa')}"
         notas = r.get("listaDetalheVerba") or []
         itens.extend({"idDeputado": id_deputado, "mes": mes, "categoria": n.get("descTipoDespesa") or categoria,
-                      "fornecedor": n.get("nomeEmitente") or None, "cnpj": n.get("cpfCnpj") or None,
+                      **comum.fornecedor(n.get("nomeEmitente"), n.get("cpfCnpj")),
                       "valor": comum.valor_br(n.get("valorReembolsado")), "data": data_iso(n.get("dataEmissao")),
                       "documento": n.get("descDocumento") or None, "fonte": VERBA_PAGINA} for n in notas)
         if not notas:

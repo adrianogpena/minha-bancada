@@ -59,7 +59,7 @@ def deputados_com_tse(lista: list[dict]) -> list[dict]:
         e = identidades.eleito_do_tse(UF, d["nomeCivil"], eleitos)
         saida.append({"id": d["idContracheque"], "nome": e["urna"] if e and e.get("urna") else d["nomeCivil"].title(),
                       "nomeCivil": e["nome"] if e else d["nomeCivil"].title(), "nomeFonte": d["nomeCivil"].title(), "foto": None,
-                      "email": e.get("email") if e else None, "titular": True, "partido": e.get("partido") if e else None, "fonte": DEPUTADOS_URL})
+                      "email": comum.email(e.get("email")) if e else None, "titular": True, "partido": comum.sigla_partido(e.get("partido")) if e else None, "fonte": DEPUTADOS_URL})
     return sorted(saida, key=lambda d: comum.sem_acento(d["nome"]))
 
 
@@ -97,7 +97,7 @@ def itens_gabinetes(linhas: list[dict], deputados: list[dict]) -> list[dict]:
         if did is None or data is None:
             continue
         categoria = " / ".join(x for x in (linha.get("Verba"), linha.get("Descrição")) if x)
-        itens.append({"idDeputado": did, "mes": int(data[5:7]), "categoria": categoria, "fornecedor": linha.get("Favorecido") or None, "cnpj": None,
+        itens.append({"idDeputado": did, "mes": int(data[5:7]), "categoria": categoria, "fornecedor": comum.compactar(linha.get("Favorecido")), "cnpj": None,
                       "valor": comum.valor_br(linha.get("Valor")), "data": data, "trecho": linha.get("Trecho") or None, "fonte": GABINETES_PAGINA})
     return itens
 

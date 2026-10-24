@@ -108,7 +108,7 @@ def texto_html(trecho: str) -> str:
 def sigla_partido(texto: str) -> str | None:
     t = texto_html(texto)
     m = re.search(r"\(([^()]+)\)\s*$", t)
-    return (m.group(1) if m else t) or None
+    return comum.sigla_partido(m.group(1) if m else t)
 
 
 def parse_lista(html: str) -> list[dict]:
@@ -122,7 +122,7 @@ def parse_lista(html: str) -> list[dict]:
         partido = re.search(r'data-title="Partido">(.*?)</td>', linha, re.S)
         email = re.search(r'href="mailto:([^"]+)"', linha)
         lista.append({"id": m.group(1), "nome": texto_html(m.group(2)), "partido": sigla_partido(partido.group(1)) if partido else None,
-                      "email": email.group(1).strip() if email else None})
+                      "email": comum.email(email.group(1)) if email else None})
     return lista
 
 
@@ -132,7 +132,7 @@ def parse_perfil(html: str) -> dict:
     foto = re.search(r'<img class="foto" src="([^"]+)"', html)
     email = re.search(r"<b>E-mail:</b>\s*<span>(.*?)</span>", html, re.S)
     return {"nomeCivil": texto_html(civil.group(1)) if civil else None, "foto": foto.group(1) if foto else None,
-            "email": texto_html(email.group(1)) if email else None}
+            "email": comum.email(texto_html(email.group(1))) if email else None}
 
 
 def montar_deputados(lista: list[dict], perfis: dict) -> list[dict]:

@@ -47,6 +47,7 @@ import sys
 import time
 import unicodedata
 import zipfile
+from datetime import date
 from html import unescape
 from pathlib import Path
 from urllib.parse import urlsplit
@@ -187,11 +188,34 @@ def compactar(texto) -> str | None:
     return " ".join((texto or "").split()) or None
 
 
+def fornecedor(nome, doc=None) -> dict:
+    """{fornecedor, cnpj} de um fornecedor como a fonte trouxe, normalizados na entrada: nome com espaços compactados;
+    documento só com dígitos (zeros à esquerda restaurados, dígito verificador conferido), None se vazio, mascarado ou inválido."""
+    import fornecedores
+    achado = fornecedores.documento(doc)
+    return {"fornecedor": compactar(nome), "cnpj": achado[1] if achado else None}
+
+
 def data_br_iso(texto: str | None, inteiro: bool = False) -> str | None:
     """"31/12/2024" (com espaços nas pontas) -> "2024-12-31". `inteiro`: recusa texto depois da data (hora)."""
     padrao = r"\s*(\d\d)/(\d\d)/(\d{4})" + (r"\s*" if inteiro else "")
     m = (re.fullmatch if inteiro else re.match)(padrao, texto or "")
-    return f"{m.group(3)}-{m.group(2)}-{m.group(1)}" if m else None
+    return _iso_valida(m.group(3), m.group(2), m.group(1)) if m else None
+
+
+def data_iso(valor) -> str | None:
+    """"2026-01-31", "2026-01-31T10:00:00" ou {"$": "2026-01-31"} -> "2026-01-31"; vazio ou data que não existe vira None."""
+    if isinstance(valor, dict):
+        valor = valor.get("$")
+    m = re.match(r"\s*(\d{4})-(\d{2})-(\d{2})", valor if isinstance(valor, str) else "")
+    return _iso_valida(*m.groups()) if m else None
+
+
+def _iso_valida(ano: str, mes: str, dia: str) -> str | None:
+    try:
+        return date(int(ano), int(mes), int(dia)).isoformat()
+    except ValueError:
+        return None
 
 
 def valor_br(texto) -> float | None:
@@ -211,6 +235,19 @@ def valor_br(texto) -> float | None:
         return float(t)
     except ValueError:
         return None
+
+
+def email(texto) -> str | None:
+    """E-mail em minúsculas, sem "mailto:", parâmetros nem espaços; None se vazio ou sem forma de e-mail."""
+    t = unescape(str(texto or "")).strip().lower()
+    t = re.sub(r"^mailto:", "", t).split("?")[0].strip()
+    return t if re.fullmatch(r"[\w.+-]+@[\w-]+(\.[\w-]+)+", t) else None
+
+
+def sigla_partido(texto) -> str | None:
+    """Sigla ou nome do partido como a fonte trouxe, com entidades resolvidas e espaços compactados (o id sai de
+    `identidades.partido_id` no núcleo); vazio vira None."""
+    return compactar(unescape(str(texto or "")).strip(" .-"))
 
 
 def mes_numero(nome) -> int | None:

@@ -66,8 +66,8 @@ def montar_deputados(servidores: list[dict], eleitos: list[dict]) -> list[dict]:
     for s in servidores:
         e = por_id.get(ligados.get(s["nome"]))
         nome = (e.get("urna") or e["nome"]) if e else (nome_do_gabinete(s.get("descricaoLotacao")) or titulo(s["nome"]))
-        lista.append({"id": str(s["matricula"]), "nome": nome, "nomeCivil": titulo(s["nome"]), "foto": None, "email": e.get("email") if e else None,
-                      "titular": True, "partido": e.get("partido") if e else None,
+        lista.append({"id": str(s["matricula"]), "nome": nome, "nomeCivil": titulo(s["nome"]), "foto": None, "email": comum.email(e.get("email")) if e else None,
+                      "titular": True, "partido": comum.sigla_partido(e.get("partido")) if e else None,
                       "fonte": TSE_FICHA.format(e["sequencial"]) if e else f"{PORTAL}servidores"})
     return sorted(lista, key=lambda d: comum.sem_acento(d["nome"]))
 
@@ -78,7 +78,7 @@ def itens_remuneracao(detalhe: dict, id_deputado: str, ano: int) -> list[dict]:
         if f.get("anoCompetencia") != ano:
             continue
         bruto, descontos = f.get("vencimentos"), f.get("descontos")
-        itens.append({"idDeputado": id_deputado, "mes": f["mesCompetencia"], "bruto": bruto,
+        itens.append({"idDeputado": id_deputado, "mes": comum.mes_numero(f["mesCompetencia"]), "bruto": bruto,
                       "liquido": round(bruto - descontos, 2) if bruto is not None and descontos is not None else None,
                       "componentes": {"salarioBase": f.get("salarioBase"), "outrosProventos": f.get("outrosProventos"), "descontos": descontos},
                       "folha": f.get("descricaoTipoFolha"), "fonte": f"{PORTAL}servidores"})

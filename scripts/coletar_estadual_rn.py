@@ -75,7 +75,7 @@ def paginas(s, caminho: str, **params):
 def partido_atual(p: dict) -> str | None:
     atuais = [f for f in p.get("filiacoes") or [] if not (f.get("vigencia") or {}).get("fim")]
     atuais.sort(key=lambda f: (f.get("vigencia") or {}).get("inicio") or "")
-    return (atuais[-1]["partido"].get("nome") or atuais[-1]["partido"].get("sigla")) if atuais else None
+    return comum.sigla_partido(atuais[-1]["partido"].get("nome") or atuais[-1]["partido"].get("sigla")) if atuais else None
 
 
 def deputado(p: dict) -> dict:
@@ -107,7 +107,7 @@ def materia(p: dict, ids: list[str]) -> tuple[str, dict]:
     tipo = prop["tipo"]
     return f"{tipo['sigla']}-{prop['numero']}-{prop['ano']}", {
         "tipo": tipo["sigla"], "tipoDescricao": titulo(tipo["descricao"]), "numero": prop["numero"], "ano": prop["ano"],
-        "dataApresentacao": (p.get("dataEntrada") or "")[:10] or None, "ementa": " ".join((p.get("ementa") or "").split()),
+        "dataApresentacao": comum.data_iso(p.get("dataEntrada")), "ementa": " ".join((p.get("ementa") or "").split()),
         "situacao": "Arquivado" if p.get("dataArquivamento") else None, "emTramitacao": not p.get("dataArquivamento"), "linkTexto": None,
         "idsAutores": ids, "idsDeputados": ids, "fonte": f"{SITE}/projeto/{p['id']}"}
 
@@ -275,7 +275,7 @@ def votacao(processo: dict, detalhe: dict, ids: set) -> tuple[dict, dict] | None
     abertura = processo["resultadoVotacao"]["dataSituacaoAbertura"]
     resultado = processo["resultadoVotacao"].get("resultadoVotacao")
     prop = processo["propositura"]
-    return ({"data": abertura[:10], "idMateria": f"{prop['tipo']['sigla']}-{prop['numero']}-{prop['ano']}", "aprovada": resultado == "A",
+    return ({"data": comum.data_iso(abertura), "idMateria": f"{prop['tipo']['sigla']}-{prop['numero']}-{prop['ano']}", "aprovada": resultado == "A",
              "resultado": {"A": "Aprovado", "R": "Rejeitado"}.get(resultado), "sim": res.get("sim"), "nao": res.get("nao"),
              "abstencoes": res.get("abstencao"), "votos": votos,
              "fonte": f"{SITE}/evento-legislativo/{processo['resultadoVotacao']['reuniao']['id']}"},

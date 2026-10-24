@@ -48,7 +48,7 @@ REGRAS = [
                 "manutencao de bens")),
     ("comunicacao", ("divulgacao", "comunicacao", "imprensa", "publicidade")),
     ("graficos", ("grafic", "copias", "reprografia", "impressos")),
-    ("telecom", ("telefon", "celular", "internet", "telecom")),
+    ("telecom", ("telefon", "celular", "internet", "telecom", "pacote de dados")),
     ("publicacoes", ("assinatura", "periodico", "jornais", "revistas", "publicacoes", "clipping", "postais", "correspondencia", "telegrama")),
     ("seguranca", ("seguranca", "vigilancia")),
     ("eventos", ("curso", "palestra", "seminario", "congresso", "evento", "inscric", "participacao")),

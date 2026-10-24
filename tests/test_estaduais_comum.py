@@ -166,3 +166,42 @@ def test_xlsx_linhas_e_abas():
 
 def test_faltando():
     assert ec.faltando({"A", "B"}, ["A", "C"], "CSV") == ["CSV sem a coluna C"]
+
+
+@pytest.mark.parametrize("nome,doc,esperado", [
+    ("  ACME   Ltda ", "11.222.333/0001-81", {"fornecedor": "ACME Ltda", "cnpj": "11222333000181"}),
+    ("Padaria", "360305000104", {"fornecedor": "Padaria", "cnpj": "00360305000104"}),   # zero à esquerda perdido
+    ("Fulano", "***.123.456-**", {"fornecedor": "Fulano", "cnpj": None}),                  # mascarado
+    ("Fulano", "11222333000182", {"fornecedor": "Fulano", "cnpj": None}),                  # dígito verificador errado
+    ("", None, {"fornecedor": None, "cnpj": None}),
+])
+def test_fornecedor(nome, doc, esperado):
+    assert ec.fornecedor(nome, doc) == esperado
+
+
+@pytest.mark.parametrize("valor,esperado", [
+    ("2026-01-31", "2026-01-31"), ("2026-01-31T10:00:00", "2026-01-31"), ({"$": "2026-01-31"}, "2026-01-31"),
+    ("2026-02-31", None), ("", None), (None, None), (20260131, None),
+])
+def test_data_iso(valor, esperado):
+    assert ec.data_iso(valor) == esperado
+
+
+def test_data_br_iso_recusa_data_inexistente():
+    assert ec.data_br_iso("31/02/2026") is None
+    assert ec.data_br_iso("28/02/2026") == "2026-02-28"
+
+
+@pytest.mark.parametrize("texto,esperado", [
+    ("Fulano@Casa.Leg.BR ", "fulano@casa.leg.br"), ("mailto:a.b@x.gov.br?subject=oi", "a.b@x.gov.br"), ("sem arroba", None),
+    ("a@b", None), ("", None), (None, None),
+])
+def test_email(texto, esperado):
+    assert ec.email(texto) == esperado
+
+
+@pytest.mark.parametrize("texto,esperado", [
+    ("  PL ", "PL"), ("PC  do   B", "PC do B"), ("&nbsp;", None), ("Podemos.", "Podemos"), ("", None), (None, None),
+])
+def test_sigla_partido(texto, esperado):
+    assert ec.sigla_partido(texto) == esperado

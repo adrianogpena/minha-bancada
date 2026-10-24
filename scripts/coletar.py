@@ -25,6 +25,7 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
 
 import cadastro_proposicoes
+import estaduais_comum as comum
 import requests
 from requests.adapters import HTTPAdapter
 from urllib3.util.retry import Retry
@@ -182,8 +183,8 @@ def coletar_cota_csv(ano: int) -> dict[int, list]:
         por_dep.setdefault(int(lin["nuDeputadoId"]), []).append({
             "mes": int(lin["numMes"]) if lin.get("numMes", "").isdigit() else None,
             "tipo": lin.get("txtDescricao"), "valor": float(lin["vlrLiquido"] or 0),
-            "fornecedor": lin.get("txtFornecedor"), "cnpj": re.sub(r"\D", "", lin.get("txtCNPJCPF") or ""),
-            "data": (lin.get("datEmissao") or "")[:10] or None, "documento": lin.get("urlDocumento") or None,
+            **comum.fornecedor(lin.get("txtFornecedor"), lin.get("txtCNPJCPF")),
+            "data": comum.data_iso(lin.get("datEmissao")), "documento": lin.get("urlDocumento") or None,
         })
     for lista in por_dep.values():
         lista.sort(key=lambda i: i["data"] or "", reverse=True)
@@ -207,8 +208,8 @@ def coletar_deputado(dep: dict, ano: int, cota: dict[int, list] | None = None) -
             avisar(f"despesas de {dep.get('nome')}: {e}")
             despesas = []
         itens_cota = [{"mes": d.get("mes"), "tipo": d.get("tipoDespesa"), "valor": d.get("valorLiquido") or 0,
-                       "fornecedor": d.get("nomeFornecedor"), "cnpj": re.sub(r"\D", "", d.get("cnpjCpfFornecedor") or ""),
-                       "data": d.get("dataDocumento"), "documento": d.get("urlDocumento")} for d in despesas]
+                       **comum.fornecedor(d.get("nomeFornecedor"), d.get("cnpjCpfFornecedor")),
+                       "data": comum.data_iso(d.get("dataDocumento")), "documento": d.get("urlDocumento")} for d in despesas]
 
     frentes = None
     try:
@@ -225,7 +226,7 @@ def coletar_deputado(dep: dict, ano: int, cota: dict[int, list] | None = None) -
         "partido": status.get("siglaPartido") or dep.get("siglaPartido"),
         "uf": status.get("siglaUf") or dep.get("siglaUf"),
         "foto": status.get("urlFoto") or dep.get("urlFoto"),
-        "email": status.get("email") or dep.get("email"),
+        "email": comum.email(status.get("email") or dep.get("email")),
         "situacao": status.get("situacao"),
         "condicaoEleitoral": status.get("condicaoEleitoral"),
         "gabinete": {k: v for k, v in (status.get("gabinete") or {}).items()
@@ -315,12 +316,12 @@ def coletar_detalhes_proposicoes() -> None:
         st = d.get("statusProposicao") or d.get("ultimoStatus") or {}
         situacao = st.get("descricaoSituacao") or ""
         return pid, {
-            "dataApresentacao": (d.get("dataApresentacao") or "")[:10] or None,
+            "dataApresentacao": comum.data_iso(d.get("dataApresentacao")),
             "situacao": situacao or None,
             "tramitacao": st.get("descricaoTramitacao"),
             "despacho": (st.get("despacho") or "").strip() or None,
             "orgao": st.get("siglaOrgao"),
-            "dataSituacao": (st.get("dataHora") or "")[:10] or None,
+            "dataSituacao": comum.data_iso(st.get("dataHora")),
             "regime": st.get("regime"),
             "inteiroTeor": d.get("urlInteiroTeor"),
             "ementaDetalhada": (d.get("ementaDetalhada") or "").strip() or None,
@@ -608,7 +609,7 @@ def coletar_senado() -> None:
             "uf": ident.get("UfParlamentar") or mandato.get("UfParlamentar"),
             "foto": ident.get("UrlFotoParlamentar"),
             "pagina": ident.get("UrlPaginaParlamentar"),
-            "email": ident.get("EmailParlamentar"),
+            "email": comum.email(ident.get("EmailParlamentar")),
             "genero": ident.get("SexoParlamentar"),
             "participacao": mandato.get("DescricaoParticipacao"),
             "fimMandato": fim,
@@ -680,7 +681,7 @@ def normalizar_votacao_senado(v: dict) -> dict | None:
         sigla, desc = x.get("siglaVotoParlamentar"), x.get("descricaoVotoParlamentar")
         # 3º item: rótulo como o Senado publicou, para poder reclassificar sem consultar de novo
         votos.append([str(cod), tipo_voto_senado(sigla, desc), f"{sigla or ''}|{desc or ''}"])
-    data = str(v.get("dataSessao") or "")[:10]
+    data = comum.data_iso(v.get("dataSessao"))
     if not votos or not data:
         return None
     resultado = v.get("resultadoVotacao")
@@ -780,7 +781,7 @@ def coletar_ceaps_senado() -> None:
             continue
         itens.setdefault(str(d["codSenador"]), []).append({
             "mes": d.get("mes"), "tipo": d.get("tipoDespesa"), "valor": d.get("valorReembolsado") or 0,
-            "fornecedor": d.get("fornecedor"), "cnpj": re.sub(r"\D", "", d.get("cpfCnpj") or ""), "data": d.get("data"),
+            **comum.fornecedor(d.get("fornecedor"), d.get("cpfCnpj")), "data": comum.data_iso(d.get("data")),
         })
     for lista in itens.values():
         lista.sort(key=lambda i: i["data"] or "", reverse=True)
@@ -864,8 +865,8 @@ def autoria_senado(p: dict, nome: str | None) -> dict | None:
         return None
     return {"id": str(p["codigoMateria"]), "processo": p["id"], "tipo": m["tipo"], "numero": m["numero"].replace(".", ""), "ano": int(m["ano"]),
             "ementa": (p.get("ementa") or "").strip(), "principal": primeiro_autor_senado(p.get("autoria"), nome),
-            "dataApresentacao": (p.get("dataApresentacao") or "")[:10] or None,
-            "situacao": p.get("situacaoAtual"), "dataSituacao": (p.get("dataSituacaoAtual") or "")[:10] or None}
+            "dataApresentacao": comum.data_iso(p.get("dataApresentacao")),
+            "situacao": p.get("situacaoAtual"), "dataSituacao": comum.data_iso(p.get("dataSituacaoAtual"))}
 
 
 def coletar_autorias_senado() -> None:
@@ -931,7 +932,7 @@ def coletar_votos(votacao: dict) -> dict:
             avisar(f"detalhe da votação {votacao['id']}: {e}")
     return {
         "id": votacao["id"],
-        "data": votacao.get("data") or (votacao.get("dataHoraRegistro") or "")[:10],
+        "data": comum.data_iso(votacao.get("data") or votacao.get("dataHoraRegistro")),
         "hora": (votacao.get("dataHoraRegistro") or "")[11:16],
         "orgao": votacao.get("siglaOrgao"),
         "descricao": (votacao.get("descricao") or "").strip(),

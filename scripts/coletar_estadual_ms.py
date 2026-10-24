@@ -57,19 +57,15 @@ def itens_ceap(linhas: list[dict], ligacao: dict, fonte: str) -> tuple[list[dict
         if not pid:
             sem_par.add(comum.nome_limpo(nome))
             continue
-        cnpj = "".join(c for c in (linha.get("CPF/CNPJ") or "") if c.isdigit())
         itens.append({"idDeputado": pid, "mes": comum.mes_numero(linha.get("MES")), "categoria": " ".join((linha.get("CATEGORIA") or "").split()) or None,
-                      "fornecedor": " ".join((linha.get("FORNECEDOR") or "").split()) or None, "cnpj": cnpj or None,
+                      **comum.fornecedor(linha.get("FORNECEDOR"), linha.get("CPF/CNPJ")),
                       "valor": comum.valor_br(linha.get("VALOR (R$)")), "documento": linha.get("DOCUMENTO") or None,
                       "emissao": emissao_iso(linha.get("EMISSAO")), "fonte": (linha.get("COMPROVANTE") or "").strip() or fonte})
     return itens, sem_par
 
 
 def emissao_iso(texto) -> str | None:
-    p = (texto or "").strip().split("/")
-    if len(p) == 3 and all(x.isdigit() for x in p):
-        return f"{p[2]}-{p[1]}-{p[0]}"
-    return None
+    return comum.data_br_iso(texto, inteiro=True)
 
 
 def baixar(s, url: str) -> str:

@@ -39,6 +39,7 @@ def monta_contas(tmp_path, monkeypatch):
     receitas = [rec("10", "r1", "1.000,00", "Recursos de partido político", "Partido A", "111"),
                 rec("10", "r2", "300,00", "Recursos de pessoas físicas", "Maria", "222"),
                 rec("10", "r3", "200,00", "Recursos de pessoas físicas", "Maria", "222"),
+                rec("10", "r6", "40,00", "Recursos de pessoas jurídicas", "TIM S A", "02.421.421/0001-11"),
                 rec("10", "r4", "50,00", "Recursos próprios", "Ele mesmo", "333"),
                 rec("99", "r5", "5,00", "Recursos de pessoas físicas", "Fora da lista", "444")]
     zip_csv(tmp_path / "zips" / "prestacao_de_contas_eleitorais_candidatos_2024.zip", {
@@ -60,9 +61,12 @@ def test_contas_resume_receitas_doadores_originarios_e_despesas(tmp_path, monkey
     sp = ler(tmp_path / "tse" / "contas" / "2024" / "SP.json")
     assert list(sp) == ["10"]   # vereador sem movimento e candidato fora da lista não aparecem
     c = sp["10"]
-    assert c["receitas"] == 1550.0 and c["despesasContratadas"] == 500.0 and c["despesasPagas"] == 250.0
+    assert c["receitas"] == 1590.0 and c["despesasContratadas"] == 500.0 and c["despesasPagas"] == 250.0
     assert c["origensReceita"][0] == ["Recursos de partido político", 1000.0]
-    assert c["principaisDoadores"] == [["Partido A", "Recursos de partido político", 1000.0], ["Maria", "Recursos de pessoas físicas", 500.0]]   # próprios ficam de fora; Maria soma pelo CPF
+    assert c["principaisDoadores"] == [["Partido A", "Recursos de partido político", 1000.0], ["Maria", "Recursos de pessoas físicas", 500.0],
+                                      ["TIM S A", "Recursos de pessoas jurídicas", 40.0]]   # próprios ficam de fora; Maria soma pelo CPF
+    assert c["doadoresPJ"] == [["02421421000111", "TIM S A", "Recursos de pessoas jurídicas", 40.0]]   # só quem tem CNPJ válido; CPF e documento inválido não entram
+    assert c["originariosPJ"] == []
     assert c["doadoresOriginarios"] == [["Empresa X", 700.0]]   # só o que veio por repasse de partido
     assert c["gastosPorCategoria"] == [["Publicidade", 400.0], ["Não informada", 100.0]]
     assert ler(tmp_path / "tse" / "contas" / "2024" / "_coleta.json")["prestacoes"] == 1

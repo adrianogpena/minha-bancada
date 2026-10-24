@@ -16,6 +16,7 @@ import sys
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
 
+import estaduais_comum as comum
 from coletar import avisar, get, get_todos
 
 RAIZ = Path(__file__).resolve().parent.parent
@@ -53,12 +54,12 @@ def desfecho(id_: int) -> dict:
     for t in tram:
         desp = t.get("despacho") or ""
         if "Publicação da Medida Provisória" in desp and "dataEdicao" not in saida:
-            saida["dataEdicao"] = (t.get("dataHora") or "")[:10]
+            saida["dataEdicao"] = comum.data_iso(t.get("dataHora"))
         m = NORMA.search(desp)
         sit = t.get("descricaoSituacao") or ""
         if m or "veto" in (t.get("descricaoSituacao") or "").lower():
             texto = desp + sit
-            saida.update({"norma": m.group(1) if m else None, "dataNorma": (t.get("dataHora") or "")[:10],
+            saida.update({"norma": m.group(1) if m else None, "dataNorma": comum.data_iso(t.get("dataHora")),
                           "veto": "total" if re.search(r"vetad[oa] total", texto, re.I)
                           else "parcial" if re.search(r"veto parcial|vetad[oa] parcial", texto, re.I) else None})
             r, c = RAZOES.search(desp), MSC_VETO.search(desp)
@@ -69,8 +70,9 @@ def desfecho(id_: int) -> dict:
             break
     fim = saida.get("dataNorma") or "9999"
     for t in tram:
-        if SANCAO.search(t.get("despacho") or "") and (t.get("dataHora") or "")[:10] <= fim:
-            saida["remessa"] = (t.get("dataHora") or "")[:10]
+        dia = comum.data_iso(t.get("dataHora"))
+        if SANCAO.search(t.get("despacho") or "") and dia and dia <= fim:
+            saida["remessa"] = dia
             break
     return saida
 
@@ -88,9 +90,9 @@ def detalhar(prop: dict) -> dict:
     return {**extra,
         "id": prop["id"], "tipo": d["siglaTipo"], "numero": d["numero"], "ano": d["ano"],
         "ementa": (d.get("ementa") or "").strip(),
-        "dataApresentacao": (d.get("dataApresentacao") or "")[:10],
+        "dataApresentacao": comum.data_iso(d.get("dataApresentacao")),
         "situacao": st.get("descricaoSituacao"),
-        "dataSituacao": (st.get("dataHora") or "")[:10],
+        "dataSituacao": comum.data_iso(st.get("dataHora")),
         "inteiroTeor": d.get("urlInteiroTeor"),
     }
 

@@ -64,7 +64,7 @@ def parse_deputados(xml: bytes) -> list[dict]:
             continue
         matricula = d.findtext("Matricula").strip()
         achados.append({"id": matricula, "nome": " ".join((d.findtext("NomeParlamentar") or "").split()), "nomeCivil": None, "foto": None,
-                        "email": (d.findtext("Email") or "").strip() or None, "titular": True, "partido": (d.findtext("Partido") or "").strip() or None,
+                        "email": comum.email(d.findtext("Email")), "titular": True, "partido": comum.sigla_partido(d.findtext("Partido")),
                         "fonte": f"{SITE}/deputado/?matricula={matricula}", "idAutor": (d.findtext("IdSPL") or "").strip() or None})
     return achados
 
@@ -90,7 +90,7 @@ def ler_proposituras(zip_bytes: bytes, primeiro_ano: int) -> dict:
                 if natureza in NATUREZAS and ano >= primeiro_ano:
                     achadas[(el.findtext("IdDocumento") or "").strip()] = {
                         "natureza": natureza, "ano": ano, "numero": (el.findtext("NroLegislativo") or "").strip(),
-                        "ementa": " ".join((el.findtext("Ementa") or "").split()), "data": (el.findtext("DtPublicacao") or "")[:10] or None}
+                        "ementa": " ".join((el.findtext("Ementa") or "").split()), "data": comum.data_iso(el.findtext("DtPublicacao"))}
                 el.clear()
     return achadas
 
@@ -137,7 +137,7 @@ def itens_verba(xml: bytes, ids_por_matricula: dict) -> list[dict]:
         if not id_dep:
             continue
         itens.append({"idDeputado": id_dep, "mes": int(d.findtext("Mes")), "categoria": (d.findtext("Tipo") or "").strip() or None,
-                      "fornecedor": " ".join((d.findtext("Fornecedor") or "").split()) or None, "cnpj": (d.findtext("CNPJ") or "").strip() or None,
+                      **comum.fornecedor(d.findtext("Fornecedor"), d.findtext("CNPJ")),
                       "valor": comum.valor_br(d.findtext("Valor")), "fonte": DESPESAS_PAGINA})
     return sorted(itens, key=lambda i: (i["mes"], i["idDeputado"], i["categoria"] or "", i["fornecedor"] or "", i["valor"] or 0))
 

@@ -5,6 +5,38 @@ Regra: toda fonte nova ou mudança de coleta ganha uma entrada aqui, no mesmo co
 Datas dos conjuntos que já existiam vêm do primeiro commit que os trouxe (`git log --diff-filter=A`).
 Todas as coletas rodam sozinhas no GitHub Actions (`.github/workflows/atualizar.yml`, todo dia às 05:00 de Brasília), salvo onde indicado.
 
+## Dados da empresa pela Receita para os fornecedores (2026-10-24)
+- **De onde:** CNPJ aberto da Receita Federal, arquivos mensais `Empresas`, `Estabelecimentos` e `Socios` (0 a 9) mais `Cnaes`, `Naturezas`, `Qualificacoes` e `Municipios`, em `https://arquivos.receitafederal.gov.br/dados/cnpj/dados_abertos_cnpj/<AAAA-MM>/` (`receita_cnpj` em `ENDPOINTS.md`, ainda ❔ não testado).
+- **Como:** `scripts/coletar_receita.py` roda só na máquina local (`--listar`, `--baixar`, depois sem opção): guarda em `dados/receita/` apenas as empresas de `nucleo/fornecedores.json` (tipo PJ), a matriz de cada uma (situação, abertura, CNAE, local), razão social, natureza, porte, capital e os sócios (nome, qualificação, entrada); nunca CPF de sócio. `scripts/empresas.py` (no `gerar.py`) grava `nucleo/empresas.json` só das empresas que o site mostra, com a data da primeira nota do ano e os dias desde a abertura. `fornecedores.html` mostra o bloco em cada fornecedor e em cada empresa do cruzamento com doadores, com a fonte e a competência; empresa aberta até 365 dias antes da primeira nota do ano vem em negrito, como fato cadastral e sem juízo.
+- **Pendente:** o endereço e o layout seguem a documentação da Receita, mas não foram conferidos contra o servidor real (a rede do ambiente de desenvolvimento bloqueia o host); os testes usam arquivos montados no layout documentado, não amostras gravadas. Na primeira coleta local, confira o resultado e, se a URL mudou, ajuste `RFB_BASE`. Sem `dados/receita/`, o `gerar.py` só avisa, grava `empresas.json` vazio e o site fica sem o bloco.
+
+## Doadores de campanha x fornecedores das cotas, só por CNPJ (2026-10-24)
+- **De onde:** nenhuma fonte nova nem endpoint novo: prestação de contas do TSE (`tse_prestacao_contas`, já coletada por `coletar_contas.py`) e os fornecedores de Câmara, Senado e Assembleias (`fornecedores.py`). Roda offline em `gerar.py`. Dados da empresa pela Receita (atividade, abertura, sócios) ficam para a etapa 2 do pacote 5.1.
+- **Como:** `coletar_contas.py` (versão 4) passa a guardar o CNPJ de doador pessoa jurídica (`doadoresPJ`, `originariosPJ`: todos, não só os cinco maiores); CPF continua sem ser guardado. `identidades.ligar_doadores` liga doador a fornecedor com CNPJ pela raiz de 8 dígitos (`cnpj`, alta) ou, nas contas ainda sem CNPJ, pelo nome padronizado igual ao de um único fornecedor (`nome`, média); ambíguo não liga e pessoa física fica de fora. `scripts/doadores.py` monta `site/dados/doadores_fornecedores.json` (com `fontes` de doações e pagamentos e quanto o mesmo político pagou à empresa na cota do ano) e grava a ligação em `nucleo/ligacoes.json` (`doadores`). A seção nova de `fornecedores.html` mostra cada cruzamento com a fonte e o método.
+- **Pendente:** os JSONs de `dados/tse/contas/` já versionados são da versão 3 (sem CNPJ), então por ora só o cruzamento por nome aparece; rodar `python scripts/coletar_contas.py` na máquina local (precisa dos ZIPs de `baixar_tse.py prestacao_contas`) e commitar para ter o cruzamento por CNPJ.
+
+## Datas dos demais coletores e teste de guarda da normalização (2026-10-23)
+- **De onde:** nenhuma fonte nova; mudança em `coletar_executivo.py`, `coletar_estaduais.py`, `coletar_estadual_pr.py` e nas prefeituras BA, GO e SP.
+- **Como:** as datas passam por `estaduais_comum.data_iso` / `data_br_iso` (só data que existe no calendário); onde a fonte não traz data válida o campo fica `null` (no executivo, `remessa` só é gravada com data válida; na prefeitura de GO, a proposição sem data de criação é ignorada). `tests/test_normalizacao_coletores.py` falha se um coletor voltar a cortar data com `[:10]`, usar `strptime` dd/mm/aaaa ou limpar CNPJ com `re.sub` à mão.
+
+## Câmara e Senado: documento, data e e-mail normalizados na coleta (2026-10-23)
+- **De onde:** nenhuma fonte nova; mudança em `scripts/coletar.py` (cota da Câmara pelo CSV e pela API, CEAPS, proposições, votações e perfis).
+- **Como:** o CNPJ/CPF do fornecedor passa por `fornecedores.documento` (via `estaduais_comum.fornecedor`): só dígitos, zero à esquerda restaurado, dígito verificador conferido; vazio, mascarado ou inválido vira `null` (antes `""` ou os dígitos como vieram). As datas passam por `estaduais_comum.data_iso` (existente no calendário) e o e-mail por `estaduais_comum.email`.
+- **Mudança de dado:** `cnpj` ausente passa de `""` para `null`; documentos com dígito verificador errado deixam de ser gravados. O cache bruto já versionado só muda quando o ano for recoletado.
+
+## E-mail, partido, valor e mês normalizados nos coletores estaduais (2026-10-23)
+- **De onde:** nenhuma fonte nova; mudança em `estaduais_comum.py` e nos coletores BA, CE, GO, MG, MT, PA, PE, PR, RN, RR, SC, SE e SP.
+- **Como:** `estaduais_comum.email` grava o e-mail em minúsculas, sem `mailto:` e só se tiver forma de e-mail; `sigla_partido` resolve entidades e compacta espaços (o id continua saindo de `identidades.partido_id` no núcleo); PA passa o valor da verba por `valor_br`; MT passa `mesCompetencia` por `mes_numero`.
+
+## Datas e categorias normalizadas nos coletores estaduais (2026-10-23)
+- **De onde:** nenhuma fonte nova; mudança em `estaduais_comum.py` e nos coletores BA, CE, MG, MS, PA, PE, RN e SP.
+- **Como:** `estaduais_comum.data_br_iso` e a nova `data_iso` (AAAA-MM-DD, também com hora ou `{"$": ...}`) só devolvem data que existe no calendário; os coletores deixam de montar a data à mão (`[:10]`, `split("/")`, f-string). O CE deixa de mapear a categoria da verba de desempenho no coletor: grava a descrição da fonte e o `gerar*` agrupa por `categorias.REGRAS` (acrescentadas "pacote de dados" em telefonia).
+- **Mudança de dado:** `categoria` das despesas do CE passa de rótulo curto ("Alimentação e refeição") para a descrição original do empenho; o agrupamento do site continua pelos ids de `categorias.py`.
+
+## Fornecedor normalizado na entrada dos coletores estaduais (2026-10-23)
+- **De onde:** nenhuma fonte nova; mudança em `coletar_estadual_{ce,mg,ms,pe,sc,sp}.py`.
+- **Como:** `estaduais_comum.fornecedor` grava o nome com espaços compactados e o documento só com dígitos (zeros à esquerda restaurados, dígito verificador conferido por `fornecedores.documento`); vazio, mascarado ou inválido vira `null`. Antes cada coletor gravava o CNPJ como a fonte trouxe.
+
 ## Ids estáveis, com hash da fonte (2026-10-23)
 - **De onde:** nenhuma fonte nova; mudança no jeito de gerar os ids do núcleo (`site/dados/nucleo/`).
 - **Como:** `scripts/ids.py` (`gerar_id`) passa a ser o único gerador: `pes_` (os mesmos ids de antes), `man_`, `can_`, `dsp_`, `for_pf_` e `for_n_`. O id de mandato deixa de depender da pessoa e da data de início e sai do registro da fonte que o criou (sequencial do TSE ou id da Casa); candidaturas guardam `eleicao` e `sequencial`. **Mudam de valor** os ids `man_`, `can_`, `dsp_`, `for_pf_` e `for_n_` (nada deles é salvo em `dados/` nem usado pelas páginas); os `pes_` e `for_<CNPJ>` ficam iguais.

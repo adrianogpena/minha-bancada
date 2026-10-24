@@ -36,7 +36,7 @@ def deputados_da_pagina(html: str) -> list[dict]:
         foto = re.search(r'<img[^>]*?\bsrc="([^"]+)"', cartao)
         nome = comum.limpar(titulo.group(1))
         achados.setdefault(ident.group(1), {"id": ident.group(1), "nome": nome, "nomeCivil": nome, "foto": unescape(foto.group(1)) if foto else None,
-                                            "email": None, "titular": True, "partido": comum.limpar(partido.group(1)) if partido else None,
+                                            "email": None, "titular": True, "partido": comum.sigla_partido(comum.limpar(partido.group(1))) if partido else None,
                                             "fonte": FICHA.format(ident.group(1))})
     return sorted(achados.values(), key=lambda d: comum.sem_acento(d["nome"]))
 

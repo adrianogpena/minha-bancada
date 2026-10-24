@@ -68,7 +68,7 @@ def test_coletar_deputado_normaliza_campos(dados, monkeypatch):
     assert d["gabinete"] == {"predio": "4", "andar": "2", "email": "g@x"}  # só chaves conhecidas e não vazias
     assert d["proposicoes"] == [{"id": 9, "tipo": "PL", "numero": 1, "ano": 2024, "ementa": "e"}]
     assert d["despesas"]["ano"] == 2025
-    assert d["despesas"]["itens"][0] == {"mes": 3, "tipo": "Passagens", "valor": 120.5, "fornecedor": "Cia", "cnpj": "", "data": "2025-03-01", "documento": "http://nf"}
+    assert d["despesas"]["itens"][0] == {"mes": 3, "tipo": "Passagens", "valor": 120.5, "fornecedor": "Cia", "cnpj": None, "data": "2025-03-01", "documento": "http://nf"}
     assert d["despesas"]["itens"][1]["valor"] == 0  # valor nulo vira 0
     assert d["redesSociais"] == ["https://x.com/fulano"]
 
@@ -90,7 +90,7 @@ def test_coletar_deputado_despesas_falham_sem_derrubar(dados, monkeypatch):
 
 
 CSV_COTA = '''﻿"txtFornecedor";"txtCNPJCPF";"txtDescricao";"datEmissao";"vlrLiquido";"numMes";"numAno";"nuDeputadoId";"urlDocumento"
-"Cia A";"12.345.678/0001-90";"Passagens";"2026-01-05T00:00:00";"100.5";"1";"2026";"7";"http://nf1"
+"Cia A";"02.964.380/0001-00";"Passagens";"2026-01-05T00:00:00";"100.5";"1";"2026";"7";"http://nf1"
 "Cia B";"";"Combustíveis";"2026-02-05T00:00:00";"20";"2";"2026";"7";""
 "Cia C";"1";"Outros";"2025-12-05T00:00:00";"5";"12";"2025";"7";""
 "Cia D";"1";"Outros";"2026-01-05T00:00:00";"5";"1";"2026";"";""
@@ -111,7 +111,7 @@ def test_coletar_cota_csv_agrupa_por_deputado(monkeypatch):
     cota = coletar.coletar_cota_csv(2026)
     assert list(cota) == [7]
     assert [i["fornecedor"] for i in cota[7]] == ["Cia B", "Cia A"]
-    assert cota[7][1] == {"mes": 1, "tipo": "Passagens", "valor": 100.5, "fornecedor": "Cia A", "cnpj": "12345678000190",
+    assert cota[7][1] == {"mes": 1, "tipo": "Passagens", "valor": 100.5, "fornecedor": "Cia A", "cnpj": "02964380000100",
                           "data": "2026-01-05", "documento": "http://nf1"}
     assert cota[7][0]["documento"] is None
 
@@ -378,7 +378,7 @@ def test_ceaps_agrupa_por_senador_ordena_e_ignora_sem_codigo(dados, monkeypatch)
     assert list(r["itens"]) == ["1"]
     assert [i["data"] for i in r["itens"]["1"]] == ["2025-03-05", "2025-01-05"]
     assert r["itens"]["1"][0]["valor"] == 0
-    assert r["itens"]["1"][1]["cnpj"] == "02964380000100" and r["itens"]["1"][0]["cnpj"] == ""
+    assert r["itens"]["1"][1]["cnpj"] == "02964380000100" and r["itens"]["1"][0]["cnpj"] is None
 
 
 def test_recursos_senado_liga_escritorio_por_nome_e_uf_e_ignora_zerados(dados, monkeypatch):
@@ -687,3 +687,9 @@ def test_coletar_presenca_eventos_conta_por_tipo_sem_repetir(dados, monkeypatch)
     coletar.coletar_presenca_eventos()
     assert json.loads((dados / "presenca_eventos.json").read_text(encoding="utf-8")) == {str(hoje.year): {
         "sessoesDeliberativas": 1, "deputados": {"7": {"sessoes": 1, "comissoes": 1, "outros": 0}, "8": {"sessoes": 0, "comissoes": 0, "outros": 1}}}}
+
+
+def test_cota_csv_cnpj_invalido_ou_mascarado_vira_none():
+    cota = coletar.comum.fornecedor("Cia", "12.345.678/0001-90")
+    assert cota == {"fornecedor": "Cia", "cnpj": None}
+    assert coletar.comum.fornecedor("Fulano", "***.123.456-**")["cnpj"] is None

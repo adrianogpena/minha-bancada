@@ -124,10 +124,11 @@ Actions, libera tudo abaixo.
 
 Depende do CNPJ do pacote 2.2.
 
-- Dados da empresa (atividade, data de abertura, sócios) pelo CNPJ aberto da Receita Federal
-  (`dadosabertos.rfb.gov.br`, arquivos de vários GB; rodar só localmente, como a prestação de contas).
-- Cruzamento com os doadores de campanha (`dados/tse/contas/`, pelo nome, já que não guardamos CPF de doador):
-  "empresa que doou e depois foi paga pela cota". Mostrar só correspondências exatas e com as duas fontes.
+- ~~Dados da empresa (atividade, data de abertura, sócios) pelo CNPJ aberto da Receita~~ (etapa 2, feita):
+  `scripts/coletar_receita.py` (local) e `scripts/empresas.py`. Falta a primeira coleta real e conferir URL e layout.
+  Fora do escopo por ser sensível: cruzar sócio com político ou parente.
+- ~~Cruzamento com os doadores de campanha~~ (etapa 1, feita): `scripts/doadores.py`, só empresas, por CNPJ (ou nome exato
+  enquanto as contas não forem recoletadas com CNPJ). Falta rodar `coletar_contas.py` localmente (versão 4) para o cruzamento por CNPJ.
 
 ### 5.2 Assembleias e Câmaras Municipais
 

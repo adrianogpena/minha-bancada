@@ -71,11 +71,11 @@ def montar_deputados(lista: list[dict], parlamentares: list[dict]) -> list[dict]
         if achado:
             foto = achado.get("foto")
             deputados.append({"id": achado["id"], "nome": nome, "nomeCivil": None, "foto": SITE + foto if foto else None,
-                              "email": achado.get("email") or None, "titular": True, "partido": p.get("partido") or achado.get("partido"),
+                              "email": comum.email(achado.get("email")), "titular": True, "partido": comum.sigla_partido(p.get("partido") or achado.get("partido")),
                               "fonte": DEPUTADOS_URL})
         else:
             deputados.append({"id": "sem-" + re.sub(r"\W+", "-", comum.sem_acento(nome)), "nome": nome, "nomeCivil": None, "foto": None,
-                              "email": None, "titular": True, "partido": p.get("partido"), "fonte": PARLAMENTARES_URL})
+                              "email": None, "titular": True, "partido": comum.sigla_partido(p.get("partido")), "fonte": PARLAMENTARES_URL})
     return deputados
 
 
@@ -90,10 +90,9 @@ def itens_verba(lancamento: dict, notas: list[dict], id_deputado: str, ano: int,
     itens = []
     for n in notas:
         data = n.get("data") or ""
-        m = re.match(r"(\d{2})/(\d{2})/(\d{4})$", data)
         itens.append({"idDeputado": id_deputado, "mes": mes, "categoria": rubricas.get(n.get("rubrica")) or f"Rubrica {n.get('rubrica')}",
-                      "fornecedor": n.get("empresa") or None, "cnpj": n.get("cnpj") or None, "valor": comum.valor_br(n.get("valor")),
-                      "data": f"{m.group(3)}-{m.group(2)}-{m.group(1)}" if m else None, "tipo": tipo, "numero": lancamento.get("numero"),
+                      **comum.fornecedor(n.get("empresa"), n.get("cnpj")), "valor": comum.valor_br(n.get("valor")),
+                      "data": comum.data_br_iso(data, inteiro=True), "tipo": tipo, "numero": lancamento.get("numero"),
                       "docid": lancamento.get("docid"), "fonte": VERBA_PAGINA})
     if not notas and lancamento.get("total") is not None:
         itens.append({"idDeputado": id_deputado, "mes": mes, "categoria": "Sem detalhamento", "fornecedor": None, "cnpj": None,
@@ -143,9 +142,8 @@ def parse_proposicoes(conteudo: bytes, tipo: str) -> list[dict]:
     itens = []
     for p in raiz.iter(TAG_PROPOSICAO[tipo]):
         data = p.get("dataPublicacao") or ""
-        m = re.match(r"(\d{2})/(\d{2})/(\d{4})$", data)
         itens.append({"docid": p.get("docid"), "numero": p.get("numero"), "ano": p.get("ano"), "tipo": p.get("tipo"), "subtipo": p.get("subtipo"),
-                      "ementa": limpar_texto(p.get("ementa")), "data": f"{m.group(3)}-{m.group(2)}-{m.group(1)}" if m else None,
+                      "ementa": limpar_texto(p.get("ementa")), "data": comum.data_br_iso(data, inteiro=True),
                       "autores": [a.get("nome") for a in p.iter("autor") if a.get("tipo") == "DEPUTADO" and a.get("nome")]})
     return itens
 

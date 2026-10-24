@@ -2,6 +2,11 @@
   "name": "minha-bancada",
   "private": true,
   "scripts": {
-    "servir": "python -u -m http.server 8000 --bind 127.0.0.1 -d site"
+    "servir": "npx browser-sync start --server site --files \"site/**/*\" --port 8000 --host 127.0.0.1 --no-open --no-ui --reload-debounce 500",
+    "gerar": "python scripts/gerar.py",
+    "test": "npm run test:py && npm run test:js",
+    "test:py": "python -m pytest -q",
+    "test:js": "node --test tests/js/app.test.js",
+    "test:e2e": "node --test tests/e2e/fumaca.test.js"
   }
 }

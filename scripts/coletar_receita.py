@@ -29,6 +29,7 @@ import json
 import os
 import re
 import sys
+import time
 import zipfile
 from pathlib import Path
 
@@ -44,6 +45,7 @@ PARTES = range(10)
 MAX_SOCIOS = 30
 MAX_SECUNDARIOS = 20
 VERSAO = 1
+TENTATIVAS = 20
 
 csv.field_size_limit(1 << 24)
 
@@ -176,10 +178,27 @@ def baixar(mes: str) -> None:
         print(f"Baixando {url} ({esperado / 1e6:.0f} MB)")
         destino.parent.mkdir(parents=True, exist_ok=True)
         tmp = destino.with_suffix(".tmp")
-        with s.get(url, stream=True, timeout=300) as r, open(tmp, "wb") as f:
-            r.raise_for_status()
-            for bloco in r.iter_content(1 << 20):
-                f.write(bloco)
+        for tentativa in range(1, TENTATIVAS + 1):
+            ja = tmp.stat().st_size if tmp.exists() else 0
+            if esperado and ja > esperado:
+                tmp.unlink()
+                ja = 0
+            if esperado and ja == esperado:
+                break
+            try:
+                with s.get(url, stream=True, timeout=300, headers={"Range": f"bytes={ja}-"} if ja else {}) as r:
+                    r.raise_for_status()
+                    if ja and r.status_code != 206:
+                        ja = 0
+                    with open(tmp, "ab" if ja else "wb") as f:
+                        for bloco in r.iter_content(1 << 20):
+                            f.write(bloco)
+                break
+            except requests.exceptions.RequestException as e:
+                print(f"  ! {nome}: conexão caiu ({e.__class__.__name__}), tentativa {tentativa}/{TENTATIVAS}; retomando", file=sys.stderr)
+                time.sleep(5 * tentativa)
+        else:
+            raise OSError(f"{nome}: não baixou após {TENTATIVAS} tentativas; rode de novo para retomar")
         if esperado and tmp.stat().st_size != esperado:
             tmp.unlink()
             raise OSError(f"{nome}: tamanho diferente do esperado ({esperado})")

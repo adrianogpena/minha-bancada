@@ -184,7 +184,7 @@ def resumo_curto(d: dict, limite: int = 3) -> str:
             partes.append((f"{nome} {ufs[0]}" if len(ufs) == 1 else nome, sum(len(novas.get(u, [])) + len(mudou.get(u, [])) for u in ufs)))
     textos = [f"{n_} {q}" for n_, q in partes if q]
     if d["votacoes"]:
-        textos.append("Votações")
+        textos.append("Votações " + ",".join(d["votacoes"]))
     if d["tse"]:
         textos.append("TSE")
     if len(textos) > limite:
@@ -197,7 +197,7 @@ def resumo_longo(d: dict) -> str:
     return " · ".join(a.replace(" — ", ": ") for a, _ in linhas(d))
 
 
-def montar(d: dict, titulo: str, rodape: tuple[str, str] = ("", ""), detalhes: str | None = None) -> tuple[str, str]:
+def montar(d: dict, titulo: str, rodape: tuple[str, str] = ("", ""), detalhes: str | None = None, sumario: bool = True) -> tuple[str, str]:
     """`detalhes`: link da página do histórico diário, com todos os itens e as fontes."""
     secoes = linhas(d)
     if not secoes:
@@ -205,7 +205,8 @@ def montar(d: dict, titulo: str, rodape: tuple[str, str] = ("", ""), detalhes: s
         return f"<p>{txt}</p>", txt
     h = [f"<h1 style='font:600 20px Arial'>{html.escape(titulo)}</h1>"]
     t = [titulo, "=" * len(titulo)]
-    h.append("<ul style='font:14px Arial;padding-left:18px'>" + "".join(f"<li>{html.escape(a)}</li>" for a, _ in secoes) + "</ul>")
+    if sumario:
+        h.append("<ul style='font:14px Arial;padding-left:18px'>" + "".join(f"<li>{html.escape(a)}</li>" for a, _ in secoes) + "</ul>")
     for a, itens in secoes:
         h.append(f"<h2 style='font:600 16px Arial;margin:22px 0 6px;border-bottom:1px solid #ddd'>{html.escape(a)}</h2>")
         if itens:

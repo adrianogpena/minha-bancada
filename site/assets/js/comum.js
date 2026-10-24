@@ -36,6 +36,28 @@ export function legenda(chaves) {
   return `<div class="legenda">${chaves.map((k) => `<span style="--c:${VOTOS[k].cor}">${VOTOS[k].rotulo}</span>`).join("")}</div>`;
 }
 
+/* Filtros da lista na URL (replaceState): quem volta pelo histórico reencontra a busca como estava. */
+export function filtrosNaUrl(ids, desenhar) {
+  const q = new URLSearchParams(location.search);
+  ids.forEach((id) => { if (q.has(id)) $(`#${id}`).value = q.get(id); });
+  const gravar = () => {
+    const nq = new URLSearchParams();
+    ids.forEach((id) => { const v = $(`#${id}`).value; if (v) nq.set(id, v); });
+    history.replaceState(null, "", `${location.pathname}${nq.size ? `?${nq}` : ""}`);
+  };
+  ids.forEach((id) => $(`#${id}`).addEventListener("input", () => { gravar(); desenhar(); }));
+  desenhar();
+}
+
+/* Botão de voltar das páginas de detalhe: volta pelo histórico (mantendo filtros) se veio de uma página do site; senão vai à lista. */
+export function botaoVoltar(rotuloLista, hrefLista) {
+  let ref = "";
+  try { const u = new URL(document.referrer); if (u.origin === location.origin) ref = u.pathname; } catch { /* sem referrer */ }
+  const rotulo = ref.endsWith("/proposicoes.html") ? "Voltar às proposições" : ref.endsWith("/votacoes.html") ? "Voltar às votações" : ref ? "Voltar" : rotuloLista;
+  setTimeout(() => $(".voltar")?.addEventListener("click", (e) => { if (ref && history.length > 1) { e.preventDefault(); history.back(); } }));
+  return `<p><a class="voltar" href="${esc(hrefLista)}">← ${esc(rotulo)}</a></p>`;
+}
+
 /* lista que cresce de N em N com um botão */
 export function listaPaginada(alvo, itens, render, passo = 20, vazio = "Nada por aqui ainda.") {
   let mostrados = 0;

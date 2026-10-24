@@ -1,6 +1,6 @@
 /* Busca de proposições (projetos, PECs…) e ficha de uma: autores e votações, com os políticos ligados a elas. */
 import { $, esc, data, semAcento, param, carregar } from "./util.js";
-import { VOTOS, selo, listaPaginada, erro, semDadosLocais } from "./comum.js";
+import { VOTOS, selo, listaPaginada, erro, semDadosLocais, filtrosNaUrl, botaoVoltar } from "./comum.js";
 import { TIPOS_PROJETO, fontes, linkTramitacao, linkMateriaSenado } from "./apis.js";
 import { barraPlacar } from "./votacoes.js";
 
@@ -27,8 +27,7 @@ export async function paginaProposicoes() {
     $("#contagem").textContent = `${f.length} proposições`;
     listaPaginada(alvo, f, render, 30, "Nenhuma proposição encontrada com essa busca.");
   };
-  ["busca", "tipo", "casa", "situacao"].forEach((id) => $(`#${id}`).addEventListener("input", desenhar));
-  desenhar();
+  filtrosNaUrl(["busca", "tipo", "casa", "situacao"], desenhar);
 }
 
 /* ---------- ficha ---------- */
@@ -52,6 +51,7 @@ export async function paginaProposicao() {
   const votacoes = (f.v || []).map((v) => ({ ...v, ...(nominais.get(v.id) || {}), nominal: nominais.has(v.id) }));
   document.title = `${rotulo(p)} | Minha Bancada`;
   alvo.innerHTML = `
+    ${botaoVoltar("Proposições", "proposicoes.html")}
     <section class="abertura">
       <p>${nomeCasa(casa)}${f.ap ? `, apresentada em ${data(f.ap)}` : ""}</p>
       <h1 style="max-width:none;font-size:clamp(28px,4.5vw,44px)">${esc(rotulo(p))}</h1>

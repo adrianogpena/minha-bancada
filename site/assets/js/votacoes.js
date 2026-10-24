@@ -1,6 +1,6 @@
 /* Lista de votações e detalhe de uma votação. */
 import { $, esc, data, semAcento, param, carregar } from "./util.js";
-import { VOTOS, selo, listaPaginada, erro, semDadosLocais } from "./comum.js";
+import { VOTOS, selo, listaPaginada, erro, semDadosLocais, filtrosNaUrl, botaoVoltar } from "./comum.js";
 import { CAMARA_API, fontes, SENADO_API, linkMateriaSenado } from "./apis.js";
 
 /* ---------- lista de votações ---------- */
@@ -25,8 +25,7 @@ export async function paginaVotacoes() {
     $("#contagem").textContent = `${f.length} votações nominais no Plenário`;
     listaPaginada(alvo, f, render, 20, "Nenhuma votação encontrada com essa busca.");
   };
-  $("#busca").addEventListener("input", desenhar);
-  desenhar();
+  filtrosNaUrl(["busca"], desenhar);
 }
 
 /* ---------- detalhe de uma votação ---------- */
@@ -42,6 +41,7 @@ export async function paginaVotacao() {
   const partidos = Object.entries(v.porPartido).sort((a, b) => Object.values(b[1]).reduce((x, y) => x + y, 0) - Object.values(a[1]).reduce((x, y) => x + y, 0));
 
   alvo.innerHTML = `
+    ${botaoVoltar("Votações", "votacoes.html")}
     <section class="abertura">
       <p>${data(v.data, true)}${v.hora ? `, às ${esc(v.hora)}` : ""}, no Plenário${senado ? " do Senado" : ""}</p>
       <h1 style="max-width:none;font-size:clamp(28px,4.5vw,44px)">${esc(v.proposicao || "Votação no Plenário")}</h1>

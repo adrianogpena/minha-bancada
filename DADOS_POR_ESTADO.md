@@ -59,7 +59,7 @@ Nacional: a bancada de cada estado é o filtro por `uf` dos 513 deputados em exe
 | Ficha: `gabinete` (prédio, sala, andar, telefone, email) | API de Dados Abertos da Câmara (`coletar.py`) | mostrado no site |
 | Ficha: `nascimento`, `municipioNascimento`, `ufNascimento`, `escolaridade`, `redesSociais` | API de Dados Abertos da Câmara (`coletar.py`) | mostrado no site |
 | Ficha: `coletadoEm` (data da coleta) | API de Dados Abertos da Câmara (`coletar.py`) | coletado, não usado no site |
-| Ficha: profissões, mandatos externos, histórico de partido e de status da 57ª legislatura e os 5 discursos mais recentes (data, tipo, fase, sumário, link) | API de Dados Abertos da Câmara (`coletar.py`, `coletar_complementos`), `dados/deputados/<id>.json` (relido a cada 1 a 7 dias por deputado) | mostrado no site (bloco Trajetória) |
+| Ficha: profissões, ocupações anteriores (título, entidade, UF, ano de início e fim), mandatos externos, histórico de partido e de status da 57ª legislatura e os 5 discursos mais recentes (data, tipo, fase, sumário, link) | API de Dados Abertos da Câmara (`coletar.py`, `coletar_complementos`), `dados/deputados/<id>.json` (relido a cada 1 a 7 dias por deputado) | mostrado no site (bloco Trajetória) |
 | Proposições: `proposicoes` (`id`, `tipo`, `numero`, `ano`, `ementa`) | API de Dados Abertos da Câmara (`coletar.py`), `dados/proposicoes/<id>.json` | mostrado no site |
 | Proposições: situação: `situacao`, `tramitacao`, `despacho`, `orgao`, `dataSituacao`, `regime`, `palavrasChave`, `dataApresentacao`, `inteiroTeor` | API de Dados Abertos da Câmara (`coletar.py`), `dados/proposicoes_detalhe.json` | mostrado no site |
 | Proposições: `ementaDetalhada` | API de Dados Abertos da Câmara (`coletar.py`), `dados/proposicoes_detalhe.json` | mostrado no site (quando difere da ementa) |
@@ -94,7 +94,7 @@ Nacional: 3 senadores por estado em `dados/senado.json`, filtrados por `uf`.
 
 ### Assembleia Legislativa
 
-Só as Assembleias com SAPL (AC, AL, AM, PB, PI, RO, TO) têm coletor (`coletar_estaduais.py`, pasta `dados/estaduais/<UF>/`). As outras 20 estão em `LEVANTAMENTO_DADOS.md`.
+As Assembleias com SAPL (AC, AL, AM, PB, PI, RO, TO) usam o coletor comum (`coletar_estaduais.py`, pasta `dados/estaduais/<UF>/`); outras 17 UFs (BA, CE, ES, GO, MG, MS, MT, PA, PE, PR, RJ, RN, RR, RS, SC, SE, SP) têm `coletar_estadual_<uf>.py` próprio, com o que cada fonte aberta dá (tópicos por estado). Sem coletor: AP, DF e MA. Lacunas: `LEVANTAMENTO_DADOS.md`.
 
 | Dado | Fonte | Status |
 |---|---|---|
@@ -104,7 +104,7 @@ Só as Assembleias com SAPL (AC, AL, AM, PB, PI, RO, TO) têm coletor (`coletar_
 | Projetos: `emTramitacao` (chega a `site/dados/estadual/<UF>/<id>.json`) | SAPL | mostrado no site |
 | Projetos: `idsAutores` (autores que não são deputados) | SAPL | coletado, não usado no site |
 | Votações nominais: `votacoes.json`: `data`, `idMateria`, `sim`, `nao`, `abstencoes`, `aprovada`, `resultado`, `votos` (deputado, voto); `materias_votadas.json`: `tipo`, `numero`, `ano`, `ementa` | SAPL | mostrado no site |
-| Presença, cota/verba, remuneração: listados em `LEVANTAMENTO_DADOS.md` como pendentes para todas as Assembleias | portais de transparência | disponível na fonte, não coletado |
+| Presença, cota/verba, remuneração: pendentes nas 7 UFs do SAPL (ver `LEVANTAMENTO_DADOS.md`); nas outras UFs, tópico de cada estado | portais de transparência | disponível na fonte, não coletado |
 
 ### Governo do estado
 
@@ -210,7 +210,7 @@ Módulo: `scripts/coletar_estaduais.py` (SAPL), dados em `dados/estaduais/AL/`. 
 | Dado | Fonte | Status |
 |---|---|---|
 | Deputados | igual ao comum; 34 deputados; host `sapl.al.al.leg.br` | mostrado no site |
-| Projetos (autoria) | igual ao comum; matérias por ano: 2023: 675, 2024: 593, 2025: 637, 2026: 292 | mostrado no site |
+| Projetos (autoria) | igual ao comum; matérias por ano: 2023: 675, 2024: 593, 2025: 637, 2026: 293 | mostrado no site |
 | Votações nominais | coletor roda, mas não achou votações nominais (arquivo `votacoes.json` vazio); a ficha do deputado fica sem votos | mostrado no site |
 | Presença, cota/verba, remuneração | pendentes (ver `LEVANTAMENTO_DADOS.md`) | disponível na fonte, não coletado |
 
@@ -483,7 +483,17 @@ não se aplica: Brasília não tem prefeito.
 
 ### Assembleia Legislativa
 
-sem coletor; motivo: `www.al.es.gov.br` (Transparência e Dados Abertos) não responde desta rede (timeout em 2026-10-22). Pelo ITGP, a Assembleia publica proposições, salário nominal, viagens e presença, e não publica votações nominais nem verba indenizatória (não conferido). Deputados: só o TSE.
+Módulo: `scripts/coletar_estadual_es.py`; dados em `dados/estaduais/ES/`. 30 deputados; `www.al.es.gov.br` (Transparência e Dados Abertos) não responde desta rede (timeout em 2026-10-22), então a lista é a dos eleitos de 2022 do TSE e a despesa vem do Portal da Transparência do Estado (CKAN). Pelo ITGP, a Assembleia publica proposições, salário nominal, viagens e presença, e não publica votações nominais (não conferido).
+
+| Dado | Fonte | Status |
+|---|---|---|
+| Deputados: nome, partido, nome civil | TSE 2022 (suplentes em exercício ficam de fora: 26 de 30 favorecidos da cota de 2026 ligam ao TSE) | mostrado no site |
+| Foto e e-mail da Assembleia | `www.al.es.gov.br` | disponível na fonte, não coletado (sem resposta desta rede) |
+| Cota parlamentar (reembolso) 2026: mês, valor pago, documento, mês de referência; sem categoria nem fornecedor | CKAN `dados.es.gov.br`, CSV `Despesas-<ano>.csv` (1,2 a 1,5 GB, lido em streaming; só a unidade gestora Assembleia e favorecido que casa com um deputado) | mostrado no site |
+| Diárias 2026: data, valor pago, documento; destino e motivo só em texto livre (`motivo`) | mesmo CSV | mostrado no site |
+| Verba: `referencia`; diárias: `dataFim`, `pagoEm`, `motivo`, `destino` | mesmo CSV | coletado, não usado no site |
+| Cota e diárias de 2023-2025 | mesmo CSV | disponível na fonte, não coletado (cada CSV anual leva cerca de 23 min; só 2026 entra) |
+| Remuneração, presença, proposições, votações nominais | `www.al.es.gov.br` | disponível na fonte, não coletado (sem resposta desta rede; não estão no portal do Estado) |
 
 ### Governo do estado
 
@@ -528,7 +538,7 @@ Módulo: `scripts/coletar_estadual_go.py`; dados em `dados/estaduais/GO/`. 43 de
 | Deputados: nome, partido, e-mail, foto, nome civil | Alego, `portal.al.go.leg.br/deputados/em-exercicio` e `/perfil/<id>` | mostrado no site |
 | Requerimentos de 2023 (autoria) | Alego Transparência, `/api/transparencia/requerimentos` | mostrado no site |
 | Proposições (projetos de lei) | Alego, `processos/busca-avancada` | disponível na fonte, não coletado (a busca devolve vazio sem os parâmetros certos e a busca simples dá 500) |
-| Votações nominais 2023+ (2042 votos nominais) | Alego Transparência, `votacoes.json?tipo=detalhes&ano=` | mostrado no site |
+| Votações nominais 2023+ (2080 votações nominais) | Alego Transparência, `votacoes.json?tipo=detalhes&ano=` | mostrado no site |
 | Verba indenizatória mensal 2023-2026 (valor apresentado e indenizado) | Alego Transparência, `/api/transparencia/verbas_indenizatorias`; sem fornecedor nem categoria | mostrado no site |
 | Verba: resumo anual | Alego Transparência, `verbas_indenizatorias/resumo-anual` | disponível na fonte, não coletado (redundante com o mensal) |
 | Remuneração 2026 | Alego Transparência, `/api/transparencia/remuneracoes?categoria=7` | mostrado no site |
@@ -816,7 +826,7 @@ Módulo: `scripts/coletar_estaduais.py` (SAPL), dados em `dados/estaduais/PB/`. 
 | Dado | Fonte | Status |
 |---|---|---|
 | Deputados | igual ao comum; 41 deputados; host `sapl.al.pb.leg.br` | mostrado no site |
-| Projetos (autoria) | igual ao comum; matérias por ano: 2023: 1660, 2024: 2008, 2025: 2978, 2026: 1691 | mostrado no site |
+| Projetos (autoria) | igual ao comum; matérias por ano: 2023: 1660, 2024: 2008, 2025: 2978, 2026: 1697 | mostrado no site |
 | Votações nominais | igual ao comum; 148 votações com votos nominais | mostrado no site |
 | Presença, cota/verba, remuneração | pendentes (ver `LEVANTAMENTO_DADOS.md`) | disponível na fonte, não coletado |
 
@@ -1458,7 +1468,7 @@ Itens que já estão em `dados/` e que `site/assets/app.js` não exibe. A lista 
 
 ## Comparação entre estados
 
-Resumo das seções de Assembleia dos 27 estados, fechado em 2026-10-22 com os coletores de GO, MG, MS, MT, PA, PE, PR, RJ, RN, RR, RS, SC, SE, SP, BA e CE. Objetivo: todos os estados com, no mínimo, a base de dados necessária (ver "Base mínima").
+Resumo das seções de Assembleia dos 27 estados, fechado em 2026-10-22 com os coletores de GO, MG, MS, MT, PA, PE, PR, RJ, RN, RR, RS, SC, SE, SP, BA e CE; ES entrou em 2026-10-23 (cota e diárias pelo CKAN do Estado). Objetivo: todos os estados com, no mínimo, a base de dados necessária (ver "Base mínima").
 
 ### Matriz UF × dado da Assembleia
 
@@ -1473,7 +1483,7 @@ Legenda: ✅ coletado e mostrado no site; ◐ coletado e não mostrado; ○ disp
 | BA | ✅ | ✅ | ✅ | ✅ | ✖ | ✖ | ✅ | ○ | ○ | ✖ | ✅ |
 | CE | ✅ | ✅ | ✅ | ✅ | ✅ | ✖ | ✅ | ✅ | ✅ | ✅ | ○ |
 | DF | ✖ | ✖ | ✖ | ✖ | ✖ | ✖ | ✖ | ✖ | ✖ | ✖ | ✖ |
-| ES | ✖ | ✖ | ✖ | ○ | ✖ | ○ | ✖ | ✖ | ○ | ○ | ✖ |
+| ES | ✅ | ✅ | ○ | ○ | ✖ | ○ | ✅ | ✖ | ○ | ✅ | ✖ |
 | GO | ✅ | ✅ | ✅ | ✅ | ✅ | ○ | ✅ | ✖ | ✅ | ✅ | ✖ |
 | MA | ✖ | ✖ | ✖ | ✖ | ✖ | ✖ | ✖ | ✖ | ✖ | ✖ | ✖ |
 | MG | ✅ | ✅ | ○ | ✅ | ✖ | ✖ | ✅ | ✅ | ✖ | ✖ | ✖ |
@@ -1509,7 +1519,7 @@ Só a base mínima (as colunas da matriz que a definem). Um estado que também n
 | BA | Votações nominais, Presença, Remuneração | Votações nominais: NoPaper bloqueia (403 Cloudflare): tentar o Firefox do usuário; senão LAI/e-SIC; Presença: NoPaper bloqueia: mesmo caminho das votações; senão LAI/e-SIC; Remuneração: só existe PDF `ALBA_ECV_Deputados.pdf`: ler o PDF ou pedir CSV por LAI/e-SIC |
 | CE | Presença | Presença: a Assembleia não publica presença em plenário: LAI/e-SIC |
 | DF | Deputados, Partido, Foto, Projetos (autoria), Votações nominais, Presença, Verba/cota, Remuneração | Deputados: nova tentativa de uma rede sem bloqueio (ou Actions); a CLDF não usa SAPL em `sapl.cl.df.gov.br`; se o site seguir fora, LAI/e-SIC; Partido: nova tentativa de uma rede sem bloqueio (ou Actions); a CLDF não usa SAPL em `sapl.cl.df.gov.br`; se o site seguir fora, LAI/e-SIC; Foto: nova tentativa de uma rede sem bloqueio (ou Actions); a CLDF não usa SAPL em `sapl.cl.df.gov.br`; se o site seguir fora, LAI/e-SIC; Projetos (autoria): nova tentativa de uma rede sem bloqueio (ou Actions); a CLDF não usa SAPL em `sapl.cl.df.gov.br`; se o site seguir fora, LAI/e-SIC; Votações nominais: nova tentativa de uma rede sem bloqueio (ou Actions); a CLDF não usa SAPL em `sapl.cl.df.gov.br`; se o site seguir fora, LAI/e-SIC; Presença: nova tentativa de uma rede sem bloqueio (ou Actions); a CLDF não usa SAPL em `sapl.cl.df.gov.br`; se o site seguir fora, LAI/e-SIC; Verba/cota: nova tentativa de uma rede sem bloqueio (ou Actions); a CLDF não usa SAPL em `sapl.cl.df.gov.br`; se o site seguir fora, LAI/e-SIC; Remuneração: nova tentativa de uma rede sem bloqueio (ou Actions); a CLDF não usa SAPL em `sapl.cl.df.gov.br`; se o site seguir fora, LAI/e-SIC |
-| ES | Deputados, Partido, Foto, Projetos (autoria), Votações nominais, Presença, Verba/cota, Remuneração | Deputados: nova tentativa de uma rede sem bloqueio (ou Actions); Partido: nova tentativa de uma rede sem bloqueio (ou Actions); Foto: nova tentativa de uma rede sem bloqueio (ou Actions); Projetos (autoria): nova tentativa de uma rede sem bloqueio (ou Actions); Votações nominais: nova tentativa; pelo ITGP a Assembleia não publica votação nominal: LAI/e-SIC; Presença: nova tentativa de uma rede sem bloqueio (ou Actions); Verba/cota: nova tentativa; pelo ITGP a Assembleia não publica verba indenizatória: LAI/e-SIC; Remuneração: nova tentativa de uma rede sem bloqueio (ou Actions) |
+| ES | Foto, Projetos (autoria), Votações nominais, Presença, Remuneração | Foto: nova tentativa de uma rede sem bloqueio (ou Actions) em `www.al.es.gov.br`, ou foto do TSE; Projetos (autoria): idem; Votações nominais: nova tentativa; pelo ITGP a Assembleia não publica votação nominal: LAI/e-SIC; Presença: nova tentativa de uma rede sem bloqueio (ou Actions); Remuneração: idem |
 | GO | Presença | Presença: a API só traz datas e pauta; pedir a lista de presença por LAI/e-SIC |
 | MA | Deputados, Partido, Foto, Projetos (autoria), Votações nominais, Presença, Verba/cota, Remuneração | Deputados: nova tentativa de uma rede sem bloqueio (ou Actions); se o site seguir fora, LAI/e-SIC; Partido: nova tentativa de uma rede sem bloqueio (ou Actions); se o site seguir fora, LAI/e-SIC; Foto: nova tentativa de uma rede sem bloqueio (ou Actions); se o site seguir fora, LAI/e-SIC; Projetos (autoria): nova tentativa de uma rede sem bloqueio (ou Actions); se o site seguir fora, LAI/e-SIC; Votações nominais: nova tentativa de uma rede sem bloqueio (ou Actions); se o site seguir fora, LAI/e-SIC; Presença: nova tentativa de uma rede sem bloqueio (ou Actions); se o site seguir fora, LAI/e-SIC; Verba/cota: nova tentativa de uma rede sem bloqueio (ou Actions); se o site seguir fora, LAI/e-SIC; Remuneração: nova tentativa de uma rede sem bloqueio (ou Actions); se o site seguir fora, LAI/e-SIC |
 | MG | Foto, Votações nominais, Presença, Remuneração | Foto: usar a foto do TSE (já no site) ou montar a URL do portal da ALMG; Votações nominais: o Swagger não tem rota: LAI/e-SIC (ou ler as atas de plenário); Presença: sem rota na API: LAI/e-SIC; Remuneração: a ALMG não publica remuneração nominal na API: LAI/e-SIC |
@@ -1543,7 +1553,7 @@ Dados coletados em 1 a 3 UFs, mais alguns extras que só uma ou duas Assembleias
 | Votos secretos (só o placar) | RN | demais UFs só têm voto nominal |
 | Remuneração com 13º em linha própria (`folha`) | MT | demais UFs não separam a folha |
 | Emendas por deputado | BA, RJ | BA: despesas por deputado e ano do CKAN; RJ: emendas impositivas 2025-2026 |
-| Dados em UF sem Assembleia coletada (só TSE) | AP, DF, ES, MA | sites fora do ar nesta rede |
+| Dados em UF sem Assembleia coletada (só TSE) | AP, DF, MA | sites fora do ar nesta rede |
 
 ### Base mínima
 
@@ -1562,7 +1572,7 @@ Situação por UF (itens da base que faltam, de 8):
 | BA | Votações nominais, Presença, Remuneração | 3 |
 | CE | Presença | 1 |
 | DF | Deputados, Partido, Foto, Projetos (autoria), Votações nominais, Presença, Verba/cota, Remuneração | 8 |
-| ES | Deputados, Partido, Foto, Projetos (autoria), Votações nominais, Presença, Verba/cota, Remuneração | 8 |
+| ES | Foto, Projetos (autoria), Votações nominais, Presença, Remuneração | 5 |
 | GO | Presença | 1 |
 | MA | Deputados, Partido, Foto, Projetos (autoria), Votações nominais, Presença, Verba/cota, Remuneração | 8 |
 | MG | Foto, Votações nominais, Presença, Remuneração | 4 |
@@ -1585,7 +1595,7 @@ Situação por UF (itens da base que faltam, de 8):
 
 Resumo por tipo de lacuna e próximo passo:
 
-- **Rede bloqueada ou site fora do ar** (AP, DF, ES, MA; parte de MT, RS, SE, RR, BA, MS): nova tentativa de uma rede sem bloqueio (Actions ou o navegador do usuário). Se abrir, reexecutar o grupo da UF.
+- **Rede bloqueada ou site fora do ar** (AP, DF, MA; parte de ES, MT, RS, SE, RR, BA, MS): nova tentativa de uma rede sem bloqueio (Actions ou o navegador do usuário). Se abrir, reexecutar o grupo da UF.
 - **Dado só em PDF** (SE, PA, MS, BA, PR votações, SP votações): extrair o texto dos PDFs ou pedir a planilha por LAI/e-SIC.
 - **Dado que a Assembleia não publica** (votações e presença em MG, PE, SE, CE, PA; remuneração em MG, PE, RR, RJ): pedir por LAI/e-SIC; sem resposta, aceitar a lacuna.
 - **Captcha, login ou token** (MS SGPL, PR ressarcimento, PE `legis`, RN cotas, RJ DOCIGP): tentar o Firefox; credencial embutida no JS não é dado aberto e só entra com autorização do usuário.

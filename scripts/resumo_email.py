@@ -174,11 +174,27 @@ def linhas(d: dict) -> list[tuple[str, list[str]]]:
 
 
 def resumo_curto(d: dict, limite: int = 3) -> str:
-    """O que mudou em uma linha, para título de item de feed e assunto de e-mail: "Câmara dos Deputados: 4 proposições novas · Senado: 1 matéria nova"."""
-    titulos = [a.replace(" — ", ": ") for a, _ in linhas(d)]
-    if len(titulos) > limite:
-        titulos = titulos[:limite] + [f"e mais {len(titulos) - limite}"]
-    return " · ".join(titulos)
+    """O que mudou em poucas palavras, para título de item de feed e assunto de e-mail (leitores cortam em ~40 caracteres): "Câmara 4 · Senado 1"."""
+    cam = len(d["camara"])
+    partes = [("Câmara", cam), ("Senado", d["senado"][1] - d["senado"][0]), ("Executivo", len(d["executivo"]) + len(d["executivo_situacao"]))]
+    for chave, nome in (("estaduais", "Assembleia"), ("governo", "Governo"), ("municipais", "Capital")):
+        novas, mudou = d[chave]
+        ufs = sorted(u for u in set(novas) | set(mudou) if novas.get(u) or mudou.get(u))
+        if ufs:
+            partes.append((f"{nome} {ufs[0]}" if len(ufs) == 1 else nome, sum(len(novas.get(u, [])) + len(mudou.get(u, [])) for u in ufs)))
+    textos = [f"{n_} {q}" for n_, q in partes if q]
+    if d["votacoes"]:
+        textos.append("Votações")
+    if d["tse"]:
+        textos.append("TSE")
+    if len(textos) > limite:
+        textos = textos[:limite] + [f"+{len(textos) - limite}"]
+    return " · ".join(textos)
+
+
+def resumo_longo(d: dict) -> str:
+    """Os títulos das seções em uma linha, para abrir o corpo do item de feed (a prévia que o leitor mostra)."""
+    return " · ".join(a.replace(" — ", ": ") for a, _ in linhas(d))
 
 
 def montar(d: dict, titulo: str, rodape: tuple[str, str] = ("", ""), detalhes: str | None = None) -> tuple[str, str]:
@@ -241,7 +257,7 @@ def main() -> None:
     (saida / "resumo.txt").write_text(t, encoding="utf-8")
     print(t)
     if a.enviar:
-        enviar(f"{titulo}: {resumo_curto(d)}" if linhas(d) else titulo, h, t)
+        enviar(f"{data[8:]}/{data[5:7]}: {resumo_curto(d)} — Minha Bancada" if linhas(d) else titulo, h, t)
 
 
 if __name__ == "__main__":

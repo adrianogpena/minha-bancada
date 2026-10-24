@@ -27,20 +27,22 @@ export async function paginaInformado() {
           <label class="campo">Capital
             <select id="inf-capital"><option value="">Escolha…</option>${Object.entries(cobertura.capitais).map(([u, m]) => `<option value="${u}">${esc(m)} (${u})</option>`).join("")}</select></label>
         </div>
+        <div class="resumo-escolhas" id="resumo" role="status" aria-live="polite"></div>
         <p class="dica-form">Estado: Assembleia, governo, deputados federais do estado e a capital. Hoje só entram estados e capitais cujos dados já coletamos (${cobertura.estados.length} Assembleias, ${Object.keys(cobertura.capitais).length} capitais); outros locais entram conforme novas fontes forem conectadas.</p>
       </fieldset>
       <fieldset>
-        <legend>2. Ou políticos específicos <small>(opcional)</small></legend>
+        <legend>2. Ou políticos <small>(opcional)</small></legend>
         <div class="filtros dois">
           <label class="campo">Onde atua
             <select id="pol-uf"><option value="BR">Presidente e deputados federais (Brasil)</option>${Object.entries(UFS).map(([u, n]) => `<option value="${u}">${esc(n)}</option>`).join("")}</select></label>
           <label class="campo">Nome<input id="pol-busca" type="search" placeholder="Ex.: Presidente, Maria, PT" autocomplete="off"></label>
         </div>
         <ul class="itens" id="pol-achados" aria-live="polite"></ul>
+        <div class="resumo-escolhas" id="resumo-pol" role="status" aria-live="polite"></div>
         <p class="dica-form">Aparecem só políticos de quem já acompanhamos propostas: Presidente, governadores, deputados federais, deputados estaduais (Assembleias coletadas) e prefeitos de capitais com dados.</p>
       </fieldset>
-      <fieldset>
-        <legend>3. Seus feeds</legend>
+      <fieldset id="sec-feeds">
+        <legend>3. Seus feeds <small id="qtd-feeds"></small></legend>
         <ul class="escolhas" id="escolhas" aria-live="polite"></ul>
         <p id="opml-p" hidden><button type="button" class="botao" id="opml">Baixar todos (arquivo OPML)</button></p>
         <details>
@@ -68,6 +70,26 @@ export async function paginaInformado() {
           <span class="acoes"><button type="button" data-copiar="${i}">copiar</button><button type="button" data-tirar="${i}" aria-label="Remover ${esc(r)}">remover</button></span></li>`).join("")
       : `<li class="vazio">Nada escolhido ainda.</li>`;
     $("#opml-p").hidden = !todos.length;
+    $("#qtd-feeds").textContent = todos.length ? `(${todos.length})` : "";
+    const ehLocal = (c) => /^(BR|UF:|MUN:)/.test(c);
+    for (const [id, local] of [["#resumo", true], ["#resumo-pol", false]]) {
+      const lista = todos.map(([c, r], i) => [c, r, i]).filter(([c]) => ehLocal(c) === local);
+      $(id).innerHTML = lista.length
+        ? `<p class="dica-form"><b>Escolhido:</b></p><div class="chips">${lista.map(([, r, i]) => `<span class="chip">${esc(r)}<button type="button" data-tirar="${i}" aria-label="Remover ${esc(r)}">×</button></span>`).join("")}</div>
+           <p class="dica-form"><a href="#sec-feeds">Ver endereços dos feeds ↓</a></p>`
+        : "";
+      $(id).onclick = (e) => {
+        const b = e.target.closest("button"); if (!b) return;
+        escolhidos.delete(todos[b.dataset.tirar][0]); desenhar(); mostrarAchados();
+      };
+    }
+    $("#add-br").textContent = escolhidos.has("BR") ? "✓ Câmara, Senado e Presidência" : "Câmara, Senado e Presidência";
+    $("#add-br").classList.toggle("marcado", escolhidos.has("BR"));
+    for (const [id, pref] of [["#inf-uf", "UF:"], ["#inf-capital", "MUN:"]]) {
+      const sel = $(id), v = sel.value;
+      if (!v || !escolhidos.has(pref + v)) sel.value = [...escolhidos.keys()].map((c) => c.startsWith(pref) ? c.slice(pref.length) : null).filter(Boolean).pop() || "";
+      sel.classList.toggle("marcado", !!sel.value);
+    }
     $("#escolhas").onclick = async (e) => {
       const b = e.target.closest("button"); if (!b) return;
       if (b.dataset.tirar != null) { escolhidos.delete(todos[b.dataset.tirar][0]); desenhar(); mostrarAchados(); return; }
@@ -76,8 +98,8 @@ export async function paginaInformado() {
   };
   const adicionar = (codigo, rotulo) => { if (codigo) { escolhidos.set(codigo, rotulo); desenhar(); mostrarAchados(); } };
   $("#add-br").onclick = () => adicionar("BR", "Brasil: Câmara, Senado e Presidência");
-  $("#inf-uf").onchange = (e) => { const u = e.target.value; adicionar(u && `UF:${u}`, `Estado: ${nomeUf(u)}`); e.target.value = ""; };
-  $("#inf-capital").onchange = (e) => { const u = e.target.value; adicionar(u && `MUN:${u}`, `Capital: ${cobertura.capitais[u]} (${u})`); e.target.value = ""; };
+  $("#inf-uf").onchange = (e) => { const u = e.target.value; adicionar(u && `UF:${u}`, `Estado: ${nomeUf(u)}`); };
+  $("#inf-capital").onchange = (e) => { const u = e.target.value; adicionar(u && `MUN:${u}`, `Capital: ${cobertura.capitais[u]} (${u})`); };
   $("#opml").onclick = () => {
     const xml = `<?xml version="1.0" encoding="UTF-8"?><opml version="2.0"><head><title>Minha Bancada</title></head><body>${
       [...escolhidos].map(([c, r]) => `<outline type="rss" text="${esc(r)}" title="${esc(r)}" xmlUrl="${esc(urlFeed(c))}"/>`).join("")}</body></opml>`;

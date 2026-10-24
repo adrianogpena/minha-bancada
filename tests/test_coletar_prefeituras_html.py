@@ -75,7 +75,7 @@ def test_sp_coletar_classifica_situacao(saida, monkeypatch):
     monkeypatch.setattr(sp, "ANO_INICIAL", a)
     monkeypatch.setattr(sp, "ws", ws_sp(a))
     sp.coletar()
-    r = json.loads((saida / "SP" / f"prefeitura_{a}.json").read_text())
+    r = json.loads((saida / "SP" / f"prefeitura_{a}.json").read_text(encoding="utf-8"))
     m = r["materias"]
     assert m[f"PL-1-{a}"]["situacao"] == "Virou lei (Lei 18.000, publicada em 2026-03-04)"
     assert m[f"PL-2-{a}"]["situacao"] == "Em tramitação" and m[f"PL-2-{a}"]["emTramitacao"] is True
@@ -167,7 +167,7 @@ def test_ba_coletar_ponta_a_ponta(saida, monkeypatch):
         {"data": "01/02/2025", "situacao": "Sancionado", "observacao": "LEI Nº 100/2025 PUBLICADO", "link": None}][::-1])
     ba.coletar()
     assert chamados == ["A"]   # só projetos de ANO_INICIAL em diante e de tipos conhecidos
-    m = json.loads((saida / "BA" / f"prefeitura_{a}.json").read_text())["materias"][f"PLE-10/{a}"]
+    m = json.loads((saida / "BA" / f"prefeitura_{a}.json").read_text(encoding="utf-8"))["materias"][f"PLE-10/{a}"]
     assert m["tipo"] == "PL" and m["numero"] == 10 and m["dataApresentacao"] == "2025-02-01" and m["linkTexto"] == "http://pdf"
     assert m["situacao"] == "Sancionado (Lei 100/2025)" and m["emTramitacao"] is False
 
@@ -240,7 +240,7 @@ def test_go_coletar(saida, monkeypatch):
                           bloco_go("a4", f"Projeto de Lei nº 10/{a} - Ementa A (reapresentado)", "Prefeito de Goiânia", "01/03/2026", "Anexado")),
         (a, 3): pagina_go(4)})
     go.coletar()
-    m = json.loads((saida / "GO" / f"prefeitura_{a}.json").read_text())["materias"]
+    m = json.loads((saida / "GO" / f"prefeitura_{a}.json").read_text(encoding="utf-8"))["materias"]
     assert sorted(m) == [f"PL-10-{a}", f"PLC-2-{a}"]
     assert m[f"PL-10-{a}"]["dataApresentacao"] == "2026-03-01" and m[f"PL-10-{a}"]["situacao"] == "Anexado a outro processo"   # fica o mais antigo
     assert m[f"PLC-2-{a}"]["emTramitacao"] is True and m[f"PLC-2-{a}"]["linkTexto"].endswith("/a3/")
@@ -279,5 +279,5 @@ def test_governo_coletar(tmp_path, monkeypatch):
                      "materia/materialegislativa": mats})
     monkeypatch.setattr(est, "get", s.get)
     gov.coletar("PB", "h")
-    r = json.loads((tmp_path / "PB" / f"governo_{a}.json").read_text())["materias"]
+    r = json.loads((tmp_path / "PB" / f"governo_{a}.json").read_text(encoding="utf-8"))["materias"]
     assert list(r) == ["1"] and r["1"]["situacao"] == "Aprovado"

@@ -109,6 +109,22 @@ test("resumosEstadual mostra cada seção com fonte e avisa quando falta", () =>
   assert.doesNotMatch(html, /Presença|Emendas/);
 });
 
+test("resumosEstadual mostra lançamentos da verba e pagamentos das emendas com data e fonte", () => {
+  const html = resumosEstadual({
+    verba: { fonte: "https://v.org/dados", anos: [{ ano: 2026, total: 30, meses: [{ mes: 2, total: 30 }], categorias: [], fornecedores: [],
+      lancamentos: [{ mes: 2, fornecedor: "F", valor: 30.5, documento: "NF-1", emissao: "2026-02-03", fonte: "https://c.org/nf.pdf" }, { mes: 3, empenho: "2026NE1", descricao: "Combustível", valor: 1, fonte: "javascript:x" }] }] },
+    emendas: { fonte: "https://e.org", anos: [{ ano: 2025, empenhado: 10, pago: 5 }],
+      pagamentos: [{ data: "2026-02-23", credor: "Credor <b>", objeto: "Obra", valor: 20, efetivado: true }, { data: "2026-01-20", credor: "B", valor: 1, efetivado: false }] },
+  });
+  assert.match(html, /Lançamentos de 2026/);
+  assert.match(html, /03\/02\/2026[\s\S]*NF-1[\s\S]*href="https:\/\/c\.org\/nf\.pdf"/);
+  assert.match(html, /2026NE1[\s\S]*Combustível/);
+  assert.doesNotMatch(html, /javascript:/);
+  assert.match(html, /Pagamentos das emendas/);
+  assert.match(html, /23\/02\/2026<\/td><td>Credor &lt;b&gt;/);
+  assert.match(html, /não efetivado/);
+});
+
 test("completarEleicao monta disputa, votos do partido e aliança a partir do que o local tem em comum", () => {
   const { completarEleicao } = js("ficha.js");
   const comuns = {

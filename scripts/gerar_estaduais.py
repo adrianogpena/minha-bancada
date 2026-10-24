@@ -13,6 +13,7 @@ do TSE à página com votos e projetos. Não acessa a internet.
 import json
 import re
 from collections import defaultdict
+from functools import partial
 from pathlib import Path
 
 import categorias
@@ -38,6 +39,9 @@ def salvar(caminho: Path, obj) -> None:
 
 INICIO_LEGISLATURA = 2023
 TOP_FORNECEDORES = 10
+UFS_LANCAMENTOS = {"CE", "MS"}   # UFs cuja verba mostra cada lançamento (empenho, descrição, nº e emissão do documento, comprovante)
+ANO_LANCAMENTOS = 2026
+CAMPOS_LANCAMENTO = ("mes", "categoria", "fornecedor", "cnpj", "valor", "documento", "emissao", "empenho", "descricao", "fonte")
 
 
 def numero(x) -> float:
@@ -59,7 +63,12 @@ def itens_por_deputado(pasta: Path, padrao: str) -> tuple:
     return saida, fonte
 
 
-def resumo_verba(itens: list, fonte) -> dict:
+def lancamentos_verba(itens: list) -> list:
+    meus = [{k: it[k] for k in CAMPOS_LANCAMENTO if it.get(k) not in (None, "")} for _, it in itens]
+    return sorted(meus, key=lambda x: (x.get("emissao") or "", numero(x.get("mes")), x.get("documento") or x.get("empenho") or ""), reverse=True)
+
+
+def resumo_verba(itens: list, fonte, lancamentos: bool = False) -> dict:
     anos = {}
     for ano, it in itens:
         a = anos.setdefault(ano, {"total": 0.0, "meses": defaultdict(float), "categorias": defaultdict(float), "fornecedores": defaultdict(float)})
@@ -73,7 +82,8 @@ def resumo_verba(itens: list, fonte) -> dict:
     for ano in sorted(anos, key=lambda x: x or 0):
         a = anos[ano]
         forn = sorted(a["fornecedores"].items(), key=lambda kv: -kv[1])[:TOP_FORNECEDORES]
-        out.append({"ano": ano, "total": round(a["total"], 2),
+        extra = {"lancamentos": lancamentos_verba([x for x in itens if x[0] == ano])} if lancamentos and (ano or 0) >= ANO_LANCAMENTOS else {}
+        out.append({**extra, "ano": ano, "total": round(a["total"], 2),
                     "meses": [{"mes": m, "total": round(t, 2)} for m, t in sorted(a["meses"].items(), key=lambda kv: str(kv[0]))],
                     "categorias": categorias.agrupar(a["categorias"]),
                     "fornecedores": [{"fornecedor": f, "cnpj": c, "total": round(t, 2)} for (f, c), t in forn]})
@@ -112,6 +122,18 @@ def resumo_emendas(itens: list, fonte) -> dict:
     return {"fonte": fonte, "anos": [{"ano": a, "empenhado": round(e, 2), "pago": round(p, 2), "quantidade": q} for a, (e, p, q) in sorted(anos.items())]}
 
 
+def pagamentos_de_emendas(pasta: Path, emendas: dict) -> dict:
+    """{idDeputado: [pagamento]} dos pagamentos_<ano>.json, ligados pelo `numero` da emenda (emendas: {idDeputado: [(ano, item)]}); do mais novo ao mais antigo."""
+    dono = {it["numero"]: pid for pid, itens in emendas.items() for _, it in itens if it.get("numero")}
+    saida = defaultdict(list)
+    for arq in sorted(pasta.glob("pagamentos_[0-9]*.json")):
+        for it in ler(arq, {}).get("itens", []):
+            pid = dono.get(it.get("numero"))
+            if pid:
+                saida[pid].append({k: it.get(k) for k in ("data", "credor", "objeto", "valor", "empenho", "efetivado")})
+    return {pid: sorted(v, key=lambda x: (x["data"] or "", x["empenho"] or ""), reverse=True) for pid, v in saida.items()}
+
+
 def resumo_presenca(itens: list, fonte) -> dict:
     campos = ("periodo", "presente", "ausente", "licenca", "totalSessoes")
     return {"fonte": fonte, "periodos": sorted(({k: it.get(k) for k in campos} for _, it in itens), key=lambda x: str(x["periodo"]))}
@@ -119,7 +141,8 @@ def resumo_presenca(itens: list, fonte) -> dict:
 
 def resumos_novos(pasta: Path) -> dict:
     """{idDeputado: {bloco: resumo}} só com os arquivos que a coleta da UF tem."""
-    blocos = (("verba", "verbas_*.json", resumo_verba), ("remuneracao", "remuneracao_*.json", resumo_remuneracao),
+    verba = partial(resumo_verba, lancamentos=pasta.name in UFS_LANCAMENTOS)
+    blocos = (("verba", "verbas_*.json", verba), ("remuneracao", "remuneracao_*.json", resumo_remuneracao),
               ("presenca", "presenca.json", resumo_presenca), ("diarias", "diarias_*.json", resumo_diarias),
               ("emendas", "emendas_*.json", resumo_emendas))
     saida = defaultdict(dict)
@@ -128,6 +151,9 @@ def resumos_novos(pasta: Path) -> dict:
         for pid, itens in por_dep.items():
             if itens:
                 saida[pid][nome] = f(itens, fonte)
+        if nome == "emendas":
+            for pid, pagamentos in pagamentos_de_emendas(pasta, por_dep).items():
+                saida[pid][nome]["pagamentos"] = pagamentos
     return saida
 
 

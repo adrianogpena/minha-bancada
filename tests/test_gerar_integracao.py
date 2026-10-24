@@ -56,6 +56,13 @@ def test_senado_liga_lista_detalhe_e_ficha(site):
     assert (site / "votacao_senado" / f"{resumo['id']}.json").is_file()
     sen = ler(site / "senador" / "7.json")
     assert sen["votos"] == [{"id": "9", "voto": "sim"}]
+    assert sen["comissoes"][0]["sigla"] == "CAE" and sen["mandatos"][0]["uf"] == "RJ"
+
+
+def test_deputado_leva_complementos_da_ficha_e_orgao_da_votacao(site):
+    d = ler(site / "deputado" / "101.json")
+    assert d["profissoes"][0]["titulo"] == "Advogada" and d["historico"][0]["partido"] == "PT" and d["discursos"][0]["tipo"] == "PELA ORDEM"
+    assert ler(site / "votacoes.json")[0]["orgao"] == "PLEN"
 
 
 def test_meta_traz_ano_e_periodo(site):

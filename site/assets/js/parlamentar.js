@@ -144,6 +144,8 @@ export function montarParlamentar(alvo, c) {
       <span class="quando"><b>${esc(p.tipo)} ${esc(p.numero)}/${esc(p.ano)}</b>${p.dataApresentacao ? `, apresentado em ${data(p.dataApresentacao)}` : ""}${p.principal ? ", autor principal" : ""}</span>
       <span class="resultado r-${classe}">${esc(texto)}</span>
       <span class="texto">${esc(p.ementa || "Sem ementa")}</span>
+      ${p.ementaDetalhada && p.ementaDetalhada !== p.ementa ? `<details class="texto"><summary>Ementa detalhada</summary>${esc(p.ementaDetalhada)}</details>` : ""}
+      ${typeof p.emTramitacao === "boolean" ? `<span class="texto quando">${p.emTramitacao ? "Em tramitação" : "Fora de tramitação"} segundo a Casa.</span>` : ""}
       ${c.papel ? `<span class="texto"><b>Papel de ${esc(nome)}:</b> ${c.papel(p)}</span>` : ""}
       ${p.situacao ? `<span class="texto"><b>Situação:</b> ${esc(p.situacao)}${p.orgao ? ` (${esc(p.orgao)})` : ""}${p.dataSituacao ? `, em ${data(p.dataSituacao)}` : ""}.${p.despacho ? ` <span class="quando">Despacho: ${esc(p.despacho.slice(0, 300))}</span>` : ""}</span>` : ""}
       ${p.tipoDescricao || p.tramitacao || p.regime || p.coautores || p.iniciativa ? `<span class="texto quando">${[p.tipoDescricao && `Tipo: ${esc(p.tipoDescricao)}`, p.iniciativa && `Iniciativa: ${esc(p.iniciativa)}`, p.totalAutores && `Assinado por ${p.totalAutores} autores${p.partidosDistintos ? ` de ${p.partidosDistintos} partidos` : ""}`, p.regime && `Regime: ${esc(p.regime)}`, p.tramitacao && `Tramitação: ${esc(p.tramitacao)}`, p.coautores && `Coautores: ${esc(p.coautores.join(", "))}`].filter(Boolean).join(" · ")}</span>` : ""}
@@ -183,7 +185,7 @@ export function montarParlamentar(alvo, c) {
 
 /* Votações do projeto (gerar.py: juntar_votacoes): as nominais levam placar e a orientação de cada bancada. */
 function votacoesDoProjeto(p) {
-  const item = (v) => `<li><span class="quando">${data(v.data)}</span> ${esc(v.descricao || "Votação")}
+  const item = (v) => `<li><span class="quando">${data(v.data)}${v.orgao ? ` · ${esc(v.orgao)}` : ""}</span> ${esc(v.descricao || "Votação")}
       ${v.nominal ? `<br><span class="quando">${v.aprovada === true ? "Aprovada" : v.aprovada === false ? "Rejeitada" : "Resultado não informado"}: ${["sim", "nao", "abstencao", "obstrucao"].filter((k) => v.placar[k]).map((k) => `${v.placar[k]} ${VOTOS[k]?.rotulo || k}`).join(", ")}.</span>
         ${v.orientacoes ? `<br><span class="quando">Orientação das bancadas: ${Object.entries(v.orientacoes).map(([b, o]) => `${esc(b)} ${esc(o)}`).join(" · ")}.</span>` : ""}
         <br><a href="votacao.html?id=${encodeURIComponent(v.id)}">Ver como cada partido votou</a>`

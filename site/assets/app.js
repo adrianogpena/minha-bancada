@@ -14,6 +14,7 @@ const PAGINAS = {
   fonte: ["fonte", "paginaFonte"],
   informado: ["informado", "paginaInformado"],
   historico: ["historico", "paginaHistorico"],
+  sobre: ["status", "paginaSobre"],
 };
 
 const pagina = document.body.dataset.pagina;

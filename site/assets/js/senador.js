@@ -31,6 +31,20 @@ function painelRecursos(rec) {
       <ul>${rec.escritorios.map((e) => `<li>${esc(e.endereco || e.nome || "")}${e.telefone ? ` · ${esc(e.telefone)}` : ""}</li>`).join("")}</ul>` : ""}`;
 }
 
+/* Comissões e mandatos do senador (coletar.py: coletar_ficha_senado). */
+function painelComissoesMandatos(sen, id) {
+  const comissoes = sen.comissoes || [], mandatos = sen.mandatos || [];
+  const periodo = (a, b) => `${a ? `desde ${data(a)}` : ""}${b ? ` até ${data(b)}` : ""}`;
+  const api = `${SENADO_API}/senador/${encodeURIComponent(id)}`;
+  return `<h2>Comissões</h2>
+    ${comissoes.length ? `<ul class="lista-simples">${comissoes.map((c) => `<li><b>${esc(c.sigla)}</b> ${esc(c.nome)}<br><span class="quando">${esc(c.cargo || "Membro")}${c.casa ? ` · ${esc(c.casa)}` : ""}, ${periodo(c.inicio, c.fim)}</span></li>`).join("")}</ul>`
+      : `<p class="vazio">Nenhuma participação registrada no mandato atual.</p>`}
+    ${mandatos.length ? `<h2>Mandatos no Senado</h2>
+      <ul class="lista-simples">${mandatos.map((m) => `<li>${m.inicio ? data(m.inicio) : "?"} a ${m.fim ? data(m.fim) : "?"}, ${esc(m.uf || "")}${m.cargo ? ` (${esc(m.cargo.toLowerCase())})` : ""}
+        ${(m.partidos || []).length ? `<br><span class="quando">Partidos: ${m.partidos.map((x) => `${esc(x.sigla)}${x.filiacao ? ` desde ${data(x.filiacao)}` : ""}${x.desfiliacao ? ` até ${data(x.desfiliacao)}` : ""}`).join(" · ")}</span>` : ""}</li>`).join("")}</ul>` : ""}
+    ${fontes([["Comissões do senador (Dados Abertos do Senado)", `${api}/comissoes`], ["Mandatos do senador (Dados Abertos do Senado)", `${api}/mandatos`]])}`;
+}
+
 export async function montarSenador(alvo, p, nome, ficha) {
   let sen, lista;
   try { [sen, lista] = await Promise.all([carregar(`dados/senador/${encodeURIComponent(p.id)}.json`), carregar("dados/votacoes_senado.json")]); } catch { return false; }
@@ -51,6 +65,7 @@ export async function montarSenador(alvo, p, nome, ficha) {
       ${sen.despesas ? painelGastos(sen.despesas, "A cota (CEAPS) reembolsa despesas do mandato, como passagens, aluguel de escritório e divulgação. Os valores são os reembolsados pelo Senado.")
         : `<p class="aviso">Os gastos da cota (CEAPS) não puderam ser carregados agora. Veja no <a href="https://www12.senado.leg.br/transparencia/sen/${encodeURIComponent(p.id)}" rel="noopener">Portal da Transparência do Senado</a>.</p>`}
       ${sen.recursos ? painelRecursos(sen.recursos) : ""}
+      ${sen.comissoes || sen.mandatos ? painelComissoesMandatos(sen, p.id) : ""}
       ${fontes([["Dados Abertos do Senado", `${SENADO_API}/senador/${encodeURIComponent(p.id)}`], sen.despesas ? ["Cota parlamentar (CEAPS)", `${SENADO_ADM_API}/senadores/despesas_ceaps/${sen.despesas.ano}`] : null, sen.recursos ? ["Recursos utilizados", `${SENADO_ADM_API}/senadores/${encodeURIComponent(p.id)}/recursos-utilizados?ano=${sen.recursos.ano}`] : null, sen.recursos?.escritorios ? ["Escritórios de apoio", `${SENADO_ADM_API}/senadores/escritorios-apoio`] : null, ["Portal da Transparência do Senado", `https://www12.senado.leg.br/transparencia/sen/${encodeURIComponent(p.id)}`]])}`,
     rotuloPerfil: sen.despesas ? "Perfil e gastos" : "Perfil",
     linhaDoTempo, proposicoes: sen.proposicoes, tipoProjeto: (x) => !!TIPOS_PROJETO[x.tipo],

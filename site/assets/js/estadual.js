@@ -1,5 +1,5 @@
 /* Deputado estadual: resumos e abas. */
-import { $, esc, reais, reaisCentavos, carregar } from "./util.js";
+import { $, esc, reais, reaisCentavos, carregar, urlSegura } from "./util.js";
 import { itemFicha, listaPaginada } from "./comum.js";
 import { semFonte, blocoPatrimonioFontes } from "./ficha.js";
 import { fontes, UFS } from "./apis.js";
@@ -12,6 +12,8 @@ function rotuloMes(m) {
   const n = parseInt(String(m).split("-").pop(), 10);
   return n >= 1 && n <= 12 ? MESES_CURTOS[n - 1] : String(m ?? "");
 }
+const dataBr = (iso) => (/^\d{4}-\d\d-\d\d$/.test(iso || "") ? iso.split("-").reverse().join("/") : "");
+const linkFonte = (url, texto) => (urlSegura(url) ? `<a href="${esc(url)}" rel="noopener">${esc(texto)}</a>` : "");
 function secaoEstadual(titulo, texto, corpo, fonte, nomeFonte) {
   return `<h2>${esc(titulo)}</h2><p>${texto}</p>${corpo}${fonte ? fontes([[nomeFonte, fonte]]) : semFonte()}`;
 }
@@ -23,7 +25,9 @@ export function resumosEstadual(dep) {
       <h3>${esc(a.ano ?? "")}: ${reaisCentavos(a.total)}</h3>
       <p>Por mês: ${a.meses.map((m) => `${esc(rotuloMes(m.mes))} ${reais(m.total)}`).join(", ")}.</p>
       ${tabela(["Categoria", "Total"], a.categorias.map((c) => [`<span title="${esc(c.originais.map(([r, v]) => `${r}: ${reais(v)}`).join("\n"))}">${esc(c.categoria)}</span>`, reais(c.total)]))}
-      ${a.fornecedores.length ? tabela(["Maiores fornecedores", "CNPJ", "Total"], a.fornecedores.map((f) => [esc(f.fornecedor), esc(f.cnpj || ""), reais(f.total)])) : ""}`).join(""), dep.verba.fonte, "Verba/cota (Assembleia)");
+      ${a.fornecedores.length ? tabela(["Maiores fornecedores", "CNPJ", "Total"], a.fornecedores.map((f) => [esc(f.fornecedor), esc(f.cnpj || ""), reais(f.total)])) : ""}
+      ${a.lancamentos?.length ? `<h3>Lançamentos de ${esc(a.ano)}</h3>${tabela(["Emissão ou mês", "Fornecedor", "Documento", "Empenho", "Descrição", "Valor", "Fonte"],
+        a.lancamentos.map((l) => [esc(dataBr(l.emissao) || rotuloMes(l.mes)), esc(l.fornecedor || ""), esc(l.documento || ""), esc(l.empenho || ""), esc(l.descricao || l.categoria || ""), reaisCentavos(l.valor), linkFonte(l.fonte, "fonte") || semFonte()]))}` : ""}`).join(""), dep.verba.fonte, "Verba/cota (Assembleia)");
   }
   if (dep.remuneracao) {
     const r = dep.remuneracao;
@@ -39,7 +43,8 @@ export function resumosEstadual(dep) {
   }
   if (dep.emendas?.anos?.length) {
     html += secaoEstadual("Emendas", "Emendas ao orçamento indicadas pelo deputado, por ano.", tabela(["Ano", "Empenhado", "Pago"],
-      dep.emendas.anos.map((a) => [esc(a.ano), reais(a.empenhado), reais(a.pago)])), dep.emendas.fonte, "Emendas (Assembleia)");
+      dep.emendas.anos.map((a) => [esc(a.ano), reais(a.empenhado), reais(a.pago)])) + (dep.emendas.pagamentos?.length ? `<h3>Pagamentos das emendas</h3>${tabela(["Data", "Credor", "Objeto", "Valor", "Situação"],
+      dep.emendas.pagamentos.map((x) => [esc(dataBr(x.data)), esc(x.credor || ""), esc(x.objeto || ""), reaisCentavos(x.valor), x.efetivado === false ? "não efetivado" : x.efetivado ? "efetivado" : ""]))}` : ""), dep.emendas.fonte, "Emendas (Assembleia)");
   }
   return html;
 }

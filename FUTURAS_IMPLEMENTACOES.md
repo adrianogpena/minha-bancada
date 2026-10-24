@@ -63,7 +63,9 @@ Fidelidade ao partido e governismo pelas orientações de bancada (também para 
 
 ## Nível 3: uma chamada por deputado ou projeto, ou visualização nova
 
-### 3.1 Carreira e histórico partidário
+### 3.1 Carreira e histórico partidário: feito (2026-10-24)
+
+Profissões, mandatos externos e histórico já existiam; entraram as ocupações e o partido do coautor na data de apresentação (registrado no `CHANGELOG.md`). Falta o partido de ex-deputados, que não são coletados. Plano original:
 
 Um passo no coletor de deputados, com chamadas por deputado (513 × 4).
 
@@ -72,7 +74,9 @@ Um passo no coletor de deputados, com chamadas por deputado (513 × 4).
 - `/deputados/{id}/historico`: trocas de partido. Resolve também o partido do coautor na data da assinatura; hoje
   usamos o partido atual e só de deputados em exercício, então ex-deputados e trocas de partido ficam sem sigla.
 
-### 3.2 Vida do projeto
+### 3.2 Vida do projeto: feito (2026-10-24)
+
+Linha do tempo, relator, comissões por onde passou e proposições relacionadas na página da proposição da Câmara (registrado no `CHANGELOG.md`). O relator sai do texto do despacho da designação, não de um campo da API. Plano original:
 
 Página do projeto com linha do tempo; uma chamada por projeto, coletada de forma incremental como os autores.
 

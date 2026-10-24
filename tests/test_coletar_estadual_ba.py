@@ -96,6 +96,19 @@ def test_itens_emendas():
     assert all(i["empenhado"] is not None and i["objeto"] for i in itens)
 
 
+def test_itens_pagamentos():
+    csv_texto = amostra("estadual_ba_emendas")["pagamentos"]
+    numero = csv_texto.splitlines()[1].split(";")[9].strip('"')
+    por_ano = ba.itens_pagamentos(csv_texto, {numero})
+    assert list(por_ano) == [2026]
+    primeiro = por_ano[2026][0]
+    assert primeiro["numero"] == numero and primeiro["data"] == "2026-01-20" and primeiro["valor"] == 500000.0
+    assert primeiro["credor"] and primeiro["objeto"] and primeiro["empenho"] and primeiro["efetivado"] is False
+    assert [i["efetivado"] for i in por_ano[2026]] == [False, True]
+    assert sorted(ba.itens_pagamentos(csv_texto, {numero}, 2025)) == [2025, 2026]
+    assert ba.itens_pagamentos(csv_texto, {"outra"}) == {}
+
+
 def test_url_zip_emendas():
     pacote = {"result": {"resources": [{"format": "PNG", "url": "a"}, {"format": "ZIP", "url": "b"}]}}
     assert ba.url_zip_emendas(pacote) == "b"
@@ -132,10 +145,29 @@ def test_coletar_emendas_grava_por_ano(tmp_path, monkeypatch):
     mini = io.BytesIO()
     with zipfile.ZipFile(mini, "w") as z:
         z.writestr(ba.EMENDAS_CSV, csv_texto)
+        z.writestr(ba.PAGAMENTOS_CSV, amostra("estadual_ba_emendas")["pagamentos"])
     monkeypatch.setattr(ba, "baixar_ckan", lambda s, url, *a, **k: pacote if url == ba.EMENDAS_API else mini.getvalue())
     ba.coletar_emendas(None, [{"id": "9", "nome": nome, "nomeCivil": None}])
     arquivos = sorted(p.name for p in tmp_path.glob("emendas_*.json"))
     assert arquivos and comum.ler(tmp_path / arquivos[0])["itens"][0]["idDeputado"] == "9"
+    assert not list(tmp_path.glob("pagamentos_*.json"))
+
+
+def test_coletar_emendas_grava_pagamentos_por_ano_do_pagamento(tmp_path, monkeypatch):
+    monkeypatch.setattr(ba, "PASTA", tmp_path)
+    pagamentos = amostra("estadual_ba_emendas")["pagamentos"]
+    numero = pagamentos.splitlines()[1].split(";")[9].strip('"')
+    pacote = json.dumps({"result": {"resources": [{"format": "ZIP", "url": "https://x/z.zip"}]}}).encode()
+    mini = io.BytesIO()
+    with zipfile.ZipFile(mini, "w") as z:
+        z.writestr(ba.EMENDAS_CSV, amostra("estadual_ba_emendas")["csv"])
+        z.writestr(ba.PAGAMENTOS_CSV, pagamentos)
+    monkeypatch.setattr(ba, "baixar_ckan", lambda s, url, *a, **k: pacote if url == ba.EMENDAS_API else mini.getvalue())
+    monkeypatch.setattr(ba, "itens_emendas", lambda texto, deputados: ({2025: [{"idDeputado": "9", "numero": numero}]}, set()))
+    ba.coletar_emendas(None, [])
+    gravado = comum.ler(tmp_path / "pagamentos_2026.json")
+    assert gravado["fonte"] == ba.EMENDAS_PAGINA and len(gravado["itens"]) == 2
+    assert not (tmp_path / "pagamentos_2025.json").exists()
 
 
 def test_precisa_detalhe_ano_corrente_renova_escalonado_e_ano_encerrado_nao():

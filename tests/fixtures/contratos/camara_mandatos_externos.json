@@ -1,0 +1,99 @@
+{
+ "fonte": "https://dadosabertos.camara.leg.br/api/v2/deputados/{id}/mandatosExternos",
+ "capturadoEm": "2026-10-24",
+ "amostra": {
+  "dados": [
+   {
+    "cargo": "Vereador(a)",
+    "siglaUf": "AP",
+    "municipio": "Macapá",
+    "anoInicio": "2009",
+    "anoFim": "2016",
+    "siglaPartidoEleicao": "PMDB",
+    "uriPartidoEleicao": "https://dadosabertos.camara.leg.br/api/v2/partidos/36800"
+   },
+   {
+    "cargo": "Vereador(a)",
+    "siglaUf": "AP",
+    "municipio": "Macapá",
+    "anoInicio": "2017",
+    "anoFim": "2019",
+    "siglaPartidoEleicao": "PROS",
+    "uriPartidoEleicao": "https://dadosabertos.camara.leg.br/api/v2/partidos/36763"
+   }
+  ],
+  "links": [
+   {
+    "rel": "self",
+    "href": "https://dadosabertos.camara.leg.br/api/v2/deputados/204379/mandatosExternos"
+   }
+  ]
+ },
+ "forma": {
+  "dados": {
+   "tipos": [
+    "list"
+   ]
+  },
+  "dados[]": {
+   "tipos": [
+    "dict"
+   ]
+  },
+  "dados[].anoFim": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "dados[].anoInicio": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "dados[].cargo": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "dados[].municipio": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "dados[].siglaPartidoEleicao": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "dados[].siglaUf": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "dados[].uriPartidoEleicao": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "links": {
+   "tipos": [
+    "list"
+   ]
+  },
+  "links[]": {
+   "tipos": [
+    "dict"
+   ]
+  },
+  "links[].href": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "links[].rel": {
+   "tipos": [
+    "str"
+   ]
+  }
+ }
+}

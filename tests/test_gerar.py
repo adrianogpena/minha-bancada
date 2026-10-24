@@ -85,6 +85,21 @@ def test_juntar_autoria_principal_coautores_partido_e_contagens():
     assert gerar.juntar_autoria({"id": 1}, None, "10", partidos) == {"id": 1}  # ainda não coletada
 
 
+def test_juntar_autoria_usa_partido_da_data_de_apresentacao():
+    import gerar
+    aut = {"idPrincipal": 10, "autores": [[10, "Ana"], [20, "Bia"]]}
+    historicos = {"20": [{"data": "2023-02-01", "partido": "PL"}, {"data": "2024-06-01", "partido": "PP"}, {"data": "2025-01-01", "partido": None}]}
+    partidos = {"10": "PT", "20": "PP"}
+    antes = gerar.juntar_autoria({"id": 1, "dataApresentacao": "2024-03-10T09:00"}, aut, "10", partidos, historicos)
+    assert antes["coautores"] == ["Bia (PL)"] and antes["partidosDistintos"] == 2
+    depois = gerar.juntar_autoria({"id": 1, "dataApresentacao": "2025-03-10"}, aut, "10", partidos, historicos)
+    assert depois["coautores"] == ["Bia (PP)"]
+    sem_data = gerar.juntar_autoria({"id": 1}, aut, "10", partidos, historicos)
+    assert sem_data["coautores"] == ["Bia (PP)"]
+    anterior = gerar.juntar_autoria({"id": 1, "dataApresentacao": "2022-01-01"}, aut, "10", partidos, historicos)
+    assert anterior["coautores"] == ["Bia (PP)"]
+
+
 def test_juntar_autoria_iniciativa_nao_deputado():
     import gerar
     aut = {"idPrincipal": None, "autores": [[None, "Poder Executivo", "Órgão do Poder Executivo"], [20, "Bia"]]}

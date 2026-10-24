@@ -75,12 +75,12 @@ jobs:
       - name: Marcar o início (só o que for gravado depois disso vai no pacote)
         run: touch "$RUNNER_TEMP/inicio"
 
-      - name: Coletar Senado (senadores, votações, autorias, CEAPS e recursos)
+      - name: Coletar Senado (senadores, votações, autorias, CEAPS, recursos, comissões e mandatos)
         run: python scripts/coletar.py --so senado
 
       - name: Empacotar o resultado
         if: always()
-        run: scripts/empacotar.sh "$RUNNER_TEMP/senado.tgz" "$RUNNER_TEMP/inicio" dados/senado.json dados/senado_votacoes dados/senado_materias.json dados/senado_autorias.json dados/senado_ceaps.json dados/senado_recursos.json
+        run: scripts/empacotar.sh "$RUNNER_TEMP/senado.tgz" "$RUNNER_TEMP/inicio" dados/senado.json dados/senado_votacoes dados/senado_materias.json dados/senado_autorias.json dados/senado_ceaps.json dados/senado_recursos.json dados/senado_ficha.json
 
       - uses: actions/upload-artifact@v7
         if: always()
@@ -350,6 +350,11 @@ jobs:
           done
           true
 
+      - name: Testar as APIs e fontes (alimenta a lista de status em "Sobre os dados")
+        if: ${{ github.event_name != 'push' }}   # só no diário (e na execução manual); merges publicam com o status do último checkup
+        continue-on-error: true   # sem o teste o site ainda publica, com o status do dia anterior
+        run: python scripts/testar_endpoints.py --sem-tabela || true
+
       - name: Gerar arquivos do site
         run: python scripts/gerar.py
 
@@ -359,7 +364,7 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           # só adiciona o que existe; um caminho ausente (coleta que falhou) derrubaria o passo
-          for f in dados/votacoes dados/proposicoes dados/proposicoes_cadastro dados/proposicoes_detalhe.json dados/proposicoes_autores.json dados/proposicoes_temas.json dados/orgaos_deputados.json dados/orientacoes.json dados/blocos.json dados/proposicoes_votacoes.json dados/presenca_eventos.json dados/senado_votacoes dados/senado_materias.json dados/executivo.json dados/estaduais dados/siconfi dados/municipais dados/tse; do
+          for f in dados/votacoes dados/proposicoes dados/proposicoes_cadastro dados/proposicoes_detalhe.json dados/proposicoes_autores.json dados/proposicoes_temas.json dados/orgaos_deputados.json dados/orientacoes.json dados/blocos.json dados/proposicoes_votacoes.json dados/presenca_eventos.json dados/senado_votacoes dados/senado_materias.json dados/executivo.json dados/estaduais dados/siconfi dados/municipais dados/tse dados/status_apis.json; do
             if [ -e "$f" ]; then git add "$f"; fi
           done
           git diff --cached --quiet || git commit -m "Dados atualizados em $(date -u +%Y-%m-%d)"

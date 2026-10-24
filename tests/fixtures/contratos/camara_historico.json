@@ -1,0 +1,150 @@
+{
+ "fonte": "https://dadosabertos.camara.leg.br/api/v2/deputados/{id}/historico",
+ "capturadoEm": "2026-10-24",
+ "amostra": {
+  "dados": [
+   {
+    "id": 204379,
+    "uri": "https://dadosabertos.camara.leg.br/api/v2/deputados/204379",
+    "nome": "Acácio Favacho",
+    "nomeEleitoral": "ACÁCIO FAVACHO",
+    "siglaPartido": "MDB",
+    "uriPartido": "https://dadosabertos.camara.leg.br/api/v2/partidos/36899",
+    "siglaUf": "AP",
+    "idLegislatura": 57,
+    "email": null,
+    "urlFoto": "https://www.camara.leg.br/internet/deputado/bandep/204379.jpg",
+    "dataHora": "2023-02-01T00:00",
+    "situacao": null,
+    "condicaoEleitoral": null,
+    "descricaoStatus": "Nome no início da legislatura / Partido no início da legislatura"
+   },
+   {
+    "id": 204379,
+    "uri": "https://dadosabertos.camara.leg.br/api/v2/deputados/204379",
+    "nome": "Acácio Favacho",
+    "nomeEleitoral": "ACÁCIO FAVACHO",
+    "siglaPartido": "MDB",
+    "uriPartido": "https://dadosabertos.camara.leg.br/api/v2/partidos/36899",
+    "siglaUf": "AP",
+    "idLegislatura": 57,
+    "email": null,
+    "urlFoto": "https://www.camara.leg.br/internet/deputado/bandep/204379.jpg",
+    "dataHora": "2023-02-01T12:05",
+    "situacao": "Exercício",
+    "condicaoEleitoral": "Titular",
+    "descricaoStatus": "Entrada - Posse de Eleito Titular - Posse na Sessão Preparatória"
+   }
+  ],
+  "links": [
+   {
+    "rel": "self",
+    "href": "https://dadosabertos.camara.leg.br/api/v2/deputados/204379/historico"
+   }
+  ]
+ },
+ "forma": {
+  "dados": {
+   "tipos": [
+    "list"
+   ]
+  },
+  "dados[]": {
+   "tipos": [
+    "dict"
+   ]
+  },
+  "dados[].condicaoEleitoral": {
+   "tipos": [
+    "null",
+    "str"
+   ]
+  },
+  "dados[].dataHora": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "dados[].descricaoStatus": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "dados[].email": {
+   "tipos": [
+    "null"
+   ]
+  },
+  "dados[].id": {
+   "tipos": [
+    "int"
+   ]
+  },
+  "dados[].idLegislatura": {
+   "tipos": [
+    "int"
+   ]
+  },
+  "dados[].nome": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "dados[].nomeEleitoral": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "dados[].siglaPartido": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "dados[].siglaUf": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "dados[].situacao": {
+   "tipos": [
+    "null",
+    "str"
+   ]
+  },
+  "dados[].uri": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "dados[].uriPartido": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "dados[].urlFoto": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "links": {
+   "tipos": [
+    "list"
+   ]
+  },
+  "links[]": {
+   "tipos": [
+    "dict"
+   ]
+  },
+  "links[].href": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "links[].rel": {
+   "tipos": [
+    "str"
+   ]
+  }
+ }
+}

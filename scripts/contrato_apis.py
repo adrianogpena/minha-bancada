@@ -231,6 +231,45 @@ def _(ctx):
     return http_json(f"{CAMARA}/deputados/{ctx['dep']}")
 
 
+def _primeiro_com_dados(ctx, caminho, **params):
+    """Primeira resposta não vazia entre os deputados da lista (profissão e mandato externo faltam em muitos)."""
+    r = None
+    for did in ctx["deps"]:
+        r = http_json(f"{CAMARA}/deputados/{did}/{caminho}", **params)
+        if r["dados"] and any(v for v in r["dados"][0].values()):
+            return r
+    return r
+
+
+@ep("camara_profissoes", f"{CAMARA}/deputados/{{id}}/profissoes", campos("dados[]", "titulo", "dataHora"))
+def _(ctx):
+    return _primeiro_com_dados(ctx, "profissoes")
+
+
+@ep("camara_ocupacoes", f"{CAMARA}/deputados/{{id}}/ocupacoes",
+    campos("dados[]", "titulo", "entidade", "entidadeUF", "anoInicio", "anoFim"))
+def _(ctx):
+    return _primeiro_com_dados(ctx, "ocupacoes")
+
+
+@ep("camara_mandatos_externos", f"{CAMARA}/deputados/{{id}}/mandatosExternos",
+    campos("dados[]", "cargo", "siglaUf", "municipio", "anoInicio", "anoFim", "siglaPartidoEleicao"))
+def _(ctx):
+    return _primeiro_com_dados(ctx, "mandatosExternos")
+
+
+@ep("camara_historico", f"{CAMARA}/deputados/{{id}}/historico",
+    campos("dados[]", "idLegislatura", "dataHora", "siglaPartido", "situacao", "condicaoEleitoral", "descricaoStatus"))
+def _(ctx):
+    return http_json(f"{CAMARA}/deputados/{ctx['dep']}/historico")
+
+
+@ep("camara_discursos", f"{CAMARA}/deputados/{{id}}/discursos",
+    campos("dados[]", "dataHoraInicio", "tipoDiscurso", "sumario", "urlTexto", "urlVideo", "urlAudio") + ["dados[].faseEvento.titulo"])
+def _(ctx):
+    return _primeiro_com_dados(ctx, "discursos", itens=2, ordem="DESC", ordenarPor="dataHoraInicio", dataInicio="2023-02-01")
+
+
 @ep("camara_despesas", f"{CAMARA}/deputados/{{id}}/despesas", campos("dados[]", "mes", "tipoDespesa", "valorLiquido", "nomeFornecedor", "dataDocumento", "urlDocumento"))
 def _(ctx):
     # um deputado com despesas no ano: procura nos primeiros da lista
@@ -269,6 +308,11 @@ def _(ctx):
     return http_json(f"{CAMARA}/proposicoes/{ctx.get('exec') or ctx['prop']}/tramitacoes")
 
 
+@ep("camara_relacionadas", f"{CAMARA}/proposicoes/{{id}}/relacionadas", campos("dados[]", "id", "uri", "siglaTipo", "numero", "ano"))
+def _(ctx):
+    return http_json(f"{CAMARA}/proposicoes/{ctx['prop']}/relacionadas")
+
+
 @ep("camara_votacoes", f"{CAMARA}/votacoes", campos("dados[]", "id", "data", "dataHoraRegistro", "siglaOrgao", "descricao", "aprovacao"))
 def _(ctx):
     ini = (HOJE - dt.timedelta(days=29)).isoformat()
@@ -303,6 +347,20 @@ def _(ctx):
     r = http_json(f"{SENADO}/senador/lista/atual.json")
     ctx["senador"] = r["ListaParlamentarEmExercicio"]["Parlamentares"]["Parlamentar"][0]["IdentificacaoParlamentar"]["CodigoParlamentar"]
     return r
+
+
+@ep("senado_comissoes", f"{SENADO}/senador/{{id}}/comissoes",
+    campos("MembroComissaoParlamentar.Parlamentar.MembroComissoes.Comissao[]", "DescricaoParticipacao", "DataInicio")
+    + campos("MembroComissaoParlamentar.Parlamentar.MembroComissoes.Comissao[].IdentificacaoComissao", "CodigoComissao", "SiglaComissao", "NomeComissao", "SiglaCasaComissao"))
+def _(ctx):
+    return http_json(f"{SENADO}/senador/{ctx['senador']}/comissoes.json")
+
+
+@ep("senado_mandatos", f"{SENADO}/senador/{{id}}/mandatos",
+    campos("MandatoParlamentar.Parlamentar.Mandatos.Mandato[]", "CodigoMandato", "UfParlamentar", "DescricaoParticipacao",
+           "PrimeiraLegislaturaDoMandato.DataInicio", "SegundaLegislaturaDoMandato.DataFim", "Partidos.Partido[].Sigla", "Partidos.Partido[].DataFiliacao"))
+def _(ctx):
+    return http_json(f"{SENADO}/senador/{ctx['senador']}/mandatos.json")
 
 
 @ep("senado_votacoes", f"{SENADO}/votacao",

@@ -41,6 +41,8 @@ CKAN = "https://dados.ba.gov.br"
 EMENDAS_PAGINA = f"{CKAN}/dataset/emendas-parlamentares"
 EMENDAS_API = f"{CKAN}/api/3/action/package_show?id=emendas-parlamentares"
 EMENDAS_CSV = "VW_PAINEL_EMENDAS_PARLAMENTARES_DESPESAS.csv"
+PAGAMENTOS_CSV = "VW_PAINEL_EMENDAS_PARLAMENTARES_PAGAMENTOS.csv"
+ANO_PAGAMENTOS = 2026
 LEGISLATURA = "20ª (2023-2027)"
 ANO_VERBA = 2023
 ANO_PROPOSICOES = 2023
@@ -349,6 +351,30 @@ def itens_emendas(texto: str, deputados: list[dict]) -> tuple[dict, set]:
     return por_ano, sem_par
 
 
+def itens_pagamentos(texto: str, emendas: set, ano_minimo: int = ANO_PAGAMENTOS) -> dict:
+    """{ano do pagamento: [itens]} do CSV de pagamentos; só de emendas em `emendas` (num_codigo), pagos a partir de `ano_minimo`. Sem idDeputado: `numero` aponta a emenda."""
+    linhas = list(csv.DictReader(io.StringIO(texto), delimiter=";"))
+    cab = {comum.sem_acento(k): k for k in (linhas[0] if linhas else {})}
+
+    def campo(linha, nome):
+        return (linha.get(next((orig for sem, orig in cab.items() if sem.startswith(nome)), "")) or "").strip()
+
+    efetivado = {"sim": True, "nao": False}
+    por_ano: dict[int, list] = {}
+    for linha in linhas:
+        numero = campo(linha, "num_codigo_exec")
+        data = iso_data(campo(linha, "data do pagamento"))
+        if numero not in emendas or not data or int(data[:4]) < ano_minimo:
+            continue
+        por_ano.setdefault(int(data[:4]), []).append({
+            "numero": numero, "data": data, "credor": sem_espacos(campo(linha, "razaosocialcredor")) or None,
+            "valor": comum.valor_br(campo(linha, "val_pagto_nob")), "objeto": sem_espacos(campo(linha, "objeto")) or None,
+            "empenho": campo(linha, "num_empenho") or None, "efetivado": efetivado.get(comum.sem_acento(campo(linha, "pagamento_efetivado")).lower())})
+    for itens in por_ano.values():
+        itens.sort(key=lambda i: (i["data"], i["numero"], i["empenho"] or ""))
+    return por_ano
+
+
 def coletar_emendas(s, deputados: list[dict]) -> None:
     pacote = json.loads(baixar_ckan(s, EMENDAS_API))
     zip_bytes = baixar_ckan(s, url_zip_emendas(pacote), TIMEOUT_ARQUIVO)
@@ -357,6 +383,11 @@ def coletar_emendas(s, deputados: list[dict]) -> None:
     for ano, itens in sorted(por_ano.items()):
         comum.salvar(PASTA / f"emendas_{ano}.json", {"coletadoEm": date.today().isoformat(), "fonte": EMENDAS_PAGINA, "itens": itens})
     print(f"BA: emendas: {sum(len(v) for v in por_ano.values())} itens em {len(por_ano)} anos")
+    numeros = {i["numero"] for itens in por_ano.values() for i in itens if i["numero"]}
+    pagamentos = itens_pagamentos(decodificar(z.read(PAGAMENTOS_CSV)), numeros)
+    for ano, itens in sorted(pagamentos.items()):
+        comum.salvar(PASTA / f"pagamentos_{ano}.json", {"coletadoEm": date.today().isoformat(), "fonte": EMENDAS_PAGINA, "itens": itens})
+    print(f"BA: pagamentos de emendas: {sum(len(v) for v in pagamentos.values())} itens em {len(pagamentos)} anos")
     if sem_par:
         comum.avisar(f"BA: emendas sem deputado atual ({len(sem_par)}): {sorted(sem_par)[:10]}")
 
@@ -448,8 +479,13 @@ def _contrato_emendas(ctx):
 
 def _conferir_emendas(registro):
     falhas = []
-    if EMENDAS_CSV not in registro["arquivos"]:
-        falhas.append(f"ZIP sem {EMENDAS_CSV}")
+    for arquivo in (EMENDAS_CSV, PAGAMENTOS_CSV):
+        if arquivo not in registro["arquivos"]:
+            falhas.append(f"ZIP sem {arquivo}")
+    linha = registro["pagamentos"].splitlines()[1].split(";")
+    pagos = itens_pagamentos(registro["pagamentos"], {linha[9].strip('" ')}, 0)
+    if not pagos or any(not i["data"] or i["valor"] is None for v in pagos.values() for i in v):
+        falhas.append("pagamentos de emendas sem data ou valor")
     primeiro = registro["csv"].splitlines()[1].split(";")
     por_ano, _ = itens_emendas(registro["csv"], [{"id": "x", "nome": primeiro[8].strip('" '), "nomeCivil": None}])
     itens = [i for v in por_ano.values() for i in v]

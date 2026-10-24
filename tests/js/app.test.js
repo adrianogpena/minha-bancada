@@ -10,6 +10,7 @@ const { urlLegivel, fontes } = js("apis.js");
 const { resumosEstadual } = js("estadual.js");
 const { linksRedes } = js("ficha.js");
 const { foto } = js("comum.js");
+const { agruparPeriodos, chaveDe, juntarDias } = js("historico.js");
 
 test("esc escapa HTML e trata nulos", () => {
   assert.equal(esc(`<a href="x">'&'</a>`), "&lt;a href=&quot;x&quot;&gt;&#39;&amp;&#39;&lt;/a&gt;");
@@ -151,4 +152,23 @@ test("completarEleicao monta disputa, votos do partido e aliança a partir do qu
   const pronta = { cargoTse: "VEREADOR", unidadeEleitoral: "71072", partido: "PT", disputa: { vagas: 1 } };
   assert.deepEqual(completarEleicao(pronta, comuns).disputa, { vagas: 1 });
   assert.equal(pronta.partidoVotos, undefined);
+});
+
+test("agruparPeriodos junta dias em semanas (segunda a domingo) e meses", () => {
+  const indice = [{ data: "2026-10-26", total: 1 }, { data: "2026-10-25", total: 2 }, { data: "2026-10-19", total: 3 }, { data: "2026-09-30", total: 4 }];
+  assert.deepEqual(agruparPeriodos(indice, "semana").map((g) => [g.chave, g.total]), [["2026-10-26", 1], ["2026-10-19", 5], ["2026-09-28", 4]]);
+  assert.deepEqual(agruparPeriodos(indice, "mes").map((g) => [g.chave, g.dias.length]), [["2026-10", 3], ["2026-09", 1]]);
+  assert.equal(chaveDe("semana", "2026-10-25"), "2026-10-19");
+});
+
+test("juntarDias soma contagens, marca o dia de cada evento e só dá cobertura vazia a quem não teve item no período", () => {
+  const dia = (d, locais, eventos, cobertura) => ({ data: d, locais, contagem: Object.fromEntries(Object.keys(locais).map((c) => [c, { nova: eventos.filter((e) => e.local === c).length }])), cobertura, eventos });
+  const novo = dia("2026-10-20", { BR: "Brasil", "UF:SP": "São Paulo" }, [{ local: "UF:SP", titulo: "b" }], { BR: { itens: 0, status: "parado" }, "UF:SP": { itens: 1 } });
+  const velho = dia("2026-10-19", { BR: "Brasil" }, [{ local: "BR", titulo: "a" }], { BR: { itens: 1 } });
+  const j = juntarDias([novo, velho], "2026-10-19");
+  assert.deepEqual(Object.keys(j.locais), ["BR", "UF:SP"]);
+  assert.deepEqual(j.eventos.map((e) => [e.titulo, e._dia]), [["a", "2026-10-19"], ["b", "2026-10-20"]]);
+  assert.equal(j.contagem.BR.nova, 1);
+  assert.equal(j.cobertura.BR.itens, 1);
+  assert.deepEqual([j.de, j.ate], ["2026-10-19", "2026-10-20"]);
 });

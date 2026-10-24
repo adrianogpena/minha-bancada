@@ -32,9 +32,11 @@ LIMITE = 12  # itens listados por seção; o resto vira "e mais N"
 TIPOS_DESTAQUE = ("PL", "PLP", "PEC", "PDL", "MPV")
 
 
-def link_historico(data: str, locais=None) -> str:
-    """Página do histórico diário (detalhes e fontes) para um dia AAAA-MM-DD, filtrada por códigos de local ou político quando houver."""
-    return f"{SITE}historico.html?dia={data}" + (f"&locais={quote(','.join(sorted(locais)), safe=',:')}" if locais else "")
+def link_historico(data: str, locais=None, periodo: str = "dia") -> str:
+    """Página do histórico (detalhes e fontes) para um dia AAAA-MM-DD, filtrada por códigos de local ou político quando houver.
+    `periodo` "semana" ou "mes": a página abre a semana ou o mês que contém `data`."""
+    return (f"{SITE}historico.html?dia={data}" + (f"&periodo={periodo}" if periodo != "dia" else "")
+            + (f"&locais={quote(','.join(sorted(locais)), safe=',:')}" if locais else ""))
 
 
 def cont(n: int, um: str, varios: str) -> str:
@@ -197,8 +199,8 @@ def resumo_longo(d: dict) -> str:
     return " · ".join(a.replace(" — ", ": ") for a, _ in linhas(d))
 
 
-def montar(d: dict, titulo: str, rodape: tuple[str, str] = ("", ""), detalhes: str | None = None, sumario: bool = True, dias: int = 1) -> tuple[str, str]:
-    """`detalhes`: link da página do histórico diário, com todos os itens e as fontes. `dias` > 1 (aviso semanal ou mensal): o texto manda conferir os últimos `dias` dias no histórico, a partir do dia do link."""
+def montar(d: dict, titulo: str, rodape: tuple[str, str] = ("", ""), detalhes: str | None = None, sumario: bool = True, periodo: str = "dia") -> tuple[str, str]:
+    """`detalhes`: link da página do histórico, com todos os itens e as fontes. `periodo` ("dia", "semana" ou "mes") diz o que o link abre."""
     secoes = linhas(d)
     if not secoes:
         txt = "Nenhum dado novo nesta execução."
@@ -213,11 +215,9 @@ def montar(d: dict, titulo: str, rodape: tuple[str, str] = ("", ""), detalhes: s
             h.append("<ul style='font:13px Arial;color:#333;padding-left:18px'>" + "".join(f"<li style='margin:3px 0'>{html.escape(i)}</li>" for i in itens) + "</ul>")
         t += ["", a] + [f"  - {i}" for i in itens]
     if detalhes:
-        if dias > 1:
-            pedido = f"Abra o histórico no dia do aviso e confira os últimos {dias} dias, com cada item e a fonte oficial"
-        else:
-            pedido = "Veja cada item, com a fonte oficial"
-        h.append(f"<p style='font:14px Arial'><b>Quer mais detalhes?</b> {pedido}, em <a href='{html.escape(detalhes)}'>{html.escape(detalhes)}</a></p>")
+        pedido = {"semana": "Veja cada item da semana, com a fonte oficial", "mes": "Veja cada item do mês, com a fonte oficial"}.get(periodo, "Veja cada item, com a fonte oficial")
+        nome = {"semana": "Abrir o histórico da semana", "mes": "Abrir o histórico do mês"}.get(periodo, "Abrir o histórico do dia")
+        h.append(f"<p style='font:14px Arial'><b>Quer mais detalhes?</b> {pedido}: <a href='{html.escape(detalhes)}'>{nome}</a></p>")
         t += ["", f"Quer mais detalhes? {pedido}: {detalhes}"]
     h.append(f"<p style='font:12px Arial;color:#666'>Ver no site: <a href='{SITE}'>{SITE}</a></p>{rodape[0]}")
     t += ["", f"Ver no site: {SITE}"] + ([rodape[1]] if rodape[1] else [])

@@ -1,4 +1,4 @@
-/* Histórico diário. */
+/* Histórico por dia, semana ou mês. */
 import { $, esc, data, semAcento, carregar, urlSegura } from "./util.js";
 import { erro } from "./comum.js";
 import { fontes } from "./apis.js";
@@ -34,8 +34,63 @@ function cargoHist(p) {
 
 const somar = (eventos) => eventos.reduce((t, e) => t + (e.quantidade || 1), 0);   // um evento "lote" resume vários registros
 
-/* Locais acompanhados no dia que não tiveram item: distingue "nada aconteceu" de "não foi acompanhado" e mostra coleta parada. */
-function coberturaSemNovidade(dia, codigos, local, mostrar) {
+/* ---------- Semana e mês ---------- */
+/* Não há arquivo de semana nem de mês: o período é a junção, no navegador, dos arquivos diários que ele cobre. */
+const PERIODOS = { dia: "Dia", semana: "Semana", mes: "Mês" };
+const somarDias = (iso, n) => { const d = new Date(iso + "T12:00:00Z"); d.setUTCDate(d.getUTCDate() + n); return d.toISOString().slice(0, 10); };
+const segunda = (iso) => somarDias(iso, -((new Date(iso + "T12:00:00Z").getUTCDay() + 6) % 7));
+
+/* Chave do período que contém o dia: o próprio dia, a segunda-feira da semana ou AAAA-MM. */
+export const chaveDe = (periodo, iso) => periodo === "semana" ? segunda(iso) : periodo === "mes" ? iso.slice(0, 7) : iso;
+
+/* Agrupa o índice (do mais novo ao mais antigo) por período; `dias` guarda os dias do grupo na mesma ordem. */
+export function agruparPeriodos(indice, periodo) {
+  const grupos = new Map();
+  for (const x of indice) {
+    const chave = chaveDe(periodo, x.data);
+    if (!grupos.has(chave)) grupos.set(chave, { chave, dias: [], total: 0 });
+    const g = grupos.get(chave);
+    g.dias.push(x.data);
+    g.total += x.total;
+  }
+  return [...grupos.values()];
+}
+
+function rotuloPeriodo(g, periodo) {
+  if (periodo === "semana") return `Semana de ${data(g.chave)} a ${data(somarDias(g.chave, 6))}`;
+  if (periodo === "mes") return new Date(g.chave + "-15T12:00:00Z").toLocaleDateString("pt-BR", { month: "long", year: "numeric", timeZone: "UTC" });
+  return data(g.chave);
+}
+
+const chaveLocal = (c) => `${c === "BR" ? 0 : 1}${c.startsWith("MUN") ? 1 : 0}${c}`;   // mesma ordem de historico.ordem_local
+
+/* Junta os arquivos diários (do mais novo ao mais antigo) no formato de um dia. Cada evento ganha `_dia`; os de dias diferentes não são deduplicados. */
+export function juntarDias(dias, chave) {
+  const locais = {}, contagem = {}, cobertura = {};
+  const eventos = [];
+  for (const d of dias) {
+    for (const [c, nome] of Object.entries(d.locais)) locais[c] ??= nome;
+    for (const [c, porTipo] of Object.entries(d.contagem)) for (const [k, n] of Object.entries(porTipo)) {
+      contagem[c] ??= {};
+      contagem[c][k] = (contagem[c][k] || 0) + n;
+    }
+    for (const [c, x] of Object.entries(d.cobertura || {})) {   // status do dia mais novo; só conta como "sem novidade" quem não teve item em nenhum dia
+      if (cobertura[c]) cobertura[c].itens += x.itens || 0;
+      else cobertura[c] = { ...x, itens: x.itens || 0 };
+    }
+    for (const e of d.eventos) eventos.push({ ...e, _dia: d.data });
+  }
+  const ordem = Object.keys(locais).sort((a, b) => (chaveLocal(a) < chaveLocal(b) ? -1 : 1));
+  eventos.sort((a, b) => (chaveLocal(a.local) < chaveLocal(b.local) ? -1 : chaveLocal(a.local) > chaveLocal(b.local) ? 1 : 0));
+  return {
+    data: chave, de: dias[dias.length - 1].data, ate: dias[0].data, eventos, cobertura,
+    locais: Object.fromEntries(ordem.map((c) => [c, locais[c]])),
+    contagem: Object.fromEntries(ordem.map((c) => [c, contagem[c] || {}])),
+  };
+}
+
+/* Locais acompanhados no dia (ou no período) que não tiveram item: distingue "nada aconteceu" de "não foi acompanhado" e mostra coleta parada. */
+function coberturaSemNovidade(dia, codigos, local, mostrar, unidade = "dia") {
   if (!dia.cobertura || !mostrar) return "";
   const lista = Object.entries(dia.cobertura).filter(([c, x]) => !x.itens && (local && local !== "__avisos" ? c === local : noEscopo({ local: c, uf: c.startsWith("UF:") ? c.slice(3) : null, politicos: [] }, codigos)));
   if (!lista.length) return "";
@@ -43,7 +98,7 @@ function coberturaSemNovidade(dia, codigos, local, mostrar) {
   const grupos = [
     ["irrelevante", "Dados mudaram, mas nada relevante para o histórico", (x) => x.mudancas && x.mudancas.length ? `atualizou ${x.mudancas.join(", ")}` : "os arquivos foram atualizados, sem item para o histórico (detalhe não registrado neste dia)"],
     ["parado", "Sem dados novos", (x) => x.ultimaMudanca ? `sem alteração desde ${data(x.ultimaMudanca)}` : "sem alteração nos dados"],
-    ["falha", "Coleta falhou ou não rodou neste dia", (x) => x.ultimaColeta ? `última coleta gravada em ${data(x.ultimaColeta)}` : "nenhum dado gravado neste dia"],
+    ["falha", `Coleta falhou ou não rodou neste ${unidade}`, (x) => x.ultimaColeta ? `última coleta gravada em ${data(x.ultimaColeta)}` : `nenhum dado gravado neste ${unidade}`],
     ["sem_cobertura", "Sem cobertura (ainda não coletamos este local)", () => "sem fonte conectada"],
   ];
   const bloco = ([chave, titulo, motivo]) => {
@@ -56,7 +111,7 @@ function coberturaSemNovidade(dia, codigos, local, mostrar) {
 function itemHistorico(e) {
   const mudanca = e.mudanca ? `<p class="hist-mudanca"><span>${esc(e.mudanca[0])}</span> → <b>${esc(e.mudanca[1])}</b></p>` : "";
   return `<li class="hist-item r-${e.relevancia || 2}">
-    <div class="hist-cab"><span class="hist-tag k-${esc(e.categoria)}">${esc(CATEGORIAS_HIST[e.categoria] || e.categoria)}</span> <b>${esc(e.titulo)}</b>${e.dataDoAto ? ` <span class="quando">${esc(data(e.dataDoAto))}</span>` : ""}</div>
+    <div class="hist-cab"><span class="hist-tag k-${esc(e.categoria)}">${esc(CATEGORIAS_HIST[e.categoria] || e.categoria)}</span> <b>${esc(e.titulo)}</b>${e.dataDoAto ? ` <span class="quando">${esc(data(e.dataDoAto))}</span>` : ""}${e._dia ? ` <span class="quando">registrado em ${esc(data(e._dia))}</span>` : ""}</div>
     ${e.texto ? `<p class="texto">${esc(e.texto)}</p>` : ""}${mudanca}${e.resumo ? `<p class="hist-resumo">${esc(e.resumo)}</p>` : ""}${e.titulos ? `<details class="hist-lista"><summary>Ver os ${e.titulos.length} títulos</summary><p>${e.titulos.map(esc).join(" · ")}</p></details>` : ""}
     ${fontes(e.fontes || [])}</li>`;
 }
@@ -68,12 +123,20 @@ export async function paginaHistorico() {
   if (!indice.length) { alvo.innerHTML = `<p class="vazio">O histórico começa no próximo dia com novidades nos dados.</p>`; return; }
   const q = new URLSearchParams(location.search);
   let codigos = (q.get("locais") || "").split(",").filter(Boolean);
-  const dias = indice.map((x) => x.data);
-  const diaInicial = dias.includes(q.get("dia")) ? q.get("dia") : dias[0];
+  let periodo = PERIODOS[q.get("periodo")] ? q.get("periodo") : "dia";
+  let grupos = agruparPeriodos(indice, periodo);
+  const diaPedido = /^\d{4}-\d{2}-\d{2}/.test(q.get("dia") || "") ? chaveDe(periodo, q.get("dia").slice(0, 10)) : /^\d{4}-\d{2}$/.test(q.get("dia") || "") ? q.get("dia") : "";
+  const diaInicial = grupos.some((g) => g.chave === diaPedido) ? diaPedido : grupos[0].chave;
+  const listarPeriodos = (escolhido) => {
+    grupos = agruparPeriodos(indice, periodo);
+    $("#h-dia").innerHTML = grupos.map((g) => `<option value="${esc(g.chave)}">${esc(rotuloPeriodo(g, periodo))} (${g.total})</option>`).join("");
+    $("#h-dia").value = escolhido;
+  };
 
   alvo.innerHTML = `
     <div class="filtros hist-filtros">
-      <label class="campo">Dia<select id="h-dia">${indice.map((x) => `<option value="${esc(x.data)}">${esc(data(x.data))} (${x.total})</option>`).join("")}</select></label>
+      <label class="campo">Ver por<select id="h-periodo">${Object.entries(PERIODOS).map(([k, v]) => `<option value="${k}">${v}</option>`).join("")}</select></label>
+      <label class="campo">Quando<select id="h-dia"></select></label>
       <label class="campo">Local<select id="h-local"></select></label>
       <label class="campo">Tipo<select id="h-tipo"><option value="">Todos</option>${Object.entries(CATEGORIAS_HIST).map(([k, v]) => `<option value="${k}">${esc(v)}</option>`).join("")}</select></label>
       <label class="campo">Importância<select id="h-imp">${Object.entries(IMPORTANCIA_HIST).map(([k, v]) => `<option value="${k}">${esc(v)}</option>`).join("")}</select></label>
@@ -81,14 +144,19 @@ export async function paginaHistorico() {
     </div>
     <p class="contagem" id="h-contagem" aria-live="polite"></p>
     <div id="h-lista"></div>`;
-  $("#h-dia").value = diaInicial;
+  $("#h-periodo").value = periodo;
+  listarPeriodos(diaInicial);
   $("#h-tipo").value = q.get("tipo") || "";
-  $("#h-imp").value = q.get("imp") || "";
+  $("#h-imp").value = q.has("imp") ? q.get("imp") : periodo === "dia" ? "" : "2";   // semana e mês começam em "Projetos e marcos"
 
   let dia = null;
   async function abrirDia() {
     $("#h-lista").innerHTML = `<p class="vazio">Carregando…</p>`;
-    try { dia = await carregar(`dados/historico/${$("#h-dia").value}.json`); } catch (e) { return erro($("#h-lista"), e); }
+    const g = grupos.find((x) => x.chave === $("#h-dia").value);
+    try {
+      dia = periodo === "dia" ? await carregar(`dados/historico/${g.chave}.json`)
+        : juntarDias(await Promise.all(g.dias.map((d) => carregar(`dados/historico/${d}.json`))), g.chave);
+    } catch (e) { return erro($("#h-lista"), e); }
     const opcoes = [`<option value="">Todos os locais</option>`];
     const unico = codigos.length === 1 && dia.locais[codigos[0]];
     if (codigos.length && !unico) opcoes.push(`<option value="__avisos">Seus avisos (${codigos.length})</option>`);
@@ -104,16 +172,19 @@ export async function paginaHistorico() {
       && (!busca || semAcento([e.titulo, e.texto, e.resumo, ...(e.politicos || []).map((p) => p.nome)].join(" ")).includes(busca)));
     const novo = new URLSearchParams();
     novo.set("dia", dia.data);
+    if (periodo !== "dia") novo.set("periodo", periodo);
     if (codigos.length) novo.set("locais", codigos.join(","));
     if (tipo) novo.set("tipo", tipo);
-    if (imp) novo.set("imp", imp);
+    if (imp || periodo !== "dia") novo.set("imp", $("#h-imp").value);
     if (busca) novo.set("busca", $("#h-busca").value.trim());
     history.replaceState(null, "", "?" + novo);
 
     const locais = [...new Set(filtrados.map((e) => e.local))];
-    $("#h-contagem").textContent = `${somar(filtrados)} de ${somar(dia.eventos)} mudanças em ${data(dia.data, true)}, em ${locais.length} ${locais.length === 1 ? "local" : "locais"}.`;
-    const semNovidade = coberturaSemNovidade(dia, codigos, $("#h-local").value, tipo || busca || imp ? 0 : 1);
-    if (!filtrados.length) { $("#h-lista").innerHTML = `<p class="vazio">Nada com esses filtros neste dia. Tente outro dia ou limpe os filtros.</p>${semNovidade}`; return; }
+    const quando = periodo === "dia" ? `em ${data(dia.data, true)}` : `de ${data(dia.de, true)} a ${data(dia.ate, true)}`;
+    const unidade = periodo === "dia" ? "dia" : "período";
+    $("#h-contagem").textContent = `${somar(filtrados)} de ${somar(dia.eventos)} mudanças ${quando}, em ${locais.length} ${locais.length === 1 ? "local" : "locais"}.`;
+    const semNovidade = coberturaSemNovidade(dia, codigos, $("#h-local").value, tipo || busca || imp ? 0 : 1, unidade);
+    if (!filtrados.length) { $("#h-lista").innerHTML = `<p class="vazio">Nada com esses filtros neste ${unidade}. Tente outro ${unidade} ou limpe os filtros.</p>${semNovidade}`; return; }
     const abrir = filtrados.length <= 60;
     $("#h-lista").innerHTML = locais.map((l) => {
       const doLocal = filtrados.filter((e) => e.local === l);
@@ -134,6 +205,13 @@ export async function paginaHistorico() {
     }).join("") + semNovidade;
   }
 
+  $("#h-periodo").addEventListener("change", () => {
+    const recente = grupos.find((g) => g.chave === $("#h-dia").value).dias[0];
+    periodo = $("#h-periodo").value;
+    $("#h-imp").value = periodo === "dia" ? "" : "2";
+    listarPeriodos(chaveDe(periodo, recente));
+    abrirDia();
+  });
   $("#h-dia").addEventListener("change", abrirDia);
   $("#h-local").addEventListener("change", () => { codigos = $("#h-local").value === "__avisos" ? codigos : $("#h-local").value ? [$("#h-local").value] : []; desenhar(); });
   $("#h-tipo").addEventListener("change", desenhar);

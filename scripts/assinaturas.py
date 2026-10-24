@@ -170,17 +170,17 @@ def main() -> None:
         for ass in ativos:
             freq = ass["freq"]
             if freq == "diario":
-                tit, dados, dias = titulo, completo, 1
+                tit, dados, inicio, periodo = titulo, completo, data, "dia"
             else:
                 if freq not in periodos:
                     j = janela(freq, data)
-                    periodos[freq] = j and (j[1], r.coletar(commit_antes_de(j[0], a.depois), a.depois), (date.fromisoformat(data) - date.fromisoformat(j[0])).days)
+                    periodos[freq] = j and (j[1], r.coletar(commit_antes_de(j[0], a.depois), a.depois), j[0], "semana" if freq == "semanal" else "mes")
                 if not periodos[freq]:
                     continue
-                tit, dados, dias = periodos[freq]
+                tit, dados, inicio, periodo = periodos[freq]
             parte = feeds.selecionar(dados, ass["regras"], deps_uf)
             if not feeds.vazio(parte):
-                h, t = r.montar(parte, tit, rodape(ass), detalhes=r.link_historico(data, ass["regras"]), dias=dias)
+                h, t = r.montar(parte, tit, rodape(ass), detalhes=r.link_historico(inicio, ass["regras"], periodo), periodo=periodo)
                 envios.append((ass, tit, h, t, {"List-Unsubscribe": f"<{link('cancelar', ass['token'])}>"}))
     for ass in pendentes:
         h, t = confirmacao(ass)

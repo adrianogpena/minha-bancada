@@ -424,6 +424,13 @@ def gerar_eleitorado() -> None:
                 break
 
 
+def copiar_status_apis():
+    """Resultado do último teste dos endpoints (scripts/testar_endpoints.py), para a página Sobre os dados."""
+    status = ler(BRUTO / "status_apis.json")
+    if status:
+        salvar(SAIDA / "status_apis.json", status)
+
+
 def main():
     ids = ler(BRUTO / "deputados.json", [])
     if not ids:
@@ -584,6 +591,7 @@ def main():
     if (BRUTO / "executivo.json").exists():
         shutil.copy(BRUTO / "executivo.json", SAIDA / "executivo.json")
     shutil.copy(BRUTO / "municipios_ibge.json", SAIDA / "municipios_ibge.json")
+    copiar_status_apis()
     if (BRUTO / "historico").is_dir():   # histórico diário (scripts/historico.py): fica no git e a página historico.html lê daqui
         shutil.copytree(BRUTO / "historico", SAIDA / "historico")
     meta = ler(BRUTO / "meta.json", {}) or {}

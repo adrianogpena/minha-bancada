@@ -172,6 +172,10 @@ input:focus, select:focus { border-color: var(--marca); outline: none; box-shado
 .aviso { background: var(--marca-clara); border-radius: var(--raio); padding: 12px 14px; font-size: 15px; }
 .vazio { color: var(--tinta-suave); padding: 16px 0; }
 .texto-longo { max-width: 68ch; }
+.texto-longo:has(#status-apis) { max-width: 100%; }
+.estado-api { font-weight: 700; }
+.estado-api.ok { color: var(--marca); }
+.estado-api.erro { color: var(--nao); }
 .texto-longo li { margin-bottom: 6px; }
 
 .rodape { margin-top: 64px; border-top: 1px solid var(--linha); padding: 22px 0 40px; font-size: 14px; color: var(--tinta-suave); }

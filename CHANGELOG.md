@@ -5,6 +5,10 @@ Regra: toda fonte nova ou mudança de coleta ganha uma entrada aqui, no mesmo co
 Datas dos conjuntos que já existiam vêm do primeiro commit que os trouxe (`git log --diff-filter=A`).
 Todas as coletas rodam sozinhas no GitHub Actions (`.github/workflows/atualizar.yml`, todo dia às 05:00 de Brasília), salvo onde indicado.
 
+## Status das APIs na página Sobre os dados (2026-10-24)
+- **De onde:** as URLs de teste de `ENDPOINTS.md` (nenhuma fonte nova).
+- **Como:** o job `publicar` roda `python scripts/testar_endpoints.py --sem-tabela` todo dia antes do `gerar.py`; o resultado (status, data e hora do checkup, último funcionamento, primeira verificação) fica em `dados/status_apis.json`, commitado pelo Actions, e `gerar.py` copia para `site/dados/status_apis.json`. `sobre.html` lista cada API, destaca as que nunca funcionaram desde a primeira verificação e as fora do ar.
+
 ## Vida do projeto: tramitações e proposições relacionadas (2026-10-24)
 - **De onde:** API da Câmara, `https://dadosabertos.camara.leg.br/api/v2/proposicoes/<id>/tramitacoes` (já usado só no Executivo) e `/relacionadas` (`camara_tramitacoes`, `camara_relacionadas` em `ENDPOINTS.md`).
 - **Como:** `coletar_tramitacoes_proposicoes` (`coletar.py`) guarda em `dados/proposicoes_tramitacoes.json` os eventos (data, órgão, tramitação, situação, despacho até 250 caracteres), o último relator designado (lido do despacho) e as relacionadas (id e rótulo). Cada execução consulta no máximo `TRAMITACOES_POR_EXECUCAO` (3000): primeiro os novos, depois os que ainda tramitam, relidos após 7 dias; projeto finalizado não é relido. `gerar.py` grava `site/dados/tramitacao/<id>.json`, e a página da proposição da Câmara mostra "Vida do projeto".

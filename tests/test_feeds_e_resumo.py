@@ -52,10 +52,10 @@ def test_linhas_senado_executivo_e_votacoes():
                 votacoes=["SP", "RJ"], tse=["dados/tse/2026/SP.json"])
     titulos = [t for t, _ in r.linhas(d)]
     assert "Senado — 3 matérias novas" in titulos
-    assert "Executivo — 1 novos, 1 com nova situação" in titulos
+    assert "Executivo — 1 novo, 1 com nova situação" in titulos
     assert "Votações estaduais atualizadas" in titulos
-    assert "TSE — 1 arquivos recoletados" in titulos
-    exec_itens = dict(r.linhas(d))["Executivo — 1 novos, 1 com nova situação"]
+    assert "TSE — 1 arquivo recoletado" in titulos
+    exec_itens = dict(r.linhas(d))["Executivo — 1 novo, 1 com nova situação"]
     assert "PL 2/2025: Aguardando → Sancionada" in exec_itens
 
 

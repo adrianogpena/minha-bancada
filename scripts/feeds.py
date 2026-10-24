@@ -144,7 +144,7 @@ def main() -> None:
             if vazio(parte):
                 continue
             h, _ = r.montar(parte, f"{nomes[codigo]}, {data[8:]}/{data[5:7]}/{data[:4]}", detalhes=r.link_historico(data, [codigo]))
-            itens[codigo].append(item(f"{nomes[codigo]} em {data[8:]}/{data[5:7]}/{data[:4]}", data, codigo, h))
+            itens[codigo].append(item(f"{data[8:]}/{data[5:7]}/{data[:4]} — {r.resumo_curto(parte)}", data, codigo, h))
     SAIDA.mkdir(parents=True, exist_ok=True)
     for antigo in SAIDA.glob("*.xml"):
         antigo.unlink()

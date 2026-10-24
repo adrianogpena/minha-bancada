@@ -37,6 +37,15 @@ def link_historico(data: str, locais=None) -> str:
     return f"{SITE}historico.html?dia={data}" + (f"&locais={quote(','.join(sorted(locais)), safe=',:')}" if locais else "")
 
 
+def cont(n: int, um: str, varios: str) -> str:
+    """"1 novo", "3 novos"; vazio quando n é 0, para não listar zeros nos títulos."""
+    return f"{n} {um if n == 1 else varios}" if n else ""
+
+
+def juntar(*partes: str) -> str:
+    return ", ".join(p for p in partes if p)
+
+
 def git(*args: str) -> str:
     return subprocess.check_output([GIT, *args], cwd=RAIZ, text=True)
 
@@ -141,14 +150,14 @@ def linhas(d: dict) -> list[tuple[str, list[str]]]:
         resto = ", ".join(f"{n} {t}" for t, n in tipos.most_common() if t not in TIPOS_DESTAQUE)
         if resto:
             itens.append(f"Outros: {resto}")
-        s.append((f"Câmara dos Deputados — {len(cam)} proposições novas", itens))
+        s.append((f"Câmara dos Deputados — {cont(len(cam), 'proposição nova', 'proposições novas')}", itens))
     ntot = d["senado"][1] - d["senado"][0]
     if ntot:
-        s.append((f"Senado — {ntot} matérias novas", []))
+        s.append((f"Senado — {cont(ntot, 'matéria nova', 'matérias novas')}", []))
     if d["executivo"] or d["executivo_situacao"]:
         itens = [f"{i['tipo']} {i['numero']}/{i['ano']} — {cortar(i.get('ementa'))}" for i in d["executivo"]]
         itens += [f"{i['tipo']} {i['numero']}/{i['ano']}: {a or '—'} → {i.get('situacao') or '—'}" for i, a in d["executivo_situacao"]]
-        s.append((f"Executivo — {len(d['executivo'])} novos, {len(d['executivo_situacao'])} com nova situação", itens))
+        s.append((f"Executivo — {juntar(cont(len(d['executivo']), 'novo', 'novos'), cont(len(d['executivo_situacao']), 'com nova situação', 'com nova situação'))}", itens))
     for chave, titulo in (("estaduais", "Assembleia"), ("governo", "Governo do estado, projetos enviados à Assembleia"), ("municipais", "Câmara da capital")):
         novas, mudou = d[chave]
         for uf in sorted(set(novas) | set(mudou)):
@@ -156,12 +165,20 @@ def linhas(d: dict) -> list[tuple[str, list[str]]]:
             if len(novas[uf]) > LIMITE:
                 itens.append(f"…e mais {len(novas[uf]) - LIMITE}")
             itens += [f"{m.get('tipo', '')} {m.get('numero', '')}/{m.get('ano', '')}: {a or '—'} → {m.get('situacao') or '—'}" for m, a in mudou[uf][:LIMITE]]
-            s.append((f"{titulo} {uf} — {len(novas[uf])} novas, {len(mudou[uf])} com nova situação", itens))
+            s.append((f"{titulo} {uf} — {juntar(cont(len(novas[uf]), 'nova', 'novas'), cont(len(mudou[uf]), 'com nova situação', 'com nova situação'))}", itens))
     if d["votacoes"]:
         s.append(("Votações estaduais atualizadas", [", ".join(d["votacoes"])]))
     if d["tse"]:
-        s.append((f"TSE — {len(d['tse'])} arquivos recoletados", ["Sem eleitos novos; só atualização de redes sociais e bens."]))
+        s.append((f"TSE — {cont(len(d['tse']), 'arquivo recoletado', 'arquivos recoletados')}", ["Sem eleitos novos; só atualização de redes sociais e bens."]))
     return s
+
+
+def resumo_curto(d: dict, limite: int = 3) -> str:
+    """O que mudou em uma linha, para título de item de feed e assunto de e-mail: "Câmara dos Deputados: 4 proposições novas · Senado: 1 matéria nova"."""
+    titulos = [a.replace(" — ", ": ") for a, _ in linhas(d)]
+    if len(titulos) > limite:
+        titulos = titulos[:limite] + [f"e mais {len(titulos) - limite}"]
+    return " · ".join(titulos)
 
 
 def montar(d: dict, titulo: str, rodape: tuple[str, str] = ("", ""), detalhes: str | None = None) -> tuple[str, str]:
@@ -216,14 +233,15 @@ def main() -> None:
     a = p.parse_args()
     data = git("log", "-1", "--format=%cs", a.depois).strip()
     titulo = f"Minha Bancada — o que mudou em {data[8:]}/{data[5:7]}/{data[:4]}"
-    h, t = montar(coletar(a.antes, a.depois), titulo, detalhes=link_historico(data))
+    d = coletar(a.antes, a.depois)
+    h, t = montar(d, titulo, detalhes=link_historico(data))
     saida = Path(a.saida)
     saida.mkdir(parents=True, exist_ok=True)
     (saida / "resumo.html").write_text(f"<!doctype html><meta charset=utf-8><title>{titulo}</title>{h}", encoding="utf-8")
     (saida / "resumo.txt").write_text(t, encoding="utf-8")
     print(t)
     if a.enviar:
-        enviar(titulo, h, t)
+        enviar(f"{titulo}: {resumo_curto(d)}" if linhas(d) else titulo, h, t)
 
 
 if __name__ == "__main__":

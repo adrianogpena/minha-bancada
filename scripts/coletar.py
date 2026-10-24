@@ -37,7 +37,7 @@ DADOS = RAIZ / "dados"
 INICIO_LEGISLATURA = "2023-02-01"  # 57ª legislatura
 LEGISLATURA = 57
 ARQUIVOS_CAMARA = "https://dadosabertos.camara.leg.br/arquivos"
-BLOCOS_COMPLEMENTO = ("profissoes", "mandatosExternos", "historico", "discursos")
+BLOCOS_COMPLEMENTO = ("profissoes", "ocupacoes", "mandatosExternos", "historico", "discursos")
 DISCURSOS_RECENTES = 5  # os discursos mais recentes do mandato atual que a ficha mostra
 TRABALHADORES_SENADO = 2  # o Senado responde 503 quando apertado
 TRABALHADORES = int(os.environ.get("CAMARA_TRABALHADORES", "10"))  # requisições em paralelo; seja gentil com a API pública (429 e 5xx são repetidos com espera)
@@ -200,7 +200,7 @@ def _dia(texto: str | None) -> str | None:
 
 
 def coletar_complementos(dep: dict, anterior: dict, hoje: dt.date) -> dict:
-    """Profissões, mandatos fora da Câmara, histórico de partido/situação na legislatura e últimos discursos.
+    """Profissões, ocupações anteriores, mandatos fora da Câmara, histórico de partido/situação na legislatura e últimos discursos.
     Cada bloco falha sozinho (mantém o que já havia). Só relê quando o anterior tem mais de 1 + id % 7 dias
     (cada deputado em um dia, para espalhar as chamadas); `complementosEm` guarda a data da última leitura."""
     did = dep["id"]
@@ -211,6 +211,11 @@ def coletar_complementos(dep: dict, anterior: dict, hoje: dt.date) -> dict:
     def profissoes():
         return [{"titulo": x["titulo"].strip(), "desde": _dia(x.get("dataHora"))}
                 for x in get(f"/deputados/{did}/profissoes").get("dados", []) if (x.get("titulo") or "").strip()]
+
+    def ocupacoes():
+        return [{"titulo": x["titulo"].strip(), "entidade": (x.get("entidade") or "").strip() or None,
+                 "uf": x.get("entidadeUF") or None, "inicio": x.get("anoInicio"), "fim": x.get("anoFim")}
+                for x in get(f"/deputados/{did}/ocupacoes").get("dados", []) if (x.get("titulo") or "").strip()]
 
     def mandatos_externos():
         return [{"cargo": x.get("cargo"), "uf": x.get("siglaUf"), "municipio": x.get("municipio") or None,
@@ -233,7 +238,7 @@ def coletar_complementos(dep: dict, anterior: dict, hoje: dt.date) -> dict:
                 for x in r.get("dados", [])]
 
     saida, falhou = {}, 0
-    for nome, f in zip(BLOCOS_COMPLEMENTO, (profissoes, mandatos_externos, historico, discursos)):
+    for nome, f in zip(BLOCOS_COMPLEMENTO, (profissoes, ocupacoes, mandatos_externos, historico, discursos)):
         try:
             saida[nome] = f()
         except Exception as e:  # complemento da ficha: sem ele o perfil só não mostra o bloco

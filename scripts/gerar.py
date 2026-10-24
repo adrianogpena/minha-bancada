@@ -50,24 +50,40 @@ def juntar_detalhe(p: dict, det: dict | None) -> dict:
 MAX_COAUTORES = 15
 
 
-def juntar_autoria(p: dict, aut: dict | None, did: str, partidos: dict | None = None) -> dict:
+def partido_em(historico: list | None, dia: str | None) -> str | None:
+    """Partido do deputado em `dia` (AAAA-MM-DD) pelo histórico da legislatura: o último registro até o dia.
+    None quando não há histórico, o dia ou registro com partido até essa data (quem chama usa o partido atual)."""
+    if not historico or not dia:
+        return None
+    ate = [h for h in historico if h.get("partido") and h.get("data") and h["data"] <= dia[:10]]
+    return max(ate, key=lambda h: h["data"])["partido"] if ate else None
+
+
+def juntar_autoria(p: dict, aut: dict | None, did: str, partidos: dict | None = None,
+                   historicos: dict | None = None) -> dict:
     """Acrescenta, quando a autoria do projeto já foi coletada: `principal` (o deputado foi o primeiro
     a assinar), `coautores` (outros autores, com o partido entre parênteses quando é deputado em exercício;
     até MAX_COAUTORES), `totalAutores` (total de autores), `partidosDistintos` (partidos distintos entre os autores que são
     deputados em exercício, quando há mais de um) e `iniciativa` (tipo do autor principal, quando não é
-    deputado: Poder Executivo, Senado, comissão...)."""
+    deputado: Poder Executivo, Senado, comissão...). O partido de cada autor é o da data de apresentação do projeto
+    (`historicos`: id -> histórico da legislatura); sem histórico ou data, o atual (`partidos`)."""
     if not aut or not aut.get("autores"):
         return p
     partidos = partidos or {}
+    historicos = historicos or {}
+
+    def sigla_de(i) -> str | None:
+        return partido_em(historicos.get(str(i)), p.get("dataApresentacao")) or partidos.get(str(i))
+
     outros = []
     for i, nome, *_ in aut["autores"]:
         if str(i) == did:
             continue
-        sigla = partidos.get(str(i))
+        sigla = sigla_de(i)
         outros.append(f"{nome} ({sigla})" if sigla else nome)
     if len(outros) > MAX_COAUTORES:
         outros = outros[:MAX_COAUTORES] + [f"e mais {len(outros) - MAX_COAUTORES}"]
-    siglas = {partidos[str(i)] for i, *_ in aut["autores"] if str(i) in partidos}
+    siglas = {s for i, *_ in aut["autores"] if (s := sigla_de(i))}
     primeiro = aut["autores"][0]
     extra = {"principal": str(aut.get("idPrincipal")) == did}
     if outros:
@@ -437,6 +453,7 @@ def main():
     blocos_lista = ler(BRUTO / "blocos.json", []) or []
     blocos = {b: partidos_do_bloco(b, blocos_lista) for b in {b for o in orientacoes.values() for b in o if b.startswith("Bl ")}}
     partidos = {str(i): d["partido"] for i, d in deputados.items() if d.get("partido")}
+    historicos = {str(i): d["historico"] for i, d in deputados.items() if d.get("historico")}
 
     if SAIDA.exists():
         shutil.rmtree(SAIDA)
@@ -496,7 +513,7 @@ def main():
         total_gasto = totais_gasto[did]
         votos = votos_por_dep.get(did, [])
         votou = sum(1 for x in votos if x["voto"] in ("sim", "nao", "abstencao", "art17"))
-        proposicoes = [juntar_autoria(juntar_detalhe(p, detalhes.get(str(p["id"]))), autorias.get(str(p["id"])), str(did), partidos)
+        proposicoes = [juntar_autoria(juntar_detalhe(p, detalhes.get(str(p["id"]))), autorias.get(str(p["id"])), str(did), partidos, historicos)
                        for p in d["proposicoes"]]
         for p in proposicoes:
             if p.get("tipo") in TIPOS_PROJETO and temas.get(str(p["id"])):
@@ -517,7 +534,7 @@ def main():
             "proposicoes": proposicoes, "autoria": autoria,
             "temas": resumir_temas(proposicoes), "orgaos": ordenar_orgaos(orgaos.get(str(did), [])),
             "frentes": sorted(d["frentes"], key=lambda f: f["titulo"]) if d.get("frentes") is not None else None,
-            **{k: d[k] for k in ("profissoes", "mandatosExternos", "historico", "discursos") if k in d},
+            **{k: d[k] for k in ("profissoes", "ocupacoes", "mandatosExternos", "historico", "discursos") if k in d},
             "votos": votos, "comportamento": comportamento, "presenca": presenca_do_deputado(did, presenca, medianas),
             "totalVotacoes": total_nominais, "eleicao": eleicoes_deps.get(did), "condicao": d.get("condicaoEleitoral"),
             "despesas": {

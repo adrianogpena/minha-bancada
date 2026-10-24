@@ -63,7 +63,9 @@ Fidelidade ao partido e governismo pelas orientações de bancada (também para 
 
 ## Nível 3: uma chamada por deputado ou projeto, ou visualização nova
 
-### 3.1 Carreira e histórico partidário
+### 3.1 Carreira e histórico partidário: feito (2026-10-24)
+
+Profissões, mandatos externos e histórico já existiam; entraram as ocupações e o partido do coautor na data de apresentação (registrado no `CHANGELOG.md`). Falta o partido de ex-deputados, que não são coletados. Plano original:
 
 Um passo no coletor de deputados, com chamadas por deputado (513 × 4).
 

@@ -5,6 +5,10 @@ Regra: toda fonte nova ou mudança de coleta ganha uma entrada aqui, no mesmo co
 Datas dos conjuntos que já existiam vêm do primeiro commit que os trouxe (`git log --diff-filter=A`).
 Todas as coletas rodam sozinhas no GitHub Actions (`.github/workflows/atualizar.yml`, todo dia às 05:00 de Brasília), salvo onde indicado.
 
+## Carreira do deputado: ocupações anteriores e partido do coautor na data (2026-10-24)
+- **De onde:** API da Câmara, `https://dadosabertos.camara.leg.br/api/v2/deputados/<id>/ocupacoes` (`camara_ocupacoes` em `ENDPOINTS.md`); o `/historico` já era coletado.
+- **Como:** `coletar.py` guarda `ocupacoes` (título, entidade, UF, anos) no bloco de complementos de cada deputado (mesma releitura escalonada por `id % 7`); o perfil mostra "Ocupações anteriores". `gerar.py` passa a dar ao coautor o partido da data de apresentação do projeto, pelo `historico` da legislatura 57, e cai no partido atual sem histórico ou data. Ex-deputados seguem sem sigla (só deputados em exercício são coletados).
+
 ## Assembleias BA, CE e MS: pagamentos das emendas e lançamentos da verba no site (2026-10-24)
 - **De onde:** BA: Dados Abertos Bahia (CKAN, `https://dados.ba.gov.br/dataset/emendas-parlamentares`), CSV `VW_PAINEL_EMENDAS_PARLAMENTARES_PAGAMENTOS.csv` do mesmo ZIP das emendas (host já em `ENDPOINTS.md`). CE e MS: nenhuma fonte nova, campos que o coletor já guardava (`empenho`, `descricao`; `documento`, `emissao` e o comprovante).
 - **Como:** BA: `coletar_estadual_ba.py` lê o CSV de pagamentos do ZIP já baixado e grava `dados/estaduais/BA/pagamentos_<ano do pagamento>.json` só com pagamentos de 2026 em diante, de emendas dos deputados da lista; cada item guarda `numero` (o `num_codigo` da emenda, sem repetir deputado), `data` ISO, `credor` (só razão social: a fonte não traz CNPJ), `valor`, `objeto`, `empenho` e `efetivado`. `gerar_estaduais.py` junta pelo `numero` e põe `emendas.pagamentos` no JSON do deputado; CE e MS ganham `verba.anos[].lancamentos` (2026 em diante) com empenho, descrição, nº e emissão do documento e o link da fonte; `estadual.js` mostra as duas tabelas.

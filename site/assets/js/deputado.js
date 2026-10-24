@@ -59,17 +59,18 @@ export function painelGastos(desp, explicacao) {
 /* Profissões, mandatos fora da Câmara, histórico de partido e situação e últimos discursos (coletar.py: coletar_complementos). */
 function painelTrajetoria(dep) {
   const api = `${CAMARA_API}/deputados/${encodeURIComponent(dep.id)}`;
-  const { profissoes, mandatosExternos, historico, discursos } = dep;
-  if (!profissoes && !mandatosExternos && !historico && !discursos) return "";
+  const { profissoes, ocupacoes, mandatosExternos, historico, discursos } = dep;
+  if (!profissoes && !ocupacoes && !mandatosExternos && !historico && !discursos) return "";
   const periodo = (a, b) => (a && b ? `${esc(a)} a ${esc(b)}` : a ? `desde ${esc(a)}` : b ? `até ${esc(b)}` : "");
   const mudancas = (historico || []).filter((h, i, l) => i === 0 || h.partido !== l[i - 1].partido || h.situacao !== l[i - 1].situacao || h.descricao);
   return `
     <h2>Trajetória</h2>
     ${profissoes?.length ? `<p><b>Profissão:</b> ${profissoes.map((x) => esc(x.titulo)).join(", ")}.</p>` : ""}
+    ${ocupacoes?.length ? `<h3>Ocupações anteriores</h3><ul class="lista-simples">${ocupacoes.map((o) => `<li>${esc(o.titulo)}${o.entidade ? ` · ${esc(o.entidade)}` : ""}${o.uf ? `/${esc(o.uf)}` : ""}${periodo(o.inicio, o.fim) ? `<br><span class="quando">${periodo(o.inicio, o.fim)}</span>` : ""}</li>`).join("")}</ul>` : ""}
     ${mandatosExternos?.length ? `<h3>Mandatos fora da Câmara</h3><ul class="lista-simples">${mandatosExternos.map((m) => `<li>${esc(m.cargo)}${m.municipio ? ` em ${esc(m.municipio)}` : ""}${m.uf ? `/${esc(m.uf)}` : ""}<br><span class="quando">${periodo(m.inicio, m.fim)}${m.partido ? `, pelo ${esc(m.partido)}` : ""}</span></li>`).join("")}</ul>` : ""}
     ${mudancas.length ? `<h3>Partido e situação nesta legislatura</h3><ul class="lista-simples">${mudancas.map((h) => `<li><span class="quando">${h.data ? data(h.data) : ""}</span> ${esc([h.partido, h.situacao].filter(Boolean).join(" · "))}${h.descricao ? `<br><span class="quando">${esc(h.descricao)}</span>` : ""}</li>`).join("")}</ul>` : ""}
     ${discursos?.length ? `<h3>Discursos mais recentes</h3><ul class="lista-simples">${discursos.map((d) => `<li><span class="quando">${d.data ? data(d.data) : ""}${d.tipo ? `, ${esc(d.tipo.toLowerCase())}` : ""}${d.fase ? ` (${esc(d.fase)})` : ""}</span>${d.sumario ? `<br>${esc(d.sumario)}` : ""}${urlSegura(d.link) ? `<br><a href="${esc(d.link)}" rel="noopener">Ver o discurso</a>` : ""}</li>`).join("")}</ul>` : ""}
-    ${fontes([["Profissões (API da Câmara)", `${api}/profissoes`], ["Mandatos externos (API da Câmara)", `${api}/mandatosExternos`], ["Histórico (API da Câmara)", `${api}/historico`], ["Discursos (API da Câmara)", `${api}/discursos`]])}`;
+    ${fontes([["Profissões (API da Câmara)", `${api}/profissoes`], ["Ocupações (API da Câmara)", `${api}/ocupacoes`], ["Mandatos externos (API da Câmara)", `${api}/mandatosExternos`], ["Histórico (API da Câmara)", `${api}/historico`], ["Discursos (API da Câmara)", `${api}/discursos`]])}`;
 }
 
 const ARQUIVOS_CAMARA = "https://dadosabertos.camara.leg.br/arquivos";

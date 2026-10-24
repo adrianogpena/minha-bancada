@@ -246,6 +246,12 @@ def _(ctx):
     return _primeiro_com_dados(ctx, "profissoes")
 
 
+@ep("camara_ocupacoes", f"{CAMARA}/deputados/{{id}}/ocupacoes",
+    campos("dados[]", "titulo", "entidade", "entidadeUF", "anoInicio", "anoFim"))
+def _(ctx):
+    return _primeiro_com_dados(ctx, "ocupacoes")
+
+
 @ep("camara_mandatos_externos", f"{CAMARA}/deputados/{{id}}/mandatosExternos",
     campos("dados[]", "cargo", "siglaUf", "municipio", "anoInicio", "anoFim", "siglaPartidoEleicao"))
 def _(ctx):

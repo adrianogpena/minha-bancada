@@ -606,6 +606,9 @@ ROTAS_COMPLEMENTOS = {
     "/deputados/7": DETALHE_DEP, "/deputados/7/despesas": {"dados": []}, "/deputados/7/frentes": {"dados": []},
     "/deputados/7/profissoes": {"dados": [{"dataHora": "2019-02-06T18:58", "codTipoProfissao": 1, "titulo": " Empresário "},
                                           {"dataHora": None, "codTipoProfissao": None, "titulo": None}]},
+    "/deputados/7/ocupacoes": {"dados": [{"titulo": " Diretor ", "entidade": "Cooperativa X", "entidadeUF": "AP", "entidadePais": "Brasil",
+                                          "anoInicio": 2005, "anoFim": None},
+                                         {"titulo": None, "entidade": "Sem título"}]},
     "/deputados/7/mandatosExternos": {"dados": [{"cargo": "Vereador(a)", "siglaUf": "AP", "municipio": "Macapá", "anoInicio": "2009",
                                                  "anoFim": "2016", "siglaPartidoEleicao": "PMDB"}]},
     "/deputados/7/historico": {"dados": [
@@ -622,6 +625,7 @@ def test_coletar_deputado_grava_complementos_da_ficha(dados, monkeypatch):
     chamadas = roteador(monkeypatch, ROTAS_COMPLEMENTOS)
     d = coletar.coletar_deputado({"id": 7, "nome": "F"}, 2025)
     assert d["profissoes"] == [{"titulo": "Empresário", "desde": "2019-02-06"}]
+    assert d["ocupacoes"] == [{"titulo": "Diretor", "entidade": "Cooperativa X", "uf": "AP", "inicio": 2005, "fim": None}]
     assert d["mandatosExternos"] == [{"cargo": "Vereador(a)", "uf": "AP", "municipio": "Macapá", "inicio": "2009", "fim": "2016", "partido": "PMDB"}]
     assert d["historico"] == [{"data": "2023-02-01", "partido": "ABC", "situacao": "Exercício", "condicao": "Titular", "descricao": "Posse"}]
     assert d["discursos"] == [{"data": "2026-09-02", "tipo": "PELA ORDEM", "fase": "Ordem do Dia", "sumario": "Orientou a bancada.", "link": "https://v/1"}]
@@ -637,7 +641,7 @@ def test_coletar_deputado_complementos_recentes_nao_consultam_de_novo(dados, mon
     chamadas = roteador(monkeypatch, ROTAS_COMPLEMENTOS)
     d = coletar.coletar_deputado({"id": 7, "nome": "F"}, 2025)
     assert d["profissoes"] == [{"titulo": "Médico", "desde": None}]
-    assert not any(c[0].endswith(("/profissoes", "/historico", "/discursos", "/mandatosExternos")) for c in chamadas)
+    assert not any(c[0].endswith(("/profissoes", "/ocupacoes", "/historico", "/discursos", "/mandatosExternos")) for c in chamadas)
 
 
 def test_coletar_deputado_complemento_que_falha_mantem_o_anterior(dados, monkeypatch):

@@ -4,7 +4,7 @@ import json
 import os
 
 import pytest
-from cryptography.hazmat.primitives import hashes
+from cryptography.hazmat.primitives import hashes, serialization
 from cryptography.hazmat.primitives.asymmetric import padding, rsa
 from cryptography.hazmat.primitives.ciphers.aead import AESGCM
 
@@ -138,3 +138,18 @@ def test_main_sem_segredos_nao_faz_nada(monkeypatch, capsys):
     monkeypatch.setattr("sys.argv", ["assinaturas.py"])
     a.main()
     assert "pulando" in capsys.readouterr().out
+
+
+def test_main_so_confirmacoes_manda_so_a_confirmacao_e_nao_le_o_git(monkeypatch, privada, tmp_path):
+    pem = privada.private_bytes(serialization.Encoding.PEM, serialization.PrivateFormat.PKCS8, serialization.NoEncryption()).decode()
+    linhas = [linha(privada, "novo@b.co", "1", "2026-10-24T10:00:00"), linha(privada, "ativo@b.co", "2", "2026-10-20T10:00:00", confirmado=True)]
+    arquivo = tmp_path / "linhas.json"
+    arquivo.write_text(json.dumps(linhas), encoding="utf-8")
+    monkeypatch.setenv("ASSINANTES_CHAVE_PRIVADA", pem)
+    monkeypatch.setenv("ASSINANTES_URL", "https://exemplo/exec")
+    monkeypatch.setattr(a.r, "git", lambda *x: pytest.fail("não deve ler o git"))
+    monkeypatch.setattr("sys.argv", ["assinaturas.py", "--arquivo", str(arquivo), "--saida", str(tmp_path / "saida"), "--so-confirmacoes"])
+    a.main()
+    enviados = list((tmp_path / "saida").glob("*.html"))
+    assert len(enviados) == 1
+    assert "novo@b.co" in enviados[0].read_text(encoding="utf-8")

@@ -60,7 +60,7 @@ export async function paginaInformado() {
           <p><button type="submit" class="botao" id="inf-enviar">Quero receber por e-mail</button></p>
           <p class="aviso-form" id="inf-msg" role="status" aria-live="polite"></p>
         </form>
-        <p class="dica-form">Você recebe um e-mail para confirmar (a confirmação sai junto com o próximo envio diário, até 24 horas) e todo aviso traz o link para cancelar.</p>
+        <p class="dica-form">Você recebe um e-mail para confirmar (a confirmação sai em até 15 minutos) e todo aviso traz o link para cancelar.</p>
       </fieldset>
     </div>`;
 
@@ -166,7 +166,7 @@ export async function paginaInformado() {
         /* text/plain evita o pedido de verificação do navegador; o Apps Script não responde com CORS, então a resposta é opaca */
         await fetch(URL_ASSINATURAS, { method: "POST", mode: "no-cors", headers: { "Content-Type": "text/plain;charset=utf-8" },
           body: JSON.stringify({ v: 1, h, k: b64(k), iv: b64(iv), c: b64(cifrado) }) });
-        msg.textContent = "Pedido enviado. Você receberá um e-mail de confirmação em até 24 horas; se não chegar, olhe o spam.";
+        msg.textContent = "Pedido enviado. Você receberá um e-mail de confirmação em até 15 minutos; se não chegar, olhe o spam.";
       } catch {
         msg.textContent = "Não foi possível enviar agora. Tente de novo em instantes.";
       }

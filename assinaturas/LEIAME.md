@@ -9,7 +9,7 @@ navegador  --cifra (AES-256-GCM + RSA-OAEP 4096)-->  Apps Script / planilha  --s
 - O navegador cifra `{e-mail, escolhas, token}` com a chave **pública** (`site/chave_publica.json`). O site e a planilha nunca veem o endereço.
 - A planilha acha cada linha pelo SHA-256 do token, que só existe no e-mail do assinante (confirmação e cancelamento).
 - A chave **privada** fica só como segredo do GitHub. `scripts/assinaturas.py` decifra na memória, envia e não imprime endereços no log.
-- Cadastro não confirmado some em 7 dias. A confirmação sai junto com o envio diário (até 24 horas).
+- Cadastro não confirmado some em 7 dias. A confirmação sai em até 15 minutos (`.github/workflows/confirmacoes.yml`); o aviso das mudanças sai no envio diário.
 
 ## Limite honesto
 

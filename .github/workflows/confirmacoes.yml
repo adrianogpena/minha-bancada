@@ -1,0 +1,72 @@
+name: Confirmações do Fique informado
+
+on:
+  schedule:
+    - cron: "*/15 * * * *"   # o GitHub pode atrasar alguns minutos
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: write   # apagar as execuções sem envio
+
+concurrency:
+  group: confirmacoes
+  cancel-in-progress: false
+
+jobs:
+  confirmar:
+    name: Mandar as confirmações pendentes
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    # a chave privada é segredo deste Environment (assinaturas/LEIAME.md)
+    environment: github-pages
+    env:
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          sparse-checkout: |
+            scripts
+            requirements.txt
+
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - run: pip install -r requirements.txt
+
+      - name: Mandar as confirmações pendentes
+        id: envio
+        env:
+          SMTP_HOST: ${{ secrets.SMTP_HOST }}
+          SMTP_PORT: ${{ secrets.SMTP_PORT }}
+          SMTP_USUARIO: ${{ secrets.SMTP_USUARIO }}
+          SMTP_SENHA: ${{ secrets.SMTP_SENHA }}
+          ASSINANTES_URL: ${{ secrets.ASSINANTES_URL }}
+          ASSINANTES_CHAVE: ${{ secrets.ASSINANTES_CHAVE }}
+          ASSINANTES_CHAVE_PRIVADA: ${{ secrets.ASSINANTES_CHAVE_PRIVADA }}
+        run: |
+          set -o pipefail
+          if [ -z "$SMTP_HOST" ] || [ -z "$ASSINANTES_URL" ]; then echo "Segredos de assinantes não configurados; pulando."; exit 0; fi
+          python scripts/assinaturas.py --so-confirmacoes --enviar | tee "$RUNNER_TEMP/saida.txt"
+          if grep -qE "Enviados: [1-9]" "$RUNNER_TEMP/saida.txt"; then echo "enviou=sim" >> "$GITHUB_OUTPUT"; fi
+
+      # marca a execução que mandou algo; a limpeza abaixo só apaga as que não têm este passo
+      - name: Confirmação enviada
+        if: steps.envio.outputs.enviou == 'sim'
+        run: echo "Pelo menos uma confirmação foi enviada nesta execução."
+
+      - name: Apagar as execuções sem envio do dia
+        # à noite (23h UTC, 20h em Brasília): as execuções com falha e as que enviaram ficam
+        if: github.event_name == 'schedule' && steps.envio.conclusion == 'success'
+        run: |
+          [ "$(date -u +%H)" = "23" ] || exit 0
+          gh run list --workflow confirmacoes.yml --status completed --limit 300 --json databaseId,conclusion \
+            --jq '.[] | select(.conclusion == "success") | .databaseId' |
+          while read -r id; do
+            enviou=$(gh run view "$id" --json jobs --jq '[.jobs[].steps[] | select(.name == "Confirmação enviada" and .conclusion == "success")] | length')
+            [ "$enviou" = "0" ] && gh run delete "$id"
+          done
+          exit 0

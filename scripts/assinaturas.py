@@ -11,8 +11,10 @@ Nada que identifique alguém vai para o log. Variáveis: ASSINANTES_URL, ASSINAN
 e as SMTP_* de resumo_email.py.
 
 Uso:
-    python scripts/assinaturas.py [ANTES [DEPOIS]] [--arquivo linhas.json] [--saida PASTA] [--enviar]
-(--arquivo lê as linhas cifradas de um JSON em vez do Apps Script; sem --enviar nada é mandado nem marcado)
+    python scripts/assinaturas.py [ANTES [DEPOIS]] [--arquivo linhas.json] [--saida PASTA] [--enviar] [--so-confirmacoes]
+(--arquivo lê as linhas cifradas de um JSON em vez do Apps Script; sem --enviar nada é mandado nem marcado;
+--so-confirmacoes manda só os e-mails de confirmação, sem o aviso das mudanças, e dispensa o histórico do git:
+é o que .github/workflows/confirmacoes.yml roda a cada 15 minutos)
 """
 
 import argparse
@@ -119,6 +121,7 @@ def main() -> None:
     p.add_argument("--arquivo")
     p.add_argument("--saida")
     p.add_argument("--enviar", action="store_true")
+    p.add_argument("--so-confirmacoes", action="store_true")
     a = p.parse_args()
 
     pem = os.environ.get("ASSINANTES_CHAVE_PRIVADA", "")
@@ -130,10 +133,10 @@ def main() -> None:
     ativos, pendentes, apagar = organizar(linhas, privada)
     print(f"{len(linhas)} linhas: {len(ativos)} assinantes ativos, {len(pendentes)} a confirmar, {len(apagar)} a apagar.")
 
-    data = r.git("log", "-1", "--format=%cs", a.depois).strip()
-    titulo = f"Minha Bancada — suas atualizações de {data[8:]}/{data[5:7]}/{data[:4]}"
     envios = []
-    if ativos:
+    if ativos and not a.so_confirmacoes:
+        data = r.git("log", "-1", "--format=%cs", a.depois).strip()
+        titulo = f"Minha Bancada — suas atualizações de {data[8:]}/{data[5:7]}/{data[:4]}"
         completo, deps_uf = r.coletar(a.antes, a.depois), feeds.deputados_por_uf()
         if not deps_uf:
             print("Aviso: site/dados/indice ausente; avisos por estado não incluem a bancada federal.", file=sys.stderr)

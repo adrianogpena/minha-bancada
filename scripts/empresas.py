@@ -23,7 +23,7 @@ VOCABULARIO = {   # vocabulário fechado da Receita (Metadados do CNPJ)
     "porte": {"00": "Não informado", "01": "Microempresa", "03": "Empresa de pequeno porte", "05": "Demais"},
     "tipoSocio": {"1": "Pessoa jurídica", "2": "Pessoa física", "3": "Estrangeiro"},
 }
-FONTE = {"nome": "Receita Federal, CNPJ (dados abertos)", "url": "https://arquivos.receitafederal.gov.br/dados/cnpj/dados_abertos_cnpj"}
+FONTE = {"nome": "Receita Federal, CNPJ (dados abertos)", "url": "https://arquivos.receitafederal.gov.br/index.php/s/YggdBLfdninEJX9"}
 
 
 def _dias(abertura: str | None, nota: str | None) -> int | None:

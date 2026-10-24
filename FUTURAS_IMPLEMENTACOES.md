@@ -125,7 +125,7 @@ Actions, libera tudo abaixo.
 Depende do CNPJ do pacote 2.2.
 
 - ~~Dados da empresa (atividade, data de abertura, sócios) pelo CNPJ aberto da Receita~~ (etapa 2, feita):
-  `scripts/coletar_receita.py` (local) e `scripts/empresas.py`. Falta a primeira coleta real e conferir URL e layout.
+  `scripts/coletar_receita.py` (local) e `scripts/empresas.py`. Primeira coleta real feita em 2026-10-24 (competência 2026-09), URL e layout conferidos.
   Fora do escopo por ser sensível: cruzar sócio com político ou parente.
 - ~~Cruzamento com os doadores de campanha~~ (etapa 1, feita): `scripts/doadores.py`, só empresas, por CNPJ (ou nome exato
   enquanto as contas não forem recoletadas com CNPJ). Falta rodar `coletar_contas.py` localmente (versão 4) para o cruzamento por CNPJ.

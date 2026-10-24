@@ -318,7 +318,8 @@ select:disabled { opacity: .55; }
 .informado li button:disabled { opacity: .55; cursor: default; }
 .informado .botao { font: 700 16px var(--texto); background: var(--marca); color: var(--superficie); border: 0; border-radius: var(--raio); padding: 12px 20px; cursor: pointer; }
 .informado .botao:disabled { opacity: .6; cursor: wait; }
-.informado .mais { margin-top: 0; font-weight: 700; }
+.informado .mais { margin-top: 0; width: 100%; font: 17px var(--texto); padding: 10px 12px; text-align: left; }
+@media (max-width: 760px) { .informado .mais { min-height: 46px; padding: 12px; font-size: 16px; } }
 .dica-form { color: var(--tinta-suave); font-size: 14px; margin: 8px 0 0; }
 .aviso-form { font-weight: 700; min-height: 1.4em; }
 .informado .marcado { border-color: var(--marca); box-shadow: 0 0 0 1px var(--marca); }

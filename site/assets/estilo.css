@@ -369,6 +369,7 @@ select:disabled { opacity: .55; }
 .ver-legivel { font-weight: 700; color: var(--marca) !important; }
 .fontes .ver-legivel::before { content: "· "; color: var(--tinta-suave); font-weight: 400; }
 .tabela-fonte th, .tabela-fonte td { text-align: left; vertical-align: top; }
+#status-apis .tabela-fonte td:nth-child(n+3) { white-space: nowrap; }
 .painel details { margin: 6px 0; }
 .painel details > summary { cursor: pointer; font-weight: 700; }
 .painel .ficha .ficha { margin: 4px 0 4px 8px; }

@@ -1,0 +1,101 @@
+name: Testar feeds RSS e e-mails
+
+# Disparo manual para testar o "Fique informado" sem coletar nem publicar nada: gera os feeds e o resumo do dia a partir do
+# histórico git e guarda o resultado como artefato. Os e-mails só saem se pedido nas opções.
+
+on:
+  workflow_dispatch:
+    inputs:
+      dia:
+        description: "Dia dos dados (AAAA-MM-DD); vazio = o commit diário mais recente"
+        required: false
+        default: ""
+      enviar_resumo:
+        description: "Enviar o resumo geral por e-mail (só para EMAIL_PARA, o dono)"
+        type: boolean
+        default: false
+      enviar_assinantes:
+        description: "Enviar os avisos aos ASSINANTES REAIS (cuidado: chega na caixa deles)"
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: testar-avisos
+  cancel-in-progress: false
+
+jobs:
+  testar:
+    name: Gerar feeds e e-mails de teste
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    # os segredos de e-mail e da lista de assinantes ficam neste Environment (assinaturas/LEIAME.md)
+    environment: github-pages
+    env:
+      SMTP_HOST: ${{ secrets.SMTP_HOST }}
+      SMTP_PORT: ${{ secrets.SMTP_PORT }}
+      SMTP_USUARIO: ${{ secrets.SMTP_USUARIO }}
+      SMTP_SENHA: ${{ secrets.SMTP_SENHA }}
+      EMAIL_PARA: ${{ secrets.EMAIL_PARA }}
+      ASSINANTES_URL: ${{ secrets.ASSINANTES_URL }}
+      ASSINANTES_CHAVE: ${{ secrets.ASSINANTES_CHAVE }}
+      ASSINANTES_CHAVE_PRIVADA: ${{ secrets.ASSINANTES_CHAVE_PRIVADA }}
+      DIA: ${{ inputs.dia }}
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - run: pip install -r requirements.txt
+
+      - name: Buscar o histórico git
+        run: git fetch --shallow-since="30 days ago" -q origin master
+
+      - name: Gerar o núcleo do site (usado pelos feeds; sem internet)
+        run: python scripts/gerar.py
+
+      - name: Gerar os feeds RSS (últimos 14 dias)
+        run: python scripts/feeds.py --dias 14
+
+      - name: Escolher o commit diário
+        id: commit
+        run: |
+          if [ -n "$DIA" ]; then
+            DEPOIS=$(git log --grep='^Dados atualizados em' --format='%H' --since="$DIA 00:00 +0000" --until="$DIA 23:59:59 +0000" -n1)
+          else
+            DEPOIS=$(git log -1 --grep='^Dados atualizados em' --format=%H)
+          fi
+          if [ -z "$DEPOIS" ]; then echo "Sem commit diário para '${DIA:-o mais recente}'."; exit 1; fi
+          echo "depois=$DEPOIS" >> "$GITHUB_OUTPUT"
+          echo "Commit: $DEPOIS ($(git log -1 --format=%cs "$DEPOIS"))"
+
+      - name: Montar o resumo geral (resumo.html e resumo.txt)
+        run: python scripts/resumo_email.py "${{ steps.commit.outputs.depois }}~1" "${{ steps.commit.outputs.depois }}" --saida "$RUNNER_TEMP/saida"
+
+      - name: Enviar o resumo geral para EMAIL_PARA
+        if: ${{ inputs.enviar_resumo }}
+        run: python scripts/resumo_email.py "${{ steps.commit.outputs.depois }}~1" "${{ steps.commit.outputs.depois }}" --saida "$RUNNER_TEMP/saida" --enviar
+
+      - name: Avisos aos assinantes (sem enviar; só conta quantos sairiam)
+        # sem --saida: as prévias trariam endereços decifrados, e o artefato de um repositório público é baixável
+        if: ${{ !inputs.enviar_assinantes }}
+        run: |
+          if [ -z "$ASSINANTES_URL" ]; then echo "Segredos de assinantes não configurados; pulando."; exit 0; fi
+          python scripts/assinaturas.py "${{ steps.commit.outputs.depois }}~1" "${{ steps.commit.outputs.depois }}"
+
+      - name: Enviar os avisos aos assinantes reais
+        if: ${{ inputs.enviar_assinantes }}
+        run: python scripts/assinaturas.py "${{ steps.commit.outputs.depois }}~1" "${{ steps.commit.outputs.depois }}" --enviar
+
+      - uses: actions/upload-artifact@v7
+        with:
+          name: feeds-e-resumo
+          path: |
+            site/feeds
+            ${{ runner.temp }}/saida
+          retention-days: 7

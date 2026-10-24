@@ -102,17 +102,18 @@ def rotulos() -> dict[str, str]:
     return mapa
 
 
-def dias(n: int) -> list[tuple[str, str]]:
-    """[(commit, data)] dos últimos n commits diários que têm pai disponível, do mais novo ao mais antigo."""
-    saida = []
-    for linha in r.git("log", "--grep=^Dados atualizados em", "--format=%H %cs", f"-n{n}").splitlines():
+def dias(n: int) -> list[tuple[str, str, str]]:
+    """[(antes, depois, data)] dos últimos n dias com commit diário, do mais novo ao mais antigo. Vários commits no mesmo dia
+    (execução manual além da agendada) viram um intervalo só, do pai do primeiro ao último, para o dia não repetir item."""
+    por_dia = {}
+    for linha in r.git("log", "--grep=^Dados atualizados em", "--format=%H %cs", "-n50").splitlines():
         commit, data = linha.split()
         try:
             r.git("rev-parse", "--verify", "-q", f"{commit}~1")
         except Exception:
             continue   # histórico raso: sem o commit anterior não há o que comparar
-        saida.append((commit, data))
-    return saida
+        por_dia.setdefault(data, []).append(commit)
+    return [(f"{cs[-1]}~1", cs[0], data) for data, cs in list(por_dia.items())[:n]]
 
 
 def item(titulo: str, data: str, codigo: str, corpo: str) -> str:
@@ -137,14 +138,14 @@ def main() -> None:
     nomes, deps_uf = rotulos(), deputados_por_uf()
     itens = defaultdict(list)
     lista = dias(a.dias)
-    for commit, data in lista:
-        d = r.coletar(f"{commit}~1", commit)
+    for antes, depois, data in lista:
+        d = r.coletar(antes, depois)
         for codigo in nomes:
             parte = selecionar(d, {codigo}, deps_uf)
             if vazio(parte):
                 continue
-            h, _ = r.montar(parte, f"{nomes[codigo]}, {data[8:]}/{data[5:7]}/{data[:4]}", detalhes=r.link_historico(data, [codigo]))
-            itens[codigo].append(item(f"{nomes[codigo]} em {data[8:]}/{data[5:7]}/{data[:4]}", data, codigo, h))
+            h, _ = r.montar(parte, r.resumo_longo(parte), detalhes=r.link_historico(data, [codigo]), sumario=False)
+            itens[codigo].append(item(f"{data[8:]}/{data[5:7]}: {r.resumo_curto(parte)}", data, codigo, h))
     SAIDA.mkdir(parents=True, exist_ok=True)
     for antigo in SAIDA.glob("*.xml"):
         antigo.unlink()

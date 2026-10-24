@@ -73,7 +73,7 @@ def test_meta_traz_ano_e_periodo(site):
 def test_tudo_que_o_front_busca_com_caminho_fixo_e_gerado_ou_conhecido(site):
     """Todo `carregar("dados/…")` com caminho literal nos módulos JS/HTML aponta para algo que o gerar.py produz.
     Os que dependem de coletas opcionais (executivo, histórico, eleitorado…) ficam em OPCIONAIS."""
-    opcionais = {"dados/executivo.json", "dados/municipios_ibge.json", "dados/historico/indice.json", "dados/indice/BR.json"}
+    opcionais = {"dados/executivo.json", "dados/municipios_ibge.json", "dados/historico/indice.json", "dados/indice/BR.json", "dados/status_apis.json"}
     fontes = [*(RAIZ / "site" / "assets" / "js").glob("*.js"), *(RAIZ / "site").glob("*.html")]
     achados = set()
     for f in fontes:

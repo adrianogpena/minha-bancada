@@ -12,7 +12,7 @@ const path = require("node:path");
 const RAIZ = path.resolve(__dirname, "../..");
 const TIPOS = { ".html": "text/html; charset=utf-8", ".js": "text/javascript", ".css": "text/css", ".json": "application/json", ".svg": "image/svg+xml" };
 // arquivos opcionais: a página trata a ausência (try/catch), mas o navegador registra o 404
-const OPCIONAIS = ["/dados/executivo.json", "/dados/historico/indice.json", "/dados/indice/BR.json", "/dados/municipios_ibge.json", "/chave_publica.json", "/favicon.ico"];
+const OPCIONAIS = ["/dados/executivo.json", "/dados/historico/indice.json", "/dados/indice/BR.json", "/dados/municipios_ibge.json", "/dados/status_apis.json", "/geo/br.json", "/dados/tramitacao/900.json", "/chave_publica.json", "/favicon.ico"];
 
 let pasta, servidor, base, navegador;
 

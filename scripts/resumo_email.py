@@ -32,9 +32,20 @@ LIMITE = 12  # itens listados por seção; o resto vira "e mais N"
 TIPOS_DESTAQUE = ("PL", "PLP", "PEC", "PDL", "MPV")
 
 
-def link_historico(data: str, locais=None) -> str:
-    """Página do histórico diário (detalhes e fontes) para um dia AAAA-MM-DD, filtrada por códigos de local ou político quando houver."""
-    return f"{SITE}historico.html?dia={data}" + (f"&locais={quote(','.join(sorted(locais)), safe=',:')}" if locais else "")
+def link_historico(data: str, locais=None, periodo: str = "dia") -> str:
+    """Página do histórico (detalhes e fontes) para um dia AAAA-MM-DD, filtrada por códigos de local ou político quando houver.
+    `periodo` "semana" ou "mes": a página abre a semana ou o mês que contém `data`."""
+    return (f"{SITE}historico.html?dia={data}" + (f"&periodo={periodo}" if periodo != "dia" else "")
+            + (f"&locais={quote(','.join(sorted(locais)), safe=',:')}" if locais else ""))
+
+
+def cont(n: int, um: str, varios: str) -> str:
+    """"1 novo", "3 novos"; vazio quando n é 0, para não listar zeros nos títulos."""
+    return f"{n} {um if n == 1 else varios}" if n else ""
+
+
+def juntar(*partes: str) -> str:
+    return ", ".join(p for p in partes if p)
 
 
 def git(*args: str) -> str:
@@ -141,14 +152,14 @@ def linhas(d: dict) -> list[tuple[str, list[str]]]:
         resto = ", ".join(f"{n} {t}" for t, n in tipos.most_common() if t not in TIPOS_DESTAQUE)
         if resto:
             itens.append(f"Outros: {resto}")
-        s.append((f"Câmara dos Deputados — {len(cam)} proposições novas", itens))
+        s.append((f"Câmara dos Deputados — {cont(len(cam), 'proposição nova', 'proposições novas')}", itens))
     ntot = d["senado"][1] - d["senado"][0]
     if ntot:
-        s.append((f"Senado — {ntot} matérias novas", []))
+        s.append((f"Senado — {cont(ntot, 'matéria nova', 'matérias novas')}", []))
     if d["executivo"] or d["executivo_situacao"]:
         itens = [f"{i['tipo']} {i['numero']}/{i['ano']} — {cortar(i.get('ementa'))}" for i in d["executivo"]]
         itens += [f"{i['tipo']} {i['numero']}/{i['ano']}: {a or '—'} → {i.get('situacao') or '—'}" for i, a in d["executivo_situacao"]]
-        s.append((f"Executivo — {len(d['executivo'])} novos, {len(d['executivo_situacao'])} com nova situação", itens))
+        s.append((f"Executivo — {juntar(cont(len(d['executivo']), 'novo', 'novos'), cont(len(d['executivo_situacao']), 'com nova situação', 'com nova situação'))}", itens))
     for chave, titulo in (("estaduais", "Assembleia"), ("governo", "Governo do estado, projetos enviados à Assembleia"), ("municipais", "Câmara da capital")):
         novas, mudou = d[chave]
         for uf in sorted(set(novas) | set(mudou)):
@@ -156,31 +167,58 @@ def linhas(d: dict) -> list[tuple[str, list[str]]]:
             if len(novas[uf]) > LIMITE:
                 itens.append(f"…e mais {len(novas[uf]) - LIMITE}")
             itens += [f"{m.get('tipo', '')} {m.get('numero', '')}/{m.get('ano', '')}: {a or '—'} → {m.get('situacao') or '—'}" for m, a in mudou[uf][:LIMITE]]
-            s.append((f"{titulo} {uf} — {len(novas[uf])} novas, {len(mudou[uf])} com nova situação", itens))
+            s.append((f"{titulo} {uf} — {juntar(cont(len(novas[uf]), 'nova', 'novas'), cont(len(mudou[uf]), 'com nova situação', 'com nova situação'))}", itens))
     if d["votacoes"]:
         s.append(("Votações estaduais atualizadas", [", ".join(d["votacoes"])]))
     if d["tse"]:
-        s.append((f"TSE — {len(d['tse'])} arquivos recoletados", ["Sem eleitos novos; só atualização de redes sociais e bens."]))
+        s.append((f"TSE — {cont(len(d['tse']), 'arquivo recoletado', 'arquivos recoletados')}", ["Sem eleitos novos; só atualização de redes sociais e bens."]))
     return s
 
 
-def montar(d: dict, titulo: str, rodape: tuple[str, str] = ("", ""), detalhes: str | None = None) -> tuple[str, str]:
-    """`detalhes`: link da página do histórico diário, com todos os itens e as fontes."""
+def resumo_curto(d: dict, limite: int = 3) -> str:
+    """O que mudou em poucas palavras, para título de item de feed e assunto de e-mail (leitores cortam em ~40 caracteres): "Câmara 4 · Senado 1"."""
+    cam = len(d["camara"])
+    partes = [("Câmara", cam), ("Senado", d["senado"][1] - d["senado"][0]), ("Executivo", len(d["executivo"]) + len(d["executivo_situacao"]))]
+    for chave, nome in (("estaduais", "Assembleia"), ("governo", "Governo"), ("municipais", "Capital")):
+        novas, mudou = d[chave]
+        ufs = sorted(u for u in set(novas) | set(mudou) if novas.get(u) or mudou.get(u))
+        if ufs:
+            partes.append((f"{nome} {ufs[0]}" if len(ufs) == 1 else nome, sum(len(novas.get(u, [])) + len(mudou.get(u, [])) for u in ufs)))
+    textos = [f"{n_} {q}" for n_, q in partes if q]
+    if d["votacoes"]:
+        textos.append("Votações " + ",".join(d["votacoes"]))
+    if d["tse"]:
+        textos.append("TSE")
+    if len(textos) > limite:
+        textos = textos[:limite] + [f"+{len(textos) - limite}"]
+    return " · ".join(textos)
+
+
+def resumo_longo(d: dict) -> str:
+    """Os títulos das seções em uma linha, para abrir o corpo do item de feed (a prévia que o leitor mostra)."""
+    return " · ".join(a.replace(" — ", ": ") for a, _ in linhas(d))
+
+
+def montar(d: dict, titulo: str, rodape: tuple[str, str] = ("", ""), detalhes: str | None = None, sumario: bool = True, periodo: str = "dia") -> tuple[str, str]:
+    """`detalhes`: link da página do histórico, com todos os itens e as fontes. `periodo` ("dia", "semana" ou "mes") diz o que o link abre."""
     secoes = linhas(d)
     if not secoes:
         txt = "Nenhum dado novo nesta execução."
         return f"<p>{txt}</p>", txt
     h = [f"<h1 style='font:600 20px Arial'>{html.escape(titulo)}</h1>"]
     t = [titulo, "=" * len(titulo)]
-    h.append("<ul style='font:14px Arial;padding-left:18px'>" + "".join(f"<li>{html.escape(a)}</li>" for a, _ in secoes) + "</ul>")
+    if sumario:
+        h.append("<ul style='font:14px Arial;padding-left:18px'>" + "".join(f"<li>{html.escape(a)}</li>" for a, _ in secoes) + "</ul>")
     for a, itens in secoes:
         h.append(f"<h2 style='font:600 16px Arial;margin:22px 0 6px;border-bottom:1px solid #ddd'>{html.escape(a)}</h2>")
         if itens:
             h.append("<ul style='font:13px Arial;color:#333;padding-left:18px'>" + "".join(f"<li style='margin:3px 0'>{html.escape(i)}</li>" for i in itens) + "</ul>")
         t += ["", a] + [f"  - {i}" for i in itens]
     if detalhes:
-        h.append(f"<p style='font:14px Arial'><b>Quer mais detalhes?</b> Veja cada item, com a fonte oficial, em <a href='{html.escape(detalhes)}'>{html.escape(detalhes)}</a></p>")
-        t += ["", f"Quer mais detalhes? Veja cada item, com a fonte oficial: {detalhes}"]
+        pedido = {"semana": "Veja cada item da semana, com a fonte oficial", "mes": "Veja cada item do mês, com a fonte oficial"}.get(periodo, "Veja cada item, com a fonte oficial")
+        nome = {"semana": "Abrir o histórico da semana", "mes": "Abrir o histórico do mês"}.get(periodo, "Abrir o histórico do dia")
+        h.append(f"<p style='font:14px Arial'><b>Quer mais detalhes?</b> {pedido}: <a href='{html.escape(detalhes)}'>{nome}</a></p>")
+        t += ["", f"Quer mais detalhes? {pedido}: {detalhes}"]
     h.append(f"<p style='font:12px Arial;color:#666'>Ver no site: <a href='{SITE}'>{SITE}</a></p>{rodape[0]}")
     t += ["", f"Ver no site: {SITE}"] + ([rodape[1]] if rodape[1] else [])
     return "<div style='max-width:680px;margin:auto'>" + "".join(h) + "</div>", "\n".join(t)
@@ -216,7 +254,8 @@ def main() -> None:
     a = p.parse_args()
     data = git("log", "-1", "--format=%cs", a.depois).strip()
     titulo = f"Minha Bancada — o que mudou em {data[8:]}/{data[5:7]}/{data[:4]}"
-    h, t = montar(coletar(a.antes, a.depois), titulo, detalhes=link_historico(data))
+    d = coletar(a.antes, a.depois)
+    h, t = montar(d, titulo, detalhes=link_historico(data))
     saida = Path(a.saida)
     saida.mkdir(parents=True, exist_ok=True)
     (saida / "resumo.html").write_text(f"<!doctype html><meta charset=utf-8><title>{titulo}</title>{h}", encoding="utf-8")

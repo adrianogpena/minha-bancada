@@ -5,6 +5,10 @@ Regra: toda fonte nova ou mudança de coleta ganha uma entrada aqui, no mesmo co
 Datas dos conjuntos que já existiam vêm do primeiro commit que os trouxe (`git log --diff-filter=A`).
 Todas as coletas rodam sozinhas no GitHub Actions (`.github/workflows/atualizar.yml`, todo dia às 05:00 de Brasília), salvo onde indicado.
 
+## Malhas do mapa em cópia local (2026-10-24)
+- **De onde:** IBGE, `https://servicodados.ibge.gov.br/api/v3/malhas` (`ibge_malha_pais`, `ibge_malha_estado` em `ENDPOINTS.md`), a mesma que o mapa consultava no navegador.
+- **Como:** `python scripts/baixar_malhas.py` grava `site/geo/br.json` e `site/geo/uf_<código>.json` (qualidade mínima); o mapa lê a cópia local e só cai na API do IBGE se o arquivo faltar. Motivo: a API do IBGE ficou fora do ar e o mapa da página inicial parou de carregar. **Pendente:** rodar o script quando o IBGE voltar e commitar `site/geo/`.
+
 ## Dados da empresa pela Receita para os fornecedores (2026-10-24)
 - **De onde:** CNPJ aberto da Receita Federal, arquivos mensais `Empresas`, `Estabelecimentos` e `Socios` (0 a 9) mais `Cnaes`, `Naturezas`, `Qualificacoes` e `Municipios`, em `https://arquivos.receitafederal.gov.br/public.php/webdav/<AAAA-MM>/` (compartilhamento público da Receita, Nextcloud/WebDAV, usuário = token `YggdBLfdninEJX9` e senha vazia; o endereço antigo `/dados/cnpj/dados_abertos_cnpj/` responde 404; `receita_cnpj` em `ENDPOINTS.md`).
 - **Como:** `scripts/coletar_receita.py` roda só na máquina local (`--listar`, `--baixar`, depois sem opção): guarda em `dados/receita/` apenas as empresas de `nucleo/fornecedores.json` (tipo PJ), a matriz de cada uma (situação, abertura, CNAE, local), razão social, natureza, porte, capital e os sócios (nome, qualificação, entrada); nunca CPF de sócio. `scripts/empresas.py` (no `gerar.py`) grava `nucleo/empresas.json` só das empresas que o site mostra, com a data da primeira nota do ano e os dias desde a abertura. `fornecedores.html` mostra o bloco em cada fornecedor e em cada empresa do cruzamento com doadores, com a fonte e a competência; empresa aberta até 365 dias antes da primeira nota do ano vem em negrito, como fato cadastral e sem juízo.

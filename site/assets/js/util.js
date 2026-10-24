@@ -32,6 +32,11 @@ export async function carregar(caminho) {
   return r.json();
 }
 
+/* Malha do mapa: cópia local em geo/ (scripts/baixar_malhas.py); se faltar, cai na API do IBGE. */
+export async function carregarMalha(local, remoto) {
+  try { return await carregar(local); } catch { return carregar(remoto); }
+}
+
 export const pctBr = (v) => `${v.toFixed(1).replace(".", ",")}%`;
 
 export const numeroBr = (n) => n.toLocaleString("pt-BR");

@@ -1,5 +1,5 @@
 /* Painel da eleição e mapas dos locais de votação (Leaflet). */
-import { esc, data, carregar, numeroBr } from "./util.js";
+import { esc, data, carregar, carregarMalha, numeroBr } from "./util.js";
 import { divulgaUrl, CODIGO_ELEITORAL_URL, ARTIGO_ELEICAO, MAJORITARIOS, linkCF, semFonte, rotuloResultado, blocoCampanha, blocoDisputa, blocoPartido, blocoAlianca, blocoOndeVotou } from "./ficha.js";
 import { TSE_CDN, fontes, UFS, COD_UF, MALHAS, SENADO_API } from "./apis.js";
 import { svgMapa } from "./mapa.js";
@@ -34,7 +34,7 @@ async function desenharMapaMunicipios(el) {
   try {
     ibgeDeTse ||= await carregar("dados/municipios_ibge.json");
     const tseDeIbge = Object.fromEntries(Object.entries(ibgeDeTse).map(([t, i]) => [i, t]));
-    const fc = await carregar(`${MALHAS}/estados/${COD_UF[el.dataset.uf]}?formato=application/vnd.geo+json&intrarregiao=municipio&qualidade=minima`);
+    const fc = await carregarMalha(`geo/uf_${COD_UF[el.dataset.uf]}.json`, `${MALHAS}/estados/${COD_UF[el.dataset.uf]}?formato=application/vnd.geo+json&intrarregiao=municipio&qualidade=minima`);
     const votos = new Map(JSON.parse(el.dataset.votosPorMunicipio).map(([c, v]) => [String(c).padStart(5, "0"), v]));
     const maximo = Math.max(...votos.values());
     el.innerHTML = svgMapa(fc, (f) => tseDeIbge[f.properties.codarea] || "");

@@ -1,5 +1,5 @@
 /* Página inicial: todos os políticos. */
-import { $, esc, semAcento, carregar } from "./util.js";
+import { $, esc, semAcento, carregar, carregarMalha } from "./util.js";
 import { abas, erro } from "./comum.js";
 import { UFS, UF_COD, COD_UF, MALHAS } from "./apis.js";
 import { GRUPOS, linhaPolitico, svgMapa, desenharEleitorado, desenharPerfilCasas } from "./mapa.js";
@@ -23,7 +23,7 @@ export async function paginaPoliticos() {
   abas($("#periodo"), [{ valor: "agora", rotulo: "No cargo agora" }, { valor: "2026", rotulo: "Eleitos em 2026" }], (v) => { periodo = v; desenhar(); });
   $("#periodo").querySelectorAll("button").forEach((b) => b.setAttribute("aria-pressed", b.dataset.v === periodo));
 
-  const geo = async (url) => (geos[url] ||= await carregar(url));
+  const geo = async (local, remoto) => (geos[local] ||= await carregarMalha(local, remoto));
 
   function desenharTrilha() {
     const partes = [uf ? `<button type="button" data-ir="br">Brasil</button>` : `<b>Brasil</b>`];
@@ -37,9 +37,9 @@ export async function paginaPoliticos() {
     try {
       // o DF não tem municípios (nem eleição municipal): desenha as regiões administrativas, só para olhar
       const semMunicipios = uf === "DF";
-      const fc = semMunicipios ? await geo("geo/df_ras.json") : uf
-        ? await geo(`${MALHAS}/estados/${COD_UF[uf]}?formato=application/vnd.geo+json&intrarregiao=municipio&qualidade=minima`)
-        : await geo(`${MALHAS}/paises/BR?formato=application/vnd.geo+json&intrarregiao=UF&qualidade=minima`);
+      const fc = semMunicipios ? await geo("geo/df_ras.json", "geo/df_ras.json") : uf
+        ? await geo(`geo/uf_${COD_UF[uf]}.json`, `${MALHAS}/estados/${COD_UF[uf]}?formato=application/vnd.geo+json&intrarregiao=municipio&qualidade=minima`)
+        : await geo("geo/br.json", `${MALHAS}/paises/BR?formato=application/vnd.geo+json&intrarregiao=UF&qualidade=minima`);
       if (minha !== versao) return;
       mapa.innerHTML = svgMapa(fc, semMunicipios ? (f) => f.properties.codigo : uf ? (f) => tseDeIbge[f.properties.codarea] || "" : (f) => UF_COD[f.properties.codarea] || "");
       mapa.querySelectorAll("path").forEach((p) => {

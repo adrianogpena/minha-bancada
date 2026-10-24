@@ -470,6 +470,70 @@ def coletar_autores_proposicoes() -> None:
         salvar(arquivo, cache)
     print(f"Autores salvos: {feitos}, falhas: {falhas}, no arquivo: {len(cache)}")
 
+ORCAMENTO_TRAMITACOES = int(os.environ.get("TRAMITACOES_POR_EXECUCAO", "3000"))
+RELATOR = re.compile(r"Designad[oa] Relator[a]?,?\s*(?:Dep\.|Sen\.)?\s*([^()]+?)(?:\s*\(([^)]*)\))?(?:\.|$)", re.I)
+
+
+def tramitacao_da_resposta(tramitacoes: list, relacionadas: list) -> dict:
+    """De /proposicoes/{id}/tramitacoes e /relacionadas para {"eventos": [[data, órgão, tramitação, situação, despacho], ...],
+    "relator": "Nome (PARTIDO-UF)" | None, "relacionadas": [[id, "TIPO nº/ano"], ...]}. Eventos na ordem da sequência; o relator é o último
+    designado no despacho (a API só dá a URI do relator, sem nome)."""
+    ordem = sorted(tramitacoes, key=lambda t: (t.get("dataHora") or "", t.get("sequencia") or 0))
+    eventos, relator = [], None
+    for t in ordem:
+        despacho = (t.get("despacho") or "").strip()
+        eventos.append([comum.data_iso(t.get("dataHora")), t.get("siglaOrgao"), t.get("descricaoTramitacao"),
+                        t.get("descricaoSituacao"), despacho[:250] or None])
+        m = RELATOR.search(despacho) if "elator" in (t.get("descricaoTramitacao") or "") else None
+        if m:
+            relator = (m.group(1).strip() + (f" ({m.group(2).strip()})" if m.group(2) else ""))
+    rel = {}
+    for r in relacionadas:
+        i = id_da_uri(r.get("uri"))
+        if i:
+            rel[i] = f"{r.get('siglaTipo') or ''} {r.get('numero') or ''}/{r.get('ano') or ''}".strip()
+    return {"eventos": eventos, "relator": relator, "relacionadas": [[i, rel[i]] for i in sorted(rel, key=int)]}
+
+
+def coletar_tramitacoes_proposicoes() -> None:
+    """Linha do tempo de cada projeto e os projetos relacionados, em dados/proposicoes_tramitacoes.json (vai para o git).
+    Cada execução consulta no máximo ORCAMENTO_TRAMITACOES: primeiro os nunca consultados (mais novos antes), depois os
+    que ainda tramitam, relidos depois de RENOVAR_APOS_DIAS. Projeto finalizado (pelo detalhe) não é relido."""
+    arquivo = DADOS / "proposicoes_tramitacoes.json"
+    cache = ler(arquivo, {})
+    detalhes = ler(DADOS / "proposicoes_detalhe.json", {})
+    todos = ids_de_projetos(TIPOS_PROJETO)
+    hoje = dt.date.today()
+    limite_velho = (hoje - dt.timedelta(days=RENOVAR_APOS_DIAS)).isoformat()
+    novos = sorted(todos - cache.keys(), key=int, reverse=True)
+    velhos = sorted((i for i in todos & cache.keys()
+                     if not (detalhes.get(i) or {}).get("finalizada") and cache[i].get("consultadoEm", "") < limite_velho),
+                    key=lambda i: cache[i].get("consultadoEm", ""))
+    fila = (novos + velhos)[:ORCAMENTO_TRAMITACOES]
+    print(f"Tramitações de proposições: {len(todos)} projetos, {len(novos)} novos, {len(velhos)} a renovar; consultando {len(fila)}")
+
+    def buscar(pid: str) -> tuple[str, dict]:
+        tram = get(f"/proposicoes/{pid}/tramitacoes").get("dados", []) or []
+        rel = get(f"/proposicoes/{pid}/relacionadas").get("dados", []) or []
+        return pid, {**tramitacao_da_resposta(tram, rel), "consultadoEm": hoje.isoformat()}
+
+    feitos = falhas = 0
+    with ThreadPoolExecutor(TRABALHADORES) as ex:
+        for f in as_completed([ex.submit(buscar, i) for i in fila]):
+            try:
+                pid, info = f.result()
+                cache[pid] = info
+                feitos += 1
+            except Exception as e:
+                falhas += 1
+                if falhas <= 5:
+                    avisar(f"tramitação de proposição: {e}")
+            if feitos and feitos % 1000 == 0:
+                salvar(arquivo, cache)
+    if feitos:
+        salvar(arquivo, cache)
+    print(f"Tramitações salvas: {feitos}, falhas: {falhas}, no arquivo: {len(cache)}")
+
 
 def baixar_arquivo_camara(caminho: str) -> list:
     """Arquivo em lote da Câmara (https://dadosabertos.camara.leg.br/arquivos/...): devolve a lista `dados` do JSON."""
@@ -1133,6 +1197,10 @@ def main():
             coletar_autores_proposicoes()
         except Exception as e:
             avisar(f"autores das proposições: {e}")
+        try:
+            coletar_tramitacoes_proposicoes()
+        except Exception as e:
+            avisar(f"tramitações das proposições: {e}")
         for etapa in (coletar_temas_proposicoes, coletar_orgaos_deputados, coletar_orientacoes,
                       coletar_blocos, coletar_votacoes_proposicoes, coletar_presenca_eventos):  # complementos: cada um falha sozinho
             try:

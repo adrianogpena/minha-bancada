@@ -32,7 +32,8 @@ Status: ✅ OK · ❌ ERRO (resposta com falha ou fora do ar) · ❔ não testad
 | camara_proposicao | Câmara | https://dadosabertos.camara.leg.br/api/v2/proposicoes/2270800 | scripts/coletar.py, scripts/coletar_executivo.py, site/assets/app.js | ✅ OK | 2026-10-21 | HTTP 200, application/json |
 | camara_executivo | Câmara | https://dadosabertos.camara.leg.br/api/v2/proposicoes?autor=Poder%20Executivo&siglaTipo=PL&ano=2025&itens=1 | scripts/coletar_executivo.py | ✅ OK | 2026-10-21 | HTTP 200, application/json |
 | camara_autores | Câmara | https://dadosabertos.camara.leg.br/api/v2/proposicoes/2270800/autores | scripts/coletar.py | ✅ OK | 2026-10-21 | HTTP 200, application/json |
-| camara_tramitacoes | Câmara | https://dadosabertos.camara.leg.br/api/v2/proposicoes/2270800/tramitacoes | scripts/coletar_executivo.py | ✅ OK | 2026-10-21 | HTTP 200, application/json |
+| camara_tramitacoes | Câmara | https://dadosabertos.camara.leg.br/api/v2/proposicoes/2270800/tramitacoes | scripts/coletar.py, scripts/coletar_executivo.py | ✅ OK | 2026-10-21 | HTTP 200, application/json |
+| camara_relacionadas | Câmara | https://dadosabertos.camara.leg.br/api/v2/proposicoes/2270800/relacionadas | scripts/coletar.py | ✅ OK | 2026-10-24 | HTTP 200, application/json |
 | camara_votacoes | Câmara | https://dadosabertos.camara.leg.br/api/v2/votacoes?dataInicio=2025-03-01&dataFim=2025-03-31&itens=1 | scripts/coletar.py | ✅ OK | 2026-10-21 | HTTP 200, application/json |
 | camara_votacao | Câmara | https://dadosabertos.camara.leg.br/api/v2/votacoes/2442848-52 | scripts/coletar.py, site/assets/app.js | ✅ OK | 2026-10-21 | HTTP 200, application/json |
 | camara_votos | Câmara | https://dadosabertos.camara.leg.br/api/v2/votacoes/2442848-52/votos | scripts/coletar.py, site/assets/app.js | ✅ OK | 2026-10-21 | HTTP 200, application/json |

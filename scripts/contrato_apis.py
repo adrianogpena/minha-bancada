@@ -308,6 +308,11 @@ def _(ctx):
     return http_json(f"{CAMARA}/proposicoes/{ctx.get('exec') or ctx['prop']}/tramitacoes")
 
 
+@ep("camara_relacionadas", f"{CAMARA}/proposicoes/{{id}}/relacionadas", campos("dados[]", "id", "uri", "siglaTipo", "numero", "ano"))
+def _(ctx):
+    return http_json(f"{CAMARA}/proposicoes/{ctx['prop']}/relacionadas")
+
+
 @ep("camara_votacoes", f"{CAMARA}/votacoes", campos("dados[]", "id", "data", "dataHoraRegistro", "siglaOrgao", "descricao", "aprovacao"))
 def _(ctx):
     ini = (HOJE - dt.timedelta(days=29)).isoformat()

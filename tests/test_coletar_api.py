@@ -784,3 +784,26 @@ def test_cota_csv_cnpj_invalido_ou_mascarado_vira_none():
     cota = coletar.comum.fornecedor("Cia", "12.345.678/0001-90")
     assert cota == {"fornecedor": "Cia", "cnpj": None}
     assert coletar.comum.fornecedor("Fulano", "***.123.456-**")["cnpj"] is None
+
+
+def test_tramitacao_da_resposta_ordena_acha_relator_e_relacionadas():
+    tram = [
+        {"dataHora": "2026-02-01T10:00", "sequencia": 2, "siglaOrgao": "CCJC", "descricaoTramitacao": "Designação de Relator(a)",
+         "descricaoSituacao": "Aguardando Parecer", "despacho": "Designada Relatora, Dep. Ana Souza (PP-PI)"},
+        {"dataHora": "2026-01-01T09:00", "sequencia": 1, "siglaOrgao": "MESA", "descricaoTramitacao": "Apresentação", "despacho": ""},
+    ]
+    rel = [{"uri": "https://dadosabertos.camara.leg.br/api/v2/proposicoes/20", "siglaTipo": "PL", "numero": "5", "ano": "2025"}, {"uri": None}]
+    r = coletar.tramitacao_da_resposta(tram, rel)
+    assert r["eventos"][0] == ["2026-01-01", "MESA", "Apresentação", None, None]
+    assert r["relator"] == "Ana Souza (PP-PI)"
+    assert r["relacionadas"] == [["20", "PL 5/2025"]]
+
+
+def test_tramitacoes_proposicoes_nao_reconsulta_finalizada(dados, monkeypatch):
+    coletar.salvar(dados / "proposicoes" / "1.json", {"itens": [{"id": 10, "siglaTipo": "PL"}, {"id": 12, "siglaTipo": "PL"}]})
+    coletar.salvar(dados / "proposicoes_tramitacoes.json", {"12": {"eventos": [], "consultadoEm": "2020-01-01"}})
+    coletar.salvar(dados / "proposicoes_detalhe.json", {"12": {"finalizada": True}})
+    chamadas = roteador(monkeypatch, {"/proposicoes/10/tramitacoes": {"dados": []}, "/proposicoes/10/relacionadas": {"dados": []}})
+    coletar.coletar_tramitacoes_proposicoes()
+    assert [c[0] for c in chamadas] == ["/proposicoes/10/tramitacoes", "/proposicoes/10/relacionadas"]
+    assert set(json.loads((dados / "proposicoes_tramitacoes.json").read_text())) == {"10", "12"}

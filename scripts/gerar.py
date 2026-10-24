@@ -562,6 +562,8 @@ def main():
     resumo_deps.sort(key=lambda x: x["nome"])
     salvar(SAIDA / "deputados.json", resumo_deps)
     votacoes_senado = gerar_senadores()
+    for pid, t in (ler(BRUTO / "proposicoes_tramitacoes.json", {}) or {}).items():
+        salvar(SAIDA / "tramitacao" / f"{pid}.json", {c: t[c] for c in ("eventos", "relator", "relacionadas") if t.get(c)})
     total = gerar_proposicoes.gerar(SAIDA, deputados, detalhes, autorias, votacoes_projetos, nominais,
                                     ler(BRUTO / "senado.json", []) or [], ler(BRUTO / "senado_autorias.json", {}) or {},
                                     votacoes_senado, TIPOS_PROJETO, destino_projeto, nucleo["chaves"])

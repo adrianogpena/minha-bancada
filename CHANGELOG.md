@@ -5,6 +5,10 @@ Regra: toda fonte nova ou mudança de coleta ganha uma entrada aqui, no mesmo co
 Datas dos conjuntos que já existiam vêm do primeiro commit que os trouxe (`git log --diff-filter=A`).
 Todas as coletas rodam sozinhas no GitHub Actions (`.github/workflows/atualizar.yml`, todo dia às 05:00 de Brasília), salvo onde indicado.
 
+## Vida do projeto: tramitações e proposições relacionadas (2026-10-24)
+- **De onde:** API da Câmara, `https://dadosabertos.camara.leg.br/api/v2/proposicoes/<id>/tramitacoes` (já usado só no Executivo) e `/relacionadas` (`camara_tramitacoes`, `camara_relacionadas` em `ENDPOINTS.md`).
+- **Como:** `coletar_tramitacoes_proposicoes` (`coletar.py`) guarda em `dados/proposicoes_tramitacoes.json` os eventos (data, órgão, tramitação, situação, despacho até 250 caracteres), o último relator designado (lido do despacho) e as relacionadas (id e rótulo). Cada execução consulta no máximo `TRAMITACOES_POR_EXECUCAO` (3000): primeiro os novos, depois os que ainda tramitam, relidos após 7 dias; projeto finalizado não é relido. `gerar.py` grava `site/dados/tramitacao/<id>.json`, e a página da proposição da Câmara mostra "Vida do projeto".
+
 ## Carreira do deputado: ocupações anteriores e partido do coautor na data (2026-10-24)
 - **De onde:** API da Câmara, `https://dadosabertos.camara.leg.br/api/v2/deputados/<id>/ocupacoes` (`camara_ocupacoes` em `ENDPOINTS.md`); o `/historico` já era coletado.
 - **Como:** `coletar.py` guarda `ocupacoes` (título, entidade, UF, anos) no bloco de complementos de cada deputado (mesma releitura escalonada por `id % 7`); o perfil mostra "Ocupações anteriores". `gerar.py` passa a dar ao coautor o partido da data de apresentação do projeto, pelo `historico` da legislatura 57, e cai no partido atual sem histórico ou data. Ex-deputados seguem sem sigla (só deputados em exercício são coletados).

@@ -1,7 +1,7 @@
 /* Busca de proposições (projetos, PECs…) e ficha de uma: autores e votações, com os políticos ligados a elas. */
 import { $, esc, data, semAcento, param, carregar } from "./util.js";
 import { VOTOS, selo, listaPaginada, erro, semDadosLocais, filtrosNaUrl, botaoVoltar } from "./comum.js";
-import { TIPOS_PROJETO, fontes, linkTramitacao, linkMateriaSenado } from "./apis.js";
+import { TIPOS_PROJETO, CAMARA_API, fontes, linkTramitacao, linkMateriaSenado } from "./apis.js";
 import { barraPlacar } from "./votacoes.js";
 
 const DESTINOS = { aprovada: "Aprovada", rejeitada: "Rejeitada/arquivada", tramitando: "Em tramitação", sem: "Sem situação" };
@@ -66,7 +66,10 @@ export async function paginaProposicao() {
       <span class="quando">${data(v.data)}${v.orgao ? ` · ${esc(v.orgao)}` : ""}${v.aprovada === 1 ? ", aprovada" : v.aprovada === 0 ? ", rejeitada" : ""}</span>
       <span class="texto">${esc(v.descricao || "Votação")}${v.nominal ? barraPlacar(v.placar) : `<span class="quando">Votação simbólica ou em comissão: sem voto individual.</span>`}</span>
       ${v.nominal ? `<button type="button" class="mais" data-i="${i}">Ver quem votou</button><div id="votos-${i}"></div>` : ""}</li>`).join("")}</ul>` : `<p class="vazio">Nenhuma votação registrada no Plenário.</p>`}
+    <div id="vida"></div>
     ${fontes([["Tramitação oficial", senado ? linkMateriaSenado(id) : linkTramitacao(id)]])}`;
+
+  if (!senado) vidaDoProjeto($("#vida"), id, p.a);
 
   alvo.addEventListener("click", async (e) => {
     const b = e.target.closest("button[data-i]");
@@ -88,3 +91,26 @@ export async function paginaProposicao() {
     desenhar();
   });
 }
+
+
+/* Linha do tempo, relator, comissões e projetos relacionados (coletar.py: coletar_tramitacoes_proposicoes). */
+async function vidaDoProjeto(alvo, id) {
+  let t;
+  try { t = await carregar(`dados/tramitacao/${encodeURIComponent(id)}.json`); } catch { return; }
+  const eventos = t.eventos || [], orgaos = [...new Set(eventos.map((e) => e[1]).filter(Boolean))];
+  const relacionadas = t.relacionadas || [];
+  alvo.innerHTML = `<h2>Vida do projeto (${eventos.length} movimentações)</h2>
+    ${t.relator ? `<p class="texto-longo"><b>Último relator designado:</b> ${esc(t.relator)}</p>` : ""}
+    ${orgaos.length ? `<p class="texto-longo"><b>Por onde passou:</b> ${esc(orgaos.join(", "))}</p>` : ""}
+    <ol class="itens" id="linha-tempo">${[...eventos].reverse().slice(0, 15).map(evento).join("")}</ol>
+    ${eventos.length > 15 ? `<button type="button" class="mais" id="mais-tempo">Ver as ${eventos.length - 15} movimentações mais antigas</button>` : ""}
+    ${relacionadas.length ? `<p class="texto-longo"><b>Proposições relacionadas (${relacionadas.length}):</b> ${relacionadas.map(([rid, rot]) => `<a href="${esc(linkTramitacao(rid))}" rel="noopener">${esc(rot)}</a>`).join(", ")}</p>` : ""}
+    ${fontes([["Tramitações (API da Câmara)", `${CAMARA_API}/proposicoes/${encodeURIComponent(id)}/tramitacoes`]])}`;
+  const mais = $("#mais-tempo");
+  if (mais) mais.addEventListener("click", () => {
+    $("#linha-tempo").insertAdjacentHTML("beforeend", [...eventos].reverse().slice(15).map(evento).join(""));
+    mais.hidden = true;
+  });
+}
+const evento = ([dia, orgao, tipo, situacao, despacho]) => `<li><span class="quando">${dia ? data(dia) : "sem data"}${orgao ? ` · ${esc(orgao)}` : ""}${situacao ? ` · ${esc(situacao)}` : ""}</span>
+  <span class="texto">${esc(tipo || "Movimentação")}${despacho ? `<br><span class="quando">${esc(despacho)}</span>` : ""}</span></li>`;

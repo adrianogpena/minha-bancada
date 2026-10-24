@@ -41,7 +41,7 @@ Status: ✅ OK · ❌ ERRO (resposta com falha ou fora do ar) · ❔ não testad
 | senado_senador | Senado | https://legis.senado.leg.br/dadosabertos/senador/5012 | site/assets/app.js (link de fonte) | ✅ OK | 2026-10-24 | HTTP 200, application/xml, 1 KB |
 | senado_comissoes | Senado | https://legis.senado.leg.br/dadosabertos/senador/5012/comissoes.json | scripts/coletar.py, site/assets/js/senador.js (link de fonte) | ✅ OK | 2026-10-24 | HTTP 200, application/json, 5 KB |
 | senado_mandatos | Senado | https://legis.senado.leg.br/dadosabertos/senador/5012/mandatos.json | scripts/coletar.py, site/assets/js/senador.js (link de fonte) | ✅ OK | 2026-10-24 | HTTP 200, application/json, 0 KB |
-| senado_votacoes | Senado | https://legis.senado.leg.br/dadosabertos/votacao?dataInicio=2025-03-01&dataFim=2025-03-31 | scripts/coletar.py, site/assets/app.js | ✅ OK | 2026-10-24 | HTTP 200, application/json |
+| senado_votacoes | Senado | https://legis.senado.leg.br/dadosabertos/votacao?dataInicio=2025-03-01&dataFim=2025-03-31 | scripts/coletar.py, site/assets/app.js | ✅ OK | 2026-10-24 | HTTP 200, application/json, 5 KB |
 | senado_processos | Senado | https://legis.senado.leg.br/dadosabertos/processo?codigoParlamentarAutor=5012 | scripts/coletar.py | ✅ OK | 2026-10-24 | HTTP 200, application/json |
 | senado_processo | Senado | https://legis.senado.leg.br/dadosabertos/processo/1582415 | site/assets/app.js (link de fonte) | ✅ OK | 2026-10-24 | HTTP 200, application/json, 2 KB |
 | senado_ceaps | Senado | https://adm.senado.gov.br/adm-dadosabertos/api/v1/senadores/despesas_ceaps/2025 | scripts/coletar.py, site/assets/app.js | ✅ OK | 2026-10-24 | HTTP 200, application/json, 10.1 MB |
@@ -55,7 +55,7 @@ Status: ✅ OK · ❌ ERRO (resposta com falha ou fora do ar) · ❔ não testad
 | tse_prestacao_contas | TSE | https://cdn.tse.jus.br/estatistica/sead/odsele/prestacao_contas/prestacao_de_contas_eleitorais_candidatos_2024.zip | scripts/baixar_tse.py, scripts/coletar_contas.py | ✅ OK | 2026-10-24 | HTTP 200, application/zip, 1348.3 MB |
 | tse_votacao_partido_munzona | TSE | https://cdn.tse.jus.br/estatistica/sead/odsele/votacao_partido_munzona/votacao_partido_munzona_2024.zip | scripts/baixar_tse.py, scripts/coletar_partidos.py | ✅ OK | 2026-10-24 | HTTP 200, application/zip, 6.1 MB |
 | tse_votacao_secao | TSE | https://cdn.tse.jus.br/estatistica/sead/odsele/votacao_secao/votacao_secao_2022_DF.zip | scripts/baixar_tse.py, scripts/coletar_secoes.py | ✅ OK | 2026-10-24 | HTTP 200, application/zip, 34.3 MB |
-| tse_votacao_secao_2024 | TSE | https://cdn.tse.jus.br/estatistica/sead/odsele/votacao_secao/votacao_secao_2024_DF.zip | scripts/baixar_tse.py, scripts/coletar_secoes.py | ❌ ERRO | 2026-10-24 | HTTP 404 |
+| tse_votacao_secao_2024 | TSE | https://cdn.tse.jus.br/estatistica/sead/odsele/votacao_secao/votacao_secao_2024_AC.zip | scripts/baixar_tse.py, scripts/coletar_secoes.py | ✅ OK | 2026-10-24 | HTTP 200, application/zip, 5.6 MB |
 | tse_perfil_eleitorado | TSE | https://cdn.tse.jus.br/estatistica/sead/odsele/perfil_eleitorado/perfil_eleitorado_2024.zip | scripts/baixar_tse.py, scripts/coletar_eleitorado.py | ✅ OK | 2026-10-24 | HTTP 200, application/zip, 333.6 MB |
 | tse_detalhe_votacao_munzona | TSE | https://cdn.tse.jus.br/estatistica/sead/odsele/detalhe_votacao_munzona/detalhe_votacao_munzona_2024.zip | scripts/baixar_tse.py, scripts/coletar_disputa.py, scripts/gerar_municipios_ibge.py | ✅ OK | 2026-10-24 | HTTP 200, application/zip, 1.5 MB |
 | tse_consulta_coligacao | TSE | https://cdn.tse.jus.br/estatistica/sead/odsele/consulta_coligacao/consulta_coligacao_2024.zip | scripts/baixar_tse.py, scripts/coletar_coligacoes.py | ✅ OK | 2026-10-24 | HTTP 200, application/zip, 11.0 MB |
@@ -63,9 +63,9 @@ Status: ✅ OK · ❌ ERRO (resposta com falha ou fora do ar) · ❔ não testad
 | tse_eleitorado_locais_votacao | TSE | https://cdn.tse.jus.br/estatistica/sead/odsele/eleitorado_locais_votacao/eleitorado_local_votacao_2024.zip | scripts/baixar_tse.py, scripts/coletar_secoes.py | ✅ OK | 2026-10-24 | HTTP 200, application/zip, 45.3 MB |
 | tse_motivo_cassacao | TSE | https://cdn.tse.jus.br/estatistica/sead/odsele/motivo_cassacao/motivo_cassacao_2024.zip | scripts/baixar_tse.py | ✅ OK | 2026-10-24 | HTTP 200, application/zip, 588 KB |
 | tse_fotos | TSE | https://cdn.tse.jus.br/estatistica/sead/eleicoes/eleicoes2022/fotos/foto_cand2022_DF_div.zip | scripts/coletar_tse.py | ✅ OK | 2026-10-24 | HTTP 200, application/zip, 25.4 MB |
-| tse_fotos_2024 | TSE | https://cdn.tse.jus.br/estatistica/sead/eleicoes/eleicoes2024/fotos/foto_cand2024_DF_div.zip | scripts/coletar_tse.py | ❌ ERRO | 2026-10-24 | HTTP 404 |
+| tse_fotos_2024 | TSE | https://cdn.tse.jus.br/estatistica/sead/eleicoes/eleicoes2024/fotos/foto_cand2024_AC_div.zip | scripts/coletar_tse.py | ✅ OK | 2026-10-24 | HTTP 200, application/zip, 68.3 MB |
 | tse_dados_abertos | TSE | https://dadosabertos.tse.jus.br | links de fonte (site e README) | ✅ OK | 2026-10-24 | HTTP 200, text/html, 15 KB |
-| receita_cnpj | Receita Federal | https://arquivos.receitafederal.gov.br/public.php/webdav/2026-09/Cnaes.zip | scripts/coletar_receita.py, scripts/empresas.py | ❌ ERRO | 2026-10-24 | HTTP 401 |
+| receita_cnpj | Receita Federal | https://YggdBLfdninEJX9:@arquivos.receitafederal.gov.br/public.php/webdav/2026-09/Cnaes.zip | scripts/coletar_receita.py, scripts/empresas.py | ✅ OK | 2026-10-24 | HTTP 200, application/zip, 21 KB |
 | tse_divulgacandcontas | TSE | https://divulgacandcontas.tse.jus.br/divulga/ | site/assets/app.js (link) | ❌ ERRO | 2026-10-24 | HTTP 403 |
 | ibge_municipios | IBGE | https://servicodados.ibge.gov.br/api/v1/localidades/municipios | scripts/gerar_municipios_ibge.py | ❌ ERRO | 2026-10-24 | ConnectTimeout: HTTPSConnectionPool(host='servicodados.ibge.gov.br', port=443): Max retries exceeded with url: /api/ |
 | ibge_malha_estado | IBGE | https://servicodados.ibge.gov.br/api/v3/malhas/estados/53?formato=application/vnd.geo%2Bjson&intrarregiao=municipio&qualidade=minima | site/assets/app.js | ❌ ERRO | 2026-10-24 | ConnectTimeout: HTTPSConnectionPool(host='servicodados.ibge.gov.br', port=443): Max retries exceeded with url: /api/ |
@@ -96,16 +96,16 @@ Status: ✅ OK · ❌ ERRO (resposta com falha ou fora do ar) · ❔ não testad
 | camara_cota_limites | Links e recursos do site | https://www2.camara.leg.br/comunicacao/assessoria-de-imprensa/guia-para-jornalistas/cota-parlamentar | scripts/gerar.py, site/assets/app.js | ✅ OK | 2026-10-24 | HTTP 200, text/html |
 | camara_decreto_legislativo_172 | Links e recursos do site | https://www2.camara.leg.br/legin/fed/decleg/2022/decretolegislativo-172-21-dezembro-2022-793529-republicacao-166629-pl.html | site/assets/app.js | ✅ OK | 2026-10-24 | HTTP 200, text/html, 8 KB |
 | senado_materia_portal | Links e recursos do site | https://www25.senado.leg.br/web/atividade/materias/-/materia/99175 | site/assets/app.js | ✅ OK | 2026-10-24 | HTTP 200, text/html |
-| senado_transparencia | Links e recursos do site | https://www12.senado.leg.br/transparencia/sen/5012 | site/assets/app.js | ❌ ERRO | 2026-10-24 | HTTP 404 |
+| senado_transparencia | Links e recursos do site | https://www6g.senado.leg.br/transparencia/sen/5012 | site/assets/app.js | ✅ OK | 2026-10-24 | HTTP 200, text/html, 44 KB |
 | planalto_constituicao | Links e recursos do site | https://www.planalto.gov.br/ccivil_03/constituicao/constituicao.htm | site/assets/app.js | ✅ OK | 2026-10-24 | HTTP 200, text/html, 1.8 MB |
 | planalto_codigo_eleitoral | Links e recursos do site | https://www.planalto.gov.br/ccivil_03/leis/l4737compilado.htm | site/assets/app.js | ✅ OK | 2026-10-24 | HTTP 200, text/html, 436 KB |
 | leaflet_js | Links e recursos do site | https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js | site/assets/app.js | ✅ OK | 2026-10-24 | HTTP 200, application/javascript, 41 KB |
 | osm_tiles | Links e recursos do site | https://tile.openstreetmap.org/0/0/0.png | site/assets/app.js | ✅ OK | 2026-10-24 | HTTP 200, image/png, 6 KB |
 | google_fonts | Links e recursos do site | https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible | site/*.html | ✅ OK | 2026-10-24 | HTTP 200, text/css |
-| rs_dados_diarias | Assembleias (estaduais) | https://dados.rs.gov.br/api/3/action/package_show?id=diarias-do-estado | scripts/coletar_estadual_rs.py | ✅ OK | 2026-10-24 | HTTP 200, application/json |
+| rs_dados_diarias | Assembleias (estaduais) | https://dados.rs.gov.br/api/3/action/package_show?id=diarias-do-estado | scripts/coletar_estadual_rs.py | ❌ ERRO | 2026-10-24 | ReadTimeout: HTTPSConnectionPool(host='dados.rs.gov.br', port=443): Read timed out. (read timeout=60) |
 | es_dados_despesas | Assembleias (estaduais) | https://dados.es.gov.br/api/3/action/package_show?id=portal-da-transparencia-despesas-execucao-orcamentaria-e-financeira | scripts/coletar_estadual_es.py | ✅ OK | 2026-10-24 | HTTP 200, application/json, 87 KB |
 | rs_transparencia_diarias | Assembleias (estaduais) | https://www.transparencia.rs.gov.br/relatorios/externo/diarias-assembleia/dados/ | scripts/coletar_estadual_rs.py | ✅ OK | 2026-10-24 | HTTP 200, text/html |
-| rn_api_transparencia | Assembleias (estaduais) | https://api-transparencialegislativa.al.rn.leg.br/elegis-api-transp-legislativa/ | scripts/coletar_estadual_rn.py | ❌ ERRO | 2026-10-24 | HTTP 404 |
+| rn_api_transparencia | Assembleias (estaduais) | https://api-transparencialegislativa.al.rn.leg.br/elegis-api-transp-legislativa/parlamentar | scripts/coletar_estadual_rn.py | ✅ OK | 2026-10-24 | HTTP 200, application/json, 32 KB |
 | rn_transparencia_verbas | Assembleias (estaduais) | https://transparencia.al.rn.leg.br/verbas | scripts/coletar_estadual_rn.py | ✅ OK | 2026-10-24 | HTTP 200, text/html |
 | rn_transparencia_legislativa | Assembleias (estaduais) | https://transparencialegislativa.al.rn.leg.br | scripts/coletar_estadual_rn.py | ✅ OK | 2026-10-24 | HTTP 200, text/html |
 | rr_deputados | Assembleias (estaduais) | https://al.rr.leg.br/deputados-estaduais-2023/ | scripts/coletar_estadual_rr.py | ✅ OK | 2026-10-24 | HTTP 200, text/html, 35 KB |
@@ -113,7 +113,7 @@ Status: ✅ OK · ❌ ERRO (resposta com falha ou fora do ar) · ❔ não testad
 | rr_transparencia | Assembleias (estaduais) | https://transparencia.al.rr.leg.br | scripts/coletar_estadual_rr.py | ✅ OK | 2026-10-24 | HTTP 200, text/html |
 | pa_alepa | Assembleias (estaduais) | https://alepa.pa.gov.br/Transparencia/FrequenciaSessoes | scripts/coletar_estadual_pa.py | ✅ OK | 2026-10-24 | HTTP 200, text/html, 124 KB |
 | pa_sigep | Assembleias (estaduais) | https://sigep.alepa.pa.gov.br/transp/frame_verbagabinete.php | scripts/coletar_estadual_pa.py | ✅ OK | 2026-10-24 | HTTP 200, text/html, 6 KB |
-| pa_quartertec | Assembleias (estaduais) | https://alepa.quartertec.com.br/api/dashboard/data | scripts/coletar_estadual_pa.py | ❌ ERRO | 2026-10-24 | HTTP 500 |
+| pa_quartertec | Assembleias (estaduais) | https://alepa.quartertec.com.br/api/dashboard/data?dashboardId=dashboard57&parameters=%5B%7B%22name%22%3A%22CPF_Deputados%22%2C%22value%22%3A%227BD68C11-DC21-4571-8EF6-AAB6E15355EF%22%2C%22type%22%3A%22System.String%22%2C%22allowMultiselect%22%3Atrue%2C%22selectAll%22%3Atrue%7D%5D&itemId=gridDashboardItem2&query=%7B%22Filter%22%3A%5B%7B%22dimensions%22%3A%5B%7B%22%40ItemType%22%3A%22Dimension%22%2C%22%40DataMember%22%3A%22Ano%22%2C%22%40DefaultId%22%3A%22DataItem0%22%2C%22NumericFormat%22%3A%7B%22%40FormatType%22%3A%22General%22%7D%2C%22%40SortOrder%22%3A%22Descending%22%7D%5D%2C%22values%22%3A%5B%5B2026%5D%5D%7D%5D%7D | scripts/coletar_estadual_pa.py | ✅ OK | 2026-10-24 | HTTP 200, application/json, 45 KB |
 | se_deputados | Assembleias (estaduais) | https://al.se.leg.br/ | scripts/coletar_estadual_se.py | ✅ OK | 2026-10-24 | HTTP 200, text/html |
 | se_legis | Assembleias (estaduais) | https://aleselegis.al.se.leg.br/spl/parlamentar.aspx | scripts/coletar_estadual_se.py | ❌ ERRO | 2026-10-24 | ConnectTimeout: HTTPSConnectionPool(host='aleselegis.al.se.leg.br', port=443): Max retries exceeded with url: /spl/p |
 | ba_deputados | Assembleias (estaduais) | https://www.al.ba.gov.br/deputados/deputados-estaduais | scripts/coletar_estadual_ba.py | ✅ OK | 2026-10-24 | HTTP 200, text/html, 105 KB |
@@ -140,14 +140,14 @@ Status: ✅ OK · ❌ ERRO (resposta com falha ou fora do ar) · ❔ não testad
 | pr_transparencia | Assembleias (estaduais) | https://transparencia.assembleia.pr.leg.br/api/remuneracao | scripts/coletar_estadual_pr.py | ❌ ERRO | 2026-10-24 | HTTP 403 |
 | pr_webservices | Assembleias (estaduais) | https://webservices.assembleia.pr.leg.br/api/public/proposicao/filtrar | scripts/coletar_estadual_pr.py | ❌ ERRO | 2026-10-24 | SSLError: HTTPSConnectionPool(host='webservices.assembleia.pr.leg.br', port=443): Max retries exceeded with ur |
 | pr_consultas | Assembleias (estaduais) | https://consultas.assembleia.pr.leg.br/#/pesquisa-legislativa | scripts/coletar_estadual_pr.py | ✅ OK | 2026-10-24 | HTTP 200, text/html, 1 KB |
-| sp_dados_abertos | Assembleias (estaduais) | https://www.al.sp.gov.br/repositorioDados/ | scripts/coletar_estadual_sp.py | ❌ ERRO | 2026-10-24 | HTTP 404 |
-| sp_legis_api | Assembleias (estaduais) | https://legis-api-portal-prd.al.sp.gov.br | scripts/coletar_estadual_sp.py | ❌ ERRO | 2026-10-24 | HTTP 404 |
+| sp_dados_abertos | Assembleias (estaduais) | https://www.al.sp.gov.br/repositorioDados/deputados/deputados.xml | scripts/coletar_estadual_sp.py | ✅ OK | 2026-10-24 | HTTP 200, application/xml |
+| sp_legis_api | Assembleias (estaduais) | https://legis-api-portal-prd.al.sp.gov.br/parlamentar-portal | scripts/coletar_estadual_sp.py | ✅ OK | 2026-10-24 | HTTP 200, application/json |
 | sp_legis | Assembleias (estaduais) | https://www3.al.sp.gov.br/legis/ | scripts/coletar_estadual_sp.py | ✅ OK | 2026-10-24 | HTTP 200, text/html |
 
 ## Observações sobre os erros
 
-- **senado_transparencia**: o site monta o link em `www12.senado.leg.br/transparencia/sen/<id>` (404); o endereço que responde é `www6g.senado.leg.br/transparencia/sen/<id>`. Link quebrado em `site/assets/app.js`.
-- **tse_votacao_secao_2024** e **tse_fotos_2024**: o TSE não publica esses arquivos para 2024 (só 2022); os coletores avisam e seguem.
+- **senado_transparencia**: o link antigo `www12.senado.leg.br/transparencia/sen/<id>` dava 404; o site passou a usar `www6g.senado.leg.br/transparencia/sen/<id>` (`site/assets/js/senador.js`, `site/assets/js/comum.js`).
+- **tse_votacao_secao_2024** e **tse_fotos_2024**: a sonda usa o AC; o DF não tem eleição municipal e dá 404 em 2024 (os arquivos existem para as demais UFs).
 - **tse_divulgacandcontas**: responde 403 a clientes automatizados; é só link para o navegador (pode funcionar para pessoas).
 - **sapl_*_PB (Assembleia da Paraíba)**: o servidor não responde (timeout de 60 s).
 - **Assembleias estaduais bloqueadas ou fora do ar (2026-10-22)**: `www.al.ap.leg.br`, `www.cl.df.gov.br`, `www.al.es.gov.br` e `sistemas.al.ma.leg.br` dão timeout de qualquer ferramenta (sem coletor). `sapl.al.rr.leg.br` responde 403 a clientes automatizados; `albalegis.nopapercloud.com.br` (BA) dá 403 do Cloudflare; `sgpl.consulta.al.ms.gov.br` (MS) pede captcha; `api-transparencia.al.rn.leg.br` (RN) exige token Bearer; `consultas.assembleia.pr.leg.br` (PR) usa reCAPTCHA; `aleselegis.al.se.leg.br` e `www.al.mt.gov.br` não respondem. São só links de fonte ou hosts não coletados.

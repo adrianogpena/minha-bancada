@@ -107,7 +107,7 @@ def gerar(saida, deputados: dict, detalhes: dict, autorias: dict, votacoes_proje
                     for v in sorted(nominais_sen.get(mid, []), key=lambda x: x["data"], reverse=True)[:MAX_VOTACOES]]
         fichas[f"s-{a['ano']}"][mid] = _sem_vazios({"ap": a.get("dataApresentacao"), "au": sorted(m["autores"], key=lambda x: not x.get("p")), "v": votacoes})
 
-    indice.sort(key=lambda i: (i["a"], i["n"]), reverse=True)
+    indice.sort(key=lambda i: (int(i["a"] or 0), int(i["n"] or 0)), reverse=True)
     salvar(saida / "proposicoes.json", indice)
     salvar(saida / "nucleo" / "autorias.json", {"proposicoes": len(indice), "semPessoa": sem_pessoa,
                                                  "porPessoa": {k: sorted(v, key=lambda x: x[0]) for k, v in sorted(por_pessoa.items())}})

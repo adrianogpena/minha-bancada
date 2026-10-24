@@ -4,7 +4,8 @@ doadores) a partir do ZIP do TSE baixado por scripts/baixar_tse.py, e guarda um 
 UF em dados/tse/contas/<ano>/<UF>.json (vai para o git; o ZIP em dados/tse_bruto/ não).
 
 Só roda na sua máquina: o ZIP tem 0,5 a 1,3 GB e anos encerrados não mudam. O Actions
-só lê os JSONs resumidos. Não guarda CPF de doadores, só o nome que consta na prestação. Os doadores originários
+só lê os JSONs resumidos. Não guarda CPF de doadores, só o nome que consta na prestação; de doador pessoa jurídica guarda também o
+CNPJ (`doadoresPJ`, `originariosPJ`: todos, não só os cinco maiores), que o scripts/doadores.py cruza com os fornecedores das cotas. Os doadores originários
 (arquivo receitas_candidatos_doador_originario) mostram quem está por trás dos repasses de
 partido e de outros candidatos.
 
@@ -26,6 +27,8 @@ import zipfile
 from collections import defaultdict
 from pathlib import Path
 
+from fornecedores import documento
+
 RAIZ = Path(__file__).resolve().parent.parent
 TSE = RAIZ / "dados" / "tse"
 ZIPS = RAIZ / "dados" / "tse_bruto" / "prestacao_contas"
@@ -34,7 +37,7 @@ TOP_DOADORES = 5
 TOP_GASTOS = 6
 TOP_ORIGINARIOS = 5
 REPASSES = ("partido", "outros candidatos")
-VERSAO = 3
+VERSAO = 4
 
 csv.field_size_limit(1 << 24)
 
@@ -76,6 +79,7 @@ def coletar_ano(ano: int) -> None:
     repasse = {}  # SQ_RECEITA de repasse de partido/outro candidato -> SQ_CANDIDATO
     por_origem = defaultdict(lambda: defaultdict(float))
     doadores = defaultdict(dict)  # sq -> chave do doador -> [nome, origem, valor]
+    doadores_pj = defaultdict(dict)  # sq -> CNPJ do doador -> [nome, origem, valor]
     for lin in linhas(zip_path, f"receitas_candidatos_{ano}_BRASIL.csv"):
         sq = lin["SQ_CANDIDATO"]
         if sq not in alvo:
@@ -92,14 +96,21 @@ def coletar_ano(ano: int) -> None:
         if nome:
             d = doadores[sq].setdefault(nulo(lin["NR_CPF_CNPJ_DOADOR"]) or nome, [nome, origem, 0.0])
             d[2] += v
+            doc = documento(lin["NR_CPF_CNPJ_DOADOR"])
+            if doc and doc[0] == "cnpj":
+                doadores_pj[sq].setdefault(doc[1], [nome, origem, 0.0])[2] += v
 
     originarios = defaultdict(dict)  # sq -> chave do doador -> [nome, valor]
+    originarios_pj = defaultdict(dict)  # sq -> CNPJ do doador originário -> [nome, valor]
     for lin in linhas(zip_path, f"receitas_candidatos_doador_originario_{ano}_BRASIL.csv"):
         sq = repasse.get(lin["SQ_RECEITA"])
         nome = sq and (nulo(lin["NM_DOADOR_ORIGINARIO_RFB"]) or nulo(lin["NM_DOADOR_ORIGINARIO"]))
         if nome:
             d = originarios[sq].setdefault(nulo(lin["NR_CPF_CNPJ_DOADOR_ORIGINARIO"]) or nome, [nome, 0.0])
             d[1] += valor(lin["VR_RECEITA"])
+            doc = documento(lin["NR_CPF_CNPJ_DOADOR_ORIGINARIO"])
+            if doc and doc[0] == "cnpj":
+                originarios_pj[sq].setdefault(doc[1], [nome, 0.0])[1] += valor(lin["VR_RECEITA"])
 
     despesa = defaultdict(float)
     por_gasto = defaultdict(lambda: defaultdict(float))
@@ -133,6 +144,8 @@ def coletar_ano(ano: int) -> None:
             "origensReceita": sorted(([k, round(v, 2)] for k, v in por_origem[sq].items() if v), key=lambda x: -x[1]),
             "principaisDoadores": [[n, o, round(v, 2)] for n, o, v in top if v > 0],
             "doadoresOriginarios": [[n, round(v, 2)] for n, v in orig if v > 0],
+            "doadoresPJ": sorted(([c, n, o, round(v, 2)] for c, (n, o, v) in doadores_pj[sq].items() if v > 0), key=lambda d: d[0]),
+            "originariosPJ": sorted(([c, n, round(v, 2)] for c, (n, v) in originarios_pj[sq].items() if v > 0), key=lambda d: d[0]),
             "gastosPorCategoria": [[k, round(v, 2)] for k, v in gastos if v > 0],
         }
     pasta = TSE / "contas" / str(ano)

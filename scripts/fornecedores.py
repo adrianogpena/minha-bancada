@@ -217,6 +217,8 @@ def construir(deputados: dict, bruto: Path, nucleo: dict) -> dict:
         por_casa.update(f["casas"])
     return {
         "entidades": entidades,
+        # em memória, para scripts/doadores.py: id do fornecedor -> [(casa, uf, id na Casa, pessoa, valor)]; não vai para o site
+        "recebimentos": {f["id"]: [(*q, f["info"][q][2], round(v, 2)) for q, v in f["politicos"].items()] for f, _, _ in ranking},
         "ranking": {"ano": ano, "fornecedores": topo,
                     "resumo": {"total": round(sum(f["total"] for f, _, _ in ranking), 2), "fornecedores": len(entidades),
                                "porCasa": {c: round(v, 2) for c, v in por_casa.items()},

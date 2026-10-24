@@ -25,6 +25,11 @@ Nome em registro (autor de projeto, favorecido de diária, gabinete, voto...) ->
 deputados, uf)` é o único lugar que compara nomes de registros das Assembleias; os coletores só chamam. `ESTRATEGIAS[uf]` guarda
 a regra de cada UF. O resultado de cada coleta vai para dados/estaduais/<UF>/ligacoes.json (`gravar_ligacoes`) e `construir` junta
 tudo em `ligacoes.json` do núcleo, com a pessoa. Correção manual: scripts/ligacoes_manuais.json.
+
+Doador de campanha -> fornecedor das cotas: `ligar_doadores(doadores, fornecedores)`, só para fornecedor com CNPJ (pessoa jurídica):
+  cnpj (alta)   os 8 primeiros dígitos do CNPJ do doador (prestação de contas do TSE) são o id `for_<8 dígitos>` do fornecedor
+  nome (média)  doador sem CNPJ na fonte (coleta antiga): nome padronizado igual ao de um único fornecedor com CNPJ
+Nome que casa com mais de um fornecedor não liga (`ambiguos`). `scripts/doadores.py` só chama; o resultado vai para `ligacoes.json` (`doadores`).
 """
 
 import difflib
@@ -34,6 +39,7 @@ from collections import Counter, defaultdict
 from pathlib import Path
 
 import estaduais_comum as comum
+from fornecedores import nome_chave
 from gerar_politicos import ler, salvar
 from ids import gerar_id
 
@@ -422,6 +428,28 @@ def ligar_nomes(nomes, deputados: list[dict], uf: str | None = None) -> dict:
             else:
                 log["semPar"].add(n)
     return {n: i for n, (i, _, _) in ligados.items()}
+
+
+def ligar_doadores(doadores, fornecedores: list[dict]) -> tuple[dict, dict]:
+    """`doadores`: [(chave, nome, cnpj ou None)] como a prestação de contas publica; `fornecedores`: nucleo/fornecedores.json.
+    Devolve ({chave: [id do fornecedor, método, confiança]}, {chave: [ids]}) com o que ligou e o que ficou ambíguo."""
+    empresas = {f["id"]: f for f in fornecedores if f.get("tipo") == "PJ"}
+    por_nome = defaultdict(set)
+    for f in empresas.values():
+        for n in (f["nome"], *f.get("nomes", ())):
+            if nome_chave(n):
+                por_nome[nome_chave(n)].add(f["id"])
+    ligados, ambiguos = {}, {}
+    for chave, nome, cnpj in doadores:
+        if cnpj:
+            if (id_ := f"for_{cnpj[:8]}") in empresas:
+                ligados[chave] = [id_, "cnpj", "alta"]
+        elif (ids := por_nome.get(nome_chave(nome), set())):
+            if len(ids) == 1:
+                ligados[chave] = [next(iter(ids)), "nome", "média"]
+            else:
+                ambiguos[chave] = sorted(ids)
+    return ligados, ambiguos
 
 
 def _tokens_sp(nome: str) -> list[str]:

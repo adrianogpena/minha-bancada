@@ -24,6 +24,13 @@
 <p class="contagem" id="contagem" aria-live="polite">Carregando…</p>
 <p class="nota-lista">Valores das notas lançadas no ano. O CNPJ ou CPF vem como cada fonte publica; documento com dígito verificador inválido é ignorado e, quando o mesmo nome aparece com um único CNPJ em outra nota, a nota entra nesse fornecedor. Fornecedor sem documento aparece pelo nome. Fontes: <a href="https://www.camara.leg.br/cotas/" rel="noopener">cota parlamentar (Câmara)</a>, <a href="https://adm.senado.gov.br/adm-dadosabertos" rel="noopener">CEAPS (Senado)</a> e os portais de transparência das Assembleias, que cada ficha de deputado estadual cita.</p>
 <div id="resultado"></div>
+<section id="doadores" hidden>
+  <h2>Empresas que doaram a campanhas e receberam da cota</h2>
+  <p class="nota-lista">Cruzamento exato entre duas fontes oficiais: o CNPJ de empresas que constam como doadoras (ou como origem de um repasse) na prestação de contas de um eleito e o CNPJ de fornecedores das cotas e verbas. Cada linha mostra a fonte e como as duas se ligaram. É só coincidência de cadastro: não indica irregularidade. Pessoa física fica de fora, porque o nome sozinho confunde homônimos.</p>
+  <p class="contagem" id="contagem-doadores" aria-live="polite"></p>
+  <div id="resultado-doadores"></div>
+  <p class="nota-lista" id="fontes-doadores"></p>
+</section>
 </main>
 <script type="module" src="assets/app.js"></script>
 </body>

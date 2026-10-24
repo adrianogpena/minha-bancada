@@ -14,6 +14,7 @@ from pathlib import Path
 
 import categorias
 import gerar_estaduais
+import doadores
 import fornecedores as nucleo_fornecedores
 import candidaturas
 import identidades
@@ -541,10 +542,14 @@ def main():
                                     ler(BRUTO / "senado.json", []) or [], ler(BRUTO / "senado_autorias.json", {}) or {},
                                     votacoes_senado, TIPOS_PROJETO, destino_projeto, nucleo["chaves"])
     print(f"Gerado: {total} proposições para a busca")
+    forn = nucleo_fornecedores.construir(deputados, BRUTO, nucleo)
+    cruzamento = doadores.construir(BRUTO, nucleo, forn)
+    nucleo["ligacoes"]["doadores"] = cruzamento["ligacoes"]   # a tabela de ligações é uma só: o cruzamento entra antes de salvá-la
     identidades.salvar_nucleo(nucleo, SAIDA / "nucleo")
     candidaturas.salvar_candidaturas(candidaturas.construir(BRUTO, nucleo), SAIDA)
     mandatos.salvar_mandatos(mandatos.construir(deputados, BRUTO, nucleo), SAIDA)
-    nucleo_fornecedores.salvar_fornecedores(nucleo_fornecedores.construir(deputados, BRUTO, nucleo), SAIDA)
+    nucleo_fornecedores.salvar_fornecedores(forn, SAIDA)
+    doadores.salvar_doadores(cruzamento, SAIDA)
     gerar_politicos.gerar(deputados, gerar_estaduais.gerar(), nucleo["chaves"])
     gerar_prefeituras.gerar()
     gerar_eleitorado()

@@ -17,8 +17,8 @@ Uso (antes, rode `python scripts/gerar.py` para existir o núcleo de fornecedore
     python scripts/coletar_receita.py                        # lê os ZIPs baixados e grava dados/receita/
     python scripts/coletar_receita.py --mes 2026-09
 
-Fonte: https://arquivos.receitafederal.gov.br/dados/cnpj/dados_abertos_cnpj (Cadastro Nacional da Pessoa Jurídica, dados abertos;
-`RFB_BASE` troca o endereço). Layout dos arquivos: "Metadados do CNPJ", na mesma página da Receita.
+Fonte: https://arquivos.receitafederal.gov.br/index.php/s/YggdBLfdninEJX9 (compartilhamento público, acessado por WebDAV; Cadastro Nacional da Pessoa Jurídica, dados abertos;
+`RFB_BASE` e `RFB_TOKEN` trocam o endereço e o token). Layout dos arquivos: "Metadados do CNPJ", na mesma página da Receita.
 """
 
 import argparse
@@ -38,7 +38,8 @@ RAIZ = Path(__file__).resolve().parent.parent
 BRUTO = RAIZ / "dados" / "receita_bruto"
 DESTINO = RAIZ / "dados" / "receita"
 FORNECEDORES = RAIZ / "site" / "dados" / "nucleo" / "fornecedores.json"
-BASE = os.environ.get("RFB_BASE", "https://arquivos.receitafederal.gov.br/dados/cnpj/dados_abertos_cnpj")
+BASE = os.environ.get("RFB_BASE", "https://arquivos.receitafederal.gov.br/public.php/webdav")
+TOKEN = os.environ.get("RFB_TOKEN", "YggdBLfdninEJX9")
 PARTES = range(10)
 MAX_SOCIOS = 30
 MAX_SECUNDARIOS = 20
@@ -159,6 +160,7 @@ def competencia_local(mes: str | None) -> str:
 def baixar(mes: str) -> None:
     import requests
     s = requests.Session()
+    s.auth = (TOKEN, "")
     s.headers["User-Agent"] = "minha-bancada (projeto de transparencia)"
     for nome in arquivos():
         destino = BRUTO / mes / nome

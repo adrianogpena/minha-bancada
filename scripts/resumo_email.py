@@ -197,8 +197,8 @@ def resumo_longo(d: dict) -> str:
     return " · ".join(a.replace(" — ", ": ") for a, _ in linhas(d))
 
 
-def montar(d: dict, titulo: str, rodape: tuple[str, str] = ("", ""), detalhes: str | None = None, sumario: bool = True) -> tuple[str, str]:
-    """`detalhes`: link da página do histórico diário, com todos os itens e as fontes."""
+def montar(d: dict, titulo: str, rodape: tuple[str, str] = ("", ""), detalhes: str | None = None, sumario: bool = True, dias: int = 1) -> tuple[str, str]:
+    """`detalhes`: link da página do histórico diário, com todos os itens e as fontes. `dias` > 1 (aviso semanal ou mensal): o texto manda conferir os últimos `dias` dias no histórico, a partir do dia do link."""
     secoes = linhas(d)
     if not secoes:
         txt = "Nenhum dado novo nesta execução."
@@ -213,8 +213,12 @@ def montar(d: dict, titulo: str, rodape: tuple[str, str] = ("", ""), detalhes: s
             h.append("<ul style='font:13px Arial;color:#333;padding-left:18px'>" + "".join(f"<li style='margin:3px 0'>{html.escape(i)}</li>" for i in itens) + "</ul>")
         t += ["", a] + [f"  - {i}" for i in itens]
     if detalhes:
-        h.append(f"<p style='font:14px Arial'><b>Quer mais detalhes?</b> Veja cada item, com a fonte oficial, em <a href='{html.escape(detalhes)}'>{html.escape(detalhes)}</a></p>")
-        t += ["", f"Quer mais detalhes? Veja cada item, com a fonte oficial: {detalhes}"]
+        if dias > 1:
+            pedido = f"Abra o histórico no dia do aviso e confira os últimos {dias} dias, com cada item e a fonte oficial"
+        else:
+            pedido = "Veja cada item, com a fonte oficial"
+        h.append(f"<p style='font:14px Arial'><b>Quer mais detalhes?</b> {pedido}, em <a href='{html.escape(detalhes)}'>{html.escape(detalhes)}</a></p>")
+        t += ["", f"Quer mais detalhes? {pedido}: {detalhes}"]
     h.append(f"<p style='font:12px Arial;color:#666'>Ver no site: <a href='{SITE}'>{SITE}</a></p>{rodape[0]}")
     t += ["", f"Ver no site: {SITE}"] + ([rodape[1]] if rodape[1] else [])
     return "<div style='max-width:680px;margin:auto'>" + "".join(h) + "</div>", "\n".join(t)

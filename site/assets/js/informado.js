@@ -53,10 +53,14 @@ export async function paginaInformado() {
       </fieldset>
       <fieldset id="sec-email" hidden>
         <legend>4. Prefere por e-mail? <small>(opcional)</small></legend>
-        <p class="dica-form">Um e-mail por dia, só quando houver novidade <b>nos itens de "Seus feeds"</b>, listados abaixo. O que você não escolheu não é enviado. Seu endereço é <b>criptografado no seu navegador</b> antes de sair: o site e a planilha onde fica o cadastro só guardam texto ilegível. Só o robô diário do GitHub, que tem a chave, consegue abri-lo para enviar o aviso. Quem administra o projeto controla esse robô e, tecnicamente, poderia mudá-lo para ler os endereços; se isso não é aceitável para você, use o RSS acima, que não pede nenhum dado.</p>
+        <p class="dica-form">Um e-mail por dia, por semana ou por mês (você escolhe), só quando houver novidade <b>nos itens de "Seus feeds"</b>, listados abaixo. O que você não escolheu não é enviado. Seu endereço é <b>criptografado no seu navegador</b> antes de sair: o site e a planilha onde fica o cadastro só guardam texto ilegível. Só o robô diário do GitHub, que tem a chave, consegue abri-lo para enviar o aviso. Quem administra o projeto controla esse robô e, tecnicamente, poderia mudá-lo para ler os endereços; se isso não é aceitável para você, use o RSS acima, que não pede nenhum dado.</p>
         <div class="resumo-escolhas" id="email-escolhas" role="status" aria-live="polite"></div>
         <form id="form-email" novalidate>
-          <label class="campo">E-mail<input id="inf-email" type="email" autocomplete="email" placeholder="voce@exemplo.com"></label>
+          <div class="linha-email">
+            <label class="campo">E-mail<input id="inf-email" type="email" autocomplete="email" placeholder="voce@exemplo.com"></label>
+            <label class="campo">Frequência
+              <select id="inf-freq"><option value="diario" selected>Diário</option><option value="semanal">Semanal (segunda-feira)</option><option value="mensal">Mensal (dia 1)</option></select></label>
+          </div>
           <p><button type="submit" class="botao" id="inf-enviar">Quero receber por e-mail</button></p>
           <p class="aviso-form" id="inf-msg" role="status" aria-live="polite"></p>
         </form>
@@ -158,7 +162,7 @@ export async function paginaInformado() {
         const token = hex(crypto.getRandomValues(new Uint8Array(32)));   // só vai no e-mail de quem assina; a planilha guarda o SHA-256 dele
         const aes = await crypto.subtle.generateKey({ name: "AES-GCM", length: 256 }, true, ["encrypt"]);
         const iv = crypto.getRandomValues(new Uint8Array(12));
-        const dados = enc.encode(JSON.stringify({ email, token, locais, politicos, rotulos: [...escolhidos.values()] }));
+        const dados = enc.encode(JSON.stringify({ email, token, freq: $("#inf-freq").value, locais, politicos, rotulos: [...escolhidos.values()] }));
         const cifrado = await crypto.subtle.encrypt({ name: "AES-GCM", iv }, aes, dados);
         const rsa = await crypto.subtle.importKey("jwk", chavePublica, { name: "RSA-OAEP", hash: "SHA-256" }, false, ["encrypt"]);
         const k = await crypto.subtle.encrypt({ name: "RSA-OAEP" }, rsa, await crypto.subtle.exportKey("raw", aes));

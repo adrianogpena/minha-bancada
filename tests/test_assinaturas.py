@@ -37,6 +37,22 @@ def test_decifrar_ok(privada):
     assert d["rotulos"] == ["Brasil"]
 
 
+def test_decifrar_frequencia(privada):
+    base = {"email": "a@b.co", "locais": ["BR"]}
+    assert a.decifrar(cifrar(privada, base), privada)["freq"] == "diario"
+    assert a.decifrar(cifrar(privada, {**base, "freq": "semanal"}), privada)["freq"] == "semanal"
+    assert a.decifrar(cifrar(privada, {**base, "freq": "xyz"}), privada)["freq"] == "diario"
+
+
+def test_janela():
+    assert a.janela("diario", "2026-10-26") is None
+    assert a.janela("semanal", "2026-10-26")[0] == "2026-10-19"
+    assert a.janela("semanal", "2026-10-27") is None
+    assert a.janela("mensal", "2026-11-01")[0] == "2026-10-01"
+    assert a.janela("mensal", "2026-11-02") is None
+    assert a.janela("mensal", "2026-01-01")[1].endswith("12/2025")
+
+
 def test_decifrar_filtra_regras_invalidas(privada):
     linha = cifrar(privada, {"email": "a@b.co", "locais": ["BR", "XX", "UF:sp", "<script>"], "politicos": ["dep:abc", "pres"]})
     assert a.decifrar(linha, privada)["regras"] == {"BR", "pres"}

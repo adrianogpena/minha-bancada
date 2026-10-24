@@ -311,6 +311,10 @@ select:disabled { opacity: .55; }
 .informado legend { font: 700 18px var(--display); padding: 0 6px; }
 .informado legend small { font: 400 14px var(--texto); color: var(--tinta-suave); }
 .informado .filtros { margin-top: 4px; }
+.linha-email { display: flex; gap: 10px; align-items: flex-end; }
+.linha-email .campo:first-child { flex: 1; min-width: 0; }
+.linha-email .campo:last-child { flex: none; }
+@media (max-width: 520px) { .linha-email { flex-wrap: wrap; } .linha-email .campo { flex: 1 1 100%; } }
 .informado .itens, .informado .escolhas { list-style: none; margin: 8px 0; padding: 0; }
 .informado li { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 8px 0; border-bottom: 1px solid var(--linha); }
 .informado li button { font: 700 14px var(--texto); border: 1.5px solid var(--linha); background: none; color: var(--tinta); border-radius: var(--raio); padding: 4px 10px; cursor: pointer; white-space: nowrap; }

@@ -424,7 +424,7 @@ jobs:
           ASSINANTES_CHAVE_PRIVADA: ${{ secrets.ASSINANTES_CHAVE_PRIVADA }}
         run: |
           if [ -z "$SMTP_HOST" ] || [ -z "$ASSINANTES_URL" ]; then echo "Segredos de assinantes não configurados; pulando."; exit 0; fi
-          git fetch --deepen=50 -q || true
+          git fetch --shallow-since="70 days ago" -q origin master || true   # o aviso mensal compara com o início do mês anterior
           DEPOIS=$(git log -1 --grep='^Dados atualizados em' --format=%H)
           # sem commit de hoje (nada mudou), não manda aviso; confirmações pendentes esperam o próximo dia com dados
           [ -n "$DEPOIS" ] && [ "$(git log -1 --format=%cs "$DEPOIS")" = "$(date -u +%F)" ] && python scripts/assinaturas.py "$DEPOIS~1" "$DEPOIS" --enviar

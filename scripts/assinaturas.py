@@ -6,7 +6,8 @@ manda para o Apps Script (assinaturas/apps_script.gs), que só guarda texto cifr
 GitHub Actions com a chave privada (segredo ASSINANTES_CHAVE_PRIVADA), consegue ler. Ele:
   1. decifra as linhas e junta as do mesmo e-mail (vale a confirmada mais nova);
   2. manda o e-mail de confirmação das novas (uma por e-mail e dia) e apaga as linhas substituídas ou ilegíveis;
-  3. manda a cada assinante confirmado só o que mudou no escopo dele (mesma seleção dos feeds RSS, scripts/feeds.py).
+  3. manda a cada assinante confirmado só o que mudou no escopo dele (mesma seleção dos feeds RSS, scripts/feeds.py):
+     todo dia (diário), na segunda-feira com a semana anterior (semanal) ou no dia 1 com o mês anterior (mensal).
 Nada que identifique alguém vai para o log. Variáveis: ASSINANTES_URL, ASSINANTES_CHAVE, ASSINANTES_CHAVE_PRIVADA
 e as SMTP_* de resumo_email.py.
 
@@ -28,6 +29,7 @@ import sys
 import urllib.parse
 import urllib.request
 from collections import defaultdict
+from datetime import date, timedelta
 from pathlib import Path
 
 from cryptography.hazmat.primitives import hashes, serialization
@@ -41,6 +43,7 @@ LOCAL = re.compile(r"^(BR|(UF|MUN):[A-Z]{2})$")
 POLITICO = re.compile(r"^(pres|dep:\d+|gov:[A-Z]{2}|est:[A-Z]{2}:\d+|pref:[A-Z]{2})$")
 EMAIL = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
 TOKEN = re.compile(r"^[0-9a-f]{64}$")
+FREQUENCIAS = ("diario", "semanal", "mensal")   # cadastro sem "freq" (anterior ao dropdown) vale diário
 
 
 def chamar(url: str, **params) -> object:
@@ -60,7 +63,8 @@ def decifrar(linha: dict, privada) -> dict | None:
         politicos = [x for x in d.get("politicos", []) if isinstance(x, str) and POLITICO.match(x)][:60]
         if not locais and not politicos:
             return None
-        return {"email": email, "token": token, "regras": set(locais) | set(politicos),
+        freq = d.get("freq") if d.get("freq") in FREQUENCIAS else "diario"
+        return {"email": email, "token": token, "freq": freq, "regras": set(locais) | set(politicos),
                 "rotulos": [str(x)[:120] for x in d.get("rotulos", [])][:90], "h": linha["h"], "criado": linha.get("criado", ""),
                 "confirmado": bool(linha.get("confirmado")), "enviada": bool(linha.get("enviada"))}
     except Exception:
@@ -89,6 +93,25 @@ def organizar(linhas: list[dict], privada) -> tuple[list[dict], list[dict], list
     return ativos, pendentes, apagar
 
 
+def janela(freq: str, data: str) -> tuple[str, str] | None:
+    """(início, título) do período que o aviso `freq` cobre no dia `data` (AAAA-MM-DD), ou None se não é dia de enviar.
+    Semanal sai na segunda-feira e cobre os 7 dias anteriores; mensal sai no dia 1 e cobre o mês anterior."""
+    dia = date.fromisoformat(data)
+    br = lambda d: d.strftime("%d/%m/%Y")
+    if freq == "semanal" and dia.weekday() == 0:
+        ini = dia - timedelta(days=7)
+        return ini.isoformat(), f"Minha Bancada — suas atualizações da semana, de {br(ini)} a {br(dia - timedelta(days=1))}"
+    if freq == "mensal" and dia.day == 1:
+        fim = dia - timedelta(days=1)
+        return fim.replace(day=1).isoformat(), f"Minha Bancada — suas atualizações de {fim.month:02d}/{fim.year}"
+    return None
+
+
+def commit_antes_de(inicio: str, depois: str) -> str:
+    """Último commit anterior ao dia `inicio`; sem ele (histórico raso), o mais antigo disponível."""
+    return r.git("rev-list", "-1", f"--before={inicio}T00:00:00Z", depois).strip() or r.git("rev-list", "--max-parents=0", depois).split()[-1]
+
+
 def link(acao: str, token: str) -> str:
     base = os.environ["ASSINANTES_URL"]
     return f"{base}{'&' if '?' in base else '?'}{urllib.parse.urlencode({'acao': acao, 't': token})}"
@@ -101,7 +124,10 @@ def rodape(a: dict) -> tuple[str, str]:
     if a["rotulos"]:
         h += f"Você acompanha: {html.escape('; '.join(a['rotulos']))}.<br>"
         t += f"Você acompanha: {'; '.join(a['rotulos'])}.\n"
-    return h + f"Não quer mais receber? <a href='{html.escape(cancelar)}'>Cancelar o aviso</a>.</p>", t + f"Cancelar o aviso: {cancelar}"
+    freq = {"diario": "diário", "semanal": "semanal", "mensal": "mensal"}[a.get("freq", "diario")]
+    h += f"Frequência do aviso: {freq}. Para mudar, faça um novo cadastro na página Fique informado.<br>"
+    t += f"Frequência do aviso: {freq}. Para mudar, faça um novo cadastro na página Fique informado.\n"
+    return h + f"Não quer mais receber?<a href='{html.escape(cancelar)}'>Cancelar o aviso</a>.</p>", t + f"Cancelar o aviso: {cancelar}"
 
 
 def confirmacao(a: dict) -> tuple[str, str]:
@@ -140,11 +166,22 @@ def main() -> None:
         completo, deps_uf = r.coletar(a.antes, a.depois), feeds.deputados_por_uf()
         if not deps_uf:
             print("Aviso: site/dados/indice ausente; avisos por estado não incluem a bancada federal.", file=sys.stderr)
+        periodos = {}   # freq -> (título, mudanças do período) ou None; calculado uma vez por frequência
         for ass in ativos:
-            parte = feeds.selecionar(completo, ass["regras"], deps_uf)
+            freq = ass["freq"]
+            if freq == "diario":
+                tit, dados, dias = titulo, completo, 1
+            else:
+                if freq not in periodos:
+                    j = janela(freq, data)
+                    periodos[freq] = j and (j[1], r.coletar(commit_antes_de(j[0], a.depois), a.depois), (date.fromisoformat(data) - date.fromisoformat(j[0])).days)
+                if not periodos[freq]:
+                    continue
+                tit, dados, dias = periodos[freq]
+            parte = feeds.selecionar(dados, ass["regras"], deps_uf)
             if not feeds.vazio(parte):
-                h, t = r.montar(parte, titulo, rodape(ass), detalhes=r.link_historico(data, ass["regras"]))
-                envios.append((ass, titulo, h, t, {"List-Unsubscribe": f"<{link('cancelar', ass['token'])}>"}))
+                h, t = r.montar(parte, tit, rodape(ass), detalhes=r.link_historico(data, ass["regras"]), dias=dias)
+                envios.append((ass, tit, h, t, {"List-Unsubscribe": f"<{link('cancelar', ass['token'])}>"}))
     for ass in pendentes:
         h, t = confirmacao(ass)
         envios.append((ass, "Confirme seu aviso do Minha Bancada", h, t, {}))

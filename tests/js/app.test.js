@@ -6,7 +6,7 @@ const path = require("node:path");
 globalThis.window = {};
 const js = (nome) => require(path.join(__dirname, "../../site/assets/js", nome));
 const { esc, reais, reaisCentavos, pct, data, semAcento, urlSegura } = js("util.js");
-const { urlLegivel, fontes, temResultado, tramitandoNoAno } = js("apis.js");
+const { urlLegivel, fontes, temResultado, movimentadoNoAno } = js("apis.js");
 const { resumosEstadual } = js("estadual.js");
 const { linksRedes } = js("ficha.js");
 const { foto } = js("comum.js");
@@ -19,13 +19,13 @@ test("temResultado deixa de fora a votação sem aprovada nem rejeitada", () => 
   assert.equal(temResultado({}), false);
 });
 
-test("tramitandoNoAno pega só projeto andando com situação atualizada no ano", () => {
-  const andando = { situacao: "Aguardando Parecer", dataSituacao: "2026-03-10" };
-  assert.equal(tramitandoNoAno(andando, 2026), true);
-  assert.equal(tramitandoNoAno({ ...andando, dataSituacao: "2025-08-22" }, 2026), false);
-  assert.equal(tramitandoNoAno({ ...andando, situacao: "Arquivada" }, 2026), false);
-  assert.equal(tramitandoNoAno({ ...andando, emTramitacao: false }, 2026), false);
-  assert.equal(tramitandoNoAno({ situacao: "Aguardando Parecer" }, 2026), false);
+test("movimentadoNoAno pega o projeto com situação atualizada no ano, qualquer que seja o desfecho", () => {
+  const p = { situacao: "Aguardando Parecer", dataSituacao: "2026-03-10" };
+  assert.equal(movimentadoNoAno(p, 2026), true);
+  assert.equal(movimentadoNoAno({ ...p, situacao: "Arquivada" }, 2026), true);
+  assert.equal(movimentadoNoAno({ ...p, situacao: "Transformado em Norma Jurídica" }, 2026), true);
+  assert.equal(movimentadoNoAno({ ...p, dataSituacao: "2025-08-22" }, 2026), false);
+  assert.equal(movimentadoNoAno({ situacao: "Aguardando Parecer" }, 2026), false);
 });
 
 test("esc escapa HTML e trata nulos", () => {

@@ -14,8 +14,8 @@ export const resultado = (a) => (a === 1 ? ["Aprovada", "aprovada"] : a === 0 ? 
 export const TIPOS_PROJETO = { PL: "Projeto de lei", PLP: "Projeto de lei complementar", PEC: "Proposta de emenda à Constituição", PDL: "Projeto de decreto legislativo",
   PRC: "Projeto de resolução", PLC: "Projeto de lei da Câmara", PLS: "Projeto de lei do Senado", PRS: "Projeto de resolução do Senado", PDS: "Projeto de decreto legislativo do Senado", PLN: "Projeto de lei do Congresso", PFC: "Proposta de fiscalização e controle", PLV: "Projeto de lei de conversão", MPV: "Medida provisória" };
 
-/* Projeto em tramitação com a situação atualizada no ano `ano` (o que a página destaca no topo das propostas). */
-export const tramitandoNoAno = (p, ano) => desfecho(p)[1] === "tramitando" && p.emTramitacao !== false && String(p.dataSituacao || "").startsWith(String(ano));
+/* Projeto com a situação atualizada no ano `ano`, qualquer que seja o desfecho (o que a página destaca no topo das propostas). */
+export const movimentadoNoAno = (p, ano) => String(p.dataSituacao || "").startsWith(String(ano));
 
 // resume a situação da Câmara em um destino compreensível
 export function desfecho(p) {

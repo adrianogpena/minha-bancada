@@ -1,7 +1,7 @@
 /* Montagem da ficha de um parlamentar (deputado ou senador). */
 import { $, esc, pct, data, urlSegura } from "./util.js";
 import { VOTOS, foto, selo, legenda, listaPaginada, abas, ligarAbas } from "./comum.js";
-import { CAMARA_API, resultado, desfecho, tramitandoNoAno, fontes } from "./apis.js";
+import { CAMARA_API, resultado, desfecho, movimentadoNoAno, fontes } from "./apis.js";
 import { barraPlacar } from "./votacoes.js";
 import { LEGENDA_PROJETOS, avisoDados } from "./executivo.js";
 
@@ -172,10 +172,13 @@ export function montarParlamentar(alvo, c) {
   mostrarProj("todos");
 
   const anoAtual = new Date().getFullYear();
-  const destaque = projetos.filter((p) => tramitandoNoAno(p, anoAtual)).sort((a, b) => b.dataSituacao.localeCompare(a.dataSituacao));
+  const destaque = projetos.filter((p) => movimentadoNoAno(p, anoAtual)).sort((a, b) => b.dataSituacao.localeCompare(a.dataSituacao));
   if (destaque.length) {
-    $("#destaque-ano").innerHTML = `<h2>Em tramitação em ${anoAtual} <small class="sub">(${destaque.length})</small></h2>
-      <p>Projetos que seguem andando e tiveram a situação atualizada neste ano, do movimento mais recente para o mais antigo.</p>
+    const porDestino = destaque.reduce((m, p) => { const d = desfecho(p)[1]; m[d] = (m[d] || 0) + 1; return m; }, {});
+    const resumo = [[porDestino.tramitando, "em tramitação"], [porDestino.aprovada, "aprovados"], [porDestino.rejeitada, "arquivados ou retirados"], [porDestino.sem, "sem desfecho claro"]]
+      .filter(([n]) => n).map(([n, r]) => `${n} ${r}`).join(", ");
+    $("#destaque-ano").innerHTML = `<h2>Movimentados em ${anoAtual} <small class="sub">(${destaque.length})</small></h2>
+      <p>Projetos do parlamentar cuja situação mudou neste ano, com o status atual de cada um: ${esc(resumo)}. Do movimento mais recente para o mais antigo.</p>
       <div id="lista-destaque"></div>`;
     listaPaginada($("#lista-destaque"), destaque, renderProj, 5, "");
   }

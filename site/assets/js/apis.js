@@ -20,7 +20,8 @@ export const movimentadoNoAno = (p, ano) => String(p.dataSituacao || "").startsW
 // resume a situação da Câmara em um destino compreensível
 export function desfecho(p) {
   const s = semAcento(p.situacao || "");
-  if (!p.situacao) return ["Situação ainda não consultada", "sem"];
+  // a Câmara só deixa a situação vazia enquanto o projeto tramita (os desfechos sempre trazem situação); com tramitação lida, não é "não consultada"
+  if (!p.situacao) return p.tramitacao || p.dataSituacao ? ["Em tramitação", "tramitando", "andamento"] : ["Situação ainda não consultada", "sem"];
   if (/tramitacao encerrada/.test(s)) return ["Tramitação encerrada", "sem"];
   if (/^(sancionad|promulgad)/.test(s)) return ["Aprovada", "aprovada"];
   if (/^aprovad/.test(s)) return ["Aprovada", "aprovada", "andamento"];

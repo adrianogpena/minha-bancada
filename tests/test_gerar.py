@@ -136,6 +136,8 @@ def test_relatorias_por_deputado_liga_pelo_id_do_relator():
     deputados = {1: {"proposicoes": [{"id": 10, "tipo": "PL"}, {"id": 11, "tipo": "REQ"}]}, 2: {"proposicoes": [{"id": 20, "tipo": "PEC"}, {"id": 21, "tipo": "PL"}]}}
     detalhes = {"10": {"relator": "2"}, "11": {"relator": "2"}, "20": {"relator": "2"}, "21": {}}
     assert gerar.relatorias_por_deputado(deputados, detalhes) == {"2": ["10", "20"]}
+    detalhes["346155"] = {"tipo": "PL", "relator": "1"}   # principal de apensado, de autor fora da legislatura
+    assert gerar.relatorias_por_deputado(deputados, detalhes)["1"] == ["346155"]
 
 
 def test_resumir_autoria_conta_so_projetos():

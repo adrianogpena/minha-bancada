@@ -49,8 +49,12 @@ def juntar_detalhe(p: dict, det: dict | None) -> dict:
 
 def relatorias_por_deputado(deputados: dict, detalhes: dict) -> dict:
     """Id do deputado -> ids (ordenados) dos projetos de que ele é o último relator, segundo proposicoes_detalhe.json.
-    Só entram projetos de algum deputado da legislatura (os que o coletor acompanha); o relator vem do id da Câmara, sem comparar nomes."""
+    Entram os projetos de deputados da legislatura e os principais dos apensados deles (têm `tipo` no detalhe); o relator vem do id da Câmara,
+    sem comparar nomes."""
     saida = defaultdict(set)
+    for pid, det in detalhes.items():
+        if det.get("relator") and det.get("tipo") in TIPOS_PROJETO:
+            saida[str(det["relator"])].add(str(pid))
     for d in deputados.values():
         for p in d["proposicoes"]:
             relator = (detalhes.get(str(p["id"])) or {}).get("relator")

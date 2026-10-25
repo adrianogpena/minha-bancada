@@ -26,3 +26,17 @@ def test_camara_e_senado_ligam_autores_e_votacoes(tmp_path):
     assert lido("senadores.json") == [{"id": "7", "nome": "Bia", "partido": "PL", "uf": "RJ"}]
     # relação proposição -> pessoa: só quem tem id no núcleo; o Executivo entra em semPessoa
     assert lido("nucleo/autorias.json") == {"proposicoes": 2, "semPessoa": 1, "porPessoa": {"pes_ana": [["c-5", 1]], "pes_bia": [["s-88", 1]]}}
+
+
+def test_principal_de_apensado_sem_autor_na_legislatura_entra_no_indice(tmp_path):
+    import json
+    deps = {101: {"nome": "Ana", "partido": "PT", "uf": "SP", "proposicoes": [{"id": 5, "tipo": "PL", "numero": 9, "ano": 2024, "ementa": "x"}]}}
+    detalhes = {"5": {"apensadoA": "346155"},
+                "346155": {"tipo": "PL", "numero": 580, "ano": 2007, "ementa": "Principal antigo", "situacao": None, "tramitacao": "Notificações",
+                           "dataSituacao": "2025-08-22", "orgao": "CCJC", "relator": "220645"},
+                "99": {"tipo": "REQ", "numero": 1, "ano": 2025, "ementa": "fora dos tipos"}}
+    total = gerar_proposicoes.gerar(tmp_path, deps, detalhes, {}, {}, {}, [], {}, [], TIPOS_PROJETO, destino_projeto, {})
+    assert total == 2
+    indice = {i["k"]: i for i in json.loads((tmp_path / "proposicoes.json").read_text(encoding="utf-8"))}
+    assert indice["c-346155"]["n"] == 580 and indice["c-346155"]["d"] == "tramitando" and "c-99" not in indice
+    assert json.loads((tmp_path / "proposicao/c-2007.json").read_text(encoding="utf-8"))["346155"] == {"o": "CCJC"}

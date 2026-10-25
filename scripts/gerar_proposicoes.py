@@ -78,6 +78,14 @@ def gerar(saida, deputados: dict, detalhes: dict, autorias: dict, votacoes_proje
         fichas[f"c-{p['ano']}"][str(pid)] = _sem_vazios({"o": p.get("orgao"), "ap": p.get("dataApresentacao"), "au": autores,
                                                          "v": _votacoes(votacoes_projeto.get(str(pid)), nominais)})
 
+    # --- principais dos apensados, de autor fora da legislatura: o detalhe guarda tipo, número e ementa (sem autores na ficha)
+    conhecidas = {str(i) for i in por_id}
+    for pid, det in detalhes.items():
+        if det.get("tipo") in tipos and pid not in conhecidas:
+            p = {"id": pid, **{c: det.get(c) for c in ("tipo", "numero", "ano", "ementa", "situacao", "tramitacao", "dataSituacao")}}
+            indice.append(_item("c", p, destino))
+            fichas[f"c-{p['ano']}"][pid] = _sem_vazios({"o": det.get("orgao"), "ap": det.get("dataApresentacao"), "au": []})
+
     # --- Senado: a matéria aparece nas autorias de cada senador; o Plenário é ligado pelo código da matéria (propId)
     sen = {str(s["id"]): s for s in senadores}
     nominais_sen = defaultdict(list)

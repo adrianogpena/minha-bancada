@@ -18,10 +18,12 @@ export async function paginaInformado() {
     <div class="informado">
       <fieldset>
         <legend>1. O que você quer acompanhar?</legend>
-        <p class="dica-form">Cada escolha vira um feed. Você pode misturar.</p>
+        <p class="dica-form">Cada escolha vira um feed. Você pode misturar. “Tudo” avisa de qualquer mudança no nível federal, em todos os estados e em todas as capitais.</p>
         <div class="filtros dois">
-          <label class="campo">Brasil
-            <button type="button" class="mais" id="add-br">Câmara, Senado e Presidência</button></label>
+          <label class="campo">Tudo
+            <button type="button" class="mais" id="add-tudo">Brasil, estados e capitais</button></label>
+          <label class="campo">Federal
+            <button type="button" class="mais" id="add-federal">Câmara, Senado e Presidência</button></label>
           <label class="campo">Estado
             <select id="inf-uf"><option value="">Escolha…</option>${cobertura.estados.map((u) => `<option value="${u}">${esc(nomeUf(u))}</option>`).join("")}</select></label>
           <label class="campo">Capital
@@ -83,7 +85,7 @@ export async function paginaInformado() {
       const b = e.target.closest("button"); if (!b) return;
       escolhidos.delete(todos[b.dataset.tirar][0]); desenhar(); mostrarAchados();
     };
-    const ehLocal = (c) => /^(BR|UF:|MUN:)/.test(c);
+    const ehLocal = (c) => /^(BR|FEDERAL|UF:|MUN:)/.test(c);
     for (const [id, local] of [["#resumo", true], ["#resumo-pol", false]]) {
       const lista = todos.map(([c, r], i) => [c, r, i]).filter(([c]) => ehLocal(c) === local);
       $(id).innerHTML = lista.length
@@ -95,8 +97,10 @@ export async function paginaInformado() {
         escolhidos.delete(todos[b.dataset.tirar][0]); desenhar(); mostrarAchados();
       };
     }
-    $("#add-br").textContent = escolhidos.has("BR") ? "✓ Câmara, Senado e Presidência" : "Câmara, Senado e Presidência";
-    $("#add-br").classList.toggle("marcado", escolhidos.has("BR"));
+    $("#add-tudo").textContent = escolhidos.has("BR") ? "✓ Brasil, estados e capitais" : "Brasil, estados e capitais";
+    $("#add-tudo").classList.toggle("marcado", escolhidos.has("BR"));
+    $("#add-federal").textContent = escolhidos.has("FEDERAL") ? "✓ Câmara, Senado e Presidência" : "Câmara, Senado e Presidência";
+    $("#add-federal").classList.toggle("marcado", escolhidos.has("FEDERAL"));
     for (const [id, pref] of [["#inf-uf", "UF:"], ["#inf-capital", "MUN:"]]) {
       const sel = $(id), v = sel.value;
       if (!v || !escolhidos.has(pref + v)) sel.value = [...escolhidos.keys()].map((c) => c.startsWith(pref) ? c.slice(pref.length) : null).filter(Boolean).pop() || "";
@@ -109,7 +113,8 @@ export async function paginaInformado() {
     };
   };
   const adicionar = (codigo, rotulo) => { if (codigo) { escolhidos.set(codigo, rotulo); desenhar(); mostrarAchados(); } };
-  $("#add-br").onclick = () => adicionar("BR", "Brasil: Câmara, Senado e Presidência");
+  $("#add-tudo").onclick = () => adicionar("BR", "Tudo: Brasil, estados e capitais");
+  $("#add-federal").onclick = () => adicionar("FEDERAL", "Federal: Câmara, Senado e Presidência");
   $("#inf-uf").onchange = (e) => { const u = e.target.value; adicionar(u && `UF:${u}`, `Estado: ${nomeUf(u)}`); };
   $("#inf-capital").onchange = (e) => { const u = e.target.value; adicionar(u && `MUN:${u}`, `Capital: ${cobertura.capitais[u]} (${u})`); };
   $("#opml").onclick = () => {
@@ -151,7 +156,7 @@ export async function paginaInformado() {
     $("#form-email").addEventListener("submit", async (e) => {
       e.preventDefault();
       const msg = $("#inf-msg"), email = $("#inf-email").value.trim();
-      const locais = [...escolhidos.keys()].filter((c) => /^(BR|UF:|MUN:)/.test(c));
+      const locais = [...escolhidos.keys()].filter((c) => /^(BR|FEDERAL|UF:|MUN:)/.test(c));
       const politicos = [...escolhidos.keys()].filter((c) => !locais.includes(c));
       if (!escolhidos.size) { msg.textContent = "Escolha acima pelo menos um local ou político."; return; }
       if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) { msg.textContent = "Digite um e-mail válido."; return; }

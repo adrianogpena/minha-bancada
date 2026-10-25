@@ -100,9 +100,9 @@ def test_vazio():
     assert not feeds.vazio(vazio_d(votacoes=["SP"]))
 
 
-def test_selecionar_brasil_leva_camara_e_senado():
+def test_selecionar_federal_leva_camara_e_senado():
     d = vazio_d(camara=[prop(deps=[1]), prop(n=2, deps=[2])], senado=(0, 5))
-    parte = feeds.selecionar(d, {"BR"}, {})
+    parte = feeds.selecionar(d, {"FEDERAL"}, {})
     assert len(parte["camara"]) == 2 and parte["senado"] == (0, 5)
 
 
@@ -117,6 +117,17 @@ def test_selecionar_uf_inclui_bancada_federal_do_estado():
     d = vazio_d(camara=[prop(deps=[1]), prop(n=2, deps=[2])])
     parte = feeds.selecionar(d, {"UF:SP"}, {"SP": {1}, "RJ": {2}})
     assert [i["numero"] for i in parte["camara"]] == [1]
+
+
+def test_selecionar_br_junta_federal_e_todos_os_estados():
+    d = vazio_d(camara=[prop(deps=[1]), prop(n=2, deps=[2])], senado=(0, 5), votacoes=["SP", "RJ"])
+    parte = feeds.selecionar(d, {"BR"}, {"SP": {1}, "RJ": {2}})
+    assert len(parte["camara"]) == 2 and parte["senado"] == (0, 5) and parte["votacoes"] == ["SP", "RJ"]
+
+
+def test_link_historico_de_br_nao_filtra_local_e_federal_filtra_br():
+    assert "locais" not in r.link_historico("2026-10-25", {"BR"})
+    assert r.link_historico("2026-10-25", {"FEDERAL"}).endswith("&locais=BR")
 
 
 def test_selecionar_estado_e_deputado_estadual():

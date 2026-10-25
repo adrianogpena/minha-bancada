@@ -249,7 +249,8 @@ def test_detalhes_proposicoes_prioriza_novas_e_marca_situacao_final(dados, monke
         "/proposicoes/10": {"dados": {"dataApresentacao": "2025-01-02T10:00", "ementaDetalhada": " det ", "keywords": "a, b",
                                        "urlInteiroTeor": "http://pdf",
                                        "statusProposicao": {"descricaoSituacao": "Arquivada", "descricaoTramitacao": "Arquivamento",
-                                                            "despacho": " Arquive-se ", "siglaOrgao": "MESA", "dataHora": "2025-02-03T09:00", "regime": "Ordinário"}}},
+                                                            "despacho": " Arquive-se ", "siglaOrgao": "MESA", "dataHora": "2025-02-03T09:00", "regime": "Ordinário",
+                                                            "uriUltimoRelator": "https://dadosabertos.camara.leg.br/api/v2/deputados/220645"}}},
         "/proposicoes/12": {"dados": {"dataApresentacao": "2025-03-04", "statusProposicao": {"descricaoSituacao": "Aguardando Parecer"}}},
     }
     chamadas = roteador(monkeypatch, resp)
@@ -260,6 +261,7 @@ def test_detalhes_proposicoes_prioriza_novas_e_marca_situacao_final(dados, monke
     assert cache["10"]["dataApresentacao"] == "2025-01-02" and cache["10"]["dataSituacao"] == "2025-02-03"
     assert cache["10"]["despacho"] == "Arquive-se" and cache["10"]["ementaDetalhada"] == "det"
     assert cache["12"]["finalizada"] is False and cache["12"]["despacho"] is None
+    assert cache["10"]["relator"] == "220645" and cache["12"]["relator"] is None
 
 
 def test_detalhes_proposicoes_respeita_orcamento_e_renova_so_o_que_tramita(dados, monkeypatch):

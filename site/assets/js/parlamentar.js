@@ -46,6 +46,7 @@ export function montarParlamentar(alvo, c) {
       <div class="numeros" id="numeros-prop"></div>
     </section>
     <section id="destaque-ano"></section>
+    <section id="relatorias"></section>
     <h2 id="proposicoes">Projetos <small class="sub">(${projetos.length})</small></h2>
     <p>Projetos de lei, emendas à Constituição e similares. ${esc(c.aviso)}</p>
     ${LEGENDA_PROJETOS}
@@ -182,6 +183,18 @@ export function montarParlamentar(alvo, c) {
       <p>Projetos do parlamentar cuja situação mudou neste ano, com o status atual de cada um: ${esc(resumo)}. Do movimento mais recente para o mais antigo.</p>
       <div id="lista-destaque"></div>`;
     listaPaginada($("#lista-destaque"), destaque, renderProj, 5, "");
+  }
+
+  if (c.relatorias?.length) {
+    const renderRelatoria = (x) => `<li class="cartao-item">
+      <span class="quando"><b>${esc(x.t)} ${esc(x.n)}/${esc(x.a)}</b></span>
+      <span class="resultado r-${esc(x.d)}">${esc(x.s || "Em tramitação")}</span>
+      <span class="texto">${esc(x.e || "Sem ementa")}</span>
+      <span class="texto"><a href="proposicao.html?k=${encodeURIComponent(x.k)}">Ver todos os políticos ligados a esta proposição</a></span></li>`;
+    $("#relatorias").innerHTML = `<h2>Relatorias <small class="sub">(${c.relatorias.length})</small></h2>
+      <p>Projetos em que ${esc(nome)} é o último relator informado pela Câmara. Valem só os projetos de deputados da legislatura atual, e o relator pode já ter mudado.</p>
+      <div id="lista-relatorias"></div>`;
+    listaPaginada($("#lista-relatorias"), c.relatorias, renderRelatoria, 5, "");
   }
 
   const renderOutro = (p) => `<li>

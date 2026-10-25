@@ -357,6 +357,12 @@ def id_da_uri(uri: str | None) -> str | None:
     return m.group(1) if m else None
 
 
+def id_deputado_da_uri(uri: str | None) -> str | None:
+    """Id do deputado no fim de uma URI da API (.../deputados/220645), ou None."""
+    m = re.search(r"/deputados/(\d+)/?$", uri or "")
+    return m.group(1) if m else None
+
+
 def coletar_detalhes_proposicoes() -> None:
     """Situação atual de cada projeto (aprovado, arquivado, em tramitação...).
     Guardado em dados/proposicoes_detalhe.json (vai para o git). Há muitos
@@ -387,6 +393,7 @@ def coletar_detalhes_proposicoes() -> None:
             "orgao": st.get("siglaOrgao"),
             "dataSituacao": comum.data_iso(st.get("dataHora")),
             "regime": st.get("regime"),
+            "relator": id_deputado_da_uri(st.get("uriUltimoRelator")),
             "inteiroTeor": d.get("urlInteiroTeor"),
             "ementaDetalhada": (d.get("ementaDetalhada") or "").strip() or None,
             "palavrasChave": (d.get("keywords") or "").strip() or None,

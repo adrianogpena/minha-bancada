@@ -47,6 +47,18 @@ def juntar_detalhe(p: dict, det: dict | None) -> dict:
     return {**p, **{c: det[c] for c in campos if det.get(c)}, **({"linkTexto": det["inteiroTeor"]} if det.get("inteiroTeor") else {})}
 
 
+def relatorias_por_deputado(deputados: dict, detalhes: dict) -> dict:
+    """Id do deputado -> ids (ordenados) dos projetos de que ele é o último relator, segundo proposicoes_detalhe.json.
+    Só entram projetos de algum deputado da legislatura (os que o coletor acompanha); o relator vem do id da Câmara, sem comparar nomes."""
+    saida = defaultdict(set)
+    for d in deputados.values():
+        for p in d["proposicoes"]:
+            relator = (detalhes.get(str(p["id"])) or {}).get("relator")
+            if relator and p.get("tipo") in TIPOS_PROJETO:
+                saida[str(relator)].add(str(p["id"]))
+    return {r: sorted(ids) for r, ids in saida.items()}
+
+
 MAX_COAUTORES = 15
 
 
@@ -468,6 +480,7 @@ def main():
     blocos_lista = ler(BRUTO / "blocos.json", []) or []
     blocos = {b: partidos_do_bloco(b, blocos_lista) for b in {b for o in orientacoes.values() for b in o if b.startswith("Bl ")}}
     partidos = {str(i): d["partido"] for i, d in deputados.items() if d.get("partido")}
+    relatorias = relatorias_por_deputado(deputados, detalhes)
     historicos = {str(i): d["historico"] for i, d in deputados.items() if d.get("historico")}
 
     if SAIDA.exists():
@@ -546,7 +559,7 @@ def main():
             "nascimento": d.get("nascimento"),
             "naturalidade": ", ".join(x for x in (d.get("municipioNascimento"), d.get("ufNascimento")) if x),
             "escolaridade": d.get("escolaridade"), "redesSociais": d.get("redesSociais", []),
-            "proposicoes": proposicoes, "autoria": autoria,
+            "proposicoes": proposicoes, "autoria": autoria, "relatorias": relatorias.get(str(did), []),
             "temas": resumir_temas(proposicoes), "orgaos": ordenar_orgaos(orgaos.get(str(did), [])),
             "frentes": sorted(d["frentes"], key=lambda f: f["titulo"]) if d.get("frentes") is not None else None,
             **{k: d[k] for k in ("profissoes", "ocupacoes", "mandatosExternos", "historico", "discursos") if k in d},

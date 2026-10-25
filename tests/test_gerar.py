@@ -131,6 +131,13 @@ def test_destino_projeto_sem_situacao_depende_da_tramitacao_lida():
     assert gerar.tramitacao_lida({"tramitacao": "Apresentação de Proposição"}) and not gerar.tramitacao_lida({"situacao": None})
 
 
+def test_relatorias_por_deputado_liga_pelo_id_do_relator():
+    import gerar
+    deputados = {1: {"proposicoes": [{"id": 10, "tipo": "PL"}, {"id": 11, "tipo": "REQ"}]}, 2: {"proposicoes": [{"id": 20, "tipo": "PEC"}, {"id": 21, "tipo": "PL"}]}}
+    detalhes = {"10": {"relator": "2"}, "11": {"relator": "2"}, "20": {"relator": "2"}, "21": {}}
+    assert gerar.relatorias_por_deputado(deputados, detalhes) == {"2": ["10", "20"]}
+
+
 def test_resumir_autoria_conta_so_projetos():
     import gerar
     props = [

@@ -152,6 +152,11 @@ export async function paginaDeputado() {
   } catch (e) { return semDadosLocais(alvo, e, `${CAMARA_API}/deputados/${encodeURIComponent(id)}`); }
   document.title = `${dep.nome} (${dep.partido}/${dep.uf}) | Minha Bancada`;
 
+  let indice = [];
+  if (dep.relatorias?.length) { try { indice = await carregar("dados/proposicoes.json"); } catch { /* sem o índice, a seção de relatorias fica de fora */ } }
+  const porChave = new Map(indice.map((x) => [x.k, x]));
+  const relatorias = (dep.relatorias || []).map((id) => porChave.get(`c-${id}`)).filter(Boolean);
+
   const meus = new Map(dep.votos.map((v) => [v.id, v.voto]));
   const desp = dep.despesas;
   const painelPerfil = `
@@ -184,7 +189,7 @@ export async function paginaDeputado() {
     painelPerfil, rotuloPerfil: "Perfil e gastos",
     linhaDoTempo: votacoes.filter(temResultado).map((v) => ({ ...v, voto: meus.get(v.id) || "ausente" })), // mais recente primeiro
     painelComportamento: painelComportamento(dep) + painelPresencaDeputado(dep),
-    proposicoes: dep.proposicoes, tipoProjeto: (p) => !!TIPOS_PROJETO[p.tipo],
+    relatorias, proposicoes: dep.proposicoes, tipoProjeto: (p) => !!TIPOS_PROJETO[p.tipo],
     textoLegislatura: "como autor ou coautor nesta legislatura (desde fev. de 2023)", suprapartidarios: true,
     papel: (p) => p.principal === undefined ? "autor ou coautor. A Câmara lista os dois juntos e a ordem de assinatura desta proposição ainda não foi coletada."
       : p.principal ? "<b>autor principal</b> (o primeiro a assinar)." : "<b>coautor</b> (assinou depois do autor principal).",

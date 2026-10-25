@@ -6,6 +6,8 @@ export const arquivoTse = (conjunto, p) => `${TSE_CDN}/${conjunto}/${conjunto}_$
 export const arquivoRedesTse = (p) => `${TSE_CDN}/consulta_cand/rede_social_candidato_${p.ano}${p.ano === 2022 ? `_${p.uf === "BR" ? "BR" : p.uf}` : ""}.zip`;
 
 export const CAMARA_API = "https://dadosabertos.camara.leg.br/api/v2";
+/* Votação com resultado final (aprovada ou rejeitada); sem isso não entra na lista de votações do parlamentar. */
+export const temResultado = (v) => v.aprovada === 0 || v.aprovada === 1;
 export const resultado = (a) => (a === 1 ? ["Aprovada", "aprovada"] : a === 0 ? ["Rejeitada", "rejeitada"] : ["Sem resultado informado", "sem"]);
 
 // projetos de verdade; o resto (requerimentos, emendas, pareceres) só aparece em "Outros documentos"

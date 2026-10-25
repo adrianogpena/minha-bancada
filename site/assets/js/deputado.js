@@ -2,7 +2,7 @@
 import { $, esc, reais, reaisCentavos, pct, data, param, carregar, pctBr, urlSegura } from "./util.js";
 import { VOTOS, itemFicha, semDadosLocais } from "./comum.js";
 import { linhaNoCargoAte, linhaSubsidio } from "./ficha.js";
-import { CAMARA_API, TIPOS_PROJETO, linkTramitacao, fontes } from "./apis.js";
+import { CAMARA_API, TIPOS_PROJETO, linkTramitacao, fontes, temResultado } from "./apis.js";
 import { montarParlamentar } from "./parlamentar.js";
 import { painelEleicao } from "./eleicao.js";
 
@@ -182,7 +182,7 @@ export async function paginaDeputado() {
       fontes: [["Cadastro do deputado (API da Câmara)", `${CAMARA_API}/deputados/${encodeURIComponent(dep.id)}`]] }),
     subtitulo: `<span class="selo">${esc(dep.partido)}/${esc(dep.uf)}</span> ${dep.situacao ? esc(dep.situacao) : ""}`,
     painelPerfil, rotuloPerfil: "Perfil e gastos",
-    linhaDoTempo: votacoes.map((v) => ({ ...v, voto: meus.get(v.id) || "ausente" })), // mais recente primeiro
+    linhaDoTempo: votacoes.filter(temResultado).map((v) => ({ ...v, voto: meus.get(v.id) || "ausente" })), // mais recente primeiro
     painelComportamento: painelComportamento(dep) + painelPresencaDeputado(dep),
     proposicoes: dep.proposicoes, tipoProjeto: (p) => !!TIPOS_PROJETO[p.tipo],
     textoLegislatura: "como autor ou coautor nesta legislatura (desde fev. de 2023)", suprapartidarios: true,

@@ -6,11 +6,18 @@ const path = require("node:path");
 globalThis.window = {};
 const js = (nome) => require(path.join(__dirname, "../../site/assets/js", nome));
 const { esc, reais, reaisCentavos, pct, data, semAcento, urlSegura } = js("util.js");
-const { urlLegivel, fontes } = js("apis.js");
+const { urlLegivel, fontes, temResultado } = js("apis.js");
 const { resumosEstadual } = js("estadual.js");
 const { linksRedes } = js("ficha.js");
 const { foto } = js("comum.js");
 const { agruparPeriodos, chaveDe, juntarDias } = js("historico.js");
+
+test("temResultado deixa de fora a votação sem aprovada nem rejeitada", () => {
+  assert.equal(temResultado({ aprovada: 1 }), true);
+  assert.equal(temResultado({ aprovada: 0 }), true);
+  assert.equal(temResultado({ aprovada: null }), false);
+  assert.equal(temResultado({}), false);
+});
 
 test("esc escapa HTML e trata nulos", () => {
   assert.equal(esc(`<a href="x">'&'</a>`), "&lt;a href=&quot;x&quot;&gt;&#39;&amp;&#39;&lt;/a&gt;");

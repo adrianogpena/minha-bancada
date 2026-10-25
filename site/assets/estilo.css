@@ -68,7 +68,7 @@ img { max-width: 100%; display: block; }
   font: 800 clamp(34px, 6vw, 64px)/1.02 var(--display);
   letter-spacing: -0.025em; margin: 0 0 14px;
 }
-.abertura p { margin: 0; color: var(--tinta-suave); max-width: 60ch; }
+.abertura p { margin: 0; color: var(--tinta-suave); }
 h1, h2, h3 { font-family: var(--display); letter-spacing: -0.01em; }
 h2 { font-size: 26px; line-height: 1.15; margin: 40px 0 14px; }
 
@@ -171,8 +171,6 @@ input:focus, select:focus { border-color: var(--marca); outline: none; box-shado
 .ficha dd.embaixo { grid-column: 1 / -1; text-align: left; }
 .aviso { background: var(--marca-clara); border-radius: var(--raio); padding: 12px 14px; font-size: 15px; }
 .vazio { color: var(--tinta-suave); padding: 16px 0; }
-.texto-longo { max-width: 68ch; }
-.texto-longo:has(#status-apis) { max-width: 100%; }
 .estado-api { font-weight: 700; }
 .estado-api.ok { color: var(--marca); }
 .estado-api.erro { color: var(--nao); }
@@ -348,7 +346,7 @@ select:disabled { opacity: .55; }
 .hist-item { padding: 10px 0 10px 12px; border-left: 3px solid var(--linha); margin: 0 0 10px; }
 .hist-cab { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 10px; }
 .hist-item .quando { font-size: 14px; color: var(--tinta-suave); }
-.hist-item .texto { margin: 4px 0; max-width: 75ch; }
+.hist-item .texto { margin: 4px 0; }
 .hist-mudanca, .hist-resumo { margin: 2px 0; font-size: 15px; color: var(--tinta-suave); }
 .hist-mudanca b { color: var(--tinta); }
 .hist-tag { font: 700 12px var(--texto); text-transform: uppercase; letter-spacing: .03em; padding: 2px 8px; border-radius: 999px; background: var(--marca-clara); color: var(--marca); }
@@ -369,6 +367,7 @@ select:disabled { opacity: .55; }
 .ver-legivel { font-weight: 700; color: var(--marca) !important; }
 .fontes .ver-legivel::before { content: "· "; color: var(--tinta-suave); font-weight: 400; }
 .tabela-fonte th, .tabela-fonte td { text-align: left; vertical-align: top; }
+#status-apis .tabela-fonte td:nth-child(n+3) { white-space: nowrap; }
 .painel details { margin: 6px 0; }
 .painel details > summary { cursor: pointer; font-weight: 700; }
 .painel .ficha .ficha { margin: 4px 0 4px 8px; }

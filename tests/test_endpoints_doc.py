@@ -12,7 +12,7 @@ IGNORAR = {"github.com", "adrianogpena.github.io", "www.w3.org", "www.openstreet
 
 
 def hosts(texto: str) -> set[str]:
-    return {m.lower() for m in re.findall(r"https?://([a-zA-Z0-9_.-]+)", texto)}
+    return {m.lower() for m in re.findall(r"https?://(?:[^/@\s]*@)?([a-zA-Z0-9_.-]+)", texto)}
 
 
 def test_todo_host_usado_esta_em_endpoints_md():

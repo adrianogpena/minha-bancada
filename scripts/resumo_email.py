@@ -36,7 +36,7 @@ def link_historico(data: str, locais=None, periodo: str = "dia") -> str:
     """Página do histórico (detalhes e fontes) para um dia AAAA-MM-DD, filtrada por códigos de local ou político quando houver.
     `periodo` "semana" ou "mes": a página abre a semana ou o mês que contém `data`."""
     return (f"{SITE}historico.html?dia={data}" + (f"&periodo={periodo}" if periodo != "dia" else "")
-            + (f"&locais={quote(','.join(sorted(locais)), safe=',:')}" if locais else ""))
+            + (f"&locais={quote(','.join(sorted({'BR' if c == 'FEDERAL' else c for c in locais})), safe=',:')}" if locais and "BR" not in locais else ""))
 
 
 def cont(n: int, um: str, varios: str) -> str:

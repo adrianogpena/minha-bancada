@@ -132,7 +132,7 @@ def test_carga_em_lote_do_tse_vira_um_evento(repo, tmp_path, monkeypatch):
 def test_link_historico_filtra_por_codigos():
     assert r.link_historico("2026-01-02") == r.SITE + "historico.html?dia=2026-01-02"
     assert r.link_historico("2026-01-02", {"UF:SP", "FEDERAL"}).endswith("dia=2026-01-02&locais=BR,UF:SP")
-    assert r.link_historico("2026-01-05", {"BR"}, "semana").endswith("dia=2026-01-05&periodo=semana&locais=BR")
+    assert r.link_historico("2026-01-05", {"FEDERAL"}, "semana").endswith("dia=2026-01-05&periodo=semana&locais=BR")
     assert r.link_historico("2026-01-01", None, "mes").endswith("dia=2026-01-01&periodo=mes")
 
 

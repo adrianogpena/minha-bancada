@@ -6,16 +6,22 @@ export const arquivoTse = (conjunto, p) => `${TSE_CDN}/${conjunto}/${conjunto}_$
 export const arquivoRedesTse = (p) => `${TSE_CDN}/consulta_cand/rede_social_candidato_${p.ano}${p.ano === 2022 ? `_${p.uf === "BR" ? "BR" : p.uf}` : ""}.zip`;
 
 export const CAMARA_API = "https://dadosabertos.camara.leg.br/api/v2";
+/* Votação com resultado final (aprovada ou rejeitada); sem isso não entra na lista de votações do parlamentar. */
+export const temResultado = (v) => v.aprovada === 0 || v.aprovada === 1;
 export const resultado = (a) => (a === 1 ? ["Aprovada", "aprovada"] : a === 0 ? ["Rejeitada", "rejeitada"] : ["Sem resultado informado", "sem"]);
 
 // projetos de verdade; o resto (requerimentos, emendas, pareceres) só aparece em "Outros documentos"
 export const TIPOS_PROJETO = { PL: "Projeto de lei", PLP: "Projeto de lei complementar", PEC: "Proposta de emenda à Constituição", PDL: "Projeto de decreto legislativo",
   PRC: "Projeto de resolução", PLC: "Projeto de lei da Câmara", PLS: "Projeto de lei do Senado", PRS: "Projeto de resolução do Senado", PDS: "Projeto de decreto legislativo do Senado", PLN: "Projeto de lei do Congresso", PFC: "Proposta de fiscalização e controle", PLV: "Projeto de lei de conversão", MPV: "Medida provisória" };
 
+/* Projeto com a situação atualizada no ano `ano`, qualquer que seja o desfecho (o que a página destaca no topo das propostas). */
+export const movimentadoNoAno = (p, ano) => String(p.dataSituacao || "").startsWith(String(ano));
+
 // resume a situação da Câmara em um destino compreensível
 export function desfecho(p) {
   const s = semAcento(p.situacao || "");
-  if (!p.situacao) return ["Situação ainda não consultada", "sem"];
+  // a Câmara só deixa a situação vazia enquanto o projeto tramita (os desfechos sempre trazem situação); com tramitação lida, não é "não consultada"
+  if (!p.situacao) return p.tramitacao || p.dataSituacao ? ["Em tramitação", "tramitando", "andamento"] : ["Situação ainda não consultada", "sem"];
   if (/tramitacao encerrada/.test(s)) return ["Tramitação encerrada", "sem"];
   if (/^(sancionad|promulgad)/.test(s)) return ["Aprovada", "aprovada"];
   if (/^aprovad/.test(s)) return ["Aprovada", "aprovada", "andamento"];

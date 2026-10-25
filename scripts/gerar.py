@@ -47,6 +47,22 @@ def juntar_detalhe(p: dict, det: dict | None) -> dict:
     return {**p, **{c: det[c] for c in campos if det.get(c)}, **({"linkTexto": det["inteiroTeor"]} if det.get("inteiroTeor") else {})}
 
 
+def relatorias_por_deputado(deputados: dict, detalhes: dict) -> dict:
+    """Id do deputado -> ids (ordenados) dos projetos de que ele é o último relator, segundo proposicoes_detalhe.json.
+    Entram os projetos de deputados da legislatura e os principais dos apensados deles (têm `tipo` no detalhe); o relator vem do id da Câmara,
+    sem comparar nomes."""
+    saida = defaultdict(set)
+    for pid, det in detalhes.items():
+        if det.get("relator") and det.get("tipo") in TIPOS_PROJETO:
+            saida[str(det["relator"])].add(str(pid))
+    for d in deputados.values():
+        for p in d["proposicoes"]:
+            relator = (detalhes.get(str(p["id"])) or {}).get("relator")
+            if relator and p.get("tipo") in TIPOS_PROJETO:
+                saida[str(relator)].add(str(p["id"]))
+    return {r: sorted(ids) for r, ids in saida.items()}
+
+
 MAX_COAUTORES = 15
 
 
@@ -99,11 +115,19 @@ def juntar_autoria(p: dict, aut: dict | None, did: str, partidos: dict | None = 
 TIPOS_PROJETO = {"PL", "PLP", "PEC", "PDL", "PRC", "PLC", "PLS", "PRS", "PDS", "PLN", "PFC", "PLV", "MPV"}
 
 
-def destino_projeto(situacao: str | None) -> str:
-    """Mesma classificação de `desfecho` em site/assets/js/apis.js: aprovada, rejeitada, tramitando ou sem (sem desfecho conhecido)."""
+def tramitacao_lida(p: dict) -> bool:
+    """A proposição já tem tramitação ou data de situação vindas de proposicoes_detalhe.json."""
+    return bool(p.get("tramitacao") or p.get("dataSituacao"))
+
+
+def destino_projeto(situacao: str | None, lida: bool = False) -> str:
+    """Mesma classificação de `desfecho` em site/assets/js/apis.js: aprovada, rejeitada, tramitando ou sem (sem desfecho conhecido).
+    `lida`: a tramitação da proposição já foi consultada; a Câmara só deixa a situação vazia enquanto ela tramita."""
     s = unicodedata.normalize("NFD", (situacao or "").lower())
     s = "".join(c for c in s if unicodedata.category(c) != "Mn")
-    if not situacao or "tramitacao encerrada" in s:
+    if not situacao:
+        return "tramitando" if lida else "sem"
+    if "tramitacao encerrada" in s:
         return "sem"
     if re.match(r"(sancionad|promulgad|aprovad)", s):
         return "aprovada"
@@ -127,7 +151,7 @@ def resumir_autoria(proposicoes: list) -> dict:
     proprias = [p for p in com_autoria if p["principal"]]
     return {
         "projetos": len(projetos), "autoriaColetada": len(com_autoria), "proprias": len(proprias),
-        "aprovadasProprias": sum(1 for p in proprias if destino_projeto(p.get("situacao")) == "aprovada"),
+        "aprovadasProprias": sum(1 for p in proprias if destino_projeto(p.get("situacao"), tramitacao_lida(p)) == "aprovada"),
         "suprapartidarios": sum(1 for p in com_autoria if p.get("partidosDistintos", 0) > 1),
     }
 
@@ -253,7 +277,7 @@ def resumir_temas(proposicoes: list) -> list:
         for t in p.get("temas", []):
             c = por_tema.setdefault(t, [0, 0, 0])
             c[0] += 1
-            c[1] += destino_projeto(p.get("situacao")) == "aprovada"
+            c[1] += destino_projeto(p.get("situacao"), tramitacao_lida(p)) == "aprovada"
             c[2] += bool(p.get("principal"))
     return sorted(([t, *c] for t, c in por_tema.items()), key=lambda x: (-x[1], x[0]))
 
@@ -460,6 +484,7 @@ def main():
     blocos_lista = ler(BRUTO / "blocos.json", []) or []
     blocos = {b: partidos_do_bloco(b, blocos_lista) for b in {b for o in orientacoes.values() for b in o if b.startswith("Bl ")}}
     partidos = {str(i): d["partido"] for i, d in deputados.items() if d.get("partido")}
+    relatorias = relatorias_por_deputado(deputados, detalhes)
     historicos = {str(i): d["historico"] for i, d in deputados.items() if d.get("historico")}
 
     if SAIDA.exists():
@@ -538,7 +563,7 @@ def main():
             "nascimento": d.get("nascimento"),
             "naturalidade": ", ".join(x for x in (d.get("municipioNascimento"), d.get("ufNascimento")) if x),
             "escolaridade": d.get("escolaridade"), "redesSociais": d.get("redesSociais", []),
-            "proposicoes": proposicoes, "autoria": autoria,
+            "proposicoes": proposicoes, "autoria": autoria, "relatorias": relatorias.get(str(did), []),
             "temas": resumir_temas(proposicoes), "orgaos": ordenar_orgaos(orgaos.get(str(did), [])),
             "frentes": sorted(d["frentes"], key=lambda f: f["titulo"]) if d.get("frentes") is not None else None,
             **{k: d[k] for k in ("profissoes", "ocupacoes", "mandatosExternos", "historico", "discursos") if k in d},

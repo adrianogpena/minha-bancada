@@ -1,7 +1,7 @@
 /* Senador: presença, recursos e abas. */
 import { esc, reais, reaisCentavos, pct, data, carregar, numeroBr, urlSegura } from "./util.js";
 import { itemFicha } from "./comum.js";
-import { TIPOS_PROJETO, fontes, UFS, SENADO_API, SENADO_ADM_API, linkMateriaSenado } from "./apis.js";
+import { TIPOS_PROJETO, fontes, UFS, SENADO_API, SENADO_ADM_API, linkMateriaSenado, temResultado } from "./apis.js";
 import { painelGastos } from "./deputado.js";
 import { montarParlamentar } from "./parlamentar.js";
 import { painelEleicaoDe } from "./eleicao.js";
@@ -49,7 +49,7 @@ export async function montarSenador(alvo, p, nome, ficha) {
   let sen, lista;
   try { [sen, lista] = await Promise.all([carregar(`dados/senador/${encodeURIComponent(p.id)}.json`), carregar("dados/votacoes_senado.json")]); } catch { return false; }
   const meus = new Map(sen.votos.map((v) => [v.id, v.voto]));
-  const linhaDoTempo = lista.filter((v) => meus.has(v.id)).map((v) => ({ ...v, voto: meus.get(v.id) }));
+  const linhaDoTempo = lista.filter((v) => temResultado(v) && meus.has(v.id)).map((v) => ({ ...v, voto: meus.get(v.id) }));
   const situacao = p.fimMandato ? `Mandato até ${data(p.fimMandato, true)}.` : "";
   const apiVotacao = (v) => `${SENADO_API}/votacao?dataInicio=${v.data.replaceAll("-", "")}&dataFim=${v.data.replaceAll("-", "")}`;
   montarParlamentar(alvo, {

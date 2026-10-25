@@ -1,7 +1,7 @@
 /* Montagem da ficha de um parlamentar (deputado ou senador). */
 import { $, esc, pct, data, urlSegura } from "./util.js";
 import { VOTOS, foto, selo, legenda, listaPaginada, abas, ligarAbas } from "./comum.js";
-import { CAMARA_API, resultado, desfecho, fontes } from "./apis.js";
+import { CAMARA_API, resultado, desfecho, movimentadoNoAno, fontes } from "./apis.js";
 import { barraPlacar } from "./votacoes.js";
 import { LEGENDA_PROJETOS, avisoDados } from "./executivo.js";
 
@@ -45,6 +45,8 @@ export function montarParlamentar(alvo, c) {
         <p>${c.proposicoes.length} documentos apresentados ${esc(c.textoLegislatura)}.</p></div>
       <div class="numeros" id="numeros-prop"></div>
     </section>
+    <section id="destaque-ano"></section>
+    <section id="relatorias"></section>
     <h2 id="proposicoes">Projetos <small class="sub">(${projetos.length})</small></h2>
     <p>Projetos de lei, emendas à Constituição e similares. ${esc(c.aviso)}</p>
     ${LEGENDA_PROJETOS}
@@ -147,6 +149,7 @@ export function montarParlamentar(alvo, c) {
       ${p.ementaDetalhada && p.ementaDetalhada !== p.ementa ? `<details class="texto"><summary>Ementa detalhada</summary>${esc(p.ementaDetalhada)}</details>` : ""}
       ${typeof p.emTramitacao === "boolean" ? `<span class="texto quando">${p.emTramitacao ? "Em tramitação" : "Fora de tramitação"} segundo a Casa.</span>` : ""}
       ${c.papel ? `<span class="texto"><b>Papel de ${esc(nome)}:</b> ${c.papel(p)}</span>` : ""}
+      ${!p.situacao && p.tramitacao ? `<span class="texto"><b>Última tramitação:</b> ${esc(p.tramitacao)}${p.orgao ? ` (${esc(p.orgao)})` : ""}${p.dataSituacao ? `, em ${data(p.dataSituacao)}` : ""}.${p.despacho ? ` <span class="quando">Despacho: ${esc(p.despacho.slice(0, 300))}</span>` : ""}</span>` : ""}
       ${p.situacao ? `<span class="texto"><b>Situação:</b> ${esc(p.situacao)}${p.orgao ? ` (${esc(p.orgao)})` : ""}${p.dataSituacao ? `, em ${data(p.dataSituacao)}` : ""}.${p.despacho ? ` <span class="quando">Despacho: ${esc(p.despacho.slice(0, 300))}</span>` : ""}</span>` : ""}
       ${p.tipoDescricao || p.tramitacao || p.regime || p.coautores || p.iniciativa ? `<span class="texto quando">${[p.tipoDescricao && `Tipo: ${esc(p.tipoDescricao)}`, p.iniciativa && `Iniciativa: ${esc(p.iniciativa)}`, p.totalAutores && `Assinado por ${p.totalAutores} autores${p.partidosDistintos ? ` de ${p.partidosDistintos} partidos` : ""}`, p.regime && `Regime: ${esc(p.regime)}`, p.tramitacao && `Tramitação: ${esc(p.tramitacao)}`, p.coautores && `Coautores: ${esc(p.coautores.join(", "))}`].filter(Boolean).join(" · ")}</span>` : ""}
       ${p.apensadoA || p.anterior || p.posterior ? `<span class="texto quando">${[p.apensadoA && ligacao("Apensado ao projeto principal", p.apensadoA), p.anterior && ligacao("Proposição anterior", p.anterior), p.posterior && ligacao("Proposição posterior", p.posterior)].filter(Boolean).join(" · ")}</span>` : ""}
@@ -169,6 +172,30 @@ export function montarParlamentar(alvo, c) {
     $("#filtro-tema select").addEventListener("input", (e) => { temaProj = e.target.value; mostrarProj(abaProj); });
   }
   mostrarProj("todos");
+
+  const anoAtual = new Date().getFullYear();
+  const destaque = projetos.filter((p) => movimentadoNoAno(p, anoAtual)).sort((a, b) => b.dataSituacao.localeCompare(a.dataSituacao));
+  if (destaque.length) {
+    const porDestino = destaque.reduce((m, p) => { const d = desfecho(p)[1]; m[d] = (m[d] || 0) + 1; return m; }, {});
+    const resumo = [[porDestino.tramitando, "em tramitação"], [porDestino.aprovada, "aprovados"], [porDestino.rejeitada, "arquivados ou retirados"], [porDestino.sem, "sem desfecho claro"]]
+      .filter(([n]) => n).map(([n, r]) => `${n} ${r}`).join(", ");
+    $("#destaque-ano").innerHTML = `<h2>Movimentados em ${anoAtual} <small class="sub">(${destaque.length})</small></h2>
+      <p>Projetos do parlamentar cuja situação mudou neste ano, com o status atual de cada um: ${esc(resumo)}. Do movimento mais recente para o mais antigo.</p>
+      <div id="lista-destaque"></div>`;
+    listaPaginada($("#lista-destaque"), destaque, renderProj, 5, "");
+  }
+
+  if (c.relatorias?.length) {
+    const renderRelatoria = (x) => `<li class="cartao-item">
+      <span class="quando"><b>${esc(x.t)} ${esc(x.n)}/${esc(x.a)}</b></span>
+      <span class="resultado r-${esc(x.d)}">${esc(x.s || "Em tramitação")}</span>
+      <span class="texto">${esc(x.e || "Sem ementa")}</span>
+      <span class="texto"><a href="proposicao.html?k=${encodeURIComponent(x.k)}">Ver todos os políticos ligados a esta proposição</a></span></li>`;
+    $("#relatorias").innerHTML = `<h2>Relatorias <small class="sub">(${c.relatorias.length})</small></h2>
+      <p>Projetos em que ${esc(nome)} é o último relator informado pela Câmara. Valem só os projetos de deputados da legislatura atual, e o relator pode já ter mudado.</p>
+      <div id="lista-relatorias"></div>`;
+    listaPaginada($("#lista-relatorias"), c.relatorias, renderRelatoria, 5, "");
+  }
 
   const renderOutro = (p) => `<li>
       <span class="quando"><b>${esc(p.tipo)} ${esc(p.numero)}/${esc(p.ano)}</b></span>

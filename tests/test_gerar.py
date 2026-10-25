@@ -123,6 +123,23 @@ def test_destino_projeto_segue_o_desfecho_do_site():
         assert gerar.destino_projeto(situacao) == esperado, situacao
 
 
+def test_destino_projeto_sem_situacao_depende_da_tramitacao_lida():
+    import gerar
+    assert gerar.destino_projeto(None) == "sem"
+    assert gerar.destino_projeto(None, lida=True) == "tramitando"
+    assert gerar.destino_projeto("Arquivada", lida=True) == "rejeitada"
+    assert gerar.tramitacao_lida({"tramitacao": "Apresentação de Proposição"}) and not gerar.tramitacao_lida({"situacao": None})
+
+
+def test_relatorias_por_deputado_liga_pelo_id_do_relator():
+    import gerar
+    deputados = {1: {"proposicoes": [{"id": 10, "tipo": "PL"}, {"id": 11, "tipo": "REQ"}]}, 2: {"proposicoes": [{"id": 20, "tipo": "PEC"}, {"id": 21, "tipo": "PL"}]}}
+    detalhes = {"10": {"relator": "2"}, "11": {"relator": "2"}, "20": {"relator": "2"}, "21": {}}
+    assert gerar.relatorias_por_deputado(deputados, detalhes) == {"2": ["10", "20"]}
+    detalhes["346155"] = {"tipo": "PL", "relator": "1"}   # principal de apensado, de autor fora da legislatura
+    assert gerar.relatorias_por_deputado(deputados, detalhes)["1"] == ["346155"]
+
+
 def test_resumir_autoria_conta_so_projetos():
     import gerar
     props = [

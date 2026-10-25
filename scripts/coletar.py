@@ -357,6 +357,12 @@ def id_da_uri(uri: str | None) -> str | None:
     return m.group(1) if m else None
 
 
+def id_deputado_da_uri(uri: str | None) -> str | None:
+    """Id do deputado no fim de uma URI da API (.../deputados/220645), ou None."""
+    m = re.search(r"/deputados/(\d+)/?$", uri or "")
+    return m.group(1) if m else None
+
+
 def coletar_detalhes_proposicoes() -> None:
     """Situação atual de cada projeto (aprovado, arquivado, em tramitação...).
     Guardado em dados/proposicoes_detalhe.json (vai para o git). Há muitos
@@ -366,6 +372,9 @@ def coletar_detalhes_proposicoes() -> None:
     arquivo = DADOS / "proposicoes_detalhe.json"
     cache = ler(arquivo, {})
     todos = ids_de_projetos(TIPOS_PRINCIPAIS)
+    # projeto principal de um apensado pode ser de autor fora da legislatura (e é nele que a Câmara registra o relator): entra na fila
+    principais = {c["apensadoA"] for c in cache.values() if c.get("apensadoA")} - todos
+    todos |= principais
     hoje = dt.date.today()
     limite_velho = (hoje - dt.timedelta(days=RENOVAR_APOS_DIAS)).isoformat()
     novos = sorted(todos - cache.keys(), reverse=True)
@@ -379,7 +388,10 @@ def coletar_detalhes_proposicoes() -> None:
         d = get(f"/proposicoes/{pid}").get("dados", {}) or {}
         st = d.get("statusProposicao") or d.get("ultimoStatus") or {}
         situacao = st.get("descricaoSituacao") or ""
+        # só para quem não está no cadastro de proposições dos deputados: tipo, número e ementa não existem em outro arquivo
+        quem = {"tipo": d.get("siglaTipo"), "numero": d.get("numero"), "ano": d.get("ano"), "ementa": (d.get("ementa") or "").strip() or None} if pid in principais else {}
         return pid, {
+            **quem,
             "dataApresentacao": comum.data_iso(d.get("dataApresentacao")),
             "situacao": situacao or None,
             "tramitacao": st.get("descricaoTramitacao"),
@@ -387,6 +399,7 @@ def coletar_detalhes_proposicoes() -> None:
             "orgao": st.get("siglaOrgao"),
             "dataSituacao": comum.data_iso(st.get("dataHora")),
             "regime": st.get("regime"),
+            "relator": id_deputado_da_uri(st.get("uriUltimoRelator")),
             "inteiroTeor": d.get("urlInteiroTeor"),
             "ementaDetalhada": (d.get("ementaDetalhada") or "").strip() or None,
             "palavrasChave": (d.get("keywords") or "").strip() or None,

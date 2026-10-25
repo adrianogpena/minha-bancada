@@ -6,11 +6,34 @@ const path = require("node:path");
 globalThis.window = {};
 const js = (nome) => require(path.join(__dirname, "../../site/assets/js", nome));
 const { esc, reais, reaisCentavos, pct, data, semAcento, urlSegura } = js("util.js");
-const { urlLegivel, fontes } = js("apis.js");
+const { urlLegivel, fontes, temResultado, movimentadoNoAno, desfecho } = js("apis.js");
 const { resumosEstadual } = js("estadual.js");
 const { linksRedes } = js("ficha.js");
 const { foto } = js("comum.js");
 const { agruparPeriodos, chaveDe, juntarDias } = js("historico.js");
+
+test("temResultado deixa de fora a votação sem aprovada nem rejeitada", () => {
+  assert.equal(temResultado({ aprovada: 1 }), true);
+  assert.equal(temResultado({ aprovada: 0 }), true);
+  assert.equal(temResultado({ aprovada: null }), false);
+  assert.equal(temResultado({}), false);
+});
+
+test("movimentadoNoAno pega o projeto com situação atualizada no ano, qualquer que seja o desfecho", () => {
+  const p = { situacao: "Aguardando Parecer", dataSituacao: "2026-03-10" };
+  assert.equal(movimentadoNoAno(p, 2026), true);
+  assert.equal(movimentadoNoAno({ ...p, situacao: "Arquivada" }, 2026), true);
+  assert.equal(movimentadoNoAno({ ...p, situacao: "Transformado em Norma Jurídica" }, 2026), true);
+  assert.equal(movimentadoNoAno({ ...p, dataSituacao: "2025-08-22" }, 2026), false);
+  assert.equal(movimentadoNoAno({ situacao: "Aguardando Parecer" }, 2026), false);
+});
+
+test("desfecho trata situação vazia com tramitação lida como projeto em tramitação", () => {
+  assert.deepEqual(desfecho({ situacao: null, tramitacao: "Apresentação de Proposição" }).slice(0, 2), ["Em tramitação", "tramitando"]);
+  assert.deepEqual(desfecho({ situacao: null, dataSituacao: "2026-08-25" }).slice(0, 2), ["Em tramitação", "tramitando"]);
+  assert.deepEqual(desfecho({ situacao: null }).slice(0, 2), ["Situação ainda não consultada", "sem"]);
+  assert.deepEqual(desfecho({ situacao: "Arquivada" }).slice(0, 2), ["Arquivada", "rejeitada"]);
+});
 
 test("esc escapa HTML e trata nulos", () => {
   assert.equal(esc(`<a href="x">'&'</a>`), "&lt;a href=&quot;x&quot;&gt;&#39;&amp;&#39;&lt;/a&gt;");

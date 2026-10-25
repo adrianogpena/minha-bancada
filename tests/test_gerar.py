@@ -123,6 +123,14 @@ def test_destino_projeto_segue_o_desfecho_do_site():
         assert gerar.destino_projeto(situacao) == esperado, situacao
 
 
+def test_destino_projeto_sem_situacao_depende_da_tramitacao_lida():
+    import gerar
+    assert gerar.destino_projeto(None) == "sem"
+    assert gerar.destino_projeto(None, lida=True) == "tramitando"
+    assert gerar.destino_projeto("Arquivada", lida=True) == "rejeitada"
+    assert gerar.tramitacao_lida({"tramitacao": "Apresentação de Proposição"}) and not gerar.tramitacao_lida({"situacao": None})
+
+
 def test_resumir_autoria_conta_so_projetos():
     import gerar
     props = [

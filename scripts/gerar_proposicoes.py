@@ -26,7 +26,7 @@ MAX_VOTACOES = 30
 def _item(casa: str, p: dict, destino) -> dict:
     """Linha do índice: chave, tipo, número, ano, ementa curta, situação e destino (aprovada, rejeitada, tramitando, sem)."""
     return {"k": f"{casa}-{p['id']}", "c": casa, "t": p["tipo"], "n": p["numero"], "a": p["ano"],
-            "e": (p.get("ementa") or "").strip()[:TAMANHO_EMENTA], "s": p.get("situacao"), "d": destino(p.get("situacao"))}
+            "e": (p.get("ementa") or "").strip()[:TAMANHO_EMENTA], "s": p.get("situacao"), "d": destino(p.get("situacao"), bool(p.get("tramitacao") or p.get("dataSituacao")))}
 
 
 def _sem_vazios(d: dict) -> dict:

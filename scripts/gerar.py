@@ -99,11 +99,19 @@ def juntar_autoria(p: dict, aut: dict | None, did: str, partidos: dict | None = 
 TIPOS_PROJETO = {"PL", "PLP", "PEC", "PDL", "PRC", "PLC", "PLS", "PRS", "PDS", "PLN", "PFC", "PLV", "MPV"}
 
 
-def destino_projeto(situacao: str | None) -> str:
-    """Mesma classificação de `desfecho` em site/assets/js/apis.js: aprovada, rejeitada, tramitando ou sem (sem desfecho conhecido)."""
+def tramitacao_lida(p: dict) -> bool:
+    """A proposição já tem tramitação ou data de situação vindas de proposicoes_detalhe.json."""
+    return bool(p.get("tramitacao") or p.get("dataSituacao"))
+
+
+def destino_projeto(situacao: str | None, lida: bool = False) -> str:
+    """Mesma classificação de `desfecho` em site/assets/js/apis.js: aprovada, rejeitada, tramitando ou sem (sem desfecho conhecido).
+    `lida`: a tramitação da proposição já foi consultada; a Câmara só deixa a situação vazia enquanto ela tramita."""
     s = unicodedata.normalize("NFD", (situacao or "").lower())
     s = "".join(c for c in s if unicodedata.category(c) != "Mn")
-    if not situacao or "tramitacao encerrada" in s:
+    if not situacao:
+        return "tramitando" if lida else "sem"
+    if "tramitacao encerrada" in s:
         return "sem"
     if re.match(r"(sancionad|promulgad|aprovad)", s):
         return "aprovada"
@@ -127,7 +135,7 @@ def resumir_autoria(proposicoes: list) -> dict:
     proprias = [p for p in com_autoria if p["principal"]]
     return {
         "projetos": len(projetos), "autoriaColetada": len(com_autoria), "proprias": len(proprias),
-        "aprovadasProprias": sum(1 for p in proprias if destino_projeto(p.get("situacao")) == "aprovada"),
+        "aprovadasProprias": sum(1 for p in proprias if destino_projeto(p.get("situacao"), tramitacao_lida(p)) == "aprovada"),
         "suprapartidarios": sum(1 for p in com_autoria if p.get("partidosDistintos", 0) > 1),
     }
 
@@ -253,7 +261,7 @@ def resumir_temas(proposicoes: list) -> list:
         for t in p.get("temas", []):
             c = por_tema.setdefault(t, [0, 0, 0])
             c[0] += 1
-            c[1] += destino_projeto(p.get("situacao")) == "aprovada"
+            c[1] += destino_projeto(p.get("situacao"), tramitacao_lida(p)) == "aprovada"
             c[2] += bool(p.get("principal"))
     return sorted(([t, *c] for t, c in por_tema.items()), key=lambda x: (-x[1], x[0]))
 

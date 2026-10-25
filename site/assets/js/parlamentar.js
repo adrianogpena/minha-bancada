@@ -1,7 +1,7 @@
 /* Montagem da ficha de um parlamentar (deputado ou senador). */
 import { $, esc, pct, data, urlSegura } from "./util.js";
 import { VOTOS, foto, selo, legenda, listaPaginada, abas, ligarAbas } from "./comum.js";
-import { CAMARA_API, resultado, desfecho, fontes } from "./apis.js";
+import { CAMARA_API, resultado, desfecho, tramitandoNoAno, fontes } from "./apis.js";
 import { barraPlacar } from "./votacoes.js";
 import { LEGENDA_PROJETOS, avisoDados } from "./executivo.js";
 
@@ -45,6 +45,7 @@ export function montarParlamentar(alvo, c) {
         <p>${c.proposicoes.length} documentos apresentados ${esc(c.textoLegislatura)}.</p></div>
       <div class="numeros" id="numeros-prop"></div>
     </section>
+    <section id="destaque-ano"></section>
     <h2 id="proposicoes">Projetos <small class="sub">(${projetos.length})</small></h2>
     <p>Projetos de lei, emendas à Constituição e similares. ${esc(c.aviso)}</p>
     ${LEGENDA_PROJETOS}
@@ -169,6 +170,15 @@ export function montarParlamentar(alvo, c) {
     $("#filtro-tema select").addEventListener("input", (e) => { temaProj = e.target.value; mostrarProj(abaProj); });
   }
   mostrarProj("todos");
+
+  const anoAtual = new Date().getFullYear();
+  const destaque = projetos.filter((p) => tramitandoNoAno(p, anoAtual)).sort((a, b) => b.dataSituacao.localeCompare(a.dataSituacao));
+  if (destaque.length) {
+    $("#destaque-ano").innerHTML = `<h2>Em tramitação em ${anoAtual} <small class="sub">(${destaque.length})</small></h2>
+      <p>Projetos que seguem andando e tiveram a situação atualizada neste ano, do movimento mais recente para o mais antigo.</p>
+      <div id="lista-destaque"></div>`;
+    listaPaginada($("#lista-destaque"), destaque, renderProj, 5, "");
+  }
 
   const renderOutro = (p) => `<li>
       <span class="quando"><b>${esc(p.tipo)} ${esc(p.numero)}/${esc(p.ano)}</b></span>

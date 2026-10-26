@@ -474,7 +474,8 @@ def _contrato_emendas(ctx):
     z = zipfile.ZipFile(io.BytesIO(baixar_ckan(s, url_zip_emendas(pacote), TIMEOUT_ARQUIVO)))
     texto = decodificar(z.read(EMENDAS_CSV))
     linhas = texto.splitlines()
-    return {"csv": "\n".join(linhas[:4]), "arquivos": sorted(z.namelist())}
+    pagamentos = decodificar(z.read(PAGAMENTOS_CSV)).splitlines()
+    return {"csv": "\n".join(linhas[:4]), "pagamentos": "\n".join(pagamentos[:4]), "arquivos": sorted(z.namelist())}
 
 
 def _conferir_emendas(registro):

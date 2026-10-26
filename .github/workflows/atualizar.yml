@@ -13,6 +13,9 @@ permissions:
   pages: write
   id-token: write
 
+env:
+  TZ: America/Sao_Paulo   # date.today() dos coletores segue o dia de Brasília, também em execução manual à noite
+
 concurrency:
   group: atualizar
   cancel-in-progress: false

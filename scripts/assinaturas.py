@@ -94,22 +94,23 @@ def organizar(linhas: list[dict], privada) -> tuple[list[dict], list[dict], list
 
 
 def janela(freq: str, data: str) -> tuple[str, str] | None:
-    """(início, título) do período que o aviso `freq` cobre no dia `data` (AAAA-MM-DD), ou None se não é dia de enviar.
-    Semanal sai na segunda-feira e cobre os 7 dias anteriores; mensal sai no dia 1 e cobre o mês anterior."""
+    """(início, título) do período que o aviso `freq` cobre quando o último dia dos fatos é `data` (AAAA-MM-DD), ou None se não é dia de enviar.
+    A coleta roda de madrugada e traz o dia anterior: o semanal sai na segunda-feira (`data` é domingo) e cobre segunda a domingo;
+    o mensal sai no dia 1 (`data` é o último dia do mês) e cobre o mês inteiro."""
     dia = date.fromisoformat(data)
     br = lambda d: d.strftime("%d/%m/%Y")
-    if freq == "semanal" and dia.weekday() == 0:
-        ini = dia - timedelta(days=7)
-        return ini.isoformat(), f"Minha Bancada — suas atualizações da semana, de {br(ini)} a {br(dia - timedelta(days=1))}"
-    if freq == "mensal" and dia.day == 1:
-        fim = dia - timedelta(days=1)
-        return fim.replace(day=1).isoformat(), f"Minha Bancada — suas atualizações de {fim.month:02d}/{fim.year}"
+    if freq == "semanal" and dia.weekday() == 6:
+        ini = dia - timedelta(days=6)
+        return ini.isoformat(), f"Minha Bancada — suas atualizações da semana, de {br(ini)} a {br(dia)}"
+    if freq == "mensal" and (dia + timedelta(days=1)).day == 1:
+        return dia.replace(day=1).isoformat(), f"Minha Bancada — suas atualizações de {dia.month:02d}/{dia.year}"
     return None
 
 
 def commit_antes_de(inicio: str, depois: str) -> str:
-    """Último commit anterior ao dia `inicio`; sem ele (histórico raso), o mais antigo disponível."""
-    return r.git("rev-list", "-1", f"--before={inicio}T00:00:00Z", depois).strip() or r.git("rev-list", "--max-parents=0", depois).split()[-1]
+    """Último commit anterior à coleta que trouxe o dia `inicio` (a da madrugada seguinte, em Brasília); sem ele (histórico raso), o mais antigo disponível."""
+    coleta = date.fromisoformat(inicio) + timedelta(days=1)
+    return r.git("rev-list", "-1", f"--before={coleta.isoformat()}T00:00:00-03:00", depois).strip() or r.git("rev-list", "--max-parents=0", depois).split()[-1]
 
 
 def link(acao: str, token: str) -> str:
@@ -161,7 +162,7 @@ def main() -> None:
 
     envios = []
     if ativos and not a.so_confirmacoes:
-        data = r.git("log", "-1", "--format=%cs", a.depois).strip()
+        data = r.dia_do_commit(a.depois)
         titulo = f"Minha Bancada — suas atualizações de {data[8:]}/{data[5:7]}/{data[:4]}"
         completo, deps_uf = r.coletar(a.antes, a.depois), feeds.deputados_por_uf()
         if not deps_uf:

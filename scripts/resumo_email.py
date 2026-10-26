@@ -18,12 +18,14 @@ import shutil
 import smtplib
 import subprocess
 from collections import Counter, defaultdict
+from datetime import datetime, timedelta
 from email.message import EmailMessage
 from pathlib import Path
 from urllib.parse import quote
 
 import cadastro_proposicoes
 import nomes_legados
+from fuso import BRASILIA
 
 RAIZ = Path(__file__).resolve().parent.parent
 GIT = shutil.which("git") or "git"
@@ -50,6 +52,17 @@ def juntar(*partes: str) -> str:
 
 def git(*args: str) -> str:
     return subprocess.check_output([GIT, *args], cwd=RAIZ, text=True)
+
+
+def dia_dos_fatos(timestamp: int) -> str:
+    """Dia (AAAA-MM-DD, Brasília) a que pertence uma coleta feita no instante `timestamp`: a coleta roda de madrugada e traz o dia anterior."""
+    return (datetime.fromtimestamp(timestamp, BRASILIA).date() - timedelta(days=1)).isoformat()
+
+
+def dia_do_commit(rev: str, *caminhos: str) -> str | None:
+    """Dia dos fatos do commit `rev` (ou do último que mexeu em `caminhos`); None se não houver."""
+    ts = git("log", "-1", "--format=%ct", rev, *(["--", *caminhos] if caminhos else [])).strip()
+    return dia_dos_fatos(int(ts)) if ts else None
 
 
 def carregar(rev: str, caminho: str):
@@ -252,7 +265,7 @@ def main() -> None:
     p.add_argument("--saida", default=".")
     p.add_argument("--enviar", action="store_true")
     a = p.parse_args()
-    data = git("log", "-1", "--format=%cs", a.depois).strip()
+    data = dia_do_commit(a.depois)
     titulo = f"Minha Bancada — o que mudou em {data[8:]}/{data[5:7]}/{data[:4]}"
     d = coletar(a.antes, a.depois)
     h, t = montar(d, titulo, detalhes=link_historico(data))

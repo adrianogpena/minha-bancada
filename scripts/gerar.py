@@ -15,6 +15,7 @@ from pathlib import Path
 import categorias
 import gerar_estaduais
 import doadores
+import fuso
 import empresas
 import fornecedores as nucleo_fornecedores
 import candidaturas
@@ -383,7 +384,8 @@ def gerar_senadores() -> list:
         # votação em que ninguém tem voto com direção só pode ser secreta, mesmo em dados salvos antes do campo existir
         secreta = bool(v.get("secreta")) or (contagem["secreto"] > 0 and not any(contagem[k] for k in ("sim", "nao", "abstencao", "obstrucao")))
         item = {
-            "id": v["id"], "data": v["data"], "hora": v.get("hora"), "descricao": v["descricao"],
+            "id": v["id"], "data": v["data"], "hora": v.get("hora"), "dataHora": fuso.iso(f"{v['data']}T{v['hora']}") if v.get("hora") else None,
+            "descricao": v["descricao"],
             "proposicao": v.get("proposicao"), "propId": v.get("propId"), "ementa": v.get("ementa"),
             "aprovada": v.get("aprovada"), "resultadoTexto": v.get("resultadoTexto"),
             "placar": placar, "placarOficial": bool(totais), "ausentes": contagem["ausente"],
@@ -511,7 +513,7 @@ def main():
                 "voto": tipo_voto(t),
             })
         resumo = {
-            "id": v["id"], "data": v["data"], "hora": v.get("hora"),
+            "id": v["id"], "data": v["data"], "hora": v.get("hora"), "dataHora": fuso.iso(f"{v['data']}T{v['hora']}") if v.get("hora") else None,
             "descricao": v["descricao"], "proposicao": v.get("proposicao"),
             "propId": v.get("propId"), "ementa": v.get("ementa"),
             "aprovada": v.get("aprovada"), "placar": dict(placar),

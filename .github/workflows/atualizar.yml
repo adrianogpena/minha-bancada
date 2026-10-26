@@ -2,7 +2,7 @@ name: Atualizar dados e publicar site
 
 on:
   schedule:
-    - cron: "0 8 * * *"    # todo dia às 08:00 UTC (05:00 em Brasília)
+    - cron: "47 7 * * *"   # todo dia às 07:47 UTC (04:47 em Brasília), fora da hora cheia
   workflow_dispatch:        # permite rodar manualmente pela aba Actions
   push:
     branches: [master]
@@ -12,6 +12,9 @@ permissions:
   contents: write   # salvar o cache de dados no repositório
   pages: write
   id-token: write
+
+env:
+  TZ: America/Sao_Paulo   # date.today() dos coletores segue o dia de Brasília, também em execução manual à noite
 
 concurrency:
   group: atualizar
@@ -367,7 +370,7 @@ jobs:
           for f in dados/votacoes dados/proposicoes dados/proposicoes_cadastro dados/proposicoes_detalhe.json dados/proposicoes_autores.json dados/proposicoes_temas.json dados/orgaos_deputados.json dados/orientacoes.json dados/blocos.json dados/proposicoes_votacoes.json dados/presenca_eventos.json dados/senado_votacoes dados/senado_materias.json dados/executivo.json dados/estaduais dados/siconfi dados/municipais dados/tse dados/status_apis.json; do
             if [ -e "$f" ]; then git add "$f"; fi
           done
-          git diff --cached --quiet || git commit -m "Dados atualizados em $(date -u +%Y-%m-%d)"
+          git diff --cached --quiet || git commit -m "Dados atualizados em $(TZ=America/Sao_Paulo date +%Y-%m-%d)"
           git push
 
       - name: Registrar o histórico diário (todos os detalhes do dia, com fontes, em dados/historico)
@@ -377,7 +380,7 @@ jobs:
           git fetch --deepen=50 -q || true
           python scripts/historico.py
           git add dados/historico
-          git diff --cached --quiet || git commit -m "Histórico diário de $(date -u +%Y-%m-%d)"
+          git diff --cached --quiet || git commit -m "Histórico diário de $(TZ=America/Sao_Paulo date -d yesterday +%Y-%m-%d)"   # a coleta roda de madrugada e traz o dia anterior
           git push
 
       - name: Atualizar os feeds RSS do Fique informado (últimos 14 dias, a partir do histórico git)
@@ -408,7 +411,7 @@ jobs:
           git fetch --deepen=50 -q || true
           DEPOIS=$(git log -1 --grep='^Dados atualizados em' --format=%H)
           # sem commit de hoje (nada mudou), não reenvia o de ontem
-          [ -n "$DEPOIS" ] && [ "$(git log -1 --format=%cs "$DEPOIS")" = "$(date -u +%F)" ] && python scripts/resumo_email.py "$DEPOIS~1" "$DEPOIS" --enviar
+          [ -n "$DEPOIS" ] && [ "$(TZ=America/Sao_Paulo git log -1 --format=%cd --date=format-local:%F "$DEPOIS")" = "$(TZ=America/Sao_Paulo date +%F)" ] && python scripts/resumo_email.py "$DEPOIS~1" "$DEPOIS" --enviar
 
       - name: Enviar avisos aos assinantes de "Fique informado" (e-mails cifrados)
         # só na execução agendada; a chave privada decifra os cadastros só na memória deste passo (assinaturas/LEIAME.md); falha aqui não derruba a publicação
@@ -427,4 +430,4 @@ jobs:
           git fetch --shallow-since="70 days ago" -q origin master || true   # o aviso mensal compara com o início do mês anterior
           DEPOIS=$(git log -1 --grep='^Dados atualizados em' --format=%H)
           # sem commit de hoje (nada mudou), não manda aviso; confirmações pendentes esperam o próximo dia com dados
-          [ -n "$DEPOIS" ] && [ "$(git log -1 --format=%cs "$DEPOIS")" = "$(date -u +%F)" ] && python scripts/assinaturas.py "$DEPOIS~1" "$DEPOIS" --enviar
+          [ -n "$DEPOIS" ] && [ "$(TZ=America/Sao_Paulo git log -1 --format=%cd --date=format-local:%F "$DEPOIS")" = "$(TZ=America/Sao_Paulo date +%F)" ] && python scripts/assinaturas.py "$DEPOIS~1" "$DEPOIS" --enviar

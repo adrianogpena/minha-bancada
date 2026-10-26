@@ -7,7 +7,7 @@ on:
   workflow_dispatch:
     inputs:
       dia:
-        description: "Dia dos dados (AAAA-MM-DD); vazio = o commit diário mais recente"
+        description: "Dia dos fatos (AAAA-MM-DD, Brasília; a coleta é a da madrugada seguinte); vazio = o commit diário mais recente"
         required: false
         default: ""
       enviar_resumo:
@@ -66,13 +66,14 @@ jobs:
         id: commit
         run: |
           if [ -n "$DIA" ]; then
-            DEPOIS=$(git log --grep='^Dados atualizados em' --format='%H' --since="$DIA 00:00 +0000" --until="$DIA 23:59:59 +0000" -n1)
+            COLETA=$(date -d "$DIA + 1 day" +%F)
+            DEPOIS=$(git log --grep='^Dados atualizados em' --format='%H' --since="$COLETA 00:00 -0300" --until="$COLETA 23:59:59 -0300" -n1)
           else
             DEPOIS=$(git log -1 --grep='^Dados atualizados em' --format=%H)
           fi
           if [ -z "$DEPOIS" ]; then echo "Sem commit diário para '${DIA:-o mais recente}'."; exit 1; fi
           echo "depois=$DEPOIS" >> "$GITHUB_OUTPUT"
-          echo "Commit: $DEPOIS ($(git log -1 --format=%cs "$DEPOIS"))"
+          echo "Commit: $DEPOIS ($(TZ=America/Sao_Paulo git log -1 --format=%cd --date=format-local:%F "$DEPOIS"))"
 
       - name: Montar o resumo geral (resumo.html e resumo.txt)
         run: python scripts/resumo_email.py "${{ steps.commit.outputs.depois }}~1" "${{ steps.commit.outputs.depois }}" --saida "$RUNNER_TEMP/saida"

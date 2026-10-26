@@ -23,6 +23,13 @@ export const data = (iso, longo = false) => {
   const d = new Date(iso.slice(0, 10) + "T12:00:00Z");
   return d.toLocaleDateString("pt-BR", longo ? { day: "numeric", month: "long", year: "numeric", timeZone: "UTC" } : { day: "2-digit", month: "short", year: "numeric", timeZone: "UTC" });
 };
+// Instante com offset (a hora de Brasília salva pelo coletor) mostrado no fuso de quem abre o site; sem offset, cai na data e hora como salvas.
+export const dataHora = (iso, longo = false) => {
+  const d = iso && new Date(iso);
+  if (!d || isNaN(d)) return "";
+  const dia = d.toLocaleDateString("pt-BR", longo ? { day: "numeric", month: "long", year: "numeric" } : { day: "2-digit", month: "short", year: "numeric" });
+  return `${dia}, ${longo ? "às " : ""}${d.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit", timeZoneName: "short" })}`;
+};
 export const semAcento = (s) => String(s ?? "").normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
 export const param = (nome) => new URLSearchParams(location.search).get(nome);
 

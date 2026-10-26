@@ -18,9 +18,9 @@ API da Câmara ──> scripts/coletar.py ──> dados/        (cache bruto; o 
                          └──> site/dados/  ──> GitHub Pages
 ```
 
-O arquivo `.github/workflows/atualizar.yml` roda as duas etapas todo dia às 5h (Brasília) e publica o resultado. Depois de salvar os dados do dia, na ordem:
+O arquivo `.github/workflows/atualizar.yml` roda as duas etapas todo dia de madrugada (07:47 UTC, 04:47 em Brasília) e publica o resultado. Depois de salvar os dados do dia, na ordem:
 
-1. `scripts/historico.py` registra tudo o que mudou, com fontes, em `dados/historico/` (página **Histórico** do site);
+1. `scripts/historico.py` registra tudo o que mudou, com fontes, em `dados/historico/` (página **Histórico** do site). O dia do histórico é o dia dos fatos, em Brasília: a coleta de madrugada de 26/10 grava `2026-10-25.json`;
 2. `scripts/feeds.py` atualiza os feeds RSS;
 3. o site é publicado;
 4. os e-mails saem (resumo ao dono e avisos aos assinantes). E-mail e RSS trazem só um resumo e o link para a página do dia no Histórico.
@@ -97,7 +97,7 @@ Sem `--limite` a coleta pega todos os deputados em exercício. `--dias` só vale
 | `scripts/coletar_coligacoes.py` | Resume coligações, federações e a situação da legenda do partido de cada eleito, a partir do arquivo baixado por `baixar_tse.py consulta_coligacao` (rodar depois de `coletar_tse.py`). |
 | `scripts/resumo_email.py` | Resumo do que mudou na execução diária, enviado por e-mail ao dono do projeto. |
 | `scripts/assinaturas.py`, `scripts/gerar_chaves.py`, `assinaturas/` | Aviso por e-mail opcional do Fique informado, com o e-mail criptografado no navegador (só o robô diário tem a chave). Passo a passo em `assinaturas/LEIAME.md`. |
-| `scripts/historico.py` | Histórico diário: compara os dados do dia com os do dia anterior (pelo git) e grava em `dados/historico/AAAA-MM-DD.json` todos os detalhes, por local e por político, com a fonte de cada item. A página `site/historico.html` lê esses arquivos. Cada item recebe uma relevância (3 marco, 2 projeto de verdade, 1 o resto); o excesso de baixa relevância por local vira um evento "lote"; o dia traz a cobertura de todos os locais acompanhados, com ou sem novidade. A página mostra tudo por padrão e filtra por importância. Também refaz dias passados: `python scripts/historico.py --dias 7`. |
+| `scripts/historico.py` | Histórico diário: compara os dados da coleta com os da anterior (pelo git; o arquivo leva a data do dia anterior à coleta, em Brasília) e grava em `dados/historico/AAAA-MM-DD.json` todos os detalhes, por local e por político, com a fonte de cada item. A página `site/historico.html` lê esses arquivos. Cada item recebe uma relevância (3 marco, 2 projeto de verdade, 1 o resto); o excesso de baixa relevância por local vira um evento "lote"; o dia traz a cobertura de todos os locais acompanhados, com ou sem novidade. A página mostra tudo por padrão e filtra por importância. Também refaz dias passados: `python scripts/historico.py --dias 7`. |
 | `scripts/feeds.py` | Feeds RSS da página Fique informado (um por local e por político acompanhável), em `site/feeds/`, a partir do histórico git. Sem cadastro de leitores. |
 | `scripts/gerar_municipios_ibge.py`, `scripts/simplificar_df.py` | Refazem `dados/municipios_ibge.json` (código TSE → IBGE) e `site/geo/df_ras.json` (regiões administrativas do DF) a partir das fontes oficiais. Rodar só se mudarem. |
 | `scripts/identidades.py` | Núcleo de identidades: id próprio de pessoa e de partido ligando TSE, Câmara, Senado e Assembleias (`site/dados/nucleo/`), com o método e a confiança de cada ligação. Chamado pelo `gerar.py`. Também é o único lugar que liga nomes de registros das Assembleias ao deputado (`ligar_nomes`; correções manuais em `scripts/ligacoes_manuais.json`). |

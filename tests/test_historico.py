@@ -13,7 +13,7 @@ import feeds
 def repo(tmp_path, monkeypatch):
     """Repositório git de mentira com dois commits de dados, para o histórico comparar."""
     def git(*a, data=None):
-        env = {**os.environ, "GIT_COMMITTER_DATE": f"{data}T12:00:00", "GIT_AUTHOR_DATE": f"{data}T12:00:00"} if data else None
+        env = {**os.environ, "GIT_COMMITTER_DATE": f"{data}T12:00:00-0300", "GIT_AUTHOR_DATE": f"{data}T12:00:00-0300"} if data else None
         subprocess.run(["git", *a], cwd=tmp_path, check=True, capture_output=True, env=env)
 
     def salvar(caminho, obj):
@@ -98,13 +98,13 @@ def test_primeira_coleta_nao_vira_novidade(repo, tmp_path):
 
 def test_dias_git_agrupa_commits_do_mesmo_dia(repo, tmp_path):
     (tmp_path / "dados" / "x.json").write_text("{}")
-    env = {**os.environ, "GIT_COMMITTER_DATE": "2026-01-02T20:00:00", "GIT_AUTHOR_DATE": "2026-01-02T20:00:00"}
+    env = {**os.environ, "GIT_COMMITTER_DATE": "2026-01-02T20:00:00-0300", "GIT_AUTHOR_DATE": "2026-01-02T20:00:00-0300"}
     subprocess.run(["git", "add", "-A"], cwd=tmp_path, check=True)
     subprocess.run(["git", "commit", "-qm", "Dados atualizados em 2026-01-02"], cwd=tmp_path, check=True, env=env)
-    # o dia 01-01 não tem commit anterior para comparar; o 01-02 vai do pai do primeiro commit do dia ao último
+    # o commit de 01-01 não tem anterior para comparar; as coletas de 01-02 (de madrugada, trazem os fatos de 01-01) vão do pai do primeiro ao último
     (dia,) = h.dias_git(None)
     primeiro, ultimo = r.git("rev-parse", "HEAD~2").strip(), r.git("rev-parse", "HEAD").strip()
-    assert dia[0] == "2026-01-02" and r.git("rev-parse", dia[1]).strip() == primeiro and dia[2] == ultimo
+    assert dia[0] == "2026-01-01" and r.git("rev-parse", dia[1]).strip() == primeiro and dia[2] == ultimo
     assert h.dias_git(None) == h.dias_git(1)
 
 
@@ -127,6 +127,12 @@ def test_carga_em_lote_do_tse_vira_um_evento(repo, tmp_path, monkeypatch):
     subprocess.run(["git", "commit", "-qm", "lote"], cwd=tmp_path, check=True)
     ev = [e for e in h.dia("2026-01-03", "HEAD~1", "HEAD")["eventos"] if e["categoria"] == "eleicao"]
     assert len(ev) == 1 and "registros novos ou alterados" in ev[0]["titulo"]
+
+
+def test_dia_dos_fatos_e_o_dia_anterior_a_coleta_em_brasilia():
+    assert r.dia_dos_fatos(1767253620) == "2025-12-31"   # 2026-01-01 07:47 UTC = 04:47 em Brasília
+    assert r.dia_dos_fatos(1767236400) == "2025-12-31"   # 03:00 UTC = 00:00 de 01/01 em Brasília
+    assert r.dia_dos_fatos(1767236340) == "2025-12-30"   # 02:59 UTC ainda é 31/12 em Brasília
 
 
 def test_link_historico_filtra_por_codigos():
@@ -214,8 +220,8 @@ def test_cobertura_mostra_local_sem_novidade_e_desde_quando(repo, tmp_path):
     subprocess.run(["git", "add", "-A"], cwd=tmp_path, check=True)
     subprocess.run(["git", "commit", "-qm", "so tse"], cwd=tmp_path, check=True)
     cob = h.dia("2026-01-03", "HEAD~1", "HEAD")["cobertura"]
-    assert cob["UF:AC"] == {"nome": "Estado: Acre", "mudou": False, "itens": 0, "status": "parado", "ultimaMudanca": "2026-01-02"}
-    assert cob["BR"]["status"] == "parado" and cob["BR"]["ultimaMudanca"] == "2026-01-02"
+    assert cob["UF:AC"] == {"nome": "Estado: Acre", "mudou": False, "itens": 0, "status": "parado", "ultimaMudanca": "2026-01-01"}
+    assert cob["BR"]["status"] == "parado" and cob["BR"]["ultimaMudanca"] == "2026-01-01"
     assert cob["UF:SP"] == {"nome": "Estado: São Paulo", "mudou": False, "itens": 0, "status": "sem_cobertura"}
 
 
@@ -231,11 +237,11 @@ def test_cobertura_separa_mudanca_irrelevante_de_so_data_de_coleta(repo, tmp_pat
     commit("nada de AC")
     cob = h.dia("2026-01-03", "HEAD~1", "HEAD")["cobertura"]["UF:AC"]
     assert cob["status"] == "falha" and cob["ultimaColeta"] == "2026-01-01"
-    arq.write_text(json.dumps({**base, "coletadoEm": "2026-01-03"}), encoding="utf-8")
+    arq.write_text(json.dumps({**base, "coletadoEm": "2026-01-04"}), encoding="utf-8")
     commit("so a data")
     cob = h.dia("2026-01-03", "HEAD~1", "HEAD")["cobertura"]["UF:AC"]
     assert cob["status"] == "parado" and cob["mudou"] is False
-    arq.write_text(json.dumps({**base, "coletadoEm": "2026-01-04", "fonte": "outra"}), encoding="utf-8")
+    arq.write_text(json.dumps({**base, "coletadoEm": "2026-01-05", "fonte": "outra"}), encoding="utf-8")
     commit("campo novo")
     cob = h.dia("2026-01-04", "HEAD~1", "HEAD")["cobertura"]["UF:AC"]
     assert cob["status"] == "irrelevante" and cob["mudancas"] == ["matérias"] and cob["mudou"] is True

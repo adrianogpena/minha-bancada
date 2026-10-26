@@ -36,6 +36,7 @@ from datetime import date
 from pathlib import Path
 
 import feeds
+import fuso
 import nomes_legados
 import cadastro_proposicoes
 import resumo_email as r
@@ -93,8 +94,9 @@ def dias_git(n: int | None) -> list[tuple[str, str, str]]:
     """[(data, antes, depois)] dos n últimos dias com commit de dados, do mais novo ao mais antigo.
     Vários commits no mesmo dia viram um dia só: do pai do primeiro ao último."""
     por_dia = defaultdict(list)
-    for linha in r.git("log", "--grep=^Dados atualizados em", "--format=%H %cs").splitlines():
-        commit, data = linha.split()
+    for linha in r.git("log", "--grep=^Dados atualizados em", "--format=%H %ct").splitlines():
+        commit, ts = linha.split()
+        data = r.dia_dos_fatos(int(ts))
         por_dia[data].append(commit)   # do mais novo ao mais antigo
     saida = []
     for data in sorted(por_dia, reverse=True):
@@ -526,7 +528,7 @@ def ultima_coleta(depois: str, prefixo: str) -> str | None:
     arquivos = [f for f in listar(depois, prefixo) if f.endswith(".json")]
     anos = {m.group(1) for f in arquivos if (m := re.search(r"_(\d{4})\.json$", f))}
     recentes = [f for f in arquivos if not re.search(r"_\d{4}\.json$", f) or f.endswith(f"_{max(anos)}.json")]
-    datas = [str(x["coletadoEm"])[:10] for x in ler_lote(depois, recentes).values() if isinstance(x, dict) and x.get("coletadoEm")]
+    datas = [fuso.dia(x["coletadoEm"]) or str(x["coletadoEm"])[:10] for x in ler_lote(depois, recentes).values() if isinstance(x, dict) and x.get("coletadoEm")]
     return max(datas) if datas else None
 
 
@@ -551,7 +553,7 @@ def cobertura(ctx: Contexto, antes: str, depois: str, contagem: dict, data: str 
     status: "novidade" (saiu item), "irrelevante" (os dados mudaram mas nada vira item; `mudancas` diz o que), "parado" (nenhum dado novo),
     "falha" (a coleta não gravou nada nesse dia; `ultimaColeta`) e "sem_cobertura" (estado ainda sem fonte coletada).
     Assim "nada aconteceu" se distingue de "o local não foi acompanhado" e uma coleta parada há dias aparece."""
-    data = data or r.git("log", "-1", "--format=%cs", depois).strip()
+    data = data or r.dia_do_commit(depois)
     prefixos = {"BR": list(PREFIXOS_BR)}
     for tipo, pasta in (("UF", "estaduais"), ("MUN", "municipais")):
         for uf in sorted({f.split("/")[2] for f in listar(depois, f"dados/{pasta}")}):
@@ -571,14 +573,14 @@ def cobertura(ctx: Contexto, antes: str, depois: str, contagem: dict, data: str 
                 item.update(status="irrelevante", mudancas=mudancas)
             else:
                 coleta = ultima_coleta(depois, prefixos[local][0]) if local != "BR" else None
-                if coleta and coleta < data:
+                if coleta and coleta <= data:   # a coleta que trouxe o dia `data` é a do dia seguinte
                     item.update(status="falha", ultimaColeta=coleta)
                 else:
                     item["status"] = "parado"
                 item["ultimaMudanca"] = ultima_mudanca_registrada(data, local)
                 if not item["ultimaMudanca"] and not alterados:
                     with contextlib.suppress(subprocess.CalledProcessError):
-                        item["ultimaMudanca"] = r.git("log", "-1", "--format=%cs", depois, "--", *prefixos[local]).strip() or None
+                        item["ultimaMudanca"] = r.dia_do_commit(depois, *prefixos[local])
         saida[local] = {k: v for k, v in item.items() if v is not None}
     for uf in sorted(feeds.UFS):
         if f"UF:{uf}" not in saida:
@@ -650,7 +652,7 @@ def main() -> None:
     a = p.parse_args()
     saida = Path(a.saida)
     if a.antes:
-        lista = [(r.git("log", "-1", "--format=%cs", a.depois or "HEAD").strip(), a.antes, a.depois or "HEAD")]
+        lista = [(r.dia_do_commit(a.depois or "HEAD"), a.antes, a.depois or "HEAD")]
     else:
         lista = dias_git(a.dias)
     for data, antes, depois in lista:

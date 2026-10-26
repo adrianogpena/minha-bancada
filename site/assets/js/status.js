@@ -1,7 +1,7 @@
 /* Sobre os dados: lista das APIs e fontes que o site consulta, com o resultado do último checkup (dados/status_apis.json). */
 import { $, esc, carregar, urlSegura } from "./util.js";
 
-const quando = (iso) => (!iso ? "—" : iso.length === 10 ? new Date(iso + "T12:00:00Z").toLocaleDateString("pt-BR", { dateStyle: "short", timeZone: "UTC" }) : new Date(iso).toLocaleString("pt-BR", { dateStyle: "short", timeStyle: "short" }));
+const quando = (iso) => (!iso ? "—" : iso.length === 10 ? new Date(iso + "T12:00:00Z").toLocaleDateString("pt-BR", { dateStyle: "short", timeZone: "UTC" }) : new Date(iso).toLocaleString("pt-BR", { dateStyle: "short", timeStyle: "short", timeZoneName: "short" }));
 const host = (u) => { try { return new URL(u).hostname; } catch { return u; } };
 
 function linha([nome, a]) {

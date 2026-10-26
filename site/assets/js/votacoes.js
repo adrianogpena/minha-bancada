@@ -1,5 +1,5 @@
 /* Lista de votações e detalhe de uma votação. */
-import { $, esc, data, semAcento, param, carregar } from "./util.js";
+import { $, esc, data, dataHora, semAcento, param, carregar } from "./util.js";
 import { VOTOS, selo, listaPaginada, erro, semDadosLocais, filtrosNaUrl, botaoVoltar } from "./comum.js";
 import { CAMARA_API, fontes, SENADO_API, linkMateriaSenado } from "./apis.js";
 
@@ -43,7 +43,7 @@ export async function paginaVotacao() {
   alvo.innerHTML = `
     ${botaoVoltar("Votações", "votacoes.html")}
     <section class="abertura">
-      <p>${data(v.data, true)}${v.hora ? `, às ${esc(v.hora)}` : ""}, no Plenário${senado ? " do Senado" : ""}${v.orgao && v.orgao !== "PLEN" ? ` (órgão ${esc(v.orgao)})` : v.orgao ? " (PLEN)" : ""}</p>
+      <p>${v.dataHora ? esc(dataHora(v.dataHora, true)) : `${data(v.data, true)}${v.hora ? `, às ${esc(v.hora)}` : ""}`}, no Plenário${senado ? " do Senado" : ""}${v.orgao && v.orgao !== "PLEN" ? ` (órgão ${esc(v.orgao)})` : v.orgao ? " (PLEN)" : ""}</p>
       <h1 style="max-width:none;font-size:clamp(28px,4.5vw,44px)">${esc(v.proposicao || "Votação no Plenário")}</h1>
       ${v.propId ? `<p><a href="proposicao.html?k=${senado ? "s" : "c"}-${encodeURIComponent(v.propId)}">Ver autores e outras votações desta proposição</a></p>` : ""}
       ${v.ementa ? `<p class="texto-longo"><b>Sobre o quê:</b> ${esc(v.ementa)}</p>` : ""}

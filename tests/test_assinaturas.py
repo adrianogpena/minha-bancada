@@ -45,12 +45,12 @@ def test_decifrar_frequencia(privada):
 
 
 def test_janela():
-    assert a.janela("diario", "2026-10-26") is None
-    assert a.janela("semanal", "2026-10-26")[0] == "2026-10-19"
-    assert a.janela("semanal", "2026-10-27") is None
-    assert a.janela("mensal", "2026-11-01")[0] == "2026-10-01"
-    assert a.janela("mensal", "2026-11-02") is None
-    assert a.janela("mensal", "2026-01-01")[1].endswith("12/2025")
+    assert a.janela("diario", "2026-10-25") is None
+    assert a.janela("semanal", "2026-10-25")[0] == "2026-10-19"
+    assert a.janela("semanal", "2026-10-26") is None
+    assert a.janela("mensal", "2026-10-31")[0] == "2026-10-01"
+    assert a.janela("mensal", "2026-11-01") is None
+    assert a.janela("mensal", "2025-12-31")[1].endswith("12/2025")
 
 
 def test_decifrar_filtra_regras_invalidas(privada):

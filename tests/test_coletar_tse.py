@@ -122,3 +122,19 @@ def test_main_registra_falha_sem_derrubar(monkeypatch, tmp_path):
     monkeypatch.setattr(t, "coletar_ano", explode)
     t.main()
     assert t.AVISOS == 1
+
+
+def test_precisa_coletar_ano_em_andamento_olha_o_last_modified(tmp_path, monkeypatch):
+    agora = dt.datetime.now(dt.UTC).isoformat()
+    datas = {"consulta_cand/consulta_cand_2026.zip": "Sun, 25 Oct 2026 15:37:01 GMT"}
+    marca(tmp_path, monkeypatch, t.ANO_EM_ANDAMENTO, versao=t.VERSAO, coletadoEm=agora, modificados=datas)
+    assert not t.precisa_coletar(t.ANO_EM_ANDAMENTO, False, datas)
+    assert not t.precisa_coletar(t.ANO_EM_ANDAMENTO, False, None)
+    assert t.precisa_coletar(t.ANO_EM_ANDAMENTO, False, {"consulta_cand/consulta_cand_2026.zip": "Mon, 26 Oct 2026 20:00:00 GMT"})
+
+
+def test_modificados_no_cdn_devolve_none_se_falhar(monkeypatch):
+    def falha(*a, **k):
+        raise t.requests.ConnectionError("sem rede")
+    monkeypatch.setattr(t.requests, "head", falha)
+    assert t.modificados_no_cdn(2026) is None

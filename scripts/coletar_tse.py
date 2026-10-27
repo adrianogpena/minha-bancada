@@ -3,7 +3,9 @@ Baixa do TSE os eleitos de cada eleição (com bens declarados) e guarda um
 resumo por estado em dados/tse/<ano>/<UF>.json (salvo no git).
 
 Eleições já encerradas (2022, 2024) são baixadas uma vez só. A eleição em
-andamento (2026) é atualizada a cada poucos dias, até o resultado final.
+andamento (2026) é baixada de novo quando o TSE troca algum dos arquivos (data
+Last-Modified do CDN, guardada em _coleta.json); por segurança, também a cada
+DIAS_ENTRE_ATUALIZACOES dias, para pegar o que a data não mostra.
 
 Uso:
     python scripts/coletar_tse.py                  # todos os anos configurados
@@ -37,7 +39,11 @@ ANOS = [2018, 2022, 2024, 2026]
 SO_CARGOS = {2018: {"SENADOR"}}
 MAJORITARIOS = {"PRESIDENTE", "GOVERNADOR", "PREFEITO"}
 ANO_EM_ANDAMENTO = 2026
-DIAS_ENTRE_ATUALIZACOES = 2
+DIAS_ENTRE_ATUALIZACOES = 7   # reserva: refaz o ano em andamento mesmo sem mudança de Last-Modified
+# arquivos do CDN cuja data decide se o ano em andamento precisa ser baixado de novo
+ARQUIVOS_DATADOS = ["consulta_cand/consulta_cand_{ano}.zip", "votacao_candidato_munzona/votacao_candidato_munzona_{ano}.zip",
+                     "bem_candidato/bem_candidato_{ano}.zip"]
+MODIFICADOS: dict = {}  # Last-Modified lido antes da coleta em andamento, gravado em _coleta.json
 
 # só guardamos estas colunas na memória (o arquivo de 2024 tem ~460 mil linhas)
 COLUNAS = ["SQ_CANDIDATO", "NR_TURNO", "DS_CARGO", "DS_SIT_TOT_TURNO", "SG_UF", "SG_UE", "NM_UE",
@@ -420,11 +426,30 @@ def salvar_ano(ano: int, pasta: Path, eleitos: dict) -> None:
         "coletadoEm": dt.datetime.now(dt.UTC).isoformat(timespec="seconds"),
         "eleitos": len(eleitos),
         "versao": VERSAO,
+        **({"modificados": MODIFICADOS} if ano == ANO_EM_ANDAMENTO and MODIFICADOS else {}),
     }), encoding="utf-8")
     print(f"  salvo em {pasta} ({len(por_uf)} arquivos)")
 
 
-def precisa_coletar(ano: int, forcar: bool) -> bool:
+def modificados_no_cdn(ano: int) -> dict | None:
+    """Last-Modified de cada arquivo de ARQUIVOS_DATADOS (um HEAD por arquivo); None se algum falhar."""
+    datas = {}
+    try:
+        for modelo in ARQUIVOS_DATADOS:
+            nome = modelo.format(ano=ano)
+            r = requests.head(f"{CDN}/{nome}", timeout=60, allow_redirects=True,
+                              headers={"User-Agent": "minha-bancada (projeto de transparencia)"})
+            r.raise_for_status()
+            if not r.headers.get("Last-Modified"):
+                return None
+            datas[nome] = r.headers["Last-Modified"]
+    except requests.RequestException as e:
+        print(f"TSE {ano}: não consegui ler o Last-Modified ({e})")
+        return None
+    return datas
+
+
+def precisa_coletar(ano: int, forcar: bool, modificados: dict | None = None) -> bool:
     marca = DADOS / str(ano) / "_coleta.json"
     if forcar or not marca.exists():
         return True
@@ -434,7 +459,9 @@ def precisa_coletar(ano: int, forcar: bool) -> bool:
     if ano != ANO_EM_ANDAMENTO:
         return False
     quando = dt.datetime.fromisoformat(info["coletadoEm"])
-    return dt.datetime.now(dt.UTC) - quando > dt.timedelta(days=DIAS_ENTRE_ATUALIZACOES)
+    if dt.datetime.now(dt.UTC) - quando > dt.timedelta(days=DIAS_ENTRE_ATUALIZACOES):
+        return True
+    return modificados is not None and modificados != info.get("modificados")
 
 
 def main():
@@ -443,7 +470,10 @@ def main():
     p.add_argument("--forcar", action="store_true")
     a = p.parse_args()
     for ano in a.anos:
-        if not precisa_coletar(ano, a.forcar):
+        MODIFICADOS.clear()
+        if ano == ANO_EM_ANDAMENTO:
+            MODIFICADOS.update(modificados_no_cdn(ano) or {})
+        if not precisa_coletar(ano, a.forcar, MODIFICADOS or None):
             print(f"TSE {ano}: em cache, nada a fazer")
             continue
         try:

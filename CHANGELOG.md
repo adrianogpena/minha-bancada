@@ -5,6 +5,10 @@ Regra: toda fonte nova ou mudança de coleta ganha uma entrada aqui, no mesmo co
 Datas dos conjuntos que já existiam vêm do primeiro commit que os trouxe (`git log --diff-filter=A`).
 Todas as coletas rodam sozinhas no GitHub Actions (`.github/workflows/atualizar.yml`, todo dia às 05:00 de Brasília), salvo onde indicado.
 
+## TSE 2026: recoleta quando o CDN troca o arquivo (2026-10-27)
+- **De onde:** `https://cdn.tse.jus.br/estatistica/sead/odsele/` (`consulta_cand`, `votacao_candidato_munzona`, `bem_candidato`; nenhuma fonte nova).
+- **Como:** `coletar_tse.py` faz um HEAD por arquivo e compara o `Last-Modified` com o de `dados/tse/2026/_coleta.json` (`modificados`); baixa de novo só se mudou. Reserva: refaz a cada 7 dias (antes, a cada 2 dias sem olhar o arquivo).
+
 ## Status das APIs na página Sobre os dados (2026-10-24)
 - **De onde:** as URLs de teste de `ENDPOINTS.md` (nenhuma fonte nova).
 - **Como:** o job `publicar` roda `python scripts/testar_endpoints.py --sem-tabela` todo dia antes do `gerar.py`; o resultado (status, data e hora do checkup, último funcionamento, primeira verificação) fica em `dados/status_apis.json`, commitado pelo Actions, e `gerar.py` copia para `site/dados/status_apis.json`. `sobre.html` lista cada API, destaca as que nunca funcionaram desde a primeira verificação e as fora do ar.

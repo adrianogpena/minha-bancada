@@ -16,14 +16,16 @@ import csv
 import io
 import json
 import re
+import tempfile
 import zipfile
 import zlib
 from concurrent.futures import ThreadPoolExecutor
 from datetime import date, timedelta
 from functools import partial
+from pathlib import Path
 
+import certifi
 import requests
-import urllib3
 
 import estaduais_comum as comum
 import identidades
@@ -70,11 +72,22 @@ def decodificar(conteudo: bytes) -> str:
 baixar = partial(comum.baixar, timeout=TIMEOUT)
 
 
+INTERMEDIARIO_CKAN = Path(__file__).with_name("sectigo_ov_r36.pem")
+_cadeia_ckan: list[str] = []
+
+
+def cadeia_ckan() -> str:
+    """Raízes do certifi + o intermediário que o servidor não envia (Sectigo OV R36, de http://crt.sectigo.com/SectigoPublicServerAuthenticationCAOVR36.crt)."""
+    if not _cadeia_ckan or not Path(_cadeia_ckan[0]).exists():
+        _cadeia_ckan[:] = [tempfile.mkstemp(suffix=".pem")[1]]
+        Path(_cadeia_ckan[0]).write_text(Path(certifi.where()).read_text() + "\n" + INTERMEDIARIO_CKAN.read_text(), encoding="ascii")
+    return _cadeia_ckan[0]
+
+
 def baixar_ckan(s, url: str, timeout: int = TIMEOUT) -> bytes:
-    """dados.ba.gov.br não envia o certificado intermediário (o Python recusa, o navegador aceita): sem verificar, só para dados abertos."""
-    urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
+    """dados.ba.gov.br não envia o certificado intermediário (o Python recusa, o navegador aceita): verifica com ele versionado em scripts/."""
     comum.checar_prazo()
-    r = requests.get(url, timeout=timeout, verify=False, headers={"User-Agent": comum.USER_AGENT})
+    r = requests.get(url, timeout=timeout, verify=cadeia_ckan(), headers={"User-Agent": comum.USER_AGENT})
     r.raise_for_status()
     return r.content
 

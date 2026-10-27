@@ -25,7 +25,7 @@ function etiquetaEstado(e) {
 }
 
 export function linhaPolitico(x) {
-  return `<li><a class="linha-pol" href="${linkPolitico(x)}">
+  return `<li><a class="linha-pol" href="${esc(linkPolitico(x))}">
     ${foto({ nome: x.nome || "?", foto: x.foto })}
     <span><span class="nome">${esc(x.nome)}</span><br><span class="sigla">${esc(x.cargo)}${x.partido ? `, ${esc(x.partido)}` : ""}${x.municipio ? ` em ${esc(x.municipio)}` : x.uf ? `, ${esc(x.uf)}` : ""}</span></span>
     ${etiquetaEstado(x.estado)}

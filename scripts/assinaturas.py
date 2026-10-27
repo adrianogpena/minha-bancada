@@ -41,12 +41,15 @@ import resumo_email as r
 
 LOCAL = re.compile(r"^(BR|(UF|MUN):[A-Z]{2})$")
 POLITICO = re.compile(r"^(pres|dep:\d+|gov:[A-Z]{2}|est:[A-Z]{2}:\d+|pref:[A-Z]{2})$")
-EMAIL = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
+EMAIL = re.compile(r"^[A-Za-z0-9._%+-]+@[A-Za-z0-9-]+(\.[A-Za-z0-9-]+)*\.[A-Za-z]{2,}$")
+ROTULO_INVALIDO = re.compile(r"[^\w ():,.·—-]")
 TOKEN = re.compile(r"^[0-9a-f]{64}$")
 FREQUENCIAS = ("diario", "semanal", "mensal")   # cadastro sem "freq" (anterior ao dropdown) vale diário
 
 
 def chamar(url: str, **params) -> object:
+    if not url.startswith("https://"):
+        raise ValueError("ASSINANTES_URL precisa ser https")
     with urllib.request.urlopen(f"{url}{'&' if '?' in url else '?'}{urllib.parse.urlencode(params)}", timeout=60) as resp:
         return json.load(resp)
 
@@ -65,7 +68,7 @@ def decifrar(linha: dict, privada) -> dict | None:
             return None
         freq = d.get("freq") if d.get("freq") in FREQUENCIAS else "diario"
         return {"email": email, "token": token, "freq": freq, "regras": set(locais) | set(politicos),
-                "rotulos": [str(x)[:120] for x in d.get("rotulos", [])][:90], "h": linha["h"], "criado": linha.get("criado", ""),
+                "rotulos": [t for t in (ROTULO_INVALIDO.sub("", str(x))[:120].strip() for x in d.get("rotulos", [])) if t][:len(locais) + len(politicos)], "h": linha["h"], "criado": linha.get("criado", ""),
                 "confirmado": bool(linha.get("confirmado")), "enviada": bool(linha.get("enviada"))}
     except Exception:
         return None

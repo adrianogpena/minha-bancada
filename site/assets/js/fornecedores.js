@@ -1,5 +1,5 @@
 /* Fornecedores que mais recebem das cotas e verbas: Câmara, Senado e Assembleias. */
-import { $, esc, reais, data, semAcento, carregar } from "./util.js";
+import { $, esc, reais, data, semAcento, carregar, urlSegura } from "./util.js";
 import { listaPaginada, erro } from "./comum.js";
 
 const CASAS = { camara: "Câmara", senado: "Senado", estadual: "Assembleias" };
@@ -46,7 +46,7 @@ async function doadoresEFornecedores(casas, empresa) {
   if (!cruz.cruzamentos.length) return;
   const cadastro = new Map(forn.map((f) => [f.id, f]));
   const pessoa = new Map(pessoas.map((p) => [p.id, p]));
-  const fonte = (f) => (f && f.url ? `<a href="${esc(f.url)}" rel="noopener">${esc(f.nome)}</a>` : esc(f ? f.nome : ""));
+  const fonte = (f) => (f && urlSegura(f.url) ? `<a href="${esc(f.url)}" rel="noopener">${esc(f.nome)}</a>` : esc(f ? f.nome : ""));
   const paginaPaga = (p) => (p.casa === "camara" ? `deputado.html?id=${encodeURIComponent(p.id)}` : p.casa === "senado" ? `politico.html?f=senado&i=${encodeURIComponent(p.id)}` : null);
   const doacao = (d) => {
     const quem = pessoa.get(d.pessoa);
@@ -82,7 +82,7 @@ async function blocoEmpresa() {
   if (!j.fonte) return () => "";
   const t = j.tabelas;
   const nome = (tabela, c) => (c ? `${esc(cnae(c))}${t[tabela] && t[tabela][c] ? ` ${esc(t[tabela][c])}` : ""}` : "");
-  const fonte = `<a href="${esc(j.fonte.url)}" rel="noopener">${esc(j.fonte.nome)}</a>, base de ${esc(j.fonte.competencia)}`;
+  const fonte = `${urlSegura(j.fonte.url) ? `<a href="${esc(j.fonte.url)}" rel="noopener">${esc(j.fonte.nome)}</a>` : esc(j.fonte.nome)}, base de ${esc(j.fonte.competencia)}`;
   return (id) => {
     const e = j.empresas[id];
     if (!e) return "";

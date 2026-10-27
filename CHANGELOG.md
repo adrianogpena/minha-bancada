@@ -5,6 +5,10 @@ Regra: toda fonte nova ou mudança de coleta ganha uma entrada aqui, no mesmo co
 Datas dos conjuntos que já existiam vêm do primeiro commit que os trouxe (`git log --diff-filter=A`).
 Todas as coletas rodam sozinhas no GitHub Actions (`.github/workflows/atualizar.yml`, todo dia às 05:00 de Brasília), salvo onde indicado.
 
+## ES: CSV de despesas em 3 conexões e leitura incremental (2026-10-27)
+
+`https://dados.es.gov.br/dataset/portal-da-transparencia-despesas-execucao-orcamentaria-e-financeira` (CSV anual no S3, aceita `Range`). Medido: ~0,65 MB/s numa conexão e ~1,8 MB/s em três. O CSV agora é lido em até 3 fatias paralelas com `Range`, com um offset por fatia no `parcial_<ano>.json`. Quando o arquivo muda, só o trecho novo depois do `tamanho` guardado é lido, e uma leitura completa acontece a cada 14 dias (estornos em linhas antigas). O passo de commit do workflow agora faz `git pull --rebase` antes do `git push` (a coleta longa perdia a corrida contra outros pushes).
+
 ## TSE 2026: recoleta quando o CDN troca o arquivo (2026-10-27)
 - **De onde:** `https://cdn.tse.jus.br/estatistica/sead/odsele/` (`consulta_cand`, `votacao_candidato_munzona`, `bem_candidato`; nenhuma fonte nova).
 - **Como:** `coletar_tse.py` faz um HEAD por arquivo e compara o `Last-Modified` com o de `dados/tse/2026/_coleta.json` (`modificados`); baixa de novo só se mudou. Reserva: refaz a cada 7 dias (antes, a cada 2 dias sem olhar o arquivo).

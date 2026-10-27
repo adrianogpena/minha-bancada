@@ -371,6 +371,7 @@ jobs:
             if [ -e "$f" ]; then git add "$f"; fi
           done
           git diff --cached --quiet || git commit -m "Dados atualizados em $(TZ=America/Sao_Paulo date +%Y-%m-%d)"
+          git pull --rebase -q origin master   # a coleta dura horas: um push de outra origem nesse meio tempo recusaria o nosso
           git push
 
       - name: Registrar o histórico diário (todos os detalhes do dia, com fontes, em dados/historico)
@@ -381,6 +382,7 @@ jobs:
           python scripts/historico.py
           git add dados/historico
           git diff --cached --quiet || git commit -m "Histórico diário de $(TZ=America/Sao_Paulo date -d yesterday +%Y-%m-%d)"   # a coleta roda de madrugada e traz o dia anterior
+          git pull --rebase -q origin master
           git push
 
       - name: Atualizar os feeds RSS do Fique informado (últimos 14 dias, a partir do histórico git)

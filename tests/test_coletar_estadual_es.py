@@ -1,4 +1,5 @@
 import json
+import re
 from datetime import date
 
 import coletar_estadual_es as es
@@ -100,8 +101,9 @@ def csv_bytes():
 
 
 class Resp:
-    def __init__(self, dados=None, conteudo=b"", status=200, falhar_em=None):
+    def __init__(self, dados=None, conteudo=b"", status=200, falhar_em=None, total=None, inicio=0):
         self._dados, self.conteudo, self.status_code, self.falhar_em = dados, conteudo, status, falhar_em
+        self.headers = {"Content-Range": f"bytes {inicio}-{total - 1}/{total}"} if total else {}
 
     def __enter__(self):
         return self
@@ -123,15 +125,19 @@ class Resp:
 
 
 class Sessao:
-    def __init__(self, pacote, falhar_em=None):
+    def __init__(self, pacote, falhar_em=None, conteudo=None):
         self.pacote, self.falhar_em, self.pedidos = pacote, falhar_em, []
+        self.conteudo = conteudo if conteudo is not None else csv_bytes()
 
     def get(self, url, timeout=None, stream=False, headers=None):
         if "package_show" in url:
             return Resp(dados=self.pacote)
-        inicio = int(headers["Range"][6:-1]) if headers and "Range" in headers else 0
+        inicio, fim = re.fullmatch(r"bytes=(\d+)-(\d*)", headers["Range"]).groups()
+        inicio = int(inicio)
         self.pedidos.append((url, inicio))
-        return Resp(conteudo=csv_bytes()[inicio:], status=206 if inicio else 200, falhar_em=self.falhar_em)
+        corte = int(fim) + 1 if fim else None
+        return Resp(conteudo=self.conteudo[inicio:corte], status=206, total=len(self.conteudo), inicio=inicio,
+                    falhar_em=None if fim else self.falhar_em)
 
 
 def preparar(tmp_path, monkeypatch, sessao):
@@ -142,7 +148,7 @@ def preparar(tmp_path, monkeypatch, sessao):
     arquivo.write_text(json.dumps(tse), encoding="utf-8")
     monkeypatch.setattr(es, "TSE_ARQUIVO", arquivo)
     monkeypatch.setattr(comum, "DADOS", tmp_path / "estaduais")
-    monkeypatch.setattr(comum, "sessao", lambda: sessao)
+    monkeypatch.setattr(comum, "sessao", lambda *a: sessao)
     pasta = tmp_path / "estaduais" / "ES"
     pasta.mkdir(parents=True)
     return pasta
@@ -158,7 +164,7 @@ def test_coletar_grava_e_pula_anos_fechados_e_sem_mudanca(tmp_path, monkeypatch)
     pasta = preparar(tmp_path, monkeypatch, sessao)
     (pasta / "verbas_2023.json").write_text(json.dumps({"coletadoEm": "2024-01-01", "itens": []}), encoding="utf-8")
     es.coletar()
-    assert sessao.pedidos == [("https://dados.es.gov.br/26.csv", 0)]
+    assert {u for u, _ in sessao.pedidos} == {"https://dados.es.gov.br/26.csv"}
     deps = json.loads((pasta / "deputados.json").read_text(encoding="utf-8"))
     assert [d["id"] for d in deps["deputados"]] == ["80"] and deps["host"] is None
     verbas = json.loads((pasta / "verbas_2026.json").read_text(encoding="utf-8"))
@@ -179,15 +185,80 @@ def test_coletar_prazo_guarda_parcial_e_continua_com_range(tmp_path, monkeypatch
     (pasta / "verbas_2026.json").unlink()
 
     cortada = Sessao(PACOTE, falhar_em=len(csv_bytes()) // 2)
-    monkeypatch.setattr(comum, "sessao", lambda: cortada)
+    monkeypatch.setattr(comum, "sessao", lambda *a: cortada)
     es.coletar()
     parcial = json.loads((pasta / "parcial_2026.json").read_text(encoding="utf-8"))
-    assert 0 < parcial["offset"] < len(csv_bytes()) and not (pasta / "verbas_2026.json").exists()
-    assert csv_bytes()[parcial["offset"] - 1:parcial["offset"]] == b"\n"
+    offset = parcial["fatias"][0]["offset"]
+    assert 0 < offset < len(csv_bytes()) and not (pasta / "verbas_2026.json").exists()
+    assert csv_bytes()[offset - 1:offset] == b"\n"
 
     retomada = Sessao(PACOTE)
-    monkeypatch.setattr(comum, "sessao", lambda: retomada)
+    monkeypatch.setattr(comum, "sessao", lambda *a: retomada)
     es.coletar()
-    assert retomada.pedidos == [("https://dados.es.gov.br/26.csv", parcial["offset"])]
+    assert ("https://dados.es.gov.br/26.csv", offset) in retomada.pedidos
     assert json.loads((pasta / "verbas_2026.json").read_text(encoding="utf-8"))["itens"] == esperado
     assert not (pasta / "parcial_2026.json").exists()
+
+
+def coletar_de_novo(tmp_path, monkeypatch, conteudo=None, modificado="2026-10-22T10:56:36"):
+    pacote = {"result": {"resources": [{"name": "Despesas-2026.csv", "url": "https://dados.es.gov.br/26.csv", "last_modified": modificado}]}}
+    sessao = Sessao(pacote, conteudo=conteudo)
+    pasta = preparar(tmp_path, monkeypatch, sessao)
+    return sessao, pasta
+
+
+def itens_2026(pasta):
+    return json.loads((pasta / "verbas_2026.json").read_text(encoding="utf-8"))
+
+
+def test_fatias_paralelas_dao_o_mesmo_resultado(tmp_path, monkeypatch):
+    sessao, pasta = coletar_de_novo(tmp_path, monkeypatch)
+    es.coletar()
+    esperado = itens_2026(pasta)["itens"]
+    (pasta / "verbas_2026.json").unlink()
+    monkeypatch.setattr(es, "FATIA_MIN", 100)
+    sessao.pedidos.clear()
+    es.coletar()
+    assert len(sessao.pedidos) == 1 + es.CONEXOES
+    assert itens_2026(pasta)["itens"] == esperado
+
+
+def linha_nova():
+    bruta = next(b for b in csv_bytes().split(b"\n") if es.e_cota(es.linha_da_assembleia(b.rstrip(b"\r"), cab()) or {}))
+    doc = es.linha_da_assembleia(bruta.rstrip(b"\r"), cab())["Documento"].encode()
+    return bruta.replace(doc, b"2026OB999999") + b"\n"
+
+
+def cab():
+    return es.cabecalho_csv(csv_bytes().split(b"\n")[0].rstrip(b"\r"))
+
+
+def test_mudanca_na_fonte_le_so_o_trecho_novo(tmp_path, monkeypatch):
+    sessao, pasta = coletar_de_novo(tmp_path, monkeypatch)
+    es.coletar()
+    antes = itens_2026(pasta)
+    tamanho = len(csv_bytes())
+    assert antes["tamanho"] == tamanho
+    sessao.conteudo = csv_bytes() + linha_nova()
+    sessao.pacote["result"]["resources"][0]["last_modified"] = "2026-10-23T10:00:00"
+    sessao.pedidos.clear()
+    es.coletar()
+    assert ("https://dados.es.gov.br/26.csv", tamanho) in sessao.pedidos
+    assert all(o in (0, tamanho) for _, o in sessao.pedidos)
+    depois = itens_2026(pasta)
+    assert len(depois["itens"]) == len(antes["itens"]) + 1 and depois["completaEm"] == antes["completaEm"]
+    assert "2026OB999999" in {i["documento"] for i in depois["itens"]}
+
+
+def test_completa_velha_ou_arquivo_menor_le_tudo(tmp_path, monkeypatch):
+    sessao, pasta = coletar_de_novo(tmp_path, monkeypatch)
+    es.coletar()
+    antes = itens_2026(pasta)
+    antes["completaEm"] = "2026-01-01"
+    (pasta / "verbas_2026.json").write_text(json.dumps(antes), encoding="utf-8")
+    sessao.pacote["result"]["resources"][0]["last_modified"] = "2026-10-23T10:00:00"
+    sessao.pedidos.clear()
+    es.coletar()
+    assert len(itens_2026(pasta)["itens"]) == len(antes["itens"]) and itens_2026(pasta)["completaEm"] == date.today().isoformat()
+    assert len(sessao.pedidos) > 1 and min(o for _, o in sessao.pedidos[1:]) > 0
+    assert sessao.pedidos[-1][1] < antes["tamanho"]

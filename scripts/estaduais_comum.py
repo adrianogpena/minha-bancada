@@ -104,11 +104,11 @@ class _Sessao(requests.Session):
             raise
 
 
-def sessao() -> requests.Session:
+def sessao(conexoes: int = CONEXOES_POR_HOST) -> requests.Session:
     s = _Sessao()
     s.headers.update({"User-Agent": USER_AGENT, "Accept": "*/*"})
     retry = Retry(total=3, backoff_factor=2, status_forcelist=(429, 500, 502, 503, 504), allowed_methods=("GET",))
-    adaptador = HTTPAdapter(max_retries=retry, pool_connections=CONEXOES_POR_HOST, pool_maxsize=CONEXOES_POR_HOST, pool_block=True)
+    adaptador = HTTPAdapter(max_retries=retry, pool_connections=conexoes, pool_maxsize=conexoes, pool_block=True)
     s.mount("https://", adaptador)
     s.mount("http://", adaptador)
     return s

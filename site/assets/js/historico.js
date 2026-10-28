@@ -37,6 +37,7 @@ const somar = (eventos) => eventos.reduce((t, e) => t + (e.quantidade || 1), 0);
 /* ---------- Semana e mês ---------- */
 /* Não há arquivo de semana nem de mês: o período é a junção, no navegador, dos arquivos diários que ele cobre. */
 const PERIODOS = { dia: "Dia", semana: "Semana", mes: "Mês" };
+const dataHora = (iso) => new Date(iso).toLocaleString("pt-BR", { timeZone: "America/Sao_Paulo", day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" }).replace(",", "");
 const somarDias = (iso, n) => { const d = new Date(iso + "T12:00:00Z"); d.setUTCDate(d.getUTCDate() + n); return d.toISOString().slice(0, 10); };
 const segunda = (iso) => somarDias(iso, -((new Date(iso + "T12:00:00Z").getUTCDay() + 6) % 7));
 
@@ -180,7 +181,7 @@ export async function paginaHistorico() {
     history.replaceState(null, "", "?" + novo);
 
     const locais = [...new Set(filtrados.map((e) => e.local))];
-    const quando = periodo === "dia" ? `em ${data(dia.data, true)} (coletadas na madrugada de ${data(somarDias(dia.data, 1))})` : `de ${data(dia.de, true)} a ${data(dia.ate, true)}`;
+    const quando = periodo === "dia" ? `em ${data(dia.data, true)}${dia.coletaEm ? ` (novidades ${dia.coletaAnterior ? `entre ${dataHora(dia.coletaAnterior)} e` : "até"} ${dataHora(dia.coletaEm)})` : ""}` : `de ${data(dia.de, true)} a ${data(dia.ate, true)}`;
     const unidade = periodo === "dia" ? "dia" : "período";
     $("#h-contagem").textContent = `${somar(filtrados)} de ${somar(dia.eventos)} mudanças ${quando}, em ${locais.length} ${locais.length === 1 ? "local" : "locais"}.`;
     const semNovidade = coberturaSemNovidade(dia, codigos, $("#h-local").value, tipo || busca || imp ? 0 : 1, unidade);

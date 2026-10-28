@@ -5,6 +5,10 @@ Regra: toda fonte nova ou mudança de coleta ganha uma entrada aqui, no mesmo co
 Datas dos conjuntos que já existiam vêm do primeiro commit que os trouxe (`git log --diff-filter=A`).
 Todas as coletas rodam sozinhas no GitHub Actions (`.github/workflows/atualizar.yml`, todo dia às 05:00 de Brasília), salvo onde indicado.
 
+## Histórico: dia da coleta e hora real da execução (2026-10-28)
+
+O dia de cada histórico passou a ser o dia (Brasília) em que a coleta rodou, e não o anterior. Cada arquivo traz `coletaEm` e `coletaAnterior` (hora em que a execução começou, obtida de `gh run view`; nos dias antigos, da lista de execuções do Actions) e a página mostra "novidades entre <coleta anterior> e <coleta>". Os arquivos já gravados foram renomeados +1 dia. Links de e-mail e RSS somam 1 dia ao dia dos fatos.
+
 ## ES: CSV de despesas em 3 conexões e leitura incremental (2026-10-27)
 
 `https://dados.es.gov.br/dataset/portal-da-transparencia-despesas-execucao-orcamentaria-e-financeira` (CSV anual no S3, aceita `Range`). Medido: ~0,65 MB/s numa conexão e ~1,8 MB/s em três. O CSV agora é lido em até 3 fatias paralelas com `Range`, com um offset por fatia no `parcial_<ano>.json`. Quando o arquivo muda, só o trecho novo depois do `tamanho` guardado é lido, e uma leitura completa acontece a cada 14 dias (estornos em linhas antigas). O passo de commit do workflow agora faz `git pull --rebase` antes do `git push` (a coleta longa perdia a corrida contra outros pushes).

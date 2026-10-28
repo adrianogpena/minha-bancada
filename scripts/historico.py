@@ -18,6 +18,7 @@ Cada evento do dia:
 O dia também traz "cobertura": para cada local (todos os estados, com ou sem fonte), o nome, quantos itens saíram (itens) e o status:
 novidade, irrelevante (dados mudaram sem virar item; "mudancas" lista o quê), parado (ultimaMudanca quando conhecida), falha (coleta não gravou nada
 no dia; ultimaColeta) ou sem_cobertura. O campo coletadoEm, que muda todo dia, não conta como mudança.
+O dia do histórico é o dia (Brasília) em que a coleta rodou; "coletaEm" e "coletaAnterior" (ISO com fuso) dizem entre que execuções saíram as novidades.
 Os códigos de local e de político são os mesmos do feeds.py.
 
 Uso:
@@ -28,11 +29,12 @@ Uso:
 import argparse
 import contextlib
 import json
+import os
 import re
 import shutil
 import subprocess
 from collections import Counter, defaultdict
-from datetime import date
+from datetime import date, datetime
 from pathlib import Path
 
 import feeds
@@ -90,13 +92,40 @@ def listar(rev: str, prefixo: str) -> list[str]:
         return []
 
 
+def dia_da_coleta(timestamp: int) -> str:
+    """Dia (AAAA-MM-DD, Brasília) em que a coleta rodou: é o dia do histórico, e as novidades vão da coleta anterior a ela."""
+    return datetime.fromtimestamp(timestamp, fuso.BRASILIA).date().isoformat()
+
+
+def dia_do_commit(rev: str, *caminhos: str) -> str | None:
+    ts = r.git("log", "-1", "--format=%ct", rev, *(["--", *caminhos] if caminhos else [])).strip()
+    return dia_da_coleta(int(ts)) if ts else None
+
+
+def momento_do_commit(rev: str) -> str | None:
+    """Instante (ISO, Brasília) do último commit de dados alcançável a partir de `rev`; None se não houver."""
+    ts = r.git("log", "-1", "--grep=^Dados atualizados em", "--format=%ct", rev).strip()
+    return datetime.fromtimestamp(int(ts), fuso.BRASILIA).isoformat(timespec="seconds") if ts else None
+
+
+def coleta_anterior(data: str, antes: str, pasta: Path) -> str | None:
+    """Instante da coleta anterior: o `coletaEm` do dia gravado logo antes, ou o commit de dados anterior a `antes`."""
+    for arq in sorted(pasta.glob("????-??-??.json"), reverse=True):
+        if arq.stem < data:
+            with contextlib.suppress(OSError, ValueError):
+                if (x := json.loads(arq.read_text(encoding="utf-8")).get("coletaEm")):
+                    return x
+            break
+    return momento_do_commit(antes)
+
+
 def dias_git(n: int | None) -> list[tuple[str, str, str]]:
     """[(data, antes, depois)] dos n últimos dias com commit de dados, do mais novo ao mais antigo.
     Vários commits no mesmo dia viram um dia só: do pai do primeiro ao último."""
     por_dia = defaultdict(list)
     for linha in r.git("log", "--grep=^Dados atualizados em", "--format=%H %ct").splitlines():
         commit, ts = linha.split()
-        data = r.dia_dos_fatos(int(ts))
+        data = dia_da_coleta(int(ts))
         por_dia[data].append(commit)   # do mais novo ao mais antigo
     saida = []
     for data in sorted(por_dia, reverse=True):
@@ -553,7 +582,7 @@ def cobertura(ctx: Contexto, antes: str, depois: str, contagem: dict, data: str 
     status: "novidade" (saiu item), "irrelevante" (os dados mudaram mas nada vira item; `mudancas` diz o que), "parado" (nenhum dado novo),
     "falha" (a coleta não gravou nada nesse dia; `ultimaColeta`) e "sem_cobertura" (estado ainda sem fonte coletada).
     Assim "nada aconteceu" se distingue de "o local não foi acompanhado" e uma coleta parada há dias aparece."""
-    data = data or r.dia_do_commit(depois)
+    data = data or dia_do_commit(depois)
     prefixos = {"BR": list(PREFIXOS_BR)}
     for tipo, pasta in (("UF", "estaduais"), ("MUN", "municipais")):
         for uf in sorted({f.split("/")[2] for f in listar(depois, f"dados/{pasta}")}):
@@ -573,14 +602,14 @@ def cobertura(ctx: Contexto, antes: str, depois: str, contagem: dict, data: str 
                 item.update(status="irrelevante", mudancas=mudancas)
             else:
                 coleta = ultima_coleta(depois, prefixos[local][0]) if local != "BR" else None
-                if coleta and coleta <= data:   # a coleta que trouxe o dia `data` é a do dia seguinte
+                if coleta and coleta < data:   # `data` é o dia da coleta: uma última coleta anterior a ele é coleta que não rodou
                     item.update(status="falha", ultimaColeta=coleta)
                 else:
                     item["status"] = "parado"
                 item["ultimaMudanca"] = ultima_mudanca_registrada(data, local)
                 if not item["ultimaMudanca"] and not alterados:
                     with contextlib.suppress(subprocess.CalledProcessError):
-                        item["ultimaMudanca"] = r.dia_do_commit(depois, *prefixos[local])
+                        item["ultimaMudanca"] = dia_do_commit(depois, *prefixos[local])
         saida[local] = {k: v for k, v in item.items() if v is not None}
     for uf in sorted(feeds.UFS):
         if f"UF:{uf}" not in saida:
@@ -597,7 +626,7 @@ def ordem_local(c):
     return (c != "BR", c.startswith("MUN"), c)
 
 
-def dia(data: str, antes: str, depois: str) -> dict:
+def dia(data: str, antes: str, depois: str, coleta_em: str | None = None, coleta_ant: str | None = None) -> dict:
     ctx = Contexto(depois)
     eventos = []
     for coletor in COLETORES:
@@ -610,7 +639,9 @@ def dia(data: str, antes: str, depois: str) -> dict:
     contagem = {c: {} for c in locais}
     for e in eventos:
         contagem[e["local"]][e["categoria"]] = contagem[e["local"]].get(e["categoria"], 0) + e.get("quantidade", 1)
+    quando = {"coletaAnterior": coleta_ant, "coletaEm": coleta_em or momento_do_commit(depois)}
     return {"data": data, "antes": r.git("rev-parse", antes).strip(), "depois": r.git("rev-parse", depois).strip(),
+            **{k: v for k, v in quando.items() if v},
             "locais": {c: ctx.nome_local(c) for c in locais}, "contagem": contagem, "cobertura": cobertura(ctx, antes, depois, contagem, data),
             "eventos": eventos}
 
@@ -652,11 +683,12 @@ def main() -> None:
     a = p.parse_args()
     saida = Path(a.saida)
     if a.antes:
-        lista = [(r.dia_do_commit(a.depois or "HEAD"), a.antes, a.depois or "HEAD")]
+        lista = [(dia_do_commit(a.depois or "HEAD"), a.antes, a.depois or "HEAD")]
     else:
         lista = dias_git(a.dias)
-    for data, antes, depois in lista:
-        d = dia(data, antes, depois)
+    inicio = os.environ.get("COLETA_INICIO")   # início da execução agendada (o workflow informa); sem ele vale a hora do commit de dados
+    for i, (data, antes, depois) in enumerate(lista):
+        d = dia(data, antes, depois, inicio if i == 0 else None, coleta_anterior(data, antes, saida))
         gravar(d, saida)
         print(f"Histórico de {data}: {len(d['eventos'])} eventos em {len(d['locais'])} locais")
     if not lista:

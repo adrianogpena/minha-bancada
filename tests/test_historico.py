@@ -101,10 +101,10 @@ def test_dias_git_agrupa_commits_do_mesmo_dia(repo, tmp_path):
     env = {**os.environ, "GIT_COMMITTER_DATE": "2026-01-02T20:00:00-0300", "GIT_AUTHOR_DATE": "2026-01-02T20:00:00-0300"}
     subprocess.run(["git", "add", "-A"], cwd=tmp_path, check=True)
     subprocess.run(["git", "commit", "-qm", "Dados atualizados em 2026-01-02"], cwd=tmp_path, check=True, env=env)
-    # o commit de 01-01 não tem anterior para comparar; as coletas de 01-02 (de madrugada, trazem os fatos de 01-01) vão do pai do primeiro ao último
+    # o commit de 01-01 não tem anterior para comparar; as coletas de 01-02 vão do pai do primeiro ao último
     (dia,) = h.dias_git(None)
     primeiro, ultimo = r.git("rev-parse", "HEAD~2").strip(), r.git("rev-parse", "HEAD").strip()
-    assert dia[0] == "2026-01-01" and r.git("rev-parse", dia[1]).strip() == primeiro and dia[2] == ultimo
+    assert dia[0] == "2026-01-02" and r.git("rev-parse", dia[1]).strip() == primeiro and dia[2] == ultimo
     assert h.dias_git(None) == h.dias_git(1)
 
 
@@ -135,11 +135,22 @@ def test_dia_dos_fatos_e_o_dia_anterior_a_coleta_em_brasilia():
     assert r.dia_dos_fatos(1767236340) == "2025-12-30"   # 02:59 UTC ainda é 31/12 em Brasília
 
 
-def test_link_historico_filtra_por_codigos():
-    assert r.link_historico("2026-01-02") == r.SITE + "historico.html?dia=2026-01-02"
-    assert r.link_historico("2026-01-02", {"UF:SP", "FEDERAL"}).endswith("dia=2026-01-02&locais=BR,UF:SP")
-    assert r.link_historico("2026-01-05", {"FEDERAL"}, "semana").endswith("dia=2026-01-05&periodo=semana&locais=BR")
-    assert r.link_historico("2026-01-01", None, "mes").endswith("dia=2026-01-01&periodo=mes")
+def test_dia_da_coleta_e_o_dia_em_brasilia():
+    assert h.dia_da_coleta(1767253620) == "2026-01-01"   # 07:47 UTC = 04:47 em Brasília
+    assert h.dia_da_coleta(1767236400) == "2026-01-01"   # 03:00 UTC = 00:00 de 01/01 em Brasília
+    assert h.dia_da_coleta(1767236340) == "2025-12-31"   # 02:59 UTC ainda é 31/12 em Brasília
+
+
+def test_dia_grava_o_instante_das_coletas(repo):
+    d = h.dia("2026-01-02", "HEAD~1", "HEAD", "2026-01-02T11:00:00-03:00", "2026-01-01T12:00:00-03:00")
+    assert d["coletaEm"] == "2026-01-02T11:00:00-03:00" and d["coletaAnterior"] == "2026-01-01T12:00:00-03:00"
+
+
+def test_link_historico_leva_ao_dia_da_coleta_seguinte_ao_dos_fatos():
+    assert r.link_historico("2026-01-02") == r.SITE + "historico.html?dia=2026-01-03"
+    assert r.link_historico("2026-01-02", {"UF:SP", "FEDERAL"}).endswith("dia=2026-01-03&locais=BR,UF:SP")
+    assert r.link_historico("2026-01-05", {"FEDERAL"}, "semana").endswith("dia=2026-01-06&periodo=semana&locais=BR")
+    assert r.link_historico("2026-01-01", None, "mes").endswith("dia=2026-01-02&periodo=mes")
 
 
 def test_montar_inclui_link_para_o_historico():
@@ -152,7 +163,7 @@ def test_montar_inclui_link_para_o_historico():
 
 def test_item_do_feed_aponta_para_o_historico_do_dia_e_do_local():
     it = feeds.item("T", "2026-01-02", "UF:SP", "corpo")
-    assert f"<link>{r.SITE}historico.html?dia=2026-01-02&amp;locais=UF:SP</link>" in it
+    assert f"<link>{r.SITE}historico.html?dia=2026-01-03&amp;locais=UF:SP</link>" in it
 
 
 def test_formato_novo_dos_arquivos_de_proposicoes_nao_vira_tudo_novo(repo, tmp_path):
@@ -220,8 +231,8 @@ def test_cobertura_mostra_local_sem_novidade_e_desde_quando(repo, tmp_path):
     subprocess.run(["git", "add", "-A"], cwd=tmp_path, check=True)
     subprocess.run(["git", "commit", "-qm", "so tse"], cwd=tmp_path, check=True)
     cob = h.dia("2026-01-03", "HEAD~1", "HEAD")["cobertura"]
-    assert cob["UF:AC"] == {"nome": "Estado: Acre", "mudou": False, "itens": 0, "status": "parado", "ultimaMudanca": "2026-01-01"}
-    assert cob["BR"]["status"] == "parado" and cob["BR"]["ultimaMudanca"] == "2026-01-01"
+    assert cob["UF:AC"] == {"nome": "Estado: Acre", "mudou": False, "itens": 0, "status": "parado", "ultimaMudanca": "2026-01-02"}
+    assert cob["BR"]["status"] == "parado" and cob["BR"]["ultimaMudanca"] == "2026-01-02"
     assert cob["UF:SP"] == {"nome": "Estado: São Paulo", "mudou": False, "itens": 0, "status": "sem_cobertura"}
 
 

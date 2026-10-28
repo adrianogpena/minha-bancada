@@ -20,7 +20,7 @@ API da Câmara ──> scripts/coletar.py ──> dados/        (cache bruto; o 
 
 O arquivo `.github/workflows/atualizar.yml` roda as duas etapas todo dia de madrugada (07:47 UTC, 04:47 em Brasília) e publica o resultado. Depois de salvar os dados do dia, na ordem:
 
-1. `scripts/historico.py` registra tudo o que mudou, com fontes, em `dados/historico/` (página **Histórico** do site). O dia do histórico é o dia dos fatos, em Brasília: a coleta de madrugada de 26/10 grava `2026-10-25.json`;
+1. `scripts/historico.py` registra tudo o que mudou, com fontes, em `dados/historico/` (página **Histórico** do site). O dia do histórico é o dia em que a coleta rodou, em Brasília (a coleta de 27/10 grava `2026-10-27.json`), e o arquivo guarda `coletaAnterior` e `coletaEm`, a hora em que cada execução começou de fato;
 2. `scripts/feeds.py` atualiza os feeds RSS;
 3. o site é publicado;
 4. os e-mails saem (resumo ao dono e avisos aos assinantes). E-mail e RSS trazem só um resumo e o link para a página do dia no Histórico.

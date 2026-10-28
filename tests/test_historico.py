@@ -96,6 +96,29 @@ def test_primeira_coleta_nao_vira_novidade(repo, tmp_path):
     assert not [e for e in h.dia("2026-01-03", "HEAD~1", "HEAD")["eventos"] if e["local"] == "UF:AC" and e["categoria"] != "eleicao"]
 
 
+def test_so_entra_no_historico_o_que_tem_data_do_ato_na_janela(repo, tmp_path):
+    salvar = lambda c, o: (tmp_path / c).write_text(json.dumps(o), encoding="utf-8")
+    novas = {"6": {"ano": 2026, "numero": 2, "tipo": "PL", "tipoDescricao": "Projeto de Lei", "ementa": "Novo", "situacao": "Em tramitação", "idsDeputados": [28], "dataApresentacao": "2026-01-02"},
+             "7": {"ano": 2026, "numero": 3, "tipo": "PL", "tipoDescricao": "Projeto de Lei", "ementa": "Da vespera", "situacao": "X", "idsDeputados": [28], "dataApresentacao": "2026-01-01"},
+             "8": {"ano": 2026, "numero": 4, "tipo": "PL", "tipoDescricao": "Projeto de Lei", "ementa": "Antigo demais", "situacao": "X", "idsDeputados": [28], "dataApresentacao": "2025-12-01"},
+             "9": {"ano": 2026, "numero": 5, "tipo": "PL", "tipoDescricao": "Projeto de Lei", "ementa": "Sem data", "situacao": "X", "idsDeputados": [28]}}
+    salvar("dados/estaduais/AC/materias_2026.json", {"materias": novas})
+    subprocess.run(["git", "commit", "-qam", "Dados atualizados em 2026-01-03"], cwd=tmp_path, check=True)
+    titulos = {e["titulo"]: e for e in h.dia("2026-01-03", "HEAD~1", "HEAD")["eventos"] if e["local"] == "UF:AC" and e["categoria"] == "nova"}
+    assert set(titulos) == {"Projeto de Lei 3/2026", "Projeto de Lei 5/2026"}
+    assert titulos["Projeto de Lei 3/2026"]["dataDoAto"] == "2026-01-01"
+    assert "dataDoAto" not in titulos["Projeto de Lei 5/2026"]
+
+
+def test_resumo_aplica_a_mesma_janela_e_o_periodo_longo_nao(repo, tmp_path):
+    antigo = {"ano": 2026, "numero": 4, "tipo": "PL", "ementa": "Antigo demais", "situacao": "X", "dataApresentacao": "2025-12-01"}
+    (tmp_path / "dados/estaduais/AC/materias_2026.json").write_text(json.dumps({"materias": {"8": antigo}}), encoding="utf-8")
+    subprocess.run(["git", "commit", "-qam", "Dados atualizados em 2026-01-03"], cwd=tmp_path, check=True)
+    assert r.coletar("HEAD~1", "HEAD", "2026-01-03")["estaduais"][0] == {}
+    assert len(r.coletar("HEAD~1", "HEAD")["estaduais"][0]["AC"]) == 1
+    assert r.dia_da_coleta("HEAD~1") == "2026-01-02"
+
+
 def test_dias_git_agrupa_commits_do_mesmo_dia(repo, tmp_path):
     (tmp_path / "dados" / "x.json").write_text("{}")
     env = {**os.environ, "GIT_COMMITTER_DATE": "2026-01-02T20:00:00-0300", "GIT_AUTHOR_DATE": "2026-01-02T20:00:00-0300"}
@@ -199,7 +222,6 @@ def test_relevancia_separa_projeto_de_verdade_do_resto(repo):
     assert por(ev, titulo="PL 1/2026", categoria="situacao")[0]["relevancia"] == 3                          # projeto aprovado
     assert por(ev, local="UF:AC", categoria="nova")[0]["relevancia"] == 2                                  # projeto novo, por extenso ("Projeto de Lei")
     assert por(ev, categoria="eleicao")[0]["relevancia"] == 3
-    assert h.relevancia({"categoria": "nova", "titulo": "PL 3/2026", "dataDoAto": "2025-01-01"}, "2026-01-02") == 1   # backlog
     assert h.relevancia({"categoria": "nova", "titulo": "PL 3/2026"}, "2026-01-02") == 2                       # sem data do ato: não penaliza
     assert h.relevancia({"categoria": "situacao", "titulo": "PL 3/2026", "resumo": "Nova tramitação"}, "2026-01-02") == 1
     assert h.relevancia({"categoria": "situacao", "titulo": "PL 3/2026", "mudanca": ["A", "Em análise"]}, "2026-01-02") == 2

@@ -32,6 +32,16 @@ GIT = shutil.which("git") or "git"
 SITE = "https://adrianogpena.github.io/minha-bancada/"
 LIMITE = 12  # itens listados por seção; o resto vira "e mais N"
 TIPOS_DESTAQUE = ("PL", "PLP", "PEC", "PDL", "MPV")
+JANELA_ATO_DIAS = 3  # só é novidade o que tem data do ato até 3 dias antes da coleta (ou nenhuma data); o resto fica só no site
+
+
+def na_janela(data_ato, dia_coleta: str | None) -> bool:
+    """Se uma novidade com essa data do ato entra no histórico, no RSS e no e-mail: data até JANELA_ATO_DIAS antes do dia da coleta,
+    ou sem data (ou data ilegível, ou dia da coleta desconhecido), que na dúvida entra."""
+    try:
+        return (date.fromisoformat(dia_coleta) - date.fromisoformat(str(data_ato)[:10])).days <= JANELA_ATO_DIAS
+    except (TypeError, ValueError):
+        return True
 
 
 def link_historico(data: str, locais=None, periodo: str = "dia") -> str:
@@ -66,6 +76,12 @@ def dia_do_commit(rev: str, *caminhos: str) -> str | None:
     return dia_dos_fatos(int(ts)) if ts else None
 
 
+def dia_da_coleta(rev: str) -> str | None:
+    """Dia (AAAA-MM-DD, Brasília) em que rodou a coleta do commit `rev`: o dia seguinte ao dos fatos."""
+    fatos = dia_do_commit(rev)
+    return (date.fromisoformat(fatos) + timedelta(days=1)).isoformat() if fatos else None
+
+
 def carregar(rev: str, caminho: str):
     try:
         return nomes_legados.atualizar(caminho, json.loads(git("show", f"{rev}:{caminho}")))
@@ -82,8 +98,8 @@ def cortar(texto: str, n: int = 160) -> str:
     return texto if len(texto) <= n else texto[: n - 1] + "…"
 
 
-def materias(antes: str, depois: str, prefixo: str, nome_arquivo: str):
-    """Novas matérias e mudanças de situação em dados/<prefixo>/<UF>/<nome_arquivo>."""
+def materias(antes: str, depois: str, prefixo: str, nome_arquivo: str, dia_coleta: str | None = None):
+    """Novas matérias (com data de apresentação dentro da janela) e mudanças de situação em dados/<prefixo>/<UF>/<nome_arquivo>."""
     novas, mudou = defaultdict(list), defaultdict(list)
     for f in arquivos(antes, depois, prefixo):
         if not f.endswith(nome_arquivo):
@@ -95,7 +111,8 @@ def materias(antes: str, depois: str, prefixo: str, nome_arquivo: str):
         mx, my = (x or {}).get("materias", {}), y.get("materias", {})
         for k, m in my.items():
             if k not in mx:
-                novas[uf].append(m)
+                if na_janela(m.get("dataApresentacao"), dia_coleta):
+                    novas[uf].append(m)
             elif m.get("situacao") != mx[k].get("situacao"):
                 mudou[uf].append((m, mx[k].get("situacao")))
     return novas, mudou
@@ -116,8 +133,8 @@ def objetos_em(rev: str, arquivos_deputados: dict | None = None) -> dict:
     return meta
 
 
-def camara(antes: str, depois: str):
-    """Proposições novas, sem repetir as de vários autores; "idsDeputados" lista os deputados (ids da Câmara) que constam como autores."""
+def camara(antes: str, depois: str, dia_coleta: str | None = None):
+    """Proposições novas dentro da janela, sem repetir as de vários autores; "idsDeputados" lista os deputados (ids da Câmara) que constam como autores."""
     novas, depois_ = {}, {}
     for f in arquivos(antes, depois, "dados/proposicoes"):
         x, y = carregar(antes, f), carregar(depois, f)
@@ -127,7 +144,9 @@ def camara(antes: str, depois: str):
             if pid not in ids:
                 novas.setdefault(pid, []).append(int(Path(f).stem))
     meta = objetos_em(depois, depois_) if novas else {}
-    return [{**meta[pid], "idsDeputados": deps} for pid, deps in novas.items() if pid in meta]
+    detalhe = (carregar(depois, "dados/proposicoes_detalhe.json") or {}) if novas else {}
+    return [{**meta[pid], "idsDeputados": deps} for pid, deps in novas.items()
+            if pid in meta and na_janela((detalhe.get(str(pid)) or {}).get("dataApresentacao"), dia_coleta)]
 
 
 def contar(antes: str, depois: str, caminho: str):
@@ -135,19 +154,27 @@ def contar(antes: str, depois: str, caminho: str):
     return len(x or []), len(y or [])
 
 
-def coletar(antes: str, depois: str) -> dict:
+def senado_novas(antes: str, depois: str, dia_coleta: str | None) -> tuple[int, int]:
+    """(0, matérias novas do Senado dentro da janela): o formato (antes, depois) é o das contagens, e quem lê só subtrai."""
+    x, y = carregar(antes, "dados/senado_materias.json") or {}, carregar(depois, "dados/senado_materias.json") or {}
+    return 0, sum(1 for k, m in y.items() if k not in x and na_janela(m.get("dataApresentacao") or m.get("dataSituacao"), dia_coleta))
+
+
+def coletar(antes: str, depois: str, dia_coleta: str | None = None) -> dict:
+    """`dia_coleta` (AAAA-MM-DD, ver dia_da_coleta): de onde se conta a janela da data do ato. Sem ele não há janela: serve aos resumos
+    de semana e de mês, que cobrem mais de um dia."""
     d = {"antes": antes, "depois": depois}
-    d["camara"] = camara(antes, depois)
+    d["camara"] = camara(antes, depois, dia_coleta)
     d["detalhe"] = contar(antes, depois, "dados/proposicoes_detalhe.json")
-    d["senado"] = contar(antes, depois, "dados/senado_materias.json")
+    d["senado"] = senado_novas(antes, depois, dia_coleta)
     x, y = carregar(antes, "dados/executivo.json") or [], carregar(depois, "dados/executivo.json") or []
     ids = {i["id"] for i in x}
-    d["executivo"] = [i for i in y if i["id"] not in ids]
+    d["executivo"] = [i for i in y if i["id"] not in ids and na_janela(i.get("dataApresentacao") or i.get("dataSituacao"), dia_coleta)]
     situacao = {i["id"]: i.get("situacao") for i in x}
-    d["executivo_situacao"] = [(i, situacao[i["id"]]) for i in y if i["id"] in situacao and i.get("situacao") != situacao[i["id"]]]
-    d["estaduais"] = materias(antes, depois, "dados/estaduais", "materias_2026.json")
-    d["governo"] = materias(antes, depois, "dados/estaduais", "governo_2026.json")
-    d["municipais"] = materias(antes, depois, "dados/municipais", "prefeitura_2026.json")
+    d["executivo_situacao"] = [(i, situacao[i["id"]]) for i in y if i["id"] in situacao and i.get("situacao") != situacao[i["id"]] and na_janela(i.get("dataSituacao"), dia_coleta)]
+    d["estaduais"] = materias(antes, depois, "dados/estaduais", "materias_2026.json", dia_coleta)
+    d["governo"] = materias(antes, depois, "dados/estaduais", "governo_2026.json", dia_coleta)
+    d["municipais"] = materias(antes, depois, "dados/municipais", "prefeitura_2026.json", dia_coleta)
     d["votacoes"] = sorted({f.split("/")[2] for f in arquivos(antes, depois, "dados/estaduais") if f.endswith("votacoes.json")})
     d["tse"] = [f for f in arquivos(antes, depois, "dados/tse") if "_coleta" not in f]
     return d
@@ -268,7 +295,7 @@ def main() -> None:
     a = p.parse_args()
     data = dia_do_commit(a.depois)
     titulo = f"Minha Bancada — o que mudou em {data[8:]}/{data[5:7]}/{data[:4]}"
-    d = coletar(a.antes, a.depois)
+    d = coletar(a.antes, a.depois, dia_da_coleta(a.depois))
     h, t = montar(d, titulo, detalhes=link_historico(data))
     saida = Path(a.saida)
     saida.mkdir(parents=True, exist_ok=True)

@@ -151,3 +151,5 @@ Status: ✅ OK · ❌ ERRO (resposta com falha ou fora do ar) · ❔ não testad
 - **tse_divulgacandcontas**: responde 403 a clientes automatizados; é só link para o navegador (pode funcionar para pessoas).
 - **sapl_*_PB (Assembleia da Paraíba)**: o servidor não responde (timeout de 60 s).
 - **Assembleias estaduais bloqueadas ou fora do ar (2026-10-22)**: `www.al.ap.leg.br`, `www.cl.df.gov.br`, `www.al.es.gov.br` e `sistemas.al.ma.leg.br` dão timeout de qualquer ferramenta (sem coletor). `sapl.al.rr.leg.br` responde 403 a clientes automatizados; `albalegis.nopapercloud.com.br` (BA) dá 403 do Cloudflare; `sgpl.consulta.al.ms.gov.br` (MS) pede captcha; `api-transparencia.al.rn.leg.br` (RN) exige token Bearer; `consultas.assembleia.pr.leg.br` (PR) usa reCAPTCHA; `aleselegis.al.se.leg.br` e `www.al.mt.gov.br` não respondem. São só links de fonte ou hosts não coletados.
+
+- **crt.sectigo.com (BA)**: o servidor de dados abertos da BA não envia o certificado intermediário (Sectigo OV R36); `coletar_estadual_ba.py` traz o arquivo `sectigo_ov_r36.pem`, baixado uma vez de `http://crt.sectigo.com/SectigoPublicServerAuthenticationCAOVR36.crt`. Não é consultado a cada coleta.

@@ -1,0 +1,71 @@
+name: Republicar o site (sem coletar)
+
+# Mudou só o código (site, scripts, workflows): gera o site de novo com os dados da última coleta diária e publica, em minutos.
+# Não coleta, não registra histórico, não manda e-mail nem aviso: dado novo e histórico só entram pelo atualizar.yml.
+# Coletor novo: rode o atualizar.yml à mão (workflow_dispatch) para ele trazer os primeiros dados.
+on:
+  workflow_dispatch:
+  push:
+    branches: [master]
+    paths: ["site/**", "scripts/**", ".github/workflows/**"]
+
+permissions:
+  contents: read
+  actions: read   # baixar os pacotes de dados da última execução do atualizar.yml
+  pages: write
+  id-token: write
+
+env:
+  TZ: America/Sao_Paulo
+
+concurrency:
+  group: atualizar   # o mesmo grupo do atualizar.yml: nunca dois deploys ao mesmo tempo
+  cancel-in-progress: false
+
+jobs:
+  republicar:
+    name: Gerar o site e publicar
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - run: pip install -r requirements.txt
+
+      - name: Baixar os pacotes de dados da última coleta diária bem-sucedida
+        # o que não fica no git (Câmara, Senado, fotos...) vem destes pacotes; guardados por 3 dias
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          RUN=$(gh run list --workflow atualizar.yml --status success --limit 1 --json databaseId --jq '.[0].databaseId')
+          if [ -z "$RUN" ] || [ "$RUN" = "null" ]; then echo "Nenhuma execução bem-sucedida do atualizar.yml; rode-o antes." >&2; exit 1; fi
+          echo "Pacotes da execução $RUN"
+          gh run download "$RUN" --pattern 'pacote-*' --dir "$RUNNER_TEMP/pacotes"
+          for pacote in $(find "$RUNNER_TEMP/pacotes" -name '*.tgz'); do tar xzf "$pacote"; done
+
+      - name: Gerar arquivos do site
+        run: python scripts/gerar.py
+
+      - name: Copiar o histórico para o site
+        run: python scripts/historico.py --so-espelhar
+
+      - name: Atualizar os feeds RSS do Fique informado (últimos 14 dias, a partir do histórico git)
+        continue-on-error: true   # sem feeds o site ainda publica
+        run: |
+          git fetch --shallow-since="20 days ago" -q origin master
+          python scripts/feeds.py --dias 14
+
+      - uses: actions/configure-pages@v6
+      - uses: actions/upload-pages-artifact@v5
+        with:
+          path: site
+      - id: deploy
+        uses: actions/deploy-pages@v5

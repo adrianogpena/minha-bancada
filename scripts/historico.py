@@ -5,6 +5,10 @@ A execução diária faz um commit "Dados atualizados em AAAA-MM-DD". Este scrip
 (como o resumo por e-mail e os feeds RSS) e grava dados/historico/AAAA-MM-DD.json, que fica no git: o histórico só cresce.
 Depois espelha tudo em site/dados/historico/ (com indice.json), que a página historico.html lê.
 
+O dia é o da descoberta: o de 27/10 pode trazer um ato de 26/10 encontrado só nessa coleta, com a data real em dataDoAto. Só entra o que
+tem data do ato até JANELA_ATO_DIAS (3) dias antes da coleta, ou nenhuma data; o resto continua no site, fora do histórico. Os arquivos
+dos dias são a memória: cada evento guarda a data do ato como a fonte a deu na descoberta, e uma mudança posterior vira evento novo.
+
 Cada evento do dia:
     local         "BR", "UF:SP" ou "MUN:SP" (capital)                 uf          estado de quem aparece (filtro por estado)
     categoria     nova, situacao, votacao, eleicao                    titulo      título curto (ex.: "PL 123/2026")
@@ -22,7 +26,8 @@ O dia do histórico é o dia (Brasília) em que a coleta rodou; "coletaEm" e "co
 Os códigos de local e de político são os mesmos do feeds.py.
 
 Uso:
-    python scripts/historico.py [ANTES [DEPOIS]] [--dias N] [--saida PASTA]
+    python scripts/historico.py [ANTES [DEPOIS]] [--dias N] [--saida PASTA] [--so-espelhar]
+    (--so-espelhar só copia dados/historico para site/dados/historico, sem git nem dia novo: serve ao republicar.yml)
     (sem argumentos: o último dia com commit de dados; --dias N refaz os N últimos dias, para reconstruir o passado)
 """
 
@@ -56,7 +61,7 @@ LIMITE_TEXTO = 1200
 # "projeto de verdade": sigla acima ou, nas Assembleias e prefeituras, o nome do tipo por extenso
 DESCRICAO_PROJETO = ("projeto de", "proposta de emenda", "medida provisória")
 MARCO_SITUACAO = re.compile(r"aprovad|sancionad|vetad|promulgad|arquivad|rejeitad|retirad|transformad|prejudicad", re.I)
-LIMITE_ANTIGO_DIAS = 30   # projeto "novo" com data do ato mais antiga que isso é carga de backlog, não novidade
+JANELA_ATO_DIAS = r.JANELA_ATO_DIAS   # só entra no histórico o que tem data do ato até esse tanto de dias antes da coleta (ou nenhuma data)
 LIMITE_LOTE = 40          # por local: acima disso, os eventos de baixa relevância viram um evento só
 PREFIXOS_BR = ("dados/proposicoes", "dados/proposicoes_cadastro", "dados/proposicoes_detalhe.json", "dados/votacoes", "dados/senado_materias.json",
                "dados/senado_votacoes", "dados/executivo.json")
@@ -384,7 +389,7 @@ def sapl(ctx: Contexto, antes: str, depois: str, uf: str, arquivo: str, local: s
             host = host_de(b.get(f))
             titulo = f"{m.get('tipoDescricao') or m.get('tipo', '')} {m.get('numero', '')}/{m.get('ano', '')}".strip()
             saida.append(evento(local, "nova" if novo else "situacao", titulo, uf=uf, politicos=politicos(m), texto=m.get("ementa"),
-                                mudanca=None if novo else [ant[mid].get("situacao") or "—", m.get("situacao") or "—"], resumo=m.get("situacao") if novo else None, data_do_ato=m.get("dataApresentacao"),
+                                mudanca=None if novo else [ant[mid].get("situacao") or "—", m.get("situacao") or "—"], resumo=m.get("situacao") if novo else None, data_do_ato=m.get("dataApresentacao") if novo else None,
                                 fontes=[("Matéria no sistema legislativo", f"https://{host}/materia/{mid}" if host and str(mid).isdigit() else None), ("Texto", m.get("linkTexto"))]))
     return saida
 
@@ -493,11 +498,6 @@ def relevancia(e: dict, data: str) -> int:
         if e.get("resumo") == "Nova tramitação":   # só andou de lugar; a situação é a mesma
             return 1
         return 3 if MARCO_SITUACAO.search((e.get("mudanca") or ["", ""])[1]) else 2
-    try:
-        if (date.fromisoformat(data) - date.fromisoformat(e["dataDoAto"][:10])).days > LIMITE_ANTIGO_DIAS:
-            return 1
-    except (KeyError, TypeError, ValueError):
-        pass
     return 2
 
 
@@ -626,11 +626,17 @@ def ordem_local(c):
     return (c != "BR", c.startswith("MUN"), c)
 
 
+def na_janela(e: dict, data: str) -> bool:
+    """Novidade, mudança ou votação cuja data do ato é antiga (carga de backlog, publicação atrasada) fica só no site, fora do histórico."""
+    return r.na_janela(e.get("dataDoAto"), data)
+
+
 def dia(data: str, antes: str, depois: str, coleta_em: str | None = None, coleta_ant: str | None = None) -> dict:
     ctx = Contexto(depois)
     eventos = []
     for coletor in COLETORES:
         eventos += coletor(ctx, antes, depois)
+    eventos = [e for e in eventos if na_janela(e, data)]
     for e in eventos:
         e["relevancia"] = relevancia(e, data)
     eventos = agrupar_lotes(eventos)
@@ -680,8 +686,12 @@ def main() -> None:
     p.add_argument("depois", nargs="?")
     p.add_argument("--dias", type=int, default=1)
     p.add_argument("--saida", default=str(PASTA))
+    p.add_argument("--so-espelhar", action="store_true")
     a = p.parse_args()
     saida = Path(a.saida)
+    if a.so_espelhar:
+        espelhar(saida, SITE_PASTA)
+        return
     if a.antes:
         lista = [(dia_do_commit(a.depois or "HEAD"), a.antes, a.depois or "HEAD")]
     else:

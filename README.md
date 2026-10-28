@@ -127,7 +127,8 @@ Sem `--limite` a coleta pega todos os deputados em exercício. `--dias` só vale
 | `dados/tse/` | Eleitos de cada eleição, um arquivo por estado. |
 | `dados/proposicoes/`, `dados/proposicoes_cadastro/` | Ids das proposições de cada deputado e, uma vez só por proposição, tipo, número e ementa (por ano). A API só aceita 3 meses por consulta, então a primeira coleta é longa e as seguintes buscam só o período novo. |
 | `site/` | O site: HTML, CSS e módulos ES em `assets/js/` (entrada `assets/app.js`), sem framework nem etapa de build. |
-| `.github/workflows/atualizar.yml` | Agenda diária: coletas em jobs paralelos, depois gera o site, salva o histórico e publica. |
+| `.github/workflows/atualizar.yml` | Agenda diária (e manual): coletas em jobs paralelos, depois gera o site, salva o histórico e publica. |
+| `.github/workflows/republicar.yml` | Mudança de código: gera o site com os dados da última coleta e publica, sem coletar nem gravar histórico. |
 
 ## Endpoints desativados
 

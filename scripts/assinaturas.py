@@ -167,7 +167,7 @@ def main() -> None:
     if ativos and not a.so_confirmacoes:
         data = r.dia_do_commit(a.depois)
         titulo = f"Minha Bancada — suas atualizações de {data[8:]}/{data[5:7]}/{data[:4]}"
-        completo, deps_uf = r.coletar(a.antes, a.depois), feeds.deputados_por_uf()
+        completo, deps_uf = r.coletar(a.antes, a.depois, r.dia_da_coleta(a.depois)), feeds.deputados_por_uf()
         if not deps_uf:
             print("Aviso: site/dados/indice ausente; avisos por estado não incluem a bancada federal.", file=sys.stderr)
         periodos = {}   # freq -> (título, mudanças do período) ou None; calculado uma vez por frequência

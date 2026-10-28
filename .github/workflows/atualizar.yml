@@ -3,10 +3,7 @@ name: Atualizar dados e publicar site
 on:
   schedule:
     - cron: "47 7 * * *"   # todo dia às 07:47 UTC (04:47 em Brasília), fora da hora cheia
-  workflow_dispatch:        # permite rodar manualmente pela aba Actions
-  push:
-    branches: [master]
-    paths: ["site/**", "scripts/**", ".github/workflows/**"]
+  workflow_dispatch:        # coleta completa manual (ex.: coletor novo); mudanças de código sem coleta vão pelo republicar.yml
 
 permissions:
   contents: write   # salvar o cache de dados no repositório
@@ -22,7 +19,7 @@ concurrency:
 
 jobs:
   # As coletas leem fontes diferentes e não dependem umas das outras: rodam ao mesmo tempo, cada uma num job.
-  # Cada job entrega um pacote (.tgz) com o que gravou; o job `publicar` junta tudo, gera o site e publica.
+  # Cada job entrega um pacote (.tgz, guardado por 3 dias para o republicar.yml) com o que gravou; o job `publicar` junta tudo, gera o site e publica.
   camara:
     name: Coletar Câmara dos Deputados
     runs-on: ubuntu-24.04
@@ -59,7 +56,7 @@ jobs:
           name: pacote-camara
           path: ${{ runner.temp }}/camara.tgz
           if-no-files-found: ignore
-          retention-days: 1
+          retention-days: 3
 
   senado:
     name: Coletar Senado
@@ -91,7 +88,7 @@ jobs:
           name: pacote-senado
           path: ${{ runner.temp }}/senado.tgz
           if-no-files-found: ignore
-          retention-days: 1
+          retention-days: 3
 
   tse:
     name: Coletar eleitos do TSE
@@ -123,7 +120,7 @@ jobs:
           name: pacote-tse
           path: ${{ runner.temp }}/tse.tgz
           if-no-files-found: ignore
-          retention-days: 1
+          retention-days: 3
 
   executivo:
     name: Coletar o que o Presidente enviou ao Congresso
@@ -156,7 +153,7 @@ jobs:
           name: pacote-executivo
           path: ${{ runner.temp }}/executivo.tgz
           if-no-files-found: ignore
-          retention-days: 1
+          retention-days: 3
 
   estaduais:
     name: Coletar Assembleia ${{ matrix.rotulo }}
@@ -216,7 +213,7 @@ jobs:
           name: pacote-estaduais-${{ matrix.id }}
           path: ${{ runner.temp }}/estaduais-${{ matrix.id }}.tgz
           if-no-files-found: ignore
-          retention-days: 1
+          retention-days: 3
 
   governadores:
     name: Coletar governadores (SAPL)
@@ -250,7 +247,7 @@ jobs:
           name: pacote-governadores
           path: ${{ runner.temp }}/governadores.tgz
           if-no-files-found: ignore
-          retention-days: 1
+          retention-days: 3
 
   siconfi:
     name: Coletar finanças dos estados (SICONFI)
@@ -284,7 +281,7 @@ jobs:
           name: pacote-siconfi
           path: ${{ runner.temp }}/siconfi.tgz
           if-no-files-found: ignore
-          retention-days: 1
+          retention-days: 3
 
   prefeituras:
     name: Coletar prefeitos das capitais (SAPL)
@@ -318,7 +315,7 @@ jobs:
           name: pacote-prefeituras
           path: ${{ runner.temp }}/prefeituras.tgz
           if-no-files-found: ignore
-          retention-days: 1
+          retention-days: 3
 
   publicar:
     name: Gerar o site e publicar
@@ -354,7 +351,6 @@ jobs:
           true
 
       - name: Testar as APIs e fontes (alimenta a lista de status em "Sobre os dados")
-        if: ${{ github.event_name != 'push' }}   # só no diário (e na execução manual); merges publicam com o status do último checkup
         continue-on-error: true   # sem o teste o site ainda publica, com o status do dia anterior
         run: python scripts/testar_endpoints.py --sem-tabela || true
 

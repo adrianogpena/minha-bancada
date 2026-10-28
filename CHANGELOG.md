@@ -5,6 +5,12 @@ Regra: toda fonte nova ou mudança de coleta ganha uma entrada aqui, no mesmo co
 Datas dos conjuntos que já existiam vêm do primeiro commit que os trouxe (`git log --diff-filter=A`).
 Todas as coletas rodam sozinhas no GitHub Actions (`.github/workflows/atualizar.yml`, todo dia às 05:00 de Brasília), salvo onde indicado.
 
+## Histórico só com o que é novo de verdade; republicar sem coletar (2026-10-28)
+
+O histórico, o RSS, o resumo por e-mail e os avisos diários passam a registrar só o que tem **data do ato até 3 dias antes da coleta** (`JANELA_ATO_DIAS`), ou nenhuma data. Backlog e publicação atrasada da fonte continuam no site, fora do histórico. O dia do histórico segue sendo o da descoberta, e cada evento guarda a data do ato como a fonte a deu; mudança posterior vira evento novo. Em Assembleia, a mudança de situação deixa de levar a data de apresentação como `dataDoAto` (não era a data do ato). Os resumos semanal e mensal não usam a janela.
+
+Novo `.github/workflows/republicar.yml` (push em `site/`, `scripts/` e workflows, ou manual): baixa os pacotes da última execução bem-sucedida do `atualizar.yml` (agora guardados por 3 dias), roda `gerar.py`, espelha o histórico (`historico.py --so-espelhar`), refaz os feeds e publica. Não coleta, não grava histórico e não envia e-mail. O `atualizar.yml` deixa de rodar no push: só no agendamento e à mão. Coletor novo: rodar o `atualizar.yml` manualmente.
+
 ## Histórico: dia da coleta e hora real da execução (2026-10-28)
 
 O dia de cada histórico passou a ser o dia (Brasília) em que a coleta rodou, e não o anterior. Cada arquivo traz `coletaEm` e `coletaAnterior` (hora em que a execução começou, obtida de `gh run view`; nos dias antigos, da lista de execuções do Actions) e a página mostra "novidades entre <coleta anterior> e <coleta>". Os arquivos já gravados foram renomeados +1 dia. Links de e-mail e RSS somam 1 dia ao dia dos fatos.

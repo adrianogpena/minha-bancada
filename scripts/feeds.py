@@ -142,7 +142,7 @@ def main() -> None:
     itens = defaultdict(list)
     lista = dias(a.dias)
     for antes, depois, data in lista:
-        d = r.coletar(antes, depois)
+        d = r.coletar(antes, depois, r.dia_da_coleta(depois))
         for codigo in nomes:
             parte = selecionar(d, {codigo}, deps_uf)
             if vazio(parte):

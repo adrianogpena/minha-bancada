@@ -65,6 +65,9 @@ function rotuloPeriodo(g, periodo) {
 
 const chaveLocal = (c) => `${c === "BR" ? 0 : 1}${c.startsWith("MUN") ? 1 : 0}${c}`;   // mesma ordem de historico.ordem_local
 
+const statusDe = (x) => x.status || (x.mudou ? "irrelevante" : "parado");   // dias gravados antes dos status
+const diasEntre = (a, b) => Math.round((Date.parse(b + "T12:00:00Z") - Date.parse(a + "T12:00:00Z")) / 864e5);
+
 /* Junta os arquivos diários (do mais novo ao mais antigo) no formato de um dia. Cada evento ganha `_dia`; os de dias diferentes não são deduplicados. */
 export function juntarDias(dias, chave) {
   const locais = {}, contagem = {}, cobertura = {};
@@ -75,9 +78,15 @@ export function juntarDias(dias, chave) {
       contagem[c] ??= {};
       contagem[c][k] = (contagem[c][k] || 0) + n;
     }
-    for (const [c, x] of Object.entries(d.cobertura || {})) {   // status do dia mais novo; só conta como "sem novidade" quem não teve item em nenhum dia
-      if (cobertura[c]) cobertura[c].itens += x.itens || 0;
-      else cobertura[c] = { ...x, itens: x.itens || 0 };
+    for (const [c, x] of Object.entries(d.cobertura || {})) {   // só conta como "sem novidade" quem não teve item em nenhum dia
+      const acc = cobertura[c];
+      if (!acc) { cobertura[c] = { ...x, itens: x.itens || 0, foraDaJanela: x.foraDaJanela || 0, mudancas: [...(x.mudancas || [])] }; continue; }
+      acc.itens += x.itens || 0;
+      acc.foraDaJanela += x.foraDaJanela || 0;
+      for (const m of x.mudancas || []) if (!acc.mudancas.includes(m)) acc.mudancas.push(m);
+      acc.ultimaMudanca ??= x.ultimaMudanca;
+      acc.ultimaColeta ??= x.ultimaColeta;
+      if (statusDe(x) === "irrelevante" && ["parado", "falha"].includes(statusDe(acc))) { acc.status = "irrelevante"; acc.mudou = true; }   // mudança em qualquer dia vale para o período; falha só vale se for a do dia mais novo e nada mudou
     }
     for (const e of d.eventos) eventos.push({ ...e, _dia: d.data });
   }
@@ -95,18 +104,24 @@ function coberturaSemNovidade(dia, codigos, local, mostrar, unidade = "dia") {
   if (!dia.cobertura || !mostrar) return "";
   const lista = Object.entries(dia.cobertura).filter(([c, x]) => !x.itens && (local && local !== "__avisos" ? c === local : noEscopo({ local: c, uf: c.startsWith("UF:") ? c.slice(3) : null, politicos: [] }, codigos)));
   if (!lista.length) return "";
-  const status = (x) => x.status || (x.mudou ? "irrelevante" : "parado");   // dias gravados antes dos status
+  const status = statusDe;
+  const referencia = dia.ate || dia.data;
+  const fora = (x) => x.foraDaJanela ? `; ${x.foraDaJanela} ${x.foraDaJanela === 1 ? "item" : "itens"} com data do ato anterior à janela de 3 dias ficaram só no site` : "";
+  const haDias = (x) => { const n = diasEntre(x.ultimaColeta, referencia); return n > 0 ? ` (há ${n} ${n === 1 ? "dia" : "dias"})` : ""; };
   const grupos = [
-    ["irrelevante", "Dados mudaram, mas nada relevante para o histórico", (x) => x.mudancas && x.mudancas.length ? `atualizou ${x.mudancas.join(", ")}` : "os arquivos foram atualizados, sem item para o histórico (detalhe não registrado neste dia)"],
-    ["parado", "Sem dados novos", (x) => x.ultimaMudanca ? `sem alteração desde ${data(x.ultimaMudanca)}` : "sem alteração nos dados"],
-    ["falha", `Coleta falhou ou não rodou neste ${unidade}`, (x) => x.ultimaColeta ? `última coleta gravada em ${data(x.ultimaColeta)}` : `nenhum dado gravado neste ${unidade}`],
-    ["sem_cobertura", "Sem cobertura (ainda não coletamos este local)", () => "sem fonte conectada"],
+    ["irrelevante", "Dados mudaram, mas nada relevante para o histórico", (x) => (x.mudancas && x.mudancas.length ? `atualizou ${x.mudancas.join(", ")}` : "os arquivos foram atualizados, sem item para o histórico (detalhe não registrado neste dia)") + fora(x)],
+    ["parado", "Sem dados novos", (x) => (x.ultimaMudanca ? `sem alteração desde ${data(x.ultimaMudanca)}` : "sem alteração nos dados") + fora(x)],
+    ["falha", `Coleta falhou ou não rodou neste ${unidade}`, (x) => (x.ultimaColeta ? `última coleta gravada em ${data(x.ultimaColeta)}${haDias(x)}` : `nenhum dado gravado neste ${unidade}`) + fora(x), (a, b) => (a.ultimaColeta || "") < (b.ultimaColeta || "") ? -1 : 1],   // a parada mais antiga primeiro
   ];
-  const bloco = ([chave, titulo, motivo]) => {
+  const bloco = ([chave, titulo, motivo, ordem]) => {
     const itens = lista.filter(([, x]) => status(x) === chave);
+    if (ordem) itens.sort(([, a], [, b]) => ordem(a, b));
     return itens.length ? `<h3>${titulo} <small>${itens.length}</small></h3><ul>${itens.map(([, x]) => `<li><b>${esc(x.nome)}</b>: ${esc(motivo(x))}</li>`).join("")}</ul>` : "";
   };
-  return `<section class="painel hist-sem"><h2>Acompanhados, sem novidade <small>${lista.length}</small></h2>${grupos.map(bloco).join("")}</section>`;
+  const acompanhados = lista.filter(([, x]) => status(x) !== "sem_cobertura");
+  const sem = lista.filter(([, x]) => status(x) === "sem_cobertura");
+  return (acompanhados.length ? `<section class="painel hist-sem"><h2>Acompanhados, sem novidade <small>${acompanhados.length}</small></h2>${grupos.map(bloco).join("")}</section>` : "")
+    + (sem.length ? `<section class="painel hist-sem"><h2>Sem cobertura <small>${sem.length}</small></h2><p class="texto">Ainda não coletamos estes locais (sem fonte conectada): ${sem.map(([, x]) => `<b>${esc(x.nome)}</b>`).join(", ")}.</p></section>` : "");
 }
 
 function itemHistorico(e) {

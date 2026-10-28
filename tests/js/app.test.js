@@ -195,3 +195,15 @@ test("juntarDias soma contagens, marca o dia de cada evento e só dá cobertura 
   assert.equal(j.cobertura.BR.itens, 1);
   assert.deepEqual([j.de, j.ate], ["2026-10-19", "2026-10-20"]);
 });
+
+test("juntarDias: mudança em qualquer dia vale para o período, falha antiga não, e soma itens fora da janela", () => {
+  const dia = (d, cobertura) => ({ data: d, locais: {}, contagem: {}, cobertura, eventos: [] });
+  const j = juntarDias([
+    dia("2026-10-21", { A: { itens: 0, status: "parado", ultimaMudanca: "2026-10-19" }, B: { itens: 0, status: "parado" }, C: { itens: 0, status: "falha", ultimaColeta: "2026-10-18" } }),
+    dia("2026-10-20", { A: { itens: 0, status: "irrelevante", mudancas: ["verbas"], foraDaJanela: 2 }, B: { itens: 0, status: "falha", ultimaColeta: "2026-10-17" }, C: { itens: 0, status: "irrelevante", mudancas: ["verbas"] } }),
+  ], "2026-10-19");
+  assert.equal(j.cobertura.A.status, "irrelevante");
+  assert.deepEqual([j.cobertura.A.mudancas, j.cobertura.A.foraDaJanela, j.cobertura.A.ultimaMudanca], [["verbas"], 2, "2026-10-19"]);
+  assert.equal(j.cobertura.B.status, "parado");
+  assert.equal(j.cobertura.C.status, "irrelevante");
+});

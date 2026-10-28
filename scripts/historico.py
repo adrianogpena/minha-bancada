@@ -20,7 +20,7 @@ Cada evento do dia:
     quantidade    só no evento "lote": quantos registros de baixa relevância ele resume (acima de LIMITE_LOTE por local)
     titulos       só no evento "lote": os títulos resumidos (ex.: "REQ 12/2026"), em ordem
 O dia também traz "cobertura": para cada local (todos os estados, com ou sem fonte), o nome, quantos itens saíram (itens) e o status:
-novidade, irrelevante (dados mudaram sem virar item; "mudancas" lista o quê), parado (ultimaMudanca quando conhecida), falha (coleta não gravou nada
+novidade, irrelevante (dados mudaram sem virar item; "mudancas" lista o quê; "foraDaJanela" conta os itens barrados pela janela), parado (ultimaMudanca quando conhecida), falha (coleta não gravou nada
 no dia; ultimaColeta) ou sem_cobertura. O campo coletadoEm, que muda todo dia, não conta como mudança.
 O dia do histórico é o dia (Brasília) em que a coleta rodou; "coletaEm" e "coletaAnterior" (ISO com fuso) dizem entre que execuções saíram as novidades.
 Os códigos de local e de político são os mesmos do feeds.py.
@@ -537,7 +537,8 @@ def agrupar_lotes(eventos: list) -> list:
 ADMINISTRATIVOS = ("coletadoEm", "vistas", "completaEm")   # campos de controle da coleta: mudam todo dia sem trazer dado
 ROTULOS_ARQUIVO = {"materias": "matérias", "materias_votadas": "matérias votadas", "governo": "projetos do governo", "votacoes": "votações",
                    "deputados": "deputados", "verbas": "verbas", "remuneracao": "remuneração", "presenca": "presença", "diarias": "diárias",
-                   "emendas": "emendas", "proposicoes": "proposições"}
+                   "emendas": "emendas", "proposicoes": "proposições", "ligacoes": "ligação de nomes a deputados",
+                   "parcial": "leitura em andamento (parcial)", "presenca_sessoes": "presença em sessões"}
 
 
 def rotulo_arquivo(caminho: str) -> str:
@@ -582,8 +583,19 @@ def ultima_mudanca_registrada(data: str, local: str) -> str | None:
     return None
 
 
-def cobertura(ctx: Contexto, antes: str, depois: str, contagem: dict, data: str | None = None) -> dict:
-    """Todo local monitorado no dia, com ou sem novidade: {código: {nome, mudou, itens, status, mudancas, ultimaMudanca, ultimaColeta}}.
+def ultima_mudanca_real(antes: str, prefixos: list[str], limite: int = 10) -> str | None:
+    """Dia da última mudança real do local entre os `limite` commits de dados anteriores a `antes`, comparando um commit com o seguinte."""
+    commits = r.git("log", f"-{limite + 1}", "--grep=^Dados atualizados em", "--format=%H", antes).split()
+    for novo, velho in zip(commits, commits[1:]):
+        arquivos = [f for p in prefixos for f in r.arquivos(velho, novo, p)]
+        if arquivos and mudancas_reais(velho, novo, arquivos):
+            return dia_do_commit(novo)
+    return None
+
+
+def cobertura(ctx: Contexto, antes: str, depois: str, contagem: dict, data: str | None = None, fora: dict | None = None) -> dict:
+    """Todo local monitorado no dia, com ou sem novidade: {código: {nome, mudou, itens, status, mudancas, foraDaJanela, ultimaMudanca, ultimaColeta}}.
+    foraDaJanela: quantos itens do local ficaram fora do histórico por terem data do ato anterior à janela (só no site).
     status: "novidade" (saiu item), "irrelevante" (os dados mudaram mas nada vira item; `mudancas` diz o que), "parado" (nenhum dado novo),
     "falha" (a coleta não gravou nada nesse dia; `ultimaColeta`) e "sem_cobertura" (estado ainda sem fonte coletada).
     Assim "nada aconteceu" se distingue de "o local não foi acompanhado" e uma coleta parada há dias aparece."""
@@ -612,9 +624,14 @@ def cobertura(ctx: Contexto, antes: str, depois: str, contagem: dict, data: str 
                 else:
                     item["status"] = "parado"
                 item["ultimaMudanca"] = ultima_mudanca_registrada(data, local)
+                if not item["ultimaMudanca"]:
+                    with contextlib.suppress(subprocess.CalledProcessError):
+                        item["ultimaMudanca"] = ultima_mudanca_real(antes, prefixos[local])
                 if not item["ultimaMudanca"] and not alterados:
                     with contextlib.suppress(subprocess.CalledProcessError):
                         item["ultimaMudanca"] = dia_do_commit(depois, *prefixos[local])
+        if fora and fora.get(local):
+            item["foraDaJanela"] = fora[local]
         saida[local] = {k: v for k, v in item.items() if v is not None}
     for uf in sorted(feeds.UFS):
         if f"UF:{uf}" not in saida:
@@ -642,6 +659,10 @@ def dia(data: str, antes: str, depois: str, coleta_em: str | None = None, coleta
     eventos = []
     for coletor in COLETORES:
         eventos += coletor(ctx, antes, depois)
+    fora = Counter()
+    for e in eventos:
+        if not na_janela(e, data):
+            fora[e["local"]] += e.get("quantidade", 1)
     eventos = [e for e in eventos if na_janela(e, data)]
     for e in eventos:
         e["relevancia"] = relevancia(e, data)
@@ -654,7 +675,7 @@ def dia(data: str, antes: str, depois: str, coleta_em: str | None = None, coleta
     quando = {"coletaAnterior": coleta_ant, "coletaEm": coleta_em or momento_do_commit(depois)}
     return {"data": data, "antes": r.git("rev-parse", antes).strip(), "depois": r.git("rev-parse", depois).strip(),
             **{k: v for k, v in quando.items() if v},
-            "locais": {c: ctx.nome_local(c) for c in locais}, "contagem": contagem, "cobertura": cobertura(ctx, antes, depois, contagem, data),
+            "locais": {c: ctx.nome_local(c) for c in locais}, "contagem": contagem, "cobertura": cobertura(ctx, antes, depois, contagem, data, fora),
             "eventos": eventos}
 
 

@@ -14,7 +14,7 @@ Cada evento do dia:
     categoria     nova, situacao, votacao, eleicao                    titulo      título curto (ex.: "PL 123/2026")
     politicos     [{codigo: código do "Fique informado" ou null, nome, pagina: página no site ou null}]
     texto         ementa, despacho                                    mudanca     [antes, depois] de uma mudança
-    resumo        placar, resultado                                   dataDoAto   data do ato (AAAA-MM-DD)
+    resumo        placar, resultado                                   dataDoAto   data do ato (AAAA-MM-DD); dataDoAtoAproximada: é só a de apresentação
     fontes        [[rótulo, URL], ...]
     relevancia    3 marco (votação, projeto aprovado/sancionado/vetado, eleito), 2 projeto de verdade, 1 o resto (requerimento, parecer, carga antiga)
     quantidade    só no evento "lote": quantos registros de baixa relevância ele resume (acima de LIMITE_LOTE por local)
@@ -213,9 +213,9 @@ def cortar(texto, n: int = LIMITE_TEXTO) -> str:
 
 
 def evento(local: str, categoria: str, titulo: str, *, uf=None, politicos=None, texto=None, mudanca=None, resumo=None,
-           data_do_ato=None, fontes=None, relevancia=None, quantidade=None, titulos=None) -> dict:
+           data_do_ato=None, aproximada=False, fontes=None, relevancia=None, quantidade=None, titulos=None) -> dict:
     e = {"local": local, "categoria": categoria, "titulo": titulo, "uf": uf, "politicos": politicos or None, "texto": cortar(texto) or None,
-         "mudanca": mudanca, "resumo": resumo, "dataDoAto": data_do_ato,
+         "mudanca": mudanca, "resumo": resumo, "dataDoAto": data_do_ato, "dataDoAtoAproximada": aproximada or None,
          "fontes": [list(a) for a in (fontes or []) if a and a[1]], "relevancia": relevancia, "quantidade": quantidade, "titulos": titulos}
     return {k: v for k, v in e.items() if v not in (None, [], "")}
 
@@ -389,7 +389,7 @@ def sapl(ctx: Contexto, antes: str, depois: str, uf: str, arquivo: str, local: s
             host = host_de(b.get(f))
             titulo = f"{m.get('tipoDescricao') or m.get('tipo', '')} {m.get('numero', '')}/{m.get('ano', '')}".strip()
             saida.append(evento(local, "nova" if novo else "situacao", titulo, uf=uf, politicos=politicos(m), texto=m.get("ementa"),
-                                mudanca=None if novo else [ant[mid].get("situacao") or "—", m.get("situacao") or "—"], resumo=m.get("situacao") if novo else None, data_do_ato=m.get("dataApresentacao") if novo else None,
+                                mudanca=None if novo else [ant[mid].get("situacao") or "—", m.get("situacao") or "—"], resumo=m.get("situacao") if novo else None, data_do_ato=m.get("dataApresentacao"), aproximada=not novo,
                                 fontes=[("Matéria no sistema legislativo", f"https://{host}/materia/{mid}" if host and str(mid).isdigit() else None), ("Texto", m.get("linkTexto"))]))
     return saida
 
@@ -507,25 +507,30 @@ def tipo_do_titulo(titulo: str) -> str:
 
 
 def agrupar_lotes(eventos: list) -> list:
-    """Por local, o que passa de LIMITE_LOTE entre novidades de baixa relevância (requerimentos, pareceres, carga antiga)
-    vira um evento só, com a conta por tipo; projetos de verdade e marcos nunca entram no lote."""
-    baixos = defaultdict(list)
-    for e in eventos:
-        if e["relevancia"] == 1 and e["categoria"] in ("nova", "situacao"):
-            baixos[e["local"]].append(e)
+    """Por local, o que passa de LIMITE_LOTE entre novidades de baixa relevância (requerimentos, pareceres e afins) vira um evento só,
+    com a conta por tipo; o mesmo vale para as mudanças de situação sem data do ato (data aproximada) que não são marco, caso a fonte
+    reescreva situações antigas de uma vez. Projetos de verdade novos e marcos nunca entram no lote."""
     saida = eventos
-    for local, lista in baixos.items():
-        if len(lista) <= LIMITE_LOTE:
-            continue
-        ids = {id(e) for e in lista}
-        saida = [e for e in saida if id(e) not in ids]
-        tipos = Counter(tipo_do_titulo(e["titulo"]) for e in lista).most_common(8)
-        resto = len(lista) - sum(n for _, n in tipos)
-        conta = ", ".join(f"{n} {t}" for t, n in tipos) + (f" e mais {resto} de outros tipos" if resto else "")
-        ufs = {e.get("uf") for e in lista if e.get("uf")}
-        saida.append(evento(local, "lote", f"{len(lista)} registros de baixa relevância (requerimentos, pareceres e afins)", uf=ufs.pop() if len(ufs) == 1 else None,
-                            resumo=f"Novos ou com nova situação: {conta}. Títulos na lista abaixo.", relevancia=1, quantidade=len(lista),
-                            titulos=sorted(e["titulo"] for e in lista)))
+    for chave, titulo, resumo in (
+            (lambda e: e["relevancia"] == 1 and e["categoria"] in ("nova", "situacao"), "{n} registros de baixa relevância (requerimentos, pareceres e afins)",
+             "Novos ou com nova situação: {conta}. Títulos na lista abaixo."),
+            (lambda e: e["relevancia"] == 2 and e.get("dataDoAtoAproximada"), "{n} mudanças de situação sem data do ato conhecida",
+             "Com nova situação, de uma vez: {conta}. Títulos na lista abaixo.")):
+        grupos = defaultdict(list)
+        for e in saida:
+            if chave(e):
+                grupos[e["local"]].append(e)
+        for local, lista in grupos.items():
+            if len(lista) <= LIMITE_LOTE:
+                continue
+            ids = {id(e) for e in lista}
+            saida = [e for e in saida if id(e) not in ids]
+            tipos = Counter(tipo_do_titulo(e["titulo"]) for e in lista).most_common(8)
+            resto = len(lista) - sum(n for _, n in tipos)
+            conta = ", ".join(f"{n} {t}" for t, n in tipos) + (f" e mais {resto} de outros tipos" if resto else "")
+            ufs = {e.get("uf") for e in lista if e.get("uf")}
+            saida.append(evento(local, "lote", titulo.format(n=len(lista)), uf=ufs.pop() if len(ufs) == 1 else None,
+                                resumo=resumo.format(conta=conta), relevancia=1, quantidade=len(lista), titulos=sorted(e["titulo"] for e in lista)))
     return saida
 
 
@@ -627,8 +632,9 @@ def ordem_local(c):
 
 
 def na_janela(e: dict, data: str) -> bool:
-    """Novidade, mudança ou votação cuja data do ato é antiga (carga de backlog, publicação atrasada) fica só no site, fora do histórico."""
-    return r.na_janela(e.get("dataDoAto"), data)
+    """Novidade, mudança ou votação cuja data do ato é antiga (carga de backlog, publicação atrasada) fica só no site, fora do histórico.
+    Data aproximada (mudança de situação de Assembleia ou capital, que mostra só a data de apresentação) não conta: entra no dia da descoberta."""
+    return e.get("dataDoAtoAproximada") or r.na_janela(e.get("dataDoAto"), data)
 
 
 def dia(data: str, antes: str, depois: str, coleta_em: str | None = None, coleta_ant: str | None = None) -> dict:

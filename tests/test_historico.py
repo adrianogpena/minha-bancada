@@ -119,6 +119,23 @@ def test_resumo_aplica_a_mesma_janela_e_o_periodo_longo_nao(repo, tmp_path):
     assert r.dia_da_coleta("HEAD~1") == "2026-01-02"
 
 
+def test_situacao_de_assembleia_entra_com_data_aproximada_e_vira_lote_quando_sao_muitas(repo, tmp_path, monkeypatch):
+    def mat(n, situacao):
+        return {"ano": 2026, "numero": n, "tipo": "PL", "tipoDescricao": "Projeto de Lei", "ementa": "x", "situacao": situacao, "idsDeputados": [28], "dataApresentacao": "2025-01-01"}
+    def gravar(situacoes, mensagem):
+        (tmp_path / "dados/estaduais/AC/materias_2026.json").write_text(json.dumps({"materias": {str(n): mat(n, sit) for n, sit in situacoes.items()}}), encoding="utf-8")
+        subprocess.run(["git", "commit", "-qam", mensagem], cwd=tmp_path, check=True)
+    gravar({5: "Em tramitação", 20: "Em tramitação", 21: "Em tramitação"}, "base")
+    gravar({5: "Vetado", 20: "Em comissão", 21: "Em comissão"}, "Dados atualizados em 2026-01-03")
+    ev = [e for e in h.dia("2026-01-03", "HEAD~1", "HEAD")["eventos"] if e["local"] == "UF:AC" and e["categoria"] == "situacao"]
+    assert len(ev) == 3 and all(e["dataDoAto"] == "2025-01-01" and e["dataDoAtoAproximada"] for e in ev)
+    monkeypatch.setattr(h, "LIMITE_LOTE", 1)
+    ev = [e for e in h.dia("2026-01-03", "HEAD~1", "HEAD")["eventos"] if e["local"] == "UF:AC" and e["categoria"] in ("situacao", "lote")]
+    lote, = [e for e in ev if e["categoria"] == "lote"]
+    assert lote["quantidade"] == 2 and lote["titulos"] == ["Projeto de Lei 20/2026", "Projeto de Lei 21/2026"] and "sem data do ato" in lote["titulo"]
+    assert [e["titulo"] for e in ev if e["categoria"] == "situacao"] == ["Projeto de Lei 5/2026"]   # o marco (vetado) segue individual
+
+
 def test_dias_git_agrupa_commits_do_mesmo_dia(repo, tmp_path):
     (tmp_path / "dados" / "x.json").write_text("{}")
     env = {**os.environ, "GIT_COMMITTER_DATE": "2026-01-02T20:00:00-0300", "GIT_AUTHOR_DATE": "2026-01-02T20:00:00-0300"}

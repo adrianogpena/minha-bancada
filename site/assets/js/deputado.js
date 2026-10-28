@@ -73,6 +73,21 @@ function painelTrajetoria(dep) {
     ${fontes([["Profissões (API da Câmara)", `${api}/profissoes`], ["Ocupações (API da Câmara)", `${api}/ocupacoes`], ["Mandatos externos (API da Câmara)", `${api}/mandatosExternos`], ["Histórico (API da Câmara)", `${api}/historico`], ["Discursos (API da Câmara)", `${api}/discursos`]])}`;
 }
 
+/* Com quem o deputado mais assina projetos (scripts/gerar_coautoria.py). `lista` é dados/deputados.json, para nome e partido dos parceiros. */
+function painelCoautoria(dep, lista) {
+  const c = dep.coautoria;
+  if (!c) return `<h2>Com quem assina projetos</h2><p class="vazio">Nenhum projeto assinado junto com outro deputado, entre os que já tiveram a autoria coletada.</p>`;
+  const por = new Map(lista.map((d) => [String(d.id), d]));
+  return `
+    <h2>Com quem assina projetos</h2>
+    <p>${c.projetos} ${c.projetos === 1 ? "projeto assinado" : "projetos assinados"} com outros deputados, ${c.outroPartido} com deputado de outro partido (${pct(c.outroPartido, c.projetos)}). <a href="coautoria.html">Ver a rede entre os partidos</a>.</p>
+    <div class="rolagem"><table class="tabela"><thead><tr><th>Deputado</th><th>Partido</th><th>Projetos em comum</th></tr></thead><tbody>
+      ${c.parceiros.map(([j, n]) => { const d = por.get(String(j)); return `<tr><td>${d ? `<a href="deputado.html?id=${encodeURIComponent(j)}">${esc(d.nome)}</a>` : `Deputado ${esc(j)}`}</td><td>${d ? `${esc(d.partido)}/${esc(d.uf)}` : "—"}</td><td>${n}</td></tr>`; }).join("")}
+    </tbody></table></div>
+    <p class="quando">Só projetos (PL, PEC e afins) com mais de um deputado em exercício entre os autores; não entram autores que não são deputados nem projetos com mais de 30 deputados.</p>
+    ${fontes([["Autores de cada proposição (API da Câmara)", `${CAMARA_API}/proposicoes`]])}`;
+}
+
 const ARQUIVOS_CAMARA = "https://dadosabertos.camara.leg.br/arquivos";
 function painelTematico(dep) {
   const api = `${CAMARA_API}/deputados/${encodeURIComponent(dep.id)}`;
@@ -146,9 +161,9 @@ function painelPresencaDeputado(dep) {
 export async function paginaDeputado() {
   const alvo = $("#conteudo");
   const id = param("id");
-  let dep, votacoes;
+  let dep, votacoes, lista;
   try {
-    [dep, votacoes] = await Promise.all([carregar(`dados/deputado/${encodeURIComponent(id)}.json`), carregar("dados/votacoes.json")]);
+    [dep, votacoes, lista] = await Promise.all([carregar(`dados/deputado/${encodeURIComponent(id)}.json`), carregar("dados/votacoes.json"), carregar("dados/deputados.json")]);
   } catch (e) { return semDadosLocais(alvo, e, `${CAMARA_API}/deputados/${encodeURIComponent(id)}`); }
   document.title = `${dep.nome} (${dep.partido}/${dep.uf}) | Minha Bancada`;
 
@@ -164,6 +179,8 @@ export async function paginaDeputado() {
     ${fontes([["Cota parlamentar (API da Câmara)", `${CAMARA_API}/deputados/${encodeURIComponent(dep.id)}/despesas?ano=${desp.ano}`], desp.limite ? ["Limite mensal da cota por estado (Câmara)", LIMITE_COTA_URL] : null, ["Portal da Câmara", `https://www.camara.leg.br/deputados/${encodeURIComponent(dep.id)}`]])}
 
     ${painelTematico(dep)}
+
+    ${painelCoautoria(dep, lista)}
 
     ${painelTrajetoria(dep)}
 

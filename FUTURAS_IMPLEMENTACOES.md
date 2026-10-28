@@ -89,7 +89,9 @@ Página do projeto com linha do tempo; uma chamada por projeto, coletada de form
 - `/deputados/{id}/eventos`: audiências e reuniões de que participou.
 - Uma chamada por deputado e por período; o volume cresce rápido, então guardar só contagens e os mais recentes.
 
-### 3.4 Rede de coautoria
+### 3.4 Rede de coautoria: feito (2026-10-28)
+
+Parceiros mais frequentes no perfil do deputado e matriz partido × partido em `coautoria.html` (registrado no `CHANGELOG.md`). Não há grafo; projetos com mais de 30 deputados ficam de fora. Plano original:
 
 - Com quem cada deputado mais coassina e índice de colaboração entre partidos. Os dados já existem
   (`proposicoes_autores.json`); o difícil é a exibição (grafo ou matriz entre partidos).

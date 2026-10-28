@@ -24,6 +24,7 @@ import mandatos
 import gerar_prefeituras
 import gerar_politicos
 import gerar_proposicoes
+import gerar_coautoria
 from gerar_politicos import ler, salvar
 
 RAIZ = Path(__file__).resolve().parent.parent
@@ -488,6 +489,8 @@ def main():
     partidos = {str(i): d["partido"] for i, d in deputados.items() if d.get("partido")}
     relatorias = relatorias_por_deputado(deputados, detalhes)
     historicos = {str(i): d["historico"] for i, d in deputados.items() if d.get("historico")}
+    coautoria_dep, coautoria_geral = gerar_coautoria.construir(
+        deputados, autorias, TIPOS_PROJETO, lambda i, dia: partido_em(historicos.get(i), dia) or partidos.get(i))
 
     if SAIDA.exists():
         shutil.rmtree(SAIDA)
@@ -565,7 +568,7 @@ def main():
             "nascimento": d.get("nascimento"),
             "naturalidade": ", ".join(x for x in (d.get("municipioNascimento"), d.get("ufNascimento")) if x),
             "escolaridade": d.get("escolaridade"), "redesSociais": d.get("redesSociais", []),
-            "proposicoes": proposicoes, "autoria": autoria, "relatorias": relatorias.get(str(did), []),
+            "proposicoes": proposicoes, "autoria": autoria, "coautoria": coautoria_dep.get(str(did)), "relatorias": relatorias.get(str(did), []),
             "temas": resumir_temas(proposicoes), "orgaos": ordenar_orgaos(orgaos.get(str(did), [])),
             "frentes": sorted(d["frentes"], key=lambda f: f["titulo"]) if d.get("frentes") is not None else None,
             **{k: d[k] for k in ("profissoes", "ocupacoes", "mandatosExternos", "historico", "discursos") if k in d},
@@ -595,6 +598,7 @@ def main():
 
     resumo_deps.sort(key=lambda x: x["nome"])
     salvar(SAIDA / "deputados.json", resumo_deps)
+    salvar(SAIDA / "coautoria.json", coautoria_geral)
     votacoes_senado = gerar_senadores()
     for pid, t in (ler(BRUTO / "proposicoes_tramitacoes.json", {}) or {}).items():
         salvar(SAIDA / "tramitacao" / f"{pid}.json", {c: t[c] for c in ("eventos", "relator", "relacionadas") if t.get(c)})

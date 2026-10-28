@@ -5,6 +5,10 @@ Regra: toda fonte nova ou mudança de coleta ganha uma entrada aqui, no mesmo co
 Datas dos conjuntos que já existiam vêm do primeiro commit que os trouxe (`git log --diff-filter=A`).
 Todas as coletas rodam sozinhas no GitHub Actions (`.github/workflows/atualizar.yml`, todo dia às 05:00 de Brasília), salvo onde indicado.
 
+## Rede de coautoria (2026-10-28)
+
+Sem fonte nova: `scripts/gerar_coautoria.py` cruza `dados/proposicoes_autores.json` (`/proposicoes/{id}/autores`, já coletado) com as proposições de cada deputado. Conta só projetos (`TIPOS_PROJETO`) com mais de um deputado em exercício entre os autores; autor que não é deputado e projeto com mais de 30 deputados ficam de fora. Partido de cada autor na data de apresentação. Gera `coautoria` em `site/dados/deputado/<id>.json` (parceiros mais frequentes, ids) e `site/dados/coautoria.json` (partido × partido). Páginas: bloco "Com quem assina projetos" no perfil do deputado e `coautoria.html`.
+
 ## Histórico só com o que é novo de verdade; republicar sem coletar (2026-10-28)
 
 O histórico, o RSS, o resumo por e-mail e os avisos diários passam a registrar só o que tem **data do ato até 3 dias antes da coleta** (`JANELA_ATO_DIAS`), ou nenhuma data. Backlog e publicação atrasada da fonte continuam no site, fora do histórico. O dia do histórico segue sendo o da descoberta, e cada evento guarda a data do ato como a fonte a deu; mudança posterior vira evento novo. Em Assembleia e capital, a mudança de situação não tem data do ato na fonte: o evento mostra a data de apresentação com `dataDoAtoAproximada` (a página escreve "apresentado em ..., data da mudança desconhecida"), entra sempre pela janela e, se passar de `LIMITE_LOTE` por local num dia (fonte reescrevendo situações antigas), vira um evento "lote"; marcos (aprovado, vetado...) ficam individuais. Os resumos semanal e mensal não usam a janela.

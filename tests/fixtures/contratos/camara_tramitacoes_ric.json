@@ -1,0 +1,149 @@
+{
+ "fonte": "https://dadosabertos.camara.leg.br/api/v2/proposicoes/{id}/tramitacoes",
+ "capturadoEm": "2026-10-29",
+ "amostra": {
+  "dados": [
+   {
+    "dataHora": "2026-04-24T00:00",
+    "sequencia": 18,
+    "siglaOrgao": "1SECM",
+    "uriOrgao": "https://dadosabertos.camara.leg.br/api/v2/orgaos/5470",
+    "uriUltimoRelator": "https://dadosabertos.camara.leg.br/api/v2/deputados/178937",
+    "regime": ".",
+    "descricaoTramitacao": "Abertura de Prazo",
+    "codTipoTramitacao": "350",
+    "descricaoSituacao": "Aguardando Remessa ao Arquivo",
+    "codSituacao": 931,
+    "despacho": "Prazo para Resposta Externas (de 25/04/2026 a 25/05/2026)",
+    "url": null,
+    "ambito": "Regimental",
+    "apreciacao": "Indefinida"
+   },
+   {
+    "dataHora": "2026-05-25T00:00",
+    "sequencia": 19,
+    "siglaOrgao": "1SECM",
+    "uriOrgao": "https://dadosabertos.camara.leg.br/api/v2/orgaos/5470",
+    "uriUltimoRelator": "https://dadosabertos.camara.leg.br/api/v2/deputados/178937",
+    "regime": ".",
+    "descricaoTramitacao": "Recebimento de Resposta",
+    "codTipoTramitacao": "162",
+    "descricaoSituacao": "Aguardando Remessa ao Arquivo",
+    "codSituacao": 931,
+    "despacho": "Recebimento de resposta conforme ofício nº 452/2026/CC/PR, de 25 de maio de 2026, da Casa Civil da Presidência da República.",
+    "url": "https://www.camara.leg.br/proposicoesWeb/prop_mostrarintegra?codteor=3136161",
+    "ambito": "Regimental",
+    "apreciacao": "Indefinida"
+   }
+  ],
+  "links": [
+   {
+    "rel": "self",
+    "href": "https://dadosabertos.camara.leg.br/api/v2/proposicoes/2599966/tramitacoes"
+   }
+  ]
+ },
+ "forma": {
+  "dados": {
+   "tipos": [
+    "list"
+   ]
+  },
+  "dados[]": {
+   "tipos": [
+    "dict"
+   ]
+  },
+  "dados[].ambito": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "dados[].apreciacao": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "dados[].codSituacao": {
+   "tipos": [
+    "int"
+   ]
+  },
+  "dados[].codTipoTramitacao": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "dados[].dataHora": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "dados[].descricaoSituacao": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "dados[].descricaoTramitacao": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "dados[].despacho": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "dados[].regime": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "dados[].sequencia": {
+   "tipos": [
+    "int"
+   ]
+  },
+  "dados[].siglaOrgao": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "dados[].uriOrgao": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "dados[].uriUltimoRelator": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "dados[].url": {
+   "tipos": [
+    "null",
+    "str"
+   ]
+  },
+  "links": {
+   "tipos": [
+    "list"
+   ]
+  },
+  "links[]": {
+   "tipos": [
+    "dict"
+   ]
+  },
+  "links[].href": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "links[].rel": {
+   "tipos": [
+    "str"
+   ]
+  }
+ }
+}

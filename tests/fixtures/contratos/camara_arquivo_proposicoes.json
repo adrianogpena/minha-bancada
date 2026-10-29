@@ -1,0 +1,243 @@
+{
+ "fonte": "https://dadosabertos.camara.leg.br/arquivos/proposicoes/json/proposicoes-{ano}.json",
+ "capturadoEm": "2026-10-29",
+ "amostra": {
+  "dados": [
+   {
+    "id": 2599966,
+    "uri": "https://dadosabertos.camara.leg.br/api/v2/proposicoes/2599966",
+    "siglaTipo": "RIC",
+    "numero": 1,
+    "ano": 2026,
+    "codTipo": 148,
+    "descricaoTipo": "Requerimento de Informação",
+    "ementa": "Solicita informações ao Sr. Ministro-chefe da casa civil, acerca da coordenação interministerial, das diretrizes estratégicas e das decisões de priorização orçamentária no âmbito da educação básica, especialmente no que se refere aos cortes em políticas estruturantes e à expansão do programa Pé-de-M",
+    "ementaDetalhada": "",
+    "keywords": "",
+    "dataApresentacao": "2026-02-02T09:17:55",
+    "uriOrgaoNumerador": "https://dadosabertos.camara.leg.br/api/v2/orgaos/180",
+    "uriPropAnterior": "",
+    "uriPropPrincipal": "",
+    "uriPropPosterior": "",
+    "urlInteiroTeor": "https://www.camara.leg.br/proposicoesWeb/prop_mostrarintegra?codteor=3075770",
+    "ultimoStatus": {
+     "data": "2026-05-25T00:00:00",
+     "sequencia": "20",
+     "uriRelator": "https://dadosabertos.camara.leg.br/api/v2/deputados/178937",
+     "codOrgao": "5470",
+     "siglaOrgao": "1SECM",
+     "uriOrgao": "https://dadosabertos.camara.leg.br/api/v2/orgaos/5470",
+     "regime": "",
+     "descricaoTramitacao": "Providência Interna - Comunicação de resposta ostensiva",
+     "idTipoTramitacao": "1056",
+     "descricaoSituacao": "Aguardando Remessa ao Arquivo",
+     "idSituacao": "931",
+     "despacho": "Encaminhamento de resposta por meio do sistema Infoleg",
+     "apreciacao": "Indefinida",
+     "url": ""
+    }
+   },
+   {
+    "id": 2600012,
+    "uri": "https://dadosabertos.camara.leg.br/api/v2/proposicoes/2600012",
+    "siglaTipo": "REQ",
+    "numero": 19,
+    "ano": 2026,
+    "codTipo": 356,
+    "descricaoTipo": "Requerimento de Convocação de Ministro de Estado no Plenário (art. 50, CF)",
+    "ementa": "Requer a convocação do Ministro de Estado da Justiça e Segurança Pública, Sr. Wellington César Lima e Silva, para prestar esclarecimentos acerca dos protocolos de segurança e assistência à saúde aplicados ao ex-Presidente da República Jair Messias Bolsonaro na unidade prisional do Distrito Federal.",
+    "ementaDetalhada": "",
+    "keywords": "",
+    "dataApresentacao": "2026-02-02T09:32:02",
+    "uriOrgaoNumerador": "https://dadosabertos.camara.leg.br/api/v2/orgaos/180",
+    "uriPropAnterior": "",
+    "uriPropPrincipal": "",
+    "uriPropPosterior": "",
+    "urlInteiroTeor": "https://www.camara.leg.br/proposicoesWeb/prop_mostrarintegra?codteor=3075818",
+    "ultimoStatus": {
+     "data": "2026-02-02T09:32:02",
+     "sequencia": "1",
+     "uriRelator": "",
+     "codOrgao": "100061",
+     "siglaOrgao": "NAJUR(SGM)",
+     "uriOrgao": "https://dadosabertos.camara.leg.br/api/v2/orgaos/100061",
+     "regime": "",
+     "descricaoTramitacao": "Apresentação de Proposição",
+     "idTipoTramitacao": "100",
+     "descricaoSituacao": "Aguardando Despacho do Presidente da Câmara dos Deputados",
+     "idSituacao": "905",
+     "despacho": "Apresentação do REQ n. 19/2026 (Requerimento de Convocação de Ministro de Estado no Plenário (art. 50, CF)), pelo Deputado Evair Vieira de Melo (PP/ES), que \"Requer a convocação do Ministro de Estado da Justiça e Segurança Pública, Sr. Wellington César Lima e Silva, para prestar esclarecimentos acer",
+     "apreciacao": "Indefinida",
+     "url": "https://www.camara.leg.br/proposicoesWeb/prop_mostrarintegra?codteor=3075818"
+    }
+   }
+  ]
+ },
+ "forma": {
+  "dados": {
+   "tipos": [
+    "list"
+   ]
+  },
+  "dados[]": {
+   "tipos": [
+    "dict"
+   ]
+  },
+  "dados[].ano": {
+   "tipos": [
+    "int"
+   ]
+  },
+  "dados[].codTipo": {
+   "tipos": [
+    "int"
+   ]
+  },
+  "dados[].dataApresentacao": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "dados[].descricaoTipo": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "dados[].ementa": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "dados[].ementaDetalhada": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "dados[].id": {
+   "tipos": [
+    "int"
+   ]
+  },
+  "dados[].keywords": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "dados[].numero": {
+   "tipos": [
+    "int"
+   ]
+  },
+  "dados[].siglaTipo": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "dados[].ultimoStatus": {
+   "tipos": [
+    "dict"
+   ]
+  },
+  "dados[].ultimoStatus.apreciacao": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "dados[].ultimoStatus.codOrgao": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "dados[].ultimoStatus.data": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "dados[].ultimoStatus.descricaoSituacao": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "dados[].ultimoStatus.descricaoTramitacao": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "dados[].ultimoStatus.despacho": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "dados[].ultimoStatus.idSituacao": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "dados[].ultimoStatus.idTipoTramitacao": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "dados[].ultimoStatus.regime": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "dados[].ultimoStatus.sequencia": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "dados[].ultimoStatus.siglaOrgao": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "dados[].ultimoStatus.uriOrgao": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "dados[].ultimoStatus.uriRelator": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "dados[].ultimoStatus.url": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "dados[].uri": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "dados[].uriOrgaoNumerador": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "dados[].uriPropAnterior": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "dados[].uriPropPosterior": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "dados[].uriPropPrincipal": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "dados[].urlInteiroTeor": {
+   "tipos": [
+    "str"
+   ]
+  }
+ }
+}

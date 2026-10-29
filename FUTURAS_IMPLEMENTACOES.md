@@ -19,8 +19,8 @@ por mês e os 10 maiores fornecedores, os bens declarados e a prestação de con
 | 1 | Feito (ver abaixo) | 1.1 a 1.6 |
 | 2 | Feito (ver abaixo) | 2.1 a 2.4 |
 | 3 | Uma chamada por deputado ou por projeto, ou visualização nova | 3.1 Carreira e histórico partidário · 3.2 Vida do projeto · 3.3 Discursos e agenda · 3.4 Rede de coautoria |
-| 4 | Raspagem de HTML ou chave de API | 4.1 Recursos do deputado (portal da Câmara) · 4.2 Emendas e Portal da Transparência |
-| 5 | Fontes grandes, sem padrão ou cruzamentos sensíveis | 5.1 Fornecedores e doadores · 5.2 Assembleias e Câmaras Municipais · 5.3 Órgãos de controle |
+| 4 | Raspagem de HTML ou chave de API | 4.1 Recursos do deputado (portal da Câmara) · 4.2 Emendas e Portal da Transparência · 4.3 Ministros de Estado |
+| 5 | Fontes grandes, sem padrão ou cruzamentos sensíveis | 5.1 Fornecedores e doadores · 5.2 Assembleias e Câmaras Municipais · 5.3 Ministros dos tribunais superiores · 5.4 Órgãos de controle |
 
 ## Nível 1: feito (2026-10-22)
 
@@ -122,7 +122,26 @@ Actions, libera tudo abaixo.
   empenhado e pago e o município que recebeu. No site: quanto cada deputado e senador mandou, para quais municípios
   e áreas, e o mapa dos destinos (o mapa por município já existe para votos).
 - "Emendas Pix" (transferências especiais), no mesmo portal e no Transferegov: as de menor rastreio, vale um destaque.
-- Viagens a serviço e cargos de ministros e do Executivo federal.
+- Viagens a serviço e cargos de ministros e do Executivo federal (ver 4.3).
+
+### 4.3 Ministros de Estado: o que fica para depois
+
+A primeira etapa (lista atual do Planalto, requerimentos de informação, convocações e licenças de deputados e
+senadores pelas APIs da Câmara e do Senado) está em andamento. Fica para depois, levantado em 2026-10-29:
+
+| Ideia | Fonte | Situação em 2026-10-29 | O que daria no site |
+|---|---|---|---|
+| Data de nomeação e exoneração, interinos | DOU: busca `www.in.gov.br/consulta/-/buscar/dou` (HTML com JSON embutido) ou INLABS (`inlabs.in.gov.br`, exige cadastro) | busca devolveu HTTP 502 duas vezes; INLABS em "Manutenção Programada" | "No cargo desde/até" exatos e link para o decreto; sem isso, a data vem do dia em que a lista do Planalto mudou |
+| Portarias, instruções normativas e resoluções assinadas | DOU (mesmas fontes) | não medido | aba "Atos" e eventos no histórico diário; filtrar só atos normativos, o volume é grande |
+| Exposições de motivos de MPs e PLs do Executivo | texto do documento (Câmara `inteiroTeor`, Planalto) | a assinatura não vem em campo da API, só no texto | ligar as propostas de `dados/executivo.json` ao ministro que assinou, não só à Presidência |
+| Decretos presidenciais referendados | DOU / Planalto (legislação) | não medido | lista de decretos com a assinatura do ministro |
+| Salário, viagens a serviço, cartão corporativo, jetons de conselhos de estatais | API do Portal da Transparência (chave do 4.2) | não medido (falta a chave) | abas de gastos e histórico de viagens; os dados chegam com semanas de atraso |
+| Agenda de compromissos | e-Agendas (CGU) | não medido | só reuniões com empresas e entidades privadas; a agenda inteira vira ruído |
+| Votos em conselhos (CMN, CNPE, Conama) | atas de cada conselho | não medido | costuma sair só a decisão, sem o voto de cada membro |
+| Ministros anteriores (antes da primeira coleta) | DOU | depende da busca do DOU | página "Ministérios" com o histórico de cada pasta |
+
+Descartado: Wikidata (consulta SPARQL de 2026-10-29 trouxe 6 ministros sem data de saída, parte já fora do cargo).
+A página do Planalto (`www.gov.br/planalto/pt-br/conheca-a-presidencia/ministros-e-ministras`) só tem os atuais, sem datas.
 
 ## Nível 5: fontes grandes, sem padrão ou cruzamentos sensíveis
 
@@ -148,7 +167,13 @@ Sem padrão nacional; cada Casa publica do seu jeito.
 - Mesmo nível de detalhe de autoria (principal, coautores, partido, total) para as assembleias estaduais; hoje só
   Câmara e Senado separam principal e coautor.
 
-### 5.3 Órgãos de controle
+### 5.3 Ministros dos tribunais superiores
+
+Depois dos ministros de Estado (4.3), o objetivo é ter no site todos os ministros: STF, STJ, TST, TSE, STM e TCU.
+Equivalente às abas de votações e propostas: votos em julgamentos, decisões monocráticas e pedidos de vista.
+Fontes de cada tribunal ainda não levantadas.
+
+### 5.4 Órgãos de controle
 
 - **TCU, contas julgadas irregulares** (dados abertos do TCU): lista oficial de responsáveis por contas irregulares,
   usada pela Justiça Eleitoral na Ficha Limpa. O cruzamento é por nome e exige cuidado com homônimos; só mostrar

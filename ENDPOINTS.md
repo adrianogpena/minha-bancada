@@ -11,7 +11,7 @@ Status: ✅ OK · ❌ ERRO (resposta com falha ou fora do ar) · ❔ não testad
 
 | Nome | Grupo | URL de teste | Usado em | Status | Verificado em | Detalhe |
 |---|---|---|---|---|---|---|
-| camara_deputados | Câmara | https://dadosabertos.camara.leg.br/api/v2/deputados?itens=1 | scripts/coletar.py, site/assets/app.js | ✅ OK | 2026-10-24 | HTTP 200, application/json |
+| camara_deputados | Câmara | https://dadosabertos.camara.leg.br/api/v2/deputados?itens=1 | scripts/coletar.py, site/assets/app.js, scripts/coletar_ministros.py | ✅ OK | 2026-10-24 | HTTP 200, application/json |
 | camara_deputado | Câmara | https://dadosabertos.camara.leg.br/api/v2/deputados/204379 | scripts/coletar.py, site/assets/app.js | ✅ OK | 2026-10-24 | HTTP 200, application/json |
 | camara_despesas | Câmara | https://dadosabertos.camara.leg.br/api/v2/deputados/204379/despesas?ano=2025&itens=1 | scripts/coletar.py, site/assets/app.js | ✅ OK | 2026-10-24 | HTTP 200, application/json |
 | camara_cota_csv | Câmara | https://www.camara.leg.br/cotas/Ano-2026.csv.zip | scripts/coletar.py | ✅ OK | 2026-10-24 | HTTP 200, application/zip, 4.4 MB |
@@ -19,7 +19,7 @@ Status: ✅ OK · ❌ ERRO (resposta com falha ou fora do ar) · ❔ não testad
 | camara_profissoes | Câmara | https://dadosabertos.camara.leg.br/api/v2/deputados/204379/profissoes | scripts/coletar.py, site/assets/js/deputado.js (link de fonte) | ✅ OK | 2026-10-24 | HTTP 200, application/json |
 | camara_ocupacoes | Câmara | https://dadosabertos.camara.leg.br/api/v2/deputados/204379/ocupacoes | scripts/coletar.py, site/assets/js/deputado.js (link de fonte) | ✅ OK | 2026-10-24 | HTTP 200, application/json |
 | camara_mandatos_externos | Câmara | https://dadosabertos.camara.leg.br/api/v2/deputados/204379/mandatosExternos | scripts/coletar.py, site/assets/js/deputado.js (link de fonte) | ✅ OK | 2026-10-24 | HTTP 200, application/json |
-| camara_historico | Câmara | https://dadosabertos.camara.leg.br/api/v2/deputados/204379/historico | scripts/coletar.py, site/assets/js/deputado.js (link de fonte) | ✅ OK | 2026-10-24 | HTTP 200, application/json |
+| camara_historico | Câmara | https://dadosabertos.camara.leg.br/api/v2/deputados/204379/historico | scripts/coletar.py, site/assets/js/deputado.js (link de fonte), scripts/coletar_ministros.py | ✅ OK | 2026-10-24 | HTTP 200, application/json |
 | camara_discursos | Câmara | https://dadosabertos.camara.leg.br/api/v2/deputados/204379/discursos?itens=2&ordem=DESC&ordenarPor=dataHoraInicio&dataInicio=2023-02-01 | scripts/coletar.py, site/assets/js/deputado.js (link de fonte) | ✅ OK | 2026-10-24 | HTTP 200, application/json |
 | camara_arquivo_temas | Câmara | https://dadosabertos.camara.leg.br/arquivos/proposicoesTemas/json/proposicoesTemas-2025.json | scripts/coletar.py, site/assets/app.js | ✅ OK | 2026-10-24 | HTTP 200, application/json |
 | camara_arquivo_orgaos | Câmara | https://dadosabertos.camara.leg.br/arquivos/orgaosDeputados/json/orgaosDeputados-L57.json | scripts/coletar.py | ✅ OK | 2026-10-24 | HTTP 200, application/json |
@@ -32,18 +32,23 @@ Status: ✅ OK · ❌ ERRO (resposta com falha ou fora do ar) · ❔ não testad
 | camara_proposicao | Câmara | https://dadosabertos.camara.leg.br/api/v2/proposicoes/2270800 | scripts/coletar.py, scripts/coletar_executivo.py, site/assets/app.js | ✅ OK | 2026-10-24 | HTTP 200, application/json |
 | camara_executivo | Câmara | https://dadosabertos.camara.leg.br/api/v2/proposicoes?autor=Poder%20Executivo&siglaTipo=PL&ano=2025&itens=1 | scripts/coletar_executivo.py | ✅ OK | 2026-10-24 | HTTP 200, application/json |
 | camara_autores | Câmara | https://dadosabertos.camara.leg.br/api/v2/proposicoes/2270800/autores | scripts/coletar.py | ✅ OK | 2026-10-24 | HTTP 200, application/json |
-| camara_tramitacoes | Câmara | https://dadosabertos.camara.leg.br/api/v2/proposicoes/2270800/tramitacoes | scripts/coletar.py, scripts/coletar_executivo.py | ✅ OK | 2026-10-24 | HTTP 200, application/json |
+| camara_tramitacoes | Câmara | https://dadosabertos.camara.leg.br/api/v2/proposicoes/2270800/tramitacoes | scripts/coletar.py, scripts/coletar_executivo.py, scripts/coletar_ministros.py | ✅ OK | 2026-10-24 | HTTP 200, application/json |
 | camara_relacionadas | Câmara | https://dadosabertos.camara.leg.br/api/v2/proposicoes/2270800/relacionadas | scripts/coletar.py | ✅ OK | 2026-10-24 | HTTP 200, application/json |
 | camara_votacoes | Câmara | https://dadosabertos.camara.leg.br/api/v2/votacoes?dataInicio=2025-03-01&dataFim=2025-03-31&itens=1 | scripts/coletar.py | ✅ OK | 2026-10-24 | HTTP 200, application/json |
 | camara_votacao | Câmara | https://dadosabertos.camara.leg.br/api/v2/votacoes/2442848-52 | scripts/coletar.py, site/assets/app.js | ✅ OK | 2026-10-24 | HTTP 200, application/json |
 | camara_votos | Câmara | https://dadosabertos.camara.leg.br/api/v2/votacoes/2442848-52/votos | scripts/coletar.py, site/assets/app.js | ✅ OK | 2026-10-24 | HTTP 200, application/json |
-| senado_lista | Senado | https://legis.senado.leg.br/dadosabertos/senador/lista/atual.json | scripts/coletar.py | ✅ OK | 2026-10-24 | HTTP 200, application/json, 11 KB |
+| camara_arquivo_proposicoes | Câmara | https://dadosabertos.camara.leg.br/arquivos/proposicoes/json/proposicoes-2026.json | scripts/coletar_ministros.py | ❔ | — | — |
+| camara_arquivo_autores | Câmara | https://dadosabertos.camara.leg.br/arquivos/proposicoesAutores/json/proposicoesAutores-2026.json | scripts/coletar_ministros.py | ❔ | — | — |
+| senado_lista | Senado | https://legis.senado.leg.br/dadosabertos/senador/lista/atual.json | scripts/coletar.py, scripts/coletar_ministros.py | ✅ OK | 2026-10-24 | HTTP 200, application/json, 11 KB |
 | senado_senador | Senado | https://legis.senado.leg.br/dadosabertos/senador/5012 | site/assets/app.js (link de fonte) | ✅ OK | 2026-10-24 | HTTP 200, application/xml, 1 KB |
 | senado_comissoes | Senado | https://legis.senado.leg.br/dadosabertos/senador/5012/comissoes.json | scripts/coletar.py, site/assets/js/senador.js (link de fonte) | ✅ OK | 2026-10-24 | HTTP 200, application/json, 5 KB |
 | senado_mandatos | Senado | https://legis.senado.leg.br/dadosabertos/senador/5012/mandatos.json | scripts/coletar.py, site/assets/js/senador.js (link de fonte) | ✅ OK | 2026-10-24 | HTTP 200, application/json, 0 KB |
 | senado_votacoes | Senado | https://legis.senado.leg.br/dadosabertos/votacao?dataInicio=2025-03-01&dataFim=2025-03-31 | scripts/coletar.py, site/assets/app.js | ✅ OK | 2026-10-24 | HTTP 200, application/json, 5 KB |
 | senado_processos | Senado | https://legis.senado.leg.br/dadosabertos/processo?codigoParlamentarAutor=5012 | scripts/coletar.py | ✅ OK | 2026-10-24 | HTTP 200, application/json |
 | senado_processo | Senado | https://legis.senado.leg.br/dadosabertos/processo/1582415 | site/assets/app.js (link de fonte) | ✅ OK | 2026-10-24 | HTTP 200, application/json, 2 KB |
+| senado_afastados | Senado | https://legis.senado.leg.br/dadosabertos/senador/lista/afastados.json | scripts/coletar_ministros.py | ❔ | — | — |
+| senado_requerimentos | Senado | https://legis.senado.leg.br/dadosabertos/processo?sigla=RQS&ano=2026 | scripts/coletar_ministros.py | ❔ | — | — |
+| planalto_ministros | Planalto | https://www.gov.br/planalto/pt-br/conheca-a-presidencia/ministros-e-ministras | scripts/coletar_ministros.py | ❔ | — | — |
 | senado_ceaps | Senado | https://adm.senado.gov.br/adm-dadosabertos/api/v1/senadores/despesas_ceaps/2025 | scripts/coletar.py, site/assets/app.js | ✅ OK | 2026-10-24 | HTTP 200, application/json, 10.1 MB |
 | senado_recursos | Senado | https://adm.senado.gov.br/adm-dadosabertos/api/v1/senadores/5012/recursos-utilizados?ano=2025 | scripts/coletar.py, site/assets/app.js (link de fonte) | ✅ OK | 2026-10-24 | HTTP 200, application/json |
 | senado_escritorios | Senado | https://adm.senado.gov.br/adm-dadosabertos/api/v1/senadores/escritorios-apoio | scripts/coletar.py, site/assets/app.js (link de fonte) | ✅ OK | 2026-10-24 | HTTP 200, application/json |

@@ -5,6 +5,15 @@ Regra: toda fonte nova ou mudança de coleta ganha uma entrada aqui, no mesmo co
 Datas dos conjuntos que já existiam vêm do primeiro commit que os trouxe (`git log --diff-filter=A`).
 Todas as coletas rodam sozinhas no GitHub Actions (`.github/workflows/atualizar.yml`, todo dia às 05:00 de Brasília), salvo onde indicado.
 
+## Ministros de Estado: coletor da primeira etapa (2026-10-29)
+
+`scripts/coletar_ministros.py`, job `ministros` no `atualizar.yml`, grava em `dados/ministros/` (formato no docstring do coletor). Ainda sem página no site: a ligação às pessoas e as páginas vêm na próxima etapa.
+- **Lista de ministros:** `https://www.gov.br/planalto/pt-br/conheca-a-presidencia/ministros-e-ministras` (HTML; só os atuais, sem datas; exige `Accept: text/html`, senão o gov.br responde 401/404). Quem entra e sai é marcado pelo dia da coleta (`vistoDesde`/`vistoAte`).
+- **Requerimentos na Câmara:** arquivos anuais `https://dadosabertos.camara.leg.br/arquivos/proposicoes/json/proposicoes-<ano>.json` (~74 MB em 2026) e `proposicoesAutores-<ano>.json`, de 2023 em diante. Ficam os RIC com "ministr" na ementa e os REQ de convocação/convite de ministro (o filtro `keywords` da API devolve 0 para REQ). Nos RIC, envio ao ministério, fim do prazo e resposta saem de `/proposicoes/{id}/tramitacoes`, relida só quando o último status muda e até chegar a resposta. Ano encerrado (`comum.ano_encerrado`) não é baixado de novo depois de todas as tramitações lidas.
+- **Requerimentos no Senado:** `https://legis.senado.leg.br/dadosabertos/processo?sigla=RQS&ano=<ano>` (1 chamada por ano), tipos "Informações" e "Convocação de autoridades" com "ministr" na ementa.
+- **Licenças:** `/deputados/{id}/historico` dos deputados da legislatura fora de exercício (afastamento "Ministro de Estado") e `senador/lista/atual.json` e `afastados.json` do Senado (causa "Ocupação de cargo de ministro/secretário", que não separa ministro de secretário estadual).
+- **Medido em 2026-10-29:** coleta do zero 23 min (14.543 tramitações de RIC de 2023 a 2026, 6 conexões; prazo `MINISTROS_PRAZO_MIN`, 25 min no Actions, deixa o resto para o dia seguinte); com cache 46 s (só 2025 e 2026 baixados, nenhuma tramitação a reler).
+
 ## Rede de coautoria (2026-10-28)
 
 Sem fonte nova: `scripts/gerar_coautoria.py` cruza `dados/proposicoes_autores.json` (`/proposicoes/{id}/autores`, já coletado) com as proposições de cada deputado. Conta só projetos (`TIPOS_PROJETO`) com mais de um deputado em exercício entre os autores; autor que não é deputado e projeto com mais de 30 deputados ficam de fora. Partido de cada autor na data de apresentação. Gera `coautoria` em `site/dados/deputado/<id>.json` (parceiros mais frequentes, ids) e `site/dados/coautoria.json` (partido × partido). Páginas: bloco "Com quem assina projetos" no perfil do deputado e `coautoria.html`.

@@ -395,6 +395,71 @@ def _(ctx):
     return http_json(f"{SENADO_ADM}/senadores/escritorios-apoio")
 
 
+# ---------------------------------------------------------------- ministros (scripts/coletar_ministros.py)
+
+@ep("camara_arquivo_proposicoes", "https://dadosabertos.camara.leg.br/arquivos/proposicoes/json/proposicoes-{ano}.json",
+    campos("dados[]", "id", "siglaTipo", "numero", "ano", "ementa", "dataApresentacao", "urlInteiroTeor")
+    + campos("dados[].ultimoStatus", "data", "descricaoSituacao", "descricaoTramitacao", "siglaOrgao"))
+def _(ctx):
+    import coletar_ministros as m
+    dados = http_json(f"{m.ARQUIVOS}/proposicoes/json/proposicoes-{ANO}.json")["dados"]
+    ric = next(p for p in dados if p["siglaTipo"] == "RIC" and "resposta" in m.comum.sem_acento((p.get("ultimoStatus") or {}).get("descricaoTramitacao")))
+    req = next(p for p in dados if p["siglaTipo"] == "REQ" and m.convocacao(p.get("ementa")))
+    ctx["ric"] = ric["id"]
+    return {"dados": [ric, req]}
+
+
+@ep("camara_tramitacoes_ric", f"{CAMARA}/proposicoes/{{id}}/tramitacoes", campos("dados[]", "descricaoTramitacao", "despacho", "dataHora"))
+def _(ctx):
+    import coletar_ministros as m
+    r = http_json(f"{CAMARA}/proposicoes/{ctx['ric']}/tramitacoes")
+    # a amostra guarda só 2 itens: os que o coletor lê com texto que muda de forma (prazo no despacho e a resposta)
+    r["dados"] = [t for t in r["dados"] if m.comum.sem_acento(t.get("descricaoTramitacao")).startswith(("abertura de prazo", "recebimento de resposta"))]
+    return r
+
+
+@ep("camara_arquivo_autores", "https://dadosabertos.camara.leg.br/arquivos/proposicoesAutores/json/proposicoesAutores-{ano}.json",
+    campos("dados[]", "idProposicao", "idDeputadoAutor", "nomeAutor", "ordemAssinatura"), independente=True)
+def _(ctx):
+    return {"dados": http_json(f"https://dadosabertos.camara.leg.br/arquivos/proposicoesAutores/json/proposicoesAutores-{ANO}.json")["dados"][:AMOSTRA]}
+
+
+@ep("senado_afastados", f"{SENADO}/senador/lista/afastados.json",
+    campos("AfastamentoAtual.Parlamentares.Parlamentar[].IdentificacaoParlamentar", "CodigoParlamentar", "NomeParlamentar")
+    + ["**DescricaoCausaAfastamento", "**DescricaoCargoAssumido", "**DataInicio", "**DataFim"], independente=True)
+def _(ctx):
+    r = http_json(f"{SENADO}/senador/lista/afastados.json")
+    lista = r["AfastamentoAtual"]["Parlamentares"]["Parlamentar"]
+    r["AfastamentoAtual"]["Parlamentares"]["Parlamentar"] = sorted(lista, key=lambda p: "DescricaoCargoAssumido" not in json.dumps(p))
+    return r
+
+
+@ep("senado_requerimentos", f"{SENADO}/processo?sigla=RQS&ano={{ano}}",
+    campos("[]", "id", "identificacao", "tipoConteudo", "ementa", "autoria", "dataApresentacao", "tramitando", "urlDocumento"), independente=True)
+def _(ctx):
+    import coletar_ministros as m
+    r = http_json(f"{SENADO}/processo", sigla="RQS", ano=ANO)
+    return [p for p in r if (p.get("tipoConteudo") or "").strip() in m.TIPOS_SENADO and m.ministro(p.get("ementa"))]
+
+
+def _planalto_pagina(ctx):
+    import coletar_ministros as m
+    html = requests.get(m.PLANALTO, headers={"User-Agent": UA, "Accept": "text/html"}, timeout=60).text
+    ini, fim = html.find('<div class="documentByLine"'), html.find("</div>", html.find('id="parent-fieldname-text"'))
+    return {"html": html[ini:fim + 6]}
+
+
+def _planalto_conferir(registro):
+    import coletar_ministros as m
+    lista, atualizado = m.ler_planalto(registro["html"])
+    falhas = [f"só {len(lista)} ministros reconhecidos na página"] if len(lista) < m.MINIMO_PLANALTO else []
+    return falhas, [] if atualizado else ["página sem 'Atualizado em'"]
+
+
+ENDPOINTS.append(Endpoint("planalto_ministros", "https://www.gov.br/planalto/pt-br/conheca-a-presidencia/ministros-e-ministras", _planalto_pagina,
+                          html=_planalto_conferir))
+
+
 def iterar(obj, chave):
     """Todos os valores da chave em qualquer nível."""
     if isinstance(obj, dict):

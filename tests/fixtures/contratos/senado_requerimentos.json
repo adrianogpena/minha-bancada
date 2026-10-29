@@ -1,0 +1,129 @@
+{
+ "fonte": "https://legis.senado.leg.br/dadosabertos/processo?sigla=RQS&ano={ano}",
+ "capturadoEm": "2026-10-29",
+ "amostra": [
+  {
+   "autoria": "Senador Eduardo Girão (NOVO/CE)",
+   "casaIdentificadora": "SF",
+   "codigoMateria": 172396,
+   "dataApresentacao": "2026-01-08",
+   "dataSituacaoAtual": "2026-02-10",
+   "dataUltimaAtualizacao": "2026-03-13T18:34:57.1",
+   "ementa": "Requer informações ao Senhor Rui Costa, Ministro de Estado da Casa Civil, sobre a falta de transparência e informações do detalhamento de investimentos no âmbito do Novo Programa de Aceleração do Crescimento (Novo PAC).",
+   "enteIdentificador": "PLEN",
+   "id": 8984767,
+   "identificacao": "RQS 4/2026",
+   "situacaoAtual": "MATÉRIA COM A RELATORIA",
+   "tipoConteudo": "Informações",
+   "tipoDocumento": "Requerimento",
+   "tramitando": "Sim",
+   "ultimaInformacaoAtualizada": "PUBLICACAO_OFICIAL",
+   "urlDocumento": "https://legis.senado.gov.br/sdleg-getter/dadosabertos/documento/6eea5979-b966-402c-bccf-92ce4fa54a1c"
+  },
+  {
+   "autoria": "Senador Eduardo Girão (NOVO/CE)",
+   "casaIdentificadora": "SF",
+   "codigoMateria": 172441,
+   "dataApresentacao": "2026-01-20",
+   "dataSituacaoAtual": "2026-04-08",
+   "dataUltimaAtualizacao": "2026-04-08T17:42:54.837",
+   "ementa": "Requer informações ao Senhor Rui Costa dos Santos, Ministro de Estado da Casa Civil, sobre a reunião realizada pelo Presidente no dia 15 de janeiro com autoridades envolvidas no caso Master.",
+   "enteIdentificador": "PLEN",
+   "id": 8986095,
+   "identificacao": "RQS 23/2026",
+   "situacaoAtual": "MATÉRIA COM A RELATORIA",
+   "tipoConteudo": "Informações",
+   "tipoDocumento": "Requerimento",
+   "tramitando": "Sim",
+   "ultimaInformacaoAtualizada": "EVENTO_LEGISLATIVO",
+   "urlDocumento": "https://legis.senado.gov.br/sdleg-getter/dadosabertos/documento/32b25de2-1890-48fd-9089-2e51f577cdff"
+  }
+ ],
+ "forma": {
+  "[]": {
+   "tipos": [
+    "dict"
+   ]
+  },
+  "[].autoria": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "[].casaIdentificadora": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "[].codigoMateria": {
+   "tipos": [
+    "int"
+   ]
+  },
+  "[].dataApresentacao": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "[].dataSituacaoAtual": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "[].dataUltimaAtualizacao": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "[].ementa": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "[].enteIdentificador": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "[].id": {
+   "tipos": [
+    "int"
+   ]
+  },
+  "[].identificacao": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "[].situacaoAtual": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "[].tipoConteudo": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "[].tipoDocumento": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "[].tramitando": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "[].ultimaInformacaoAtualizada": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "[].urlDocumento": {
+   "tipos": [
+    "str"
+   ]
+  }
+ }
+}

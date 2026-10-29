@@ -155,6 +155,41 @@ jobs:
           if-no-files-found: ignore
           retention-days: 3
 
+  ministros:
+    name: Coletar ministros de Estado
+    runs-on: ubuntu-24.04
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - run: pip install -r requirements.txt
+
+      - name: Marcar o início (só o que for gravado depois disso vai no pacote)
+        run: touch "$RUNNER_TEMP/inicio"
+
+      - name: Coletar ministros, requerimentos a ministros e licenças de parlamentares
+        run: python scripts/coletar_ministros.py
+        env:
+          MINISTROS_PRAZO_MIN: "25"   # tramitações que não couberem ficam para o dia seguinte
+        continue-on-error: true
+
+      - name: Empacotar o resultado
+        if: always()
+        run: scripts/empacotar.sh "$RUNNER_TEMP/ministros.tgz" "$RUNNER_TEMP/inicio" dados/ministros
+
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: pacote-ministros
+          path: ${{ runner.temp }}/ministros.tgz
+          if-no-files-found: ignore
+          retention-days: 3
+
   estaduais:
     name: Coletar Assembleia ${{ matrix.rotulo }}
     runs-on: ubuntu-24.04
@@ -319,7 +354,7 @@ jobs:
 
   publicar:
     name: Gerar o site e publicar
-    needs: [camara, senado, tse, executivo, estaduais, governadores, siconfi, prefeituras]
+    needs: [camara, senado, tse, executivo, ministros, estaduais, governadores, siconfi, prefeituras]
     # Câmara, Senado e TSE são indispensáveis; as demais coletas falham sem impedir a publicação
     if: ${{ !cancelled() && needs.camara.result == 'success' && needs.senado.result == 'success' && needs.tse.result == 'success' }}
     runs-on: ubuntu-24.04
@@ -363,7 +398,7 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           # só adiciona o que existe; um caminho ausente (coleta que falhou) derrubaria o passo
-          for f in dados/votacoes dados/proposicoes dados/proposicoes_cadastro dados/proposicoes_detalhe.json dados/proposicoes_autores.json dados/proposicoes_temas.json dados/orgaos_deputados.json dados/orientacoes.json dados/blocos.json dados/proposicoes_votacoes.json dados/presenca_eventos.json dados/senado_votacoes dados/senado_materias.json dados/executivo.json dados/estaduais dados/siconfi dados/municipais dados/tse dados/status_apis.json; do
+          for f in dados/votacoes dados/proposicoes dados/proposicoes_cadastro dados/proposicoes_detalhe.json dados/proposicoes_autores.json dados/proposicoes_temas.json dados/orgaos_deputados.json dados/orientacoes.json dados/blocos.json dados/proposicoes_votacoes.json dados/presenca_eventos.json dados/senado_votacoes dados/senado_materias.json dados/executivo.json dados/ministros dados/estaduais dados/siconfi dados/municipais dados/tse dados/status_apis.json; do
             if [ -e "$f" ]; then git add "$f"; fi
           done
           git diff --cached --quiet || git commit -m "Dados atualizados em $(TZ=America/Sao_Paulo date +%Y-%m-%d)"

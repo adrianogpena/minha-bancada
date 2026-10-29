@@ -1,0 +1,108 @@
+{
+ "fonte": "https://dadosabertos.camara.leg.br/arquivos/proposicoesAutores/json/proposicoesAutores-{ano}.json",
+ "capturadoEm": "2026-10-29",
+ "amostra": {
+  "dados": [
+   {
+    "idProposicao": 2649428,
+    "uriProposicao": "https://dadosabertos.camara.leg.br/api/v2/proposicoes/2649428",
+    "idDeputadoAutor": 220543,
+    "uriAutor": "https://dadosabertos.camara.leg.br/api/v2/deputados/220543",
+    "codTipoAutor": 10000,
+    "tipoAutor": "Deputado(a)",
+    "nomeAutor": "Ricardo Ayres",
+    "siglaPartidoAutor": "REPUBLIC",
+    "uriPartidoAutor": "",
+    "siglaUFAutor": "TO",
+    "ordemAssinatura": "1",
+    "proponente": "1"
+   },
+   {
+    "idProposicao": 2649427,
+    "uriProposicao": "https://dadosabertos.camara.leg.br/api/v2/proposicoes/2649427",
+    "idDeputadoAutor": 139285,
+    "uriAutor": "https://dadosabertos.camara.leg.br/api/v2/deputados/139285",
+    "codTipoAutor": 10000,
+    "tipoAutor": "Deputado(a)",
+    "nomeAutor": "Lídice da Mata",
+    "siglaPartidoAutor": "PSB",
+    "uriPartidoAutor": "https://dadosabertos.camara.leg.br/api/v2/partidos/36832",
+    "siglaUFAutor": "BA",
+    "ordemAssinatura": "1",
+    "proponente": "1"
+   }
+  ]
+ },
+ "forma": {
+  "dados": {
+   "tipos": [
+    "list"
+   ]
+  },
+  "dados[]": {
+   "tipos": [
+    "dict"
+   ]
+  },
+  "dados[].codTipoAutor": {
+   "tipos": [
+    "int"
+   ]
+  },
+  "dados[].idDeputadoAutor": {
+   "tipos": [
+    "int"
+   ]
+  },
+  "dados[].idProposicao": {
+   "tipos": [
+    "int"
+   ]
+  },
+  "dados[].nomeAutor": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "dados[].ordemAssinatura": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "dados[].proponente": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "dados[].siglaPartidoAutor": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "dados[].siglaUFAutor": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "dados[].tipoAutor": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "dados[].uriAutor": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "dados[].uriPartidoAutor": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "dados[].uriProposicao": {
+   "tipos": [
+    "str"
+   ]
+  }
+ }
+}

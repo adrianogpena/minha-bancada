@@ -124,6 +124,7 @@ Sem `--limite` a coleta pega todos os deputados em exercício. `--dias` só vale
 | `scripts/coletar_prefeitura_ba.py` | O mesmo para Salvador: consulta de proposições da Câmara (grade Scriptcase), filtrada pelo autor "Executivo Municipal"; o link de cada projeto é o PDF do texto integral. |
 | `scripts/coletar_prefeitura_go.py` | O mesmo para Goiânia: consulta pública de processos do SUAP da Câmara, filtrada pelo interessado "Prefeito de Goiânia"; o link de cada projeto é a página pública do processo. Usa o certificado intermediário de `scripts/certs/`, que o servidor não envia. |
 | `dados/municipais/` | Cache dessas coletas, um arquivo por ano e capital. |
+| `scripts/coletar_ministros.py` | Ministros de Estado: lista atual do Planalto, requerimentos de informação e de convocação a ministro na Câmara (arquivo anual, com envio, prazo e resposta lidos da tramitação) e no Senado, e licenças de deputados e senadores para ser ministro. Grava em `dados/ministros/`. |
 | `dados/tse/` | Eleitos de cada eleição, um arquivo por estado. |
 | `dados/proposicoes/`, `dados/proposicoes_cadastro/` | Ids das proposições de cada deputado e, uma vez só por proposição, tipo, número e ementa (por ano). A API só aceita 3 meses por consulta, então a primeira coleta é longa e as seguintes buscam só o período novo. |
 | `site/` | O site: HTML, CSS e módulos ES em `assets/js/` (entrada `assets/app.js`), sem framework nem etapa de build. |

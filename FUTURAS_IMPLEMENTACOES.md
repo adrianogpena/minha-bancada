@@ -92,8 +92,9 @@ Sem padrão nacional; cada Casa publica do seu jeito.
   sem campo estruturado: extrair exigiria regex por trecho e conferência por cidade, e erro aqui vira dado errado sobre
   político. Só valeria para as capitais e cidades grandes cobertas, com link do PDF como fonte. Se for feito, registrar
   o host no `ENDPOINTS.md`.
-- Mesmo nível de detalhe de autoria (principal, coautores, partido, total) para todas as Assembleias: hoje só
-  alguns coletores guardam os coautores (`gerar_estaduais.py`); o Senado também ainda não tem partido dos coautores e total.
+- Autoria das Assembleias: coautores e total de autores já saem (2026-10-29). Falta o autor principal e o partido dos
+  coautores: as fontes não garantem a ordem de assinatura e o partido só chega pelo TSE depois da geração das fichas;
+  o Senado também ainda não tem partido dos coautores e total.
 
 ### 4.3 Ministros dos tribunais superiores
 

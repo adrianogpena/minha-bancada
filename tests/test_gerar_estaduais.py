@@ -102,3 +102,17 @@ def test_verba_de_ce_e_ms_traz_lancamentos_so_do_ano_atual(tmp_path, monkeypatch
     assert ms[1]["lancamentos"][1] == {"mes": 3, "categoria": "Combustível", "fornecedor": "F", "cnpj": "1", "valor": 10, "empenho": "2026NE1", "descricao": "d", "fonte": "https://comprovante"}
     go = json.loads((tmp_path / "saida" / "estadual" / "GO" / "1.json").read_text(encoding="utf-8"))["verba"]["anos"]
     assert all("lancamentos" not in a for a in go)
+
+
+def test_total_de_autores_conta_quem_nao_e_deputado(tmp_path, monkeypatch):
+    bruto = preparar(tmp_path, monkeypatch)
+    pasta = bruto / "AC"
+    escrever(pasta, "deputados.json", {"host": "h", "deputados": [
+        {"id": 1, "nome": "Ana", "titular": True}, {"id": 2, "nome": "Bia", "titular": True}]})
+    escrever(pasta, "votacoes.json", {"votacoes": {}})
+    escrever(pasta, "materias_2024.json", {"materias": {"9": {
+        "idsDeputados": [1, 2], "idsAutores": [5, 6, 7], "tipo": "PL", "tipoDescricao": "Projeto", "numero": 1, "ano": 2024,
+        "dataApresentacao": "2024-02-01", "ementa": "x", "situacao": "Em tramitação"}}})
+    ge.gerar_assembleia("AC", pasta)
+    p = json.loads((tmp_path / "saida" / "estadual" / "AC" / "1.json").read_text(encoding="utf-8"))["proposicoes"][0]
+    assert p["coautores"] == ["Bia"] and p["totalAutores"] == 3

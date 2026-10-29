@@ -76,7 +76,7 @@ export async function montarEstadual(alvo, p, nome, ficha, situacao) {
     rotuloPerfil: "Perfil e bens",
     linhaDoTempo, proposicoes: dep.proposicoes, tipoProjeto: () => true,
     textoLegislatura: "como autor ou coautor nesta legislatura",
-    papel: (x) => x.coautores && x.coautores.length ? `<b>autor ou coautor</b>, junto com ${esc(x.coautores.join(", "))}.` : "<b>autor ou coautor</b>. A Assembleia não lista outros deputados nesta proposta.",
+    papel: (x) => x.coautores && x.coautores.length ? `<b>autor ou coautor</b>, junto com ${esc(x.coautores.join(", "))}${x.totalAutores > x.coautores.length + 1 ? ` (${x.totalAutores} autores no total, contando quem não é deputado)` : ""}.` : "<b>autor ou coautor</b>. A Assembleia não lista outros deputados nesta proposta.",
     aviso: "Só entram projetos (de lei, resolução, decreto legislativo, emendas à Constituição e afins). A situação vem do sistema da Assembleia.",
     rotuloSem: "tramitação encerrada, sem resultado informado",
     semOutros: "Requerimentos, indicações e outros documentos da Assembleia não estão no site. Veja no sistema de tramitação da Assembleia.",

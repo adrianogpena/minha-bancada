@@ -5,6 +5,10 @@ Regra: toda fonte nova ou mudança de coleta ganha uma entrada aqui, no mesmo co
 Datas dos conjuntos que já existiam vêm do primeiro commit que os trouxe (`git log --diff-filter=A`).
 Todas as coletas rodam sozinhas no GitHub Actions (`.github/workflows/atualizar.yml`, todo dia às 05:00 de Brasília), salvo onde indicado.
 
+## Total de autores nos projetos das Assembleias (2026-10-29)
+- **De onde:** sem fonte nova; usa `idsAutores` já coletado de cada Assembleia.
+- **Como:** `gerar_estaduais.py` grava `totalAutores` (autores contando quem não é deputado) junto de `coautores`; a ficha mostra o total quando passa dos deputados listados.
+
 ## Inidôneos pelo TCU nos fornecedores (2026-10-29)
 - **De onde:** `https://contas.tcu.gov.br/ords/condenacao/consulta/inidoneos` (`tcu_inidoneos` em `ENDPOINTS.md`): API aberta do TCU, sem chave, 90 empresas e pessoas proibidas de licitar com a administração federal (nome, CPF/CNPJ, processo, deliberação, datas, UF).
 - **Como:** `scripts/coletar_tcu.py` (mesmo job `tcu`) pagina como os inabilitados e grava `dados/tcu/inidoneos.json`, fora do git. Só o CNPJ válido é guardado; CPF de pessoa física é descartado. `fornecedores.construir` liga pelo CNPJ base (a sanção é da empresa; o fornecedor já junta matriz e filiais) e `site/dados/inidoneos_tcu.json` (id do fornecedor -> sanções) alimenta o aviso "Inidônea pelo TCU", com o processo, no ranking de fornecedores e no cruzamento com doadores. Só aparece para quem está entre os fornecedores do ano. Contrato semanal: `tcu_inidoneos`.

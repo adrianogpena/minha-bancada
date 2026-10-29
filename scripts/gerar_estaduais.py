@@ -216,7 +216,7 @@ def gerar_assembleia(uf: str, pasta: Path) -> list[dict]:
                 projetos[pid].append({"id": mid, "tipo": m["tipo"], "tipoDescricao": m.get("tipoDescricao"), "numero": m["numero"], "ano": m["ano"],
                                       "dataApresentacao": m.get("dataApresentacao"), "ementa": m["ementa"], "situacao": m["situacao"],
                                       "emTramitacao": m.get("emTramitacao"), "linkTexto": m.get("linkTexto"),
-                                      **({"coautores": coautores} if coautores else {}),
+                                      **({"coautores": coautores, "totalAutores": max(len(m.get("idsAutores") or []), len(m["idsDeputados"]))} if coautores else {}),
                                       **({"fonte": m["fonte"]} if m.get("fonte") else {})})
 
     for pid in deputados:

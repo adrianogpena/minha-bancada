@@ -178,15 +178,26 @@ function painelRecursosDeputado(dep) {
   const v = rec.verba, mes = ["jan", "fev", "mar", "abr", "mai", "jun", "jul", "ago", "set", "out", "nov", "dez"];
   const total = v ? v.gasto + v.naoUtilizado : 0;
   const portal = `https://www.camara.leg.br/deputados/${encodeURIComponent(dep.id)}`;
+  const verbaAnos = Object.entries(rec.verbaAnos || {}).filter(([, m]) => m.length).sort();
+  const presencas = Object.entries(rec.presenca || {}).filter(([, p]) => p.dias).sort();
   return `
     <h2>Recursos e benefícios em ${rec.ano}</h2>
     <div class="rolagem"><table class="tabela"><thead><tr><th>Recurso</th><th>Situação</th></tr></thead><tbody>
       ${rec.beneficios.map(([t, x]) => `<tr><td>${esc(t)}</td><td>${esc(x)}</td></tr>`).join("")}
     </tbody></table></div>
-    ${v ? `<h3>Verba de gabinete: ${pct(v.gasto, total)} usada no ano</h3>
+    ${rec.pessoal?.total ? `<p>Pessoal de gabinete em exercício em ${rec.pessoal.ano}: <b>${rec.pessoal.total}</b>. ${rec.pessoal.porGrupo.map(([g, n]) => `<span class="selo">${esc(g)}: ${n}</span>`).join(" ")}</p>` : ""}
+    ${v ? `<h3>Verba de gabinete:${pct(v.gasto, total)} usada no ano</h3>
       <p>Gastou <b>${reaisCentavos(v.gasto)}</b> de ${reaisCentavos(total)} (não utilizado: ${reaisCentavos(v.naoUtilizado)}).${v.limiteMensal ? ` O limite mensal é de ${reaisCentavos(v.limiteMensal)}, para pagar os secretários parlamentares.` : ""}</p>
       ${v.porMes.length ? `<p>${v.porMes.map(([m, x]) => `<span class="selo">${mes[m - 1]}: ${reais(x)}</span>`).join(" ")}</p>` : ""}` : ""}
-    ${fontes([["Recursos do deputado (portal da Câmara)", portal], v ? ["Verba de gabinete (portal da Câmara)", `${portal}/verba-gabinete?ano=${rec.ano}`] : null])}
+    ${verbaAnos.length ? `<h3>Verba de gabinete nos anos anteriores</h3>
+      <div class="rolagem"><table class="tabela"><thead><tr><th>Ano</th><th>Gasto</th><th>Disponível</th><th>Uso</th></tr></thead><tbody>
+        ${verbaAnos.map(([a, meses]) => { const g = meses.reduce((t, m) => t + m[2], 0), d = meses.reduce((t, m) => t + m[1], 0); return `<tr><td>${esc(a)}</td><td>${reaisCentavos(g)}</td><td>${reaisCentavos(d)}</td><td>${pct(g, d)}</td></tr>`; }).join("")}
+      </tbody></table></div>` : ""}
+    ${presencas.length ? `<h3>Ausências em plenário, justificadas ou não</h3>
+      <div class="rolagem"><table class="tabela"><thead><tr><th>Ano</th><th>Dias de sessão</th><th>Presente</th><th>Ausência justificada</th><th>Ausência não justificada</th></tr></thead><tbody>
+        ${presencas.map(([a, p]) => `<tr><td>${esc(a)}</td><td>${p.dias}</td><td>${p.presentes}</td><td>${p.justificadas}</td><td>${p.naoJustificadas}</td></tr>`).join("")}
+      </tbody></table></div>` : ""}
+    ${fontes([["Recursos do deputado (portal da Câmara)", portal], rec.pessoal ? ["Pessoal de gabinete (portal da Câmara)", `${portal}/pessoal-gabinete`] : null,v ? ["Verba de gabinete (portal da Câmara)", `${portal}/verba-gabinete?ano=${rec.ano}`] : null])}
     ${rec.atualizadoEm ? `<p class="vazio">Informações do portal atualizadas em ${data(rec.atualizadoEm.slice(0, 10), true)}.</p>` : ""}`;
 }
 

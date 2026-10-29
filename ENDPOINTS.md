@@ -49,6 +49,9 @@ Status: ✅ OK · ❌ ERRO (resposta com falha ou fora do ar) · ❔ não testad
 | senado_processo | Senado | https://legis.senado.leg.br/dadosabertos/processo/1582415 | site/assets/app.js (link de fonte) | ✅ OK | 2026-10-24 | HTTP 200, application/json, 2 KB |
 | senado_afastados | Senado | https://legis.senado.leg.br/dadosabertos/senador/lista/afastados.json | scripts/coletar_ministros.py | ❔ | — | — |
 | senado_requerimentos | Senado | https://legis.senado.leg.br/dadosabertos/processo?sigla=RQS&ano=2026 | scripts/coletar_ministros.py | ❔ | — | — |
+| camara_portal_pessoal | Câmara | https://www.camara.leg.br/deputados/204379/pessoal-gabinete | scripts/coletar.py (raspagem da contagem de pessoal por grupo funcional), site/assets/js/deputado.js (link de fonte) | ❔ | — | — |
+| camara_portal_verba_ano | Câmara | https://www.camara.leg.br/deputados/204379/verba-gabinete?ano=2025 | scripts/coletar.py (raspagem da verba de gabinete mês a mês), site/assets/js/deputado.js (link de fonte) | ❔ | — | — |
+| camara_portal_presenca | Câmara | https://www.camara.leg.br/deputados/204379/presenca-plenario/2025 | scripts/coletar.py (raspagem da ausências justificadas e não justificadas), site/assets/js/deputado.js (link de fonte) | ❔ | — | — |
 | camara_portal_recursos | Câmara | https://www.camara.leg.br/deputados/204379 | scripts/coletar.py (raspagem do bloco "Recursos" e da verba de gabinete), site/assets/js/deputado.js (link de fonte) | ❔ | — | — |
 | planalto_ministros | Planalto | https://www.gov.br/planalto/pt-br/conheca-a-presidencia/ministros-e-ministras | scripts/coletar_ministros.py | ❔ | — | — |
 | senado_ceaps | Senado | https://adm.senado.gov.br/adm-dadosabertos/api/v1/senadores/despesas_ceaps/2025 | scripts/coletar.py, site/assets/app.js | ✅ OK | 2026-10-24 | HTTP 200, application/json, 10.1 MB |

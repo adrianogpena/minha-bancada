@@ -489,6 +489,46 @@ def _portal_camara_conferir(registro):
     return [], [f"página sem {n}" for n, ok in (("verba de gabinete", r.get("verba")), ("data de atualização", r.get("atualizadoEm"))) if not ok]
 
 
+def _portal_camara_pessoal(ctx):
+    import coletar
+    did = http_json(f"{CAMARA}/deputados", itens=1, ordem="ASC", ordenarPor="nome")["dados"][0]["id"]
+    html = requests.get(f"{coletar.PORTAL_CAMARA}/{did}/pessoal-gabinete", headers={"User-Agent": UA, "Accept": "text/html"}, timeout=60).text
+    ini = html.find("Pessoal de gabinete - ")
+    fim = html.find("Histórico de contratação")
+    return {"html": html[ini:fim] if ini >= 0 and fim > ini else html[:0]}
+
+
+def _portal_camara_pessoal_conferir(registro):
+    import coletar
+    r = coletar.ler_pessoal_gabinete(registro["html"])
+    return ([], []) if r and r["total"] else (["página de pessoal de gabinete sem a seção 'Em exercício' ou sem secretários"], [])
+
+
+def _portal_camara_pagina_anual(caminho, inicio):
+    def buscar(ctx):
+        import coletar
+        did = http_json(f"{CAMARA}/deputados", itens=1, ordem="ASC", ordenarPor="nome")["dados"][0]["id"]
+        html = requests.get(f"{coletar.PORTAL_CAMARA}/{did}/{caminho.format(ano=dt.date.today().year - 1)}", headers={"User-Agent": UA, "Accept": "text/html"}, timeout=60).text
+        ini = html.find(inicio)
+        if ini >= 0 and not inicio.startswith("<"):
+            ini = html.rfind("<tr>", 0, ini)
+        return {"html": html[ini:ini + 6000] if ini >= 0 else html[:0]}
+    return buscar
+
+
+def _portal_camara_verba_conferir(registro):
+    import coletar
+    return ([], []) if coletar.ler_verba_ano(registro["html"]) else (["página de verba de gabinete sem a tabela mensal"], [])
+
+
+def _portal_camara_presenca_conferir(registro):
+    import coletar
+    return ([], []) if coletar.ler_presenca_plenario(registro["html"]) else (["página de presença em plenário sem os totais"], [])
+
+
+ENDPOINTS.append(Endpoint("camara_portal_verba_ano", "https://www.camara.leg.br/deputados/{id}/verba-gabinete?ano={ano}", _portal_camara_pagina_anual("verba-gabinete?ano={ano}", "<table"), html=_portal_camara_verba_conferir))
+ENDPOINTS.append(Endpoint("camara_portal_presenca", "https://www.camara.leg.br/deputados/{id}/presenca-plenario/{ano}", _portal_camara_pagina_anual("presenca-plenario/{ano}", "Total de sessões deliberativas com Ordem"), html=_portal_camara_presenca_conferir))
+ENDPOINTS.append(Endpoint("camara_portal_pessoal", "https://www.camara.leg.br/deputados/{id}/pessoal-gabinete", _portal_camara_pessoal, html=_portal_camara_pessoal_conferir))
 ENDPOINTS.append(Endpoint("camara_portal_recursos", "https://www.camara.leg.br/deputados/{id}", _portal_camara_pagina, html=_portal_camara_conferir))
 
 

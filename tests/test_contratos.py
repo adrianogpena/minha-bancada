@@ -399,6 +399,20 @@ def test_projetos_e_resumo_reais_de_sp(monkeypatch):
     assert sp.e_do_prefeito("PL", 1, 2026, -1) is False
 
 
+def test_pessoal_gabinete_real_conta_por_grupo():
+    import coletar
+    r = coletar.ler_pessoal_gabinete(amostra("camara_portal_pessoal")["html"])
+    assert r["total"] > 0 and r["total"] == sum(n for _, n in r["porGrupo"])
+
+
+def test_verba_e_presenca_reais_do_portal():
+    import coletar
+    meses = coletar.ler_verba_ano(amostra("camara_portal_verba_ano")["html"])
+    assert meses and all(len(m) == 3 and 1 <= m[0] <= 12 for m in meses)
+    p = coletar.ler_presenca_plenario(amostra("camara_portal_presenca")["html"])
+    assert p["sessoesOD"] > 0 and p["dias"] >= p["presentes"]
+
+
 def test_recursos_camara_real_le_beneficios_e_verba():
     import coletar
     r = coletar.ler_recursos_camara(amostra("camara_portal_recursos")["html"])

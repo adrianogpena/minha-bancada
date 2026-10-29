@@ -5,6 +5,14 @@ Regra: toda fonte nova ou mudança de coleta ganha uma entrada aqui, no mesmo co
 Datas dos conjuntos que já existiam vêm do primeiro commit que os trouxe (`git log --diff-filter=A`).
 Todas as coletas rodam sozinhas no GitHub Actions (`.github/workflows/atualizar.yml`, todo dia às 05:00 de Brasília), salvo onde indicado.
 
+## Verba de gabinete de anos anteriores e presença em plenário (2026-10-29)
+- **De onde:** raspagem de `https://www.camara.leg.br/deputados/<id>/verba-gabinete?ano=<ano>` (`camara_portal_verba_ano`) e `.../presenca-plenario/<ano>` (`camara_portal_presenca`), em `ENDPOINTS.md`.
+- **Como:** `ler_verba_ano` e `ler_presenca_plenario` (`scripts/coletar.py`), chamadas por `coletar_recursos_camara` para os anos da legislatura atual. Anos encerrados são lidos uma vez (ficam em `recursos.verbaAnos` e `recursos.presenca`); só a presença do ano corrente é relida todo dia. Falha de página só avisa. Tabelas "Verba de gabinete nos anos anteriores" e "Ausências em plenário" em "Recursos e benefícios". Contrato semanal para as duas páginas.
+
+## Pessoal de gabinete por grupo funcional (2026-10-29)
+- **De onde:** raspagem de `https://www.camara.leg.br/deputados/<id>/pessoal-gabinete` (HTML; `camara_portal_pessoal` em `ENDPOINTS.md`), seção "Em exercício".
+- **Como:** `ler_pessoal_gabinete` (`scripts/coletar.py`), chamada por `coletar_recursos_camara` logo após a página principal (mais 1 página por deputado, 3 em paralelo); guarda só a contagem por grupo funcional em `recursos.pessoal` (sem nomes nem salários); falha da página só avisa. Aparece em "Recursos e benefícios". Contrato semanal: `camara_portal_pessoal`.
+
 ## Recursos do deputado no portal da Câmara (2026-10-29)
 - **De onde:** raspagem da página `https://www.camara.leg.br/deputados/<id>` (HTML; `camara_portal_recursos` em `ENDPOINTS.md`): bloco "Recursos" (pessoal de gabinete, imóvel funcional, auxílio-moradia, viagens em missão oficial, passaporte diplomático) e "Verba de gabinete" (gasto, não utilizado, gasto por mês, limite mensal). 1 página por deputado, 3 em paralelo.
 - **Como:** `coletar_recursos_camara` (`scripts/coletar.py`), no passo `--so deputados`; grava `dados/camara_recursos.json`, fora do git; fonte opcional (página que falha mantém o valor anterior; páginas sem o bloco viram aviso). `gerar.py` põe `recursos` na ficha do deputado; bloco "Recursos e benefícios" na aba Perfil e gastos. Contrato semanal: `camara_portal_recursos` em `contrato_apis.py` (falha se o bloco sumir).

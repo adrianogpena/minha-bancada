@@ -872,6 +872,32 @@ def test_recursos_camara_le_pagina_e_ignora_salario():
     assert coletar.ler_recursos_camara("<html>sem bloco</html>") is None
 
 
+def test_pessoal_gabinete_conta_por_grupo_sem_nomes():
+    linha = '<tr class="d-md-flex"><td scope="row">NOME %d</td><td class="alinhar-esquerda">%s</td><td>SP01</td></tr>'
+    pagina = ('<h2>Pessoal de gabinete - 2026</h2><span class="titulo-secao__texto">Em exercício</span><table><tbody>'
+              + linha % (1, "SECRETÁRIO PARLAMENTAR") + linha % (2, "SECRETÁRIO PARLAMENTAR") + linha % (3, "CARGO DE NATUREZA ESPECIAL")
+              + '</tbody></table><span class="titulo-secao__texto">Histórico de contratação</span><table><tbody>' + linha % (4, "ANTIGO") + '</tbody></table>')
+    r = coletar.ler_pessoal_gabinete(pagina)
+    assert r == {"ano": 2026, "total": 3, "porGrupo": [("Secretário parlamentar", 2), ("Cargo de natureza especial", 1)]}
+    assert coletar.ler_pessoal_gabinete("<html></html>") is None
+
+
+def test_verba_ano_e_presenca_plenario_leem_tabelas():
+    verba = ('<table><tbody><tr><td>01</td><td class="d">125.478,69</td><td class="d">122.903,80</td></tr>'
+             '<tr><td>02</td><td>133.170,54</td><td>131.610,99</td></tr></tbody></table>')
+    assert coletar.ler_verba_ano(verba) == [[1, 125478.69, 122903.8], [2, 133170.54, 131610.99]]
+    assert coletar.ler_verba_ano("<html></html>") is None
+    linhas = [("Total de sessões deliberativas com Ordem do Dia iniciada, na Sessão Legislativa*", 127),
+              ("Total de ausências não justificadas em sessões deliberativas com Ordem do Dia iniciada*", 10),
+              ("Total de dias com sessões deliberativas realizadas no período", 121),
+              ("Total de dias com presença nas sessões deliberativas", 105),
+              ("Total de dias com ausências justificadas em sessões deliberativas", 7),
+              ("Total de dias com ausências não justificadas em sessões deliberativas", 9)]
+    pagina = "<table><tbody>" + "".join(f"<tr><td><b>{t}</b></td><td> {n} </td><td>1%</td></tr>" for t, n in linhas) + "</tbody></table>"
+    assert coletar.ler_presenca_plenario(pagina) == {"sessoesOD": 127, "ausenciasOD": 10, "dias": 121, "presentes": 105, "justificadas": 7, "naoJustificadas": 9}
+    assert coletar.ler_presenca_plenario("<table><tbody></tbody></table>") is None
+
+
 def test_coletar_recursos_camara_mantem_anterior_quando_pagina_falha_e_avisa_sem_bloco(dados, monkeypatch):
     (dados / "deputados.json").write_text(json.dumps([1, 2, 3]), encoding="utf-8")
     (dados / "camara_recursos.json").write_text(json.dumps({"recursos": {"2": {"ano": 2025, "beneficios": [["Velho", "x"]]}}}), encoding="utf-8")
@@ -881,8 +907,8 @@ def test_coletar_recursos_camara_mantem_anterior_quando_pagina_falha_e_avisa_sem
             super().__init__(texto, status)
             self.text = texto
 
-    paginas = {"/1": Pagina(pagina_deputado()), "/2": Pagina("", 503), "/3": Pagina("<html></html>")}
-    monkeypatch.setattr(coletar.S, "get", lambda url, **k: paginas[url[url.rindex("/"):]])
+    paginas = {"/1": Pagina(pagina_deputado()), "/2": Pagina("", 503), "/3": Pagina("<html></html>"), "/pessoal-gabinete": Pagina("<html></html>")}
+    monkeypatch.setattr(coletar.S, "get", lambda url, **k: paginas.get(url[url.rindex("/"):], Pagina("<html></html>")))
     coletar.coletar_recursos_camara()
     r = json.loads((dados / "camara_recursos.json").read_text(encoding="utf-8"))["recursos"]
     assert r["1"]["beneficios"] and r["2"]["beneficios"] == [["Velho", "x"]] and "3" not in r

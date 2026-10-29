@@ -1333,6 +1333,58 @@ def ler_recursos_camara(pagina: str) -> dict | None:
     return resultado
 
 
+def ler_pessoal_gabinete(pagina: str) -> dict | None:
+    """Contagem por grupo funcional dos secretários em exercício, da página 'Pessoal de gabinete'. Nomes e salários ficam de fora.
+    None se a página não tem a seção 'Em exercício' (layout mudou)."""
+    m = re.search(r'titulo-secao__texto">Em exercício<(.*?)(?:titulo-secao__texto">Histórico|</main>|$)', pagina, re.S)
+    if not m:
+        return None
+    ano = re.search(r"Pessoal de gabinete - (\d{4})", pagina)
+    contagem: dict[str, int] = {}
+    for tr in re.findall(r"<tr class=\"d-md-flex\">(.*?)</tr>", m.group(1), re.S):
+        celulas = [_texto_html(c) for c in re.findall(r"<td[^>]*>(.*?)</td>", tr, re.S)]
+        if len(celulas) >= 2 and celulas[1]:
+            contagem[celulas[1].capitalize()] = contagem.get(celulas[1].capitalize(), 0) + 1
+    return {"ano": int(ano.group(1)) if ano else dt.date.today().year, "total": sum(contagem.values()),
+            "porGrupo": sorted(contagem.items(), key=lambda x: (-x[1], x[0]))}
+
+
+_ROTULOS_PRESENCA = (
+    ("Total de sessões deliberativas com Ordem do Dia iniciada", "sessoesOD"),
+    ("Total de ausências não justificadas em sessões deliberativas com Ordem do Dia", "ausenciasOD"),
+    ("Total de dias com sessões deliberativas realizadas", "dias"),
+    ("Total de dias com presença nas sessões deliberativas", "presentes"),
+    ("Total de dias com ausências justificadas", "justificadas"),
+    ("Total de dias com ausências não justificadas", "naoJustificadas"),
+)
+
+
+def ler_verba_ano(pagina: str) -> list[list] | None:
+    """Verba de gabinete mês a mês de um ano ([mês, disponível, gasto]) da página 'verba-gabinete?ano='. None sem tabela."""
+    m = re.search(r"<table.*?<tbody>(.*?)</tbody>", pagina, re.S)
+    if not m:
+        return None
+    meses = []
+    for tr in re.findall(r"<tr>(.*?)</tr>", m.group(1), re.S):
+        c = [_texto_html(x) for x in re.findall(r"<td[^>]*>(.*?)</td>", tr, re.S)]
+        if len(c) >= 3 and c[0].isdigit() and comum.valor_br(c[2]) is not None:
+            meses.append([int(c[0]), comum.valor_br(c[1]), comum.valor_br(c[2])])
+    return meses or None
+
+
+def ler_presenca_plenario(pagina: str) -> dict | None:
+    """Totais do ano na página 'presenca-plenario/<ano>': sessões com Ordem do Dia, ausências e dias de presença,
+    ausência justificada e não justificada. None se a página não traz os totais."""
+    resultado: dict = {}
+    for tr in re.findall(r"<tr>(.*?)</tr>", pagina, re.S):
+        c = [_texto_html(x) for x in re.findall(r"<td[^>]*>(.*?)</td>", tr, re.S)]
+        if len(c) >= 2 and c[1].isdigit():
+            for rotulo, chave in _ROTULOS_PRESENCA:
+                if c[0].startswith(rotulo):
+                    resultado[chave] = int(c[1])
+    return resultado if len(resultado) == len(_ROTULOS_PRESENCA) else None
+
+
 def coletar_recursos_camara() -> None:
     """Benefícios (imóvel funcional, auxílio-moradia, viagens, passaporte diplomático), pessoal e verba de gabinete de cada
     deputado, raspados da página dele no portal da Câmara (não estão na API). Fica em dados/camara_recursos.json
@@ -1343,10 +1395,40 @@ def coletar_recursos_camara() -> None:
     arquivo = DADOS / "camara_recursos.json"
     recursos = ler(arquivo, {}).get("recursos", {})
 
-    def buscar(did) -> tuple[str, dict | None]:
-        r = S.get(f"{PORTAL_CAMARA}/{did}", headers={"Accept": "text/html"}, timeout=60)
+    hoje = dt.date.today()
+    primeiro = hoje.year - (hoje.year - 2023) % 4  # primeiro ano da legislatura atual
+    anos_antigos = list(range(primeiro, hoje.year))
+
+    def pagina(url: str) -> str:
+        r = S.get(url, headers={"Accept": "text/html"}, timeout=60)
         r.raise_for_status()
-        return str(did), ler_recursos_camara(r.text)
+        return r.text
+
+    def buscar(did) -> tuple[str, dict | None]:
+        item = ler_recursos_camara(pagina(f"{PORTAL_CAMARA}/{did}"))
+        if not item:
+            return str(did), None
+        antes = recursos.get(str(did), {})
+        # anos encerrados só são lidos uma vez; {} marca "página lida, sem dados"
+        verba = {a: v for a, v in antes.get("verbaAnos", {}).items() if int(a) in anos_antigos}
+        presenca = {a: v for a, v in antes.get("presenca", {}).items() if int(a) in anos_antigos}
+        def pessoal(t):
+            if (p := ler_pessoal_gabinete(t)):
+                item["pessoal"] = p
+
+        etapas = [("pessoal-gabinete", pessoal)]
+        etapas += [(f"verba-gabinete?ano={a}", lambda t, a=a: verba.__setitem__(str(a), ler_verba_ano(t) or []))
+                   for a in anos_antigos if str(a) not in verba]
+        etapas += [(f"presenca-plenario/{a}", lambda t, a=a: presenca.__setitem__(str(a), ler_presenca_plenario(t) or {}))
+                   for a in anos_antigos if str(a) not in presenca]
+        etapas.append((f"presenca-plenario/{hoje.year}", lambda t: presenca.__setitem__(str(hoje.year), ler_presenca_plenario(t) or {})))
+        for caminho, aplicar in etapas:
+            try:
+                aplicar(pagina(f"{PORTAL_CAMARA}/{did}/{caminho}"))
+            except Exception as e:  # complemento do complemento: mantém o que já tinha
+                avisar(f"{caminho} do deputado {did} (portal): {e}")
+        item["verbaAnos"], item["presenca"] = verba, presenca
+        return str(did), item
 
     falhas = sem_bloco = 0
     with ThreadPoolExecutor(TRABALHADORES_PORTAL) as ex:

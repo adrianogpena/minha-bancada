@@ -51,7 +51,8 @@ def _ligar(planalto, reg, licenciados=None):
     return ms, chaves, ambiguos, resumo, sem
 
 
-def test_ministro_licenciado_liga_por_nome_com_confianca_alta_e_inicio_da_licenca():
+def test_ministro_licenciado_liga_por_nome_com_confianca_alta_e_inicio_da_licenca(monkeypatch):
+    monkeypatch.setattr(identidades, "POSSES", {})
     reg = _registro(("camara", "1", "ALEXANDRE ROCHA SANTOS PADILHA", {"camara": 1}))
     licencas = {"camara": {"1": {"historico": [
         {"data": "2023-02-02", "situacao": "Licença", "descricao": "Saída - Afastamento sem prazo determinado - Ministro de Estado"},
@@ -63,6 +64,20 @@ def test_ministro_licenciado_liga_por_nome_com_confianca_alta_e_inicio_da_licenc
     assert m["pessoa"] == next(iter(reg.por_id)) and (m["pasta"], m["inicio"], m["inicioFonte"]) == ("saude", "2025-03-10", "licenca")
     assert reg.por_id[m["pessoa"]]["ligacao"]["planalto"] == ["nome", "alta"]
     assert chaves[("planalto", "saude", "alexandre rocha santos padilha")] == m["pessoa"] and resumo["planalto"]["nome"] == 1
+
+
+def test_posse_da_wikipedia_vale_sobre_licenca_e_traz_quem_nomeou(monkeypatch):
+    reg = _registro(("camara", "1", "ALEXANDRE ROCHA SANTOS PADILHA", {"camara": 1}))
+    licencas = {"camara": {"1": {"historico": [
+        {"data": "2025-03-05", "situacao": "Licença", "descricao": "Saída - Afastamento sem prazo determinado - Ministro de Estado"}]}}}
+    posse = {"pasta": "saude", "nome": "Alexandre Rocha Santos Padilha", "posse": "2025-03-10", "nomeadoPor": "Luiz Inácio Lula da Silva",
+             "fonte": "https://pt.wikipedia.org/wiki/Lista_de_ministros_da_Sa%C3%BAde_do_Brasil"}
+    monkeypatch.setattr(identidades, "POSSES", {("saude", posse["nome"]): posse})
+    planalto = {"atuais": [{"cargo": "Ministro de Estado da Saúde", "nome": posse["nome"], "vistoDesde": "2026-10-29"}],
+                "anteriores": [{"cargo": "Ministro de Estado da Saúde", "nome": posse["nome"], "vistoDesde": "2024-01-01", "vistoAte": "2024-06-01"}]}
+    (atual, anterior), *_ = _ligar(planalto, reg, licencas)
+    assert (atual["inicio"], atual["inicioFonte"], atual["nomeadoPor"], atual["inicioUrl"]) == ("2025-03-10", "wikipedia", "Luiz Inácio Lula da Silva", posse["fonte"])
+    assert anterior["inicioFonte"] == "licenca" and "nomeadoPor" not in anterior   # quem já saiu não leva a posse do mandato atual
 
 
 def test_ministro_sem_par_ganha_pessoa_propria_e_nome_repetido_nao_liga():

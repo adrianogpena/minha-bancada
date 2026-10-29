@@ -1,0 +1,59 @@
+{
+ "fonte": "https://adm.senado.gov.br/adm-dadosabertos/api/v1/senadores/aposentados",
+ "capturadoEm": "2026-10-29",
+ "amostra": [
+  {
+   "sequencial": 2409410,
+   "nome": "NABOR TELES DA ROCHA JÚNIOR",
+   "tipo": "EX-SENADOR IPC",
+   "dataInicial": "1983-02-01",
+   "remuneracao": "30.416,22"
+  },
+  {
+   "sequencial": 2410940,
+   "nome": "HUGO NAPOLEÃO DO REGO NETO",
+   "tipo": "EX-SENADOR IPC",
+   "dataInicial": "1986-01-01",
+   "remuneracao": "30.416,22"
+  },
+  {
+   "sequencial": 2363925,
+   "nome": "JOSÉ DE SOUZA MARTINS FILHO",
+   "tipo": "EX-SENADOR IPC",
+   "dataInicial": "1987-02-01",
+   "remuneracao": "15.069,01"
+  }
+ ],
+ "forma": {
+  "[]": {
+   "tipos": [
+    "dict"
+   ]
+  },
+  "[].dataInicial": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "[].nome": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "[].remuneracao": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "[].sequencial": {
+   "tipos": [
+    "int"
+   ]
+  },
+  "[].tipo": {
+   "tipos": [
+    "str"
+   ]
+  }
+ }
+}

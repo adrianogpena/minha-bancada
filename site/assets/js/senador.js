@@ -32,6 +32,16 @@ function painelRecursos(rec) {
       <ul>${rec.escritorios.map((e) => `<li>${esc(e.endereco || e.nome || "")}${e.telefone ? ` · ${esc(e.telefone)}` : ""}</li>`).join("")}</ul>` : ""}`;
 }
 
+/* Aposentadoria parlamentar de ex-senador (apis.js: carregarAposentadoria). */
+export function painelAposentadoria(a) {
+  if (!a) return "";
+  const rotulo = a.tipo === "EX-SENADOR IPC" ? "Instituto de Previdência dos Congressistas (IPC)" : a.tipo === "EX-SENADOR PSSC" ? "Plano de Seguridade Social dos Congressistas (PSSC)" : a.tipo;
+  return `<h2>Aposentadoria parlamentar</h2>
+    <p>Recebe aposentadoria de ex-senador pelo <b>${esc(rotulo)}</b>${a.inicio ? ` desde ${data(a.inicio, true)}` : ""}${a.valor ? `: <b>${reaisCentavos(a.valor)}</b> por mês` : ""}.
+    A fonte traz só o nome, e a ligação a esta pessoa é pelo nome completo.</p>
+    ${fontes([["Aposentados do Senado", `${SENADO_ADM_API}/senadores/aposentados`]])}`;
+}
+
 /* Comissões e mandatos do senador (coletar.py: coletar_ficha_senado). */
 function painelComissoesMandatos(sen, id) {
   const comissoes = sen.comissoes || [], mandatos = sen.mandatos || [];
@@ -66,6 +76,7 @@ export async function montarSenador(alvo, p, nome, ficha) {
       ${sen.despesas ? painelGastos(sen.despesas, "A cota (CEAPS) reembolsa despesas do mandato, como passagens, aluguel de escritório e divulgação. Os valores são os reembolsados pelo Senado.")
         : `<p class="aviso">Os gastos da cota (CEAPS) não puderam ser carregados agora. Veja no <a href="https://www6g.senado.leg.br/transparencia/sen/${encodeURIComponent(p.id)}" rel="noopener">Portal da Transparência do Senado</a>.</p>`}
       ${sen.recursos ? painelRecursos(sen.recursos) : ""}
+      ${painelAposentadoria(p.aposentadoria)}
       ${sen.comissoes || sen.mandatos ? painelComissoesMandatos(sen, p.id) : ""}
       ${fontes([["Dados Abertos do Senado", `${SENADO_API}/senador/${encodeURIComponent(p.id)}`], sen.despesas ? ["Cota parlamentar (CEAPS)", `${SENADO_ADM_API}/senadores/despesas_ceaps/${sen.despesas.ano}`] : null, sen.recursos ? ["Recursos utilizados", `${SENADO_ADM_API}/senadores/${encodeURIComponent(p.id)}/recursos-utilizados?ano=${sen.recursos.ano}`] : null, sen.recursos?.escritorios ? ["Escritórios de apoio", `${SENADO_ADM_API}/senadores/escritorios-apoio`] : null, ["Portal da Transparência do Senado", `https://www6g.senado.leg.br/transparencia/sen/${encodeURIComponent(p.id)}`]])}`,
     rotuloPerfil: sen.despesas ? "Perfil e gastos" : "Perfil",

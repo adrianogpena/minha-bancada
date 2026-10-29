@@ -591,6 +591,29 @@ def ligar_ministros(planalto: dict, reg: "_Registro", licenciados: dict, chaves:
     return saida
 
 
+def ligar_aposentados(aposentados: dict, reg: "_Registro", ambiguos: list, resumo, sem_ligacao) -> list[dict]:
+    """Cada ex-senador aposentado da lista do Senado (só tem o nome) é ligado à pessoa do núcleo de mesmo nome que já foi candidata a
+    senador ou senadora; nome repetido não liga. Devolve [{pessoa, nome, tipo, inicio, valor}] só dos ligados."""
+    por_nome = defaultdict(set)
+    for pid, p in reg.por_id.items():
+        if p["nome"] and (p["senado"] or any(t[2] in SENADORES for t in p["tse"])):
+            por_nome[norm_nome(p["nome"])].add(pid)
+    saida = []
+    for x in aposentados.get("itens", []):
+        chave = norm_nome(x["nome"])
+        ids = por_nome.get(chave, set())
+        if len(ids) == 1:
+            p = reg.por_id[next(iter(ids))]
+            p["ligacao"]["aposentadoria"] = ["nome+cargo", "média"]
+            resumo["aposentadoria"]["nome+cargo"] += 1
+            saida.append({"pessoa": p["id"], "nome": x["nome"], "tipo": x["tipo"], "inicio": x.get("inicio"), "valor": x.get("valor")})
+        else:
+            if ids:
+                ambiguos.append({"fonte": "aposentadoria", "id": chave, "nome": x["nome"], "uf": None, "candidatos": sorted(ids)})
+            sem_ligacao["aposentadoria"] += 1
+    return saida
+
+
 def _nome_na_ementa(nome: str, ementa: str) -> bool:
     """Os dois primeiros nomes ("José Múcio"), ou um deles e o último ("Mauro Vieira" para Mauro Luiz Iecker Vieira), aparecem juntos na ementa."""
     partes = [t for t in norm_nome(nome).split() if t not in PARTICULAS]
@@ -770,6 +793,8 @@ def construir(deputados: dict, bruto: Path) -> dict:
     ministros = ligar_ministros(ler(bruto / "ministros" / "planalto.json", {}) or {}, reg,
                                 ler(bruto / "ministros" / "licencas.json", {}) or {}, chaves, ambiguos, resumo, sem_ligacao)
 
+    aposentados = ligar_aposentados(ler(bruto / "senado_aposentados.json", {}) or {}, reg, ambiguos, resumo, sem_ligacao)
+
     pessoas = []
     for pid in sorted(reg.por_id):
         p = reg.por_id[pid]
@@ -801,6 +826,7 @@ def construir(deputados: dict, bruto: Path) -> dict:
                      "registros": registros, "resumoRegistros": resumo_registros},
         "chaves": chaves,
         "ministros": ministros,
+        "aposentados": aposentados,
     }
 
 

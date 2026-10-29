@@ -833,3 +833,12 @@ def test_tramitacoes_proposicoes_nao_reconsulta_finalizada(dados, monkeypatch):
     coletar.coletar_tramitacoes_proposicoes()
     assert [c[0] for c in chamadas] == ["/proposicoes/10/tramitacoes", "/proposicoes/10/relacionadas"]
     assert set(json.loads((dados / "proposicoes_tramitacoes.json").read_text())) == {"10", "12"}
+
+
+def test_aposentados_senado_converte_valor_e_ignora_sem_nome(dados, monkeypatch):
+    lista = [{"sequencial": 1, "nome": " NABOR TELES ", "tipo": "EX-SENADOR IPC", "dataInicial": "1983-02-01", "remuneracao": "30.416,22"},
+             {"sequencial": 2, "nome": "", "tipo": "EX-SENADOR IPC", "dataInicial": None, "remuneracao": None}]
+    monkeypatch.setattr(coletar.S, "get", lambda url, **k: Resp(lista))
+    coletar.coletar_aposentados_senado()
+    r = json.loads((dados / "senado_aposentados.json").read_text(encoding="utf-8"))
+    assert r["itens"] == [{"nome": "NABOR TELES", "tipo": "EX-SENADOR IPC", "inicio": "1983-02-01", "valor": 30416.22}]

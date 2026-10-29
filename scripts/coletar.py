@@ -1035,6 +1035,23 @@ def coletar_recursos_senado() -> None:
     print(f"Recursos de {len(recursos)} senadores, escritórios de {len(escritorios)}, falhas: {falhas}")
 
 
+def coletar_aposentados_senado() -> None:
+    """Ex-senadores que recebem aposentadoria parlamentar (IPC e PSSC): tipo, início e valor mensal. Fica em
+    dados/senado_aposentados.json (não vai para o git). A fonte só traz o nome, sem código de senador: a ligação à pessoa é de identidades.py."""
+    r = S.get(f"{SENADO_ADM}/senadores/aposentados", headers={"Accept": "application/json"}, timeout=60)
+    r.raise_for_status()
+    itens = []
+    for x in r.json():
+        valor = str(x.get("remuneracao") or "").replace(".", "").replace(",", ".")
+        itens.append({"nome": (x.get("nome") or "").strip(), "tipo": (x.get("tipo") or "").strip(), "inicio": x.get("dataInicial"),
+                      "valor": float(valor) if valor else None})
+    itens = [i for i in itens if i["nome"]]
+    if not itens:
+        raise RuntimeError("lista de aposentados vazia")
+    salvar(DADOS / "senado_aposentados.json", {"coletadoEm": dt.date.today().isoformat(), "itens": itens})
+    print(f"Aposentados do Senado: {len(itens)}")
+
+
 def _lista(x) -> list:
     """A API do Senado devolve objeto no lugar de lista quando há um item só."""
     return [x] if isinstance(x, dict) else (x or [])
@@ -1274,7 +1291,7 @@ def main():
             coletar_senado()
         except Exception as e:
             avisar(f"senado: {e}")
-        for etapa in (coletar_votacoes_senado, coletar_autorias_senado, coletar_ceaps_senado, coletar_recursos_senado, coletar_ficha_senado):  # complementos: cada um falha sozinho
+        for etapa in (coletar_votacoes_senado, coletar_autorias_senado, coletar_ceaps_senado, coletar_recursos_senado, coletar_aposentados_senado, coletar_ficha_senado):  # complementos: cada um falha sozinho
             try:
                 etapa()
             except Exception as e:

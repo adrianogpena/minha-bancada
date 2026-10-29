@@ -80,7 +80,7 @@ jobs:
 
       - name: Empacotar o resultado
         if: always()
-        run: scripts/empacotar.sh "$RUNNER_TEMP/senado.tgz" "$RUNNER_TEMP/inicio" dados/senado.json dados/senado_votacoes dados/senado_materias.json dados/senado_autorias.json dados/senado_ceaps.json dados/senado_recursos.json dados/senado_ficha.json
+        run: scripts/empacotar.sh "$RUNNER_TEMP/senado.tgz" "$RUNNER_TEMP/inicio" dados/senado.json dados/senado_votacoes dados/senado_materias.json dados/senado_autorias.json dados/senado_ceaps.json dados/senado_recursos.json dados/senado_aposentados.json dados/senado_ficha.json
 
       - uses: actions/upload-artifact@v7
         if: always()

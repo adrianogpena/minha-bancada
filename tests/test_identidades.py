@@ -188,3 +188,17 @@ def test_eleito_do_tse_por_palavras():
     assert ident.eleito_do_tse("SC", "Ana Paula Silva", eleitos)["sequencial"] == "1"
     assert ident.eleito_do_tse("SE", "Joao Jr", eleitos)["sequencial"] == "2"
     assert ident.eleito_do_tse("SE", "Zé", eleitos) is None
+
+
+def test_aposentados_do_senado_ligam_so_por_nome_unico_de_candidato_a_senador(tmp_path):
+    bruto = tmp_path / "dados"
+    montar(bruto)
+    gravar(bruto / "senado_aposentados.json", {"itens": [
+        {"nome": "BIA LIMA", "tipo": "EX-SENADOR IPC", "inicio": "1990-02-01", "valor": 30000.0},
+        {"nome": "ANA MARIA SOUZA", "tipo": "EX-SENADOR PSSC", "inicio": "2016-01-01", "valor": 1.0},
+        {"nome": "FULANO DE TAL", "tipo": "EX-SENADOR IPC", "inicio": None, "valor": None}]})
+    n = ident.construir({}, bruto)
+    assert [(a["nome"], a["tipo"]) for a in n["aposentados"]] == [("BIA LIMA", "EX-SENADOR IPC")]
+    bia = next(p for p in n["pessoas"] if p["nome"] == "Bia Lima")
+    assert bia["ligacao"]["aposentadoria"] == ["nome+cargo", "média"] and n["aposentados"][0]["pessoa"] == bia["id"]
+    assert n["ligacoes"]["semLigacao"]["aposentadoria"] == 2

@@ -82,3 +82,9 @@ export const MALHAS = "https://servicodados.ibge.gov.br/api/v3/malhas";
 export const SENADO_API = "https://legis.senado.leg.br/dadosabertos";
 export const SENADO_ADM_API = "https://adm.senado.gov.br/adm-dadosabertos/api/v1";
 export const linkMateriaSenado = (id) => `https://www25.senado.leg.br/web/atividade/materias/-/materia/${encodeURIComponent(id)}`;
+
+/* Aposentadoria parlamentar de ex-senador (coletar.py: coletar_aposentados_senado; ligada à pessoa em identidades.py). */
+export async function carregarAposentadoria(pessoa, carregar) {
+  if (!pessoa) return null;
+  try { return (await carregar("dados/aposentados_senado.json"))[pessoa] || null; } catch { return null; }
+}

@@ -2,7 +2,7 @@
 
 Ideias levantadas e ainda não feitas, em ordem de complexidade. O que já foi implantado está no `CHANGELOG.md`
 (autoria, cota, salário, campanha e patrimônio, perfil das Casas, presença e votações, recursos do senador,
-perfil temático, carreira, vida do projeto, rede de coautoria, fornecedores com dados da Receita e cruzamento com
+perfil temático, aposentadoria de ex-senadores, carreira, vida do projeto, rede de coautoria, fornecedores com dados da Receita e cruzamento com
 doadores, despesa com pessoal pelo SICONFI, ministros de Estado em sua primeira etapa, coletores de 17 Assembleias).
 
 Ao implementar um endpoint novo, registre-o no `ENDPOINTS.md` e o conjunto no `CHANGELOG.md`.
@@ -21,8 +21,6 @@ Revisado em 2026-10-29 contra o código e o `CHANGELOG.md`.
 
 ### 1.1 Restos de pacotes feitos
 
-- **Aposentadoria parlamentar (Senado):** `/senadores/aposentados`, `aposentados-ipc` e `aposentados-pssc`
-  (`adm.senado.gov.br/adm-dadosabertos/api/v1`, 1 chamada cada). Só faz sentido com perfil de ex-senador.
 - **Comissão x tema:** "projetos na área da comissão que ele integra"; a Câmara não publica o tema de cada comissão.
 - **Fidelidade em blocos:** os blocos usam a composição atual e rótulos que não constam em `/blocos` seguem sem
   fidelidade; a presença em reuniões de comissão não tem total para comparar.

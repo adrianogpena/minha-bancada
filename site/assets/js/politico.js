@@ -2,11 +2,11 @@
 import { $, esc, reais, reaisCentavos, data, param, carregar, urlSegura } from "./util.js";
 import { itemFicha, foto, listaPaginada, erro, ligarAbas } from "./comum.js";
 import { linksRedes, fonteRedesTse, divulgaUrl, linhaNoCargoAte, linhaSubsidio, blocoPatrimonioFontes, completarEleicao } from "./ficha.js";
-import { arquivoTse, fontes, UFS } from "./apis.js";
+import { arquivoTse, fontes, UFS, carregarAposentadoria } from "./apis.js";
 import { linkPolitico } from "./mapa.js";
 import { EXECUTIVOS, casaLegislativa, itemGoverno, LEGENDA_PRESIDENTE, legendaGoverno, AVISO_PRESIDENTE, AVISO_PROPOSTAS_PRESIDENTE, avisoGovernoPropostas, avisoGoverno, itemExecutivo } from "./executivo.js";
 import { painelEleicaoDe } from "./eleicao.js";
-import { montarSenador } from "./senador.js";
+import { montarSenador, painelAposentadoria } from "./senador.js";
 import { montarEstadual } from "./estadual.js";
 
 export async function paginaPolitico() {
@@ -21,6 +21,7 @@ export async function paginaPolitico() {
     completarEleicao(p, fichas._disputas);
   } catch (e) { return erro(alvo, e); }
 
+  p.aposentadoria = await carregarAposentadoria(p.pessoa, carregar);
   const nome = p.urna || p.nome;
   const local = p.municipio ? `${p.municipio} (${p.uf})` : p.uf === "BR" ? "Brasil" : UFS[p.uf] || p.uf;
   document.title = `${nome}, ${p.cargo} | Minha Bancada`;
@@ -77,6 +78,7 @@ export async function paginaPolitico() {
       <dt>Onde atua</dt><dd>${esc(local)}</dd>
     </dl>
     ${p.fonte === "tse" ? fontes([...fonteTse, ["Dados de candidatos (TSE)", arquivoTse("consulta_cand", p)]]) : ""}
+    ${painelAposentadoria(p.aposentadoria)}
 
     ${p.fonte === "tse" ? `
     <h2>Bens declarados em ${esc(p.ano)}</h2>

@@ -622,6 +622,7 @@ def main():
     ministros = gerar_ministros.construir(BRUTO, nucleo, ler(BRUTO / "senado.json", []) or [], deputados)   # antes de salvar: grava em ligacoes["ministros"]
     identidades.salvar_nucleo(nucleo, SAIDA / "nucleo")
     gerar_ministros.salvar_ministros(ministros, SAIDA)
+    salvar(SAIDA / "aposentados_senado.json", {a["pessoa"]: {k: a[k] for k in ("tipo", "inicio", "valor") if a.get(k) is not None} for a in nucleo["aposentados"]})
     candidaturas.salvar_candidaturas(candidaturas.construir(BRUTO, nucleo), SAIDA)
     mandatos.salvar_mandatos(mandatos.construir(deputados, BRUTO, nucleo), SAIDA)
     nucleo_fornecedores.salvar_fornecedores(forn, SAIDA)

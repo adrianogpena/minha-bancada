@@ -395,6 +395,12 @@ def _(ctx):
     return http_json(f"{SENADO_ADM}/senadores/escritorios-apoio")
 
 
+@ep("senado_aposentados", f"{SENADO_ADM}/senadores/aposentados",
+    campos("[]", "nome", "tipo", "dataInicial", "remuneracao"))
+def _(ctx):
+    return http_json(f"{SENADO_ADM}/senadores/aposentados")
+
+
 # ---------------------------------------------------------------- ministros (scripts/coletar_ministros.py)
 
 @ep("camara_arquivo_proposicoes", "https://dadosabertos.camara.leg.br/arquivos/proposicoes/json/proposicoes-{ano}.json",

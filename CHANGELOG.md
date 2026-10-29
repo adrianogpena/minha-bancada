@@ -5,6 +5,10 @@ Regra: toda fonte nova ou mudança de coleta ganha uma entrada aqui, no mesmo co
 Datas dos conjuntos que já existiam vêm do primeiro commit que os trouxe (`git log --diff-filter=A`).
 Todas as coletas rodam sozinhas no GitHub Actions (`.github/workflows/atualizar.yml`, todo dia às 05:00 de Brasília), salvo onde indicado.
 
+## Partido de ex-deputados nos coautores (2026-10-29)
+
+Sem endpoint novo (`/deputados/{id}` e `/deputados/{id}/historico`, já em `ENDPOINTS.md`). `coletar.py` (`coletar_partidos_ex_deputados`) consulta uma vez cada autor de `proposicoes_autores.json` que não está em `dados/deputados/` e grava `dados/partidos_ex_deputados.json` (`partido` final e `historico` de todas as legislaturas), no máximo `EX_DEPUTADOS_POR_EXECUCAO` (500) por execução, os mais novos primeiro. `gerar.py` usa esse arquivo para a sigla dos coautores que já saíram da Câmara. Não medido contra a API real (só teste offline).
+
 ## Ministros de Estado: ligação, geração, páginas e histórico (2026-10-29)
 
 Sem fonte nova: `gerar.py` passa a ler `dados/ministros/` (sem internet). `scripts/ministerios.py` acha a pasta pela ementa (127 de 17.169 pedidos ficaram sem pasta) e pelo cargo do Planalto (38 de 38); `identidades.py` liga ministro -> pessoa (nome civil), requerimento -> ministro (`nome+pasta` quando a ementa cita o ministro; `pasta+data` só depois do início conhecido) e autoria do Senado -> senador (`nome+uf`), tudo em `nucleo/ligacoes.json` (`ministros`). Mandato `MINISTRO DE ESTADO` (sem prazo, início aproximado) em `nucleo/mandatos.json`. Saídas: `ministerios.json`, `ministerio/<pasta>.json`, `ministro/<pessoa>.json`, `ministros_autores.json`; páginas `ministerios.html` e `ministro.html`; aviso "Licenciado: Ministro de X" nas fichas de deputado e senador; categoria `ministro` e eventos de requerimento no histórico diário (`historico.py`).

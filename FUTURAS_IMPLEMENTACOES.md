@@ -23,8 +23,6 @@ Revisado em 2026-10-29 contra o código e o `CHANGELOG.md`.
 
 - **Aposentadoria parlamentar (Senado):** `/senadores/aposentados`, `aposentados-ipc` e `aposentados-pssc`
   (`adm.senado.gov.br/adm-dadosabertos/api/v1`, 1 chamada cada). Só faz sentido com perfil de ex-senador.
-- **Partido de ex-deputados:** o `/historico` só é coletado para deputados em exercício, então coautores que já
-  saíram seguem sem sigla.
 - **Comissão x tema:** "projetos na área da comissão que ele integra"; a Câmara não publica o tema de cada comissão.
 - **Fidelidade em blocos:** os blocos usam a composição atual e rótulos que não constam em `/blocos` seguem sem
   fidelidade; a presença em reuniões de comissão não tem total para comparar.

@@ -483,6 +483,51 @@ def coletar_autores_proposicoes() -> None:
         salvar(arquivo, cache)
     print(f"Autores salvos: {feitos}, falhas: {falhas}, no arquivo: {len(cache)}")
 
+
+ORCAMENTO_EX_DEPUTADOS = int(os.environ.get("EX_DEPUTADOS_POR_EXECUCAO", "500"))
+
+
+def partidos_da_resposta(historico: list, ultimo_status: dict | None) -> dict:
+    """De /deputados/{id}/historico (todas as legislaturas) e do `ultimoStatus` para {"partido": sigla final, "historico": [{"data", "partido"}]},
+    só com os registros que têm partido e data, em ordem de data."""
+    registros = sorted({(_dia(x.get("dataHora")), (x.get("siglaPartido") or "").strip())
+                        for x in historico if _dia(x.get("dataHora")) and (x.get("siglaPartido") or "").strip()})
+    final = ((ultimo_status or {}).get("siglaPartido") or "").strip() or (registros[-1][1] if registros else None)
+    return {"partido": final, "historico": [{"data": d, "partido": p} for d, p in registros]}
+
+
+def coletar_partidos_ex_deputados() -> None:
+    """Partido (e histórico de partido) de quem assina projetos como deputado mas não está em dados/deputados/ (ex-deputados),
+    para mostrar a sigla nos coautores. Guardado em dados/partidos_ex_deputados.json; cada pessoa é consultada uma vez só
+    (o mandato já acabou), no máximo ORCAMENTO_EX_DEPUTADOS por execução."""
+    arquivo = DADOS / "partidos_ex_deputados.json"
+    cache = ler(arquivo, {})
+    em_exercicio = {p.stem for p in (DADOS / "deputados").glob("*.json")}
+    autores = {str(a[0]) for aut in (ler(DADOS / "proposicoes_autores.json", {}) or {}).values() for a in aut.get("autores", []) if a[0]}
+    faltam = sorted(autores - em_exercicio - cache.keys(), key=int, reverse=True)
+    fila = faltam[:ORCAMENTO_EX_DEPUTADOS]
+    print(f"Partido de ex-deputados: {len(faltam)} sem registro; consultando {len(fila)}")
+
+    def buscar(did: str) -> tuple[str, dict]:
+        status = get(f"/deputados/{did}").get("dados", {}).get("ultimoStatus")
+        return did, partidos_da_resposta(get(f"/deputados/{did}/historico").get("dados", []), status)
+
+    feitos = falhas = 0
+    with ThreadPoolExecutor(TRABALHADORES) as ex:
+        for f in as_completed([ex.submit(buscar, i) for i in fila]):
+            try:
+                did, info = f.result()
+                cache[did] = info
+                feitos += 1
+            except Exception as e:
+                falhas += 1
+                if falhas <= 5:
+                    avisar(f"partido de ex-deputado: {e}")
+    if feitos:
+        salvar(arquivo, cache)
+    print(f"Partidos de ex-deputados salvos: {feitos}, falhas: {falhas}, no arquivo: {len(cache)}")
+
+
 ORCAMENTO_TRAMITACOES = int(os.environ.get("TRAMITACOES_POR_EXECUCAO", "3000"))
 RELATOR = re.compile(r"Designad[oa] Relator[a]?,?\s*(?:Dep\.|Sen\.)?\s*([^()]+?)(?:\s*\(([^)]*)\))?(?:\.|$)", re.I)
 
@@ -1210,6 +1255,10 @@ def main():
             coletar_autores_proposicoes()
         except Exception as e:
             avisar(f"autores das proposições: {e}")
+        try:
+            coletar_partidos_ex_deputados()
+        except Exception as e:
+            avisar(f"partido de ex-deputados: {e}")
         try:
             coletar_tramitacoes_proposicoes()
         except Exception as e:

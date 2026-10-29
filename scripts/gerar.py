@@ -493,6 +493,11 @@ def main():
     partidos = {str(i): d["partido"] for i, d in deputados.items() if d.get("partido")}
     relatorias = relatorias_por_deputado(deputados, detalhes)
     historicos = {str(i): d["historico"] for i, d in deputados.items() if d.get("historico")}
+    for i, d in (ler(BRUTO / "partidos_ex_deputados.json", {}) or {}).items():  # coautores que já saíram da Câmara
+        if i not in partidos and d.get("partido"):
+            partidos[i] = d["partido"]
+        if i not in historicos and d.get("historico"):
+            historicos[i] = d["historico"]
     coautoria_dep, coautoria_geral = gerar_coautoria.construir(
         deputados, autorias, TIPOS_PROJETO, lambda i, dia: partido_em(historicos.get(i), dia) or partidos.get(i))
 

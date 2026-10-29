@@ -583,6 +583,15 @@ def test_autores_da_resposta_principal_que_nao_e_deputado():
     assert coletar.autores_da_resposta([]) == {"idPrincipal": None, "autores": []}
 
 
+def test_partidos_da_resposta_ordena_e_ignora_registros_sem_partido():
+    historico = [{"dataHora": "2015-02-01T00:00", "siglaPartido": "PSDB"}, {"dataHora": "2011-02-01T00:00", "siglaPartido": "PT"},
+                 {"dataHora": "2013-05-01T00:00", "siglaPartido": ""}]
+    r = coletar.partidos_da_resposta(historico, {"siglaPartido": "PSDB"})
+    assert r == {"partido": "PSDB", "historico": [{"data": "2011-02-01", "partido": "PT"}, {"data": "2015-02-01", "partido": "PSDB"}]}
+    assert coletar.partidos_da_resposta(historico, None)["partido"] == "PSDB"
+    assert coletar.partidos_da_resposta([], None) == {"partido": None, "historico": []}
+
+
 def test_autores_proposicoes_so_projetos_e_nao_reconsulta(dados, monkeypatch):
     coletar.salvar(dados / "proposicoes" / "1.json", {"itens": [
         {"id": 10, "siglaTipo": "PL"}, {"id": 11, "siglaTipo": "REQ"}, {"id": 12, "siglaTipo": "PEC"}]})

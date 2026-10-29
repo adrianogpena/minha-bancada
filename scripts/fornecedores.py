@@ -219,6 +219,7 @@ def construir(deputados: dict, bruto: Path, nucleo: dict) -> dict:
         por_casa.update(f["casas"])
     return {
         "entidades": entidades,
+        "inidoneos": _inidoneos(bruto, {e["id"] for e in entidades}),
         # em memória, para scripts/doadores.py: id do fornecedor -> [(casa, uf, id na Casa, pessoa, valor)]; não vai para o site
         "recebimentos": {f["id"]: [(*q, f["info"][q][2], round(v, 2)) for q, v in f["politicos"].items()] for f, _, _ in ranking},
         # id -> (data da primeira nota do ano, data da última), só dos que têm data; também só em memória (scripts/empresas.py)
@@ -231,6 +232,17 @@ def construir(deputados: dict, bruto: Path, nucleo: dict) -> dict:
     }
 
 
+def _inidoneos(bruto: Path, ids: set) -> dict:
+    """Id do fornecedor -> sanções de inidoneidade do TCU (dados/tcu/inidoneos.json). Liga pelo CNPJ base: a sanção é da empresa, e o
+    fornecedor já junta matriz e filiais. Só os que estão entre as entidades do ano."""
+    por_id = defaultdict(list)
+    for i in (ler(bruto / "tcu" / "inidoneos.json", {}) or {}).get("itens", []):
+        id_ = "for_" + i["cnpj"][:8]
+        if id_ in ids:
+            por_id[id_].append({k: v for k, v in {**i, "cnpj": formatar_cnpj(i["cnpj"])}.items() if k not in ("nome", "municipio")} | {"nomeTcu": i["nome"]})
+    return dict(por_id)
+
+
 def _raiz(doc: tuple) -> tuple:
     return ("cnpj", doc[1][:8]) if doc[0] == "cnpj" else doc
 
@@ -238,6 +250,7 @@ def _raiz(doc: tuple) -> tuple:
 def salvar_fornecedores(res: dict, saida: Path) -> None:
     salvar(saida / "nucleo" / "fornecedores.json", res["entidades"])
     salvar(saida / "fornecedores.json", res["ranking"])
+    salvar(saida / "inidoneos_tcu.json", res["inidoneos"])
     r = res["ranking"]["resumo"]
     print(f"Fornecedores: {r['fornecedores']} no ano {res['ranking']['ano']}; {r['linhas'].get('documentoPeloNome', 0)} despesas "
           f"ganharam o documento pelo nome, {r['linhas'].get('semDocumento', 0)} seguem sem")

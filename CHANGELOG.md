@@ -5,8 +5,12 @@ Regra: toda fonte nova ou mudança de coleta ganha uma entrada aqui, no mesmo co
 Datas dos conjuntos que já existiam vêm do primeiro commit que os trouxe (`git log --diff-filter=A`).
 Todas as coletas rodam sozinhas no GitHub Actions (`.github/workflows/atualizar.yml`, todo dia às 05:00 de Brasília), salvo onde indicado.
 
+## Inidôneos pelo TCU nos fornecedores (2026-10-29)
+- **De onde:** `https://contas.tcu.gov.br/ords/condenacao/consulta/inidoneos` (`tcu_inidoneos` em `ENDPOINTS.md`): API aberta do TCU, sem chave, 90 empresas e pessoas proibidas de licitar com a administração federal (nome, CPF/CNPJ, processo, deliberação, datas, UF).
+- **Como:** `scripts/coletar_tcu.py` (mesmo job `tcu`) pagina como os inabilitados e grava `dados/tcu/inidoneos.json`, fora do git. Só o CNPJ válido é guardado; CPF de pessoa física é descartado. `fornecedores.construir` liga pelo CNPJ base (a sanção é da empresa; o fornecedor já junta matriz e filiais) e `site/dados/inidoneos_tcu.json` (id do fornecedor -> sanções) alimenta o aviso "Inidônea pelo TCU", com o processo, no ranking de fornecedores e no cruzamento com doadores. Só aparece para quem está entre os fornecedores do ano. Contrato semanal: `tcu_inidoneos`.
+
 ## Inabilitados pelo TCU (2026-10-29)
-- **De onde:** `https://contas.tcu.gov.br/ords/condenacao/consulta/inabilitados` (`tcu_inabilitados` em `ENDPOINTS.md`): API aberta do TCU, sem chave, 846 pessoas proibidas de exercer cargo ou função pública (nome, processo, deliberação, datas, UF e município do caso). A mesma API tem `inidoneos` (proibidos de licitar), não coletada.
+- **De onde:** `https://contas.tcu.gov.br/ords/condenacao/consulta/inabilitados` (`tcu_inabilitados` em `ENDPOINTS.md`): API aberta do TCU, sem chave, 846 pessoas proibidas de exercer cargo ou função pública (nome, processo, deliberação, datas, UF e município do caso). Os `inidoneos` (proibidos de licitar) entram na entrada acima.
 - **Como:** `scripts/coletar_tcu.py` (job `tcu` do `atualizar.yml`) pagina por `limit=500`/`offset` e grava `dados/tcu/inabilitados.json`, fora do git. O CPF não é guardado. `identidades.ligar_inabilitados` liga por nome completo e UF do caso (`nome+uf`, média; homônimo na mesma UF não liga) e `gerar.py` grava `site/dados/inabilitados_tcu.json`, mostrado na ficha com o número do processo. Na primeira medição, 5 dos 846 nomes batiam com alguém do núcleo, todos homônimos de outra UF: zero ligações.
 
 ## Verba de gabinete de anos anteriores e presença em plenário (2026-10-29)

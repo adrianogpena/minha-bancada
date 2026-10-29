@@ -9,6 +9,7 @@ export async function paginaFornecedores() {
   let j;
   try { j = await carregar("dados/fornecedores.json"); } catch (e) { return erro(alvo, e); }
   const empresa = await blocoEmpresa();
+  const inidonea = await blocoInidoneo();
   const link = (p) => {
     const nome = `${esc(p.nome)} (${esc(p.partido || "s/p")}-${esc(p.uf || "")}, ${reais(p.valor)})`;
     return p.pagina ? `<a href="${esc(p.pagina)}">${nome}</a>` : nome;
@@ -19,7 +20,7 @@ export async function paginaFornecedores() {
     <span class="texto"><span class="quando">${f.politicos} ${f.politicos === 1 ? "político" : "políticos"}, ${f.notas} ${f.notas === 1 ? "nota" : "notas"}
       · ${Object.entries(f.porCasa).map(([c, v]) => `${CASAS[c] || esc(c)} ${reais(v)}`).join(" · ")}</span>
       <br>Mais usado por ${f.maioresPoliticos.map(link).join(", ")}</span>
-    ${empresa(f.id)}</li>`;
+    ${inidonea(f.id)}${empresa(f.id)}</li>`;
   const desenhar = () => {
     const b = semAcento($("#busca").value.trim());
     const casa = $("#casa").value;
@@ -32,13 +33,13 @@ export async function paginaFornecedores() {
   $("#busca").addEventListener("input", desenhar);
   $("#casa").addEventListener("change", desenhar);
   desenhar();
-  doadoresEFornecedores(CASAS, empresa);
+  doadoresEFornecedores(CASAS, empresa, inidonea);
 }
 
 const LIGACAO = { cnpj: "mesmo CNPJ nas duas fontes", nome: "mesmo nome (a prestação de contas coletada não trazia o CNPJ)" };
 
 /* Empresas que doaram a campanhas e foram pagas pela cota (scripts/doadores.py). Some se o arquivo não existe. */
-async function doadoresEFornecedores(casas, empresa) {
+async function doadoresEFornecedores(casas, empresa, inidonea) {
   let cruz, forn, pessoas;
   try {
     [cruz, forn, pessoas] = await Promise.all([carregar("dados/doadores_fornecedores.json"), carregar("dados/nucleo/fornecedores.json"), carregar("dados/nucleo/pessoas.json")]);
@@ -64,13 +65,22 @@ async function doadoresEFornecedores(casas, empresa) {
   const render = (c) => {
     const f = cadastro.get(c.fornecedor) || { nome: c.fornecedor };
     return `<li><span class="texto"><b>${esc(f.nome)}</b> <span class="quando">${f.documento ? esc(f.documento) : ""}</span></span>
-      ${c.doacoes.map(doacao).join("")}${empresa(c.fornecedor)}</li>`;
+      ${c.doacoes.map(doacao).join("")}${inidonea(c.fornecedor)}${empresa(c.fornecedor)}</li>`;
   };
   $("#doadores").hidden = false;
   $("#contagem-doadores").textContent = `${cruz.cruzamentos.length} empresas; ${cruz.resumo.comPagamentoAoMesmoPolitico} receberam da cota do mesmo político que recebeu a doação`;
   listaPaginada($("#resultado-doadores"), cruz.cruzamentos, render, 20, "Nenhuma empresa em comum.");
   const pag = Object.entries(cruz.fontes.pagamentos).map(([c, f]) => `${casas[c] || esc(c)}: ${fonte(f)}`).join("; ");
   $("#fontes-doadores").innerHTML = `Fontes: doações, ${fonte(cruz.fontes.doacoes)}; pagamentos da cota em ${esc(cruz.anoPagamentos)}, ${pag}.`;
+}
+
+/* Empresas declaradas inidôneas pelo TCU (inidoneos_tcu.json, scripts/coletar_tcu.py). Devolve id do fornecedor -> HTML; vazia se não há o arquivo. */
+async function blocoInidoneo() {
+  let j;
+  try { j = await carregar("dados/inidoneos_tcu.json"); } catch { return () => ""; }
+  return (id) => (j[id] || []).map((x) => `<span class="texto"><b>Declarada inidônea pelo TCU</b> (CNPJ ${esc(x.cnpj)}), proibida de licitar com a administração federal${x.fim ? ` até ${data(x.fim)}` : ""}.
+    <span class="quando">Processo ${esc(x.processo)}${x.deliberacao ? `, ${esc(x.deliberacao)}` : ""}${x.uf ? `, ${esc(x.uf)}` : ""}.
+    Fonte: <a href="https://contas.tcu.gov.br/ords/condenacao/consulta/inidoneos" rel="noopener">TCU, licitantes inidôneos</a>.</span></span>`).join("");
 }
 
 const cnae = (c) => (c && c.length === 7 ? `${c.slice(0, 4)}-${c.slice(4, 5)}/${c.slice(5)}` : c);

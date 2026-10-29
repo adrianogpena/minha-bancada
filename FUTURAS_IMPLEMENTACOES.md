@@ -104,8 +104,8 @@ Fontes de cada tribunal ainda não levantadas.
 ### 4.4 Órgãos de controle
 
 - **TCU, inabilitados:** feito em 2026-10-29 (`coletar_tcu.py`, `identidades.ligar_inabilitados`, aviso na ficha; ver `CHANGELOG.md`).
-  A mesma API tem `inidoneos` (proibidos de licitar, CPF/CNPJ), ainda não coletada: serviria ao cruzamento com fornecedores
-  por CNPJ. Hoje o cruzamento de inabilitados dá zero ligações (5 nomes iguais, todos homônimos de outra UF), porque o TSE não
+  Os `inidoneos` (proibidos de licitar, só CNPJ) também foram feitos em 2026-10-29: aviso nos fornecedores por CNPJ.
+  Hoje o cruzamento de inabilitados dá zero ligações (5 nomes iguais, todos homônimos de outra UF), porque o TSE não
   publica CPF; o aviso aparece sozinho quando surgir um caso com nome e UF iguais.
 
 ## Pendências de cobertura do que já existe

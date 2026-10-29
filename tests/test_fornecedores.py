@@ -89,6 +89,19 @@ def test_ranking_nacional_junta_casas_filiais_e_grafias(tmp_path):
     assert resumo["linhas"]["documentoPeloNome"] == 2 and resumo["linhas"]["documentoInvalido"] == 1 and resumo["totalSemIdentificacao"] == 7.0
     assert len({e["id"] for e in r["entidades"]}) == len(r["entidades"])
     assert next(e for e in r["entidades"] if e["id"] == "for_02558157")["estabelecimentos"] == 2
+    assert r["inidoneos"] == {}
+
+
+def test_inidoneos_do_tcu_ligam_por_cnpj_base(tmp_path):
+    montar(tmp_path)
+    gravar(tmp_path / "tcu" / "inidoneos.json", {"itens": [
+        {"nome": "TIM FILIAL", "cnpj": "02421421000200", "processo": "1/2020-1", "deliberacao": "AC-1/2021-PL", "fim": "2030-01-01", "uf": "DF"},
+        {"nome": "OUTRA", "cnpj": "04268324000166", "processo": "2/2020-2"}]})
+    camara = {1: {"id": 1, "nome": "Ana", "partido": "PT", "uf": "RJ", "nomeCivil": "Ana Souza", "nascimento": "1980-01-02",
+                  "despesas": {"ano": 2026, "itens": [{"fornecedor": "TIM S.A.", "cnpj": "02421421000111", "valor": 400.0}]}}}
+    r = forn.construir(camara, tmp_path, identidades.construir(camara, tmp_path))
+    assert r["inidoneos"] == {"for_02421421": [{"cnpj": "02.421.421/0002-00", "processo": "1/2020-1", "deliberacao": "AC-1/2021-PL",
+                                                "fim": "2030-01-01", "uf": "DF", "nomeTcu": "TIM FILIAL"}]}
 
 
 def test_salvar_fornecedores(tmp_path):

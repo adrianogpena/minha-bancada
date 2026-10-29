@@ -39,3 +39,15 @@ def test_coleta_pagina_ate_acabar_e_nao_guarda_cpf(monkeypatch):
          "transito": "2022-07-16", "fim": "2027-07-16", "uf": "MA", "municipio": "SANTA INES"},
         {"nome": "ADAIR SAAR", "processo": "000.288/2025-0", "fim": "2031-08-27", "uf": "SP"}]
     assert "cpf" not in json.dumps(itens)
+
+
+def test_inidoneos_guardam_so_cnpj_valido(monkeypatch):
+    corpo = {"items": [
+        {"nome": "ALB ENGENHARIA EIRELI", "cpf_cnpj": "04.268.324/0001-66", "processo": "005.959/2015-2", "deliberacao": "AC-002216/2018-PL",
+         "data_final": "2028-08-17T03:00:00Z", "uf": "DF", "municipio": None},
+        {"nome": "PESSOA FISICA", "cpf_cnpj": "111.444.777-35", "processo": "3/2020-1", "uf": "SP"},
+        {"nome": "INVALIDO", "cpf_cnpj": "00.000.000/0000-00", "processo": "4/2020-1", "uf": "SP"}], "hasMore": False}
+    monkeypatch.setattr(tcu.comum, "get", lambda s, url, **k: Resp(corpo))
+    assert tcu.coletar_inidoneos(object()) == [
+        {"nome": "ALB ENGENHARIA EIRELI", "processo": "005.959/2015-2", "deliberacao": "AC-002216/2018-PL", "fim": "2028-08-17", "uf": "DF",
+         "cnpj": "04268324000166"}]

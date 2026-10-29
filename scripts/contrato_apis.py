@@ -413,6 +413,12 @@ def _(ctx):
     return http_json("https://contas.tcu.gov.br/ords/condenacao/consulta/inabilitados", limit=5)
 
 
+@ep("tcu_inidoneos", "https://contas.tcu.gov.br/ords/condenacao/consulta/inidoneos",
+    campos("", "hasMore") + campos("items[]", "nome", "cpf_cnpj", "processo", "deliberacao", "data_acordao", "data_transito_julgado", "data_final", "uf"))
+def _(ctx):
+    return http_json("https://contas.tcu.gov.br/ords/condenacao/consulta/inidoneos", limit=5)
+
+
 # ---------------------------------------------------------------- ministros (scripts/coletar_ministros.py)
 
 @ep("camara_arquivo_proposicoes", "https://dadosabertos.camara.leg.br/arquivos/proposicoes/json/proposicoes-{ano}.json",

@@ -58,6 +58,7 @@ Status: ✅ OK · ❌ ERRO (resposta com falha ou fora do ar) · ❔ não testad
 | senado_recursos | Senado | https://adm.senado.gov.br/adm-dadosabertos/api/v1/senadores/5012/recursos-utilizados?ano=2025 | scripts/coletar.py, site/assets/app.js (link de fonte) | ✅ OK | 2026-10-24 | HTTP 200, application/json |
 | senado_escritorios | Senado | https://adm.senado.gov.br/adm-dadosabertos/api/v1/senadores/escritorios-apoio | scripts/coletar.py, site/assets/app.js (link de fonte) | ✅ OK | 2026-10-24 | HTTP 200, application/json |
 | tcu_inabilitados | TCU | https://contas.tcu.gov.br/ords/condenacao/consulta/inabilitados | scripts/coletar_tcu.py | ❔ | — | — |
+| tcu_inidoneos | TCU | https://contas.tcu.gov.br/ords/condenacao/consulta/inidoneos | scripts/coletar_tcu.py | ❔ | — | — |
 | senado_aposentados | Senado | https://adm.senado.gov.br/adm-dadosabertos/api/v1/senadores/aposentados | scripts/coletar.py, site/assets/js/senador.js (link de fonte) | ✅ OK | 2026-10-29 | HTTP 200, application/json |
 | tse_consulta_cand | TSE | https://cdn.tse.jus.br/estatistica/sead/odsele/consulta_cand/consulta_cand_2024.zip | scripts/coletar_tse.py | ✅ OK | 2026-10-24 | HTTP 200, application/zip, 63.9 MB |
 | tse_bem_candidato | TSE | https://cdn.tse.jus.br/estatistica/sead/odsele/bem_candidato/bem_candidato_2024.zip | scripts/coletar_tse.py | ✅ OK | 2026-10-24 | HTTP 200, application/zip, 44.2 MB |

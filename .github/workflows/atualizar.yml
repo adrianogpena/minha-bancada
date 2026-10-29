@@ -285,7 +285,7 @@ jobs:
           retention-days: 3
 
   tcu:
-    name: Coletar inabilitados (TCU)
+    name: Coletar inabilitados e inidôneos (TCU)
     runs-on: ubuntu-24.04
     timeout-minutes: 10
     steps:
@@ -301,7 +301,7 @@ jobs:
       - name: Marcar o início (só o que for gravado depois disso vai no pacote)
         run: touch "$RUNNER_TEMP/inicio"
 
-      - name: Coletar inabilitados pelo TCU
+      - name: Coletar inabilitados e inidôneos pelo TCU
         run: python scripts/coletar_tcu.py
         continue-on-error: true
 

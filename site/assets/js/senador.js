@@ -4,6 +4,7 @@ import { itemFicha } from "./comum.js";
 import { TIPOS_PROJETO, fontes, UFS, SENADO_API, SENADO_ADM_API, linkMateriaSenado, temResultado } from "./apis.js";
 import { painelGastos } from "./deputado.js";
 import { montarParlamentar } from "./parlamentar.js";
+import { avisoLicenca } from "./ministros.js";
 import { painelEleicaoDe } from "./eleicao.js";
 
 /* Comparecimento do senador às votações nominais (gerar.py: categoria_presenca). */
@@ -53,7 +54,7 @@ export async function montarSenador(alvo, p, nome, ficha) {
   const situacao = p.fimMandato ? `Mandato até ${data(p.fimMandato, true)}.` : "";
   const apiVotacao = (v) => `${SENADO_API}/votacao?dataInicio=${v.data.replaceAll("-", "")}&dataFim=${v.data.replaceAll("-", "")}`;
   montarParlamentar(alvo, {
-    nome, foto: { nome, foto: p.foto }, painelEleicao: painelEleicaoDe(p, nome),
+    nome, foto: { nome, foto: p.foto }, antes: sen.ministro ? await avisoLicenca(sen.ministro, "senador") : "", painelEleicao: painelEleicaoDe(p, nome),
     subtitulo: `<span class="selo">${esc(p.partido || "")}/${esc(p.uf)}</span> ${esc(p.cargo)}${p.participacao && p.participacao !== "Titular" ? `, ${esc(p.participacao.toLowerCase())}` : ""}`,
     painelPerfil: `<p class="situacao">${esc(situacao)}</p>
       <h2>Ficha</h2>

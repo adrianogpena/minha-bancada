@@ -4,6 +4,7 @@ import { VOTOS, itemFicha, semDadosLocais } from "./comum.js";
 import { linhaNoCargoAte, linhaSubsidio } from "./ficha.js";
 import { CAMARA_API, TIPOS_PROJETO, linkTramitacao, fontes, temResultado } from "./apis.js";
 import { montarParlamentar } from "./parlamentar.js";
+import { avisoLicenca } from "./ministros.js";
 import { painelEleicao } from "./eleicao.js";
 
 /* gastos da cota (deputado: CEAP; senador: CEAPS); desp vem de gerar.py */
@@ -199,7 +200,7 @@ export async function paginaDeputado() {
     ${fontes([["Cadastro do deputado (API da Câmara)", `${CAMARA_API}/deputados/${encodeURIComponent(dep.id)}`], ["Portal da Câmara", `https://www.camara.leg.br/deputados/${encodeURIComponent(dep.id)}`]])}`;
 
   montarParlamentar(alvo, {
-    nome: dep.nome, foto: dep,
+    nome: dep.nome, foto: dep, antes: dep.ministro ? await avisoLicenca(dep.ministro, "deputado federal") : "",
     painelEleicao: painelEleicao(dep.nome, dep.eleicao, { suplente: /suplente/i.test(dep.condicao || ""), condicao: dep.condicao, cargoTse: "DEPUTADO FEDERAL",
       fontes: [["Cadastro do deputado (API da Câmara)", `${CAMARA_API}/deputados/${encodeURIComponent(dep.id)}`]] }),
     subtitulo: `<span class="selo">${esc(dep.partido)}/${esc(dep.uf)}</span> ${dep.situacao ? esc(dep.situacao) : ""}`,

@@ -5,9 +5,14 @@ Regra: toda fonte nova ou mudança de coleta ganha uma entrada aqui, no mesmo co
 Datas dos conjuntos que já existiam vêm do primeiro commit que os trouxe (`git log --diff-filter=A`).
 Todas as coletas rodam sozinhas no GitHub Actions (`.github/workflows/atualizar.yml`, todo dia às 05:00 de Brasília), salvo onde indicado.
 
+## Ministros de Estado: ligação, geração, páginas e histórico (2026-10-29)
+
+Sem fonte nova: `gerar.py` passa a ler `dados/ministros/` (sem internet). `scripts/ministerios.py` acha a pasta pela ementa (127 de 17.169 pedidos ficaram sem pasta) e pelo cargo do Planalto (38 de 38); `identidades.py` liga ministro -> pessoa (nome civil), requerimento -> ministro (`nome+pasta` quando a ementa cita o ministro; `pasta+data` só depois do início conhecido) e autoria do Senado -> senador (`nome+uf`), tudo em `nucleo/ligacoes.json` (`ministros`). Mandato `MINISTRO DE ESTADO` (sem prazo, início aproximado) em `nucleo/mandatos.json`. Saídas: `ministerios.json`, `ministerio/<pasta>.json`, `ministro/<pessoa>.json`, `ministros_autores.json`; páginas `ministerios.html` e `ministro.html`; aviso "Licenciado: Ministro de X" nas fichas de deputado e senador; categoria `ministro` e eventos de requerimento no histórico diário (`historico.py`).
+- **Limites:** o Planalto não publica a data da posse, então o início é o da licença do parlamentar (Câmara/Senado) ou o dia em que a coleta viu o nome; sem o ministro da época, só os pedidos que citam o nome ficam ligados a ele, os demais ficam na página da pasta. A resposta a requerimento do Senado não é coletada.
+
 ## Ministros de Estado: coletor da primeira etapa (2026-10-29)
 
-`scripts/coletar_ministros.py`, job `ministros` no `atualizar.yml`, grava em `dados/ministros/` (formato no docstring do coletor). Ainda sem página no site: a ligação às pessoas e as páginas vêm na próxima etapa.
+`scripts/coletar_ministros.py`, job `ministros` no `atualizar.yml`, grava em `dados/ministros/` (formato no docstring do coletor). A ligação às pessoas e as páginas vieram na etapa seguinte (entrada acima).
 - **Lista de ministros:** `https://www.gov.br/planalto/pt-br/conheca-a-presidencia/ministros-e-ministras` (HTML; só os atuais, sem datas; exige `Accept: text/html`, senão o gov.br responde 401/404). Quem entra e sai é marcado pelo dia da coleta (`vistoDesde`/`vistoAte`).
 - **Requerimentos na Câmara:** arquivos anuais `https://dadosabertos.camara.leg.br/arquivos/proposicoes/json/proposicoes-<ano>.json` (~74 MB em 2026) e `proposicoesAutores-<ano>.json`, de 2023 em diante. Ficam os RIC com "ministr" na ementa e os REQ de convocação/convite de ministro (o filtro `keywords` da API devolve 0 para REQ). Nos RIC, envio ao ministério, fim do prazo e resposta saem de `/proposicoes/{id}/tramitacoes`, relida só quando o último status muda e até chegar a resposta. Ano encerrado (`comum.ano_encerrado`) não é baixado de novo depois de todas as tramitações lidas.
 - **Requerimentos no Senado:** `https://legis.senado.leg.br/dadosabertos/processo?sigla=RQS&ano=<ano>` (1 chamada por ano), tipos "Informações" e "Convocação de autoridades" com "ministr" na ementa.

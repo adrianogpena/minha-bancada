@@ -11,7 +11,7 @@ dos dias são a memória: cada evento guarda a data do ato como a fonte a deu na
 
 Cada evento do dia:
     local         "BR", "UF:SP" ou "MUN:SP" (capital)                 uf          estado de quem aparece (filtro por estado)
-    categoria     nova, situacao, votacao, eleicao                    titulo      título curto (ex.: "PL 123/2026")
+    categoria     nova, situacao, votacao, eleicao, ministro                    titulo      título curto (ex.: "PL 123/2026")
     politicos     [{codigo: código do "Fique informado" ou null, nome, pagina: página no site ou null}]
     texto         ementa, despacho                                    mudanca     [antes, depois] de uma mudança
     resumo        placar, resultado                                   dataDoAto   data do ato (AAAA-MM-DD); dataDoAtoAproximada: é só a de apresentação
@@ -44,6 +44,8 @@ from pathlib import Path
 
 import feeds
 import fuso
+import identidades
+import ministerios
 import nomes_legados
 import cadastro_proposicoes
 import resumo_email as r
@@ -54,6 +56,8 @@ SITE_DADOS = r.RAIZ / "site" / "dados"
 CAMARA_API = "https://dadosabertos.camara.leg.br/api/v2"
 SENADO_MATERIA = "https://www25.senado.leg.br/web/atividade/materias/-/materia/"
 TSE_DADOS = "https://dadosabertos.tse.jus.br"
+SENADO_DADOS = "https://legis.senado.leg.br/dadosabertos"
+PLANALTO_MINISTROS = "https://www.gov.br/planalto/pt-br/conheca-a-presidencia/ministros-e-ministras"
 TSE_CDN = "https://cdn.tse.jus.br/estatistica/sead/odsele/consulta_cand/consulta_cand_{ano}.zip"
 # a situação só vira evento para projetos de verdade; requerimentos, emendas e pareceres entram só quando são apresentados
 PROJETOS = {"PL", "PLP", "PEC", "PDL", "MPV", "PRC", "PLN", "PLV", "PFC", "PLC", "PLS", "PRS", "PDS"}
@@ -64,7 +68,7 @@ MARCO_SITUACAO = re.compile(r"aprovad|sancionad|vetad|promulgad|arquivad|rejeita
 JANELA_ATO_DIAS = r.JANELA_ATO_DIAS   # só entra no histórico o que tem data do ato até esse tanto de dias antes da coleta (ou nenhuma data)
 LIMITE_LOTE = 40          # por local: acima disso, os eventos de baixa relevância viram um evento só
 PREFIXOS_BR = ("dados/proposicoes", "dados/proposicoes_cadastro", "dados/proposicoes_detalhe.json", "dados/votacoes", "dados/senado_materias.json",
-               "dados/senado_votacoes", "dados/executivo.json")
+               "dados/senado_votacoes", "dados/executivo.json", "dados/ministros")
 LIMITE_ELEICAO = 200   # por arquivo do TSE; acima disso é carga em lote (eleição nova, recoleta), resumida em um evento só
 
 
@@ -156,6 +160,7 @@ class Contexto:
         self.deputados = {}  # id da Câmara -> (nome, UF)
         self.capitais = {}
         self.senadores = {}  # id do Senado -> nome
+        self.lista_senadores = []   # dados/senado.json, para ligar o texto de autoria (identidades.ligar_autoria_senado)
         for arq in sorted((SITE_DADOS / "indice").glob("*.json")) if (SITE_DADOS / "indice").is_dir() else []:
             if not arq.stem.isalpha():
                 continue
@@ -170,7 +175,8 @@ class Contexto:
         except (OSError, ValueError, KeyError):
             pass
         try:
-            for s in json.loads((r.RAIZ / "dados" / "senado.json").read_text(encoding="utf-8")):
+            self.lista_senadores = json.loads((r.RAIZ / "dados" / "senado.json").read_text(encoding="utf-8"))
+            for s in self.lista_senadores:
                 self.senadores[str(s["id"])] = s.get("nome")
         except (OSError, ValueError, KeyError, TypeError):
             pass
@@ -197,6 +203,11 @@ class Contexto:
             except (OSError, ValueError, KeyError):
                 pass
         return {"codigo": f"dep:{did}", "nome": nome or f"Deputado(a) {did}", "pagina": f"deputado.html?id={did}", "uf": uf}
+
+    def senadores_por_nome(self, autoria: str) -> list:
+        """[(id, nome)] dos senadores citados no texto de autoria de um requerimento do Senado."""
+        achados = identidades.ligar_autoria_senado([autoria], self.lista_senadores).get(autoria, [])
+        return [(a[0], self.senadores.get(a[0])) for a in achados]
 
     def nome_local(self, codigo: str) -> str:
         if codigo == "BR":
@@ -279,6 +290,124 @@ def camara(ctx: Contexto, antes: str, depois: str) -> list:
                                 mudanca=[antes_ or "—", depois_ or "—"], resumo=None if sit else "Nova tramitação", data_do_ato=y.get("dataSituacao"),
                                 fontes=fontes_camara(pid, y.get("inteiroTeor"))))
     return saida
+
+
+def _pasta_do_pedido(ementa) -> str | None:
+    achadas = ministerios.pastas_do_texto(ementa)
+    return ministerios.PASTAS[achadas[0]][0] if achadas else None
+
+
+def _politico_senador(ctx: Contexto, sid: str, nome: str | None) -> dict:
+    return {"codigo": None, "nome": nome or ctx.senadores.get(sid) or f"Senador(a) {sid}", "pagina": f"politico.html?f=senado&i={sid}"}
+
+
+def ministros_planalto(antes: str, depois: str) -> list:
+    """Troca de ministro: quem entrou ou saiu da lista do Planalto, por cargo. O Planalto não dá data: vale o dia da coleta."""
+    a = ler_lote(antes, ["dados/ministros/planalto.json"]).get("dados/ministros/planalto.json")
+    b = ler_lote(depois, ["dados/ministros/planalto.json"]).get("dados/ministros/planalto.json")
+    if not a or not b:
+        return []
+    fontes_ = [("Ministros e Ministras (Planalto)", PLANALTO_MINISTROS)]
+    por_cargo = lambda d: defaultdict(set, {c: {x["nome"] for x in d["atuais"] if x["cargo"] == c} for c in {x["cargo"] for x in d["atuais"]}})  # noqa: E731
+    ant, atual = por_cargo(a), por_cargo(b)
+    saida = []
+    for cargo in sorted(set(ant) | set(atual)):
+        saiu, entrou = sorted(ant[cargo] - atual[cargo]), sorted(atual[cargo] - ant[cargo])
+        if not saiu and not entrou:
+            continue
+        saida.append(evento("BR", "ministro", cargo, mudanca=[", ".join(saiu) or "—", ", ".join(entrou) or "—"],
+                            resumo="Troca de ministro" if saiu and entrou else "Novo ministro" if entrou else "Cargo sem ministro na lista",
+                            fontes=fontes_, relevancia=3))
+    return saida
+
+
+def ministros_camara(ctx: Contexto, antes: str, depois: str, hoje: str, ontem: str) -> list:
+    """Requerimentos a ministros na Câmara: novos, resposta recebida, prazo que acabou de vencer sem resposta e convocação ou convite aprovado."""
+    arquivos_ = [f for f in r.arquivos(antes, depois, "dados/ministros") if re.fullmatch(r"dados/ministros/camara_\d{4}\.json", f)]
+    a, b = ler_lote(antes, arquivos_), ler_lote(depois, arquivos_)
+    saida = []
+    for f in arquivos_:
+        ant, atual = (a.get(f) or {}).get("itens", {}), (b.get(f) or {}).get("itens", {})
+        for pid, y in atual.items():
+            x = ant.get(pid)
+            titulo, autores = f"{y['tipo']} {y['numero']}/{y['ano']}", [ctx.deputado(int(i)) for i, _ in y.get("autores", [])]
+            uf = next((p["uf"] for p in autores if p.get("uf")), None)
+            pasta = _pasta_do_pedido(y["ementa"])
+            comum_ = dict(uf=uf, politicos=autores, texto=y["ementa"], fontes=fontes_camara(pid, y.get("inteiroTeor")))
+            if x is None:
+                saida.append(evento("BR", "nova", titulo, **comum_, resumo=f"Pedido ao ministério: {pasta}" if pasta else "Pedido a ministro",
+                                    data_do_ato=y.get("dataApresentacao"), relevancia=1))
+                continue
+            if y["tipo"] == "RIC":
+                if y.get("resposta") and not x.get("resposta"):
+                    no_prazo = not y.get("prazoFim") or y["resposta"] <= y["prazoFim"]
+                    saida.append(evento("BR", "situacao", titulo, **comum_, mudanca=["Sem resposta", "Respondido" + (" no prazo" if no_prazo else " fora do prazo")],
+                                        resumo=f"Resposta recebida ({pasta})" if pasta else "Resposta recebida", data_do_ato=y["resposta"], relevancia=2))
+                elif not y.get("resposta") and y.get("prazoFim") and ontem <= y["prazoFim"] < hoje:
+                    saida.append(evento("BR", "situacao", titulo, **comum_, mudanca=["Aguardando resposta", "Prazo vencido sem resposta"],
+                                        resumo=f"Prazo até {y['prazoFim']}" + (f", {pasta}" if pasta else ""), data_do_ato=y["prazoFim"], relevancia=2))
+            elif mudou(x.get("situacao"), y.get("situacao")) and re.search(r"aprovad", y.get("situacao") or "", re.I):
+                saida.append(evento("BR", "situacao", titulo, **comum_, mudanca=[x.get("situacao") or "—", y.get("situacao")],
+                                    resumo="Convocação ou convite a ministro aprovado", data_do_ato=y.get("dataStatus"), relevancia=3))
+    return saida
+
+
+def ministros_senado(ctx: Contexto, antes: str, depois: str) -> list:
+    """Requerimentos do Senado a ministros: novos e convocação ou convite aprovado."""
+    arquivos_ = [f for f in r.arquivos(antes, depois, "dados/ministros") if re.fullmatch(r"dados/ministros/senado_\d{4}\.json", f)]
+    a, b = ler_lote(antes, arquivos_), ler_lote(depois, arquivos_)
+    saida = []
+    for f in arquivos_:
+        ant, atual = (a.get(f) or {}).get("itens", {}), (b.get(f) or {}).get("itens", {})
+        for pid, y in atual.items():
+            x = ant.get(pid)
+            texto_autoria = y.get("autoria") or ""
+            autores = [_politico_senador(ctx, sid, nome) for sid, nome in ctx.senadores_por_nome(texto_autoria)]
+            comum_ = dict(politicos=autores, texto=y["ementa"], fontes=[("Documento (Senado)", y.get("documento"))])
+            pasta = _pasta_do_pedido(y["ementa"])
+            if x is None:
+                saida.append(evento("BR", "nova", y["identificacao"], **comum_, resumo=f"Pedido ao ministério: {pasta}" if pasta else "Pedido a ministro",
+                                    data_do_ato=y.get("dataApresentacao"), relevancia=1))
+            elif y.get("tipoConteudo") != "Informações" and mudou(x.get("deliberacao"), y.get("deliberacao")) and re.search(r"aprovad", y.get("deliberacao") or "", re.I):
+                saida.append(evento("BR", "situacao", y["identificacao"], **comum_, mudanca=[x.get("deliberacao") or "—", y["deliberacao"]],
+                                    resumo="Convocação de ministro aprovada", data_do_ato=y.get("dataDeliberacao"), relevancia=3))
+    return saida
+
+
+def ministros_licencas(ctx: Contexto, antes: str, depois: str) -> list:
+    """Parlamentar que se licenciou para ser ministro ou voltou ao mandato (novos registros no histórico da Câmara ou afastamentos do Senado)."""
+    a = ler_lote(antes, ["dados/ministros/licencas.json"]).get("dados/ministros/licencas.json")
+    b = ler_lote(depois, ["dados/ministros/licencas.json"]).get("dados/ministros/licencas.json")
+    if not a or not b:
+        return []
+    saida = []
+    for did, y in b.get("camara", {}).items():
+        antigos = {(h["data"], h.get("descricao")) for h in a.get("camara", {}).get(did, {}).get("historico", [])}
+        for h in y["historico"]:
+            if (h["data"], h.get("descricao")) in antigos or h.get("situacao") not in ("Licença", "Exercício") or h["data"] < "2023-02-02":
+                continue
+            licenca = h["situacao"] == "Licença"
+            saida.append(evento("BR", "ministro", y["nome"], politicos=[ctx.deputado(int(did))], resumo="Licenciou-se para ser ministro" if licenca else "Voltou ao mandato",
+                                texto=h.get("descricao"), data_do_ato=h["data"], relevancia=3,
+                                fontes=[("Histórico do deputado (API da Câmara)", f"{CAMARA_API}/deputados/{did}/historico")]))
+    for sid, y in b.get("senado", {}).items():
+        antigos = {(x.get("inicio"), x.get("cargo")) for x in a.get("senado", {}).get(sid, {}).get("afastamentos", [])}
+        for x in y["afastamentos"]:
+            if (x.get("inicio"), x.get("cargo")) in antigos or "inistro" not in (x.get("cargo") or ""):
+                continue
+            saida.append(evento("BR", "ministro", y["nome"], politicos=[_politico_senador(ctx, sid, y["nome"])], resumo="Afastou-se do mandato para ser ministro",
+                                texto=x.get("cargo"), data_do_ato=x.get("inicio"), relevancia=3,
+                                fontes=[("Senadores afastados (Dados Abertos do Senado)", f"{SENADO_DADOS}/senador/lista/afastados.json")]))
+    return saida
+
+
+def ministros(ctx: Contexto, antes: str, depois: str) -> list:
+    """Ministros de Estado (dados/ministros/, scripts/coletar_ministros.py): troca na lista do Planalto, requerimentos e seu andamento, licenças."""
+    if not listar(antes, "dados/ministros"):
+        return []   # primeira coleta: tudo seria "novo"
+    hoje, ontem = dia_do_commit(depois) or "", dia_do_commit(antes) or ""
+    return (ministros_planalto(antes, depois) + ministros_camara(ctx, antes, depois, hoje, ontem) + ministros_senado(ctx, antes, depois)
+            + ministros_licencas(ctx, antes, depois))
 
 
 def votos_camara(votos: list) -> str:
@@ -538,7 +667,8 @@ ADMINISTRATIVOS = ("coletadoEm", "vistas", "completaEm")   # campos de controle 
 ROTULOS_ARQUIVO = {"materias": "matérias", "materias_votadas": "matérias votadas", "governo": "projetos do governo", "votacoes": "votações",
                    "deputados": "deputados", "verbas": "verbas", "remuneracao": "remuneração", "presenca": "presença", "diarias": "diárias",
                    "emendas": "emendas", "proposicoes": "proposições", "ligacoes": "ligação de nomes a deputados",
-                   "parcial": "leitura em andamento (parcial)", "presenca_sessoes": "presença em sessões"}
+                   "parcial": "leitura em andamento (parcial)", "presenca_sessoes": "presença em sessões",
+                   "planalto": "lista de ministros", "licencas": "licenças de ministros"}
 
 
 def rotulo_arquivo(caminho: str) -> str:
@@ -639,7 +769,7 @@ def cobertura(ctx: Contexto, antes: str, depois: str, contagem: dict, data: str 
     return dict(sorted(saida.items(), key=lambda kv: ordem_local(kv[0])))
 
 
-COLETORES = (camara, votacoes_camara, senado, votacoes_senado, executivo, estados, capitais, eleitos)
+COLETORES = (camara, votacoes_camara, senado, votacoes_senado, executivo, ministros, estados, capitais, eleitos)
 
 
 # ---------------------------------------------------------------- montagem do dia

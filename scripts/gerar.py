@@ -25,6 +25,7 @@ import gerar_prefeituras
 import gerar_politicos
 import gerar_proposicoes
 import gerar_coautoria
+import gerar_ministros
 from gerar_politicos import ler, salvar
 
 RAIZ = Path(__file__).resolve().parent.parent
@@ -356,7 +357,7 @@ def resumir_presenca(c: Counter) -> dict:
     return {"votacoes": base, **{k: c[k] for k in ("compareceu", "naoCompareceu", "licenca", "missao", "outros") if c[k]}}
 
 
-def gerar_senadores() -> list:
+def gerar_senadores(ministro_de: dict | None = None) -> list:
     """Votos e projetos dos senadores em exercício -> site/dados/senador/<id>.json,
     site/dados/votacoes_senado.json (lista, sem o voto de cada um) e
     site/dados/votacao_senado/<id>.json (uma votação com o voto de cada senador)."""
@@ -425,7 +426,7 @@ def gerar_senadores() -> list:
         desde = primeira.get(sid)  # antes do primeiro voto o senador pode nem estar em exercício
         propostas = [{k: v for k, v in a.items() if v not in (None, "")} for a in autorias.get(sid, [])]
         salvar(SAIDA / "senador" / f"{sid}.json", {
-            "id": sid,
+            "id": sid, **({"ministro": ministro_de[("senado", sid)]} if ("senado", sid) in (ministro_de or {}) else {}),
             "votos": [{"id": v["id"], "voto": votos_por_sen[sid].get(v["id"], "ausente")}
                       for v in resumo if desde and v["data"] >= desde],
             "proposicoes": propostas,
@@ -469,6 +470,9 @@ def main():
         if d:
             deputados[did] = d
     nucleo = identidades.construir(deputados, BRUTO)
+    ministros_atuais = {m["pessoa"] for m in nucleo["ministros"] if not m.get("fim")}
+    ministro_de = {(casa, str(p["fontes"][casa])): p["id"] for p in nucleo["pessoas"] if p["id"] in ministros_atuais
+                   for casa in ("camara", "senado") if p.get("fontes", {}).get(casa)}   # parlamentar licenciado -> pessoa do ministro
 
     # todas as votações do histórico, só as nominais (com votos registrados)
     votacoes = []
@@ -562,7 +566,8 @@ def main():
         da_uf = gastos_por_uf[d["uf"]]
 
         salvar(SAIDA / "deputado" / f"{did}.json", {
-            "id": did, "pessoa": nucleo["chaves"].get(("camara", str(did))), "nome": d["nome"], "nomeCivil": d.get("nomeCivil"),
+            "id": did, "pessoa": nucleo["chaves"].get(("camara", str(did))), **({"ministro": ministro_de[("camara", str(did))]} if ("camara", str(did)) in ministro_de else {}),
+            "nome": d["nome"], "nomeCivil": d.get("nomeCivil"),
             "partido": d["partido"], "uf": d["uf"], "foto": d.get("foto"),
             "email": d.get("email"), "situacao": d.get("situacao"), "gabinete": d.get("gabinete") or None,
             "nascimento": d.get("nascimento"),
@@ -599,7 +604,7 @@ def main():
     resumo_deps.sort(key=lambda x: x["nome"])
     salvar(SAIDA / "deputados.json", resumo_deps)
     salvar(SAIDA / "coautoria.json", coautoria_geral)
-    votacoes_senado = gerar_senadores()
+    votacoes_senado = gerar_senadores(ministro_de)
     for pid, t in (ler(BRUTO / "proposicoes_tramitacoes.json", {}) or {}).items():
         salvar(SAIDA / "tramitacao" / f"{pid}.json", {c: t[c] for c in ("eventos", "relator", "relacionadas") if t.get(c)})
     total = gerar_proposicoes.gerar(SAIDA, deputados, detalhes, autorias, votacoes_projetos, nominais,
@@ -609,7 +614,9 @@ def main():
     forn = nucleo_fornecedores.construir(deputados, BRUTO, nucleo)
     cruzamento = doadores.construir(BRUTO, nucleo, forn)
     nucleo["ligacoes"]["doadores"] = cruzamento["ligacoes"]   # a tabela de ligações é uma só: o cruzamento entra antes de salvá-la
+    ministros = gerar_ministros.construir(BRUTO, nucleo, ler(BRUTO / "senado.json", []) or [], deputados)   # antes de salvar: grava em ligacoes["ministros"]
     identidades.salvar_nucleo(nucleo, SAIDA / "nucleo")
+    gerar_ministros.salvar_ministros(ministros, SAIDA)
     candidaturas.salvar_candidaturas(candidaturas.construir(BRUTO, nucleo), SAIDA)
     mandatos.salvar_mandatos(mandatos.construir(deputados, BRUTO, nucleo), SAIDA)
     nucleo_fornecedores.salvar_fornecedores(forn, SAIDA)

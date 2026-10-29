@@ -295,3 +295,66 @@ def test_cobertura_separa_mudanca_irrelevante_de_so_data_de_coleta(repo, tmp_pat
     commit("campo novo")
     cob = h.dia("2026-01-04", "HEAD~1", "HEAD")["cobertura"]["UF:AC"]
     assert cob["status"] == "irrelevante" and cob["mudancas"] == ["matérias"] and cob["mudou"] is True
+
+
+def test_ministros_troca_pedidos_resposta_prazo_convocacao_e_licenca(repo, tmp_path):
+    def gravar(caminho, obj):
+        arq = tmp_path / caminho
+        arq.parent.mkdir(parents=True, exist_ok=True)
+        arq.write_text(json.dumps(obj), encoding="utf-8")
+
+    def commitar(data):
+        env = {**os.environ, "GIT_COMMITTER_DATE": f"{data}T12:00:00-0300", "GIT_AUTHOR_DATE": f"{data}T12:00:00-0300"}
+        subprocess.run(["git", "add", "-A"], cwd=tmp_path, check=True)
+        subprocess.run(["git", "commit", "-qm", f"Dados atualizados em {data}"], cwd=tmp_path, check=True, env=env)
+
+    def ric(numero, **extra):
+        return {"tipo": "RIC", "numero": numero, "ano": 2026, "ementa": "Solicita informações ao Ministro da Saúde sobre vacinas", "dataApresentacao": "2026-01-01",
+                "autores": [[1, "Fulana"]], "situacao": "Aguardando", **extra}
+
+    planalto = lambda saude: {"atuais": [{"cargo": "Ministro de Estado da Saúde", "nome": saude, "vistoDesde": "2026-01-03"},
+                                         {"cargo": "Ministro de Estado do Turismo", "nome": "T", "vistoDesde": "2026-01-03"}], "anteriores": []}
+    req = {"tipo": "REQ", "numero": 5, "ano": 2026, "ementa": "Convoca o Ministro da Saúde", "dataApresentacao": "2026-01-01", "autores": [[1, "Fulana"]], "situacao": "Aguardando Apreciação"}
+    hist = lambda *itens: {"nome": "Beltrano", "historico": list(itens)}
+    exercicio = {"data": "2023-02-02", "situacao": "Exercício", "descricao": "Entrada - Posse"}
+    gravar("dados/ministros/planalto.json", planalto("A"))
+    gravar("dados/ministros/camara_2026.json", {"itens": {"100": ric(1, remessa="2025-12-20", prazoFim="2026-01-03"), "101": ric(2, remessa="2025-12-20", prazoFim="2026-01-10"), "102": req}})
+    gravar("dados/ministros/senado_2026.json", {"itens": {"900": {"identificacao": "RQS 9/2026", "tipoConteudo": "Convocação de autoridades", "ementa": "Convoca o Ministro da Saúde",
+                                                                  "autoria": "Senador X (PT/BA)", "dataApresentacao": "2026-01-01", "deliberacao": None}}})
+    gravar("dados/ministros/licencas.json", {"camara": {"7": hist(exercicio)}, "senado": {}})
+    commitar("2026-01-03")
+    gravar("dados/ministros/planalto.json", planalto("B"))
+    gravar("dados/ministros/camara_2026.json", {"itens": {
+        "100": ric(1, remessa="2025-12-20", prazoFim="2026-01-03"), "101": ric(2, remessa="2025-12-20", prazoFim="2026-01-10", resposta="2026-01-04"),
+        "102": {**req, "situacao": "Aprovado", "dataStatus": "2026-01-04"}, "103": ric(3, dataApresentacao="2026-01-04")}})
+    gravar("dados/ministros/senado_2026.json", {"itens": {
+        "900": {"identificacao": "RQS 9/2026", "tipoConteudo": "Convocação de autoridades", "ementa": "Convoca o Ministro da Saúde", "autoria": "Senador X (PT/BA)",
+                "dataApresentacao": "2026-01-01", "deliberacao": "Aprovado", "dataDeliberacao": "2026-01-04"},
+        "901": {"identificacao": "RQS 10/2026", "tipoConteudo": "Informações", "ementa": "Informações ao Ministro do Turismo", "autoria": "Senador X (PT/BA)", "dataApresentacao": "2026-01-04"}}})
+    gravar("dados/ministros/licencas.json", {"camara": {"7": hist(exercicio, {"data": "2026-01-04", "situacao": "Licença", "descricao": "Saída - Afastamento sem prazo determinado - Ministro de Estado"})}, "senado": {}})
+    commitar("2026-01-04")
+
+    ev = h.dia("2026-01-04", "HEAD~1", "HEAD")["eventos"]
+    troca, = por(ev, categoria="ministro", titulo="Ministro de Estado da Saúde")
+    assert troca["mudanca"] == ["A", "B"] and troca["resumo"] == "Troca de ministro" and troca["relevancia"] == 3
+    licenca, = por(ev, categoria="ministro", titulo="Beltrano")
+    assert licenca["resumo"] == "Licenciou-se para ser ministro" and licenca["dataDoAto"] == "2026-01-04" and licenca["politicos"][0]["codigo"] == "dep:7"
+    resposta, = por(ev, titulo="RIC 2/2026", categoria="situacao")
+    assert resposta["mudanca"] == ["Sem resposta", "Respondido no prazo"] and "Saúde" in resposta["resumo"]
+    vencido, = por(ev, titulo="RIC 1/2026", categoria="situacao")
+    assert vencido["mudanca"][1] == "Prazo vencido sem resposta" and vencido["dataDoAto"] == "2026-01-03"
+    novo, = por(ev, titulo="RIC 3/2026", categoria="nova")
+    assert novo["relevancia"] == 1 and novo["resumo"] == "Pedido ao ministério: Saúde" and novo["politicos"][0]["codigo"] == "dep:1"
+    convocacao, = por(ev, titulo="REQ 5/2026", categoria="situacao")
+    assert convocacao["relevancia"] == 3 and convocacao["resumo"] == "Convocação ou convite a ministro aprovado"
+    senado_aprovado, = por(ev, titulo="RQS 9/2026", categoria="situacao")
+    assert senado_aprovado["mudanca"] == ["—", "Aprovado"]
+    assert por(ev, titulo="RQS 10/2026", categoria="nova")
+
+
+def test_ministros_primeira_coleta_nao_vira_novidade(repo, tmp_path):
+    (tmp_path / "dados" / "ministros").mkdir(parents=True)
+    (tmp_path / "dados" / "ministros" / "planalto.json").write_text(json.dumps({"atuais": [{"cargo": "Ministro de Estado da Saúde", "nome": "A", "vistoDesde": "2026-01-03"}]}), encoding="utf-8")
+    subprocess.run(["git", "add", "-A"], cwd=tmp_path, check=True)
+    subprocess.run(["git", "commit", "-qm", "Dados atualizados em 2026-01-03"], cwd=tmp_path, check=True)
+    assert not [e for e in h.dia("2026-01-03", "HEAD~1", "HEAD")["eventos"] if e["categoria"] == "ministro"]

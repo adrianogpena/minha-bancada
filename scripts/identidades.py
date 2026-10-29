@@ -30,6 +30,16 @@ Doador de campanha -> fornecedor das cotas: `ligar_doadores(doadores, fornecedor
   cnpj (alta)   os 8 primeiros dígitos do CNPJ do doador (prestação de contas do TSE) são o id `for_<8 dígitos>` do fornecedor
   nome (média)  doador sem CNPJ na fonte (coleta antiga): nome padronizado igual ao de um único fornecedor com CNPJ
 Nome que casa com mais de um fornecedor não liga (`ambiguos`). `scripts/doadores.py` só chama; o resultado vai para `ligacoes.json` (`doadores`).
+
+Ministros de Estado (lista do Planalto, dados/ministros/): `ligar_ministros` liga cada ministro à pessoa do núcleo (`ligacao["planalto"]`):
+  nome (alta)   nome civil igual ao de uma única pessoa que é parlamentar licenciado para ser ministro (dados/ministros/licencas.json)
+  nome (média)  nome civil igual ao de uma única pessoa do núcleo (TSE, Câmara, Senado, Assembleia); com mais de uma, não liga
+Sem par, o ministro ganha pessoa própria (fonte "planalto"). `ligar_requerimentos` liga requerimento -> ministro da pasta
+(`ligacoes["ministros"]["requerimentos"]`, `[pessoa, método, confiança]`); a pasta vem de `ministerios.pastas_do_texto`:
+  nome+pasta (alta)   o nome do ministro aparece na ementa e a pasta é a dele
+  pasta+data (média)  a pasta é a dele e o pedido é de depois do dia em que o parlamentar se licenciou para o cargo
+  pasta+data (baixa)  idem, com o início vindo só do dia em que o nome entrou na lista do Planalto
+`ligar_autoria_senado` liga o texto de autoria dos requerimentos do Senado ao senador (nome+uf, média).
 """
 
 import difflib
@@ -39,6 +49,7 @@ from collections import Counter, defaultdict
 from pathlib import Path
 
 import estaduais_comum as comum
+import ministerios
 from fornecedores import nome_chave
 from gerar_politicos import ler, salvar
 from ids import gerar_id
@@ -163,7 +174,7 @@ class _Registro:
             return self.por_id[pid]
         self.ancoras[pid] = ancora
         p = self.por_id[pid] = {"id": pid, "nome": None, "nascimento": None, "genero": None, "nomes": {},
-                                "tse": [], "camara": None, "senado": None, "estadual": [], "ligacao": {}, "partidoFonte": None}
+                                "tse": [], "camara": None, "senado": None, "estadual": [], "planalto": [], "ligacao": {}, "partidoFonte": None}
         return p
 
 
@@ -518,6 +529,119 @@ def eleito_do_tse(uf: str, nome: str, eleitos: list[dict]) -> dict | None:
     return achados[0] if len(achados) == 1 else None
 
 
+# ---------------------------------------------------------------- ministros de Estado
+
+PARTICULAS = {"de", "da", "do", "das", "dos", "e"}
+SUFIXOS = {"filho", "junior", "jr", "neto", "sobrinho"}
+
+
+def _inicio_licenca(p: dict, licenciados: dict) -> str | None:
+    """Dia em que o parlamentar saiu da Casa para ser ministro: o último afastamento por "Ministro de Estado" da Câmara sem reassunção
+    depois dele; no Senado, o primeiro afastamento cujo cargo é de ministro (as renovações repetem o cargo)."""
+    cam = licenciados.get("camara", {}).get(str(p["camara"])) if p["camara"] else None
+    if cam:
+        inicio = None
+        for h in sorted(cam.get("historico", []), key=lambda h: h["data"]):
+            if h.get("situacao") == "Licença" and "inistro" in (h.get("descricao") or ""):
+                inicio = h["data"]
+            elif h.get("situacao") == "Exercício" and inicio:
+                inicio = None
+        return inicio
+    sen = licenciados.get("senado", {}).get(str(p["senado"])) if p["senado"] else None
+    datas = [a["inicio"] for a in (sen or {}).get("afastamentos", []) if "inistro" in (a.get("cargo") or "") and a.get("inicio")]
+    return min(datas) if datas else None
+
+
+def ligar_ministros(planalto: dict, reg: "_Registro", licenciados: dict, chaves: dict, ambiguos: list, resumo, sem_ligacao) -> list[dict]:
+    """Cada par cargo+nome da lista do Planalto vira {pasta, cargo, nome, pessoa, inicio, inicioFonte, fim?} e a pessoa ganha
+    `ligacao["planalto"]`. O início é o da licença do parlamentar, quando houve; senão o dia em que a coleta viu o nome pela primeira
+    vez (aproximado: o Planalto não publica datas)."""
+    por_nome = defaultdict(set)
+    for pid, p in reg.por_id.items():
+        if p["nome"]:
+            por_nome[norm_nome(p["nome"])].add(pid)
+    saida = []
+    for situacao in ("atuais", "anteriores"):
+        for x in planalto.get(situacao, []):
+            pasta = ministerios.pasta_do_cargo(x["cargo"])
+            nome = x["nome"].strip()
+            chave = norm_nome(nome)
+            if not pasta or not chave:
+                continue
+            ids = por_nome.get(chave, set())
+            if len(ids) == 1:
+                p = reg.por_id[next(iter(ids))]
+                licenciado = _inicio_licenca(p, licenciados)
+                p["ligacao"]["planalto"] = ["nome", "alta" if licenciado else "média"]
+                resumo["planalto"]["nome"] += 1
+            else:
+                if ids:
+                    ambiguos.append({"fonte": "planalto", "id": f"{pasta}|{chave}", "nome": nome, "uf": None, "candidatos": sorted(ids)})
+                sem_ligacao["planalto"] += 1
+                p = reg.obter("planalto", chave)
+                licenciado = None
+            _preencher(p, nome)
+            _guardar_nome(p, nome)
+            if pasta not in p["planalto"]:
+                p["planalto"].append(pasta)
+            chaves[("planalto", pasta, chave)] = p["id"]
+            saida.append({"pasta": pasta, "cargo": x["cargo"], "nome": nome, "pessoa": p["id"],
+                          "inicio": licenciado or x["vistoDesde"], "inicioFonte": "licenca" if licenciado else "planalto",
+                          **({"fim": x["vistoAte"]} if x.get("vistoAte") else {})})
+    return saida
+
+
+def _nome_na_ementa(nome: str, ementa: str) -> bool:
+    """Os dois primeiros nomes ("José Múcio"), ou um deles e o último ("Mauro Vieira" para Mauro Luiz Iecker Vieira), aparecem juntos na ementa."""
+    partes = [t for t in norm_nome(nome).split() if t not in PARTICULAS]
+    while len(partes) > 2 and partes[-1] in SUFIXOS:
+        partes.pop()
+    if len(partes) < 2:
+        return False
+    return f"{partes[0]} {partes[1]}" in ementa or any(f"{a} {partes[-1]}" in ementa for a in partes[:2] if a != partes[-1])
+
+
+def ligar_requerimentos(itens: dict, ministros: list[dict]) -> dict:
+    """`itens`: {id: {ementa, dataApresentacao, pastas}} (pastas de `ministerios.pastas_do_texto`). Devolve {id: [pessoa, método, confiança]}
+    só para os que tiveram ministro; sem ele o requerimento fica com a pasta e sem pessoa."""
+    por_pasta = defaultdict(list)
+    for m in ministros:
+        por_pasta[m["pasta"]].append(m)
+    ligados = {}
+    for rid, it in itens.items():
+        ementa = norm_nome(it.get("ementa"))
+        dia = it.get("dataApresentacao") or ""
+        for pasta in it.get("pastas", [])[:1]:
+            candidatos = por_pasta.get(pasta, [])
+            citado = [m for m in candidatos if _nome_na_ementa(m["nome"], ementa)]
+            if len({m["pessoa"] for m in citado}) == 1:
+                ligados[rid] = [citado[0]["pessoa"], "nome+pasta", "alta"]
+                continue
+            no_cargo = [m for m in candidatos if m["inicio"] <= dia and (not m.get("fim") or dia <= m["fim"])]
+            if len({m["pessoa"] for m in no_cargo}) == 1:
+                ligados[rid] = [no_cargo[0]["pessoa"], "pasta+data", "média" if no_cargo[0]["inicioFonte"] == "licenca" else "baixa"]
+    return ligados
+
+
+def ligar_autoria_senado(autorias, senadores: list[dict]) -> dict:
+    """{texto da autoria: [[id do senador, método, confiança], ...]} para "Senador Fulano (PSD/MS), Senadora Fulana (PT/BA)" e
+    "Líder do PP Fulana (PP/MS)". Quem não casa com um só senador em exercício não entra na lista do texto."""
+    por_nome = defaultdict(set)
+    for s in senadores:
+        for n in (s.get("nome"), s.get("nomeCivil")):
+            if n:
+                por_nome[(norm_nome(n), s["uf"])].add(str(s["id"]))
+    saida = {}
+    for texto in dict.fromkeys(a for a in autorias if isinstance(a, str)):
+        achados = []
+        for nome, uf in re.findall(r"(?:Senador(?:a)?|Líder d[oa] \S+)\s+(.+?)\s*\([^/()]+/([A-Z]{2})\)", texto):
+            ids = por_nome.get((norm_nome(nome), uf), set())
+            if len(ids) == 1:
+                achados.append([next(iter(ids)), "nome+uf", "média"])
+        saida[texto] = achados
+    return saida
+
+
 def gravar_ligacoes(uf: str | None = None, raiz: Path | None = None) -> None:
     """Junta o que `ligar_nomes` decidiu neste processo ao dados/estaduais/<UF>/ligacoes.json, de cada UF, para o cache do CI não perdê-lo:
     {nomes: {nome: [id, método, confiança]}, ambiguos: {nome: [ids]}, semPar: [nomes]}.
@@ -536,7 +660,8 @@ def gravar_ligacoes(uf: str | None = None, raiz: Path | None = None) -> None:
 
 def construir(deputados: dict, bruto: Path) -> dict:
     """Devolve {pessoas, partidos, ligacoes, chaves}. `chaves` liga a fonte à pessoa, em memória:
-    ("tse", ano, sequencial), ("camara", id), ("senado", id) e ("estadual", uf, id) -> id da pessoa."""
+    ("tse", ano, sequencial), ("camara", id), ("senado", id), ("estadual", uf, id) e ("planalto", pasta, nome) -> id da pessoa.
+    `ministros` é a lista do Planalto já ligada (ligar_ministros)."""
     reg = _Registro()
     indice = _IndiceTse(reg.por_id)
     chaves = {}
@@ -641,11 +766,15 @@ def construir(deputados: dict, bruto: Path) -> dict:
                          "ambiguos": tabela.get("ambiguos", {}), "semPar": tabela.get("semPar", [])}
         resumo_registros[uf] = dict(Counter(v[1] for v in tabela.get("nomes", {}).values()))
 
+    # --- Ministros de Estado (lista do Planalto): pessoa do núcleo pelo nome civil
+    ministros = ligar_ministros(ler(bruto / "ministros" / "planalto.json", {}) or {}, reg,
+                                ler(bruto / "ministros" / "licencas.json", {}) or {}, chaves, ambiguos, resumo, sem_ligacao)
+
     pessoas = []
     for pid in sorted(reg.por_id):
         p = reg.por_id[pid]
         tse = sorted(p["tse"], key=lambda t: (t[0], str(t[1])))
-        fontes = {k: v for k, v in (("tse", tse), ("camara", p["camara"]), ("senado", p["senado"]), ("estadual", p["estadual"])) if v}
+        fontes = {k: v for k, v in (("tse", tse), ("camara", p["camara"]), ("senado", p["senado"]), ("estadual", p["estadual"]), ("planalto", p["planalto"])) if v}
         nomes = [v for k, v in p["nomes"].items() if k != norm_nome(p["nome"])]
         atual = p["partidoFonte"] or (tse[-1][3] if tse else None)
         pessoas.append({k: v for k, v in {
@@ -671,6 +800,7 @@ def construir(deputados: dict, bruto: Path) -> dict:
                      "ambiguos": ambiguos, "partidosDesconhecidos": sorted(desconhecidas),
                      "registros": registros, "resumoRegistros": resumo_registros},
         "chaves": chaves,
+        "ministros": ministros,
     }
 
 

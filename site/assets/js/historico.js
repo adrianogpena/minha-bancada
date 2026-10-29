@@ -5,7 +5,7 @@ import { fontes } from "./apis.js";
 
 /* ---------- Histórico diário ---------- */
 /* Lê dados/historico/<dia>.json (scripts/historico.py): eventos do dia com local, políticos e fontes. */
-const CATEGORIAS_HIST = { nova: "Novo", situacao: "Mudou de situação", votacao: "Votação", eleicao: "Eleitos (TSE)", lote: "Em lote" };
+const CATEGORIAS_HIST = { nova: "Novo", situacao: "Mudou de situação", votacao: "Votação", eleicao: "Eleitos (TSE)", ministro: "Ministros", lote: "Em lote" };
 const IMPORTANCIA_HIST = { "": "Tudo", 2: "Projetos e marcos", 3: "Só marcos (votações, aprovações, vetos, eleitos)" };
 const SEM_POLITICO = "Sem político específico (votações e matérias gerais)";
 

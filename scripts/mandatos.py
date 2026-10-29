@@ -9,7 +9,10 @@ do mandato (`gerar_politicos.MANDATOS`), e as listas de quem está em exercício
 sem ter sido eleito (suplente) ganha um mandato próprio. Não acessa a internet; chamado pelo scripts/gerar.py.
 
 Campos:
-  cargo     o do TSE; `CASAS[cargo]` dá a Casa: presidencia, governo_estadual, senado, camara, assembleia, prefeitura ou camara_municipal
+  cargo     o do TSE; `CASAS[cargo]` dá a Casa: presidencia, governo_estadual, senado, camara, assembleia, prefeitura, camara_municipal
+            ou ministerio ("MINISTRO DE ESTADO", da lista do Planalto: `pasta` é a chave de ministerios.PASTAS, `semPrazo` porque o
+            ministro pode ser exonerado a qualquer momento, sem `fim` enquanto está no cargo; o início vem da licença do parlamentar
+            ou do dia em que a coleta viu o nome na lista, e sempre é aproximado)
   condicao  só aparece quando é "suplente" (o que a Casa informa; o TSE só lista eleitos); sem o campo, é titular
   status    atual (no período e, onde há lista da Casa, em exercício), fora_de_exercicio (no período, mas fora da lista da Casa:
             quem assumiu o lugar é o suplente), futuro (eleito, ainda sem posse) ou encerrado
@@ -31,7 +34,7 @@ from ids import gerar_id
 CASAS = {
     "PRESIDENTE": "presidencia", "VICE-PRESIDENTE": "presidencia", "GOVERNADOR": "governo_estadual", "VICE-GOVERNADOR": "governo_estadual",
     "SENADOR": "senado", "DEPUTADO FEDERAL": "camara", "DEPUTADO ESTADUAL": "assembleia", "DEPUTADO DISTRITAL": "assembleia",
-    "PREFEITO": "prefeitura", "VICE-PREFEITO": "prefeitura", "VEREADOR": "camara_municipal",
+    "PREFEITO": "prefeitura", "VICE-PREFEITO": "prefeitura", "VEREADOR": "camara_municipal", "MINISTRO DE ESTADO": "ministerio",
 }
 MUNICIPAIS = {"PREFEITO", "VICE-PREFEITO", "VEREADOR"}
 INICIO_LEGISLATURA = "2023-02-01"
@@ -173,6 +176,16 @@ def construir(deputados: dict, bruto: Path, nucleo: dict, hoje: str | None = Non
                           "suplente" if d.get("titular") is False else "titular")
             confirmadas.add(m["id"])
 
+    # --- Ministros de Estado: sem eleição, sem prazo; fecha quando o nome sai da lista do Planalto
+    for mn in nucleo.get("ministros", []):
+        origem = ("planalto", f"{mn['pasta']}|{identidades.norm_nome(mn['nome'])}")
+        m = novo(origem, mn["pessoa"], "MINISTRO DE ESTADO", mn["inicio"], mn.get("fim"), "BR", eleicao=None, pasta=mn["pasta"],
+                 inicioAproximado=True, fontes={"planalto": mn["pasta"]}, **({} if mn.get("fim") else {"semPrazo": True}))
+        m["status"] = "encerrado" if mn.get("fim") else "atual"
+        m["confirmado"] = True
+        confirmadas.add(m["id"])
+        stats["ministros"] += 1
+
     # --- quem foi eleito, está no período e a Casa não lista: o lugar é de um suplente
     tem_lista = {"camara": bool(deputados), "senado": bool(ler(bruto / "senado.json", []))}
     for m in mandatos:
@@ -191,6 +204,8 @@ def construir(deputados: dict, bruto: Path, nucleo: dict, hoje: str | None = Non
                 m.pop(k, None)
         if not m["mudouPartido"]:
             del m["mudouPartido"]
+        if m["fim"] is None:
+            del m["fim"]
         if m["condicao"] == "titular":     # o padrão não se repete 72 mil vezes
             del m["condicao"]
         if not m.get("fontes"):

@@ -7,6 +7,8 @@ const PAGINAS = {
   camara: ["camara", "paginaCamara"],
   fornecedores: ["fornecedores", "paginaFornecedores"],
   coautoria: ["coautoria", "paginaCoautoria"],
+  ministerios: ["ministros", "paginaMinisterios"],
+  ministro: ["ministros", "paginaMinistro"],
   deputado: ["deputado", "paginaDeputado"],
   votacoes: ["votacoes", "paginaVotacoes"],
   votacao: ["votacoes", "paginaVotacao"],

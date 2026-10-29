@@ -89,8 +89,8 @@ export function abas(alvo, opcoes, aoMudar) {
 
 /* ---------- moldura comum ---------- */
 export function moldura(pagina) {
-  const links = [["index.html", "Políticos", "inicio"], ["camara.html", "Câmara", "camara"], ["proposicoes.html", "Proposições", "proposicoes"], ["votacoes.html", "Votações", "votacoes"], ["historico.html", "Histórico", "historico"], ["informado.html", "Fique informado", "informado"], ["sobre.html", "Sobre os dados", "sobre"]];
-  const atual = { fornecedores: "camara", coautoria: "camara", deputado: "camara", votacao: "votacoes", proposicao: "proposicoes", politico: "inicio", fonte: "sobre" }[pagina] || pagina;
+  const links = [["index.html", "Políticos", "inicio"], ["camara.html", "Câmara", "camara"], ["proposicoes.html", "Proposições", "proposicoes"], ["ministerios.html", "Ministérios", "ministerios"], ["votacoes.html", "Votações", "votacoes"], ["historico.html", "Histórico", "historico"], ["informado.html", "Fique informado", "informado"], ["sobre.html", "Sobre os dados", "sobre"]];
+  const atual = { fornecedores: "camara", coautoria: "camara", deputado: "camara", votacao: "votacoes", proposicao: "proposicoes", politico: "inicio", ministro: "ministerios", fonte: "sobre" }[pagina] || pagina;
   document.body.insertAdjacentHTML("afterbegin", `
     <header class="topo"><div class="recipiente">
       <a class="marca" href="index.html"><span class="marca-icone" aria-hidden="true">${"<i></i>".repeat(9)}</span>Minha Bancada</a>

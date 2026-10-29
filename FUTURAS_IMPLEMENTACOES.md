@@ -73,9 +73,7 @@ Descartado: Wikidata (consulta SPARQL de 2026-10-29 trouxe 6 ministros sem data 
 
 ### 4.1 Fornecedores e doadores
 
-Dados da empresa pela Receita e cruzamento com doadores de campanha já existem. Falta:
-- Rodar `coletar_contas.py` (versão 4) localmente, com os ZIPs de `baixar_tse.py prestacao_contas`, e commitar, para
-  o cruzamento por CNPJ (hoje só por nome nas contas versionadas).
+Dados da empresa pela Receita e cruzamento com doadores de campanha (por CNPJ, contas na versão 4) já existem. Falta:
 - Fora do escopo por ser sensível: cruzar sócio com político ou parente.
 
 ### 4.2 Assembleias e Câmaras Municipais
@@ -86,9 +84,14 @@ Sem padrão nacional; cada Casa publica do seu jeito.
 - **SICONFI / Tesouro Nacional:** já temos a despesa com pessoal do Legislativo de cada UF (RGF) e a despesa total da
   função Legislativa dos estados (DCA, coletada em 2026-10-29). O "custo por parlamentar" das Assembleias já aparece no
   mapa; a DCA das Câmaras Municipais (uma consulta por município, incremental) também, coletada em 2026-10-29.
-- **Querido Diário** (Open Knowledge Brasil, `queridodiario.ok.org.br/api`): diários oficiais municipais com busca
-  por texto; poderia trazer nomeações, leis sancionadas e o subsídio de vereadores em cidades sem SAPL. Ainda não
-  está no `ENDPOINTS.md`.
+- **Querido Diário** (Open Knowledge Brasil): testado em 2026-10-29, **não implementar por ora**. A API mudou para
+  `https://api.queridodiario.org.br` (o domínio antigo redireciona; a rota `/gazettes` responde 405 sem seguir o redirect) e
+  oscila (HTTP 520 e timeout em tentativas seguidas). Só 510 dos 5.570 municípios têm diário coletado (`level` 3, ~9%);
+  o resto é `level` 0 ou 1, sem texto pesquisável. A busca por texto (`/gazettes?querystring="subsídio dos vereadores"&territory_ids=...`)
+  acha a resolução certa (Campinas: R$ 10.070,86 para 2021-2024, resolução 977/2020), mas o valor vem solto em trecho de PDF,
+  sem campo estruturado: extrair exigiria regex por trecho e conferência por cidade, e erro aqui vira dado errado sobre
+  político. Só valeria para as capitais e cidades grandes cobertas, com link do PDF como fonte. Se for feito, registrar
+  o host no `ENDPOINTS.md`.
 - Mesmo nível de detalhe de autoria (principal, coautores, partido, total) para todas as Assembleias: hoje só
   alguns coletores guardam os coautores (`gerar_estaduais.py`); o Senado também ainda não tem partido dos coautores e total.
 

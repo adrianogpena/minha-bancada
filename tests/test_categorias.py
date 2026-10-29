@@ -27,6 +27,8 @@ import categorias
     ("D - MATERIAIS E SERVIÇOS GRÁFICOS, DE CÓPIAS E REPRODUÇÃO DE DOCS", "graficos"),
     ("Imóvel de Apoio à Atividade Parlamentar (aluguel, condomínio, IPTU, água, telefone fixo e/ou móvel, energia elétrica)", "imovel"),
     ("Aquisição ou Locação de Software, serviços postais, assinatura de publicações, TV a cabo ou similar", "material"),
+    ("REFERE-SE AO REEMBOLSO D DESPESAS INDENIZATORIAS CONFORME ATO NORMATIVO 343/2024 SEGURO DE VIDA EM SUBSTITUICAO A NE 006593", "outros"),
+    ("REFERE-SE AO REEMBOLSO DE DESPESAS INDEDENIZATORIAS CONFORME ATO NORMATIVO 343/24 PROGRAMACAO E MANUTENCAO DE SITE", "material"),
     ("Consultoria e assessoria de imprensa", "comunicacao"), ("Assessoria de comunicação", "comunicacao"), ("ASSESSORIA JURÍDICA", "consultoria"),
     ("REEMBOLSOS / Escritório de Apoio - Energia Elétrica", "imovel"), ("REEMBOLSOS / Escritório de Apoio - Internet", "telecom"),
     ("REEMBOLSOS / Escritório de Apoio - Locação de móveis e equipamentos", "material"),

@@ -42,7 +42,7 @@ REGRAS = [
                      "indenizacoes")),
     ("pessoal", ("verba de gabinete", "pessoal de gabinete")),
     ("diarias", ("diaria",)),
-    ("material", ("software", "licenca de uso")),
+    ("material", ("software", "licenca de uso", "manutencao de site", "programacao")),
     ("locomocao", ("locomocao",)),
     ("imovel", ("imovel", "imoveis", "aluguel", "condominio", "iptu", "util.publica", "moradia", "coworking", "espaco compartilhado",
                 "manutencao de bens")),
@@ -59,7 +59,7 @@ REGRAS = [
                    "aereo", "bilhete")),
     ("material", ("material", "expediente", "suprimento", "informatica", "equipamento", "moveis", "almoxarifado", "consumo")),
     ("imovel", ("energia", "agua e esgoto", "agua,", "residuos", "coleta de lixo", "escritorio de apoio", "predial")),
-    ("outros", ("outros", "anulacao de empenho", "rubrica")),
+    ("outros", ("outros", "anulacao de empenho", "rubrica", "seguro de vida")),
 ]
 
 

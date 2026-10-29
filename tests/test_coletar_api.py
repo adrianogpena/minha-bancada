@@ -643,6 +643,10 @@ ROTAS_COMPLEMENTOS = {
          "descricaoStatus": "Posse"}]},
     "/deputados/7/discursos": {"dados": [{"dataHoraInicio": "2026-09-02T11:36", "tipoDiscurso": "PELA ORDEM", "faseEvento": {"titulo": "Ordem do Dia"},
                                           "sumario": "Orientou&nbsp;a bancada.", "urlTexto": None, "urlVideo": "https://v/1", "transcricao": "longa"}]},
+    "/deputados/7/eventos": {"dados": [{"id": 9, "dataHoraInicio": "2026-09-03T10:00", "descricaoTipo": "Audiência Pública Externa",
+                                        "descricao": "Debate  sobre saúde", "orgaos": [{"sigla": "CSAUDE"}, {"sigla": "CCJC"}]},
+                                       {"id": 8, "dataHoraInicio": "2025-05-01T09:00", "descricaoTipo": "Reunião Deliberativa", "descricao": None,
+                                        "orgaos": []}]},
 }
 
 
@@ -655,9 +659,14 @@ def test_coletar_deputado_grava_complementos_da_ficha(dados, monkeypatch):
     assert d["mandatosExternos"] == [{"cargo": "Vereador(a)", "uf": "AP", "municipio": "Macapá", "inicio": "2009", "fim": "2016", "partido": "PMDB"}]
     assert d["historico"] == [{"data": "2023-02-01", "partido": "ABC", "situacao": "Exercício", "condicao": "Titular", "descricao": "Posse"}]
     assert d["discursos"] == [{"data": "2026-09-02", "tipo": "PELA ORDEM", "fase": "Ordem do Dia", "sumario": "Orientou a bancada.", "link": "https://v/1"}]
+    assert d["discursosResumo"] == {"total": 1, "porAno": {"2026": 1}, "porTipo": {"Pela Ordem": 1}, "temas": []}
+    assert d["eventos"]["total"] == 2 and d["eventos"]["porAno"] == {"2026": 1, "2025": 1}
+    assert d["eventos"]["recentes"][0] == {"id": 9, "data": "2026-09-03", "tipo": "Audiência Pública Externa",
+                                           "titulo": "Debate sobre saúde", "orgao": "CSAUDE, CCJC"}
+    assert d["eventos"]["recentes"][1]["orgao"] is None and d["eventos"]["recentes"][1]["titulo"] is None
     assert d["complementosEm"] == dt.date.today().isoformat()
-    discursos = next(p for c, p in chamadas if c == "/deputados/7/discursos")
-    assert discursos["itens"] == coletar.DISCURSOS_RECENTES and discursos["dataInicio"] == coletar.INICIO_LEGISLATURA
+    discursos = [p for c, p in chamadas if c == "/deputados/7/discursos"]
+    assert any(p.get("itens") == coletar.DISCURSOS_RECENTES and p["dataInicio"] == coletar.INICIO_LEGISLATURA for p in discursos)
 
 
 def test_coletar_deputado_complementos_recentes_nao_consultam_de_novo(dados, monkeypatch):

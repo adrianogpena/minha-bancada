@@ -2,7 +2,7 @@
 
 Ideias levantadas e ainda não feitas, em ordem de complexidade. O que já foi implantado está no `CHANGELOG.md`
 (autoria, cota, salário, campanha e patrimônio, perfil das Casas, presença e votações, recursos do senador,
-perfil temático, aposentadoria de ex-senadores, carreira, vida do projeto, rede de coautoria, fornecedores com dados da Receita e cruzamento com
+perfil temático, discursos e eventos, aposentadoria de ex-senadores, carreira, vida do projeto, rede de coautoria, fornecedores com dados da Receita e cruzamento com
 doadores, despesa com pessoal pelo SICONFI, ministros de Estado em sua primeira etapa, coletores de 17 Assembleias).
 
 Ao implementar um endpoint novo, registre-o no `ENDPOINTS.md` e o conjunto no `CHANGELOG.md`.
@@ -13,7 +13,6 @@ Revisado em 2026-10-29 contra o código e o `CHANGELOG.md`.
 | Nível | O que exige | Pacotes |
 |---|---|---|
 | 1 | Acabamentos do que já existe | 1.1 Restos de pacotes feitos |
-| 2 | Uma chamada por deputado, volume grande | 2.1 Discursos e agenda |
 | 3 | Raspagem de HTML ou chave de API | 3.1 Recursos do deputado (portal da Câmara) · 3.2 Emendas e Portal da Transparência · 3.3 Ministros de Estado: o que fica para depois |
 | 4 | Fontes grandes, sem padrão ou cruzamentos sensíveis | 4.1 Fornecedores e doadores · 4.2 Assembleias e Câmaras Municipais · 4.3 Ministros dos tribunais superiores · 4.4 Órgãos de controle |
 
@@ -27,16 +26,6 @@ Revisado em 2026-10-29 contra o código e o `CHANGELOG.md`.
     fidelidade; a presença em reuniões de comissão não tem total para comparar.
 - **Perfil dos eleitos:** a bancada federal já usa a composição de hoje; Assembleias, Senado e Câmaras Municipais seguem com
   os eleitos de 2018/2022/2024 (suplentes que assumiram não entram).
-
-## Nível 2: uma chamada por deputado, volume grande
-
-### 2.1 Discursos e agenda
-
-Hoje a ficha mostra só os 5 discursos mais recentes (`/deputados/{id}/discursos`, sem contagem nem tema).
-- Contagem de discursos por ano e por tipo, e temas (palavras-chave), para comparar deputados.
-- `/deputados/{id}/eventos`: audiências e reuniões de que participou. A presença em sessões e reuniões já vem de
-  outro endpoint; aqui seria a lista (título, data, órgão).
-- O volume cresce rápido: guardar só contagens e os mais recentes, com a releitura escalonada de `coletar_complementos`.
 
 ## Nível 3: raspagem ou chave de API
 

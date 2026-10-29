@@ -60,8 +60,18 @@ export function painelGastos(desp, explicacao) {
 /* Profissões, mandatos fora da Câmara, histórico de partido e situação e últimos discursos (coletar.py: coletar_complementos). */
 function painelTrajetoria(dep) {
   const api = `${CAMARA_API}/deputados/${encodeURIComponent(dep.id)}`;
-  const { profissoes, ocupacoes, mandatosExternos, historico, discursos } = dep;
-  if (!profissoes && !ocupacoes && !mandatosExternos && !historico && !discursos) return "";
+  const { profissoes, ocupacoes, mandatosExternos, historico, discursos, discursosResumo, eventos } = dep;
+  if (!profissoes && !ocupacoes && !mandatosExternos && !historico && !discursos && !discursosResumo && !eventos) return "";
+  const porAno = (m) => Object.entries(m || {}).map(([a, n]) => `${esc(a)}: ${n}`).join(" · ");
+  const resumo = discursosResumo?.total
+    ? `<h3>Discursos na legislatura</h3><p><b>${discursosResumo.total}</b> discursos (${porAno(discursosResumo.porAno)}).</p>
+       ${Object.keys(discursosResumo.porTipo || {}).length ? `<p><b>Por tipo:</b> ${Object.entries(discursosResumo.porTipo).map(([t, n]) => `${esc(t)} (${n})`).join(", ")}.</p>` : ""}
+       ${discursosResumo.temas?.length ? `<p><b>Palavras mais frequentes nos sumários:</b> ${discursosResumo.temas.map(([p, n]) => `${esc(p)} (${n})`).join(", ")}.</p>` : ""}`
+    : "";
+  const agenda = eventos?.total
+    ? `<h3>Audiências e reuniões</h3><p><b>${eventos.total}</b> eventos como participante (${porAno(eventos.porAno)}). Mais recentes:</p>
+       <ul class="lista-simples">${eventos.recentes.map((e) => `<li><span class="quando">${e.data ? data(e.data) : ""}${e.tipo ? `, ${esc(e.tipo.toLowerCase())}` : ""}${e.orgao ? ` (${esc(e.orgao)})` : ""}</span>${e.titulo ? `<br>${esc(e.titulo)}` : ""}${e.id ? `<br><a href="https://www.camara.leg.br/evento-legislativo/${encodeURIComponent(e.id)}" rel="noopener">Ver o evento</a>` : ""}</li>`).join("")}</ul>`
+    : "";
   const periodo = (a, b) => (a && b ? `${esc(a)} a ${esc(b)}` : a ? `desde ${esc(a)}` : b ? `até ${esc(b)}` : "");
   const mudancas = (historico || []).filter((h, i, l) => i === 0 || h.partido !== l[i - 1].partido || h.situacao !== l[i - 1].situacao || h.descricao);
   return `
@@ -70,8 +80,10 @@ function painelTrajetoria(dep) {
     ${ocupacoes?.length ? `<h3>Ocupações anteriores</h3><ul class="lista-simples">${ocupacoes.map((o) => `<li>${esc(o.titulo)}${o.entidade ? ` · ${esc(o.entidade)}` : ""}${o.uf ? `/${esc(o.uf)}` : ""}${periodo(o.inicio, o.fim) ? `<br><span class="quando">${periodo(o.inicio, o.fim)}</span>` : ""}</li>`).join("")}</ul>` : ""}
     ${mandatosExternos?.length ? `<h3>Mandatos fora da Câmara</h3><ul class="lista-simples">${mandatosExternos.map((m) => `<li>${esc(m.cargo)}${m.municipio ? ` em ${esc(m.municipio)}` : ""}${m.uf ? `/${esc(m.uf)}` : ""}<br><span class="quando">${periodo(m.inicio, m.fim)}${m.partido ? `, pelo ${esc(m.partido)}` : ""}</span></li>`).join("")}</ul>` : ""}
     ${mudancas.length ? `<h3>Partido e situação nesta legislatura</h3><ul class="lista-simples">${mudancas.map((h) => `<li><span class="quando">${h.data ? data(h.data) : ""}</span> ${esc([h.partido, h.situacao].filter(Boolean).join(" · "))}${h.descricao ? `<br><span class="quando">${esc(h.descricao)}</span>` : ""}</li>`).join("")}</ul>` : ""}
+    ${resumo}
     ${discursos?.length ? `<h3>Discursos mais recentes</h3><ul class="lista-simples">${discursos.map((d) => `<li><span class="quando">${d.data ? data(d.data) : ""}${d.tipo ? `, ${esc(d.tipo.toLowerCase())}` : ""}${d.fase ? ` (${esc(d.fase)})` : ""}</span>${d.sumario ? `<br>${esc(d.sumario)}` : ""}${urlSegura(d.link) ? `<br><a href="${esc(d.link)}" rel="noopener">Ver o discurso</a>` : ""}</li>`).join("")}</ul>` : ""}
-    ${fontes([["Profissões (API da Câmara)", `${api}/profissoes`], ["Ocupações (API da Câmara)", `${api}/ocupacoes`], ["Mandatos externos (API da Câmara)", `${api}/mandatosExternos`], ["Histórico (API da Câmara)", `${api}/historico`], ["Discursos (API da Câmara)", `${api}/discursos`]])}`;
+    ${agenda}
+    ${fontes([["Eventos (API da Câmara)", `${api}/eventos`], ["Profissões (API da Câmara)", `${api}/profissoes`], ["Ocupações (API da Câmara)", `${api}/ocupacoes`], ["Mandatos externos (API da Câmara)", `${api}/mandatosExternos`], ["Histórico (API da Câmara)", `${api}/historico`], ["Discursos (API da Câmara)", `${api}/discursos`]])}`;
 }
 
 /* Com quem o deputado mais assina projetos (scripts/gerar_coautoria.py). `lista` é dados/deputados.json, para nome e partido dos parceiros. */

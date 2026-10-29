@@ -581,7 +581,7 @@ def main():
             "proposicoes": proposicoes, "autoria": autoria, "coautoria": coautoria_dep.get(str(did)), "relatorias": relatorias.get(str(did), []),
             "temas": resumir_temas(proposicoes), "orgaos": ordenar_orgaos(orgaos.get(str(did), [])),
             "frentes": sorted(d["frentes"], key=lambda f: f["titulo"]) if d.get("frentes") is not None else None,
-            **{k: d[k] for k in ("profissoes", "ocupacoes", "mandatosExternos", "historico", "discursos") if k in d},
+            **{k: d[k] for k in ("profissoes", "ocupacoes", "mandatosExternos", "historico", "discursos", "discursosResumo", "eventos") if k in d},
             "votos": votos, "comportamento": comportamento, "presenca": presenca_do_deputado(did, presenca, medianas),
             "totalVotacoes": total_nominais, "eleicao": eleicoes_deps.get(did), "condicao": d.get("condicaoEleitoral"),
             "despesas": {

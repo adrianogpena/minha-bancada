@@ -270,6 +270,12 @@ def _(ctx):
     return _primeiro_com_dados(ctx, "discursos", itens=2, ordem="DESC", ordenarPor="dataHoraInicio", dataInicio="2023-02-01")
 
 
+@ep("camara_eventos", f"{CAMARA}/deputados/{{id}}/eventos",
+    campos("dados[]", "id", "dataHoraInicio", "descricao", "descricaoTipo") + ["dados[].orgaos[].sigla"])
+def _(ctx):
+    return _primeiro_com_dados(ctx, "eventos", itens=2, ordem="DESC", ordenarPor="dataHoraInicio", dataInicio="2023-02-01")
+
+
 @ep("camara_despesas", f"{CAMARA}/deputados/{{id}}/despesas", campos("dados[]", "mes", "tipoDespesa", "valorLiquido", "nomeFornecedor", "dataDocumento", "urlDocumento"))
 def _(ctx):
     # um deputado com despesas no ano: procura nos primeiros da lista

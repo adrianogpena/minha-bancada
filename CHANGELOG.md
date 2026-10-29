@@ -5,6 +5,10 @@ Regra: toda fonte nova ou mudança de coleta ganha uma entrada aqui, no mesmo co
 Datas dos conjuntos que já existiam vêm do primeiro commit que os trouxe (`git log --diff-filter=A`).
 Todas as coletas rodam sozinhas no GitHub Actions (`.github/workflows/atualizar.yml`, todo dia às 05:00 de Brasília), salvo onde indicado.
 
+## Discursos e eventos do deputado (2026-10-29)
+- **De onde:** API de Dados Abertos da Câmara, `https://dadosabertos.camara.leg.br/api/v2/deputados/<id>/discursos` (agora todos da legislatura, paginados) e `/deputados/<id>/eventos` (`camara_discursos`, `camara_eventos` em `ENDPOINTS.md`).
+- **Como:** `coletar_complementos` guarda por deputado `discursosResumo` (total, por ano, por tipo e as palavras mais frequentes nos sumários) e `eventos` (total, por ano e os 5 mais recentes: tipo, título, órgão, link do portal). Mesma releitura escalonada dos demais complementos (1 + id % 7 dias); cada bloco falha sozinho. Mostrado na aba Trajetória da ficha.
+
 ## Perfil da bancada federal pela composição atual (2026-10-29)
 - **De onde:** sem fonte nova. `perfil_casas/<UF>.json` (`federal`) passa a usar os registros de candidatura de 2022 (TSE, já em `dados/tse/2022/`) dos deputados em exercício, ligados por nome e UF, suplentes que assumiram inclusive; traz `composicao: "atual"` e `emExercicio`. Quem não tem registro ligado fica de fora do perfil.
 

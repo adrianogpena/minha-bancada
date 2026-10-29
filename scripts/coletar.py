@@ -22,6 +22,7 @@ import re
 import sys
 import unicodedata
 import zipfile
+from collections import Counter
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
 
@@ -37,8 +38,16 @@ DADOS = RAIZ / "dados"
 INICIO_LEGISLATURA = "2023-02-01"  # 57ª legislatura
 LEGISLATURA = 57
 ARQUIVOS_CAMARA = "https://dadosabertos.camara.leg.br/arquivos"
-BLOCOS_COMPLEMENTO = ("profissoes", "ocupacoes", "mandatosExternos", "historico", "discursos")
+BLOCOS_COMPLEMENTO = ("profissoes", "ocupacoes", "mandatosExternos", "historico", "discursos", "discursosResumo", "eventos")
 DISCURSOS_RECENTES = 5  # os discursos mais recentes do mandato atual que a ficha mostra
+EVENTOS_RECENTES = 5  # os eventos (audiências e reuniões) mais recentes que a ficha lista
+TEMAS_DISCURSO = 8  # palavras mais frequentes nos sumários dos discursos
+PALAVRAS_VAZIAS = frozenset(
+    "sobre entre contra ainda assim porque quando durante também mesmo todos todas sendo outros outras ações ação "
+    "pelo pela pelos pelas deste desta desse dessa nesta neste essa esse esta este seus suas cujo cuja como mais "
+    "menos tendo havia foram será serão deputado deputada deputados deputadas orador oradora discurso discursos "
+    "registro comentário comentários defesa críticas crítica apoio homenagem congratulações votação projeto "
+    "projetos plenário câmara brasil nacional federal país".split())
 TRABALHADORES_SENADO = 2  # o Senado responde 503 quando apertado
 TRABALHADORES = int(os.environ.get("CAMARA_TRABALHADORES", "10"))  # requisições em paralelo; seja gentil com a API pública (429 e 5xx são repetidos com espera)
 
@@ -199,6 +208,12 @@ def _dia(texto: str | None) -> str | None:
     return (texto or "")[:10] or None
 
 
+def _palavras_tema(sumario: str | None) -> list[str]:
+    """Palavras com 5+ letras do sumário de um discurso, em minúsculas e sem as vazias."""
+    texto = html.unescape(sumario or "").lower()
+    return [p for p in re.findall(r"[a-zà-ú]{5,}", texto) if p not in PALAVRAS_VAZIAS]
+
+
 def coletar_complementos(dep: dict, anterior: dict, hoje: dt.date) -> dict:
     """Profissões, ocupações anteriores, mandatos fora da Câmara, histórico de partido/situação na legislatura e últimos discursos.
     Cada bloco falha sozinho (mantém o que já havia). Só relê quando o anterior tem mais de 1 + id % 7 dias
@@ -237,8 +252,28 @@ def coletar_complementos(dep: dict, anterior: dict, hoje: dt.date) -> dict:
                  "link": x.get("urlTexto") or x.get("urlVideo") or x.get("urlAudio")}
                 for x in r.get("dados", [])]
 
+    def discursos_resumo():
+        lista = get_todos(f"/deputados/{did}/discursos", ordem="DESC", ordenarPor="dataHoraInicio", dataInicio=INICIO_LEGISLATURA)
+        por_ano, por_tipo, palavras = Counter(), Counter(), Counter()
+        for x in lista:
+            por_ano[(x.get("dataHoraInicio") or "")[:4] or "?"] += 1
+            por_tipo[(x.get("tipoDiscurso") or "").strip().title() or "Outros"] += 1
+            palavras.update(set(_palavras_tema(x.get("sumario"))))
+        return {"total": len(lista), "porAno": dict(sorted(por_ano.items(), reverse=True)),
+                "porTipo": dict(por_tipo.most_common()),
+                "temas": [[p, n] for p, n in palavras.most_common(TEMAS_DISCURSO) if n > 1]}
+
+    def eventos():
+        lista = get_todos(f"/deputados/{did}/eventos", ordem="DESC", ordenarPor="dataHoraInicio", dataInicio=INICIO_LEGISLATURA)
+        por_ano = Counter((x.get("dataHoraInicio") or "")[:4] or "?" for x in lista)
+        return {"total": len(lista), "porAno": dict(sorted(por_ano.items(), reverse=True)),
+                "recentes": [{"id": x.get("id"), "data": _dia(x.get("dataHoraInicio")), "tipo": x.get("descricaoTipo"),
+                              "titulo": " ".join(html.unescape(x.get("descricao") or "").split())[:200] or None,
+                              "orgao": ", ".join(o["sigla"] for o in x.get("orgaos") or [] if o.get("sigla")) or None}
+                             for x in lista[:EVENTOS_RECENTES]]}
+
     saida, falhou = {}, 0
-    for nome, f in zip(BLOCOS_COMPLEMENTO, (profissoes, ocupacoes, mandatos_externos, historico, discursos)):
+    for nome, f in zip(BLOCOS_COMPLEMENTO, (profissoes, ocupacoes, mandatos_externos, historico, discursos, discursos_resumo, eventos)):
         try:
             saida[nome] = f()
         except Exception as e:  # complemento da ficha: sem ele o perfil só não mostra o bloco

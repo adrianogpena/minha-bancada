@@ -1,0 +1,235 @@
+{
+ "fonte": "https://dadosabertos.camara.leg.br/api/v2/deputados/{id}/eventos",
+ "capturadoEm": "2026-10-29",
+ "amostra": {
+  "dados": [
+   {
+    "id": 83098,
+    "uri": "https://dadosabertos.camara.leg.br/api/v2/eventos/83098",
+    "dataHoraInicio": "2026-10-27T13:55",
+    "dataHoraFim": "2026-10-27T22:07",
+    "situacao": "Encerrada",
+    "descricaoTipo": "Sessão Deliberativa",
+    "descricao": "Sessão Deliberativa Extraordinária Semipresencial (AM nº 123/2020)",
+    "localExterno": null,
+    "orgaos": [
+     {
+      "id": 180,
+      "uri": "https://dadosabertos.camara.leg.br/api/v2/orgaos/180",
+      "sigla": "PLEN",
+      "nome": "Plenário",
+      "apelido": "Plenário",
+      "codTipoOrgao": 26,
+      "tipoOrgao": "Plenário Virtual",
+      "nomePublicacao": "Plenário",
+      "nomeResumido": "Plenário"
+     }
+    ],
+    "localCamara": {
+     "nome": "Plenário da Câmara dos Deputados",
+     "predio": null,
+     "sala": null,
+     "andar": null
+    },
+    "urlRegistro": "https://www.youtube.com/watch?v=C5pY_Ak2MJM"
+   },
+   {
+    "id": 83066,
+    "uri": "https://dadosabertos.camara.leg.br/api/v2/eventos/83066",
+    "dataHoraInicio": "2026-10-15T10:00",
+    "dataHoraFim": "2026-10-15T15:44",
+    "situacao": "Encerrada",
+    "descricaoTipo": "Sessão Deliberativa",
+    "descricao": "Sessão Deliberativa Extraordinária Semipresencial (AM nº 123/2020)",
+    "localExterno": null,
+    "orgaos": [
+     {
+      "id": 180,
+      "uri": "https://dadosabertos.camara.leg.br/api/v2/orgaos/180",
+      "sigla": "PLEN",
+      "nome": "Plenário",
+      "apelido": "Plenário",
+      "codTipoOrgao": 26,
+      "tipoOrgao": "Plenário Virtual",
+      "nomePublicacao": "Plenário",
+      "nomeResumido": "Plenário"
+     }
+    ],
+    "localCamara": {
+     "nome": "Plenário da Câmara dos Deputados",
+     "predio": null,
+     "sala": null,
+     "andar": null
+    },
+    "urlRegistro": "https://www.youtube.com/watch?v=mjM9YUNIiiU"
+   }
+  ],
+  "links": [
+   {
+    "rel": "self",
+    "href": "https://dadosabertos.camara.leg.br/api/v2/deputados/204379/eventos?itens=2&ordem=DESC&ordenarPor=dataHoraInicio&dataInicio=2023-02-01"
+   },
+   {
+    "rel": "next",
+    "href": "https://dadosabertos.camara.leg.br/api/v2/deputados/204379/eventos?ordem=DESC&ordenarPor=dataHoraInicio&dataInicio=2023-02-01&pagina=2&itens=2"
+   }
+  ]
+ },
+ "forma": {
+  "dados": {
+   "tipos": [
+    "list"
+   ]
+  },
+  "dados[]": {
+   "tipos": [
+    "dict"
+   ]
+  },
+  "dados[].dataHoraFim": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "dados[].dataHoraInicio": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "dados[].descricao": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "dados[].descricaoTipo": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "dados[].id": {
+   "tipos": [
+    "int"
+   ]
+  },
+  "dados[].localCamara": {
+   "tipos": [
+    "dict"
+   ]
+  },
+  "dados[].localCamara.andar": {
+   "tipos": [
+    "null"
+   ]
+  },
+  "dados[].localCamara.nome": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "dados[].localCamara.predio": {
+   "tipos": [
+    "null"
+   ]
+  },
+  "dados[].localCamara.sala": {
+   "tipos": [
+    "null"
+   ]
+  },
+  "dados[].localExterno": {
+   "tipos": [
+    "null"
+   ]
+  },
+  "dados[].orgaos": {
+   "tipos": [
+    "list"
+   ]
+  },
+  "dados[].orgaos[]": {
+   "tipos": [
+    "dict"
+   ]
+  },
+  "dados[].orgaos[].apelido": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "dados[].orgaos[].codTipoOrgao": {
+   "tipos": [
+    "int"
+   ]
+  },
+  "dados[].orgaos[].id": {
+   "tipos": [
+    "int"
+   ]
+  },
+  "dados[].orgaos[].nome": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "dados[].orgaos[].nomePublicacao": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "dados[].orgaos[].nomeResumido": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "dados[].orgaos[].sigla": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "dados[].orgaos[].tipoOrgao": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "dados[].orgaos[].uri": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "dados[].situacao": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "dados[].uri": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "dados[].urlRegistro": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "links": {
+   "tipos": [
+    "list"
+   ]
+  },
+  "links[]": {
+   "tipos": [
+    "dict"
+   ]
+  },
+  "links[].href": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "links[].rel": {
+   "tipos": [
+    "str"
+   ]
+  }
+ }
+}

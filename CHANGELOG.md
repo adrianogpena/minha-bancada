@@ -5,6 +5,9 @@ Regra: toda fonte nova ou mudança de coleta ganha uma entrada aqui, no mesmo co
 Datas dos conjuntos que já existiam vêm do primeiro commit que os trouxe (`git log --diff-filter=A`).
 Todas as coletas rodam sozinhas no GitHub Actions (`.github/workflows/atualizar.yml`, todo dia às 05:00 de Brasília), salvo onde indicado.
 
+## Perfil da bancada federal pela composição atual (2026-10-29)
+- **De onde:** sem fonte nova. `perfil_casas/<UF>.json` (`federal`) passa a usar os registros de candidatura de 2022 (TSE, já em `dados/tse/2022/`) dos deputados em exercício, ligados por nome e UF, suplentes que assumiram inclusive; traz `composicao: "atual"` e `emExercicio`. Quem não tem registro ligado fica de fora do perfil.
+
 ## Aposentadoria parlamentar de ex-senadores (2026-10-29)
 - **De onde:** `https://adm.senado.gov.br/adm-dadosabertos/api/v1/senadores/aposentados` (1 chamada, ~60 ex-senadores: tipo IPC ou PSSC, início e valor mensal). `aposentados-ipc` e `aposentados-pssc` não foram coletados: só repetem o tipo e a data.
 - **Como:** `coletar_aposentados_senado` (`scripts/coletar.py`), no passo do Senado; grava `dados/senado_aposentados.json`, fora do git. A fonte traz só o nome, então `identidades.ligar_aposentados` liga à pessoa do núcleo de mesmo nome completo que já foi candidata ou titular ao Senado (método `nome+cargo`, confiança média; nome repetido não liga). `gerar.py` grava `site/dados/aposentados_senado.json` (por id de pessoa).

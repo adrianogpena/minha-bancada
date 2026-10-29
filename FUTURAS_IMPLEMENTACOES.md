@@ -21,10 +21,12 @@ Revisado em 2026-10-29 contra o código e o `CHANGELOG.md`.
 
 ### 1.1 Restos de pacotes feitos
 
-- **Comissão x tema:** "projetos na área da comissão que ele integra"; a Câmara não publica o tema de cada comissão.
-- **Fidelidade em blocos:** os blocos usam a composição atual e rótulos que não constam em `/blocos` seguem sem
-  fidelidade; a presença em reuniões de comissão não tem total para comparar.
-- **Perfil dos eleitos:** usa os eleitos de 2018/2022/2024, não a composição de hoje (suplentes que assumiram não entram).
+- **Pular até ter os dados** (não implementar enquanto a fonte não existir):
+  - **Comissão x tema:** "projetos na área da comissão que ele integra"; a Câmara não publica o tema de cada comissão.
+  - **Fidelidade em blocos:** os blocos usam a composição atual e rótulos que não constam em `/blocos` seguem sem
+    fidelidade; a presença em reuniões de comissão não tem total para comparar.
+- **Perfil dos eleitos:** a bancada federal já usa a composição de hoje; Assembleias, Senado e Câmaras Municipais seguem com
+  os eleitos de 2018/2022/2024 (suplentes que assumiram não entram).
 
 ## Nível 2: uma chamada por deputado, volume grande
 

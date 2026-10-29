@@ -57,6 +57,25 @@ def test_perfil_eleitos_usa_as_mesmas_posicoes_do_eleitorado():
     assert p["ocupacoes"] == [("Advogado", 2)] and dict(p["raca"]) == {"Parda": 1, "Branca": 1}
 
 
+def test_bancada_federal_atual_inclui_suplente_que_assumiu(tmp_path, monkeypatch):
+    (tmp_path / "tse" / "2022").mkdir(parents=True)
+    registros = [
+        {"cargo": "DEPUTADO FEDERAL", "nome": "ANA SOUZA", "urna": "ANA", "situacao": "eleito", "genero": "FEMININO"},
+        {"cargo": "DEPUTADO FEDERAL", "nome": "BRUNO LIMA", "urna": "BRUNO", "situacao": "suplente", "genero": "MASCULINO"},
+        {"cargo": "DEPUTADO FEDERAL", "nome": "CARLA DIAS", "urna": "CARLA", "situacao": "eleito", "genero": "FEMININO"},
+    ]
+    (tmp_path / "tse" / "2022" / "SP.json").write_text(g.json.dumps(registros), encoding="utf-8")
+    monkeypatch.setattr(g, "BRUTO", tmp_path)
+    deputados = {
+        "1": {"uf": "SP", "nome": "Ana", "nomeCivil": "Ana Souza"},
+        "2": {"uf": "SP", "nome": "Bruno", "nomeCivil": "Bruno Lima"},
+        "3": {"uf": "SP", "nome": "Sem Registro", "nomeCivil": "Sem Registro"},
+        "4": {"uf": "RJ", "nome": "Carla", "nomeCivil": "Carla Dias"},
+    }
+    achados, em_exercicio = g.bancada_federal_atual("SP", deputados)
+    assert [e["nome"] for e in achados] == ["ANA SOUZA", "BRUNO LIMA"] and em_exercicio == 3
+
+
 def test_nivel_instrucao():
     assert g.nivel_instrucao("Ensino fundamental completo") == 3
     assert g.nivel_instrucao("Superior incompleto") == 6

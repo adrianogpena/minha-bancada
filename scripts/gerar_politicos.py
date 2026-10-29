@@ -301,10 +301,30 @@ def perfil_eleitos(eleitos: list, ano: int) -> dict:
             "raca": raca.most_common(), "ocupacoes": ocupacoes.most_common(OCUPACOES_POR_CASA)}
 
 
-def gerar_perfil_casas() -> None:
+def bancada_federal_atual(uf: str, deputados: dict) -> tuple[list, int]:
+    """Registros de 2022 (TSE) dos deputados federais em exercício pela UF, inclusive suplentes que assumiram, ligados por nome.
+    Devolve (registros achados, deputados em exercício); quem não tem registro de 2022 não entra no perfil."""
+    candidatos = defaultdict(list)
+    for e in ler(BRUTO / "tse" / "2022" / f"{uf}.json", []):
+        if e["cargo"] == "DEPUTADO FEDERAL":
+            for n in (e.get("nome"), e.get("urna")):
+                candidatos[chave_nome(n, uf)].append(e)
+    atuais = [d for d in deputados.values() if d["uf"] == uf]
+    achados = []
+    for d in atuais:
+        for n in (d.get("nomeCivil"), d.get("nome")):
+            lista = candidatos.get(chave_nome(n, uf), [])
+            if lista:
+                achados.append(next((e for e in lista if e.get("situacao") == "eleito"), lista[0]))
+                break
+    return achados, len(atuais)
+
+
+def gerar_perfil_casas(deputados: dict | None = None) -> None:
     """site/dados/perfil_casas/<UF>.json: perfil dos eleitos de cada Casa, para comparar com o eleitorado.
-    Chaves: estadual (Assembleia ou Câmara Legislativa, 2022), federal (bancada do estado na Câmara, 2022),
-    senado (senadores eleitos em 2018 e 2022) e municipal (<código TSE do município> -> vereadores de 2024)."""
+    Chaves: estadual (Assembleia ou Câmara Legislativa, 2022), federal (bancada em exercício na Câmara, com os dados da candidatura
+    de 2022; sem `deputados`, os eleitos de 2022), senado (senadores eleitos em 2018 e 2022) e municipal
+    (<código TSE do município> -> vereadores de 2024)."""
     for arq in sorted((BRUTO / "tse" / "2022").glob("[A-Z][A-Z].json")):
         uf = arq.stem
         if uf == "BR":
@@ -315,9 +335,14 @@ def gerar_perfil_casas() -> None:
         vereadores = defaultdict(list)
         for e in eleitos(2024, {"VEREADOR"}):
             vereadores[e["unidadeEleitoral"]].append(e)
+        federal = perfil_eleitos(eleitos(2022, {"DEPUTADO FEDERAL"}), 2022)
+        if deputados:
+            achados, em_exercicio = bancada_federal_atual(uf, deputados)
+            if achados:
+                federal = {**perfil_eleitos(achados, 2022), "composicao": "atual", "emExercicio": em_exercicio}
         casas = {
             "estadual": perfil_eleitos(eleitos(2022, {"DEPUTADO ESTADUAL", "DEPUTADO DISTRITAL"}), 2022),
-            "federal": perfil_eleitos(eleitos(2022, {"DEPUTADO FEDERAL"}), 2022),
+            "federal": federal,
             "senado": perfil_eleitos(eleitos(2018, {"SENADOR"}) + eleitos(2022, {"SENADOR"}), 2022),
             "municipal": {cod: perfil_eleitos(lista, 2024) for cod, lista in vereadores.items()},
         }
@@ -443,7 +468,7 @@ def gerar(deputados: dict, estaduais: dict | None = None, pessoas: dict | None =
         "estados": sorted(p.parent.name for p in (BRUTO / "estaduais").glob("*/deputados.json")),
         "capitais": dict(sorted(capitais.items())),
     })
-    gerar_perfil_casas()
+    gerar_perfil_casas(deputados)
     total = sum(len(v) for v in indice.values())
     print(f"Políticos no índice: {total} em {len(indice)} UFs; {len(fichas)} arquivos de fichas")
     return resumo

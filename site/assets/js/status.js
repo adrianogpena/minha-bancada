@@ -1,7 +1,7 @@
 /* Sobre os dados: lista das APIs e fontes que o site consulta, com o resultado do último checkup (dados/status_apis.json). */
 import { $, esc, carregar, urlSegura } from "./util.js";
 
-const quando = (iso) => (!iso ? "—" : iso.length === 10 ? new Date(iso + "T12:00:00Z").toLocaleDateString("pt-BR", { dateStyle: "short", timeZone: "UTC" }) : new Date(iso).toLocaleString("pt-BR", { dateStyle: "short", timeStyle: "short", timeZoneName: "short" }));
+const quando = (iso) => (!iso ? "—" : iso.length === 10 ? new Date(iso + "T12:00:00Z").toLocaleDateString("pt-BR", { dateStyle: "short", timeZone: "UTC" }) : new Date(iso).toLocaleString("pt-BR", { day: "2-digit", month: "2-digit", year: "2-digit", hour: "2-digit", minute: "2-digit", timeZoneName: "short" }));
 const host = (u) => { try { return new URL(u).hostname; } catch { return u; } };
 
 function linha([nome, a]) {
@@ -10,7 +10,17 @@ function linha([nome, a]) {
   return `<tr><td>${esc(nome)}<br><span class="quando">${esc(a.grupo)}<br>${link}</span></td><td>${estado}${a.ok ? "" : `<br><span class="quando">${esc(a.detalhe)}</span>`}</td><td>${quando(a.verificadoEm)}</td><td>${a.ultimoOk ? quando(a.ultimoOk) : "nunca"}</td></tr>`;
 }
 
+async function cobertura() {
+  try {
+    const c = await carregar("dados/cobertura.json");
+    const capitais = Object.values(c.capitais || {});
+    $("#n-assembleias").textContent = `${c.estados.length} Assembleias: ${c.estados.join(", ")}`;
+    if (capitais.length) $("#n-capitais").textContent = ` (${capitais.join(", ")})`;
+  } catch { /* o texto fixo da página basta */ }
+}
+
 export async function paginaSobre() {
+  cobertura();
   const alvo = $("#status-apis");
   let status;
   try { status = await carregar("dados/status_apis.json"); } catch { alvo.innerHTML = `<p class="quando">O status das APIs ainda não foi gerado.</p>`; return; }

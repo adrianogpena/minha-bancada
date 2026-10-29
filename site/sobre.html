@@ -22,21 +22,30 @@
   <ul>
     <li><b>Vereadores, prefeitos e vices:</b> eleitos em 2024, segundo o <a href="https://dadosabertos.tse.jus.br">Portal de Dados Abertos do TSE</a>.</li>
     <li><b>Governadores, vices, deputados estaduais e distritais, presidente e vice:</b> eleitos em 2022, também pelo TSE.</li>
-    <li><b>Deputados federais em exercício:</b> <a href="https://dadosabertos.camara.leg.br">API de Dados Abertos da Câmara</a>, com votos, projetos e gastos.</li>
-    <li><b>Senadores em exercício:</b> <a href="https://legis.senado.leg.br/dadosabertos">Dados Abertos do Senado</a>, com votos, projetos e gastos da cota (CEAPS).</li>
-    <li><b>Eleitos em 2026:</b> TSE, atualizado a cada dois dias até o resultado final. Inclui quem disputa o 2º turno.</li>
+    <li><b>Eleitos em 2026:</b> TSE, conferido todo dia e baixado de novo quando o TSE troca os arquivos. Inclui o resultado dos dois turnos.</li>
+    <li><b>Deputados federais em exercício:</b> <a href="https://dadosabertos.camara.leg.br">API de Dados Abertos da Câmara</a> (votos, orientação de bancada, projetos, discursos, eventos, comissões e cota parlamentar) e o <a href="https://www.camara.leg.br/deputados">portal da Câmara</a> (pessoal de gabinete, verba de gabinete e presença em plenário).</li>
+    <li><b>Senadores em exercício:</b> <a href="https://legis.senado.leg.br/dadosabertos">Dados Abertos do Senado</a>, com votos, projetos, comissões, mandatos e gastos da cota (CEAPS). A aposentadoria parlamentar de ex-senadores vem do <a href="https://adm.senado.gov.br/adm-dadosabertos">portal administrativo do Senado</a>.</li>
+    <li><b>Deputados estaduais:</b> os dados abertos da Assembleia de cada estado (<span id="n-assembleias">várias Assembleias</span>): projetos, votações, cota parlamentar, diárias e gabinete, conforme o que cada Casa publica. Os estados sem Assembleia coletada ainda têm só os dados do TSE.</li>
+    <li><b>Governadores e prefeitos de capitais:</b> projetos que enviaram às Assembleias e às Câmaras, pelos sistemas SAPL das Casas<span id="n-capitais"></span>.</li>
+    <li><b>Ministros de Estado:</b> <a href="https://www.gov.br/planalto/pt-br/conheca-a-presidencia/ministros-e-ministras">site da Presidência</a>, com os requerimentos de informação da Câmara e do Senado que citam cada ministro e as licenças de parlamentares que assumiram ministérios.</li>
+    <li><b>Fornecedores das cotas:</b> os CNPJs que receberam dinheiro das cotas são cruzados com os dados cadastrais da <a href="https://www.gov.br/receitafederal/pt-br/assuntos/orientacao-tributaria/cadastros/consultas/dados-publicos-cnpj">Receita Federal</a>, com as doações de campanha das prestações de contas do TSE e com as listas de inidôneos do <a href="https://contas.tcu.gov.br">TCU</a>.</li>
+    <li><b>Inabilitados pelo TCU:</b> pessoas proibidas de exercer cargo ou função pública, ligadas ao político pelo nome; só aparecem quando a ligação é segura.</li>
+    <li><b>Finanças públicas:</b> despesa com pessoal e limites da Lei de Responsabilidade Fiscal por Poder, despesa do Legislativo dos estados e custo das Câmaras Municipais, todos do <a href="https://siconfi.tesouro.gov.br">SICONFI</a> (Tesouro Nacional). A lista de municípios e as malhas dos mapas vêm do <a href="https://servicodados.ibge.gov.br/api/docs">IBGE</a>.</li>
   </ul>
-  <p>Um robô consulta essas fontes todo dia e publica o resultado aqui. Nada é editado à mão.</p>
+  <p>Um robô consulta essas fontes todo dia de madrugada e publica o resultado aqui. A página <a href="historico.html">Histórico</a> registra o que mudou em cada coleta, com a fonte. Nada é editado à mão, a não ser a correção de uma ligação por nome, que fica em arquivo público no repositório.</p>
   <h2>Como ler os números</h2>
   <ul>
-    <li><b>Votou</b> é a parcela das votações nominais do Plenário da Câmara no período coletado em que o deputado registrou sim, não ou abstenção. Obstrução e ausência contam como não votou.</li>
-    <li>Um deputado que assumiu o mandato no meio do período, ou esteve de licença, aparece com participação menor sem ter faltado.</li>
-    <li><b>Proposições</b> são as de autoria do deputado desde fevereiro de 2023, incluindo requerimentos assinados em conjunto.</li>
-    <li><b>Gastos</b> são as despesas da cota parlamentar no ano corrente. Para deputados, o valor líquido (CEAP); para senadores, o valor reembolsado pelo Senado (CEAPS).</li>
+    <li><b>Votou</b> é a parcela das votações nominais do Plenário no período coletado em que o parlamentar registrou sim, não ou abstenção. Obstrução e ausência contam como não votou.</li>
+    <li>Um parlamentar que assumiu o mandato no meio do período, ou esteve de licença, aparece com participação menor sem ter faltado.</li>
+    <li><b>Proposições</b> são as de autoria do parlamentar, incluindo requerimentos assinados em conjunto. Na Câmara, desde fevereiro de 2023. Nas Assembleias, o total de autores pode incluir quem não é deputado (como o Executivo ou comissões).</li>
+    <li><b>Gastos</b> são as despesas da cota parlamentar. Para deputados federais, o valor líquido (CEAP); para senadores, o valor reembolsado pelo Senado (CEAPS); nas Assembleias, o que cada Casa publica. Os tipos de despesa são agrupados numa lista única de categorias para dar para comparar entre as Casas; o rótulo original da fonte é mantido.</li>
     <li><b>Bens declarados</b> são os informados pelo próprio candidato ao TSE no registro da candidatura. Não são auditados.</li>
+    <li><b>Quem o elegeu</b> mostra a eleição (ano, data e resultado) ou, para cargos de indicação, quem indicou e quando.</li>
+    <li>Todo dado de político traz o link da fonte. Quando falta, a página avisa "dado sem fonte".</li>
   </ul>
   <h2>Limitações</h2>
-  <p>Para vereadores, prefeitos, governadores e deputados estaduais, o TSE informa quem foi eleito, não quem está no cargo hoje. Quem renunciou, foi cassado ou foi substituído por suplente pode aparecer aqui até essas fontes entrarem no site. Votos e projetos por enquanto existem só para deputados federais.</p>
+  <p>Para vereadores, prefeitos, governadores e deputados estaduais, o TSE informa quem foi eleito, não quem está no cargo hoje. Quem renunciou, foi cassado ou foi substituído por suplente pode aparecer aqui até essas fontes entrarem no site. Votos, projetos e gastos existem para deputados federais, senadores e os deputados das Assembleias já coletadas; para vereadores e para a maioria dos prefeitos ainda não.</p>
+  <p>A ligação entre um registro de uma fonte e uma pessoa por nome tem confiança alta, média ou baixa. Nome ambíguo não é ligado.</p>
   <p>Este é um projeto independente, sem vínculo com órgãos públicos ou partidos. Em caso de dúvida, a fonte oficial prevalece.</p>
   <h2>Estado das APIs</h2>
   <p>O robô testa todas as APIs e fontes abaixo a cada atualização diária. Uma fonte fora do ar atrasa os dados dela, não os das demais.</p>

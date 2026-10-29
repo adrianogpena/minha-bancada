@@ -103,7 +103,7 @@ export function moldura(pagina) {
       Projeto independente, sem vínculo com órgãos públicos ou partidos. Encontrou um erro? Confira sempre a fonte oficial.
     </div></footer>`);
   carregar("dados/meta.json").then((m) => {
-    if (m.atualizadoEm) $("#rodape").insertAdjacentHTML("beforeend", ` Última atualização: ${new Date(m.atualizadoEm).toLocaleString("pt-BR", { dateStyle: "short", timeStyle: "short", timeZoneName: "short" })}.`);
+    if (m.atualizadoEm) $("#rodape").insertAdjacentHTML("beforeend", ` Última atualização: ${new Date(m.atualizadoEm).toLocaleString("pt-BR", { day: "2-digit", month: "2-digit", year: "2-digit", hour: "2-digit", minute: "2-digit", timeZoneName: "short" })}.`);
   }).catch(() => {});
 }
 

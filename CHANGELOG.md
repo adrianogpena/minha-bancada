@@ -5,6 +5,11 @@ Regra: toda fonte nova ou mudança de coleta ganha uma entrada aqui, no mesmo co
 Datas dos conjuntos que já existiam vêm do primeiro commit que os trouxe (`git log --diff-filter=A`).
 Todas as coletas rodam sozinhas no GitHub Actions (`.github/workflows/atualizar.yml`, todo dia às 05:00 de Brasília), salvo onde indicado.
 
+## Recursos do deputado no portal da Câmara (2026-10-29)
+- **De onde:** raspagem da página `https://www.camara.leg.br/deputados/<id>` (HTML; `camara_portal_recursos` em `ENDPOINTS.md`): bloco "Recursos" (pessoal de gabinete, imóvel funcional, auxílio-moradia, viagens em missão oficial, passaporte diplomático) e "Verba de gabinete" (gasto, não utilizado, gasto por mês, limite mensal). 1 página por deputado, 3 em paralelo.
+- **Como:** `coletar_recursos_camara` (`scripts/coletar.py`), no passo `--so deputados`; grava `dados/camara_recursos.json`, fora do git; fonte opcional (página que falha mantém o valor anterior; páginas sem o bloco viram aviso). `gerar.py` põe `recursos` na ficha do deputado; bloco "Recursos e benefícios" na aba Perfil e gastos. Contrato semanal: `camara_portal_recursos` em `contrato_apis.py` (falha se o bloco sumir).
+- **Fora desta etapa:** `pessoal-gabinete` (só a contagem do bloco entra), `presenca-plenario` (já coberta pela API) e `passaporte-diplomatico` (só "Possui" na página principal).
+
 ## Discursos e eventos do deputado (2026-10-29)
 - **De onde:** API de Dados Abertos da Câmara, `https://dadosabertos.camara.leg.br/api/v2/deputados/<id>/discursos` (agora todos da legislatura, paginados) e `/deputados/<id>/eventos` (`camara_discursos`, `camara_eventos` em `ENDPOINTS.md`).
 - **Como:** `coletar_complementos` guarda por deputado `discursosResumo` (total, por ano, por tipo e as palavras mais frequentes nos sumários) e `eventos` (total, por ano e os 5 mais recentes: tipo, título, órgão, link do portal). Mesma releitura escalonada dos demais complementos (1 + id % 7 dias); cada bloco falha sozinho. Mostrado na aba Trajetória da ficha.

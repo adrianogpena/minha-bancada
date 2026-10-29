@@ -397,3 +397,11 @@ def test_projetos_e_resumo_reais_de_sp(monkeypatch):
     autores = amostra("splegis_resumo")["Autores"]
     assert sp.e_do_prefeito("PL", 1, 2026, autores[0]["Chave"]) is True
     assert sp.e_do_prefeito("PL", 1, 2026, -1) is False
+
+
+def test_recursos_camara_real_le_beneficios_e_verba():
+    import coletar
+    r = coletar.ler_recursos_camara(amostra("camara_portal_recursos")["html"])
+    assert r["beneficios"] and all(len(b) == 2 and b[1] for b in r["beneficios"])
+    assert not any(b[0].lower().startswith("salário") for b in r["beneficios"])
+    assert r["verba"]["gasto"] > 0 and r["verba"]["porMes"] and r["atualizadoEm"]

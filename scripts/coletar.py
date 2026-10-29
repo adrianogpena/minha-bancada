@@ -1288,6 +1288,87 @@ def coletar_votacoes(dias_iniciais: int) -> None:
     print(f"Votações no histórico: {total}")
 
 
+PORTAL_CAMARA = "https://www.camara.leg.br/deputados"
+TRABALHADORES_PORTAL = 3  # o portal é HTML, não API: ritmo menor
+MESES_PORTAL = ("JAN", "FEV", "MAR", "ABR", "MAI", "JUN", "JUL", "AGO", "SET", "OUT", "NOV", "DEZ")
+
+
+def _texto_html(trecho: str) -> str:
+    return " ".join(html.unescape(re.sub(r"<[^>]+>", " ", trecho)).split())
+
+
+def _linhas_tabela(pagina: str, id_tabela: str) -> list[list[str]]:
+    m = re.search(rf'<table[^>]*id="{id_tabela}".*?<tbody>(.*?)</tbody>', pagina, re.S)
+    if not m:
+        return []
+    return [[_texto_html(c) for c in re.findall(r"<td[^>]*>(.*?)</td>", tr, re.S)] for tr in re.findall(r"<tr>(.*?)</tr>", m.group(1), re.S)]
+
+
+def ler_recursos_camara(pagina: str) -> dict | None:
+    """Bloco 'Recursos' (benefícios e pessoal de gabinete) e verba de gabinete da página do deputado no portal da Câmara.
+    None se a página não tem o bloco (layout mudou ou deputado sem ficha)."""
+    secao = re.search(r'id="recursos-section">(.*?)</section>', pagina, re.S)
+    if not secao:
+        return None
+    beneficios = []
+    for bloco in re.split(r'<div class="beneficio\b', secao.group(1))[1:]:
+        titulo = re.search(r'class="beneficio__titulo">(.*?)<a\b', bloco, re.S) or re.search(r'class="beneficio__titulo">(.*?)</h3>', bloco, re.S)
+        info = re.search(r'<(a|span)\b[^>]*class="[^"]*beneficio__info\b[^"]*"[^>]*>(.*?)</\1>', bloco, re.S)
+        if titulo and info and _texto_html(titulo.group(1)).lower() != "salário mensal bruto":
+            beneficios.append([_texto_html(titulo.group(1)), _texto_html(info.group(2))])
+    if not beneficios:
+        return None
+    atual = re.search(r"recursos atualizadas em (\d\d)/(\d\d)/(\d{4}) (\d\d:\d\d)", pagina)
+    ano = re.search(r"verba-gabinete\?ano=(\d{4})", pagina)
+    resultado: dict = {"ano": int(ano.group(1)) if ano else dt.date.today().year, "beneficios": beneficios}
+    if atual:
+        resultado["atualizadoEm"] = f"{atual.group(3)}-{atual.group(2)}-{atual.group(1)}T{atual.group(4)}"
+    pizza = {l[0].lower(): comum.valor_br(l[1]) for l in _linhas_tabela(pagina, "percentualgastoverbagabinete") if len(l) >= 2}
+    meses = [[MESES_PORTAL.index(l[0].upper()) + 1, comum.valor_br(l[1])] for l in _linhas_tabela(pagina, "gastomensalverbagabinete")
+             if len(l) >= 2 and l[0].upper() in MESES_PORTAL and comum.valor_br(l[1]) is not None]
+    if pizza.get("gasto") is not None:
+        limite = re.search(r"limite mensal de R\$ ([\d.,]+) para pagar", pagina)
+        resultado["verba"] = {"gasto": pizza["gasto"], "naoUtilizado": pizza.get("não utilizado") or 0, "porMes": meses,
+                              **({"limiteMensal": comum.valor_br(limite.group(1))} if limite else {})}
+    return resultado
+
+
+def coletar_recursos_camara() -> None:
+    """Benefícios (imóvel funcional, auxílio-moradia, viagens, passaporte diplomático), pessoal e verba de gabinete de cada
+    deputado, raspados da página dele no portal da Câmara (não estão na API). Fica em dados/camara_recursos.json
+    (não vai para o git). Fonte opcional: uma página que falha mantém o que já estava guardado."""
+    ids = ler(DADOS / "deputados.json", [])
+    if not ids:
+        raise RuntimeError("lista de deputados vazia; recursos não coletados")
+    arquivo = DADOS / "camara_recursos.json"
+    recursos = ler(arquivo, {}).get("recursos", {})
+
+    def buscar(did) -> tuple[str, dict | None]:
+        r = S.get(f"{PORTAL_CAMARA}/{did}", headers={"Accept": "text/html"}, timeout=60)
+        r.raise_for_status()
+        return str(did), ler_recursos_camara(r.text)
+
+    falhas = sem_bloco = 0
+    with ThreadPoolExecutor(TRABALHADORES_PORTAL) as ex:
+        for f in as_completed([ex.submit(buscar, d) for d in ids]):
+            try:
+                did, item = f.result()
+            except Exception as e:
+                falhas += 1
+                if falhas <= 5:
+                    avisar(f"recursos de deputado (portal): {e}")
+                continue
+            if item:
+                recursos[did] = item
+            else:
+                sem_bloco += 1
+    if sem_bloco:
+        avisar(f"recursos de deputado: {sem_bloco} páginas sem o bloco 'Recursos' (o layout do portal mudou?)")
+    if recursos:
+        salvar(arquivo, {"recursos": recursos})
+    print(f"Recursos de {len(recursos)} deputados (portal), sem bloco: {sem_bloco}, falhas: {falhas}")
+
+
 def main():
     p = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     p.add_argument("--limite", type=int, help="coletar só os N primeiros deputados (teste)")
@@ -1296,6 +1377,10 @@ def main():
     a = p.parse_args()
     if a.so in (None, "deputados"):
         coletar_deputados(a.limite)
+        try:
+            coletar_recursos_camara()
+        except Exception as e:  # raspagem: complemento opcional, não derruba a coleta
+            avisar(f"recursos de deputado (portal): {e}")
     if a.so in (None, "votacoes"):
         coletar_votacoes(a.dias)
     if a.so in (None, "proposicoes"):

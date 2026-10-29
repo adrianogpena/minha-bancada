@@ -851,3 +851,39 @@ def test_aposentados_senado_converte_valor_e_ignora_sem_nome(dados, monkeypatch)
     coletar.coletar_aposentados_senado()
     r = json.loads((dados / "senado_aposentados.json").read_text(encoding="utf-8"))
     assert r["itens"] == [{"nome": "NABOR TELES", "tipo": "EX-SENADOR IPC", "inicio": "1983-02-01", "valor": 30416.22}]
+
+
+def pagina_deputado(gasto="1.000,00"):
+    return f"""<table id="percentualgastoverbagabinete"><tbody><tr><td>Gasto</td><td>{gasto}</td><td>50.00%</td></tr>
+      <tr><td>Não utilizado</td><td>1.000,00</td><td>50.00%</td></tr></tbody></table>
+      <table id="gastomensalverbagabinete"><tbody><tr><td>JAN</td><td>400,00</td><td>20.00%</td></tr><tr><td>MAR</td><td>600,00</td><td>30.00%</td></tr></tbody></table>
+      <a href="x/verba-gabinete?ano=2026">mais</a> limite mensal de R$ 2.000,00 para pagar salários
+      <section id="recursos-section"><div class="beneficio"><h3 class="beneficio__titulo">Salário mensal bruto <a>?</a></h3><a class="beneficio__info">R$ 46.366,19</a></div>
+      <div class="beneficio"><h3 class="beneficio__titulo">Imóvel funcional <a>?</a></h3><span class="beneficio__info beneficio__info--centralizado">
+        Faz uso desde 20/02/2019 </span></div></section>
+      <div class="atualizacao-secao">Informações de recursos atualizadas em 29/10/2026 06:00</div>"""
+
+
+def test_recursos_camara_le_pagina_e_ignora_salario():
+    r = coletar.ler_recursos_camara(pagina_deputado())
+    assert r["beneficios"] == [["Imóvel funcional", "Faz uso desde 20/02/2019"]]
+    assert r["verba"] == {"gasto": 1000.0, "naoUtilizado": 1000.0, "porMes": [[1, 400.0], [3, 600.0]], "limiteMensal": 2000.0}
+    assert r["ano"] == 2026 and r["atualizadoEm"] == "2026-10-29T06:00"
+    assert coletar.ler_recursos_camara("<html>sem bloco</html>") is None
+
+
+def test_coletar_recursos_camara_mantem_anterior_quando_pagina_falha_e_avisa_sem_bloco(dados, monkeypatch):
+    (dados / "deputados.json").write_text(json.dumps([1, 2, 3]), encoding="utf-8")
+    (dados / "camara_recursos.json").write_text(json.dumps({"recursos": {"2": {"ano": 2025, "beneficios": [["Velho", "x"]]}}}), encoding="utf-8")
+
+    class Pagina(Resp):
+        def __init__(self, texto, status=200):
+            super().__init__(texto, status)
+            self.text = texto
+
+    paginas = {"/1": Pagina(pagina_deputado()), "/2": Pagina("", 503), "/3": Pagina("<html></html>")}
+    monkeypatch.setattr(coletar.S, "get", lambda url, **k: paginas[url[url.rindex("/"):]])
+    coletar.coletar_recursos_camara()
+    r = json.loads((dados / "camara_recursos.json").read_text(encoding="utf-8"))["recursos"]
+    assert r["1"]["beneficios"] and r["2"]["beneficios"] == [["Velho", "x"]] and "3" not in r
+    assert any("sem o bloco" in a for a in coletar.AVISOS)

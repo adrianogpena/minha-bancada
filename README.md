@@ -113,6 +113,7 @@ Sem `--limite` a coleta pega todos os deputados em exercício. `--dias` só vale
 | `scripts/gerar_politicos.py` | Junta TSE, Câmara e Senado no índice de todos os políticos (chamado pelo `gerar.py`). |
 | `dados/proposicoes_detalhe.json` | Situação atual de cada projeto (aprovado, arquivado, em tramitação), da API da Câmara. Cada execução consulta até 4000 projetos (`DETALHES_POR_EXECUCAO`), então o cache se completa em alguns dias. |
 | `dados/senado_votacoes/` | Votações nominais do Plenário do Senado, com o voto de cada senador (endpoint `/votacao`). |
+| `dados/camara_recursos.json` | Benefícios (imóvel funcional, auxílio-moradia, viagens, passaporte), pessoal e verba de gabinete de cada deputado, raspados da página dele no portal da Câmara. Fora do git. |
 | `dados/senado_recursos.json` | Recursos e benefícios de cada senador no ano (gastos fora da cota, auxílio-moradia, imóvel funcional, pessoal) e escritórios de apoio, da API administrativa do Senado. Fora do git. |
 | `dados/senado_aposentados.json` | Ex-senadores aposentados (IPC e PSSC): tipo, início e valor mensal, da API administrativa do Senado. Fora do git. |
 | `dados/senado_ceaps.json` | Gastos da cota (CEAPS) do ano corrente, de todos os senadores, da API administrativa do Senado. Fica fora do git: é baixado de novo a cada execução. |

@@ -171,6 +171,25 @@ function painelPresencaDeputado(dep) {
     </section>`;
 }
 
+/* Recursos e verba de gabinete do deputado, raspados do portal da Câmara (coletar.py: coletar_recursos_camara). */
+function painelRecursosDeputado(dep) {
+  const rec = dep.recursos;
+  if (!rec) return "";
+  const v = rec.verba, mes = ["jan", "fev", "mar", "abr", "mai", "jun", "jul", "ago", "set", "out", "nov", "dez"];
+  const total = v ? v.gasto + v.naoUtilizado : 0;
+  const portal = `https://www.camara.leg.br/deputados/${encodeURIComponent(dep.id)}`;
+  return `
+    <h2>Recursos e benefícios em ${rec.ano}</h2>
+    <div class="rolagem"><table class="tabela"><thead><tr><th>Recurso</th><th>Situação</th></tr></thead><tbody>
+      ${rec.beneficios.map(([t, x]) => `<tr><td>${esc(t)}</td><td>${esc(x)}</td></tr>`).join("")}
+    </tbody></table></div>
+    ${v ? `<h3>Verba de gabinete: ${pct(v.gasto, total)} usada no ano</h3>
+      <p>Gastou <b>${reaisCentavos(v.gasto)}</b> de ${reaisCentavos(total)} (não utilizado: ${reaisCentavos(v.naoUtilizado)}).${v.limiteMensal ? ` O limite mensal é de ${reaisCentavos(v.limiteMensal)}, para pagar os secretários parlamentares.` : ""}</p>
+      ${v.porMes.length ? `<p>${v.porMes.map(([m, x]) => `<span class="selo">${mes[m - 1]}: ${reais(x)}</span>`).join(" ")}</p>` : ""}` : ""}
+    ${fontes([["Recursos do deputado (portal da Câmara)", portal], v ? ["Verba de gabinete (portal da Câmara)", `${portal}/verba-gabinete?ano=${rec.ano}`] : null])}
+    ${rec.atualizadoEm ? `<p class="vazio">Informações do portal atualizadas em ${data(rec.atualizadoEm.slice(0, 10), true)}.</p>` : ""}`;
+}
+
 export async function paginaDeputado() {
   const alvo = $("#conteudo");
   const id = param("id");
@@ -190,6 +209,8 @@ export async function paginaDeputado() {
   const painelPerfil = `
     ${painelGastos(desp, "A cota paga despesas do mandato, como passagens, aluguel de escritório e divulgação.")}
     ${fontes([["Cota parlamentar (API da Câmara)", `${CAMARA_API}/deputados/${encodeURIComponent(dep.id)}/despesas?ano=${desp.ano}`], desp.limite ? ["Limite mensal da cota por estado (Câmara)", LIMITE_COTA_URL] : null, ["Portal da Câmara", `https://www.camara.leg.br/deputados/${encodeURIComponent(dep.id)}`]])}
+
+    ${painelRecursosDeputado(dep)}
 
     ${painelTematico(dep)}
 

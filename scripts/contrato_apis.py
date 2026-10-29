@@ -472,6 +472,26 @@ ENDPOINTS.append(Endpoint("planalto_ministros", "https://www.gov.br/planalto/pt-
                           html=_planalto_conferir))
 
 
+def _portal_camara_pagina(ctx):
+    import coletar
+    did = http_json(f"{CAMARA}/deputados", itens=1, ordem="ASC", ordenarPor="nome")["dados"][0]["id"]
+    html = requests.get(f"{coletar.PORTAL_CAMARA}/{did}", headers={"User-Agent": UA, "Accept": "text/html"}, timeout=60).text
+    ini = html.find('<h3 class="gastos__titulo">Verba de gabinete')
+    fim = html.find("</section>", html.find('id="recursos-section"'))
+    return {"html": html[ini:fim + 10] if ini >= 0 and fim >= 0 else html[:0]}
+
+
+def _portal_camara_conferir(registro):
+    import coletar
+    r = coletar.ler_recursos_camara(registro["html"])
+    if not r:
+        return ["página do deputado sem o bloco 'Recursos'"], []
+    return [], [f"página sem {n}" for n, ok in (("verba de gabinete", r.get("verba")), ("data de atualização", r.get("atualizadoEm"))) if not ok]
+
+
+ENDPOINTS.append(Endpoint("camara_portal_recursos", "https://www.camara.leg.br/deputados/{id}", _portal_camara_pagina, html=_portal_camara_conferir))
+
+
 def iterar(obj, chave):
     """Todos os valores da chave em qualquer nível."""
     if isinstance(obj, dict):

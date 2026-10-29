@@ -487,6 +487,7 @@ def main():
     orientacoes = ler(BRUTO / "orientacoes.json", {}) or {}
     votacoes_projetos = ler(BRUTO / "proposicoes_votacoes.json", {}) or {}
     presenca = ler(BRUTO / "presenca_eventos.json", {}) or {}
+    recursos_camara = (ler(BRUTO / "camara_recursos.json", {}) or {}).get("recursos", {})
     medianas = medianas_sessoes(presenca)
     blocos_lista = ler(BRUTO / "blocos.json", []) or []
     blocos = {b: partidos_do_bloco(b, blocos_lista) for b in {b for o in orientacoes.values() for b in o if b.startswith("Bl ")}}
@@ -583,6 +584,7 @@ def main():
             "frentes": sorted(d["frentes"], key=lambda f: f["titulo"]) if d.get("frentes") is not None else None,
             **{k: d[k] for k in ("profissoes", "ocupacoes", "mandatosExternos", "historico", "discursos", "discursosResumo", "eventos") if k in d},
             "votos": votos, "comportamento": comportamento, "presenca": presenca_do_deputado(did, presenca, medianas),
+            **({"recursos": recursos_camara[str(did)]} if str(did) in recursos_camara else {}),
             "totalVotacoes": total_nominais, "eleicao": eleicoes_deps.get(did), "condicao": d.get("condicaoEleitoral"),
             "despesas": {
                 "ano": d["despesas"]["ano"], "total": total_gasto,

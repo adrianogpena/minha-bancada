@@ -3,7 +3,7 @@
 Ideias levantadas e ainda não feitas, em ordem de complexidade. O que já foi implantado está no `CHANGELOG.md`
 (autoria, cota, salário, campanha e patrimônio, perfil das Casas, presença e votações, recursos do senador,
 perfil temático, discursos e eventos, aposentadoria de ex-senadores, carreira, vida do projeto, rede de coautoria, fornecedores com dados da Receita e cruzamento com
-doadores, despesa com pessoal pelo SICONFI, ministros de Estado em sua primeira etapa, coletores de 17 Assembleias).
+doadores, recursos e verba de gabinete do deputado, despesa com pessoal pelo SICONFI, ministros de Estado em sua primeira etapa, coletores de 17 Assembleias).
 
 Ao implementar um endpoint novo, registre-o no `ENDPOINTS.md` e o conjunto no `CHANGELOG.md`.
 Revisado em 2026-10-29 contra o código e o `CHANGELOG.md`.
@@ -13,7 +13,7 @@ Revisado em 2026-10-29 contra o código e o `CHANGELOG.md`.
 | Nível | O que exige | Pacotes |
 |---|---|---|
 | 1 | Acabamentos do que já existe | 1.1 Restos de pacotes feitos |
-| 3 | Raspagem de HTML ou chave de API | 3.1 Recursos do deputado (portal da Câmara) · 3.2 Emendas e Portal da Transparência · 3.3 Ministros de Estado: o que fica para depois |
+| 3 | Raspagem de HTML ou chave de API | 3.1 Recursos do deputado (o que sobra do portal) · 3.2 Emendas e Portal da Transparência · 3.3 Ministros de Estado: o que fica para depois |
 | 4 | Fontes grandes, sem padrão ou cruzamentos sensíveis | 4.1 Fornecedores e doadores · 4.2 Assembleias e Câmaras Municipais · 4.3 Ministros dos tribunais superiores · 4.4 Órgãos de controle |
 
 ## Nível 1: acabamentos
@@ -29,20 +29,19 @@ Revisado em 2026-10-29 contra o código e o `CHANGELOG.md`.
 
 ## Nível 3: raspagem ou chave de API
 
-### 3.1 Recursos do deputado no portal da Câmara
+### 3.1 Recursos do deputado no portal da Câmara: o que fica
 
-Não estão na API v2, só nas páginas do portal (HTML). Uma raspagem por deputado cobre tudo, no mesmo bloco do site
-dos recursos do senador.
+Feito em 2026-10-29: benefícios, contagem de pessoal e verba de gabinete, raspados da página principal do deputado
+(`coletar_recursos_camara`, ver `CHANGELOG.md`). Sobram as páginas de detalhe, também HTML:
 
 | Ideia | Página | O que daria no site |
 |---|---|---|
-| Benefícios | `www.camara.leg.br/deputados/{id}` (bloco "Recursos") | auxílio-moradia, imóvel funcional, viagens em missão oficial, passaporte diplomático |
-| Verba de gabinete | `www.camara.leg.br/deputados/{id}/verba-gabinete?ano={ano}` | quanto do limite mensal para pagar assessores foi usado (o limite passa de R$ 100 mil/mês) |
-| Pessoal de gabinete | `www.camara.leg.br/deputados/{id}/pessoal-gabinete` | quantos assessores e em que cargos; nomes são públicos, mas vale mostrar só a contagem |
+| Pessoal de gabinete | `www.camara.leg.br/deputados/{id}/pessoal-gabinete` | em que cargos estão os assessores; nomes são públicos, mas vale mostrar só a contagem por cargo |
+| Verba de gabinete de anos anteriores | `www.camara.leg.br/deputados/{id}/verba-gabinete?ano={ano}` | evolução do uso do limite ao longo da legislatura (a página principal traz só o ano corrente) |
 | Presença em plenário | `www.camara.leg.br/deputados/{id}/presenca-plenario/{ano}` | ausências justificadas e não justificadas (a presença em sessões já existe pela API; só vale se a página trouxer a justificativa) |
 
 Raspagem é frágil: tratar como fonte opcional (avisar e seguir, como o TSE) e cobrir com um teste de contrato em
-`scripts/contrato_apis.py`.
+`scripts/contrato_apis.py` (como `camara_portal_recursos`).
 
 ### 3.2 Emendas e Portal da Transparência
 

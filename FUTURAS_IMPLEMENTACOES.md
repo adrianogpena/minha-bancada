@@ -64,6 +64,7 @@ requerimento do Senado não é coletada. Levantado em 2026-10-29 e ainda não re
 | Salário, viagens a serviço, cartão corporativo, jetons de conselhos de estatais | API do Portal da Transparência (chave do 3.2) | não medido (falta a chave) | abas de gastos e histórico de viagens; os dados chegam com semanas de atraso |
 | Agenda de compromissos | e-Agendas (CGU) | não medido | só reuniões com empresas e entidades privadas; a agenda inteira vira ruído |
 | Votos em conselhos (CMN, CNPE, Conama) | atas de cada conselho | não medido | costuma sair só a decisão, sem o voto de cada membro |
+| Posse do ministro do Empreendedorismo (Paulo Henrique Rodrigues Pereira) | a definir (Wikipédia desatualizada: ainda mostra Tadeu Alencar) | sem data de posse; hoje vale o dia em que o Planalto passou a listá-lo | completar `scripts/ministros_posse.json` com data e `fonte` |
 | Ministros anteriores (antes da primeira coleta) | DOU | depende da busca do DOU | histórico de cada pasta em `ministerios.html` |
 | Resposta a requerimento do Senado | API do Senado | não coletada | fechar o ciclo pedido-resposta também para RQS |
 

@@ -1,0 +1,261 @@
+[
+ {
+  "pasta": "casa_civil",
+  "nome": "Miriam Belchior",
+  "posse": "2026-04-02",
+  "nomeadoPor": "Luiz Inácio Lula da Silva",
+  "fonte": "https://pt.wikipedia.org/wiki/Lista_de_ministros_da_Casa_Civil_do_Brasil"
+ },
+ {
+  "pasta": "secretaria_geral",
+  "nome": "Guilherme Castro Boulos",
+  "posse": "2025-10-29",
+  "nomeadoPor": "Luiz Inácio Lula da Silva",
+  "fonte": "https://pt.wikipedia.org/wiki/Secretaria-Geral_da_Presid%C3%AAncia_da_Rep%C3%BAblica"
+ },
+ {
+  "pasta": "relacoes_institucionais",
+  "nome": "José Nobre Guimarães",
+  "posse": "2026-04-14",
+  "nomeadoPor": "Luiz Inácio Lula da Silva",
+  "fonte": "https://pt.wikipedia.org/wiki/Secretaria_de_Rela%C3%A7%C3%B5es_Institucionais"
+ },
+ {
+  "pasta": "comunicacao_social",
+  "nome": "Sidônio Palmeira",
+  "posse": "2025-01-14",
+  "nomeadoPor": "Luiz Inácio Lula da Silva",
+  "fonte": "https://pt.wikipedia.org/wiki/Sid%C3%B4nio_Palmeira"
+ },
+ {
+  "pasta": "gsi",
+  "nome": "Marcos Antonio Amaro dos Santos",
+  "posse": "2023-05-04",
+  "nomeadoPor": "Luiz Inácio Lula da Silva",
+  "fonte": "https://pt.wikipedia.org/wiki/Lista_de_ministros_do_Gabinete_de_Seguran%C3%A7a_Institucional_do_Brasil"
+ },
+ {
+  "pasta": "agu",
+  "nome": "Jorge Rodrigo Araújo Messias",
+  "posse": "2023-01-01",
+  "nomeadoPor": "Luiz Inácio Lula da Silva",
+  "fonte": "https://pt.wikipedia.org/wiki/Lista_de_advogados-gerais_da_Uni%C3%A3o_do_Brasil"
+ },
+ {
+  "pasta": "cgu",
+  "nome": "Vinícius Marques de Carvalho",
+  "posse": "2023-01-01",
+  "nomeadoPor": "Luiz Inácio Lula da Silva",
+  "fonte": "https://pt.wikipedia.org/wiki/Vin%C3%ADcius_Marques_de_Carvalho"
+ },
+ {
+  "pasta": "agricultura",
+  "nome": "André Carlos Alves de Paula Filho",
+  "posse": "2026-04-01",
+  "nomeadoPor": "Luiz Inácio Lula da Silva",
+  "fonte": "https://pt.wikipedia.org/wiki/Lista_de_ministros_da_Agricultura_e_Pecu%C3%A1ria_do_Brasil"
+ },
+ {
+  "pasta": "cidades",
+  "nome": "Antonio Vladimir Moura Lima",
+  "posse": "2026-04-02",
+  "nomeadoPor": "Luiz Inácio Lula da Silva",
+  "fonte": "https://pt.wikipedia.org/wiki/Minist%C3%A9rio_das_Cidades"
+ },
+ {
+  "pasta": "ciencia",
+  "nome": "Luciana Barbosa de Oliveira Santos",
+  "posse": "2023-01-01",
+  "nomeadoPor": "Luiz Inácio Lula da Silva",
+  "fonte": "https://pt.wikipedia.org/wiki/Lista_de_ministros_da_Ci%C3%AAncia,_Tecnologia_e_Inova%C3%A7%C3%A3o_do_Brasil"
+ },
+ {
+  "pasta": "comunicacoes",
+  "nome": "Frederico de Siqueira Filho",
+  "posse": "2025-04-24",
+  "nomeadoPor": "Luiz Inácio Lula da Silva",
+  "fonte": "https://pt.wikipedia.org/wiki/Lista_de_ministros_das_Comunica%C3%A7%C3%B5es_do_Brasil"
+ },
+ {
+  "pasta": "cultura",
+  "nome": "Margareth Menezes da Purificação Costa",
+  "posse": "2023-01-01",
+  "nomeadoPor": "Luiz Inácio Lula da Silva",
+  "fonte": "https://pt.wikipedia.org/wiki/Lista_de_ministros_da_Cultura_do_Brasil"
+ },
+ {
+  "pasta": "defesa",
+  "nome": "José Mucio Monteiro Filho",
+  "posse": "2023-01-01",
+  "nomeadoPor": "Luiz Inácio Lula da Silva",
+  "fonte": "https://pt.wikipedia.org/wiki/Lista_de_ministros_da_Defesa_do_Brasil"
+ },
+ {
+  "pasta": "mda",
+  "nome": "Fernanda Machiaveli Morão de Oliveira",
+  "posse": "2026-04-01",
+  "nomeadoPor": "Luiz Inácio Lula da Silva",
+  "fonte": "https://pt.wikipedia.org/wiki/Lista_de_ministros_do_Desenvolvimento_Agr%C3%A1rio_e_Agricultura_Familiar_do_Brasil"
+ },
+ {
+  "pasta": "desenvolvimento_social",
+  "nome": "José Wellington Barroso de Araujo Dias",
+  "posse": "2023-01-01",
+  "nomeadoPor": "Luiz Inácio Lula da Silva",
+  "fonte": "https://pt.wikipedia.org/wiki/Minist%C3%A9rio_do_Desenvolvimento_e_Assist%C3%AAncia_Social,_Fam%C3%ADlia_e_Combate_%C3%A0_Fome"
+ },
+ {
+  "pasta": "mdic",
+  "nome": "Márcio Fernando Elias Rosa",
+  "posse": "2026-04-03",
+  "nomeadoPor": "Luiz Inácio Lula da Silva",
+  "fonte": "https://pt.wikipedia.org/wiki/Lista_de_ministros_do_Desenvolvimento,_Ind%C3%BAstria,_Com%C3%A9rcio_e_Servi%C3%A7os_do_Brasil"
+ },
+ {
+  "pasta": "direitos_humanos",
+  "nome": "Janine Mello dos Santos",
+  "posse": "2026-04-01",
+  "nomeadoPor": "Luiz Inácio Lula da Silva",
+  "fonte": "https://pt.wikipedia.org/wiki/Lista_de_ministros_dos_Direitos_Humanos_e_da_Cidadania_do_Brasil"
+ },
+ {
+  "pasta": "educacao",
+  "nome": "Leonardo Osvaldo Barchini Rosa",
+  "posse": "2026-04-02",
+  "nomeadoPor": "Luiz Inácio Lula da Silva",
+  "fonte": "https://pt.wikipedia.org/wiki/Lista_de_ministros_da_Educa%C3%A7%C3%A3o_do_Brasil"
+ },
+ {
+  "pasta": "esporte",
+  "nome": "Paulo Henrique Perna Cordeiro",
+  "posse": "2026-04-01",
+  "nomeadoPor": "Luiz Inácio Lula da Silva",
+  "fonte": "https://pt.wikipedia.org/wiki/Lista_de_ministros_do_Esporte_do_Brasil"
+ },
+ {
+  "pasta": "fazenda",
+  "nome": "Dario Carnevalli Durigan",
+  "posse": "2026-03-19",
+  "nomeadoPor": "Luiz Inácio Lula da Silva",
+  "fonte": "https://pt.wikipedia.org/wiki/Lista_de_ministros_da_Fazenda_do_Brasil"
+ },
+ {
+  "pasta": "gestao",
+  "nome": "Esther Dweck",
+  "posse": "2023-01-01",
+  "nomeadoPor": "Luiz Inácio Lula da Silva",
+  "fonte": "https://pt.wikipedia.org/wiki/Minist%C3%A9rio_da_Gest%C3%A3o_e_da_Inova%C3%A7%C3%A3o_em_Servi%C3%A7os_P%C3%BAblicos"
+ },
+ {
+  "pasta": "igualdade_racial",
+  "nome": "Rachel Barros de Oliveira",
+  "posse": "2026-04-01",
+  "nomeadoPor": "Luiz Inácio Lula da Silva",
+  "fonte": "https://pt.wikipedia.org/wiki/Minist%C3%A9rio_da_Igualdade_Racial"
+ },
+ {
+  "pasta": "integracao",
+  "nome": "Antônio Waldez Góes da Silva",
+  "posse": "2023-01-01",
+  "nomeadoPor": "Luiz Inácio Lula da Silva",
+  "fonte": "https://pt.wikipedia.org/wiki/Lista_de_ministros_da_Integra%C3%A7%C3%A3o_e_do_Desenvolvimento_Regional_do_Brasil"
+ },
+ {
+  "pasta": "justica",
+  "nome": "Wellington César Lima e Silva",
+  "posse": "2026-01-15",
+  "nomeadoPor": "Luiz Inácio Lula da Silva",
+  "fonte": "https://pt.wikipedia.org/wiki/Lista_de_ministros_da_Justi%C3%A7a_e_Seguran%C3%A7a_P%C3%BAblica_do_Brasil"
+ },
+ {
+  "pasta": "meio_ambiente",
+  "nome": "João Paulo Ribeiro Capobianco",
+  "posse": "2026-04-01",
+  "nomeadoPor": "Luiz Inácio Lula da Silva",
+  "fonte": "https://pt.wikipedia.org/wiki/Lista_de_ministros_do_Meio_Ambiente_e_Mudan%C3%A7a_do_Clima_do_Brasil"
+ },
+ {
+  "pasta": "minas_energia",
+  "nome": "Alexandre Silveira de Oliveira",
+  "posse": "2023-01-01",
+  "nomeadoPor": "Luiz Inácio Lula da Silva",
+  "fonte": "https://pt.wikipedia.org/wiki/Lista_de_ministros_de_Minas_e_Energia_do_Brasil"
+ },
+ {
+  "pasta": "mulheres",
+  "nome": "Márcia Helena Carvalho Lopes",
+  "posse": "2025-05-05",
+  "nomeadoPor": "Luiz Inácio Lula da Silva",
+  "fonte": "https://pt.wikipedia.org/wiki/Minist%C3%A9rio_das_Mulheres"
+ },
+ {
+  "pasta": "pesca",
+  "nome": "Rivetla Edipo Araujo Cruz",
+  "posse": "2026-04-01",
+  "nomeadoPor": "Luiz Inácio Lula da Silva",
+  "fonte": "https://pt.wikipedia.org/wiki/Minist%C3%A9rio_da_Pesca_e_Aquicultura"
+ },
+ {
+  "pasta": "planejamento",
+  "nome": "Bruno Moretti",
+  "posse": "2026-04-01",
+  "nomeadoPor": "Luiz Inácio Lula da Silva",
+  "fonte": "https://pt.wikipedia.org/wiki/Lista_de_ministros_do_Planejamento_e_Or%C3%A7amento_do_Brasil"
+ },
+ {
+  "pasta": "portos",
+  "nome": "Tomé Monteiro da Franca",
+  "posse": "2026-04-01",
+  "nomeadoPor": "Luiz Inácio Lula da Silva",
+  "fonte": "https://pt.wikipedia.org/wiki/Minist%C3%A9rio_de_Portos_e_Aeroportos"
+ },
+ {
+  "pasta": "povos_indigenas",
+  "nome": "Luiz Henrique Eloy Amado",
+  "posse": "2026-03-31",
+  "nomeadoPor": "Luiz Inácio Lula da Silva",
+  "fonte": "https://pt.wikipedia.org/wiki/Lista_de_ministros_dos_Povos_Ind%C3%ADgenas_do_Brasil"
+ },
+ {
+  "pasta": "previdencia",
+  "nome": "Wolney Queiroz Maciel",
+  "posse": "2025-05-02",
+  "nomeadoPor": "Luiz Inácio Lula da Silva",
+  "fonte": "https://pt.wikipedia.org/wiki/Lista_de_ministros_da_Previd%C3%AAncia_Social_do_Brasil"
+ },
+ {
+  "pasta": "relacoes_exteriores",
+  "nome": "Mauro Luiz Iecker Vieira",
+  "posse": "2023-01-01",
+  "nomeadoPor": "Luiz Inácio Lula da Silva",
+  "fonte": "https://pt.wikipedia.org/wiki/Lista_de_ministros_das_Rela%C3%A7%C3%B5es_Exteriores_do_Brasil"
+ },
+ {
+  "pasta": "saude",
+  "nome": "Alexandre Rocha Santos Padilha",
+  "posse": "2025-03-10",
+  "nomeadoPor": "Luiz Inácio Lula da Silva",
+  "fonte": "https://pt.wikipedia.org/wiki/Lista_de_ministros_da_Sa%C3%BAde_do_Brasil"
+ },
+ {
+  "pasta": "trabalho",
+  "nome": "Luiz Marinho",
+  "posse": "2023-01-01",
+  "nomeadoPor": "Luiz Inácio Lula da Silva",
+  "fonte": "https://pt.wikipedia.org/wiki/Lista_de_ministros_do_Trabalho_e_Emprego_do_Brasil"
+ },
+ {
+  "pasta": "transportes",
+  "nome": "George Santoro",
+  "posse": "2026-04-01",
+  "nomeadoPor": "Luiz Inácio Lula da Silva",
+  "fonte": "https://pt.wikipedia.org/wiki/Lista_de_ministros_dos_Transportes_do_Brasil"
+ },
+ {
+  "pasta": "turismo",
+  "nome": "Gustavo Costa Feliciano",
+  "posse": "2025-12-23",
+  "nomeadoPor": "Luiz Inácio Lula da Silva",
+  "fonte": "https://pt.wikipedia.org/wiki/Lista_de_ministros_do_Turismo_do_Brasil"
+ }
+]

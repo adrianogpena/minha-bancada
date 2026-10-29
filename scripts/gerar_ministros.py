@@ -2,10 +2,10 @@
 Ministros de Estado para o site, a partir de dados/ministros/ (coletar_ministros.py). Sem internet; chamado por gerar.py.
 
   site/dados/ministerios.json           [{pasta, nome, ministro: {pessoa, nome, inicio}|None, total, informacao, convocacao, respondidos}]
-  site/dados/ministerio/<pasta>.json    {pasta, nome, ministros: [{pessoa, nome, cargo, inicio, inicioFonte, fim?, atual, requerimentos: [id]}],
+  site/dados/ministerio/<pasta>.json    {pasta, nome, ministros: [{pessoa, nome, cargo, inicio, inicioFonte, nomeadoPor?, inicioUrl?, fim?, atual, requerimentos: [id]}],
                                          requerimentos: [...]}   cada requerimento aparece só na pasta em que a ementa o cita primeiro
   site/dados/ministros_autores.json     {id do deputado: nome} dos autores que não estão em deputados.json (já saíram da Câmara)
-  site/dados/ministro/<pessoa>.json     {pessoa, nome, cargos: [{pasta, nome, cargo, inicio, inicioFonte, fim?, atual, requerimentos: [id]}],
+  site/dados/ministro/<pessoa>.json     {pessoa, nome, cargos: [{pasta, nome, cargo, inicio, inicioFonte, nomeadoPor?, inicioUrl?, fim?, atual, requerimentos: [id]}],
                                          parlamentar: {casa, id, inicio}|None}   os pedidos em si estão em ministerio/<pasta>.json
 
 Requerimento: {id, fonte: camara|senado, idFonte, tipo, natureza: informacao|convocacao|convite, numero, ano, ementa, data, situacao,
@@ -97,6 +97,7 @@ def construir(bruto: Path, nucleo: dict, senadores: list[dict], deputados: dict 
     for m in ministros:
         cargos[m["pasta"]].append({
             "pessoa": m["pessoa"], "nome": m["nome"], "cargo": m["cargo"], "inicio": m["inicio"], "inicioFonte": m["inicioFonte"],
+            **{k: m[k] for k in ("nomeadoPor", "inicioUrl") if m.get(k)},
             **({"fim": m["fim"]} if m.get("fim") else {}), "atual": not m.get("fim"),
             "requerimentos": sorted(por_ministro.get((m["pessoa"], m["pasta"]), []))})
 

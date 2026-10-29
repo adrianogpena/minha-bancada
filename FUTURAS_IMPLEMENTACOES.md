@@ -52,7 +52,7 @@ Actions, libera tudo abaixo. Hoje só há emendas das Assembleias da BA, CE e MS
 
 Já existem o coletor da lista do Planalto, requerimentos de informação, convocações e licenças, a ligação às
 pessoas, as páginas `ministerios.html` e `ministro.html` e os eventos no histórico. Limites atuais: o Planalto não
-publica a data da posse (o início vem da licença do parlamentar ou do dia em que a coleta viu o nome) e a resposta a
+publica a data da posse (o início vem da Wikipédia, anotada à mão em `scripts/ministros_posse.json` com o presidente que nomeou; sem ela, da licença do parlamentar ou do dia em que a coleta viu o nome) e a resposta a
 requerimento do Senado não é coletada. Levantado em 2026-10-29 e ainda não refeito:
 
 | Ideia | Fonte | Situação em 2026-10-29 | O que daria no site |

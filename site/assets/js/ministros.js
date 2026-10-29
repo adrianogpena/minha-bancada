@@ -1,5 +1,5 @@
 /* Ministros de Estado e ministérios (dados/ministerios.json, dados/ministerio/<pasta>.json, dados/ministro/<pessoa>.json; scripts/gerar_ministros.py). */
-import { $, esc, data, param, carregar, numeroBr, pct } from "./util.js";
+import { $, esc, data, param, carregar, numeroBr, pct, urlSegura } from "./util.js";
 import { erro, listaPaginada, abas, ligarAbas, foto, itemFicha } from "./comum.js";
 import { fontes, CAMARA_API, SENADO_API, linkTramitacao } from "./apis.js";
 import { linkCF, semFonte } from "./ficha.js";
@@ -91,8 +91,11 @@ async function contexto() {
 const nomeCargo = (c) => c.cargo.replace(/^Ministr[oa] de Estado\s*/i, "Ministro de Estado ").trim();
 const semPrazo = `Sem prazo: pode ser exonerado a qualquer momento <span class="fonte-link"><span class="rotulo-fonte">Fonte</span> <a href="${linkCF(84)}" rel="noopener">Constituição Federal, art. 84, I</a></span>`;
 
-/* Início do cargo: o da licença do parlamentar, quando houve, ou o dia em que a coleta viu o nome na lista do Planalto. */
+const fonteWikipedia = (c) => `<span class="fonte-link"><span class="rotulo-fonte">Fonte</span> ${urlSegura(c.inicioUrl) ? `<a href="${esc(c.inicioUrl)}" rel="noopener">Wikipédia</a>` : "Wikipédia"}</span>`;
+
+/* Início do cargo: a posse (Wikipédia), quando consta; senão o da licença do parlamentar ou o dia em que a coleta viu o nome na lista do Planalto. */
 function textoInicio(c, parlamentar) {
+  if (c.inicioFonte === "wikipedia") return `${esc(data(c.inicio, true))} (data da posse) ${fonteWikipedia(c)}`;
   if (c.inicioFonte === "licenca") {
     const api = parlamentar?.casa === "senado" ? `${SENADO_API}/senador/lista/afastados.json` : `${CAMARA_API}/deputados/${encodeURIComponent(parlamentar?.id || "")}/historico`;
     return `${esc(data(c.inicio, true))} (aproximada: dia em que se licenciou do mandato) <span class="fonte-link"><span class="rotulo-fonte">Fonte</span> <a href="${esc(api)}" rel="noopener">${parlamentar?.casa === "senado" ? "afastamentos no Senado" : "histórico na Câmara"}</a></span>`;
@@ -124,6 +127,7 @@ export async function paginaMinistro() {
     <dt>${c.atual ? "Cargo" : "Cargo anterior"}</dt><dd>${esc(nomeCargo(c))} <span class="fonte-link"><span class="rotulo-fonte">Fonte</span> <a href="${PLANALTO}" rel="noopener">Ministros e Ministras (Planalto)</a></span><br>
       <a href="ministerios.html?pasta=${encodeURIComponent(c.pasta)}">Ver o ministério e os pedidos feitos à pasta</a></dd>
     ${itemFicha(["No cargo desde", textoInicio(c, parl), true])}
+    ${c.nomeadoPor ? itemFicha(["Nomeado por", `${esc(c.nomeadoPor)}, presidente na data da posse ${fonteWikipedia(c)}`, true]) : ""}
     ${itemFicha(["No cargo até", c.atual ? semPrazo : `${esc(data(c.fim, true))} (último dia em que o nome constava na lista do Planalto) <span class="fonte-link"><span class="rotulo-fonte">Fonte</span> <a href="${PLANALTO}" rel="noopener">Ministros e Ministras (Planalto)</a></span>`, true])}`).join("");
 
   const painelPerfil = `<h2>Ficha</h2>
@@ -134,8 +138,8 @@ export async function paginaMinistro() {
 
   const painelEleicao = `<section class="painel"><div class="painel-titulo"><h2>Quem o elegeu?</h2></div>
     <p>${esc(m.nome)} não foi eleito para este cargo. Ministro de Estado é <b>indicado e nomeado pelo Presidente da República</b>, que também pode exonerá-lo.</p>
-    ${m.cargos.map((c) => `<p>${esc(nomeCargo(c))}: ${c.inicioFonte === "licenca" ? `licenciou-se do mandato em ${esc(data(c.inicio, true))}` : `consta na lista do Planalto desde ${esc(data(c.inicio, true))}`}. ${semFonte("data oficial da nomeação, publicada no Diário Oficial da União")}</p>`).join("")}
-    ${fontes([["Constituição Federal, art. 84, I", linkCF(84)], ["Ministros e Ministras (Planalto)", PLANALTO]])}</section>`;
+    ${m.cargos.map((c) => `<p>${esc(nomeCargo(c))}: ${c.inicioFonte === "wikipedia" ? `tomou posse em ${esc(data(c.inicio, true))}, nomeado por ${esc(c.nomeadoPor)}` : c.inicioFonte === "licenca" ? `licenciou-se do mandato em ${esc(data(c.inicio, true))}` : `consta na lista do Planalto desde ${esc(data(c.inicio, true))}`}. ${semFonte("data oficial da nomeação, publicada no Diário Oficial da União")}</p>`).join("")}
+    ${fontes([["Constituição Federal, art. 84, I", linkCF(84)], ["Ministros e Ministras (Planalto)", PLANALTO], ...(m.cargos.some((c) => c.inicioFonte === "wikipedia") ? [["Wikipédia (posse e nomeação)", "https://pt.wikipedia.org/wiki/Gabinete_do_Brasil"]] : [])])}</section>`;
 
   const painelContas = `<section class="painel"><div class="painel-titulo"><h2>Prestação de contas</h2></div>
     <p>Pedidos de informação, convocações e convites do Congresso ligados a ${esc(m.nome)}. Só entram aqui os pedidos que citam o nome ou foram feitos depois ${m.cargos.length === 1 ? "do início no cargo" : "do início de cada cargo"}; como o Planalto não publica a data da posse, os pedidos anteriores à pasta ficam na página do ministério.</p>
@@ -190,7 +194,7 @@ async function paginaMinisterio(alvo, pasta) {
     <section class="abertura"><h1>${esc(p.nome)}</h1><p><a href="ministerios.html">Todos os ministérios</a></p></section>
     <h2>Ministros</h2>
     ${p.ministros.length ? `<ul class="lista-simples">${p.ministros.map((m) => `<li><a href="ministro.html?id=${encodeURIComponent(m.pessoa)}">${esc(m.nome)}</a>
-      <br><span class="quando">${m.atual ? "No cargo" : "Saiu da lista do Planalto"}${m.inicioFonte === "licenca" ? `, desde ${esc(data(m.inicio, true))} (dia da licença do mandato)` : `, na lista do Planalto desde ${esc(data(m.inicio, true))} (o Planalto não publica a data da posse)`}${m.fim ? ` até ${esc(data(m.fim, true))}` : ""}</span></li>`).join("")}</ul>`
+      <br><span class="quando">${m.atual ? "No cargo" : "Saiu da lista do Planalto"}${m.inicioFonte === "wikipedia" ? `, desde ${esc(data(m.inicio, true))} (posse; nomeado por ${esc(m.nomeadoPor)})` : m.inicioFonte === "licenca" ? `, desde ${esc(data(m.inicio, true))} (dia da licença do mandato)` : `, na lista do Planalto desde ${esc(data(m.inicio, true))} (o Planalto não publica a data da posse)`}${m.fim ? ` até ${esc(data(m.fim, true))}` : ""}</span></li>`).join("")}</ul>`
       : `<p class="vazio">Nenhum ministro desta pasta na lista atual do Planalto.</p>`}
     ${fontes([["Ministros e Ministras (Planalto)", PLANALTO]])}
     <h2>Pedidos do Congresso à pasta</h2>

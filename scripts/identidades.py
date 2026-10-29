@@ -232,6 +232,7 @@ class _IndiceTse:
 
 # ---------------------------------------------------------------- nome em registro -> deputado da Assembleia
 
+POSSES = {(x["pasta"], x["nome"]): x for x in ler(Path(__file__).with_name("ministros_posse.json"), []) or []}   # posse e quem nomeou (Wikipédia), por pasta e nome do Planalto
 MANUAIS = ler(Path(__file__).with_name("ligacoes_manuais.json"), {}) or {}   # {uf: {nome da fonte, como em `chave_manual`: nome do deputado}}
 CAMPOS_NOME = ("nome", "nomeCivil")
 _LOG: dict = defaultdict(lambda: {"nomes": {}, "ambiguos": {}, "semPar": set()})   # uf -> o que `ligar_nomes` decidiu neste processo
@@ -557,7 +558,8 @@ def _inicio_licenca(p: dict, licenciados: dict) -> str | None:
 def ligar_ministros(planalto: dict, reg: "_Registro", licenciados: dict, chaves: dict, ambiguos: list, resumo, sem_ligacao) -> list[dict]:
     """Cada par cargo+nome da lista do Planalto vira {pasta, cargo, nome, pessoa, inicio, inicioFonte, fim?} e a pessoa ganha
     `ligacao["planalto"]`. O início é o da licença do parlamentar, quando houve; senão o dia em que a coleta viu o nome pela primeira
-    vez (aproximado: o Planalto não publica datas)."""
+    vez (aproximado: o Planalto não publica datas). Quem está em `ministros_posse.json` (só ministros atuais) leva a data da posse e o
+    presidente que o nomeou, com a página da Wikipédia de onde saíram: `inicioFonte = "wikipedia"`, `nomeadoPor`, `inicioUrl`."""
     por_nome = defaultdict(set)
     for pid, p in reg.por_id.items():
         if p["nome"]:
@@ -587,8 +589,11 @@ def ligar_ministros(planalto: dict, reg: "_Registro", licenciados: dict, chaves:
             if pasta not in p["planalto"]:
                 p["planalto"].append(pasta)
             chaves[("planalto", pasta, chave)] = p["id"]
+            posse = None if x.get("vistoAte") else POSSES.get((pasta, nome))
             saida.append({"pasta": pasta, "cargo": x["cargo"], "nome": nome, "pessoa": p["id"],
-                          "inicio": licenciado or x["vistoDesde"], "inicioFonte": "licenca" if licenciado else "planalto",
+                          "inicio": posse["posse"] if posse else licenciado or x["vistoDesde"],
+                          "inicioFonte": "wikipedia" if posse else "licenca" if licenciado else "planalto",
+                          **({"nomeadoPor": posse["nomeadoPor"], "inicioUrl": posse["fonte"]} if posse else {}),
                           **({"fim": x["vistoAte"]} if x.get("vistoAte") else {})})
     return saida
 

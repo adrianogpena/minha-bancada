@@ -5,6 +5,10 @@ Regra: toda fonte nova ou mudança de coleta ganha uma entrada aqui, no mesmo co
 Datas dos conjuntos que já existiam vêm do primeiro commit que os trouxe (`git log --diff-filter=A`).
 Todas as coletas rodam sozinhas no GitHub Actions (`.github/workflows/atualizar.yml`, todo dia às 05:00 de Brasília), salvo onde indicado.
 
+## Inabilitados pelo TCU (2026-10-29)
+- **De onde:** `https://contas.tcu.gov.br/ords/condenacao/consulta/inabilitados` (`tcu_inabilitados` em `ENDPOINTS.md`): API aberta do TCU, sem chave, 846 pessoas proibidas de exercer cargo ou função pública (nome, processo, deliberação, datas, UF e município do caso). A mesma API tem `inidoneos` (proibidos de licitar), não coletada.
+- **Como:** `scripts/coletar_tcu.py` (job `tcu` do `atualizar.yml`) pagina por `limit=500`/`offset` e grava `dados/tcu/inabilitados.json`, fora do git. O CPF não é guardado. `identidades.ligar_inabilitados` liga por nome completo e UF do caso (`nome+uf`, média; homônimo na mesma UF não liga) e `gerar.py` grava `site/dados/inabilitados_tcu.json`, mostrado na ficha com o número do processo. Na primeira medição, 5 dos 846 nomes batiam com alguém do núcleo, todos homônimos de outra UF: zero ligações.
+
 ## Verba de gabinete de anos anteriores e presença em plenário (2026-10-29)
 - **De onde:** raspagem de `https://www.camara.leg.br/deputados/<id>/verba-gabinete?ano=<ano>` (`camara_portal_verba_ano`) e `.../presenca-plenario/<ano>` (`camara_portal_presenca`), em `ENDPOINTS.md`.
 - **Como:** `ler_verba_ano` e `ler_presenca_plenario` (`scripts/coletar.py`), chamadas por `coletar_recursos_camara` para os anos da legislatura atual. Anos encerrados são lidos uma vez (ficam em `recursos.verbaAnos` e `recursos.presenca`); só a presença do ano corrente é relida todo dia. Falha de página só avisa. Tabelas "Verba de gabinete nos anos anteriores" e "Ausências em plenário" em "Recursos e benefícios". Contrato semanal para as duas páginas.

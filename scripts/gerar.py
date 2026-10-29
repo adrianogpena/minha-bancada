@@ -625,6 +625,10 @@ def main():
     identidades.salvar_nucleo(nucleo, SAIDA / "nucleo")
     gerar_ministros.salvar_ministros(ministros, SAIDA)
     salvar(SAIDA / "aposentados_senado.json", {a["pessoa"]: {k: a[k] for k in ("tipo", "inicio", "valor") if a.get(k) is not None} for a in nucleo["aposentados"]})
+    por_pessoa = defaultdict(list)
+    for i in nucleo["inabilitados"]:
+        por_pessoa[i["pessoa"]].append({k: v for k, v in i.items() if k != "pessoa"})
+    salvar(SAIDA / "inabilitados_tcu.json", dict(por_pessoa))
     candidaturas.salvar_candidaturas(candidaturas.construir(BRUTO, nucleo), SAIDA)
     mandatos.salvar_mandatos(mandatos.construir(deputados, BRUTO, nucleo), SAIDA)
     nucleo_fornecedores.salvar_fornecedores(forn, SAIDA)

@@ -83,6 +83,13 @@ export const SENADO_API = "https://legis.senado.leg.br/dadosabertos";
 export const SENADO_ADM_API = "https://adm.senado.gov.br/adm-dadosabertos/api/v1";
 export const linkMateriaSenado = (id) => `https://www25.senado.leg.br/web/atividade/materias/-/materia/${encodeURIComponent(id)}`;
 
+/* Inabilitações do TCU para cargo ou função pública (coletar_tcu.py; ligadas à pessoa em identidades.py: ligar_inabilitados). */
+export const TCU_INABILITADOS = "https://contas.tcu.gov.br/ords/condenacao/consulta/inabilitados";
+export async function carregarInabilitacoes(pessoa, carregar) {
+  if (!pessoa) return [];
+  try { return (await carregar("dados/inabilitados_tcu.json"))[pessoa] || []; } catch { return []; }
+}
+
 /* Aposentadoria parlamentar de ex-senador (coletar.py: coletar_aposentados_senado; ligada à pessoa em identidades.py). */
 export async function carregarAposentadoria(pessoa, carregar) {
   if (!pessoa) return null;

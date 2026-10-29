@@ -407,6 +407,12 @@ def _(ctx):
     return http_json(f"{SENADO_ADM}/senadores/aposentados")
 
 
+@ep("tcu_inabilitados", "https://contas.tcu.gov.br/ords/condenacao/consulta/inabilitados",
+    campos("", "hasMore") + campos("items[]", "nome", "processo", "deliberacao", "data_acordao", "data_transito_julgado", "data_final", "uf", "municipio"))
+def _(ctx):
+    return http_json("https://contas.tcu.gov.br/ords/condenacao/consulta/inabilitados", limit=5)
+
+
 # ---------------------------------------------------------------- ministros (scripts/coletar_ministros.py)
 
 @ep("camara_arquivo_proposicoes", "https://dadosabertos.camara.leg.br/arquivos/proposicoes/json/proposicoes-{ano}.json",

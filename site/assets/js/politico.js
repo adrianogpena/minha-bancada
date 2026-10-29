@@ -2,12 +2,22 @@
 import { $, esc, reais, reaisCentavos, data, param, carregar, urlSegura } from "./util.js";
 import { itemFicha, foto, listaPaginada, erro, ligarAbas } from "./comum.js";
 import { linksRedes, fonteRedesTse, divulgaUrl, linhaNoCargoAte, linhaSubsidio, blocoPatrimonioFontes, completarEleicao } from "./ficha.js";
-import { arquivoTse, fontes, UFS, carregarAposentadoria } from "./apis.js";
+import { arquivoTse, fontes, UFS, carregarAposentadoria, carregarInabilitacoes, TCU_INABILITADOS } from "./apis.js";
 import { linkPolitico } from "./mapa.js";
 import { EXECUTIVOS, casaLegislativa, itemGoverno, LEGENDA_PRESIDENTE, legendaGoverno, AVISO_PRESIDENTE, AVISO_PROPOSTAS_PRESIDENTE, avisoGovernoPropostas, avisoGoverno, itemExecutivo } from "./executivo.js";
 import { painelEleicaoDe } from "./eleicao.js";
 import { montarSenador, painelAposentadoria } from "./senador.js";
 import { montarEstadual } from "./estadual.js";
+
+/* Inabilitação do TCU: a fonte não traz CPF, então a ligação é só por nome completo e UF do caso; o processo deixa conferir se é a mesma pessoa. */
+function avisoInabilitacao(lista, uf) {
+  if (!lista?.length) return "";
+  const caso = (c) => `<li>Processo <b>${esc(c.processo)}</b>${c.deliberacao ? `, ${esc(c.deliberacao)}` : ""}${c.acordao ? `, acórdão de ${data(c.acordao, true)}` : ""}${c.fim ? `; inabilitação até ${data(c.fim, true)}` : ""}${c.municipio ? `. Caso em ${esc(c.municipio)} (${esc(c.uf || uf)})` : ""}.</li>`;
+  return `<h2>Inabilitação pelo TCU</h2>
+    <p class="aviso">O Tribunal de Contas da União publica uma pessoa de mesmo nome${lista.length > 1 ? " em " + lista.length + " processos" : ""} como proibida de exercer cargo ou função pública. A lista não traz CPF nem data de nascimento: confira o processo antes de concluir que é a mesma pessoa.</p>
+    <ul>${lista.map(caso).join("")}</ul>
+    ${fontes([["Inabilitados (TCU)", TCU_INABILITADOS]])}`;
+}
 
 export async function paginaPolitico() {
   const alvo = $("#conteudo");
@@ -22,6 +32,7 @@ export async function paginaPolitico() {
   } catch (e) { return erro(alvo, e); }
 
   p.aposentadoria = await carregarAposentadoria(p.pessoa, carregar);
+  p.inabilitacoes = await carregarInabilitacoes(p.pessoa, carregar);
   const nome = p.urna || p.nome;
   const local = p.municipio ? `${p.municipio} (${p.uf})` : p.uf === "BR" ? "Brasil" : UFS[p.uf] || p.uf;
   document.title = `${nome}, ${p.cargo} | Minha Bancada`;
@@ -79,6 +90,7 @@ export async function paginaPolitico() {
     </dl>
     ${p.fonte === "tse" ? fontes([...fonteTse, ["Dados de candidatos (TSE)", arquivoTse("consulta_cand", p)]]) : ""}
     ${painelAposentadoria(p.aposentadoria)}
+    ${avisoInabilitacao(p.inabilitacoes, p.uf)}
 
     ${p.fonte === "tse" ? `
     <h2>Bens declarados em ${esc(p.ano)}</h2>

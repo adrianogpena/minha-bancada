@@ -40,6 +40,8 @@ Sem par, o ministro ganha pessoa própria (fonte "planalto"). `ligar_requeriment
   pasta+data (média)  a pasta é a dele e o pedido é de depois do dia em que o parlamentar se licenciou para o cargo
   pasta+data (baixa)  idem, com o início vindo só do dia em que o nome entrou na lista do Planalto
 `ligar_autoria_senado` liga o texto de autoria dos requerimentos do Senado ao senador (nome+uf, média).
+`ligar_inabilitados` liga cada inabilitado do TCU (dados/tcu/inabilitados.json, só nome e UF do caso) à pessoa com candidatura de mesmo nome
+completo na mesma UF (`ligacao["inabilitados"]` = nome+uf, média); nome repetido na UF vai para `ambiguos`.
 """
 
 import difflib
@@ -614,6 +616,25 @@ def ligar_aposentados(aposentados: dict, reg: "_Registro", ambiguos: list, resum
     return saida
 
 
+def ligar_inabilitados(inabilitados: dict, reg: "_Registro", indice: "_IndiceTse", ambiguos: list, resumo, sem_ligacao) -> list[dict]:
+    """Cada inabilitado do TCU (nome e UF do caso, sem CPF no TSE para conferir) é ligado à pessoa do núcleo que tem candidatura com o
+    mesmo nome completo na mesma UF; nome repetido na UF não liga. Só `nome+uf`, confiança média: homônimo de outra cidade ainda passa,
+    por isso o site mostra o processo. Devolve [{pessoa, nome, processo, deliberacao, acordao, transito, fim, uf, municipio}] só dos ligados."""
+    saida = []
+    for x in inabilitados.get("itens", []):
+        ids = indice.civil.get((norm_nome(x["nome"]), x.get("uf")), set()) if x.get("uf") else set()
+        if len(ids) == 1:
+            pid = next(iter(ids))
+            reg.por_id[pid]["ligacao"].setdefault("inabilitados", ["nome+uf", "média"])
+            resumo["inabilitados"]["nome+uf"] += 1
+            saida.append({"pessoa": pid, **x})
+        else:
+            if ids:
+                ambiguos.append({"fonte": "inabilitados", "id": x["processo"], "nome": x["nome"], "uf": x.get("uf"), "candidatos": sorted(ids)})
+            sem_ligacao["inabilitados"] += 1
+    return saida
+
+
 def _nome_na_ementa(nome: str, ementa: str) -> bool:
     """Os dois primeiros nomes ("José Múcio"), ou um deles e o último ("Mauro Vieira" para Mauro Luiz Iecker Vieira), aparecem juntos na ementa."""
     partes = [t for t in norm_nome(nome).split() if t not in PARTICULAS]
@@ -794,6 +815,7 @@ def construir(deputados: dict, bruto: Path) -> dict:
                                 ler(bruto / "ministros" / "licencas.json", {}) or {}, chaves, ambiguos, resumo, sem_ligacao)
 
     aposentados = ligar_aposentados(ler(bruto / "senado_aposentados.json", {}) or {}, reg, ambiguos, resumo, sem_ligacao)
+    inabilitados = ligar_inabilitados(ler(bruto / "tcu" / "inabilitados.json", {}) or {}, reg, indice, ambiguos, resumo, sem_ligacao)
 
     pessoas = []
     for pid in sorted(reg.por_id):
@@ -827,6 +849,7 @@ def construir(deputados: dict, bruto: Path) -> dict:
         "chaves": chaves,
         "ministros": ministros,
         "aposentados": aposentados,
+        "inabilitados": inabilitados,
     }
 
 

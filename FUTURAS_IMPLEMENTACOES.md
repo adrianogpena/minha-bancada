@@ -14,7 +14,7 @@ Revisado em 2026-10-29 contra o código e o `CHANGELOG.md`.
 |---|---|---|
 | 1 | Acabamentos do que já existe | 1.1 Restos de pacotes feitos |
 | 3 | Raspagem de HTML ou chave de API | 3.2 Emendas e Portal da Transparência · 3.3 Ministros de Estado: o que fica para depois |
-| 4 | Fontes grandes, sem padrão ou cruzamentos sensíveis | 4.1 Fornecedores e doadores · 4.2 Assembleias e Câmaras Municipais · 4.3 Ministros dos tribunais superiores · 4.4 Órgãos de controle |
+| 4 | Fontes grandes, sem padrão ou cruzamentos sensíveis | 4.1 Fornecedores e doadores · 4.2 Assembleias e Câmaras Municipais · 4.3 Ministros dos tribunais superiores · 4.4 Órgãos de controle (resto) |
 
 ## Nível 1: acabamentos
 
@@ -103,9 +103,10 @@ Fontes de cada tribunal ainda não levantadas.
 
 ### 4.4 Órgãos de controle
 
-- **TCU, contas julgadas irregulares** (dados abertos do TCU): lista oficial de responsáveis por contas irregulares,
-  usada pela Justiça Eleitoral na Ficha Limpa. O cruzamento é por nome e exige cuidado com homônimos; só mostrar
-  com correspondência exata e link para o processo.
+- **TCU, inabilitados:** feito em 2026-10-29 (`coletar_tcu.py`, `identidades.ligar_inabilitados`, aviso na ficha; ver `CHANGELOG.md`).
+  A mesma API tem `inidoneos` (proibidos de licitar, CPF/CNPJ), ainda não coletada: serviria ao cruzamento com fornecedores
+  por CNPJ. Hoje o cruzamento de inabilitados dá zero ligações (5 nomes iguais, todos homônimos de outra UF), porque o TSE não
+  publica CPF; o aviso aparece sozinho quando surgir um caso com nome e UF iguais.
 
 ## Pendências de cobertura do que já existe
 

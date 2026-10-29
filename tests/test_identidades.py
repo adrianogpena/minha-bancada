@@ -202,3 +202,19 @@ def test_aposentados_do_senado_ligam_so_por_nome_unico_de_candidato_a_senador(tm
     bia = next(p for p in n["pessoas"] if p["nome"] == "Bia Lima")
     assert bia["ligacao"]["aposentadoria"] == ["nome+cargo", "média"] and n["aposentados"][0]["pessoa"] == bia["id"]
     assert n["ligacoes"]["semLigacao"]["aposentadoria"] == 2
+
+
+def test_inabilitados_do_tcu_ligam_so_por_nome_e_uf_unicos(tmp_path):
+    bruto = tmp_path / "dados"
+    montar(bruto)
+    gravar(bruto / "tcu" / "inabilitados.json", {"itens": [
+        {"nome": "ANA MARIA SOUZA", "processo": "1/2020-1", "uf": "SP", "fim": "2030-01-01"},
+        {"nome": "ANA MARIA SOUZA", "processo": "2/2020-2", "uf": "RJ"},
+        {"nome": "JOÃO SILVA", "processo": "3/2020-3", "uf": "SP"},
+        {"nome": "CICRANO", "processo": "4/2020-4", "uf": "SP"}]})
+    n = ident.construir({}, bruto)
+    assert [(i["processo"], i["nome"]) for i in n["inabilitados"]] == [("1/2020-1", "ANA MARIA SOUZA")]
+    ana = next(p for p in n["pessoas"] if p["id"] == n["inabilitados"][0]["pessoa"])
+    assert ana["ligacao"]["inabilitados"] == ["nome+uf", "média"]
+    assert n["ligacoes"]["semLigacao"]["inabilitados"] == 3
+    assert [a["id"] for a in n["ligacoes"]["ambiguos"] if a["fonte"] == "inabilitados"] == ["3/2020-3"]

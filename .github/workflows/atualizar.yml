@@ -453,7 +453,7 @@ jobs:
         run: |
           git fetch --deepen=50 -q || true
           # hora em que a execução começou de fato (o agendamento pode atrasar horas), não a do cron
-          INICIO=$(gh run view "$GITHUB_RUN_ID" --json startedAt --jq .startedAt) && export COLETA_INICIO=$(TZ=America/Sao_Paulo date -d "$INICIO" +%Y-%m-%dT%H:%M:%S%:z) || true
+          if INICIO=$(gh run view "$GITHUB_RUN_ID" --json startedAt --jq .startedAt) && COLETA_INICIO=$(TZ=America/Sao_Paulo date -d "$INICIO" +%Y-%m-%dT%H:%M:%S%:z); then export COLETA_INICIO; fi
           python scripts/historico.py
           git add dados/historico
           git diff --cached --quiet || git commit -m "Histórico diário de $(TZ=America/Sao_Paulo date +%Y-%m-%d)"   # o dia do histórico é o dia da coleta

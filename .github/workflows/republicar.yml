@@ -49,7 +49,7 @@ jobs:
           if [ -z "$RUN" ] || [ "$RUN" = "null" ]; then echo "Nenhuma execução bem-sucedida do atualizar.yml; rode-o antes." >&2; exit 1; fi
           echo "Pacotes da execução $RUN"
           gh run download "$RUN" --pattern 'pacote-*' --dir "$RUNNER_TEMP/pacotes"
-          for pacote in $(find "$RUNNER_TEMP/pacotes" -name '*.tgz'); do tar xzf "$pacote"; done
+          find "$RUNNER_TEMP/pacotes" -name '*.tgz' -exec tar xzf {} \;
 
       - name: Gerar arquivos do site
         run: python scripts/gerar.py

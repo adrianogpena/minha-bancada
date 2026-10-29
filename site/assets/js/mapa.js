@@ -104,7 +104,7 @@ function perfilCasaHtml(titulo, p, chave, anoEleitorado, eleitorado) {
   const e = eleitorado;
   const c = p.custo;
   const custo = c ? `<p class="legenda-barras">Custo da Casa em ${esc(c.ano)}: <b>R$ ${numeroBr(Math.round(c.despesaLiquidada))}</b> liquidados na Ação Legislativa,
-    ou <b>R$ ${numeroBr(Math.round(c.porParlamentar))}</b> por parlamentar (${numeroBr(c.cadeiras)} cadeiras). É o gasto da Assembleia inteira, não só dos gabinetes.
+    ou <b>R$ ${numeroBr(Math.round(c.porParlamentar))}</b> por parlamentar (${numeroBr(c.cadeiras)} cadeiras). É o gasto da ${chave === "municipal" ? "Câmara" : "Assembleia"} inteira, não só dos gabinetes.
     <span class="rotulo-fonte">Fonte</span> <a href="${esc(c.fonte)}" rel="noopener">DCA, Anexo I-E (Tesouro Nacional)</a>.</p>` : "";
   const racaTotal = soma(p.raca.map(([, n]) => n));
   const anos = FONTES_ELEITOS[chave];

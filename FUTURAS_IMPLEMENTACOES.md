@@ -3,7 +3,7 @@
 Ideias levantadas e ainda não feitas, em ordem de complexidade. O que já foi implantado está no `CHANGELOG.md`
 (autoria, cota, salário, campanha e patrimônio, perfil das Casas, presença e votações, recursos do senador,
 perfil temático, discursos e eventos, aposentadoria de ex-senadores, carreira, vida do projeto, rede de coautoria, fornecedores com dados da Receita e cruzamento com
-doadores, recursos, pessoal, verba e presença em plenário do deputado pelo portal, despesa com pessoal pelo SICONFI, ministros de Estado em sua primeira etapa, coletores de 17 Assembleias).
+doadores, recursos, pessoal, verba e presença em plenário do deputado pelo portal, despesa com pessoal e das Casas pelo SICONFI, ministros de Estado em sua primeira etapa, coletores de 17 Assembleias).
 
 Ao implementar um endpoint novo, registre-o no `ENDPOINTS.md` e o conjunto no `CHANGELOG.md`.
 Revisado em 2026-10-29 contra o código e o `CHANGELOG.md`.
@@ -85,7 +85,7 @@ Sem padrão nacional; cada Casa publica do seu jeito.
 - Salário exato de deputados estaduais e vereadores: portal de transparência de cada Casa.
 - **SICONFI / Tesouro Nacional:** já temos a despesa com pessoal do Legislativo de cada UF (RGF) e a despesa total da
   função Legislativa dos estados (DCA, coletada em 2026-10-29). O "custo por parlamentar" das Assembleias já aparece no
-  mapa. Falta coletar a DCA das Câmaras Municipais (uma consulta por município).
+  mapa; a DCA das Câmaras Municipais (uma consulta por município, incremental) também, coletada em 2026-10-29.
 - **Querido Diário** (Open Knowledge Brasil, `queridodiario.ok.org.br/api`): diários oficiais municipais com busca
   por texto; poderia trazer nomeações, leis sancionadas e o subsídio de vereadores em cidades sem SAPL. Ainda não
   está no `ENDPOINTS.md`.

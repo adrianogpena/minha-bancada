@@ -333,11 +333,22 @@ def custo_assembleia(uf: str, cadeiras: int) -> dict:
     return {}
 
 
+def custo_camara_municipal(ibge: str | None, cadeiras: int, dca: dict) -> dict:
+    """Ação Legislativa liquidada (DCA da prefeitura) dividida pelas cadeiras da Câmara Municipal. `dca` é o arquivo de
+    dados/siconfi_municipios/<UF>.json. Vazio sem DCA do município ou sem cadeiras."""
+    reg = (dca.get("municipios") or {}).get(ibge) or {}
+    if not reg.get("liquidada") or not cadeiras:
+        return {}
+    return {"ano": dca["ano"], "despesaLiquidada": reg["liquidada"], "cadeiras": cadeiras,
+            "porParlamentar": round(reg["liquidada"] / cadeiras, 2), "fonte": reg.get("fonte")}
+
+
 def gerar_perfil_casas(deputados: dict | None = None) -> None:
     """site/dados/perfil_casas/<UF>.json: perfil dos eleitos de cada Casa, para comparar com o eleitorado.
     Chaves: estadual (Assembleia ou Câmara Legislativa, 2022), federal (bancada em exercício na Câmara, com os dados da candidatura
     de 2022; sem `deputados`, os eleitos de 2022), senado (senadores eleitos em 2018 e 2022) e municipal
     (<código TSE do município> -> vereadores de 2024)."""
+    ibge_do_tse = ler(BRUTO / "municipios_ibge.json", {})
     for arq in sorted((BRUTO / "tse" / "2022").glob("[A-Z][A-Z].json")):
         uf = arq.stem
         if uf == "BR":
@@ -358,11 +369,17 @@ def gerar_perfil_casas(deputados: dict | None = None) -> None:
             custo = custo_assembleia(uf, estadual.get("total"))
             if custo:
                 estadual["custo"] = custo
+        dca = ler(BRUTO / "siconfi_municipios" / f"{uf}.json", {})
+        municipal = {}
+        for cod, lista in vereadores.items():
+            perfil = perfil_eleitos(lista, 2024)
+            custo = custo_camara_municipal(ibge_do_tse.get(cod), perfil.get("total"), dca)
+            municipal[cod] = {**perfil, "custo": custo} if custo else perfil
         casas = {
             "estadual": estadual,
             "federal": federal,
             "senado": perfil_eleitos(eleitos(2018, {"SENADOR"}) + eleitos(2022, {"SENADOR"}), 2022),
-            "municipal": {cod: perfil_eleitos(lista, 2024) for cod, lista in vereadores.items()},
+            "municipal": municipal,
         }
         salvar(SAIDA / "perfil_casas" / f"{uf}.json", {k: v for k, v in casas.items() if v})
 

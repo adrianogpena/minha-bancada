@@ -67,9 +67,13 @@ def url(uf: str, ano: int, periodicidade: str, periodo: int, poder: str, **extra
     return f"{BASE}?{urlencode(params)}"
 
 
-def url_dca(uf: str, ano: int, **extra) -> str:
-    params = dict(an_exercicio=ano, no_anexo="DCA-Anexo I-E", id_ente=UFS[uf], **extra)
+def url_dca_ente(id_ente: int | str, ano: int, **extra) -> str:
+    params = dict(an_exercicio=ano, no_anexo="DCA-Anexo I-E", id_ente=id_ente, **extra)
     return f"{BASE_DCA}?{urlencode(params)}"
+
+
+def url_dca(uf: str, ano: int, **extra) -> str:
+    return url_dca_ente(UFS[uf], ano, **extra)
 
 
 def paginar(s, endereco) -> list[dict]:

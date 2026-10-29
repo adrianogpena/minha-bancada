@@ -287,7 +287,7 @@ jobs:
   siconfi:
     name: Coletar finanças dos estados (SICONFI)
     runs-on: ubuntu-24.04
-    timeout-minutes: 35
+    timeout-minutes: 65
     steps:
       - uses: actions/checkout@v7
 
@@ -306,9 +306,16 @@ jobs:
         timeout-minutes: 25
         continue-on-error: true
 
+      - name: Coletar despesa das Câmaras Municipais (DCA do SICONFI, incremental)
+        run: python scripts/coletar_siconfi_municipios.py
+        timeout-minutes: 30
+        continue-on-error: true
+        env:
+          ESTADUAIS_PRAZO_MIN: "25"
+
       - name: Empacotar o resultado
         if: always()
-        run: scripts/empacotar.sh "$RUNNER_TEMP/siconfi.tgz" "$RUNNER_TEMP/inicio" dados/siconfi
+        run: scripts/empacotar.sh "$RUNNER_TEMP/siconfi.tgz" "$RUNNER_TEMP/inicio" dados/siconfi dados/siconfi_municipios
 
       - uses: actions/upload-artifact@v7
         if: always()
@@ -398,7 +405,7 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           # só adiciona o que existe; um caminho ausente (coleta que falhou) derrubaria o passo
-          for f in dados/votacoes dados/proposicoes dados/proposicoes_cadastro dados/proposicoes_detalhe.json dados/proposicoes_autores.json dados/proposicoes_temas.json dados/orgaos_deputados.json dados/orientacoes.json dados/blocos.json dados/proposicoes_votacoes.json dados/presenca_eventos.json dados/senado_votacoes dados/senado_materias.json dados/executivo.json dados/ministros dados/estaduais dados/siconfi dados/municipais dados/tse dados/status_apis.json; do
+          for f in dados/votacoes dados/proposicoes dados/proposicoes_cadastro dados/proposicoes_detalhe.json dados/proposicoes_autores.json dados/proposicoes_temas.json dados/orgaos_deputados.json dados/orientacoes.json dados/blocos.json dados/proposicoes_votacoes.json dados/presenca_eventos.json dados/senado_votacoes dados/senado_materias.json dados/executivo.json dados/ministros dados/estaduais dados/siconfi dados/siconfi_municipios dados/municipais dados/tse dados/status_apis.json; do
             if [ -e "$f" ]; then git add "$f"; fi
           done
           git diff --cached --quiet || git commit -m "Dados atualizados em $(TZ=America/Sao_Paulo date +%Y-%m-%d)"

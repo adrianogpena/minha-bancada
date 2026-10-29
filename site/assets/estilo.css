@@ -60,7 +60,14 @@ img { max-width: 100%; display: block; }
 .repo { order: 3; display: flex; color: var(--tinta-suave); }
 .repo:hover { color: var(--tinta); }
 .nav a { color: var(--tinta-suave); text-decoration: none; font-weight: 700; font-size: 15px; padding: 18px 0; border-bottom: 3px solid transparent; }
-.nav a[aria-current="page"], .nav a:hover { color: var(--tinta); border-color: var(--marca); }
+.nav a[aria-current="page"], .nav a:hover, .nav button[aria-current="page"], .nav button:hover { color: var(--tinta); border-color: var(--marca); }
+.nav button { font: inherit; background: none; border: 0; border-bottom: 3px solid transparent; cursor: pointer; color: var(--tinta-suave); font-weight: 700; font-size: 15px; padding: 18px 0; }
+.nav button::after { content: " \25BE"; font-size: 11px; }
+.nav-grupo { position: relative; }
+.submenu { display: none; position: absolute; top: 100%; left: -12px; min-width: 190px; background: var(--superficie); border: 1px solid var(--linha); border-radius: 8px; box-shadow: 0 6px 18px rgba(0,0,0,.12); padding: 6px 0; z-index: 20; }
+.nav-grupo:hover .submenu, .nav-grupo:has(:focus-visible) .submenu { display: block; }
+.submenu a { display: block; padding: 9px 16px; border-bottom: 0; white-space: nowrap; }
+.submenu a:hover, .submenu a[aria-current="page"] { background: rgba(127,127,127,.12); }
 
 /* abertura */
 .abertura { padding: 48px 0 28px; }
@@ -183,7 +190,7 @@ input:focus, select:focus { border-color: var(--marca); outline: none; box-shado
   .repo { margin-left: auto; order: 1; }
   .marca { order: 0; }
   .nav { order: 2; gap: 14px; margin-left: 0; width: 100%; }
-  .nav a { padding: 10px 0; }
+  .nav a, .nav button { padding: 10px 0; }
   .topo .recipiente { gap: 4px; padding-top: 10px; }
   .filtros { grid-template-columns: 1fr 1fr; }
   .filtros .campo:first-child { grid-column: 1 / -1; }
@@ -269,8 +276,10 @@ select:disabled { opacity: .55; }
 @media (max-width: 760px) {
   .recipiente { padding: 0 14px; }
   .topo .recipiente { min-height: 0; padding-bottom: 0; }
-  .nav { overflow-x: auto; white-space: nowrap; gap: 18px; scrollbar-width: none; }
-  .nav a { padding: 10px 0 8px; }
+  .nav { flex-wrap: wrap; gap: 4px 18px; }
+  .nav a, .nav button { padding: 10px 0 8px; }
+  .nav-grupo .submenu { position: static; box-shadow: none; border: 0; padding: 0 0 0 12px; min-width: 0; }
+  .submenu a { padding: 8px 0; }
   .abertura { padding: 28px 0 16px; }
   h2 { font-size: 22px; margin-top: 30px; }
   input, select { font-size: 16px; padding: 12px; min-height: 46px; }

@@ -37,6 +37,8 @@ Raspagem é frágil: fonte opcional, com teste de contrato em `scripts/contrato_
 
 ### 3.2 Emendas e Portal da Transparência
 
+**Aguardando a chave de API** (pedida ao usuário em 2026-10-29; variável sugerida `PORTAL_TRANSPARENCIA_CHAVE`, local e secret do Actions).
+
 Uma chave gratuita (cadastro com conta gov.br), enviada no cabeçalho `chave-api-dados` e guardada como secret do
 Actions, libera tudo abaixo. Hoje só há emendas das Assembleias da BA, CE e MS; as federais não existem.
 
@@ -81,9 +83,9 @@ Dados da empresa pela Receita e cruzamento com doadores de campanha já existem.
 Sem padrão nacional; cada Casa publica do seu jeito.
 
 - Salário exato de deputados estaduais e vereadores: portal de transparência de cada Casa.
-- **SICONFI / Tesouro Nacional:** já temos a despesa com pessoal do Legislativo de cada UF (RGF). Falta a despesa
-  total (RREO/DCA) de cada Assembleia e Câmara Municipal; dividida pelo número de cadeiras dá o "custo por
-  parlamentar", sem raspar portais locais.
+- **SICONFI / Tesouro Nacional:** já temos a despesa com pessoal do Legislativo de cada UF (RGF) e a despesa total da
+  função Legislativa dos estados (DCA, coletada em 2026-10-29). O "custo por parlamentar" das Assembleias já aparece no
+  mapa. Falta coletar a DCA das Câmaras Municipais (uma consulta por município).
 - **Querido Diário** (Open Knowledge Brasil, `queridodiario.ok.org.br/api`): diários oficiais municipais com busca
   por texto; poderia trazer nomeações, leis sancionadas e o subsídio de vereadores em cidades sem SAPL. Ainda não
   está no `ENDPOINTS.md`.

@@ -9,9 +9,14 @@ Fonte: Relatório de Gestão Fiscal (RGF), Anexo 01, da API de dados abertos do 
 Vale o último período publicado do ano (3.º quadrimestre; se ainda não saiu, o 2.º ou o 1.º). Valores em reais;
 `pct*` é % da receita corrente líquida ajustada. É dado da instituição, não de cada deputado.
 
+Despesa total da função Legislativa: Declaração de Contas Anuais (DCA), Anexo I-E (despesa por função), do Governo do
+Estado. Publicada depois do fim do ano, então o ano corrente não tem. A subfunção 01.031 (Ação Legislativa) é a
+Assembleia; 01.032 (Controle Externo) é o Tribunal de Contas. Dividida pelas cadeiras dá o custo por parlamentar.
+
 Grava dados/siconfi/<UF>.json:
   {coletadoEm, uf, anos:{"2025":{poderes:[{poder, instituicao, periodicidade ("Q"|"S"), periodo, despesaBruta, despesaLiquida, rcl, rclAjustada,
-      dtp, pctDtp, limiteMaximo, pctLimiteMaximo, limitePrudencial, limiteAlerta, fonte}]}}}
+      dtp, pctDtp, limiteMaximo, pctLimiteMaximo, limitePrudencial, limiteAlerta, fonte}],
+    legislativa:{fonte, legislativa|acaoLegislativa|controleExterno: {empenhada, liquidada, paga}}}}}
 
 Uso:
     python scripts/coletar_siconfi.py          # todas as UFs
@@ -25,6 +30,7 @@ from urllib.parse import urlencode
 import estaduais_comum as comum
 
 BASE = "https://apidatalake.tesouro.gov.br/ords/siconfi/tt/rgf"
+BASE_DCA = "https://apidatalake.tesouro.gov.br/ords/siconfi/tt/dca"
 DADOS = comum.RAIZ / "dados" / "siconfi"
 ANO_INICIAL = 2023
 PAGINA = 5000
@@ -32,6 +38,9 @@ PAGINA = 5000
 UFS = {"RO": 11, "AC": 12, "AM": 13, "RR": 14, "PA": 15, "AP": 16, "TO": 17, "MA": 21, "PI": 22, "CE": 23, "RN": 24,
        "PB": 25, "PE": 26, "AL": 27, "SE": 28, "BA": 29, "MG": 31, "ES": 32, "RJ": 33, "SP": 35, "PR": 41, "SC": 42,
        "RS": 43, "MS": 50, "MT": 51, "GO": 52, "DF": 53}
+# conta da DCA (começo do rótulo) -> campo; coluna -> campo
+FUNCOES = {"01 -": "legislativa", "01.031 -": "acaoLegislativa", "01.032 -": "controleExterno"}
+COLUNAS_DCA = {"Despesas Empenhadas": "empenhada", "Despesas Liquidadas": "liquidada", "Despesas Pagas": "paga"}
 PODERES = ("L", "E")
 # (periodicidade, períodos do mais novo ao mais antigo); o RGF é quadrimestral, semestral só para quem optou
 PERIODOS = (("Q", (3, 2, 1)), ("S", (2, 1)))
@@ -58,16 +67,39 @@ def url(uf: str, ano: int, periodicidade: str, periodo: int, poder: str, **extra
     return f"{BASE}?{urlencode(params)}"
 
 
-def baixar(s, uf: str, ano: int, periodicidade: str, periodo: int, poder: str) -> list[dict]:
+def url_dca(uf: str, ano: int, **extra) -> str:
+    params = dict(an_exercicio=ano, no_anexo="DCA-Anexo I-E", id_ente=UFS[uf], **extra)
+    return f"{BASE_DCA}?{urlencode(params)}"
+
+
+def paginar(s, endereco) -> list[dict]:
+    """Junta as páginas; `endereco(limit, offset)` monta a consulta de cada uma."""
     itens, offset = [], 0
     while True:
-        r = s.get(url(uf, ano, periodicidade, periodo, poder, limit=PAGINA, offset=offset), timeout=60)
+        r = s.get(endereco(PAGINA, offset), timeout=60)
         r.raise_for_status()
         corpo = r.json()
         itens += corpo.get("items") or []
         if not corpo.get("hasMore"):
             return itens
         offset += PAGINA
+
+
+def baixar(s, uf: str, ano: int, periodicidade: str, periodo: int, poder: str) -> list[dict]:
+    return paginar(s, lambda limit, offset: url(uf, ano, periodicidade, periodo, poder, limit=limit, offset=offset))
+
+
+def resumir_legislativa(itens: list[dict], fonte: str) -> dict:
+    """Despesa da função Legislativa e das subfunções 031 e 032; vazio se a DCA do ano não trouxe a função."""
+    saida: dict = {}
+    for i in itens:
+        if i.get("cod_conta") != "TotalDespesas" or i.get("valor") is None:
+            continue
+        coluna = COLUNAS_DCA.get((i.get("coluna") or "").strip())
+        funcao = next((c for p, c in FUNCOES.items() if (i.get("conta") or "").startswith(p)), None)
+        if coluna and funcao:
+            saida.setdefault(funcao, {})[coluna] = float(i["valor"])
+    return {"fonte": fonte, **saida} if saida else {}
 
 
 def resumir(itens: list[dict], fonte: str) -> list[dict]:
@@ -99,12 +131,13 @@ def coletar_uf(s, uf: str, hoje: dt.date) -> None:
     anteriores = comum.ler(arq, {}).get("anos", {})
     anos = {}
     for ano in range(ANO_INICIAL, hoje.year + 1):
-        if comum.ano_encerrado(ano, hoje, arq) and str(ano) in anteriores:
+        if comum.ano_encerrado(ano, hoje, arq) and "legislativa" in anteriores.get(str(ano), {}):
             anos[str(ano)] = anteriores[str(ano)]
             continue
         poderes = [lin for poder in PODERES for lin in ano_do_poder(s, uf, ano, poder)]
-        if poderes:
-            anos[str(ano)] = {"poderes": poderes}
+        legislativa = resumir_legislativa(paginar(s, lambda limit, offset: url_dca(uf, ano, limit=limit, offset=offset)), url_dca(uf, ano))
+        if poderes or legislativa:
+            anos[str(ano)] = {"poderes": poderes, **({"legislativa": legislativa} if legislativa else {})}
         elif str(ano) in anteriores:
             anos[str(ano)] = anteriores[str(ano)]
     if anos:

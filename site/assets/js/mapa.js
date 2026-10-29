@@ -102,9 +102,13 @@ function perfilCasaHtml(titulo, p, chave, anoEleitorado, eleitorado) {
       ${bl ? `<div class="barra ref"><i style="width:${(100 * eleitores[i]) / bl}%"></i></div>` : ""}</div>`).join("")}</div>`;
   };
   const e = eleitorado;
+  const c = p.custo;
+  const custo = c ? `<p class="legenda-barras">Custo da Casa em ${esc(c.ano)}: <b>R$ ${numeroBr(Math.round(c.despesaLiquidada))}</b> liquidados na Ação Legislativa,
+    ou <b>R$ ${numeroBr(Math.round(c.porParlamentar))}</b> por parlamentar (${numeroBr(c.cadeiras)} cadeiras). É o gasto da Assembleia inteira, não só dos gabinetes.
+    <span class="rotulo-fonte">Fonte</span> <a href="${esc(c.fonte)}" rel="noopener">DCA, Anexo I-E (Tesouro Nacional)</a>.</p>` : "";
   const racaTotal = soma(p.raca.map(([, n]) => n));
   const anos = FONTES_ELEITOS[chave];
-  return `<details class="eleitorado"><summary>Perfil dos eleitos: ${esc(titulo)} (<b>${numeroBr(p.total)}</b>)</summary>
+  return `${custo}<details class="eleitorado"><summary>Perfil dos eleitos: ${esc(titulo)} (<b>${numeroBr(p.total)}</b>)</summary>
     ${e ? `<p class="legenda-barras">Barra larga: eleitos. Barra fina: eleitorado (${esc(anoEleitorado)}).</p>` : ""}
     <h3>Gênero</h3>${barras(["Mulheres", "Homens"], [p.genero[1], p.genero[0]], e && [e.porGenero[1], e.porGenero[0]])}
     <h3>Idade na eleição</h3>${barras(FAIXAS, p.faixas, e && e.porFaixaEtaria)}

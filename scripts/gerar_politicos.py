@@ -320,6 +320,19 @@ def bancada_federal_atual(uf: str, deputados: dict) -> tuple[list, int]:
     return achados, len(atuais)
 
 
+def custo_assembleia(uf: str, cadeiras: int) -> dict:
+    """Despesa liquidada da subfunção Ação Legislativa (DCA do SICONFI) do último ano publicado dividida pelas cadeiras.
+    Vazio sem DCA ou sem cadeiras. É o gasto da Casa inteira (pessoal, gabinetes, estrutura), não de cada deputado."""
+    anos = ler(BRUTO / "siconfi" / f"{uf}.json", {}).get("anos", {})
+    for ano in sorted(anos, reverse=True):
+        leg = anos[ano].get("legislativa") or {}
+        liquidada = (leg.get("acaoLegislativa") or {}).get("liquidada")
+        if liquidada and cadeiras:
+            return {"ano": int(ano), "despesaLiquidada": liquidada, "cadeiras": cadeiras,
+                    "porParlamentar": round(liquidada / cadeiras, 2), "fonte": leg.get("fonte")}
+    return {}
+
+
 def gerar_perfil_casas(deputados: dict | None = None) -> None:
     """site/dados/perfil_casas/<UF>.json: perfil dos eleitos de cada Casa, para comparar com o eleitorado.
     Chaves: estadual (Assembleia ou Câmara Legislativa, 2022), federal (bancada em exercício na Câmara, com os dados da candidatura
@@ -340,8 +353,13 @@ def gerar_perfil_casas(deputados: dict | None = None) -> None:
             achados, em_exercicio = bancada_federal_atual(uf, deputados)
             if achados:
                 federal = {**perfil_eleitos(achados, 2022), "composicao": "atual", "emExercicio": em_exercicio}
+        estadual = perfil_eleitos(eleitos(2022, {"DEPUTADO ESTADUAL", "DEPUTADO DISTRITAL"}), 2022)
+        if estadual:
+            custo = custo_assembleia(uf, estadual.get("total"))
+            if custo:
+                estadual["custo"] = custo
         casas = {
-            "estadual": perfil_eleitos(eleitos(2022, {"DEPUTADO ESTADUAL", "DEPUTADO DISTRITAL"}), 2022),
+            "estadual": estadual,
             "federal": federal,
             "senado": perfil_eleitos(eleitos(2018, {"SENADOR"}) + eleitos(2022, {"SENADOR"}), 2022),
             "municipal": {cod: perfil_eleitos(lista, 2024) for cod, lista in vereadores.items()},

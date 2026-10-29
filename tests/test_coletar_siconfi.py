@@ -39,6 +39,36 @@ def test_resumir_sem_conta_conhecida_devolve_vazio():
     assert sic.resumir([item("Outra", "Valor", 1.0)], "f") == []
 
 
+def conta_dca(conta, coluna, valor):
+    return {"cod_conta": "TotalDespesas", "conta": conta, "coluna": coluna, "valor": valor}
+
+
+DCA = [
+    conta_dca("01 - Legislativa", "Despesas Liquidadas", 3075127995.18),
+    conta_dca("01.031 - Ação Legislativa", "Despesas Empenhadas", 1208171751.48),
+    conta_dca("01.031 - Ação Legislativa", "Despesas Liquidadas", 1159495141.52),
+    conta_dca("01.032 - Controle Externo", "Despesas Pagas", 865874902.48),
+    conta_dca("01.032 - Controle Externo", "Inscrição de Restos a Pagar Processados", 1.0),
+    conta_dca("04 - Administração", "Despesas Liquidadas", 9.0),
+    {**conta_dca("01.031 - Ação Legislativa", "Despesas Pagas", 5.0), "cod_conta": "Outra"},
+]
+
+
+def test_resumir_legislativa_pega_a_funcao_e_as_subfuncoes():
+    assert sic.resumir_legislativa(DCA, "https://dca") == {
+        "fonte": "https://dca", "legislativa": {"liquidada": 3075127995.18},
+        "acaoLegislativa": {"empenhada": 1208171751.48, "liquidada": 1159495141.52}, "controleExterno": {"paga": 865874902.48}}
+
+
+def test_resumir_legislativa_sem_a_funcao_devolve_vazio():
+    assert sic.resumir_legislativa([conta_dca("04 - Administração", "Despesas Pagas", 1.0)], "f") == {}
+
+
+def test_url_dca_leva_o_ente_e_o_anexo():
+    u = sic.url_dca("SP", 2024)
+    assert "id_ente=35" in u and "an_exercicio=2024" in u and "DCA-Anexo+I-E" in u
+
+
 def test_url_leva_o_ente_e_o_poder():
     u = sic.url("AP", 2025, "Q", 3, "L")
     assert "id_ente=16" in u and "co_poder=L" in u and "an_exercicio=2025" in u and "RGF-Anexo+01" in u
@@ -63,6 +93,8 @@ class Sessao:
 
     def get(self, endereco, timeout=None):
         self.chamadas.append(endereco)
+        if "/dca?" in endereco:
+            return Resp({"items": DCA if "an_exercicio=2025" in endereco else [], "hasMore": False})
         publicado = "an_exercicio=2025" in endereco and "in_periodicidade=Q" in endereco and "nr_periodo=2" in endereco and "co_poder=L" in endereco
         return Resp({"items": AMOSTRA if publicado else [], "hasMore": False})
 
@@ -76,11 +108,12 @@ def test_coletar_uf_usa_o_ultimo_periodo_publicado(tmp_path, monkeypatch):
     linha = gravado["anos"]["2025"]["poderes"][0]
     assert (linha["periodicidade"], linha["periodo"], linha["dtp"]) == ("Q", 2, 153592169.43)
     assert "nr_periodo=2" in linha["fonte"] and "co_poder=L" in linha["fonte"]
+    assert gravado["anos"]["2025"]["legislativa"]["acaoLegislativa"]["liquidada"] == 1159495141.52
 
 
 def test_ano_encerrado_nao_e_baixado_de_novo(tmp_path, monkeypatch):
     monkeypatch.setattr(sic, "DADOS", tmp_path)
-    antigo = {"2023": {"poderes": [{"poder": "L", "instituicao": "Antiga", "dtp": 1.0}]}}
+    antigo = {"2023": {"poderes": [{"poder": "L", "instituicao": "Antiga", "dtp": 1.0}], "legislativa": {"fonte": "f"}}}
     comum.salvar(tmp_path / "AP.json", {"coletadoEm": "2026-01-01", "uf": "AP", "anos": antigo})
     s = Sessao()
     sic.coletar_uf(s, "AP", dt.date(2026, 3, 1))

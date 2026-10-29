@@ -97,3 +97,14 @@ def test_custo_do_voto_e_patrimonio(tmp_path, monkeypatch):
     atual = {"nome": "JOSE DA SILVA", "nascimento": "1970-01-01"}
     assert g.patrimonio_de(atual) == [[2018, "SENADOR", 100.0], [2022, "DEPUTADO FEDERAL", 300.0]]
     assert g.patrimonio_de({"nome": "Outra", "nascimento": "1970-01-01"}) is None
+
+
+def test_custo_assembleia_usa_o_ultimo_ano_com_dca(tmp_path, monkeypatch):
+    monkeypatch.setattr(g, "BRUTO", tmp_path)
+    (tmp_path / "siconfi").mkdir()
+    (tmp_path / "siconfi" / "AP.json").write_text(
+        '{"anos": {"2023": {"legislativa": {"fonte": "f23", "acaoLegislativa": {"liquidada": 100.0}}},'
+        ' "2024": {"legislativa": {"fonte": "f24", "acaoLegislativa": {"liquidada": 240.0}}}, "2025": {"poderes": []}}}', encoding="utf-8")
+    assert g.custo_assembleia("AP", 24) == {"ano": 2024, "despesaLiquidada": 240.0, "cadeiras": 24, "porParlamentar": 10.0, "fonte": "f24"}
+    assert g.custo_assembleia("AP", 0) == {}
+    assert g.custo_assembleia("XX", 24) == {}

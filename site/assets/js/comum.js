@@ -191,10 +191,17 @@ export function semDadosLocais(alvo, e, api) {
 
 /* Troca entre as abas de uma página de pessoa; a aba escolhida fica no #endereço. */
 export function ligarAbas(alvo) {
+  /* Só no celular: a aba escolhida vai ao meio da faixa; a primeira e a última ficam nos cantos (o limite da rolagem). */
+  function centralizarAba() {
+    if (!matchMedia("(max-width: 760px)").matches) return;
+    const faixa = $(".abas-pagina", alvo), b = faixa.querySelector("[aria-selected=true]");
+    if (b) faixa.scrollTo({ left: b.offsetLeft + b.offsetWidth / 2 - faixa.clientWidth / 2, behavior: "smooth" });
+  }
   function irParaAba(nome, atualizarUrl = true) {
     if (!$(`#painel-${nome}`)) nome = "perfil";
     alvo.querySelectorAll("[data-aba]").forEach((b) => b.setAttribute("aria-selected", b.dataset.aba === nome));
     alvo.querySelectorAll("[role=tabpanel]").forEach((p) => (p.hidden = p.id !== `painel-${nome}`));
+    centralizarAba();
     if (atualizarUrl) history.replaceState(null, "", nome === "perfil" ? location.pathname + location.search : `${location.pathname}${location.search}#${nome}`);
   }
   $(".abas-pagina", alvo).addEventListener("click", (e) => { const b = e.target.closest("[data-aba]"); if (b) irParaAba(b.dataset.aba); });

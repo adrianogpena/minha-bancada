@@ -116,7 +116,28 @@ function barraMobile(atual) {
     <div class="mb-folha" id="mb-folha" hidden><div class="mb-folha-caixa">${MAIS_MOBILE.map(link("mb-link")).join("")}</div></div>`;
 }
 
+/* Copia o cabeçalho de cada coluna para o data-rotulo das células: o modo celular mostra cada linha como cartão "rótulo: valor". */
+export function rotularTabelas(raiz = document) {
+  for (const t of raiz.querySelectorAll("table.tabela:not(.matriz):not(.tabela-fonte)")) {
+    const cab = [...t.querySelectorAll("thead th")].map((th) => th.textContent.trim());
+    for (const tr of t.querySelectorAll("tbody tr")) {
+      [...tr.children].forEach((td, i) => { if (cab[i] && !td.dataset.rotulo) td.dataset.rotulo = cab[i]; });
+    }
+  }
+}
+
+function rotularTabelasAoMontar() {
+  if (typeof MutationObserver === "undefined") return;
+  let agendado = false;
+  new MutationObserver(() => {
+    if (agendado) return;
+    agendado = true;
+    requestAnimationFrame(() => { agendado = false; rotularTabelas(); });
+  }).observe(document.body, { childList: true, subtree: true });
+}
+
 export function moldura(pagina) {
+  rotularTabelasAoMontar();
   const links = [
     ["Políticos", [["index.html", "Buscar políticos", "inicio"], ["camara.html", "Câmara", "camara"], ["ministerios.html", "Ministérios", "ministerios"]]],
     ["Atuação", [["proposicoes.html", "Proposições", "proposicoes"], ["votacoes.html", "Votações", "votacoes"]]],

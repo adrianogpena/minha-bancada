@@ -36,7 +36,7 @@ function carregarPlaywright() {
   // Janela sem barra de endereço e sem viewport emulado: a área da página é a própria janela, do tamanho do celular.
   const perfil = fs.mkdtempSync(path.join(os.tmpdir(), "bancada-mobile-dev-"));
   const contexto = await chromium.launchPersistentContext(perfil, {
-    headless: false, viewport: null, hasTouch: true, ignoreDefaultArgs: ["--enable-automation"],
+    headless: false, viewport: null, hasTouch: true, colorScheme: "dark", ignoreDefaultArgs: ["--enable-automation"],
     userAgent: "Mozilla/5.0 (Linux; Android 14; Pixel 8) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0 Mobile Safari/537.36",
     args: [`--app=${base}/${pagina}`, `--window-size=${largura},${altura}`, "--hide-scrollbars", "--touch-events=enabled"],
   });

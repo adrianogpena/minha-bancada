@@ -81,7 +81,20 @@ summary { display: flex; cursor: pointer; }
 
 /* tabelas largas rolam dentro de si, sem estourar a página */
 .rolagem, .tabela-rolavel { overflow-x: auto; -webkit-overflow-scrolling: touch; }
-.tabela { font-size: 14px; }
+.tabela { font-size: 14px; width: 100%; }
+.tabela th, .tabela td { padding-right: 6px; }
+
+/* tabela comum vira lista de cartões: a 1ª célula é o título, as outras mostram "rótulo: valor" (data-rotulo vem de rotularTabelas) */
+.tabela:not(.matriz):not(.tabela-fonte) thead { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
+.tabela:not(.matriz):not(.tabela-fonte), .tabela:not(.matriz):not(.tabela-fonte) tbody { display: block; }
+.tabela:not(.matriz):not(.tabela-fonte) tr { display: block; padding: 10px 2px; border-bottom: 1px solid var(--linha); }
+.tabela:not(.matriz):not(.tabela-fonte) td { display: flex; justify-content: space-between; gap: 16px; padding: 3px 0; border: 0; text-align: right; overflow-wrap: anywhere; }
+.tabela:not(.matriz):not(.tabela-fonte) td::before { content: attr(data-rotulo); flex: none; max-width: 45%; text-align: left; color: var(--tinta-suave); font-size: 13px; font-weight: 700; }
+.tabela:not(.matriz):not(.tabela-fonte) td:first-child { display: block; text-align: left; font-weight: 700; font-size: 15px; padding-bottom: 4px; }
+.tabela:not(.matriz):not(.tabela-fonte) td:first-child::before { content: none; }
+
+/* tabelas que continuam em grade (matriz, fontes) rolam de lado com a 1ª coluna fixa */
+.tabela-fonte th:first-child, .tabela-fonte td:first-child { position: sticky; left: 0; background: var(--superficie); }
 
 /* fontes: legíveis e sem linha que empurre a tela */
 .rotulo-fonte { font-size: 13px; }

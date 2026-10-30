@@ -126,13 +126,29 @@ export function rotularTabelas(raiz = document) {
   }
 }
 
+/* Agrupa cada <dt>+<dd> da ficha numa <div>: a grade em colunas do desktop nunca separa o rótulo do valor. */
+export function agruparFichas(raiz = document) {
+  for (const dl of raiz.querySelectorAll("dl.ficha:not([data-agrupada])")) {
+    const filhos = [...dl.children];
+    if (filhos.some((f) => f.tagName !== "DT" && f.tagName !== "DD")) continue;
+    dl.dataset.agrupada = "1";
+    for (let i = 0; i < filhos.length; i++) {
+      const grupo = document.createElement("div");
+      if (filhos[i].classList.contains("embaixo")) grupo.className = "embaixo";
+      dl.insertBefore(grupo, filhos[i]);
+      grupo.append(filhos[i]);
+      if (filhos[i].tagName === "DT" && filhos[i + 1]?.tagName === "DD") grupo.append(filhos[++i]);
+    }
+  }
+}
+
 function rotularTabelasAoMontar() {
   if (typeof MutationObserver === "undefined") return;
   let agendado = false;
   new MutationObserver(() => {
     if (agendado) return;
     agendado = true;
-    requestAnimationFrame(() => { agendado = false; rotularTabelas(); });
+    requestAnimationFrame(() => { agendado = false; rotularTabelas(); agruparFichas(); });
   }).observe(document.body, { childList: true, subtree: true });
 }
 

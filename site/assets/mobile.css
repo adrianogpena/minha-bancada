@@ -75,7 +75,7 @@ summary { display: flex; cursor: pointer; }
 .painel-titulo { flex-direction: column; align-items: flex-start; gap: 4px; }
 .numeros { grid-template-columns: 1fr 1fr; }
 .numeros b { font-size: 22px; }
-.ficha { grid-template-columns: 1fr; gap: 0; }
+.ficha[data-agrupada] { grid-template-columns: 1fr; }
 .ficha dt { font-size: 14px; margin-top: 10px; }
 .legenda { font-size: 14px; }
 

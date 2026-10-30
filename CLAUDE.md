@@ -28,7 +28,8 @@ Sem build nem linter. CI (`.github/workflows/testes.yml`): pytest + teste JS, fu
 - Endpoint novo: registrar em `ENDPOINTS.md` e o conjunto no `CHANGELOG.md` (`tests/test_endpoints_doc.py` exige todo host externo consultado em `ENDPOINTS.md`). Ideias pendentes: `FUTURAS_IMPLEMENTACOES.md`.
 - Testes nunca acessam a internet; simule a resposta no formato real da API. Mudou um coletor por mudança na API: regrave amostras com `python scripts/contrato_apis.py --gravar <nome>`.
 - Commits de dados diários (`Dados atualizados em ...`, `Histórico diário ...`) vêm do Actions; não edite `dados/` à mão.
-- Não crie PR sem pedido; desenvolva na branch designada da sessão.
+- Nunca faça push direto na `master`: desenvolva na branch designada da sessão e entregue por PR.
+- Todo PR é aberto com auto merge ativado (`enable_pr_auto_merge`), para entrar sozinho quando os testes passarem.
 
 ## Dados sem duplicação
 

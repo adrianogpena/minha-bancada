@@ -28,7 +28,9 @@ Sem build nem linter. CI (`.github/workflows/testes.yml`): pytest + teste JS, fu
 - Endpoint novo: registrar em `ENDPOINTS.md` e o conjunto no `CHANGELOG.md` (`tests/test_endpoints_doc.py` exige todo host externo consultado em `ENDPOINTS.md`). Ideias pendentes: `FUTURAS_IMPLEMENTACOES.md`.
 - Testes nunca acessam a internet; simule a resposta no formato real da API. Mudou um coletor por mudança na API: regrave amostras com `python scripts/contrato_apis.py --gravar <nome>`.
 - Commits de dados diários (`Dados atualizados em ...`, `Histórico diário ...`) vêm do Actions; não edite `dados/` à mão.
-- Não crie PR sem pedido; desenvolva na branch designada da sessão.
+- Nunca faça push direto na `master`.
+- `develop` é a branch permanente de integração (nunca apague, nem recrie): a `master` só recebe o que passou no PR e a `develop` tem tudo da `master` mais as implementações novas. A sessão faz commit na própria branch, rebaseia sobre `origin/develop`, roda `pytest`, dá push em `develop` e então apaga a branch da sessão no remoto (`git push origin --delete <branch>`). Não crie PR sem pedido.
+- Quando o PR for pedido (depois de N implementações), abra `develop` -> `master` com auto merge ativado (`enable_pr_auto_merge`). Depois do merge, traga a `master` de volta: `git checkout develop && git merge origin/master && git push origin develop`.
 
 ## Dados sem duplicação
 

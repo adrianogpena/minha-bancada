@@ -452,8 +452,8 @@ jobs:
   publicar:
     name: Gerar o site e publicar
     needs: [camara, senado, tse, executivo, ministros, estaduais, governadores, tcu, emendas, siconfi, prefeituras]
-    # Câmara, Senado e TSE são indispensáveis; as demais coletas falham sem impedir a publicação
-    if: ${{ !cancelled() && needs.camara.result == 'success' && needs.senado.result == 'success' && needs.tse.result == 'success' }}
+    # Publica com o que deu certo (histórico, RSS e e-mail saem mesmo se uma coleta falhar); só não publica se todas falharam
+    if: ${{ !cancelled() && contains(needs.*.result, 'success') }}
     runs-on: ubuntu-24.04
     timeout-minutes: 60
     environment:

@@ -1,5 +1,5 @@
 /* Busca de proposições (projetos, PECs…) e ficha de uma: autores e votações, com os políticos ligados a elas. */
-import { $, esc, data, semAcento, param, carregar } from "./util.js";
+import { $, esc, data, semAcento, param, carregar, urlSegura } from "./util.js";
 import { VOTOS, selo, listaPaginada, erro, semDadosLocais, filtrosNaUrl, botaoVoltar } from "./comum.js";
 import { TIPOS_PROJETO, CAMARA_API, fontes, linkTramitacao, linkMateriaSenado } from "./apis.js";
 import { barraPlacar } from "./votacoes.js";
@@ -45,7 +45,10 @@ export async function paginaProposicao() {
     [f, politicos, lista] = await Promise.all([carregar(`dados/proposicao/${casa}-${p.a}.json`), carregar(senado ? "dados/senadores.json" : "dados/deputados.json"), carregar(senado ? "dados/votacoes_senado.json" : "dados/votacoes.json")]);
   } catch (e) { return semDadosLocais(alvo, e, null); }
   f = f[id] || {};
+  let leis = {};
+  if (f.ls) { try { leis = await carregar("dados/leis.json"); } catch { /* sem o resumo das leis, a ficha segue sem a seção */ } }
   const quem = new Map(politicos.map((x) => [String(x.id), x]));
+  const relator = f.rl ? quem.get(String(f.rl)) : null;   // relator sem ficha no site: o nome continua em "Vida do projeto"
   const nominais = new Map(lista.map((x) => [String(x.id), x]));
   const autores = (f.au || []).map((a) => ({ ...a, ...(a.id ? quem.get(a.id) : {}), principal: !!a.p }));
   const votacoes = (f.v || []).map((v) => ({ ...v, ...(nominais.get(v.id) || {}), nominal: nominais.has(v.id) }));
@@ -56,9 +59,16 @@ export async function paginaProposicao() {
       <p>${nomeCasa(casa)}${f.ap ? `, apresentada em ${data(f.ap)}` : ""}</p>
       <h1 style="max-width:none;font-size:clamp(28px,4.5vw,44px)">${esc(rotulo(p))}</h1>
       ${TIPOS_PROJETO[p.t] ? `<p>${esc(TIPOS_PROJETO[p.t])}</p>` : ""}
-      <p class="texto-longo">${esc(p.e)}</p>
+      <p class="texto-longo">${esc(f.em || p.e)}</p>
+      ${f.ed ? `<details class="texto"><summary>Ementa detalhada</summary>${esc(f.ed)}</details>` : ""}
       <p class="texto-longo"><b>Situação:</b> ${esc(p.s || "ainda não consultada")}${f.o ? ` (${esc(f.o)})` : ""}</p>
+      ${f.tr || f.ds ? `<p class="texto-longo"><b>Última tramitação:</b> ${esc(f.tr || "")}${f.ds ? `${f.tr ? ", em " : ""}${data(f.ds)}` : ""}${f.rg ? ` · regime: ${esc(f.rg)}` : ""}</p>` : ""}
+      ${relator ? `<p class="texto-longo"><b>Relator:</b> ${linkPolitico(relator, casa)}${relator.partido ? ` (${esc([relator.partido, relator.uf].filter(Boolean).join("/"))})` : ""}</p>` : ""}
+      ${f.tm ? `<p class="texto-longo"><b>Temas:</b> ${esc(f.tm.join(", "))}</p>` : ""}
+      ${f.pc ? `<p class="texto-longo"><b>Palavras-chave:</b> ${esc(f.pc)}</p>` : ""}
+      ${f.pr ? `<p class="texto-longo"><b>Apensada ao projeto principal:</b> <a href="proposicao.html?k=c-${encodeURIComponent(f.pr)}">ver o projeto principal</a></p>` : ""}
     </section>
+    ${leisCitadas(f.ls, leis)}
     <h2>Autores (${autores.length})</h2>
     ${autores.length ? `<ul class="itens">${autores.map((a) => `<li>${linkPolitico(a, casa)}${a.principal ? ` <span class="quando">autor principal</span>` : ""}<span class="quando texto">${esc([a.partido, a.uf].filter(Boolean).join("/") || (a.id ? "" : "sem ficha no site"))}</span></li>`).join("")}</ul>` : `<p class="vazio">Autoria ainda não coletada.</p>`}
     <h2>Votações (${votacoes.length})</h2>
@@ -67,9 +77,9 @@ export async function paginaProposicao() {
       <span class="texto">${esc(v.descricao || "Votação")}${v.nominal ? barraPlacar(v.placar) : `<span class="quando">Votação simbólica ou em comissão: sem voto individual.</span>`}</span>
       ${v.nominal ? `<button type="button" class="mais" data-i="${i}">Ver quem votou</button><div id="votos-${i}"></div>` : ""}</li>`).join("")}</ul>` : `<p class="vazio">Nenhuma votação registrada no Plenário.</p>`}
     <div id="vida"></div>
-    ${fontes([["Tramitação oficial", senado ? linkMateriaSenado(id) : linkTramitacao(id)]])}`;
+    ${fontes([["Tramitação oficial", senado ? linkMateriaSenado(id) : linkTramitacao(id)], ["Inteiro teor", f.tx]])}`;
 
-  if (!senado) vidaDoProjeto($("#vida"), id, p.a);
+  if (!senado) vidaDoProjeto($("#vida"), id, !!relator);
 
   alvo.addEventListener("click", async (e) => {
     const b = e.target.closest("button[data-i]");
@@ -93,14 +103,24 @@ export async function paginaProposicao() {
 }
 
 
+/* Leis que a ementa menciona: link para o texto oficial (o LexML leva ao Planalto, Senado e Câmara) e a ementa oficial da lei como resumo. */
+function leisCitadas(ids, leis) {
+  const itens = (ids || []).map((i) => leis[i]).filter(Boolean);
+  if (!itens.length) return "";
+  return `<h2>Leis citadas (${itens.length})</h2><ul class="itens">${itens.map((l) => `<li>
+    <span class="texto"><b>${esc(l.r)}</b>${l.e ? `: ${esc(l.e)}` : `<span class="quando">Resumo ainda não coletado.</span>`}<br>
+      <a href="${esc(l.u)}" rel="noopener">Texto oficial (LexML)</a>${urlSegura(l.p) ? ` · <a href="${esc(l.p)}" rel="noopener">Planalto</a>` : ""}</span></li>`).join("")}</ul>
+    <p class="quando">O resumo é a ementa oficial da lei, não uma interpretação do que o projeto muda nela.</p>`;
+}
+
 /* Linha do tempo, relator, comissões e projetos relacionados (coletar.py: coletar_tramitacoes_proposicoes). */
-async function vidaDoProjeto(alvo, id) {
+async function vidaDoProjeto(alvo, id, comRelator) {
   let t;
   try { t = await carregar(`dados/tramitacao/${encodeURIComponent(id)}.json`); } catch { return; }
   const eventos = t.eventos || [], orgaos = [...new Set(eventos.map((e) => e[1]).filter(Boolean))];
   const relacionadas = t.relacionadas || [];
   alvo.innerHTML = `<h2>Vida do projeto (${eventos.length} movimentações)</h2>
-    ${t.relator ? `<p class="texto-longo"><b>Último relator designado:</b> ${esc(t.relator)}</p>` : ""}
+    ${t.relator && !comRelator ? `<p class="texto-longo"><b>Último relator designado:</b> ${esc(t.relator)}</p>` : ""}
     ${orgaos.length ? `<p class="texto-longo"><b>Por onde passou:</b> ${esc(orgaos.join(", "))}</p>` : ""}
     <ol class="itens" id="linha-tempo">${[...eventos].reverse().slice(0, 15).map(evento).join("")}</ol>
     ${eventos.length > 15 ? `<button type="button" class="mais" id="mais-tempo">Ver as ${eventos.length - 15} movimentações mais antigas</button>` : ""}

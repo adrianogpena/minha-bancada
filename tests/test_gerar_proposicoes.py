@@ -39,4 +39,4 @@ def test_principal_de_apensado_sem_autor_na_legislatura_entra_no_indice(tmp_path
     assert total == 2
     indice = {i["k"]: i for i in json.loads((tmp_path / "proposicoes.json").read_text(encoding="utf-8"))}
     assert indice["c-346155"]["n"] == 580 and indice["c-346155"]["d"] == "tramitando" and "c-99" not in indice
-    assert json.loads((tmp_path / "proposicao/c-2007.json").read_text(encoding="utf-8"))["346155"] == {"o": "CCJC"}
+    assert json.loads((tmp_path / "proposicao/c-2007.json").read_text(encoding="utf-8"))["346155"] == {"o": "CCJC", "tr": "Notificações", "ds": "2025-08-22", "rl": "220645"}

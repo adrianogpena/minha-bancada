@@ -72,8 +72,14 @@ Descartado: Wikidata (consulta SPARQL de 2026-10-29 trouxe 6 ministros sem data 
 
 ### 3.4 Ministérios em números
 
-A descrição de cada pasta (texto, áreas, órgãos vinculados) é a camada 1 e tem plano próprio em
-`PLANO_DESCRICAO_MINISTERIOS.md`. Depois dela, números de cada ministério em `ministerios.html?pasta=...`:
+A descrição de cada pasta (camada 1) está feita (ver `CHANGELOG.md`). **Restos da descrição:**
+- `vinculados` só existe em 10 pastas, copiados da página de vinculadas do ministério em gov.br. As outras 28 não têm página
+  utilizável (Minas e Energia e Justiça têm, mas incompleta). A fonte seria o decreto de estrutura de cada pasta, que o
+  Planalto bloqueia para coleta automática; conferir à mão ou de outro ambiente.
+- Alterações legais posteriores à Lei 14.816/2024 não foram conferidas pasta a pasta. Reforma ministerial deixa o texto velho:
+  revisar `scripts/ministerios_descricao.json` (e `revisadoEm`) junto com cada mudança em `ministerios.PASTAS`.
+
+Depois da descrição, números de cada ministério em `ministerios.html?pasta=...`:
 
 | Ideia | Fonte | Situação em 2026-10-30 | O que daria no site |
 |---|---|---|---|

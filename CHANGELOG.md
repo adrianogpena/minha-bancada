@@ -7,7 +7,7 @@ Todas as coletas rodam sozinhas no GitHub Actions (`.github/workflows/atualizar.
 
 ## O que cada ministério faz (2026-10-30)
 - **De onde:** texto da Lei 14.600/2023 (versão original, lida no portal da Câmara porque o Planalto bloqueia a coleta automática) e da Lei 14.816/2024 (Ministério do Empreendedorismo). Sem endpoint novo: os links da página são só links.
-- **Como:** sem coletor. Escrito à mão em `scripts/ministerios_descricao.json` (resumo, áreas, site, base legal e data de revisão por chave de `ministerios.PASTAS`); `gerar_ministros.py` grava `descricao` em `ministerio/<pasta>.json` e avisa quando falta pasta. A página do ministério mostra o bloco "O que faz" e a do ministro, o resumo da pasta. Plano e limites: `PLANO_DESCRICAO_MINISTERIOS.md`.
+- **Como:** sem coletor. Escrito à mão em `scripts/ministerios_descricao.json` (resumo, áreas, site, base legal e data de revisão por chave de `ministerios.PASTAS`); `gerar_ministros.py` grava `descricao` em `ministerio/<pasta>.json` e avisa quando falta pasta. A página do ministério mostra o bloco "O que faz" e a do ministro, o resumo da pasta. Pendências (vinculados das 28 pastas restantes e alterações legais após 2024): `FUTURAS_IMPLEMENTACOES.md`, pacote 3.4.
 - **Vinculados:** `vinculados` (nome e link) entrou em 10 pastas (Cidades, Comunicações, Cultura, Defesa, MDIC, Integração, Meio Ambiente, Previdência, Saúde, Trabalho), copiados da página "órgãos/entidades vinculadas" do próprio ministério em gov.br, que vira item de `base`. As demais ficam sem a lista (Minas e Energia tem página, mas com 2 itens e sem as agências) até haver página limpa ou conferência no decreto de estrutura.
 
 ## Posse e presidente que nomeou cada ministro (2026-10-29)

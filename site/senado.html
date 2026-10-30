@@ -25,10 +25,10 @@
   <label class="campo">Ordenar por<select id="ordem">
     <option value="nome">Nome</option><option value="presenca">Maior presença</option>
     <option value="proposicoes">Mais proposições</option><option value="proprias">Mais iniciativas próprias</option>
-    <option value="gasto">Maiores gastos</option></select></label>
+    <option value="gasto">Maiores gastos</option><option value="partido">Mais alinhados ao partido</option><option value="emendas">Maiores emendas</option></select></label>
 </form>
 <p class="contagem" id="contagem" aria-live="polite">Carregando…</p>
-<p class="nota-lista">Presença conta como comparecimento quem votou ou registrou presença nas votações nominais do Plenário. Iniciativa própria é um projeto em que o senador é o primeiro a assinar. Fontes: <a href="https://legis.senado.leg.br/dadosabertos/votacao" rel="noopener">votações</a>, <a href="https://legis.senado.leg.br/dadosabertos/processo" rel="noopener">processos</a> e <a href="https://adm.senado.gov.br/adm-dadosabertos/api/v1/senadores/despesas_ceaps" rel="noopener">cota CEAPS</a> do Senado.</p>
+<p class="nota-lista">Emendas: <a href="https://portaldatransparencia.gov.br/emendas/consulta" rel="noopener">Portal da Transparência</a>, ligadas ao autor só pelo nome (confira no portal); o valor soma os anos coletados. Passe o mouse sobre fiel, pró-governo e gastos para comparar com a média do partido e da bancada do estado. Presença conta como comparecimento quem votou ou registrou presença nas votações nominais do Plenário. "Com o partido" é o voto Sim ou Não igual ao da maioria dos colegas de partido na mesma votação; o Senado não publica orientação de bancada nem de governo, então não há "pró-governo". Iniciativa própria é um projeto em que o senador é o primeiro a assinar. Fontes: <a href="https://legis.senado.leg.br/dadosabertos/votacao" rel="noopener">votações</a>, <a href="https://legis.senado.leg.br/dadosabertos/processo" rel="noopener">processos</a> e <a href="https://adm.senado.gov.br/adm-dadosabertos/api/v1/senadores/despesas_ceaps" rel="noopener">cota CEAPS</a> do Senado.</p>
 <div id="resultado"></div>
 </main>
 <script type="module" src="assets/app.js"></script>

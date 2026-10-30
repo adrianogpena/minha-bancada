@@ -6,6 +6,19 @@ import { barraPlacar } from "./votacoes.js";
 import { LEGENDA_PROJETOS, avisoDados } from "./executivo.js";
 import { abaEventos, painelEventos, montarEventos } from "./eventos.js";
 
+/* Tabela "Com quem assina projetos" das duas Casas. `c` traz projetos e outroPartido; `linhas` são as células [parceiro, partido, projetos] já em HTML. */
+export function painelCoautoria({ c, quem, linhas, nota, fonte, vazio = "", intro = "" }) {
+  if (!c) return vazio ? `<h2>Com quem assina projetos</h2><p class="vazio">${vazio}</p>` : "";
+  return `
+    <h2>Com quem assina projetos</h2>
+    <p>${c.projetos} ${c.projetos === 1 ? "projeto assinado" : "projetos assinados"} com outros ${quem === "Deputado" ? "deputados" : "parlamentares"}, ${c.outroPartido} com ${quem === "Deputado" ? "deputado" : "parlamentar"} de outro partido (${pct(c.outroPartido, c.projetos)}).${intro}</p>
+    <div class="rolagem"><table class="tabela"><thead><tr><th>${quem}</th><th>Partido</th><th>Projetos em comum</th></tr></thead><tbody>
+      ${linhas.map(([n, pt, q]) => `<tr><td>${n}</td><td>${pt}</td><td>${q}</td></tr>`).join("")}
+    </tbody></table></div>
+    <p class="quando">${nota}</p>
+    ${fontes([fonte])}`;
+}
+
 const TIPOS_SESSAO = { DOR: "Sessão deliberativa ordinária", DEX: "Sessão deliberativa extraordinária", NOR: "Sessão não deliberativa", ESP: "Sessão especial" };
 
 /* As três abas (perfil, votações, propostas) de um parlamentar. Serve a deputados e senadores. */

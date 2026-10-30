@@ -62,6 +62,17 @@ def construir(emendas: list[dict], nomes: dict | None = None) -> dict[str, dict]
     return saida
 
 
+def totais(emendas: list[dict]) -> dict[str, dict]:
+    """{pessoa: {n, empenhado, pago}} somando todos os anos coletados, para as listas de deputados e senadores."""
+    saida: dict[str, dict] = {}
+    for e in emendas:
+        t = saida.setdefault(e["pessoa"], {"n": 0, "empenhado": 0.0, "pago": 0.0})
+        t["n"] += 1
+        t["empenhado"] += e.get("empenhado") or 0
+        t["pago"] += e.get("pago") or 0
+    return {p: {"n": t["n"], "empenhado": round(t["empenhado"], 2), "pago": round(t["pago"], 2)} for p, t in saida.items()}
+
+
 def municipio(nome: str, uf: str, itens: list[dict], indice: dict) -> dict:
     m = {"nome": nome, "uf": uf, "empenhado": soma(itens, "empenhado"), "pago": soma(itens, "pago"), "n": len(itens)}
     if (uf, ibge_nomes.chave(nome)) in indice:

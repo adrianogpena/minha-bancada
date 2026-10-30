@@ -33,3 +33,8 @@ def test_municipio_ganha_codigo_ibge_e_soma_das_emendas_pix():
     assert "pixN" not in por_nome["SANTOS"]
     assert por_nome["SANTO ANTÔNIO DE LEVERGER"]["ibge"] == "5101605"
     assert "ibge" not in por_nome["OUTRA"]
+
+
+def test_totais_somam_todos_os_anos_por_pessoa():
+    t = ge.totais([item("1", 2023, "A", "SP", 100.5, 40.0), item("2", 2024, "B", "SP", 50.0, 10.0), {"pessoa": "pes_b", "codigo": "3", "ano": 2024, "empenhado": 7.0}])
+    assert t == {"pes_a": {"n": 2, "empenhado": 150.5, "pago": 50.0}, "pes_b": {"n": 1, "empenhado": 7.0, "pago": 0.0}}

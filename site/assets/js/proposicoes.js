@@ -1,7 +1,7 @@
 /* Busca de proposições (projetos, PECs…) e ficha de uma: autores e votações, com os políticos ligados a elas. */
 import { $, esc, data, semAcento, param, carregar, urlSegura } from "./util.js";
 import { VOTOS, selo, listaPaginada, erro, semDadosLocais, filtrosNaUrl, botaoVoltar } from "./comum.js";
-import { TIPOS_PROJETO, CAMARA_API, fontes, linkTramitacao, linkMateriaSenado } from "./apis.js";
+import { TIPOS_PROJETO, CAMARA_API, fontes, linkTramitacao, linkMateriaSenado, linkParlamentar } from "./apis.js";
 import { barraPlacar } from "./votacoes.js";
 
 const DESTINOS = { aprovada: "Aprovada", rejeitada: "Rejeitada/arquivada", tramitando: "Em tramitação", sem: "Sem situação" };
@@ -31,7 +31,7 @@ export async function paginaProposicoes() {
 }
 
 /* ---------- ficha ---------- */
-const linkPolitico = (a, casa) => (!a.id ? esc(a.nome) : `<a href="${casa === "s" ? `politico.html?f=senado&i=${encodeURIComponent(a.id)}` : `deputado.html?id=${encodeURIComponent(a.id)}`}">${esc(a.nome)}</a>`);
+const linkPolitico = (a, casa) => (!a.id ? esc(a.nome) : `<a href="${linkParlamentar(casa === "s" ? "senado" : "camara", a.id)}">${esc(a.nome)}</a>`);
 
 /* O cabeçalho vem do índice; autores e votações, do arquivo do ano; nome, partido e UF, das listas de políticos; placar, das listas de votações. */
 export async function paginaProposicao() {

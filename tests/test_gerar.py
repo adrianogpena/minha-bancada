@@ -279,3 +279,21 @@ def test_presenca_do_deputado_por_ano_com_mediana():
     assert medianas == {"2025": 6, "2026": 5}
     assert gerar.presenca_do_deputado("1", presenca, medianas) == [
         {"ano": 2025, "sessoes": 8, "comissoes": 2, "outros": 0, "sessoesDeliberativas": 10, "medianaSessoes": 6}]
+
+
+def test_partidos_na_legislatura_ignora_repeticao_e_registro_sem_data():
+    h = [{"data": "2023-02-01", "partido": "PT"}, {"data": "2024-01-10", "partido": "PT", "situacao": "Exercício"},
+         {"data": "2025-03-05", "partido": "PSB"}, {"partido": "PL"}, {"data": "2023-01-01", "partido": None}]
+    assert gerar.partidos_na_legislatura(h) == ["PT", "PSB"]
+    assert gerar.partidos_na_legislatura(None) == []
+
+
+def test_segue_maioria_do_partido_desconta_o_proprio_voto_e_ignora_empate_e_poucos_colegas():
+    from collections import Counter
+    p = Counter(sim=3, nao=1)
+    assert gerar.segue_maioria_do_partido("sim", p) is True
+    assert gerar.segue_maioria_do_partido("nao", p) is False
+    assert gerar.segue_maioria_do_partido("abstencao", p) is None
+    assert gerar.segue_maioria_do_partido("sim", Counter(sim=2, nao=1)) is None
+    assert gerar.segue_maioria_do_partido("sim", Counter(sim=2)) is None
+    assert gerar.segue_maioria_do_partido("nao", Counter(sim=2, nao=2)) is False

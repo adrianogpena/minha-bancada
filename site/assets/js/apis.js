@@ -45,6 +45,8 @@ export function desfecho(p) {
   return ["Em tramitação", "tramitando", "andamento"];
 }
 
+/* Endereço da ficha de um parlamentar: `casa` é "camara" ou "senado". Único lugar que conhece as duas rotas. */
+export const linkParlamentar = (casa, id) => (casa === "senado" ? `politico.html?f=senado&i=${encodeURIComponent(id)}` : `deputado.html?id=${encodeURIComponent(id)}`);
 export const linkTramitacao = (id) => `https://www.camara.leg.br/proposicoesWeb/fichadetramitacao?idProposicao=${encodeURIComponent(id)}`;
 
 /* Endereço da versão legível de um link de API: reaproveita as páginas do site quando existem

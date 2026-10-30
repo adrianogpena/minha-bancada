@@ -80,6 +80,15 @@ def partido_em(historico: list | None, dia: str | None) -> str | None:
     return max(ate, key=lambda h: h["data"])["partido"] if ate else None
 
 
+def partidos_na_legislatura(historico: list | None) -> list[str]:
+    """Partidos pelos quais o deputado passou na legislatura, em ordem, sem repetir seguidos (só registros com partido e data)."""
+    seq: list[str] = []
+    for h in sorted((h for h in historico or [] if h.get("partido") and h.get("data")), key=lambda h: h["data"]):
+        if not seq or seq[-1] != h["partido"]:
+            seq.append(h["partido"])
+    return seq
+
+
 def juntar_autoria(p: dict, aut: dict | None, did: str, partidos: dict | None = None,
                    historicos: dict | None = None) -> dict:
     """Acrescenta, quando a autoria do projeto já foi coletada: `principal` (o deputado foi o primeiro
@@ -374,7 +383,18 @@ def resumir_coautoria(itens: list, partido: str | None) -> dict | None:
             "parceiros": [[n, dados[n][0], dados[n][1], q] for n, q in parceiros.most_common(10)]}
 
 
-def gerar_senadores(ministro_de: dict | None = None) -> list:
+def segue_maioria_do_partido(voto: str, partido: Counter, minimo: int = 2) -> bool | None:
+    """Se o voto Sim/Não coincide com o da maioria dos colegas de partido na mesma votação (o próprio voto não conta).
+    None quando o voto não é Sim/Não, os colegas com Sim ou Não são menos que `minimo` ou há empate."""
+    if voto not in ("sim", "nao"):
+        return None
+    sim, nao = partido["sim"] - (voto == "sim"), partido["nao"] - (voto == "nao")
+    if sim + nao < minimo or sim == nao:
+        return None
+    return voto == ("sim" if sim > nao else "nao")
+
+
+def gerar_senadores(ministro_de: dict | None = None, emendas: dict | None = None, chaves: dict | None = None) -> list:
     """Votos e projetos dos senadores em exercício -> site/dados/senador/<id>.json,
     site/dados/votacoes_senado.json (lista, sem o voto de cada um) e
     site/dados/votacao_senado/<id>.json (uma votação com o voto de cada senador)."""
@@ -394,6 +414,7 @@ def gerar_senadores(ministro_de: dict | None = None) -> list:
     por_id = {str(s["id"]): s for s in senadores}
     resumo, votos_por_sen, primeira = [], defaultdict(dict), {}
     presenca = defaultdict(Counter)
+    alinhamento = defaultdict(Counter)   # sid -> {total, seguiu}: votos Sim/Não iguais aos da maioria do partido
     presenca_ano = defaultdict(lambda: defaultdict(Counter))
     for v in votacoes:
         contagem = Counter(x[1] for x in v["votos"])
@@ -435,6 +456,11 @@ def gerar_senadores(ministro_de: dict | None = None) -> list:
             presenca_ano[sid][v["data"][:4]][cat] += 1
             if sid not in primeira or v["data"] < primeira[sid]:
                 primeira[sid] = v["data"]
+        for sid, t, *_ in v["votos"]:
+            segue = segue_maioria_do_partido(t, por_partido[(por_id.get(str(sid)) or {}).get("partido") or "?"])
+            if segue is not None:
+                alinhamento[sid]["total"] += 1
+                alinhamento[sid]["seguiu"] += segue
         salvar(SAIDA / "votacao_senado" / f"{v['id']}.json", {
             **item,
             "porPartido": {p: dict(c) for p, c in sorted(por_partido.items())},
@@ -476,6 +502,8 @@ def gerar_senadores(ministro_de: dict | None = None) -> list:
             "compareceu": pres.get("compareceu", 0) if pres else 0, "votacoes": pres["votacoes"] if pres else 0,
             "proposicoes": len(propostas), **{k: autoria[k] for k in ("proprias", "aprovadasProprias", "suprapartidarios")},
             "gasto": resumir_despesas(ceaps["ano"], ceaps["itens"].get(sid, []))["total"] if ceaps else None,
+            **({"alinhamentoPartido": {"total": alinhamento[sid]["total"], "seguiu": alinhamento[sid]["seguiu"]}} if alinhamento[sid]["total"] else {}),
+            **{k: v for k, v in ((emendas or {}).get((chaves or {}).get(("senado", sid))) or {}).items() if k != "n"},
         })
     lista.sort(key=lambda x: x["nome"])
     salvar(SAIDA / "senado.json", lista)
@@ -511,6 +539,7 @@ def main():
         if d:
             deputados[did] = d
     nucleo = identidades.construir(deputados, BRUTO)
+    emendas_pessoa = gerar_emendas.totais(nucleo["emendas"])
     ministros_atuais = {m["pessoa"] for m in nucleo["ministros"] if not m.get("fim")}
     ministro_de = {(casa, str(p["fontes"][casa])): p["id"] for p in nucleo["pessoas"] if p["id"] in ministros_atuais
                    for casa in ("camara", "senado") if p.get("fontes", {}).get(casa)}   # parlamentar licenciado -> pessoa do ministro
@@ -645,14 +674,16 @@ def main():
             "gasto": total_gasto, "votou": votou, "votacoes": total_nominais,
             "proprias": autoria["proprias"], "aprovadasProprias": autoria["aprovadasProprias"],
             "suprapartidarios": autoria["suprapartidarios"], "autoriaColetada": autoria["autoriaColetada"],
+            **({"partidosAntes": seq[:-1]} if len(seq := partidos_na_legislatura(d.get("historico"))) > 1 else {}),
             "fidelidade": comportamento["partido"] if comportamento and comportamento["partido"]["total"] else None,
             "governismo": comportamento["governo"] if comportamento and comportamento["governo"]["total"] else None,
+            **{k: v for k, v in (emendas_pessoa.get(nucleo["chaves"].get(("camara", str(did)))) or {}).items() if k != "n"},
         })
 
     resumo_deps.sort(key=lambda x: x["nome"])
     salvar(SAIDA / "deputados.json", resumo_deps)
     salvar(SAIDA / "coautoria.json", coautoria_geral)
-    votacoes_senado = gerar_senadores(ministro_de)
+    votacoes_senado = gerar_senadores(ministro_de, emendas_pessoa, nucleo["chaves"])
     for pid, t in (ler(BRUTO / "proposicoes_tramitacoes.json", {}) or {}).items():
         salvar(SAIDA / "tramitacao" / f"{pid}.json", {c: t[c] for c in ("eventos", "relator", "relacionadas") if t.get(c)})
     total = gerar_proposicoes.gerar(SAIDA, deputados, detalhes, autorias, votacoes_projetos, nominais,

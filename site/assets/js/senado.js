@@ -1,56 +1,36 @@
 /* Página do Senado: lista de senadores em exercício. */
-import { $, esc, reais, pct, semAcento, carregar } from "./util.js";
-import { foto, erro } from "./comum.js";
+import { esc, reais, pct } from "./util.js";
+import { linkParlamentar } from "./apis.js";
+import { listaParlamentares, metrica, celulaEmendas } from "./lista-parlamentares.js";
 
-export async function paginaSenado() {
-  const alvo = $("#resultado");
-  let sens;
-  try { sens = await carregar("dados/senado.json"); } catch (e) { return erro(alvo, e); }
+const taxa = (x) => (x ? x.seguiu / x.total : -1);
 
-  const ufs = [...new Set(sens.map((s) => s.uf))].sort();
-  const partidos = [...new Set(sens.map((s) => s.partido))].sort();
-  $("#uf").insertAdjacentHTML("beforeend", ufs.map((u) => `<option>${esc(u)}</option>`).join(""));
-  $("#partido").insertAdjacentHTML("beforeend", partidos.map((p) => `<option>${esc(p)}</option>`).join(""));
-
-  const q = new URLSearchParams(location.search);
-  for (const k of ["busca", "uf", "partido", "ordem"]) if (q.get(k)) $("#" + k).value = q.get(k);
-
-  const ordenadores = {
+export const CONFIG_SENADO = {
+  arquivo: "dados/senado.json",
+  singular: "senador",
+  plural: "senadores",
+  rotuloNome: "Senador",
+  href: (s) => linkParlamentar("senado", s.id),
+  sub: (s) => `${esc(s.partido || "")}/${esc(s.uf)}${s.participacao && s.participacao !== "Titular" ? `, ${esc(s.participacao.toLowerCase())}` : ""}`,
+  colunas: [
+    { rotulo: "Presença", celula: (s) => metrica(s.votacoes ? pct(s.compareceu, s.votacoes) : "—", "das votações") },
+    { rotulo: "Proposições", largo: true, ordens: ["proposicoes"], celula: (s) => metrica(s.proposicoes, "apresentadas", { largo: true }) },
+    { rotulo: "Iniciativas próprias", largo: true, ordens: ["proprias"], celula: (s) => metrica(s.proprias, "como autor principal", { largo: true, titulo: `Projetos em que ${s.nome} é o primeiro a assinar` }) },
+    { rotulo: "Com o partido", largo: true, ordens: ["partido"], valor: (s) => (s.alinhamentoPartido ? s.alinhamentoPartido.seguiu / s.alinhamentoPartido.total : null), formato: (n) => `${Math.round(n * 100)}%`,
+      celula: (s, dica) => metrica(s.alinhamentoPartido ? pct(s.alinhamentoPartido.seguiu, s.alinhamentoPartido.total) : "—", s.alinhamentoPartido ? `de ${s.alinhamentoPartido.total} votos` : "sem dados", { largo: true, titulo: ["Votos Sim ou Não iguais ao da maioria dos colegas de partido na mesma votação (o Senado não publica orientação de bancada)", dica].filter(Boolean).join(". ") }) },
+    { rotulo: "Mandato até", largo: true, celula: (s) => metrica(s.fimMandato ? esc(s.fimMandato.slice(0, 4)) : "—", "fim do mandato", { largo: true }) },
+    { rotulo: "Gastos no ano", largo: true, ordens: ["gasto"], valor: (s) => s.gasto, formato: (n) => reais(n), celula: (s, dica) => metrica(s.gasto == null ? "—" : reais(s.gasto), "cota parlamentar", { largo: true, titulo: dica }) },
+    { rotulo: "Emendas", largo: true, ordens: ["emendas"], celula: celulaEmendas },
+  ],
+  ordenadores: {
     nome: (a, b) => a.nome.localeCompare(b.nome, "pt-BR"),
     presenca: (a, b) => b.compareceu / (b.votacoes || 1) - a.compareceu / (a.votacoes || 1),
     proposicoes: (a, b) => b.proposicoes - a.proposicoes,
     proprias: (a, b) => b.proprias - a.proprias,
     gasto: (a, b) => (b.gasto || 0) - (a.gasto || 0),
-  };
+    partido: (a, b) => taxa(b.alinhamentoPartido) - taxa(a.alinhamentoPartido),
+    emendas: (a, b) => (b.empenhado || 0) - (a.empenhado || 0),
+  },
+};
 
-  function desenhar() {
-    const busca = semAcento($("#busca").value.trim());
-    const uf = $("#uf").value, partido = $("#partido").value, ordem = $("#ordem").value;
-    const filtrados = sens
-      .filter((s) => (!uf || s.uf === uf) && (!partido || s.partido === partido) && (!busca || semAcento(s.nome).includes(busca)))
-      .sort(ordenadores[ordem]);
-    const novo = new URLSearchParams();
-    if (busca) novo.set("busca", $("#busca").value.trim());
-    if (uf) novo.set("uf", uf);
-    if (partido) novo.set("partido", partido);
-    if (ordem !== "nome") novo.set("ordem", ordem);
-    history.replaceState(null, "", novo.toString() ? "?" + novo : location.pathname);
-
-    $("#contagem").textContent = `${filtrados.length} de ${sens.length} senadores em exercício`;
-    if (!filtrados.length) { alvo.innerHTML = `<p class="vazio">Nenhum senador com esses filtros. Tente limpar a busca ou escolher outro estado.</p>`; return; }
-    alvo.innerHTML = `
-      <div class="cabecalho-lista cabecalho-sen" aria-hidden="true"><span></span><span>Senador</span><span>Presença</span><span class="so-largo">Proposições</span><span class="so-largo">Iniciativas próprias</span><span class="so-largo">Mandato até</span><span class="so-largo">Gastos no ano</span></div>
-      <ul class="lista">${filtrados.map((s) => `
-        <li><a class="linha-dep linha-sen" href="politico.html?f=senado&i=${encodeURIComponent(s.id)}">
-          ${foto(s)}
-          <span><span class="nome">${esc(s.nome)}</span><br><span class="sigla">${esc(s.partido || "")}/${esc(s.uf)}${s.participacao && s.participacao !== "Titular" ? `, ${esc(s.participacao.toLowerCase())}` : ""}</span></span>
-          <span class="metrica"><b>${s.votacoes ? pct(s.compareceu, s.votacoes) : "—"}</b><span>das votações</span></span>
-          <span class="metrica so-largo"><b>${s.proposicoes}</b><span>apresentadas</span></span>
-          <span class="metrica so-largo" title="Projetos em que ${esc(s.nome)} é o primeiro a assinar"><b>${s.proprias}</b><span>como autor principal</span></span>
-          <span class="metrica so-largo"><b>${s.fimMandato ? esc(s.fimMandato.slice(0, 4)) : "—"}</b><span>fim do mandato</span></span>
-          <span class="metrica so-largo"><b>${s.gasto == null ? "—" : reais(s.gasto)}</b><span>cota parlamentar</span></span>
-        </a></li>`).join("")}</ul>`;
-  }
-  ["busca", "uf", "partido", "ordem"].forEach((id) => $("#" + id).addEventListener("input", desenhar));
-  desenhar();
-}
+export const paginaSenado = () => listaParlamentares(CONFIG_SENADO);

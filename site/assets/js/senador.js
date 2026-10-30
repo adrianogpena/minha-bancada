@@ -3,7 +3,7 @@ import { esc, reais, reaisCentavos, pct, data, carregar, numeroBr, urlSegura } f
 import { itemFicha, selosPar } from "./comum.js";
 import { TIPOS_PROJETO, fontes, UFS, SENADO_API, SENADO_ADM_API, linkMateriaSenado, temResultado } from "./apis.js";
 import { painelGastos } from "./deputado.js";
-import { montarParlamentar } from "./parlamentar.js";
+import { montarParlamentar, painelCoautoria } from "./parlamentar.js";
 import { avisoLicenca } from "./ministros.js";
 import { painelEleicaoDe } from "./eleicao.js";
 import { carregarEmendas, painelEmendas } from "./emendas.js";
@@ -102,15 +102,13 @@ function painelDiscursos(d, id, nome) {
 }
 
 /* Com quem o senador mais assina projetos (gerar.py: resumir_coautoria). */
-function painelCoautoria(c) {
-  if (!c) return "";
-  return `<h2>Com quem assina projetos</h2>
-    <p>${c.projetos} ${c.projetos === 1 ? "projeto assinado" : "projetos assinados"} com outros parlamentares, ${c.outroPartido} com parlamentar de outro partido (${pct(c.outroPartido, c.projetos)}).</p>
-    <div class="rolagem"><table class="tabela"><thead><tr><th>Parlamentar</th><th>Partido</th><th>Projetos em comum</th></tr></thead><tbody>
-      ${c.parceiros.map(([n, pt, uf, q]) => `<tr><td>${esc(n)}</td><td>${pt ? `${esc(pt)}${uf ? `/${esc(uf)}` : ""}` : "—"}</td><td>${q}</td></tr>`).join("")}
-    </tbody></table></div>
-    <p class="quando">Só projetos (PL, PEC e afins) com mais de um autor e até 30 autores. Os parceiros vêm do campo de autoria do Senado, e "outro partido" compara com o partido atual do senador.</p>
-    ${fontes([["Autoria das matérias (Dados Abertos do Senado)", `${SENADO_API}/processo`]])}`;
+function coautoriaSenador(c) {
+  return painelCoautoria({
+    c, quem: "Parlamentar",
+    linhas: (c?.parceiros || []).map(([n, pt, uf, q]) => [esc(n), pt ? `${esc(pt)}${uf ? `/${esc(uf)}` : ""}` : "—", q]),
+    nota: 'Só projetos (PL, PEC e afins) com mais de um autor e até 30 autores. Os parceiros vêm do campo de autoria do Senado, e "outro partido" compara com o partido atual do senador.',
+    fonte: ["Autoria das matérias (Dados Abertos do Senado)", `${SENADO_API}/processo`],
+  });
 }
 
 /* Relatorias na legislatura (coletar.py: relatorias_senador). */
@@ -152,7 +150,7 @@ export async function montarSenador(alvo, p, nome, ficha) {
       ${sen.comissoes || sen.mandatos ? painelComissoesMandatos(sen, p.id) : ""}
       ${painelCargos(sen, p.id)}
       ${painelDiscursos(sen.discursos, p.id, nome)}
-      ${painelCoautoria(sen.coautoria)}
+      ${coautoriaSenador(sen.coautoria)}
       ${fontes([["Dados Abertos do Senado", `${SENADO_API}/senador/${encodeURIComponent(p.id)}`], sen.despesas ? ["Cota parlamentar (CEAPS)", `${SENADO_ADM_API}/senadores/despesas_ceaps/${sen.despesas.ano}`] : null, sen.recursos ? ["Recursos utilizados", `${SENADO_ADM_API}/senadores/${encodeURIComponent(p.id)}/recursos-utilizados?ano=${sen.recursos.ano}`] : null, sen.recursos?.escritorios ? ["Escritórios de apoio", `${SENADO_ADM_API}/senadores/escritorios-apoio`] : null, ["Portal da Transparência do Senado", `https://www6g.senado.leg.br/transparencia/sen/${encodeURIComponent(p.id)}`]])}`,
     painelComportamento: painelPresencaAno(sen.presencaAno), painelRelatorias: painelRelatorias(sen.relatorias, p.id, nome),
     rotuloPerfil: sen.despesas ? "Perfil e gastos" : "Perfil",

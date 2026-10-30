@@ -12,6 +12,11 @@ const { linksRedes } = js("ficha.js");
 const { foto } = js("comum.js");
 const { blocoDescricao } = js("ministros.js");
 const { painelEmendas, ehPix } = js("emendas.js");
+const { painelCoautoria } = js("parlamentar.js");
+const { linkParlamentar } = js("apis.js");
+const { filtrarLista, consultaDaLista, mediasPor, dicaComparativa, celulaEmendas, celulaDaColuna, metrica } = js("lista-parlamentares.js");
+const { CONFIG_CAMARA } = js("camara.js");
+const { CONFIG_SENADO } = js("senado.js");
 const { agruparPeriodos, chaveDe, juntarDias, doPolitico, maisRecente } = js("historico.js");
 
 test("temResultado deixa de fora a votação sem aprovada nem rejeitada", () => {
@@ -272,4 +277,53 @@ test("painelEmendas resume as emendas Pix e prepara o mapa só com municípios d
   assert.match(html, /class="mapa-emendas" data-municipios="[^"]*3548500[^"]*" data-pix="1"/);
   assert.doesNotMatch(html.match(/data-municipios="[^"]*"/)[0], /&quot;X&quot;/);
   assert.match(html, /<th>Pix \(empenhado\)<\/th>/);
+});
+
+test("filtrarLista filtra por nome sem acento, UF e partido e ordena pela Casa", () => {
+  const itens = [
+    { nome: "Ana Souza", uf: "SP", partido: "PT", proposicoes: 5, votou: 1, votacoes: 2, gasto: 1, proprias: 1, aprovadasProprias: 0 },
+    { nome: "Álvaro Lima", uf: "RJ", partido: "PL", proposicoes: 9, votou: 2, votacoes: 2, gasto: 2, proprias: 2, aprovadasProprias: 1 },
+  ];
+  const o = CONFIG_CAMARA.ordenadores;
+  assert.deepEqual(filtrarLista(itens, { busca: "alvaro" }, o).map((d) => d.nome), ["Álvaro Lima"]);
+  assert.deepEqual(filtrarLista(itens, { uf: "SP" }, o).map((d) => d.nome), ["Ana Souza"]);
+  assert.deepEqual(filtrarLista(itens, { ordem: "proposicoes" }, o).map((d) => d.nome), ["Álvaro Lima", "Ana Souza"]);
+  assert.deepEqual(filtrarLista(itens, { ordem: "inexistente" }, CONFIG_SENADO.ordenadores).map((d) => d.nome), ["Álvaro Lima", "Ana Souza"]);
+});
+
+test("consultaDaLista só leva o que foge do padrão", () => {
+  assert.equal(consultaDaLista({ busca: " ", ordem: "nome" }), "");
+  assert.equal(consultaDaLista({ busca: "ana", uf: "SP", ordem: "gasto" }), "busca=ana&uf=SP&ordem=gasto");
+});
+
+test("painelCoautoria serve às duas Casas e linkParlamentar conhece as duas rotas", () => {
+  const c = { projetos: 1, outroPartido: 0, parceiros: [] };
+  const html = painelCoautoria({ c, quem: "Deputado", linhas: [["Ana", "PT/SP", 3]], nota: "n", fonte: ["F", "https://dadosabertos.camara.leg.br/api/v2/x"] });
+  assert.match(html, /1 projeto assinado com outros deputados, 0 com deputado de outro partido/);
+  assert.match(html, /<td>Ana<\/td><td>PT\/SP<\/td><td>3<\/td>/);
+  assert.match(painelCoautoria({ c: null, quem: "Deputado", linhas: [], vazio: "Nada." }), /class="vazio">Nada\./);
+  assert.equal(painelCoautoria({ c: null, quem: "Parlamentar", linhas: [] }), "");
+  assert.equal(linkParlamentar("camara", 5), "deputado.html?id=5");
+  assert.equal(linkParlamentar("senado", "a b"), "politico.html?f=senado&i=a%20b");
+});
+
+test("mediasPor e dicaComparativa comparam com o partido e a bancada do estado, ignorando quem não tem valor", () => {
+  const itens = [{ partido: "PT", uf: "SP", v: 10 }, { partido: "PT", uf: "RJ", v: 20 }, { partido: "PL", uf: "SP", v: 30 }, { partido: "PL", uf: "SP", v: null }];
+  const porPartido = mediasPor(itens, "partido", (d) => d.v), porUf = mediasPor(itens, "uf", (d) => d.v);
+  assert.deepEqual(porPartido(itens[0]), { media: 15, n: 2 });
+  assert.deepEqual(porPartido(itens[3]), { media: 30, n: 1 });
+  assert.equal(dicaComparativa(itens[0], porPartido, porUf, (n) => `${n}`), "média do partido (2): 15; média da bancada de SP (2): 20");
+  assert.equal(dicaComparativa({ partido: "X", uf: "ZZ" }, porPartido, porUf, String), "");
+});
+
+test("celulaEmendas mostra empenhado e pago, ou avisa que não há emendas ligadas", () => {
+  assert.match(celulaEmendas({ empenhado: 1000, pago: 400 }), /R\$\s?1\.000.*R\$\s?400[^<]* pagos/s);
+  assert.match(celulaEmendas({}), /sem emendas ligadas/);
+});
+
+test("celulaDaColuna marca como ativa só a coluna que explica a ordenação escolhida", () => {
+  const col = { ordens: ["emendas"], celula: () => metrica("1", "x", { largo: true }) };
+  assert.match(celulaDaColuna(col, {}, "", "emendas"), /class="metrica ativa so-largo"/);
+  assert.doesNotMatch(celulaDaColuna(col, {}, "", "nome"), /ativa/);
+  assert.doesNotMatch(celulaDaColuna({ celula: () => metrica("1", "x") }, {}, "", "nome"), /ativa/);
 });

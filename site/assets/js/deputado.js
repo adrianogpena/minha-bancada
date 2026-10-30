@@ -1,6 +1,6 @@
 /* Perfil do deputado: gastos, painéis e abas. */
 import { $, esc, reais, reaisCentavos, pct, data, param, carregar, pctBr, urlSegura } from "./util.js";
-import { VOTOS, itemFicha, semDadosLocais } from "./comum.js";
+import { VOTOS, itemFicha, selosPar, semDadosLocais } from "./comum.js";
 import { linhaNoCargoAte, linhaSubsidio } from "./ficha.js";
 import { CAMARA_API, TIPOS_PROJETO, linkTramitacao, fontes, temResultado } from "./apis.js";
 import { montarParlamentar } from "./parlamentar.js";
@@ -186,10 +186,10 @@ function painelRecursosDeputado(dep) {
     <div class="rolagem"><table class="tabela"><thead><tr><th>Recurso</th><th>Situação</th></tr></thead><tbody>
       ${rec.beneficios.map(([t, x]) => `<tr><td>${esc(t)}</td><td>${esc(x)}</td></tr>`).join("")}
     </tbody></table></div>
-    ${rec.pessoal?.total ? `<p>Pessoal de gabinete em exercício em ${rec.pessoal.ano}: <b>${rec.pessoal.total}</b>. ${rec.pessoal.porGrupo.map(([g, n]) => `<span class="selo">${esc(g)}: ${n}</span>`).join(" ")}</p>` : ""}
-    ${v ? `<h3>Verba de gabinete:${pct(v.gasto, total)} usada no ano</h3>
+    ${rec.pessoal?.total ? `<p>Pessoal de gabinete em exercício em ${rec.pessoal.ano}: <b>${rec.pessoal.total}</b>.</p>${selosPar(rec.pessoal.porGrupo.map(([g, n]) => [g, n]))}` : ""}
+    ${v ? `<h3>Verba de gabinete: ${pct(v.gasto, total)} usada no ano</h3>
       <p>Gastou <b>${reaisCentavos(v.gasto)}</b> de ${reaisCentavos(total)} (não utilizado: ${reaisCentavos(v.naoUtilizado)}).${v.limiteMensal ? ` O limite mensal é de ${reaisCentavos(v.limiteMensal)}, para pagar os secretários parlamentares.` : ""}</p>
-      ${v.porMes.length ? `<p>${v.porMes.map(([m, x]) => `<span class="selo">${mes[m - 1]}: ${reais(x)}</span>`).join(" ")}</p>` : ""}` : ""}
+      ${v.porMes.length ? selosPar(v.porMes.map(([m, x]) => [mes[m - 1], reais(x)])) : ""}` : ""}
     ${verbaAnos.length ? `<h3>Verba de gabinete nos anos anteriores</h3>
       <div class="rolagem"><table class="tabela"><thead><tr><th>Ano</th><th>Gasto</th><th>Disponível</th><th>Uso</th></tr></thead><tbody>
         ${verbaAnos.map(([a, meses]) => { const g = meses.reduce((t, m) => t + m[2], 0), d = meses.reduce((t, m) => t + m[1], 0); return `<tr><td>${esc(a)}</td><td>${reaisCentavos(g)}</td><td>${reaisCentavos(d)}</td><td>${pct(g, d)}</td></tr>`; }).join("")}

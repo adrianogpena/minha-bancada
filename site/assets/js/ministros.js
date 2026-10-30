@@ -192,7 +192,7 @@ export async function paginaMinisterios() {
     <div class="rolagem"><table class="tabela"><thead><tr><th>Ministério</th><th>Ministro</th><th>Pedidos</th><th>Informações respondidas</th><th>Convocações e convites</th></tr></thead><tbody>
       ${lista.map((m) => `<tr><td><a href="ministerios.html?pasta=${encodeURIComponent(m.pasta)}">${esc(m.nome)}</a></td>
         <td>${m.ministro ? `<a href="ministro.html?id=${encodeURIComponent(m.ministro.pessoa)}">${esc(m.ministro.nome)}</a>` : "—"}</td>
-        <td>${numeroBr(m.total)}</td><td>${m.informacao ? `<b>${numeroBr(m.respondidos)}</b> de ${numeroBr(m.informacao)} (${pct(m.respondidos, m.informacao)})` : "—"}</td><td>${numeroBr(m.convocacao)}</td></tr>`).join("")}
+        <td>${numeroBr(m.total)}</td><td>${m.informacao ? `<span><b>${numeroBr(m.respondidos)}</b> de ${numeroBr(m.informacao)} (${pct(m.respondidos, m.informacao)})</span>` : "—"}</td><td>${numeroBr(m.convocacao)}</td></tr>`).join("")}
     </tbody></table></div>
     <p class="nota-lista"><b>Pasta</b> é o outro nome de um ministério: a área de governo que o ministro comanda. Cada pedido conta na pasta que a ementa cita primeiro. A resposta de um requerimento de informação só é coletada para os da Câmara; os do Senado aparecem sem esse dado.
       ${fontes([["Ministros e Ministras (Planalto)", PLANALTO], ["Requerimentos (arquivos da Câmara)", "https://dadosabertos.camara.leg.br/arquivos"]])}</p>`;

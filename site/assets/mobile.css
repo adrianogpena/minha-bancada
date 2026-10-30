@@ -51,9 +51,8 @@ button { min-height: var(--alvo); }
 summary { display: flex; cursor: pointer; }
 .voltar { padding-right: 12px; }
 .mais { justify-content: center; width: 100%; font-size: 16px; }
-.abas { flex-wrap: nowrap; overflow-x: auto; scroll-snap-type: x proximity; margin-inline: -16px; padding: 2px 16px 6px; scrollbar-width: none; }
-.abas::-webkit-scrollbar { display: none; }
-.abas button { flex: none; min-height: var(--alvo); padding: 0 16px; font-size: 15px; scroll-snap-align: start; }
+.abas { flex-wrap: wrap; gap: 0 6px; }
+.abas button { flex: none; min-height: var(--alvo); min-width: var(--alvo); padding: 0 10px; font-size: 13px; }
 
 /* abas da ficha: faixa fixa embaixo do topo, rolável */
 .abas-pagina { position: sticky; top: 52px; z-index: 20; margin: 12px -16px 8px; padding: 0; background: var(--papel); scrollbar-width: none; }
@@ -67,7 +66,12 @@ summary { display: flex; cursor: pointer; }
 /* listas viram cartões de uma coluna */
 .linha-dep, .cabecalho-lista { grid-template-columns: 44px 1fr; }
 .cabecalho-lista { display: none; }
-.linha-dep .metrica:nth-of-type(n+3) { display: none; }
+.linha-dep { column-gap: 12px; row-gap: 2px; align-items: start; min-height: var(--alvo); }
+.linha-dep > .foto { grid-row: 1 / span 2; align-self: center; }
+.linha-dep .nome { font-size: 17px; }
+.linha-dep .metrica { grid-column: 2; text-align: left; }
+.linha-dep .metrica b { display: inline; font-size: 15px; margin-right: 4px; }
+.linha-dep .so-largo { display: none; }
 .linha-pol { grid-template-columns: 44px 1fr; min-height: var(--alvo); }
 .itens li { grid-template-columns: 1fr; padding: 14px 2px; }
 .itens .quando { justify-self: start; }
@@ -88,18 +92,26 @@ summary { display: flex; cursor: pointer; }
 .tabela:not(.matriz):not(.tabela-fonte) thead { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
 .tabela:not(.matriz):not(.tabela-fonte), .tabela:not(.matriz):not(.tabela-fonte) tbody { display: block; }
 .tabela:not(.matriz):not(.tabela-fonte) tr { display: block; padding: 10px 2px; border-bottom: 1px solid var(--linha); }
-.tabela:not(.matriz):not(.tabela-fonte) td { display: flex; justify-content: space-between; gap: 16px; padding: 3px 0; border: 0; text-align: right; overflow-wrap: anywhere; }
-.tabela:not(.matriz):not(.tabela-fonte) td::before { content: attr(data-rotulo); flex: none; max-width: 45%; text-align: left; color: var(--tinta-suave); font-size: 13px; font-weight: 700; }
+.tabela:not(.matriz):not(.tabela-fonte) td { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; padding: 4px 0; border: 0; text-align: right; overflow-wrap: anywhere; }
+.tabela:not(.matriz):not(.tabela-fonte) td::before { content: attr(data-rotulo); flex: none; max-width: 62%; text-align: left; color: var(--tinta-suave); font-size: 13px; font-weight: 700; }
 .tabela:not(.matriz):not(.tabela-fonte) td:first-child { display: block; text-align: left; font-weight: 700; font-size: 15px; padding-bottom: 4px; }
 .tabela:not(.matriz):not(.tabela-fonte) td:first-child::before { content: none; }
+.tabela:not(.matriz):not(.tabela-fonte) td:first-child .quando { font-weight: 400; font-size: 13px; }
 
 /* tabelas que continuam em grade (matriz, fontes) rolam de lado com a 1ª coluna fixa */
 .tabela-fonte th:first-child, .tabela-fonte td:first-child { position: sticky; left: 0; background: var(--superficie); }
+
+/* pares rótulo/valor (meses da verba, benefícios, pessoal): uma célula por par, rótulo à esquerda e valor à direita */
+.selos-par { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.selos-par.longo { grid-template-columns: 1fr; }
+.selos-par .selo > :last-child { white-space: nowrap; }
+.selos-par .selo { display: flex; justify-content: space-between; gap: 6px; padding: 6px 10px; font-size: 14px; }
 
 /* fontes: legíveis e sem linha que empurre a tela */
 .rotulo-fonte { font-size: 13px; }
 .fontes { font-size: 14px; }
 .fonte-par { white-space: normal; }
+.hist-pol summary { display: list-item; padding: 10px 0; }
 .fontes a, .fontes-lista a { display: inline-block; padding: 4px 0; }
 
 /* mapa e grade de votos */

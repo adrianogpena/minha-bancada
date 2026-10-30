@@ -13,6 +13,9 @@ export const VOTOS = {
 };
 
 
+/* Pares "rótulo: valor" em selos; no celular viram células com o rótulo à esquerda e o valor à direita (.selos-par); `longo` (rótulos compridos) usa uma coluna só. */
+export const selosPar = (pares, longo = false) => `<p class="selos-par${longo ? " longo" : ""}">${pares.map(([k, v]) => `<span class="selo"><span>${esc(k)}:</span> <span>${esc(v)}</span></span>`).join(" ")}</p>`;
+
 export const itemFicha = ([k, v, html, embaixo]) => {
   const classe = embaixo ? ' class="embaixo"' : "";
   return `<dt${classe}>${k}</dt><dd${classe}>${html ? v : esc(v)}</dd>`;

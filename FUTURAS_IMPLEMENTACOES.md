@@ -13,7 +13,7 @@ Revisado em 2026-10-29 contra o código e o `CHANGELOG.md`.
 | Nível | O que exige | Pacotes |
 |---|---|---|
 | 1 | Acabamentos do que já existe | 1.1 Restos de pacotes feitos |
-| 3 | Raspagem de HTML ou chave de API | 3.2 Emendas e Portal da Transparência · 3.3 Ministros de Estado: o que fica para depois |
+| 3 | Raspagem de HTML ou chave de API | 3.2 Emendas e Portal da Transparência · 3.3 Ministros de Estado: o que fica para depois · 3.4 Ministérios em números · 3.5 Atuação de cada ministro |
 | 4 | Fontes grandes, sem padrão ou cruzamentos sensíveis | 4.1 Fornecedores e doadores · 4.2 Assembleias e Câmaras Municipais · 4.3 Ministros dos tribunais superiores · 4.4 Órgãos de controle (resto) |
 
 ## Nível 1: acabamentos
@@ -69,6 +69,33 @@ requerimento do Senado não é coletada. Levantado em 2026-10-29 e ainda não re
 | Resposta a requerimento do Senado | API do Senado | não coletada | fechar o ciclo pedido-resposta também para RQS |
 
 Descartado: Wikidata (consulta SPARQL de 2026-10-29 trouxe 6 ministros sem data de saída, parte já fora do cargo).
+
+### 3.4 Ministérios em números
+
+A descrição de cada pasta (texto, áreas, órgãos vinculados) é a camada 1 e tem plano próprio em
+`PLANO_DESCRICAO_MINISTERIOS.md`. Depois dela, números de cada ministério em `ministerios.html?pasta=...`:
+
+| Ideia | Fonte | Situação em 2026-10-30 | O que daria no site |
+|---|---|---|---|
+| Orçamento: dotação, empenhado e pago por ministério | Portal da Transparência (chave do 3.2) ou SIOP | não medido | "A pasta tem R$ X bi este ano e pagou Y%", com série por ano |
+| Servidores da pasta | Painel Estatístico de Pessoal | não medido | quantos servidores e quanto custam |
+| Contratos e convênios | Portal da Transparência | não medido | maiores fornecedores da pasta, ligados a `nucleo/fornecedores` |
+| Pedidos do Congresso por assunto | já em `ministerio/<pasta>.json` | dados existem | "sobre o que mais perguntam a esta pasta" |
+
+Exige ligar o código de órgão do orçamento à chave de `PASTAS` (tabela versionada, não por nome) e, para valores,
+normalizar como o resto do projeto (`valor_br`, ids por `ids.gerar_id`).
+
+### 3.5 Atuação de cada ministro
+
+O que o cargo comporta vem da camada 1. A atuação da pessoa, além do que já existe (pedidos durante o mandato, tempo no
+cargo, licença do parlamentar):
+
+| Ideia | Fonte | Situação em 2026-10-30 | O que daria no site |
+|---|---|---|---|
+| Projetos, votos e licenças de quem veio do Legislativo | dados da Câmara e do Senado já coletados | dados existem | resumo do mandato anterior na página do ministro |
+| Agenda de compromissos | e-Agendas (CGU) | ver 3.3 | só reuniões com entidades privadas |
+| Atos assinados (portarias, instruções normativas) | DOU | ver 3.3 | aba "Atos" |
+| Votos em conselhos | atas | ver 3.3 | ver 3.3 |
 
 ## Nível 4: fontes grandes, sem padrão ou cruzamentos sensíveis
 

@@ -19,3 +19,4 @@ site/feeds/
 node_modules/
 dados/receita_bruto/
 CLAUDE.local.md
+.claude/

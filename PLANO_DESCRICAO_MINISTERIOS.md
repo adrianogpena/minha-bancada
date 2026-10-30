@@ -5,6 +5,8 @@ Objetivo: a página `ministerios.html?pasta=<chave>` explica em linguagem simple
 sem endpoint novo (os links oficiais são só links, não consultas). As camadas 2 (números: orçamento, servidores) e 3 (atuação
 da pessoa) estão em `FUTURAS_IMPLEMENTACOES.md`, pacotes 3.4 e 3.5.
 
+> **Andamento (2026-10-30):** etapa 1 feita. `scripts/ministerios_descricao.json` tem as 38 pastas, escritas a partir do texto da Lei 14.600/2023 (versão original, no portal da Câmara; o Planalto bloqueia a coleta automática) e da Lei 14.816/2024 (Ministério do Empreendedorismo; revoga os incisos IX e X do art. 34). `vinculados` ficou de fora desta primeira versão: a lei não os lista e a lista só entra após conferência no decreto de estrutura de cada pasta. Alterações posteriores à Lei 14.816/2024 ainda não foram conferidas pasta a pasta. O teste de cobertura já existe em `tests/test_ministros.py`.
+
 ## 1. Dados: `scripts/ministerios_descricao.json`
 
 Arquivo versionado à mão (como `ministros_posse.json`), indexado pela chave de `PASTAS` em `scripts/ministerios.py`:

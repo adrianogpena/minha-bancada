@@ -140,3 +140,16 @@ def test_mandato_de_ministro_sem_prazo_e_encerrado_quando_sai_da_lista(tmp_path)
     assert (atual["pasta"], atual["status"], atual["semPrazo"], atual["inicioAproximado"], "fim" in atual) == ("saude", "atual", True, True, False)
     assert (encerrado["status"], encerrado["fim"], "semPrazo" in encerrado) == ("encerrado", "2026-06-01", False)
     assert atual["id"].startswith("man_")
+
+
+def test_descricao_cobre_todas_as_pastas():
+    """`scripts/ministerios_descricao.json`: uma descrição por chave de PASTAS, com fonte legal e links https."""
+    import json
+    import pathlib
+    descricao = json.loads((pathlib.Path(gerar_ministros.__file__).parent / "ministerios_descricao.json").read_text(encoding="utf-8"))
+    assert set(descricao) == set(ministerios.PASTAS)
+    for chave, d in descricao.items():
+        assert d["resumo"].strip() and d["areas"] and d["base"] and d["revisadoEm"], chave
+        assert all(a.strip() for a in d["areas"]), chave
+        assert d["site"].startswith("https://www.gov.br/"), chave
+        assert all(b["rotulo"] and b["url"].startswith("https://") for b in d["base"]), chave

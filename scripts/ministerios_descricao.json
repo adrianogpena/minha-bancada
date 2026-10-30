@@ -1,0 +1,708 @@
+{
+ "casa_civil": {
+  "resumo": "Assiste diretamente o Presidente da República e coordena e integra as ações do governo, além de preparar e checar os atos presidenciais.",
+  "areas": [
+   "Coordenação e acompanhamento das ações dos ministérios e das políticas públicas",
+   "Análise prévia e verificação da constitucionalidade e da legalidade dos atos do Presidente",
+   "Sanção e veto de projetos de lei enviados pelo Congresso",
+   "Mensagens do Poder Executivo ao Congresso Nacional",
+   "Programa de Parcerias de Investimentos e obras de infraestrutura estratégicas",
+   "Publicação e preservação dos atos oficiais do Presidente"
+  ],
+  "site": "https://www.gov.br/casacivil",
+  "base": [
+   {
+    "rotulo": "Lei 14.600/2023, art. 3",
+    "url": "https://www.planalto.gov.br/ccivil_03/_ato2023-2026/2023/lei/l14600.htm"
+   }
+  ],
+  "revisadoEm": "2026-10-30"
+ },
+ "secretaria_geral": {
+  "resumo": "Cuida da relação do governo federal com a sociedade civil e com a juventude e da política de participação social.",
+  "areas": [
+   "Política e sistema nacional de participação social",
+   "Políticas públicas para a juventude",
+   "Instrumentos de consulta e de participação popular nos órgãos do governo",
+   "Parcerias do governo com organizações da sociedade civil",
+   "Diálogo com movimentos sociais e educação popular"
+  ],
+  "site": "https://www.gov.br/secretariageral",
+  "base": [
+   {
+    "rotulo": "Lei 14.600/2023, art. 4",
+    "url": "https://www.planalto.gov.br/ccivil_03/_ato2023-2026/2023/lei/l14600.htm"
+   }
+  ],
+  "revisadoEm": "2026-10-30"
+ },
+ "relacoes_institucionais": {
+  "resumo": "Faz a articulação política do governo federal, com o Congresso, os partidos, os estados, o Distrito Federal e os municípios.",
+  "areas": [
+   "Interlocução com o Poder Legislativo e com os partidos políticos",
+   "Relacionamento com estados, Distrito Federal e municípios (pacto federativo)",
+   "Relação do Executivo com organizações da sociedade civil e organizações internacionais",
+   "Coordenação e secretaria do Conselho de Desenvolvimento Econômico Social Sustentável (o \"Conselhão\")"
+  ],
+  "site": "https://www.gov.br/sri",
+  "base": [
+   {
+    "rotulo": "Lei 14.600/2023, art. 5",
+    "url": "https://www.planalto.gov.br/ccivil_03/_ato2023-2026/2023/lei/l14600.htm"
+   }
+  ],
+  "revisadoEm": "2026-10-30"
+ },
+ "comunicacao_social": {
+  "resumo": "Formula e executa a política de comunicação do Poder Executivo federal e coordena a publicidade dos órgãos e empresas do governo.",
+  "areas": [
+   "Comunicação e divulgação das políticas do governo federal",
+   "Publicidade e patrocínio de órgãos e entidades federais",
+   "Relacionamento com a imprensa e com as entidades de comunicação",
+   "Pesquisas de opinião pública",
+   "Combate à desinformação e acesso à informação",
+   "Padrão digital dos sítios e portais do governo"
+  ],
+  "site": "https://www.gov.br/secom",
+  "base": [
+   {
+    "rotulo": "Lei 14.600/2023, art. 6",
+    "url": "https://www.planalto.gov.br/ccivil_03/_ato2023-2026/2023/lei/l14600.htm"
+   }
+  ],
+  "revisadoEm": "2026-10-30"
+ },
+ "gsi": {
+  "resumo": "Assiste o Presidente em assuntos militares e de segurança e cuida da segurança pessoal do Presidente, do Vice-Presidente e dos palácios presidenciais.",
+  "areas": [
+   "Segurança pessoal do Presidente e do Vice-Presidente, de familiares e dos palácios",
+   "Segurança da informação e segurança cibernética na administração federal",
+   "Prevenção de crises e acompanhamento de riscos à estabilidade institucional",
+   "Planejamento dos eventos e dos deslocamentos presidenciais",
+   "Acompanhamento de terrorismo, infraestruturas críticas e setor espacial",
+   "Sistema de Proteção ao Programa Nuclear Brasileiro (Sipron)"
+  ],
+  "site": "https://www.gov.br/gsi",
+  "base": [
+   {
+    "rotulo": "Lei 14.600/2023, art. 8",
+    "url": "https://www.planalto.gov.br/ccivil_03/_ato2023-2026/2023/lei/l14600.htm"
+   }
+  ],
+  "revisadoEm": "2026-10-30"
+ },
+ "agu": {
+  "resumo": "Assessora o Presidente da República em assuntos jurídicos e representa a União, judicial e extrajudicialmente.",
+  "areas": [
+   "Pareceres, estudos e propostas de normas para o Presidente da República",
+   "Controle interno da legalidade dos atos da administração federal",
+   "Informações ao Judiciário quando um ato do Presidente é questionado",
+   "Atribuições previstas na Lei Complementar 73/1993 (Lei Orgânica da AGU)",
+   "Casos de improbidade encaminhados pela CGU"
+  ],
+  "site": "https://www.gov.br/agu",
+  "base": [
+   {
+    "rotulo": "Lei 14.600/2023, art. 14",
+    "url": "https://www.planalto.gov.br/ccivil_03/_ato2023-2026/2023/lei/l14600.htm"
+   },
+   {
+    "rotulo": "Constituição Federal, art. 131",
+    "url": "https://www.planalto.gov.br/ccivil_03/constituicao/constituicao.htm"
+   }
+  ],
+  "revisadoEm": "2026-10-30"
+ },
+ "cgu": {
+  "resumo": "Cuida do controle interno do governo federal: auditoria, correição, transparência, ouvidoria e combate à corrupção.",
+  "areas": [
+   "Controle interno e auditoria governamental",
+   "Prevenção e combate a fraudes e à corrupção",
+   "Correição e responsabilização de agentes públicos e de empresas (Lei Anticorrupção)",
+   "Transparência, dados abertos e Lei de Acesso à Informação",
+   "Ouvidoria e reclamações sobre serviços públicos",
+   "Ética pública, conflito de interesses e evolução patrimonial de agentes públicos"
+  ],
+  "site": "https://www.gov.br/cgu",
+  "base": [
+   {
+    "rotulo": "Lei 14.600/2023, art. 49",
+    "url": "https://www.planalto.gov.br/ccivil_03/_ato2023-2026/2023/lei/l14600.htm"
+   }
+  ],
+  "revisadoEm": "2026-10-30"
+ },
+ "mda": {
+  "resumo": "Cuida da reforma agrária, da regularização fundiária e das políticas para a agricultura familiar e para povos e comunidades tradicionais.",
+  "areas": [
+   "Reforma agrária e regularização fundiária de áreas rurais da União e do Incra",
+   "Cadastro de imóveis rurais e governança fundiária",
+   "Crédito, seguro, assistência técnica e comercialização da agricultura familiar",
+   "Compras públicas de alimentos da agricultura familiar",
+   "Terras de comunidades quilombolas, em articulação com o Ministério da Igualdade Racial",
+   "Transição agroecológica e produção de alimentos saudáveis"
+  ],
+  "site": "https://www.gov.br/mda",
+  "base": [
+   {
+    "rotulo": "Lei 14.600/2023, art. 25",
+    "url": "https://www.planalto.gov.br/ccivil_03/_ato2023-2026/2023/lei/l14600.htm"
+   }
+  ],
+  "revisadoEm": "2026-10-30"
+ },
+ "agricultura": {
+  "resumo": "Cuida da política agrícola, da produção agropecuária e da defesa agropecuária e da segurança dos alimentos.",
+  "areas": [
+   "Política agrícola: produção, comercialização e seguro rural",
+   "Defesa agropecuária: sanidade animal e vegetal, insumos e alimentos de origem animal e vegetal",
+   "Pesquisa, assistência técnica e extensão rural",
+   "Garantia de preços mínimos, armazenagem e abastecimento",
+   "Irrigação, cooperativismo e energização rural",
+   "Negociações internacionais de interesse das cadeias do agro"
+  ],
+  "site": "https://www.gov.br/agricultura",
+  "base": [
+   {
+    "rotulo": "Lei 14.600/2023, art. 19",
+    "url": "https://www.planalto.gov.br/ccivil_03/_ato2023-2026/2023/lei/l14600.htm"
+   }
+  ],
+  "revisadoEm": "2026-10-30"
+ },
+ "cidades": {
+  "resumo": "Formula as políticas de desenvolvimento urbano, habitação, saneamento e mobilidade urbana.",
+  "areas": [
+   "Habitação popular e financiamento habitacional",
+   "Saneamento básico e ambiental, inclusive na zona rural",
+   "Mobilidade e trânsito urbanos e transporte urbano",
+   "Urbanização e ordenamento do território urbano",
+   "Ações para os pequenos municípios"
+  ],
+  "site": "https://www.gov.br/cidades",
+  "base": [
+   {
+    "rotulo": "Lei 14.600/2023, art. 20",
+    "url": "https://www.planalto.gov.br/ccivil_03/_ato2023-2026/2023/lei/l14600.htm"
+   }
+  ],
+  "revisadoEm": "2026-10-30"
+ },
+ "ciencia": {
+  "resumo": "Formula as políticas nacionais de ciência, tecnologia e inovação, incluindo a política espacial e a nuclear.",
+  "areas": [
+   "Políticas nacionais de ciência, tecnologia e inovação",
+   "Transformação digital e automação",
+   "Política espacial e política nuclear",
+   "Política nacional de biossegurança",
+   "Controle da exportação de bens e serviços sensíveis"
+  ],
+  "site": "https://www.gov.br/mcti",
+  "base": [
+   {
+    "rotulo": "Lei 14.600/2023, art. 22",
+    "url": "https://www.planalto.gov.br/ccivil_03/_ato2023-2026/2023/lei/l14600.htm"
+   }
+  ],
+  "revisadoEm": "2026-10-30"
+ },
+ "comunicacoes": {
+  "resumo": "Cuida das políticas de telecomunicações, radiodifusão (rádio e TV), serviços postais e inclusão digital.",
+  "areas": [
+   "Política nacional de telecomunicações e de radiodifusão",
+   "Conectividade e inclusão digital",
+   "Serviços postais e serviços digitais",
+   "Rede nacional de comunicações, incluída a rede privativa da administração federal"
+  ],
+  "site": "https://www.gov.br/mcom",
+  "base": [
+   {
+    "rotulo": "Lei 14.600/2023, art. 23",
+    "url": "https://www.planalto.gov.br/ccivil_03/_ato2023-2026/2023/lei/l14600.htm"
+   }
+  ],
+  "revisadoEm": "2026-10-30"
+ },
+ "cultura": {
+  "resumo": "Formula a política nacional de cultura e das artes e protege o patrimônio histórico, artístico e cultural.",
+  "areas": [
+   "Política nacional de cultura e das artes",
+   "Proteção do patrimônio histórico, artístico e cultural",
+   "Direitos autorais",
+   "Diversidade cultural e acessibilidade cultural",
+   "Economia criativa e setor museal"
+  ],
+  "site": "https://www.gov.br/cultura",
+  "base": [
+   {
+    "rotulo": "Lei 14.600/2023, art. 21",
+    "url": "https://www.planalto.gov.br/ccivil_03/_ato2023-2026/2023/lei/l14600.htm"
+   }
+  ],
+  "revisadoEm": "2026-10-30"
+ },
+ "defesa": {
+  "resumo": "Dirige a política de defesa do país e as Forças Armadas (Marinha, Exército e Aeronáutica).",
+  "areas": [
+   "Política e Estratégia Nacional de Defesa",
+   "Preparo e emprego das Forças Armadas, incluído o serviço militar",
+   "Operações militares e atuação das Forças em garantia da lei e da ordem e da votação",
+   "Indústria de defesa e compras de produtos de defesa",
+   "Defesa cibernética e Sistema de Proteção da Amazônia (Sipam)",
+   "Saúde, assistência e remuneração dos militares e de seus pensionistas"
+  ],
+  "site": "https://www.gov.br/defesa",
+  "base": [
+   {
+    "rotulo": "Lei 14.600/2023, art. 24",
+    "url": "https://www.planalto.gov.br/ccivil_03/_ato2023-2026/2023/lei/l14600.htm"
+   }
+  ],
+  "revisadoEm": "2026-10-30"
+ },
+ "desenvolvimento_social": {
+  "resumo": "Cuida da assistência social, da transferência de renda (como o Bolsa Família) e da segurança alimentar e do combate à fome.",
+  "areas": [
+   "Política nacional de assistência social e gestão do Fundo Nacional de Assistência Social",
+   "Programas de transferência de renda e renda de cidadania",
+   "Segurança alimentar e nutricional",
+   "Acolhimento e reinserção social de pessoas com problemas com álcool e outras drogas",
+   "Gestão do Fundo de Combate e Erradicação da Pobreza",
+   "Aprovação dos orçamentos do Sesi, do Sesc e do Sest"
+  ],
+  "site": "https://www.gov.br/mds",
+  "base": [
+   {
+    "rotulo": "Lei 14.600/2023, art. 27",
+    "url": "https://www.planalto.gov.br/ccivil_03/_ato2023-2026/2023/lei/l14600.htm"
+   }
+  ],
+  "revisadoEm": "2026-10-30"
+ },
+ "mdic": {
+  "resumo": "Cuida da política de desenvolvimento da indústria, do comércio e dos serviços e do comércio exterior.",
+  "areas": [
+   "Política de desenvolvimento da indústria, do comércio e dos serviços",
+   "Comércio exterior: políticas, negociações internacionais e defesa comercial",
+   "Propriedade intelectual e transferência de tecnologia",
+   "Metrologia, normalização e qualidade industrial",
+   "Economia verde, descarbonização e bioeconomia no setor produtivo",
+   "Desenvolvimento tecnológico de fármacos e medicamentos nacionais"
+  ],
+  "site": "https://www.gov.br/mdic",
+  "base": [
+   {
+    "rotulo": "Lei 14.600/2023, art. 34",
+    "url": "https://www.planalto.gov.br/ccivil_03/_ato2023-2026/2023/lei/l14600.htm"
+   }
+  ],
+  "revisadoEm": "2026-10-30"
+ },
+ "direitos_humanos": {
+  "resumo": "Promove e defende os direitos humanos, em especial de idosos, crianças e adolescentes, pessoas com deficiência, LGBTQIA+ e população em situação de rua.",
+  "areas": [
+   "Políticas de promoção dos direitos humanos",
+   "Direitos da pessoa idosa, da criança e do adolescente e da pessoa com deficiência",
+   "Direitos de pessoas LGBTQIA+ e da população em situação de rua",
+   "Ouvidoria nacional de direitos humanos",
+   "Educação em direitos humanos",
+   "Combate à violência, ao preconceito e à discriminação"
+  ],
+  "site": "https://www.gov.br/mdh",
+  "base": [
+   {
+    "rotulo": "Lei 14.600/2023, art. 28",
+    "url": "https://www.planalto.gov.br/ccivil_03/_ato2023-2026/2023/lei/l14600.htm"
+   }
+  ],
+  "revisadoEm": "2026-10-30"
+ },
+ "educacao": {
+  "resumo": "Formula a política nacional de educação, da educação infantil ao ensino superior, e cuida da avaliação educacional.",
+  "areas": [
+   "Política nacional de educação",
+   "Educação infantil, ensino fundamental e médio, ensino superior, EJA e educação profissional",
+   "Educação especial e educação a distância",
+   "Avaliação, informação e pesquisa educacional",
+   "Pesquisa e extensão universitária",
+   "Assistência financeira a famílias carentes para a escolarização dos filhos"
+  ],
+  "site": "https://www.gov.br/mec",
+  "base": [
+   {
+    "rotulo": "Lei 14.600/2023, art. 30",
+    "url": "https://www.planalto.gov.br/ccivil_03/_ato2023-2026/2023/lei/l14600.htm"
+   }
+  ],
+  "revisadoEm": "2026-10-30"
+ },
+ "empreendedorismo": {
+  "resumo": "Formula as políticas de apoio ao empreendedorismo, à microempresa, à empresa de pequeno porte e ao microempreendedor.",
+  "areas": [
+   "Apoio ao empreendedorismo, às micro e pequenas empresas e ao artesanato",
+   "Formalização de empresas e identificação do microempreendedor",
+   "Microcrédito e educação empreendedora",
+   "Registro público de empresas mercantis",
+   "Acesso das micro e pequenas empresas a compras governamentais e a exportações",
+   "Apoio ao empreendedorismo em casos de calamidade pública"
+  ],
+  "site": "https://www.gov.br/memp",
+  "base": [
+   {
+    "rotulo": "Lei 14.600/2023, art. 30-A (inserido pela Lei 14.816/2024)",
+    "url": "https://www.planalto.gov.br/ccivil_03/_ato2023-2026/2024/lei/l14816.htm"
+   }
+  ],
+  "revisadoEm": "2026-10-30"
+ },
+ "esporte": {
+  "resumo": "Formula as políticas de esporte e de incentivo à prática esportiva.",
+  "areas": [
+   "Políticas relacionadas ao esporte",
+   "Incentivo a iniciativas públicas e privadas de atividades esportivas",
+   "Programas de democratização da prática esportiva e de inclusão social pelo esporte",
+   "Intercâmbio com organismos nacionais e internacionais do esporte"
+  ],
+  "site": "https://www.gov.br/esporte",
+  "base": [
+   {
+    "rotulo": "Lei 14.600/2023, art. 31",
+    "url": "https://www.planalto.gov.br/ccivil_03/_ato2023-2026/2023/lei/l14600.htm"
+   }
+  ],
+  "revisadoEm": "2026-10-30"
+ },
+ "fazenda": {
+  "resumo": "Cuida da economia do país: política tributária e aduaneira, dívida pública, moeda, crédito, seguros e contabilidade pública.",
+  "areas": [
+   "Política, arrecadação e fiscalização tributária e aduaneira (Receita Federal)",
+   "Administração das dívidas pública interna e externa",
+   "Moeda, crédito, instituições financeiras, poupança, seguros e previdência privada aberta",
+   "Administração financeira e contabilidade públicas",
+   "Negociações econômicas e financeiras com organismos multilaterais",
+   "Autorização de loterias, sorteios, consórcios e promoções comerciais"
+  ],
+  "site": "https://www.gov.br/fazenda",
+  "base": [
+   {
+    "rotulo": "Lei 14.600/2023, art. 29",
+    "url": "https://www.planalto.gov.br/ccivil_03/_ato2023-2026/2023/lei/l14600.htm"
+   }
+  ],
+  "revisadoEm": "2026-10-30"
+ },
+ "gestao": {
+  "resumo": "Cuida da gestão do Estado: servidores públicos civis, compras públicas, patrimônio da União, serviços digitais e governança das estatais.",
+  "areas": [
+   "Gestão de pessoas e política de servidores da administração federal",
+   "Compras públicas e contratações governamentais",
+   "Patrimônio imobiliário da União",
+   "Transformação digital dos serviços públicos e governança de dados",
+   "Governança corporativa das empresas estatais federais",
+   "Política nacional de arquivos e gestão do Cadastro Ambiental Rural (CAR) federal"
+  ],
+  "site": "https://www.gov.br/gestao",
+  "base": [
+   {
+    "rotulo": "Lei 14.600/2023, art. 32",
+    "url": "https://www.planalto.gov.br/ccivil_03/_ato2023-2026/2023/lei/l14600.htm"
+   }
+  ],
+  "revisadoEm": "2026-10-30"
+ },
+ "igualdade_racial": {
+  "resumo": "Promove a igualdade racial e étnica e combate o racismo, com políticas para quilombolas, povos de matriz africana e ciganos.",
+  "areas": [
+   "Políticas de promoção da igualdade racial e étnica",
+   "Ações afirmativas e combate ao racismo",
+   "Políticas para quilombolas, povos de terreiro, povos de matriz africana e ciganos",
+   "Sistema Nacional de Promoção da Igualdade Racial (Sinapir)",
+   "Acompanhamento e avaliação dos programas de ações afirmativas"
+  ],
+  "site": "https://www.gov.br/igualdaderacial",
+  "base": [
+   {
+    "rotulo": "Lei 14.600/2023, art. 33",
+    "url": "https://www.planalto.gov.br/ccivil_03/_ato2023-2026/2023/lei/l14600.htm"
+   }
+  ],
+  "revisadoEm": "2026-10-30"
+ },
+ "integracao": {
+  "resumo": "Cuida do desenvolvimento regional, da defesa civil e da segurança hídrica e da irrigação.",
+  "areas": [
+   "Política Nacional de Desenvolvimento Regional",
+   "Proteção e Defesa Civil: prevenção, resposta e reconstrução após desastres",
+   "Segurança hídrica, infraestrutura hídrica e irrigação",
+   "Fundos constitucionais de financiamento do Norte, Nordeste e Centro-Oeste",
+   "Fundos de desenvolvimento da Amazônia, do Nordeste e do Centro-Oeste",
+   "Política Nacional de Ordenamento Territorial"
+  ],
+  "site": "https://www.gov.br/mdr",
+  "base": [
+   {
+    "rotulo": "Lei 14.600/2023, art. 26",
+    "url": "https://www.planalto.gov.br/ccivil_03/_ato2023-2026/2023/lei/l14600.htm"
+   }
+  ],
+  "revisadoEm": "2026-10-30"
+ },
+ "justica": {
+  "resumo": "Cuida da justiça e da segurança pública, com a Polícia Federal e a Polícia Rodoviária Federal, a política penal nacional e a defesa do consumidor.",
+  "areas": [
+   "Polícia Federal e Polícia Rodoviária Federal",
+   "Política penal nacional e Sistema Único de Segurança Pública",
+   "Combate ao crime organizado, à lavagem de dinheiro e à corrupção",
+   "Política sobre drogas: repressão, prevenção e informação",
+   "Defesa do consumidor e da ordem econômica",
+   "Nacionalidade, migrações e refúgio",
+   "Reconhecimento e demarcação das terras indígenas"
+  ],
+  "site": "https://www.gov.br/mj",
+  "base": [
+   {
+    "rotulo": "Lei 14.600/2023, art. 35",
+    "url": "https://www.planalto.gov.br/ccivil_03/_ato2023-2026/2023/lei/l14600.htm"
+   }
+  ],
+  "revisadoEm": "2026-10-30"
+ },
+ "meio_ambiente": {
+  "resumo": "Formula as políticas nacionais do meio ambiente e da mudança do clima e de proteção de florestas e da biodiversidade.",
+  "areas": [
+   "Política nacional do meio ambiente e política nacional sobre mudança do clima",
+   "Preservação e uso sustentável de ecossistemas, biodiversidade e florestas",
+   "Proteção e recuperação da vegetação nativa e das espécies ameaçadas",
+   "Programas ambientais para a Amazônia e demais biomas",
+   "Gestão de florestas públicas para a produção sustentável",
+   "Zoneamento ecológico-econômico e educação ambiental"
+  ],
+  "site": "https://www.gov.br/mma",
+  "base": [
+   {
+    "rotulo": "Lei 14.600/2023, art. 36",
+    "url": "https://www.planalto.gov.br/ccivil_03/_ato2023-2026/2023/lei/l14600.htm"
+   }
+  ],
+  "revisadoEm": "2026-10-30"
+ },
+ "minas_energia": {
+  "resumo": "Cuida das políticas de minas e energia: petróleo, gás, energia elétrica (inclusive nuclear), biocombustíveis e mineração.",
+  "areas": [
+   "Política nacional do petróleo, do gás natural e dos biocombustíveis",
+   "Energia elétrica, inclusive nuclear, e integração do sistema elétrico",
+   "Fontes hídrica, eólica, solar e outras para energia elétrica",
+   "Política nacional de mineração e geologia",
+   "Outorgas dos setores de minas e de energia",
+   "Equilíbrio entre oferta e demanda de energia elétrica"
+  ],
+  "site": "https://www.gov.br/mme",
+  "base": [
+   {
+    "rotulo": "Lei 14.600/2023, art. 37",
+    "url": "https://www.planalto.gov.br/ccivil_03/_ato2023-2026/2023/lei/l14600.htm"
+   }
+  ],
+  "revisadoEm": "2026-10-30"
+ },
+ "mulheres": {
+  "resumo": "Formula e coordena as políticas de garantia dos direitos das mulheres.",
+  "areas": [
+   "Políticas e diretrizes de garantia dos direitos das mulheres",
+   "Articulação das políticas para as mulheres entre União, estados e municípios",
+   "Campanhas educativas e antidiscriminatórias de abrangência nacional",
+   "Cooperação com organismos nacionais e internacionais",
+   "Acompanhamento da legislação de ações afirmativas"
+  ],
+  "site": "https://www.gov.br/mulheres",
+  "base": [
+   {
+    "rotulo": "Lei 14.600/2023, art. 38",
+    "url": "https://www.planalto.gov.br/ccivil_03/_ato2023-2026/2023/lei/l14600.htm"
+   }
+  ],
+  "revisadoEm": "2026-10-30"
+ },
+ "pesca": {
+  "resumo": "Formula a política nacional da pesca e da aquicultura e concede licenças e autorizações para a atividade.",
+  "areas": [
+   "Política nacional da aquicultura e da pesca",
+   "Registro Geral da Atividade Pesqueira e licenças para pesca e aquicultura",
+   "Ordenamento do uso sustentável dos recursos pesqueiros",
+   "Estatística e pesquisa pesqueira e aquícola",
+   "Subvenção ao preço do óleo diesel para a pesca",
+   "Infraestrutura e terminais pesqueiros públicos"
+  ],
+  "site": "https://www.gov.br/mpa",
+  "base": [
+   {
+    "rotulo": "Lei 14.600/2023, art. 39",
+    "url": "https://www.planalto.gov.br/ccivil_03/_ato2023-2026/2023/lei/l14600.htm"
+   }
+  ],
+  "revisadoEm": "2026-10-30"
+ },
+ "planejamento": {
+  "resumo": "Cuida do planejamento de longo prazo e do orçamento federal: PPA, LDO e Lei Orçamentária Anual.",
+  "areas": [
+   "Plano plurianual, lei de diretrizes orçamentárias e orçamento anual",
+   "Sistema de planejamento e de orçamento federal",
+   "Avaliação do impacto das políticas e dos programas do governo",
+   "Sistemas cartográficos e estatísticos nacionais (IBGE)",
+   "Financiamentos externos de projetos públicos com organismos multilaterais"
+  ],
+  "site": "https://www.gov.br/planejamento",
+  "base": [
+   {
+    "rotulo": "Lei 14.600/2023, art. 40",
+    "url": "https://www.planalto.gov.br/ccivil_03/_ato2023-2026/2023/lei/l14600.htm"
+   }
+  ],
+  "revisadoEm": "2026-10-30"
+ },
+ "portos": {
+  "resumo": "Cuida da política de portos, aeroportos, aviação civil e transporte aquaviário.",
+  "areas": [
+   "Portos e instalações portuárias marítimos, fluviais e lacustres",
+   "Aviação civil e infraestrutura aeroportuária",
+   "Marinha mercante, vias navegáveis e Fundo da Marinha Mercante",
+   "Planos de outorgas e concessões de portos e aeroportos",
+   "Política nacional de transportes aquaviário e aeroviário"
+  ],
+  "site": "https://www.gov.br/portos-e-aeroportos",
+  "base": [
+   {
+    "rotulo": "Lei 14.600/2023, art. 41",
+    "url": "https://www.planalto.gov.br/ccivil_03/_ato2023-2026/2023/lei/l14600.htm"
+   }
+  ],
+  "revisadoEm": "2026-10-30"
+ },
+ "povos_indigenas": {
+  "resumo": "Formula a política indigenista e promove e protege os direitos dos povos indígenas.",
+  "areas": [
+   "Política indigenista",
+   "Reconhecimento, garantia e promoção dos direitos dos povos indígenas",
+   "Defesa, usufruto e gestão das terras e territórios indígenas",
+   "Proteção dos povos indígenas isolados e de recente contato",
+   "Acordos e tratados internacionais, como a Convenção 169 da OIT"
+  ],
+  "site": "https://www.gov.br/povosindigenas",
+  "base": [
+   {
+    "rotulo": "Lei 14.600/2023, art. 42",
+    "url": "https://www.planalto.gov.br/ccivil_03/_ato2023-2026/2023/lei/l14600.htm"
+   }
+  ],
+  "revisadoEm": "2026-10-30"
+ },
+ "previdencia": {
+  "resumo": "Cuida da previdência social (INSS) e da previdência complementar.",
+  "areas": [
+   "Previdência social: aposentadorias, pensões e benefícios do INSS",
+   "Previdência complementar"
+  ],
+  "site": "https://www.gov.br/previdencia",
+  "base": [
+   {
+    "rotulo": "Lei 14.600/2023, art. 43",
+    "url": "https://www.planalto.gov.br/ccivil_03/_ato2023-2026/2023/lei/l14600.htm"
+   }
+  ],
+  "revisadoEm": "2026-10-30"
+ },
+ "relacoes_exteriores": {
+  "resumo": "Conduz a política externa do Brasil: diplomacia, serviços consulares e negociações internacionais (Itamaraty).",
+  "areas": [
+   "Política internacional e relações diplomáticas",
+   "Serviços consulares",
+   "Negociações políticas, comerciais, econômicas e culturais com outros países e organismos internacionais",
+   "Representação do Estado em cortes internacionais",
+   "Programas de cooperação internacional",
+   "Promoção do comércio exterior e de investimentos",
+   "Planejamento dos deslocamentos presidenciais no exterior"
+  ],
+  "site": "https://www.gov.br/mre",
+  "base": [
+   {
+    "rotulo": "Lei 14.600/2023, art. 44",
+    "url": "https://www.planalto.gov.br/ccivil_03/_ato2023-2026/2023/lei/l14600.htm"
+   }
+  ],
+  "revisadoEm": "2026-10-30"
+ },
+ "saude": {
+  "resumo": "Coordena a política nacional de saúde e o Sistema Único de Saúde (SUS).",
+  "areas": [
+   "Coordenação e fiscalização do SUS",
+   "Vigilância em saúde, incluídos medicamentos, alimentos e controle sanitário de portos, aeroportos e fronteiras",
+   "Saúde ambiental e saúde dos trabalhadores e dos indígenas",
+   "Informações de saúde e pesquisa científica e tecnológica em saúde",
+   "Insumos críticos e complexo industrial da saúde (fármacos e medicamentos)"
+  ],
+  "site": "https://www.gov.br/saude",
+  "base": [
+   {
+    "rotulo": "Lei 14.600/2023, art. 45",
+    "url": "https://www.planalto.gov.br/ccivil_03/_ato2023-2026/2023/lei/l14600.htm"
+   }
+  ],
+  "revisadoEm": "2026-10-30"
+ },
+ "trabalho": {
+  "resumo": "Cuida das políticas de emprego e renda, relações de trabalho, fiscalização do trabalho e FGTS e FAT.",
+  "areas": [
+   "Geração de emprego e renda e intermediação de mão de obra",
+   "Fiscalização do trabalho e segurança e saúde no trabalho",
+   "Relações de trabalho, sistema sindical e registro sindical",
+   "Política salarial",
+   "Carteira de trabalho e registro e regulação profissionais",
+   "Economia popular e solidária, cooperativismo e aprendizagem",
+   "Fundo de Garantia do Tempo de Serviço (FGTS) e Fundo de Amparo ao Trabalhador (FAT)"
+  ],
+  "site": "https://www.gov.br/trabalho-e-emprego",
+  "base": [
+   {
+    "rotulo": "Lei 14.600/2023, art. 46",
+    "url": "https://www.planalto.gov.br/ccivil_03/_ato2023-2026/2023/lei/l14600.htm"
+   }
+  ],
+  "revisadoEm": "2026-10-30"
+ },
+ "transportes": {
+  "resumo": "Cuida da política de transportes ferroviário e rodoviário e da política nacional de trânsito.",
+  "areas": [
+   "Política nacional de transportes rodoviário e ferroviário",
+   "Infraestrutura de rodovias e ferrovias federais",
+   "Política nacional de trânsito",
+   "Planos de outorgas e concessões de rodovias e ferrovias",
+   "Representação do país em organismos internacionais do setor"
+  ],
+  "site": "https://www.gov.br/transportes",
+  "base": [
+   {
+    "rotulo": "Lei 14.600/2023, art. 47",
+    "url": "https://www.planalto.gov.br/ccivil_03/_ato2023-2026/2023/lei/l14600.htm"
+   }
+  ],
+  "revisadoEm": "2026-10-30"
+ },
+ "turismo": {
+  "resumo": "Formula a política nacional de turismo e promove o turismo do Brasil no país e no exterior.",
+  "areas": [
+   "Política nacional de desenvolvimento do turismo sustentável",
+   "Promoção e divulgação do turismo nacional, no país e no exterior",
+   "Planos e programas de incentivo ao turismo",
+   "Financiamento e acesso ao crédito, com gestão do Fundo Geral de Turismo (Fungetur)",
+   "Regulação, fiscalização e certificação de prestadores de serviços turísticos"
+  ],
+  "site": "https://www.gov.br/turismo",
+  "base": [
+   {
+    "rotulo": "Lei 14.600/2023, art. 48",
+    "url": "https://www.planalto.gov.br/ccivil_03/_ato2023-2026/2023/lei/l14600.htm"
+   }
+  ],
+  "revisadoEm": "2026-10-30"
+ }
+}

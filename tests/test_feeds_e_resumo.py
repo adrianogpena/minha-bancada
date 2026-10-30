@@ -157,3 +157,14 @@ def test_item_e_feed_sao_xml_valido_e_escapam():
     assert raiz.find("channel/item/guid").text == "minha-bancada-UF:SP-2026-01-02"
     assert "<SP>" in raiz.find("channel/title").text
     assert "2026" in raiz.find("channel/item/pubDate").text
+
+
+def test_ministerios_no_resumo_e_so_nos_feeds_federais():
+    d = vazio_d(ministerios=[("RIC 3/2026", "Solicita informações ao Ministro da Saúde", "Saúde")])
+    secoes = r.linhas(d)
+    assert secoes[0][0] == "Ministérios — 1 pedido novo" and "Saúde" in secoes[0][1][0]
+    assert "Ministérios 1" in r.resumo_curto(d)
+    deps = {"SP": {1}}
+    assert feeds.selecionar(d, {"FEDERAL"}, deps)["ministerios"] == d["ministerios"]
+    assert feeds.selecionar(d, {"BR"}, deps)["ministerios"] == d["ministerios"]
+    assert feeds.selecionar(d, {"UF:SP"}, deps)["ministerios"] == []

@@ -74,6 +74,7 @@ def selecionar(d: dict, regras: set[str], deps_uf: dict[str, set[int]]) -> dict:
         "detalhe": (0, 0),
         "executivo": d["executivo"] if pres else [],
         "executivo_situacao": d["executivo_situacao"] if pres else [],
+        "ministerios": d.get("ministerios", []) if br else [],
         "estaduais": por_uf("estaduais", lambda uf: uf in ufs,
                             lambda uf, m: any(f"est:{uf}:{p}" in regras for p in m.get("idsDeputados", []))),
         "governo": por_uf("governo", lambda uf: uf in ufs or f"gov:{uf}" in regras),

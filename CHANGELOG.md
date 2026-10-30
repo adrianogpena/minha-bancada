@@ -5,6 +5,10 @@ Regra: toda fonte nova ou mudança de coleta ganha uma entrada aqui, no mesmo co
 Datas dos conjuntos que já existiam vêm do primeiro commit que os trouxe (`git log --diff-filter=A`).
 Todas as coletas rodam sozinhas no GitHub Actions (`.github/workflows/atualizar.yml`, todo dia às 05:00 de Brasília), salvo onde indicado.
 
+## Ministérios no histórico, no RSS e no e-mail (2026-10-30)
+- **Sem fonte nova.** Os pedidos a ministérios (requerimentos da Câmara e do Senado, respostas, prazos vencidos e convocações aprovadas) saem das categorias `nova`/`situacao` e ganham a categoria `ministerio` ("Ministérios") no histórico diário; trocas de ministro e licenças seguem em `ministro`. Dias já gravados em `dados/historico/` não são reescritos.
+- **E-mail e RSS:** `resumo_email.coletar` ganha `ministerios` (pedidos novos na janela de datas) e a seção "Ministérios — N pedidos novos"; o assunto/título curto traz "Ministérios N". Entra nos feeds `BR` e `FEDERAL`.
+
 ## Ficha da proposição: ementa inteira, mais dados e leis citadas (2026-10-30)
 - **De onde:** a ementa inteira já vinha da API da Câmara; o corte em 180 caracteres era só do índice `proposicoes.json`. Os campos novos (ementa detalhada, palavras-chave, regime, última tramitação, link do inteiro teor, projeto principal) vêm de `proposicoes_detalhe.json` e os temas, de `proposicoes_temas.json`. Fonte nova: LexML (`lexml_norma` em `ENDPOINTS.md`), página `https://www.lexml.gov.br/urn/urn:lex:br:federal:...` de cada lei citada, para a ementa oficial e o link do Planalto.
 - **Como:** `leis.py` acha as citações com data completa (lei, lei complementar, decreto-lei, decreto, MP, emenda e Constituição) e monta a URN; `coletar_leis.py` grava `dados/leis.json` (só consulta lei nova; 400 por execução, pausa de 0,5 s). `gerar_proposicoes.py` grava `em`, `ed`, `pc`, `rg`, `tr`, `ds`, `tx`, `pr`, `tm`, `ls` na ficha e `site/dados/leis.json`. Citação sem data ("Lei nº 8.080/90") não liga, para não apontar a lei errada. Tempo da coleta não medido (sem internet para o LexML no teste local além de uma página).

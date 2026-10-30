@@ -365,6 +365,7 @@ select:disabled { opacity: .55; }
 .hist-item.r-1 { opacity: .8; }
 .hist-item.r-1 .hist-cab b { font-weight: 400; }
 .hist-tag.k-ministro { background: color-mix(in srgb, #7a3fb0 14%, var(--superficie)); color: #7a3fb0; }
+.hist-tag.k-ministerio { background: color-mix(in srgb, #0f7b7b 14%, var(--superficie)); color: #0f7b7b; }
 .hist-tag.k-lote { background: var(--linha); color: var(--tinta-suave); }
 .hist-lista { margin: 4px 0; font-size: 14px; color: var(--tinta-suave); }
 .hist-lista summary { cursor: pointer; }

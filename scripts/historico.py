@@ -11,7 +11,7 @@ dos dias são a memória: cada evento guarda a data do ato como a fonte a deu na
 
 Cada evento do dia:
     local         "BR", "UF:SP" ou "MUN:SP" (capital)                 uf          estado de quem aparece (filtro por estado)
-    categoria     nova, situacao, votacao, eleicao, ministro                    titulo      título curto (ex.: "PL 123/2026")
+    categoria     nova, situacao, votacao, eleicao, ministro, ministerio       titulo      título curto (ex.: "PL 123/2026")
     politicos     [{codigo: código do "Fique informado" ou null, nome, pagina: página no site ou null}]
     texto         ementa, despacho                                    mudanca     [antes, depois] de uma mudança
     resumo        placar, resultado                                   dataDoAto   data do ato (AAAA-MM-DD); dataDoAtoAproximada: é só a de apresentação
@@ -335,19 +335,19 @@ def ministros_camara(ctx: Contexto, antes: str, depois: str, hoje: str, ontem: s
             pasta = _pasta_do_pedido(y["ementa"])
             comum_ = dict(uf=uf, politicos=autores, texto=y["ementa"], fontes=fontes_camara(pid, y.get("inteiroTeor")))
             if x is None:
-                saida.append(evento("BR", "nova", titulo, **comum_, resumo=f"Pedido ao ministério: {pasta}" if pasta else "Pedido a ministro",
+                saida.append(evento("BR", "ministerio", titulo, **comum_, resumo=f"Pedido ao ministério: {pasta}" if pasta else "Pedido a ministro",
                                     data_do_ato=y.get("dataApresentacao"), relevancia=1))
                 continue
             if y["tipo"] == "RIC":
                 if y.get("resposta") and not x.get("resposta"):
                     no_prazo = not y.get("prazoFim") or y["resposta"] <= y["prazoFim"]
-                    saida.append(evento("BR", "situacao", titulo, **comum_, mudanca=["Sem resposta", "Respondido" + (" no prazo" if no_prazo else " fora do prazo")],
+                    saida.append(evento("BR", "ministerio", titulo, **comum_, mudanca=["Sem resposta", "Respondido" + (" no prazo" if no_prazo else " fora do prazo")],
                                         resumo=f"Resposta recebida ({pasta})" if pasta else "Resposta recebida", data_do_ato=y["resposta"], relevancia=2))
                 elif not y.get("resposta") and y.get("prazoFim") and ontem <= y["prazoFim"] < hoje:
-                    saida.append(evento("BR", "situacao", titulo, **comum_, mudanca=["Aguardando resposta", "Prazo vencido sem resposta"],
+                    saida.append(evento("BR", "ministerio", titulo, **comum_, mudanca=["Aguardando resposta", "Prazo vencido sem resposta"],
                                         resumo=f"Prazo até {y['prazoFim']}" + (f", {pasta}" if pasta else ""), data_do_ato=y["prazoFim"], relevancia=2))
             elif mudou(x.get("situacao"), y.get("situacao")) and re.search(r"aprovad", y.get("situacao") or "", re.I):
-                saida.append(evento("BR", "situacao", titulo, **comum_, mudanca=[x.get("situacao") or "—", y.get("situacao")],
+                saida.append(evento("BR", "ministerio", titulo, **comum_, mudanca=[x.get("situacao") or "—", y.get("situacao")],
                                     resumo="Convocação ou convite a ministro aprovado", data_do_ato=y.get("dataStatus"), relevancia=3))
     return saida
 
@@ -366,10 +366,10 @@ def ministros_senado(ctx: Contexto, antes: str, depois: str) -> list:
             comum_ = dict(politicos=autores, texto=y["ementa"], fontes=[("Documento (Senado)", y.get("documento"))])
             pasta = _pasta_do_pedido(y["ementa"])
             if x is None:
-                saida.append(evento("BR", "nova", y["identificacao"], **comum_, resumo=f"Pedido ao ministério: {pasta}" if pasta else "Pedido a ministro",
+                saida.append(evento("BR", "ministerio", y["identificacao"], **comum_, resumo=f"Pedido ao ministério: {pasta}" if pasta else "Pedido a ministro",
                                     data_do_ato=y.get("dataApresentacao"), relevancia=1))
             elif y.get("tipoConteudo") != "Informações" and mudou(x.get("deliberacao"), y.get("deliberacao")) and re.search(r"aprovad", y.get("deliberacao") or "", re.I):
-                saida.append(evento("BR", "situacao", y["identificacao"], **comum_, mudanca=[x.get("deliberacao") or "—", y["deliberacao"]],
+                saida.append(evento("BR", "ministerio", y["identificacao"], **comum_, mudanca=[x.get("deliberacao") or "—", y["deliberacao"]],
                                     resumo="Convocação de ministro aprovada", data_do_ato=y.get("dataDeliberacao"), relevancia=3))
     return saida
 
@@ -641,7 +641,7 @@ def agrupar_lotes(eventos: list) -> list:
     reescreva situações antigas de uma vez. Projetos de verdade novos e marcos nunca entram no lote."""
     saida = eventos
     for chave, titulo, resumo in (
-            (lambda e: e["relevancia"] == 1 and e["categoria"] in ("nova", "situacao"), "{n} registros de baixa relevância (requerimentos, pareceres e afins)",
+            (lambda e: e["relevancia"] == 1 and e["categoria"] in ("nova", "situacao", "ministerio"), "{n} registros de baixa relevância (requerimentos, pareceres e afins)",
              "Novos ou com nova situação: {conta}. Títulos na lista abaixo."),
             (lambda e: e["relevancia"] == 2 and e.get("dataDoAtoAproximada"), "{n} mudanças de situação sem data do ato conhecida",
              "Com nova situação, de uma vez: {conta}. Títulos na lista abaixo.")):

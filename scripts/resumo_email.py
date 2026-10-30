@@ -14,6 +14,7 @@ import argparse
 import html
 import json
 import os
+import re
 import shutil
 import smtplib
 import subprocess
@@ -24,6 +25,7 @@ from pathlib import Path
 from urllib.parse import quote
 
 import cadastro_proposicoes
+import ministerios
 import nomes_legados
 from fuso import BRASILIA
 
@@ -160,6 +162,25 @@ def senado_novas(antes: str, depois: str, dia_coleta: str | None) -> tuple[int, 
     return 0, sum(1 for k, m in y.items() if k not in x and na_janela(m.get("dataApresentacao") or m.get("dataSituacao"), dia_coleta))
 
 
+def ministerios_novos(antes: str, depois: str, dia_coleta: str | None) -> list[tuple[str, str, str]]:
+    """Pedidos novos a ministérios (requerimentos da Câmara e do Senado que citam ministro), dentro da janela: [(identificação, ementa, pasta ou "")].
+    Primeira coleta de dados/ministros/ não conta (tudo seria novo)."""
+    if not git("ls-tree", "-r", "--name-only", antes, "--", "dados/ministros").split():
+        return []
+    saida = []
+    for f in arquivos(antes, depois, "dados/ministros"):
+        if not re.fullmatch(r"dados/ministros/(camara|senado)_\d{4}\.json", f):
+            continue
+        x, y = (carregar(antes, f) or {}).get("itens", {}), (carregar(depois, f) or {}).get("itens", {})
+        for pid, it in y.items():
+            if pid in x or not na_janela(it.get("dataApresentacao"), dia_coleta):
+                continue
+            achadas = ministerios.pastas_do_texto(it.get("ementa"))
+            nome = it.get("identificacao") or f"{it.get('tipo')} {it.get('numero')}/{it.get('ano')}"
+            saida.append((nome, it.get("ementa") or "", ministerios.PASTAS[achadas[0]][0] if achadas else ""))
+    return sorted(saida)
+
+
 def coletar(antes: str, depois: str, dia_coleta: str | None = None) -> dict:
     """`dia_coleta` (AAAA-MM-DD, ver dia_da_coleta): de onde se conta a janela da data do ato. Sem ele não há janela: serve aos resumos
     de semana e de mês, que cobrem mais de um dia."""
@@ -172,6 +193,7 @@ def coletar(antes: str, depois: str, dia_coleta: str | None = None) -> dict:
     d["executivo"] = [i for i in y if i["id"] not in ids and na_janela(i.get("dataApresentacao") or i.get("dataSituacao"), dia_coleta)]
     situacao = {i["id"]: i.get("situacao") for i in x}
     d["executivo_situacao"] = [(i, situacao[i["id"]]) for i in y if i["id"] in situacao and i.get("situacao") != situacao[i["id"]] and na_janela(i.get("dataSituacao"), dia_coleta)]
+    d["ministerios"] = ministerios_novos(antes, depois, dia_coleta)
     d["estaduais"] = materias(antes, depois, "dados/estaduais", "materias_2026.json", dia_coleta)
     d["governo"] = materias(antes, depois, "dados/estaduais", "governo_2026.json", dia_coleta)
     d["municipais"] = materias(antes, depois, "dados/municipais", "prefeitura_2026.json", dia_coleta)
@@ -201,6 +223,11 @@ def linhas(d: dict) -> list[tuple[str, list[str]]]:
         itens = [f"{i['tipo']} {i['numero']}/{i['ano']} — {cortar(i.get('ementa'))}" for i in d["executivo"]]
         itens += [f"{i['tipo']} {i['numero']}/{i['ano']}: {a or '—'} → {i.get('situacao') or '—'}" for i, a in d["executivo_situacao"]]
         s.append((f"Executivo — {juntar(cont(len(d['executivo']), 'novo', 'novos'), cont(len(d['executivo_situacao']), 'com nova situação', 'com nova situação'))}", itens))
+    if d.get("ministerios"):
+        itens = [f"{n} — {p + ': ' if p else ''}{cortar(e)}" for n, e, p in d["ministerios"][:LIMITE]]
+        if len(d["ministerios"]) > LIMITE:
+            itens.append(f"…e mais {len(d['ministerios']) - LIMITE}")
+        s.append((f"Ministérios — {cont(len(d['ministerios']), 'pedido novo', 'pedidos novos')}", itens))
     for chave, titulo in (("estaduais", "Assembleia"), ("governo", "Governo do estado, projetos enviados à Assembleia"), ("municipais", "Câmara da capital")):
         novas, mudou = d[chave]
         for uf in sorted(set(novas) | set(mudou)):
@@ -219,7 +246,8 @@ def linhas(d: dict) -> list[tuple[str, list[str]]]:
 def resumo_curto(d: dict, limite: int = 3) -> str:
     """O que mudou em poucas palavras, para título de item de feed e assunto de e-mail (leitores cortam em ~40 caracteres): "Câmara 4 · Senado 1"."""
     cam = len(d["camara"])
-    partes = [("Câmara", cam), ("Senado", d["senado"][1] - d["senado"][0]), ("Executivo", len(d["executivo"]) + len(d["executivo_situacao"]))]
+    partes = [("Câmara", cam), ("Senado", d["senado"][1] - d["senado"][0]), ("Executivo", len(d["executivo"]) + len(d["executivo_situacao"])),
+             ("Ministérios", len(d.get("ministerios", [])))]
     for chave, nome in (("estaduais", "Assembleia"), ("governo", "Governo"), ("municipais", "Capital")):
         novas, mudou = d[chave]
         ufs = sorted(u for u in set(novas) | set(mudou) if novas.get(u) or mudou.get(u))

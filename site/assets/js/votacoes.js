@@ -1,13 +1,13 @@
 /* Lista de votações e detalhe de uma votação. */
 import { $, esc, data, dataHora, semAcento, param, carregar } from "./util.js";
 import { VOTOS, selo, listaPaginada, erro, semDadosLocais, filtrosNaUrl, botaoVoltar } from "./comum.js";
-import { CAMARA_API, quorumCamara, fontes, SENADO_API, linkMateriaSenado } from "./apis.js";
+import { CAMARA_API, CADEIRAS_CAMARA, quorumCamara, fontes, SENADO_API, linkMateriaSenado } from "./apis.js";
 
 /* ---------- lista de votações ---------- */
 export function barraPlacar(placar) {
   const total = Object.values(placar).reduce((a, b) => a + b, 0) || 1;
   return `<div class="placar" role="img" aria-label="${Object.entries(placar).map(([k, n]) => `${VOTOS[k]?.rotulo || k}: ${n}`).join(", ")}">
-    ${["sim", "nao", "abstencao", "obstrucao", "secreto", "art17", "outro"].filter((k) => placar[k]).map((k) => `<i style="width:${(placar[k] / total) * 100}%;background:${VOTOS[k].cor}"></i>`).join("")}</div>`;
+    ${["sim", "nao", "abstencao", "obstrucao", "secreto", "art17", "outro", "ausente"].filter((k) => placar[k]).map((k) => `<i style="width:${(placar[k] / total) * 100}%;background:${VOTOS[k].cor}"></i>`).join("")}</div>`;
 }
 
 export async function paginaVotacoes() {
@@ -41,8 +41,17 @@ export async function paginaVotacao() {
   const partidos = Object.entries(v.porPartido).sort((a, b) => Object.values(b[1]).reduce((x, y) => x + y, 0) - Object.values(a[1]).reduce((x, y) => x + y, 0));
 
   const q = senado ? null : quorumCamara(v.proposicao, v.descricao);
-  const nota = q ? `<p class="aviso">Por que o resultado não depende só de quem tem mais votos: ${esc(q.regra)}. Aqui o mínimo era <b>${q.minimo} votos Sim</b>; foram <b>${v.placar.sim || 0}</b>. Quem não votou ou faltou conta, na prática, como "não".</p>` : "";
+  const nota = q ? `<p class="aviso">Por que o resultado não depende só de quem tem mais votos: ${esc(q.regra)}. Aqui o mínimo era <b>${q.minimo} votos Sim</b>; foram <b>${v.placar.sim || 0}</b>. Quem se ausentou da votação (sem estar de falta) conta, na prática, como "não".</p>` : "";
 
+  let ausentes = [], semVotoSemLista = 0;
+  if (!senado) {
+    const quemVotou = new Set(v.votos.map((d) => d.id));
+    const emExercicio = await carregar("dados/deputados.json").catch(() => null);
+    ausentes = emExercicio ? emExercicio.filter((d) => !quemVotou.has(d.id)).map((d) => ({ id: d.id, nome: d.nome, partido: d.partido, uf: d.uf, voto: "ausente" })) : [];
+    if (!emExercicio) semVotoSemLista = Math.max(0, CADEIRAS_CAMARA - v.votos.length);
+  }
+  const semVoto = ausentes.length || semVotoSemLista;
+  const notaSemVoto = semVoto ? `<p class="aviso">${semVoto} dos ${v.votos.length + semVoto} deputados não aparecem na fonte desta votação. Isso não quer dizer abstenção: a Câmara registra abstenção como voto, e aqui não há registro nenhum desses deputados (ausência, licença ou não votou).</p><p class="aviso"><b>Limite dos dados:</b> a fonte da votação não informa quem era deputado na data nem o motivo de cada ausência. Por isso a lista usa os deputados em exercício hoje: pode incluir quem ainda não tinha assumido na data e deixar de fora quem já saiu.</p>` : "";
   alvo.innerHTML = `
     ${botaoVoltar("Votações", "votacoes.html")}
     <section class="abertura">
@@ -56,13 +65,14 @@ export async function paginaVotacao() {
       <div class="painel-titulo"><h2>Placar</h2><p>${v.aprovada === 1 ? "Aprovada" : v.aprovada === 0 ? "Rejeitada" : ""}</p></div>
       ${nota}
       ${v.secreta ? `<p class="aviso">Votação secreta: o Senado informa que cada senador votou, mas não como. O voto individual não é público.</p>` : ""}
-      ${barraPlacar(v.placar)}
+      ${barraPlacar(semVoto ? { ...v.placar, ausente: semVoto } : v.placar)}
+      ${notaSemVoto}
       <div class="numeros">
         <div><b>${v.placar.sim || 0}</b><span>Sim</span></div>
         <div><b>${v.placar.nao || 0}</b><span>Não</span></div>
         <div><b>${v.placar.abstencao || 0}</b><span>Abstenção</span></div>
         <div><b>${v.placar.obstrucao || 0}</b><span>Obstrução</span></div>
-        ${senado ? `<div><b>${v.ausentes || 0}</b><span>Sem voto registrado</span></div>` : ""}
+        ${senado ? `<div><b>${v.ausentes || 0}</b><span>Sem voto registrado</span></div>` : `<div><b>${semVoto}</b><span>Sem voto registrado</span></div>`}
       </div>
     </section>
     <h2>Por partido</h2>
@@ -71,14 +81,15 @@ export async function paginaVotacao() {
     </tbody></table></div>
     <h2>Voto de cada ${quem}</h2>
     <div class="filtros" style="grid-template-columns:2fr 1fr"><label class="campo">Buscar ${quem}<input id="busca-dep" type="search" placeholder="Nome, partido ou estado"></label>
-      <label class="campo">Voto<select id="filtro-voto"><option value="">Todos</option>${["sim", "nao", "abstencao", "obstrucao", ...(senado ? ["art17", "secreto", "ausente"] : [])].map((k) => `<option value="${k}">${VOTOS[k].rotulo}</option>`).join("")}</select></label></div>
+      <label class="campo">Voto<select id="filtro-voto"><option value="">Todos</option>${["sim", "nao", "abstencao", "obstrucao", ...(senado ? ["art17", "secreto", "ausente"] : ["art17", "ausente"])].map((k) => `<option value="${k}">${VOTOS[k].rotulo}</option>`).join("")}</select></label></div>
     <div id="lista-dep"></div>
     ${senado ? fontes([["Votos de cada senador (API do Senado)", `${SENADO_API}/votacao?dataInicio=${v.data.replaceAll("-", "")}&dataFim=${v.data.replaceAll("-", "")}`], v.propId ? ["Tramitação da matéria", linkMateriaSenado(v.propId)] : null]) : ""}`;
 
+  const todos = [...v.votos, ...ausentes].sort((a, b) => a.nome.localeCompare(b.nome, "pt-BR"));
   const render = (d) => `<li>${linkQuem(d) ? `<a href="${esc(linkQuem(d))}">${esc(d.nome)}</a>` : esc(d.nome)}${selo(d.voto)}<span class="quando texto">${esc(d.partido)}${d.uf ? `/${esc(d.uf)}` : ""}${d.motivo ? ` · ${esc(d.motivo)}` : ""}</span></li>`;
   const desenhar = () => {
     const b = semAcento($("#busca-dep").value.trim()), f = $("#filtro-voto").value;
-    listaPaginada($("#lista-dep"), v.votos.filter((d) => (!f || d.voto === f) && (!b || semAcento(`${d.nome} ${d.partido} ${d.uf}`).includes(b))), render, 50, `Nenhum ${quem} com esse filtro.`);
+    listaPaginada($("#lista-dep"), todos.filter((d) => (!f || d.voto === f) && (!b || semAcento(`${d.nome} ${d.partido} ${d.uf}`).includes(b))), render, 50, `Nenhum ${quem} com esse filtro.`);
   };
   $("#busca-dep").addEventListener("input", desenhar);
   $("#filtro-voto").addEventListener("input", desenhar);

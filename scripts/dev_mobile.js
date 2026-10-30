@@ -1,5 +1,6 @@
 // Abre o site numa janela de celular (toque ligado, janela 412x800 por padrão, a área visível do Galaxy M55 no Chrome) servindo site/ com os dados já gerados.
-// Uso: npm run dev:mobile [-- <página>] [--largura=360] [--altura=740]
+// Com --desktop abre a janela com o layout de navegador de computador (1280x800 por padrão, sem toque).
+// Uso: npm run dev:mobile [-- <página>] [--largura=360] [--altura=740]  |  npm run dev:window [-- <página>] [--largura=1280] [--altura=800]
 // Fechar a janela encerra o servidor. Recarregue (F5) para ver mudanças no CSS/JS.
 const { execFileSync } = require("node:child_process");
 const fs = require("node:fs");
@@ -12,7 +13,8 @@ const TIPOS = { ".html": "text/html; charset=utf-8", ".js": "text/javascript", "
 
 const args = process.argv.slice(2);
 const opcao = (nome, padrao) => Number(args.find((a) => a.startsWith(`--${nome}=`))?.split("=")[1] ?? padrao);
-const largura = opcao("largura", 412), altura = opcao("altura", 800);
+const desktop = args.includes("--desktop");
+const largura = opcao("largura", desktop ? 1280 : 412), altura = opcao("altura", 800);
 const pagina = args.find((a) => !a.startsWith("--")) || "index.html";
 
 function carregarPlaywright() {
@@ -33,12 +35,17 @@ function carregarPlaywright() {
   const base = `http://127.0.0.1:${servidor.address().port}`;
 
   const { chromium } = carregarPlaywright();
-  // Janela sem barra de endereço e sem viewport emulado: a área da página é a própria janela, do tamanho do celular.
+  // Janela sem barra de endereço e sem viewport emulado: a área da página é a própria janela, do tamanho pedido.
   const perfil = fs.mkdtempSync(path.join(os.tmpdir(), "bancada-mobile-dev-"));
   const contexto = await chromium.launchPersistentContext(perfil, {
-    headless: false, viewport: null, hasTouch: true, colorScheme: "dark", ignoreDefaultArgs: ["--enable-automation"],
-    userAgent: "Mozilla/5.0 (Linux; Android 14; Pixel 8) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0 Mobile Safari/537.36",
-    args: [`--app=${base}/${pagina}`, `--window-size=${largura},${altura}`, "--hide-scrollbars", "--touch-events=enabled"],
+    // --test-type some com o aviso de flag não suportada; as variáveis GOOGLE_* somem com o de chaves de API ausentes
+    env: { ...process.env, GOOGLE_API_KEY: "no", GOOGLE_DEFAULT_CLIENT_ID: "no", GOOGLE_DEFAULT_CLIENT_SECRET: "no" },
+    headless: false, viewport: null, colorScheme: "dark", ignoreDefaultArgs: ["--enable-automation"],
+    ...(desktop ? {} : {
+      hasTouch: true,
+      userAgent: "Mozilla/5.0 (Linux; Android 14; Pixel 8) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0 Mobile Safari/537.36",
+    }),
+    args: [`--app=${base}/${pagina}`, `--window-size=${largura},${altura}`, "--test-type", "--disable-features=Translate,TranslateUI", "--lang=pt-BR", ...(desktop ? [] : ["--hide-scrollbars", "--touch-events=enabled"])],
   });
   const aba = contexto.pages()[0] ?? (await contexto.waitForEvent("page"));
   await aba.waitForLoadState();
@@ -53,7 +60,7 @@ function carregarPlaywright() {
     await aba.waitForTimeout(250);
   }
   const [w, h] = await aba.evaluate(() => [innerWidth, innerHeight]);
-  console.log(`Modo celular ${w}x${h} (pedido ${largura}x${altura}) em ${base}/${pagina}. Feche a janela para encerrar.`);
+  console.log(`Modo ${desktop ? "desktop" : "celular"} ${w}x${h} (pedido ${largura}x${altura}) em ${base}/${pagina}. Feche a janela para encerrar.`);
 
   const encerrar = () => { servidor.close(); process.exit(0); };
   contexto.on("close", encerrar);

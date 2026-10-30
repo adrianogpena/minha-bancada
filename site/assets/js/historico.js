@@ -210,9 +210,9 @@ export async function paginaHistorico() {
         if (!grupos.has(p.nome)) grupos.set(p.nome, { p, eventos: [] });
         grupos.get(p.nome).eventos.push(e);
       }
-      const peso = (g) => Math.max(...g.eventos.map((e) => e.relevancia || 2));   // o político com o fato mais importante vem primeiro
+      const peso = (g) => Math.max(...g.eventos.map((e) => e.relevancia || 2));   // o presidente sempre abre a lista; depois, o político com o fato mais importante
       for (const g of grupos.values()) g.eventos.sort((a, b) => (b.relevancia || 2) - (a.relevancia || 2));
-      const ordenados = [...grupos.values()].sort((a, b) => peso(b) - peso(a) || (a.p.codigo ? 0 : 1) - (b.p.codigo ? 0 : 1) || b.eventos.length - a.eventos.length || a.p.nome.localeCompare(b.p.nome, "pt-BR"));
+      const ordenados = [...grupos.values()].sort((a, b) => (b.p.codigo === "pres") - (a.p.codigo === "pres") || peso(b) - peso(a) || (a.p.codigo ? 0 : 1) - (b.p.codigo ? 0 : 1) || b.eventos.length - a.eventos.length || a.p.nome.localeCompare(b.p.nome, "pt-BR"));
       return `<section class="painel hist-local">
         <h2>${esc(dia.locais[l])} <small>${somar(doLocal)} ${somar(doLocal) === 1 ? "mudança" : "mudanças"}</small></h2>
         ${ordenados.map(({ p, eventos }) => `<details class="hist-pol"${abrir ? " open" : ""}>

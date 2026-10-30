@@ -9,6 +9,7 @@ pip install -r requirements-dev.txt   # roda sozinho no início das sessões na 
 python -m pytest -q                   # Python, offline, poucos segundos
 node --test tests/js/app.test.js      # módulos de site/assets/js
 node --test tests/e2e/fumaca.test.js  # fumaça no navegador (Playwright + Chromium) sobre dados mínimos (tests/e2e/preparar_site.py)
+node --test tests/e2e/mobile.test.js  # modo celular (320/360/412px): sem rolagem lateral, alvo de toque >= 44px, texto >= 13px; MOBILE_FOTOS=<pasta> salva capturas
 python scripts/gerar.py               # gera site/dados/ a partir de dados/
 python -m http.server 8000 -d site    # servir local
 ```

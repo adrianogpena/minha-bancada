@@ -68,6 +68,8 @@ img { max-width: 100%; display: block; }
 .submenu a { display: block; padding: 9px 16px; border-bottom: 0; white-space: nowrap; }
 .submenu a:hover, .submenu a[aria-current="page"] { background: rgba(127,127,127,.12); }
 
+.mb-barra, .mb-folha { display: none; }
+
 /* abertura */
 .abertura { padding: 48px 0 28px; }
 .abertura h1 {

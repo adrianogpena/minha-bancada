@@ -97,6 +97,25 @@ function menuItem(atual) {
   };
 }
 
+/* Navegação do modo celular (estilo em mobile.css; no computador fica escondida): barra inferior + folha "Mais". */
+const BARRA_MOBILE = [["index.html", "Políticos", "inicio"], ["camara.html", "Câmara", "camara"], ["votacoes.html", "Votações", "votacoes"], ["historico.html", "Histórico", "historico"]];
+const MAIS_MOBILE = [["proposicoes.html", "Proposições", "proposicoes"], ["ministerios.html", "Ministérios", "ministerios"], ["informado.html", "Fique informado", "informado"], ["sobre.html", "Sobre os dados", "sobre"], ["mapa-dados.html", "Mapa dos dados", "mapadados"]];
+
+function barraMobile(atual) {
+  const link = (classe) => ([h, t, p]) => `<a class="${classe}" href="${h}"${p === atual ? ' aria-current="page"' : ""}>${t}</a>`;
+  const noMais = MAIS_MOBILE.some((i) => i[2] === atual);
+  setTimeout(() => {
+    const botao = document.getElementById("mb-mais"), folha = document.getElementById("mb-folha");
+    if (!botao || !folha) return;
+    const alternar = (aberta) => { folha.hidden = !aberta; botao.setAttribute("aria-expanded", String(aberta)); };
+    botao.addEventListener("click", () => alternar(folha.hidden));
+    folha.addEventListener("click", (e) => { if (e.target === folha || e.target.closest("a")) alternar(false); });
+    document.addEventListener("keydown", (e) => { if (e.key === "Escape") alternar(false); });
+  });
+  return `<nav class="mb-barra" aria-label="Navegação">${BARRA_MOBILE.map(link("mb-item")).join("")}<button type="button" class="mb-item" id="mb-mais" aria-expanded="false" aria-controls="mb-folha"${noMais ? ' aria-current="page"' : ""}>Mais</button></nav>
+    <div class="mb-folha" id="mb-folha" hidden><div class="mb-folha-caixa">${MAIS_MOBILE.map(link("mb-link")).join("")}</div></div>`;
+}
+
 export function moldura(pagina) {
   const links = [
     ["Políticos", [["index.html", "Buscar políticos", "inicio"], ["camara.html", "Câmara", "camara"], ["ministerios.html", "Ministérios", "ministerios"]]],
@@ -110,6 +129,7 @@ export function moldura(pagina) {
       <a class="repo" href="https://github.com/adrianogpena/minha-bancada" rel="noopener" aria-label="Código-fonte no GitHub" title="Código-fonte no GitHub"><svg viewBox="0 0 16 16" width="22" height="22" aria-hidden="true"><path fill="currentColor" d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27s1.36.09 2 .27c1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8z"/></svg></a>
       <nav class="nav" aria-label="Principal">${links.map(menuItem(atual)).join("")}</nav>
     </div></header>`);
+  document.body.insertAdjacentHTML("beforeend", barraMobile(atual));
   document.body.insertAdjacentHTML("beforeend", `
     <footer class="rodape"><div class="recipiente" id="rodape">
       Dados públicos do <a href="https://dadosabertos.tse.jus.br">TSE</a>, da <a href="https://dadosabertos.camara.leg.br">Câmara dos Deputados</a> e do <a href="https://www12.senado.leg.br/dados-abertos">Senado Federal</a>, atualizados automaticamente.

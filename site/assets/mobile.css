@@ -1,0 +1,97 @@
+/* Modo celular (carregado por estilo.css só até 760px). Não é o layout do computador espremido:
+   a navegação vira barra inferior, as abas e os filtros rolam de lado, e o alvo de toque tem 44px.
+   Testado por tests/e2e/mobile.test.js. */
+:root { --alvo: 44px; --barra: 60px; }
+
+body { font-size: 16px; padding-bottom: calc(var(--barra) + env(safe-area-inset-bottom)); overflow-wrap: anywhere; }
+.recipiente { padding: 0 16px; }
+
+/* topo: só a marca; o menu fica na barra inferior */
+.topo { position: sticky; top: 0; z-index: 30; }
+.topo .recipiente { min-height: 52px; flex-wrap: nowrap; padding-top: 0; }
+.topo .nav { display: none; }
+.repo { margin-left: auto; order: 0; min-width: var(--alvo); min-height: var(--alvo); align-items: center; justify-content: center; }
+.marca { font-size: 18px; min-height: var(--alvo); }
+
+/* barra inferior */
+.mb-barra {
+  display: grid; grid-template-columns: repeat(5, 1fr); position: fixed; left: 0; right: 0; bottom: 0; z-index: 40;
+  height: calc(var(--barra) + env(safe-area-inset-bottom)); padding-bottom: env(safe-area-inset-bottom);
+  background: var(--superficie); border-top: 1px solid var(--linha);
+}
+.mb-item {
+  display: flex; align-items: center; justify-content: center; text-align: center; min-height: var(--alvo);
+  font: 700 13px/1.15 var(--texto); color: var(--tinta-suave); text-decoration: none; background: none; border: 0;
+  border-top: 3px solid transparent; padding: 0 2px; cursor: pointer;
+}
+.mb-item[aria-current="page"] { color: var(--tinta); border-top-color: var(--marca); background: var(--marca-clara); }
+.mb-folha { display: flex; align-items: flex-end; position: fixed; inset: 0; z-index: 50; background: rgba(0,0,0,.45); }
+.mb-folha[hidden] { display: none; }
+.mb-folha-caixa {
+  width: 100%; background: var(--superficie); border-radius: 16px 16px 0 0; padding: 8px 8px calc(var(--barra) + 12px + env(safe-area-inset-bottom));
+  box-shadow: 0 -8px 24px rgba(0,0,0,.2);
+}
+.mb-link { display: flex; align-items: center; min-height: 52px; padding: 0 14px; font-weight: 700; font-size: 17px; color: var(--tinta); text-decoration: none; border-radius: 8px; }
+.mb-link[aria-current="page"] { background: var(--marca-clara); color: var(--marca); }
+
+/* títulos e respiro */
+.abertura { padding: 24px 0 12px; }
+h2 { font-size: 22px; margin: 28px 0 12px; }
+.rodape { margin-top: 32px; padding-bottom: 24px; }
+
+/* campos: 16px evita o zoom automático do iOS; altura de toque */
+input, select { font-size: 16px; min-height: var(--alvo); }
+input[type="checkbox"], input[type="radio"] { width: 24px; min-height: 24px; }
+button { min-height: var(--alvo); }
+.filtros, .filtros.dois, .hist-filtros { grid-template-columns: 1fr; gap: 8px; }
+.filtros .campo:first-child, .filtros.dois .largo { grid-column: auto; }
+
+/* botões, chips e resumos */
+.mais, .voltar, summary { display: inline-flex; align-items: center; min-height: var(--alvo); }
+summary { display: flex; cursor: pointer; }
+.voltar { padding-right: 12px; }
+.mais { justify-content: center; width: 100%; font-size: 16px; }
+.abas { flex-wrap: nowrap; overflow-x: auto; scroll-snap-type: x proximity; margin-inline: -16px; padding: 2px 16px 6px; scrollbar-width: none; }
+.abas::-webkit-scrollbar { display: none; }
+.abas button { flex: none; min-height: var(--alvo); padding: 0 16px; font-size: 15px; scroll-snap-align: start; }
+
+/* abas da ficha: faixa fixa embaixo do topo, rolável */
+.abas-pagina { position: sticky; top: 52px; z-index: 20; margin: 12px -16px 8px; padding: 0 12px; background: var(--papel); scrollbar-width: none; }
+.abas-pagina::-webkit-scrollbar { display: none; }
+.abas-pagina button { min-height: var(--alvo); padding: 0 14px; font-size: 15px; }
+
+/* perfil em coluna */
+.perfil { flex-direction: column; align-items: flex-start; gap: 12px; padding-top: 20px; }
+.perfil h1 { font-size: 30px; }
+
+/* listas viram cartões de uma coluna */
+.linha-dep, .cabecalho-lista { grid-template-columns: 44px 1fr; }
+.cabecalho-lista { display: none; }
+.linha-dep .metrica:nth-of-type(n+3) { display: none; }
+.linha-pol { grid-template-columns: 44px 1fr; min-height: var(--alvo); }
+.itens li { grid-template-columns: 1fr; padding: 14px 2px; }
+.itens .quando { justify-self: start; }
+.painel { padding: 14px; margin-top: 16px; }
+.painel-titulo { flex-direction: column; align-items: flex-start; gap: 4px; }
+.numeros { grid-template-columns: 1fr 1fr; }
+.numeros b { font-size: 22px; }
+.ficha { grid-template-columns: 1fr; gap: 0; }
+.ficha dt { font-size: 14px; margin-top: 10px; }
+.legenda { font-size: 14px; }
+
+/* tabelas largas rolam dentro de si, sem estourar a página */
+.rolagem, .tabela-rolavel { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+.tabela { font-size: 14px; }
+
+/* fontes: legíveis e sem linha que empurre a tela */
+.rotulo-fonte { font-size: 13px; }
+.fontes { font-size: 14px; }
+.fonte-par { white-space: normal; }
+.fontes a, .fontes-lista a { display: inline-block; padding: 4px 0; }
+
+/* mapa e grade de votos */
+.mapa svg { max-height: 50vh; }
+.faixa a, .faixa span.q { width: 14px; height: 22px; }
+small { font-size: 13px; }
+.linha-email { flex-direction: column; align-items: stretch; }
+.linha-email .campo:first-child, .linha-email .campo:last-child { flex: none; }

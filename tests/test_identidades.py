@@ -218,3 +218,18 @@ def test_inabilitados_do_tcu_ligam_so_por_nome_e_uf_unicos(tmp_path):
     assert ana["ligacao"]["inabilitados"] == ["nome+uf", "média"]
     assert n["ligacoes"]["semLigacao"]["inabilitados"] == 3
     assert [a["id"] for a in n["ligacoes"]["ambiguos"] if a["fonte"] == "inabilitados"] == ["3/2020-3"]
+
+
+def test_emendas_ligam_so_por_nome_unico_de_parlamentar_federal(tmp_path):
+    bruto = tmp_path / "dados"
+    montar(bruto)
+    gravar(bruto / "emendas" / "2024.json", {"itens": [
+        {"codigo": "1", "ano": 2024, "autor": "ANA SOUZA", "empenhado": 10.0},
+        {"codigo": "2", "ano": 2024, "autor": "ANA SOUZA", "empenhado": 5.0},
+        {"codigo": "3", "ano": 2024, "autor": "BANCADA DO CEARÁ"},
+        {"codigo": "4", "ano": 2024, "autor": "CARLÃO"}]})
+    n = ident.construir({}, bruto)
+    assert [(e["codigo"], e["autor"]) for e in n["emendas"]] == [("1", "ANA SOUZA"), ("2", "ANA SOUZA")]
+    ana = next(p for p in n["pessoas"] if p["id"] == n["emendas"][0]["pessoa"])
+    assert ana["ligacao"]["emendas"] == ["nome+cargo", "média"]
+    assert n["ligacoes"]["semLigacao"]["emendas"] == 2

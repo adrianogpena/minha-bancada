@@ -37,14 +37,13 @@ Raspagem é frágil: fonte opcional, com teste de contrato em `scripts/contrato_
 
 ### 3.2 Emendas e Portal da Transparência
 
-**Aguardando a chave de API** (pedida ao usuário em 2026-10-29; variável sugerida `PORTAL_TRANSPARENCIA_CHAVE`, local e secret do Actions).
+**Emendas feitas em 2026-10-30, sem ter rodado contra a API real** (chave só no secret `PORTAL_TRANSPARENCIA_CHAVE` do Actions): coletor
+`coletar_emendas.py`, ligação do autor por nome, `site/dados/emendas/<pessoa>.json` e painel na ficha (ver `CHANGELOG.md`).
+Falta conferir na primeira execução do Actions: nomes dos campos e formato do autor (`autor` x `nomeAutor`), tempo da coleta e quantos autores
+ligam (`site/dados/nucleo/ligacoes.json`, `emendas`); depois regravar `tests/test_coletar_emendas.py` com amostra real.
 
-Uma chave gratuita (cadastro com conta gov.br), enviada no cabeçalho `chave-api-dados` e guardada como secret do
-Actions, libera tudo abaixo. Hoje só há emendas das Assembleias da BA, CE e MS; as federais não existem.
-
-- `api.portaldatransparencia.gov.br/api-de-dados/emendas`: emendas individuais e de bancada por autor, com valor
-  empenhado e pago e o município que recebeu. No site: quanto cada deputado e senador mandou, para quais municípios
-  e áreas, e o mapa dos destinos (o mapa por município já existe para votos).
+Ainda não feito, com a mesma chave:
+- Mapa dos destinos por município (o mapa por município já existe para votos) e totais por área.
 - "Emendas Pix" (transferências especiais), no mesmo portal e no Transferegov: as de menor rastreio, vale um destaque.
 - Viagens a serviço e cargos do Executivo federal (ver 3.3).
 

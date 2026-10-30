@@ -11,6 +11,7 @@ const { resumosEstadual } = js("estadual.js");
 const { linksRedes } = js("ficha.js");
 const { foto } = js("comum.js");
 const { blocoDescricao } = js("ministros.js");
+const { painelEmendas } = js("emendas.js");
 const { agruparPeriodos, chaveDe, juntarDias } = js("historico.js");
 
 test("temResultado deixa de fora a votação sem aprovada nem rejeitada", () => {
@@ -232,4 +233,14 @@ test("quorumCamara: PLP e PEC têm mínimo; requerimento e projeto comum não", 
   assert.equal(quorumCamara("PEC 45/2019", "Aprovada a Emenda").minimo, 308);
   assert.equal(quorumCamara("PLP 281/2019", "Aprovado o Requerimento"), null);
   assert.equal(quorumCamara("PL 1/2020", "Aprovada"), null);
+});
+
+test("painelEmendas some sem dados, escapa o texto da fonte e limita a lista", () => {
+  assert.equal(painelEmendas(null), "");
+  assert.equal(painelEmendas({ anos: [] }), "");
+  const itens = Array.from({ length: 60 }, (_, n) => ({ codigo: String(n), ano: 2024, local: "<b>X</b>", empenhado: 1, pago: 1 }));
+  const html = painelEmendas({ anos: [{ ano: 2024, n: 60, empenhado: 60, liquidado: 0, pago: 60 }], municipios: [], itens });
+  assert.match(html, /as 50 maiores de 60/);
+  assert.match(html, /&lt;b&gt;X&lt;\/b&gt;/);
+  assert.match(html, /portaldatransparencia\.gov\.br\/emendas\/consulta\?ano=2024/);
 });

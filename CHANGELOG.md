@@ -5,6 +5,11 @@ Regra: toda fonte nova ou mudança de coleta ganha uma entrada aqui, no mesmo co
 Datas dos conjuntos que já existiam vêm do primeiro commit que os trouxe (`git log --diff-filter=A`).
 Todas as coletas rodam sozinhas no GitHub Actions (`.github/workflows/atualizar.yml`, todo dia às 05:00 de Brasília), salvo onde indicado.
 
+## Emendas parlamentares federais (2026-10-30)
+- **De onde:** API do Portal da Transparência, `https://api.portaldatransparencia.gov.br/api-de-dados/emendas` (`portal_transparencia_emendas` em `ENDPOINTS.md`), com chave gratuita no cabeçalho `chave-api-dados` (secret `PORTAL_TRANSPARENCIA_CHAVE`; sem ela o coletor avisa e pula).
+- **Como:** `scripts/coletar_emendas.py`, job `emendas` do `atualizar.yml`. Pagina por `ano` e `pagina` (a API devolve lista vazia ao fim), de 2019 em diante; grava `dados/emendas/<ano>.json` (autor como veio, local do gasto com município e UF, função, subfunção, empenhado, liquidado e pago). Anos encerrados vêm do git e não são baixados de novo; o ano passado e o corrente são relidos. Pausa de 0,7 s por página. Tempo da coleta e formato dos campos ainda **não medidos contra a API real** (a chave só existe no Actions): conferir a primeira execução e regravar o teste com amostra real.
+- **Ligação e site:** `identidades.ligar_emendas` liga o autor à pessoa que foi parlamentar federal e tem o nome (`nome+cargo`, média; nome repetido não liga, bancada e comissão ficam sem pessoa). `gerar_emendas.py` grava `site/dados/emendas/<pessoa>.json` (totais por ano, 15 municípios de maior valor e a lista); `emendas.js` mostra o painel na ficha de deputado, senador e demais. `site/mapa-dados.html` e `site/sobre.html` atualizados.
+
 ## Coleta da Câmara mais rápida: cache da ficha e leitura incremental (2026-10-30)
 
 O passo "Coletar deputados da Câmara" passou de ~20 min para mais de 22 depois que a ficha ganhou `discursosResumo` e `eventos` (paginam a legislatura inteira de cada deputado). Como `dados/deputados/` não vai para o git, todo dia partia do zero e o escalonamento de complementos (`1 + id % 7` dias) nunca valia no Actions.

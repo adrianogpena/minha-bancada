@@ -6,6 +6,7 @@ import { painelGastos } from "./deputado.js";
 import { montarParlamentar } from "./parlamentar.js";
 import { avisoLicenca } from "./ministros.js";
 import { painelEleicaoDe } from "./eleicao.js";
+import { carregarEmendas, painelEmendas } from "./emendas.js";
 
 /* Comparecimento do senador às votações nominais (gerar.py: categoria_presenca). */
 function painelPresenca(pr) {
@@ -59,6 +60,7 @@ function painelComissoesMandatos(sen, id) {
 export async function montarSenador(alvo, p, nome, ficha) {
   let sen, lista;
   try { [sen, lista] = await Promise.all([carregar(`dados/senador/${encodeURIComponent(p.id)}.json`), carregar("dados/votacoes_senado.json")]); } catch { return false; }
+  const emendas = await carregarEmendas(p.pessoa);
   const meus = new Map(sen.votos.map((v) => [v.id, v.voto]));
   const linhaDoTempo = lista.filter((v) => temResultado(v) && meus.has(v.id)).map((v) => ({ ...v, voto: meus.get(v.id) }));
   const situacao = p.fimMandato ? `Mandato até ${data(p.fimMandato, true)}.` : "";
@@ -76,6 +78,7 @@ export async function montarSenador(alvo, p, nome, ficha) {
       ${sen.despesas ? painelGastos(sen.despesas, "A cota (CEAPS) reembolsa despesas do mandato, como passagens, aluguel de escritório e divulgação. Os valores são os reembolsados pelo Senado.")
         : `<p class="aviso">Os gastos da cota (CEAPS) não puderam ser carregados agora. Veja no <a href="https://www6g.senado.leg.br/transparencia/sen/${encodeURIComponent(p.id)}" rel="noopener">Portal da Transparência do Senado</a>.</p>`}
       ${sen.recursos ? painelRecursos(sen.recursos) : ""}
+      ${painelEmendas(emendas)}
       ${painelAposentadoria(p.aposentadoria)}
       ${sen.comissoes || sen.mandatos ? painelComissoesMandatos(sen, p.id) : ""}
       ${fontes([["Dados Abertos do Senado", `${SENADO_API}/senador/${encodeURIComponent(p.id)}`], sen.despesas ? ["Cota parlamentar (CEAPS)", `${SENADO_ADM_API}/senadores/despesas_ceaps/${sen.despesas.ano}`] : null, sen.recursos ? ["Recursos utilizados", `${SENADO_ADM_API}/senadores/${encodeURIComponent(p.id)}/recursos-utilizados?ano=${sen.recursos.ano}`] : null, sen.recursos?.escritorios ? ["Escritórios de apoio", `${SENADO_ADM_API}/senadores/escritorios-apoio`] : null, ["Portal da Transparência do Senado", `https://www6g.senado.leg.br/transparencia/sen/${encodeURIComponent(p.id)}`]])}`,

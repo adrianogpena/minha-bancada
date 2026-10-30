@@ -6,6 +6,7 @@ import { CAMARA_API, TIPOS_PROJETO, linkTramitacao, fontes, temResultado } from 
 import { montarParlamentar } from "./parlamentar.js";
 import { avisoLicenca } from "./ministros.js";
 import { painelEleicao } from "./eleicao.js";
+import { carregarEmendas, painelEmendas } from "./emendas.js";
 
 /* gastos da cota (deputado: CEAP; senador: CEAPS); desp vem de gerar.py */
 const LIMITE_COTA_URL = "https://www2.camara.leg.br/comunicacao/assessoria-de-imprensa/guia-para-jornalistas/cota-parlamentar";
@@ -217,11 +218,14 @@ export async function paginaDeputado() {
 
   const meus = new Map(dep.votos.map((v) => [v.id, v.voto]));
   const desp = dep.despesas;
+  const emendas = await carregarEmendas(dep.pessoa);
   const painelPerfil = `
     ${painelGastos(desp, "A cota paga despesas do mandato, como passagens, aluguel de escritório e divulgação.")}
     ${fontes([["Cota parlamentar (API da Câmara)", `${CAMARA_API}/deputados/${encodeURIComponent(dep.id)}/despesas?ano=${desp.ano}`], desp.limite ? ["Limite mensal da cota por estado (Câmara)", LIMITE_COTA_URL] : null, ["Portal da Câmara", `https://www.camara.leg.br/deputados/${encodeURIComponent(dep.id)}`]])}
 
     ${painelRecursosDeputado(dep)}
+
+    ${painelEmendas(emendas)}
 
     ${painelTematico(dep)}
 

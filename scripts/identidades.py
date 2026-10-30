@@ -42,6 +42,8 @@ Sem par, o ministro ganha pessoa própria (fonte "planalto"). `ligar_requeriment
 `ligar_autoria_senado` liga o texto de autoria dos requerimentos do Senado ao senador (nome+uf, média).
 `ligar_inabilitados` liga cada inabilitado do TCU (dados/tcu/inabilitados.json, só nome e UF do caso) à pessoa com candidatura de mesmo nome
 completo na mesma UF (`ligacao["inabilitados"]` = nome+uf, média); nome repetido na UF vai para `ambiguos`.
+`ligar_emendas` liga o autor de cada emenda federal (dados/emendas, Portal da Transparência) à pessoa que foi parlamentar federal e tem esse
+nome (`ligacao["emendas"]` = nome+cargo, média); nome de mais de uma pessoa vai para `ambiguos`, autor coletivo (bancada, comissão) não liga.
 """
 
 import difflib
@@ -621,6 +623,36 @@ def ligar_aposentados(aposentados: dict, reg: "_Registro", ambiguos: list, resum
     return saida
 
 
+def ligar_emendas(emendas: list[dict], reg: "_Registro", ambiguos: list, resumo, sem_ligacao) -> list[dict]:
+    """`emendas`: itens de dados/emendas/<ano>.json. O autor (nome parlamentar ou civil, como o Portal da Transparência publica) é ligado à
+    pessoa do núcleo que já foi parlamentar federal (Câmara, Senado ou candidata a deputado federal ou senador) e tem esse nome; nome de mais de
+    uma pessoa não liga. Autor coletivo (bancada, comissão, relator-geral) não tem pessoa e fica de fora. Só `nome+cargo`, confiança média.
+    Devolve os itens ligados, com `pessoa`."""
+    por_nome = defaultdict(set)
+    for pid, p in reg.por_id.items():
+        if p["camara"] or p["senado"] or any(t[2] in FEDERAIS | SENADORES for t in p["tse"]):
+            for n in (norm_nome(p["nome"]), *p["nomes"]):
+                if n:
+                    por_nome[n].add(pid)
+    resultado = {}   # nome do autor -> id ou None, para decidir uma vez por nome
+    saida = []
+    for x in emendas:
+        chave = norm_nome(x["autor"])
+        if chave not in resultado:
+            ids = por_nome.get(chave, set())
+            resultado[chave] = next(iter(ids)) if len(ids) == 1 else None
+            if len(ids) == 1:
+                reg.por_id[resultado[chave]]["ligacao"].setdefault("emendas", ["nome+cargo", "média"])
+                resumo["emendas"]["nome+cargo"] += 1
+            else:
+                if ids:
+                    ambiguos.append({"fonte": "emendas", "id": chave, "nome": x["autor"], "uf": None, "candidatos": sorted(ids)})
+                sem_ligacao["emendas"] += 1
+        if resultado[chave]:
+            saida.append({"pessoa": resultado[chave], **x})
+    return saida
+
+
 def ligar_inabilitados(inabilitados: dict, reg: "_Registro", indice: "_IndiceTse", ambiguos: list, resumo, sem_ligacao) -> list[dict]:
     """Cada inabilitado do TCU (nome e UF do caso, sem CPF no TSE para conferir) é ligado à pessoa do núcleo que tem candidatura com o
     mesmo nome completo na mesma UF; nome repetido na UF não liga. Só `nome+uf`, confiança média: homônimo de outra cidade ainda passa,
@@ -822,6 +854,9 @@ def construir(deputados: dict, bruto: Path) -> dict:
     aposentados = ligar_aposentados(ler(bruto / "senado_aposentados.json", {}) or {}, reg, ambiguos, resumo, sem_ligacao)
     inabilitados = ligar_inabilitados(ler(bruto / "tcu" / "inabilitados.json", {}) or {}, reg, indice, ambiguos, resumo, sem_ligacao)
 
+    emendas = ligar_emendas([i for arq in sorted((bruto / "emendas").glob("[0-9]*.json")) for i in (ler(arq, {}) or {}).get("itens", [])],
+                            reg, ambiguos, resumo, sem_ligacao)
+
     pessoas = []
     for pid in sorted(reg.por_id):
         p = reg.por_id[pid]
@@ -855,6 +890,7 @@ def construir(deputados: dict, bruto: Path) -> dict:
         "ministros": ministros,
         "aposentados": aposentados,
         "inabilitados": inabilitados,
+        "emendas": emendas,
     }
 
 

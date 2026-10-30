@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mapa dos dados | Minha Bancada</title>
+<meta name="description" content="Todas as ligações que o Minha Bancada faz entre políticos, ministros, propostas, votações, fornecedores e eleições, e como cada uma é feita.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Bricolage+Grotesque:opsz,wght@12..96,700;12..96,800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/estilo.css">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 9 9'%3E%3Crect width='4' height='4' fill='%232456c9'/%3E%3Crect x='5' width='4' height='4' fill='%23c13b1d'/%3E%3Crect y='5' width='4' height='4' fill='%23c13b1d'/%3E%3Crect x='5' y='5' width='4' height='4' fill='%232456c9'/%3E%3C/svg%3E">
+</head>
+<body data-pagina="mapadados">
+<main class="recipiente">
+<section class="abertura">
+  <h1>Mapa dos dados</h1>
+  <p>Cada fonte oficial publica sua parte, quase nunca com o mesmo código. Aqui estão todas as ligações que o site faz entre elas, sem citar ninguém, para você entender de onde vem o que aparece em cada página.</p>
+</section>
+<div class="texto-longo">
+  <h2>Como uma ligação é feita</h2>
+  <ul>
+    <li><b>Pela própria fonte:</b> o código vem pronto (número da proposição, CNPJ, sequencial do TSE). Não há dúvida.</li>
+    <li><b>Pelo nome:</b> quando a fonte só traz o nome. A ligação tem <b>confiança alta, média ou baixa</b>, conforme o que foi comparado (nome civil, nascimento, cargo, UF, nome de urna).</li>
+    <li><b>Nome ambíguo não é ligado.</b> Se mais de uma pessoa serve, o registro fica sem ligação em vez de apontar para a pessoa errada.</li>
+    <li>Uma correção à mão só existe num arquivo público do repositório, nunca escondida no código.</li>
+  </ul>
+
+  <h2>Pessoas e mandatos</h2>
+  <div class="rolagem"><table class="tabela">
+    <thead><tr><th>De</th><th>Para</th><th>Como</th><th>Aparece em</th></tr></thead>
+    <tbody>
+      <tr><td>Eleito do TSE (qualquer eleição)</td><td>Pessoa</td><td>Nome civil + data de nascimento: a mesma pessoa tem o mesmo código em todas as eleições. Alta.</td><td>Ficha do político, "Quem o elegeu?"</td></tr>
+      <tr><td>Deputado federal em exercício (Câmara)</td><td>Pessoa</td><td>Nome civil + nascimento. Alta.</td><td>Ficha, página da Câmara</td></tr>
+      <tr><td>Senador em exercício (Senado)</td><td>Pessoa</td><td>Nome civil, cargo e UF (média); nome e UF (média).</td><td>Ficha, votos e projetos do senador</td></tr>
+      <tr><td>Deputado estadual em exercício (Assembleia)</td><td>Pessoa</td><td>Sequencial do TSE quando a Assembleia o usa (alta); nome civil, cargo e UF (média); nome de urna, cargo e UF (baixa).</td><td>Ficha, projetos e gastos do deputado estadual</td></tr>
+      <tr><td>Aposentado do Senado</td><td>Pessoa</td><td>Nome civil e cargo (média).</td><td>Aposentadoria parlamentar na ficha</td></tr>
+      <tr><td>Pessoa</td><td>Mandato</td><td>Cargo, Casa, local e período vêm do TSE; as listas de exercício da Câmara, do Senado e das Assembleias confirmam quem está no cargo (e quem é suplente).</td><td>"No cargo até", situação do mandato</td></tr>
+      <tr><td>Mandato</td><td>Partido</td><td>Partido na eleição e partido de hoje; fusões e renomeações contam como o mesmo partido.</td><td>Partido e "mudou de partido"</td></tr>
+    </tbody>
+  </table></div>
+
+  <h2>Eleições</h2>
+  <div class="rolagem"><table class="tabela">
+    <thead><tr><th>De</th><th>Para</th><th>Como</th><th>Aparece em</th></tr></thead>
+    <tbody>
+      <tr><td>Pessoa</td><td>Candidatura</td><td>Código da candidatura gerado a partir da eleição e do sequencial do TSE.</td><td>Votos, patrimônio, resultado e contas de campanha</td></tr>
+      <tr><td>Candidatura</td><td>Disputa</td><td>Cargo + local da eleição: reúne comparecimento, vagas, votos por partido e coligações uma vez só.</td><td>"Quem o elegeu?", quociente eleitoral</td></tr>
+      <tr><td>Vice</td><td>Titular da chapa</td><td>O vice não tem prestação de contas própria; usa a do titular.</td><td>Contas de campanha do vice</td></tr>
+      <tr><td>Partido</td><td>Federação e coligação</td><td>Lista de partidos do TSE, com as grafias unificadas.</td><td>Disputa, partido na ficha</td></tr>
+    </tbody>
+  </table></div>
+
+  <h2>Propostas e votações</h2>
+  <div class="rolagem"><table class="tabela">
+    <thead><tr><th>De</th><th>Para</th><th>Como</th><th>Aparece em</th></tr></thead>
+    <tbody>
+      <tr><td>Deputado federal</td><td>Proposição</td><td>Pelo código que a Câmara publica; tipo, número e ementa ficam guardados uma vez, no cadastro de proposições.</td><td>Proposições do deputado, página da proposição</td></tr>
+      <tr><td>Proposição</td><td>Coautores</td><td>Pelos autores que a Câmara informa; dois deputados que assinaram juntos formam uma ligação de coautoria.</td><td>Coautoria, página da proposição</td></tr>
+      <tr><td>Votação nominal</td><td>Voto de cada parlamentar</td><td>Código do parlamentar na Casa. Obstrução e ausência contam como "não votou".</td><td>Votações, participação do político</td></tr>
+      <tr><td>Votação</td><td>Orientação da bancada</td><td>Orientação que cada partido ou bloco registrou naquela votação.</td><td>Página da votação</td></tr>
+      <tr><td>Autor em Assembleia</td><td>Deputado estadual</td><td>Pelo nome do autor, com a regra de cada estado (alguns incluem título, apelido ou partido no nome). Autor que não é deputado, como o Executivo ou uma comissão, fica sem ligação.</td><td>Projetos do deputado estadual</td></tr>
+      <tr><td>Texto de autoria de requerimento do Senado</td><td>Senador</td><td>Nome e UF (média).</td><td>Requerimentos do senador</td></tr>
+      <tr><td>Governador ou prefeito de capital</td><td>Projeto enviado ao Legislativo</td><td>Pelos sistemas SAPL das Casas.</td><td>Projetos enviados</td></tr>
+    </tbody>
+  </table></div>
+
+  <h2>Ministros e ministérios</h2>
+  <div class="rolagem"><table class="tabela">
+    <thead><tr><th>De</th><th>Para</th><th>Como</th><th>Aparece em</th></tr></thead>
+    <tbody>
+      <tr><td>Ministro (lista do Planalto)</td><td>Pessoa</td><td>Nome civil igual ao de um parlamentar licenciado para ser ministro (alta) ou ao de uma única pessoa do site (média). Sem par, ganha uma pessoa própria.</td><td>Página do ministro</td></tr>
+      <tr><td>Ministro</td><td>Ministério</td><td>O ministério que ele comanda, conforme a lista do Planalto.</td><td>Ministérios</td></tr>
+      <tr><td>Ministro</td><td>Posse e quem nomeou</td><td>Anotado à mão a partir de fonte secundária; a página diz isso.</td><td>Página do ministro</td></tr>
+      <tr><td>Requerimento de informação</td><td>Ministro</td><td>O nome do ministro aparece na ementa e o ministério é o dele (alta); ou o ministério é o dele e o pedido é posterior à posse (média ou baixa, conforme a origem da data).</td><td>Requerimentos sobre o ministro</td></tr>
+      <tr><td>Parlamentar licenciado</td><td>Ministério</td><td>Licença para assumir o ministério, que também define o início aproximado do mandato de ministro.</td><td>Ficha do parlamentar e do ministro</td></tr>
+    </tbody>
+  </table></div>
+
+  <h2>Dinheiro: cotas, doações e empresas</h2>
+  <div class="rolagem"><table class="tabela">
+    <thead><tr><th>De</th><th>Para</th><th>Como</th><th>Aparece em</th></tr></thead>
+    <tbody>
+      <tr><td>Despesa de cota ou verba</td><td>Categoria</td><td>O tipo de despesa de cada Casa entra numa lista única de categorias; o rótulo original é mantido.</td><td>Gastos, comparações entre Casas</td></tr>
+      <tr><td>Despesa de cota ou verba</td><td>Fornecedor</td><td>CNPJ (só os dígitos, com dígito verificador conferido). Matriz e filiais somam juntas. Sem CNPJ, pelo nome padronizado, se ele aparece com um único documento.</td><td>Fornecedores, gastos do político</td></tr>
+      <tr><td>Fornecedor</td><td>Dados cadastrais</td><td>CNPJ na Receita Federal: dados cadastrais da empresa.</td><td>Página de fornecedores</td></tr>
+      <tr><td>Doador de campanha (empresa)</td><td>Fornecedor das cotas</td><td>Os 8 primeiros dígitos do CNPJ (alta) ou o nome padronizado, sem CNPJ na fonte (média).</td><td>Fornecedores que também doaram</td></tr>
+      <tr><td>Fornecedor e doador</td><td>Lista de inidôneos do TCU</td><td>CNPJ nas listas do Tribunal de Contas da União.</td><td>Alerta no fornecedor</td></tr>
+      <tr><td>Pessoa inabilitada pelo TCU</td><td>Político</td><td>Nome completo igual ao de uma candidatura na mesma UF (média). Nome repetido na UF não liga.</td><td>Aviso na ficha</td></tr>
+    </tbody>
+  </table></div>
+
+  <h2>Território e finanças públicas</h2>
+  <div class="rolagem"><table class="tabela">
+    <thead><tr><th>De</th><th>Para</th><th>Como</th><th>Aparece em</th></tr></thead>
+    <tbody>
+      <tr><td>Município e UF</td><td>Mapa</td><td>Código do IBGE e malhas dos mapas.</td><td>Mapas de resultados</td></tr>
+      <tr><td>Estado, município e Poder</td><td>Despesa e limites fiscais</td><td>Código do ente no SICONFI (Tesouro Nacional).</td><td>Finanças públicas, custo do Legislativo</td></tr>
+    </tbody>
+  </table></div>
+
+  <h2>O que fica sem ligação</h2>
+  <p>Registro sem par seguro continua visível na fonte, mas sem apontar para uma pessoa: autores que não são deputados, nomes repetidos, pessoas que as fontes escrevem de formas muito diferentes. A tabela de ligações do projeto guarda, para cada fonte, quantos registros foram ligados, por qual método, quantos ficaram ambíguos e quantos sem par.</p>
+  <p>Cada dado de político traz o link da fonte. Para a lista de fontes e o estado das APIs, veja <a href="sobre.html">Sobre os dados</a>.</p>
+</div>
+</main>
+<script type="module" src="assets/app.js"></script>
+</body>
+</html>

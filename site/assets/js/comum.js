@@ -101,7 +101,8 @@ export function moldura(pagina) {
   const links = [
     ["Políticos", [["index.html", "Buscar políticos", "inicio"], ["camara.html", "Câmara", "camara"], ["ministerios.html", "Ministérios", "ministerios"]]],
     ["Atuação", [["proposicoes.html", "Proposições", "proposicoes"], ["votacoes.html", "Votações", "votacoes"]]],
-    ["historico.html", "Histórico", "historico"], ["informado.html", "Fique informado", "informado"], ["sobre.html", "Sobre os dados", "sobre"]];
+    ["historico.html", "Histórico", "historico"], ["informado.html", "Fique informado", "informado"],
+    ["Dados", [["sobre.html", "Sobre os dados", "sobre"], ["mapa-dados.html", "Mapa dos dados", "mapadados"]]]];
   const atual = { fornecedores: "camara", coautoria: "camara", deputado: "camara", votacao: "votacoes", proposicao: "proposicoes", politico: "inicio", ministro: "ministerios", fonte: "sobre" }[pagina] || pagina;
   document.body.insertAdjacentHTML("afterbegin", `
     <header class="topo"><div class="recipiente">

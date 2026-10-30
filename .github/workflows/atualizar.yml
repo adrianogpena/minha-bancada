@@ -503,7 +503,7 @@ jobs:
             sincronizar || { avisar; exit 1; }
           fi
           aberta=$(gh issue list --state open --search "\"A develop não sincronizou com a master\" in:title" --json number --jq '.[0].number')
-          [ -n "$aberta" ] && gh issue close "$aberta" --comment "Sincronização restabelecida." || true
+          if [ -n "$aberta" ]; then gh issue close "$aberta" --comment "Sincronização restabelecida." || true; fi
           git worktree remove --force "$RUNNER_TEMP/develop" 2> /dev/null || true
 
       - name: Atualizar os feeds RSS do Fique informado (últimos 14 dias, a partir do histórico git)

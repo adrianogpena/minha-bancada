@@ -57,7 +57,7 @@ const PAGINAS = [
   ["politico.html?f=t/2024/71072&i=500", "Comparecimento e vagas", "attached"],
   ["politico.html?f=t/2024/71072&i=500", "Quociente eleitoral", "attached"],
   ["politico.html?f=t/2024/71072&i=501", "concorreu sozinho", "attached"],
-  ["sobre.html", "Sobre"],
+  ["sobre.html", "Como ler os números"],
   ["mapa-dados.html", "Como uma ligação é feita"],
   ["informado.html", "Minha Bancada"],
   ["historico.html", "Minha Bancada"],

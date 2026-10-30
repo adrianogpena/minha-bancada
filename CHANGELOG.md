@@ -5,6 +5,10 @@ Regra: toda fonte nova ou mudança de coleta ganha uma entrada aqui, no mesmo co
 Datas dos conjuntos que já existiam vêm do primeiro commit que os trouxe (`git log --diff-filter=A`).
 Todas as coletas rodam sozinhas no GitHub Actions (`.github/workflows/atualizar.yml`, todo dia às 05:00 de Brasília), salvo onde indicado.
 
+## O que cada ministério faz (2026-10-30)
+- **De onde:** texto da Lei 14.600/2023 (versão original, lida no portal da Câmara porque o Planalto bloqueia a coleta automática) e da Lei 14.816/2024 (Ministério do Empreendedorismo). Sem endpoint novo: os links da página são só links.
+- **Como:** sem coletor. Escrito à mão em `scripts/ministerios_descricao.json` (resumo, áreas, site, base legal e data de revisão por chave de `ministerios.PASTAS`); `gerar_ministros.py` grava `descricao` em `ministerio/<pasta>.json` e avisa quando falta pasta. A página do ministério mostra o bloco "O que faz" e a do ministro, o resumo da pasta. Plano e limites: `PLANO_DESCRICAO_MINISTERIOS.md`.
+
 ## Posse e presidente que nomeou cada ministro (2026-10-29)
 - **De onde:** Wikipédia em português (`wikipedia_ministros` em `ENDPOINTS.md`), página mais atualizada de cada pasta (`Lista de ministros ... do Brasil`, ou o artigo do ministério ou da pessoa quando a lista não existe ou está parada, como a de Pesca). Fonte secundária: o Planalto e o DOU não publicam essa data de forma consultável.
 - **Como:** sem coletor, de propósito (o dado não muda). Anotado à mão em `scripts/ministros_posse.json` (`pasta`, `nome` como no Planalto, `posse`, `nomeadoPor`, `fonte` com a página usada); `identidades.ligar_ministros` aplica ao ministro atual (`inicioFonte: "wikipedia"`, `nomeadoPor`, `inicioUrl`) e sobrepõe a data aproximada da licença e a do Planalto. O presidente é o do governo em que ele assumiu o cargo atual. Sem entrada: Empreendedorismo. O titular é Paulo Henrique Rodrigues Pereira (confirmado pelo responsável pelo projeto); a Wikipédia ainda mostra Tadeu Alencar (desde 03/04/2026), então não serve de fonte. Fica a data aproximada do Planalto até haver outra fonte para a posse.

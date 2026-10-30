@@ -2,7 +2,7 @@
 Ministros de Estado para o site, a partir de dados/ministros/ (coletar_ministros.py). Sem internet; chamado por gerar.py.
 
   site/dados/ministerios.json           [{pasta, nome, ministro: {pessoa, nome, inicio}|None, total, informacao, convocacao, respondidos}]
-  site/dados/ministerio/<pasta>.json    {pasta, nome, ministros: [{pessoa, nome, cargo, inicio, inicioFonte, nomeadoPor?, inicioUrl?, fim?, atual, requerimentos: [id]}],
+  site/dados/ministerio/<pasta>.json    {pasta, nome, descricao?: {resumo, areas, site, base: [{rotulo, url}], revisadoEm}, ministros: [{pessoa, nome, cargo, inicio, inicioFonte, nomeadoPor?, inicioUrl?, fim?, atual, requerimentos: [id]}],
                                          requerimentos: [...]}   cada requerimento aparece só na pasta em que a ementa o cita primeiro
   site/dados/ministros_autores.json     {id do deputado: nome} dos autores que não estão em deputados.json (já saíram da Câmara)
   site/dados/ministro/<pessoa>.json     {pessoa, nome, cargos: [{pasta, nome, cargo, inicio, inicioFonte, nomeadoPor?, inicioUrl?, fim?, atual, requerimentos: [id]}],
@@ -20,11 +20,21 @@ from pathlib import Path
 
 import identidades
 import ministerios
-from estaduais_comum import sem_acento
+from estaduais_comum import avisar, sem_acento
 from gerar_politicos import ler, salvar
 
+DESCRICAO = Path(__file__).with_name("ministerios_descricao.json")   # escrito à mão, por chave de ministerios.PASTAS
 CAMPOS_CAMARA = ("tipo", "numero", "ano", "ementa", "situacao", "remessa", "prazoFim", "resposta")
 CAMPOS_SENADO = ("ementa", "deliberacao", "dataDeliberacao", "tramitando", "documento")
+
+
+def descricoes(caminho: Path = DESCRICAO) -> dict:
+    """O que cada pasta faz (texto versionado). Pasta sem descrição vira aviso e a página some com o bloco."""
+    d = ler(caminho, {}) or {}
+    falta = [k for k in ministerios.PASTAS if k not in d]
+    if falta:
+        avisar(f"ministérios sem descrição em {caminho.name}: {', '.join(falta)}")
+    return {k: v for k, v in d.items() if k in ministerios.PASTAS}
 
 
 def natureza(tipo: str, ementa: str, conteudo: str | None = None) -> str:
@@ -101,6 +111,7 @@ def construir(bruto: Path, nucleo: dict, senadores: list[dict], deputados: dict 
             **({"fim": m["fim"]} if m.get("fim") else {}), "atual": not m.get("fim"),
             "requerimentos": sorted(por_ministro.get((m["pessoa"], m["pasta"]), []))})
 
+    descricao = descricoes()
     pessoas = {p["id"]: p for p in nucleo["pessoas"]}
     saida = {"ministerio": {}, "ministro": {}}
     resumo = []
@@ -109,7 +120,8 @@ def construir(bruto: Path, nucleo: dict, senadores: list[dict], deputados: dict 
         if not lista and pasta not in cargos:
             continue
         titulares = sorted(cargos.get(pasta, []), key=lambda c: c["inicio"], reverse=True)
-        saida["ministerio"][pasta] = {"pasta": pasta, "nome": nome, "ministros": titulares, "requerimentos": lista}
+        saida["ministerio"][pasta] = {"pasta": pasta, "nome": nome, **({"descricao": descricao[pasta]} if pasta in descricao else {}),
+                                     "ministros": titulares, "requerimentos": lista}
         atual = next((c for c in titulares if c["atual"]), None)
         resumo.append({"pasta": pasta, "nome": nome,
                        "ministro": {k: atual[k] for k in ("pessoa", "nome", "inicio")} if atual else None,

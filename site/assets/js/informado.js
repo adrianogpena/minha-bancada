@@ -23,7 +23,7 @@ export async function paginaInformado() {
           <label class="campo">Tudo
             <button type="button" class="mais" id="add-tudo">Brasil, estados e capitais</button></label>
           <label class="campo">Federal
-            <button type="button" class="mais" id="add-federal">Câmara, Senado e Presidência</button></label>
+            <button type="button" class="mais" id="add-federal">Câmara, Senado, Presidência e Ministérios</button></label>
           <label class="campo">Estado
             <select id="inf-uf"><option value="">Escolha…</option>${cobertura.estados.map((u) => `<option value="${u}">${esc(nomeUf(u))}</option>`).join("")}</select></label>
           <label class="campo">Capital
@@ -99,7 +99,7 @@ export async function paginaInformado() {
     }
     $("#add-tudo").textContent = escolhidos.has("BR") ? "✓ Brasil, estados e capitais" : "Brasil, estados e capitais";
     $("#add-tudo").classList.toggle("marcado", escolhidos.has("BR"));
-    $("#add-federal").textContent = escolhidos.has("FEDERAL") ? "✓ Câmara, Senado e Presidência" : "Câmara, Senado e Presidência";
+    $("#add-federal").textContent = escolhidos.has("FEDERAL") ? "✓ Câmara, Senado, Presidência e Ministérios" : "Câmara, Senado, Presidência e Ministérios";
     $("#add-federal").classList.toggle("marcado", escolhidos.has("FEDERAL"));
     for (const [id, pref] of [["#inf-uf", "UF:"], ["#inf-capital", "MUN:"]]) {
       const sel = $(id), v = sel.value;
@@ -114,7 +114,7 @@ export async function paginaInformado() {
   };
   const adicionar = (codigo, rotulo) => { if (codigo) { escolhidos.set(codigo, rotulo); desenhar(); mostrarAchados(); } };
   $("#add-tudo").onclick = () => adicionar("BR", "Tudo: Brasil, estados e capitais");
-  $("#add-federal").onclick = () => adicionar("FEDERAL", "Federal: Câmara, Senado e Presidência");
+  $("#add-federal").onclick = () => adicionar("FEDERAL", "Federal: Câmara, Senado, Presidência e Ministérios");
   $("#inf-uf").onchange = (e) => { const u = e.target.value; adicionar(u && `UF:${u}`, `Estado: ${nomeUf(u)}`); };
   $("#inf-capital").onchange = (e) => { const u = e.target.value; adicionar(u && `MUN:${u}`, `Capital: ${cobertura.capitais[u]} (${u})`); };
   $("#opml").onclick = () => {

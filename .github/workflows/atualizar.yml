@@ -474,6 +474,26 @@ jobs:
           git pull --rebase -q origin master
           git push
 
+      - name: Sincronizar a develop com a master (dados do dia e commits de merge)
+        # a develop é a branch de integração das sessões; sem isso ela fica com dados velhos. Usa uma worktree à parte para não mexer no checkout dos passos seguintes
+        continue-on-error: true   # conflito ou falha aqui deixa a develop como estava e não impede a publicação
+        run: |
+          if ! git ls-remote --exit-code --heads origin develop > /dev/null; then echo "Sem develop no remoto; pulando."; exit 0; fi
+          sincronizar() {
+            git fetch -q --shallow-since="90 days ago" origin master develop || return 1
+            rm -rf "$RUNNER_TEMP/develop"
+            git worktree add -q -B develop "$RUNNER_TEMP/develop" origin/develop || return 1
+            git -C "$RUNNER_TEMP/develop" merge --no-edit -q -m "Sincroniza a develop com a master" origin/master || { git -C "$RUNNER_TEMP/develop" merge --abort 2> /dev/null; return 1; }
+            git -C "$RUNNER_TEMP/develop" push -q origin develop
+          }
+          # a primeira tentativa usa histórico raso; sem base comum nele, baixa o histórico inteiro e repete
+          if ! sincronizar; then
+            git worktree remove --force "$RUNNER_TEMP/develop" 2> /dev/null || true
+            git fetch -q --unshallow origin || true
+            sincronizar || { echo "::warning::Não foi possível sincronizar a develop com a master (conflito?); resolva à mão."; exit 1; }
+          fi
+          git worktree remove --force "$RUNNER_TEMP/develop" 2> /dev/null || true
+
       - name: Atualizar os feeds RSS do Fique informado (últimos 14 dias, a partir do histórico git)
         continue-on-error: true   # sem feeds o site ainda publica
         run: |

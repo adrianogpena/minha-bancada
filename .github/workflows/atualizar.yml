@@ -481,6 +481,11 @@ jobs:
         continue-on-error: true   # sem o teste o site ainda publica, com o status do dia anterior
         run: python scripts/testar_endpoints.py --sem-tabela || true
 
+      - name: Baixar as malhas dos mapas (IBGE) para site/geo
+        # sem as malhas o site cai na API do IBGE pelo navegador de cada visitante
+        continue-on-error: true
+        run: python scripts/baixar_malhas.py
+
       - name: Gerar arquivos do site
         run: python scripts/gerar.py
 

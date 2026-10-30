@@ -39,12 +39,12 @@ Raspagem é frágil: fonte opcional, com teste de contrato em `scripts/contrato_
 
 **Emendas feitas em 2026-10-30, sem ter rodado contra a API real** (chave só no secret `PORTAL_TRANSPARENCIA_CHAVE` do Actions): coletor
 `coletar_emendas.py`, ligação do autor por nome, `site/dados/emendas/<pessoa>.json` e painel na ficha (ver `CHANGELOG.md`).
-Falta conferir na primeira execução do Actions: nomes dos campos e formato do autor (`autor` x `nomeAutor`), tempo da coleta e quantos autores
+Falta conferir na primeira execução do Actions: nomes dos campos e formato do autor (`autor` x `nomeAutor`), tempo da coleta e se o tipo das Pix vem como "Transferências Especiais", quantos municípios casam com o IBGE e quantos autores
 ligam (`site/dados/nucleo/ligacoes.json`, `emendas`); depois regravar `tests/test_coletar_emendas.py` com amostra real.
 
 Ainda não feito, com a mesma chave:
-- Mapa dos destinos por município (o mapa por município já existe para votos) e totais por área.
-- "Emendas Pix" (transferências especiais), no mesmo portal e no Transferegov: as de menor rastreio, vale um destaque.
+- Totais por área (função) das emendas.
+- Emendas Pix com o favorecido e o plano de ação do Transferegov (hoje só o município e os valores do Portal da Transparência).
 - Viagens a serviço e cargos do Executivo federal (ver 3.3).
 
 ### 3.3 Ministros de Estado: o que fica para depois

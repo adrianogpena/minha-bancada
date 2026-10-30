@@ -11,7 +11,7 @@ const { resumosEstadual } = js("estadual.js");
 const { linksRedes } = js("ficha.js");
 const { foto } = js("comum.js");
 const { blocoDescricao } = js("ministros.js");
-const { painelEmendas } = js("emendas.js");
+const { painelEmendas, ehPix } = js("emendas.js");
 const { agruparPeriodos, chaveDe, juntarDias } = js("historico.js");
 
 test("temResultado deixa de fora a votação sem aprovada nem rejeitada", () => {
@@ -243,4 +243,18 @@ test("painelEmendas some sem dados, escapa o texto da fonte e limita a lista", (
   assert.match(html, /as 50 maiores de 60/);
   assert.match(html, /&lt;b&gt;X&lt;\/b&gt;/);
   assert.match(html, /portaldatransparencia\.gov\.br\/emendas\/consulta\?ano=2024/);
+});
+
+test("painelEmendas resume as emendas Pix e prepara o mapa só com municípios de código IBGE", () => {
+  assert.equal(ehPix("Emenda Individual - Transferências Especiais"), true);
+  assert.equal(ehPix("Emenda Individual - Transferências com Finalidade Definida"), false);
+  const html = painelEmendas({
+    anos: [{ ano: 2024, n: 2, empenhado: 30, liquidado: 0, pago: 10 }],
+    municipios: [{ nome: "SANTOS", uf: "SP", ibge: "3548500", empenhado: 20, pago: 10, n: 1, pixEmpenhado: 20, pixPago: 10, pixN: 1 }, { nome: "X", uf: "SP", empenhado: 10, pago: 0, n: 1 }],
+    itens: [{ codigo: "1", ano: 2024, tipo: "Emenda Individual - Transferências Especiais", empenhado: 20, pago: 10 }, { codigo: "2", ano: 2024, tipo: "Individual", empenhado: 10, pago: 0 }],
+  });
+  assert.match(html, /Emendas Pix<\/b>[^<]*\(transferências especiais[^<]*<b>1<\/b>/);
+  assert.match(html, /class="mapa-emendas" data-municipios="[^"]*3548500[^"]*" data-pix="1"/);
+  assert.doesNotMatch(html.match(/data-municipios="[^"]*"/)[0], /&quot;X&quot;/);
+  assert.match(html, /<th>Pix \(empenhado\)<\/th>/);
 });

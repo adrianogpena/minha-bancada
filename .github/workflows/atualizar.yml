@@ -46,9 +46,13 @@ jobs:
       - name: Coletar proposições da Câmara
         run: python scripts/coletar.py --so proposicoes
 
+      - name: Coletar o resumo das leis citadas nas proposições
+        run: python scripts/coletar_leis.py
+        continue-on-error: true
+
       - name: Empacotar o resultado
         if: always()
-        run: scripts/empacotar.sh "$RUNNER_TEMP/camara.tgz" "$RUNNER_TEMP/inicio" dados/deputados dados/deputados.json dados/proposicoes dados/proposicoes_cadastro dados/proposicoes_detalhe.json dados/proposicoes_autores.json dados/proposicoes_temas.json dados/orgaos_deputados.json dados/orientacoes.json dados/blocos.json dados/proposicoes_votacoes.json dados/presenca_eventos.json dados/camara_recursos.json dados/votacoes dados/meta.json
+        run: scripts/empacotar.sh "$RUNNER_TEMP/camara.tgz" "$RUNNER_TEMP/inicio" dados/deputados dados/deputados.json dados/proposicoes dados/proposicoes_cadastro dados/proposicoes_detalhe.json dados/proposicoes_autores.json dados/proposicoes_temas.json dados/leis.json dados/orgaos_deputados.json dados/orientacoes.json dados/blocos.json dados/proposicoes_votacoes.json dados/presenca_eventos.json dados/camara_recursos.json dados/votacoes dados/meta.json
 
       - uses: actions/upload-artifact@v7
         if: always()

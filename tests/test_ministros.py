@@ -163,3 +163,14 @@ def test_descricoes_avisa_pasta_sem_descricao(tmp_path, capsys):
     assert list(d) == ["saude"]
     assert "sem descrição" in capsys.readouterr().err
     assert set(gerar_ministros.descricoes()) == set(ministerios.PASTAS)
+
+
+def test_indice_de_ministros_para_o_fique_informado(tmp_path):
+    nucleo = {"ministros": [{"pessoa": "pes_1", "nome": "Fulano", "cargo": "Ministro de Estado da Saúde", "pasta": "saude", "inicio": "2026-01-01", "inicioFonte": "planalto"},
+                            {"pessoa": "pes_2", "nome": "Antigo", "cargo": "Ministro de Estado da Fazenda", "pasta": "fazenda", "inicio": "2023-01-01", "inicioFonte": "planalto", "fim": "2025-01-01"}],
+              "pessoas": [{"id": "pes_1", "fontes": {}}, {"id": "pes_2", "fontes": {}}], "ligacoes": {}}
+    res = gerar_ministros.construir(tmp_path, nucleo, [])
+    assert res["indice"] == [{"id": "saude", "nome": "Fulano", "cargo": "Ministro de Estado da Saúde", "ordemCargo": 3, "estado": "atual", "partido": None,
+                              "pagina": "ministro.html?id=pes_1", "codigoFeed": "min:saude"}]   # só o ministro atual de cada pasta
+    gerar_ministros.salvar_ministros(res, tmp_path / "site")
+    assert (tmp_path / "site" / "indice" / "MIN.json").is_file()

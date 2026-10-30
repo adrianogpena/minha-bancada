@@ -36,12 +36,12 @@ export async function paginaInformado() {
         <legend>2. Ou políticos <small>(opcional)</small></legend>
         <div class="filtros dois">
           <label class="campo">Onde atua
-            <select id="pol-uf"><option value="BR">Presidente e deputados federais (Brasil)</option>${Object.entries(UFS).map(([u, n]) => `<option value="${u}">${esc(n)}</option>`).join("")}</select></label>
-          <label class="campo">Nome<input id="pol-busca" type="search" placeholder="Ex.: Presidente, Maria, PT" autocomplete="off"></label>
+            <select id="pol-uf"><option value="BR">Presidente e deputados federais (Brasil)</option><option value="MIN">Ministros e ministérios</option>${Object.entries(UFS).map(([u, n]) => `<option value="${u}">${esc(n)}</option>`).join("")}</select></label>
+          <label class="campo">Nome<input id="pol-busca" type="search" placeholder="Ex.: Presidente, Maria, Saúde, PT" autocomplete="off"></label>
         </div>
         <ul class="itens" id="pol-achados" aria-live="polite"></ul>
         <div class="resumo-escolhas" id="resumo-pol" role="status" aria-live="polite"></div>
-        <p class="dica-form">Aparecem só políticos de quem já acompanhamos propostas: Presidente, governadores, deputados federais, deputados estaduais (Assembleias coletadas) e prefeitos de capitais com dados.</p>
+        <p class="dica-form">Aparecem só políticos de quem já acompanhamos propostas: Presidente, governadores, deputados federais, deputados estaduais (Assembleias coletadas), ministros (um por ministério, o feed segue o cargo) e prefeitos de capitais com dados.</p>
       </fieldset>
       <fieldset id="sec-feeds">
         <legend>3. Seus feeds <small id="qtd-feeds"></small></legend>
@@ -131,7 +131,7 @@ export async function paginaInformado() {
   let indice = [];
   const mostrarAchados = () => {
     const q = semAcento($("#pol-busca").value.trim());
-    const achados = indice.filter((x) => x.codigoFeed && (!q || semAcento(`${x.nome} ${x.cargo} ${x.partido || ""} ${x.municipio || ""}`).includes(q))).slice(0, 12);
+    const achados = indice.filter((x) => x.codigoFeed && (!q || semAcento(`${x.nome} ${x.cargo} ${x.partido || ""} ${x.municipio || ""}`).includes(q))).slice(0, $("#pol-uf").value === "MIN" ? 60 : 12);
     $("#pol-achados").innerHTML = achados.length
       ? achados.map((x, i) => `<li><span><b>${esc(x.nome)}</b> <small>${esc(x.cargo)}${x.partido ? ` · ${esc(x.partido)}` : ""}${x.municipio ? ` · ${esc(x.municipio)}` : ""}</small></span>
           <button type="button" data-i="${i}"${escolhidos.has(x.codigoFeed) ? " disabled" : ""}>${escolhidos.has(x.codigoFeed) ? "adicionado" : "acompanhar"}</button></li>`).join("")

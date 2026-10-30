@@ -157,3 +157,19 @@ def test_item_e_feed_sao_xml_valido_e_escapam():
     assert raiz.find("channel/item/guid").text == "minha-bancada-UF:SP-2026-01-02"
     assert "<SP>" in raiz.find("channel/title").text
     assert "2026" in raiz.find("channel/item/pubDate").text
+
+
+def test_ministros_no_resumo_e_nos_feeds_do_ministro_e_federais():
+    m = {"codigo": "min:saude", "tipo": "resposta", "titulo": "RIC 3/2026", "resumo": "Resposta recebida (Saúde)", "ementa": "Solicita informações ao Ministro da Saúde",
+         "mudanca": ["Sem resposta", "Respondido no prazo"], "pasta": "Saúde", "ministro": "Fulano", "cargo": "Ministro de Estado da Saúde"}
+    d = vazio_d(ministros=[m])
+    secoes = r.linhas(d)
+    assert secoes[0][0] == "Ministros — 1 novidade"
+    assert secoes[0][1][0].startswith("Fulano, Ministro de Estado da Saúde — RIC 3/2026: Resposta recebida (Saúde)")
+    assert "Ministros 1" in r.resumo_curto(d)
+    deps = {"SP": {1}}
+    assert feeds.selecionar(d, {"FEDERAL"}, deps)["ministros"] == [m]
+    assert feeds.selecionar(d, {"BR"}, deps)["ministros"] == [m]
+    assert feeds.selecionar(d, {"min:saude"}, deps)["ministros"] == [m]
+    assert feeds.selecionar(d, {"min:fazenda"}, deps)["ministros"] == []
+    assert feeds.selecionar(d, {"UF:SP"}, deps)["ministros"] == []

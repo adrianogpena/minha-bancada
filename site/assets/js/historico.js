@@ -5,7 +5,7 @@ import { fontes } from "./apis.js";
 
 /* ---------- Histórico diário ---------- */
 /* Lê dados/historico/<dia>.json (scripts/historico.py): eventos do dia com local, políticos e fontes. */
-const CATEGORIAS_HIST = { nova: "Novo", situacao: "Mudou de situação", votacao: "Votação", eleicao: "Eleitos (TSE)", ministro: "Ministros", lote: "Em lote" };
+const CATEGORIAS_HIST = { nova: "Novo", situacao: "Mudou de situação", votacao: "Votação", eleicao: "Eleitos (TSE)", ministro: "Ministros e ministérios", lote: "Em lote" };
 const IMPORTANCIA_HIST = { "": "Tudo", 2: "Projetos e marcos", 3: "Só marcos (votações, aprovações, vetos, eleitos)" };
 const SEM_POLITICO = "Sem político específico (votações e matérias gerais)";
 
@@ -22,6 +22,7 @@ function noEscopo(e, codigos) {
 
 /* Cargo exibido ao lado do nome do político. */
 function cargoHist(p) {
+  if (p.cargo) return p.cargo;
   const c = p.codigo || "";
   if (c.startsWith("dep:")) return "Deputado(a) federal";
   if (c.startsWith("est:")) return "Deputado(a) estadual";
@@ -209,9 +210,9 @@ export async function paginaHistorico() {
         if (!grupos.has(p.nome)) grupos.set(p.nome, { p, eventos: [] });
         grupos.get(p.nome).eventos.push(e);
       }
-      const peso = (g) => Math.max(...g.eventos.map((e) => e.relevancia || 2));   // o político com o fato mais importante vem primeiro
+      const peso = (g) => Math.max(...g.eventos.map((e) => e.relevancia || 2));   // o presidente sempre abre a lista; depois, o político com o fato mais importante
       for (const g of grupos.values()) g.eventos.sort((a, b) => (b.relevancia || 2) - (a.relevancia || 2));
-      const ordenados = [...grupos.values()].sort((a, b) => peso(b) - peso(a) || (a.p.codigo ? 0 : 1) - (b.p.codigo ? 0 : 1) || b.eventos.length - a.eventos.length || a.p.nome.localeCompare(b.p.nome, "pt-BR"));
+      const ordenados = [...grupos.values()].sort((a, b) => (b.p.codigo === "pres") - (a.p.codigo === "pres") || peso(b) - peso(a) || (a.p.codigo ? 0 : 1) - (b.p.codigo ? 0 : 1) || b.eventos.length - a.eventos.length || a.p.nome.localeCompare(b.p.nome, "pt-BR"));
       return `<section class="painel hist-local">
         <h2>${esc(dia.locais[l])} <small>${somar(doLocal)} ${somar(doLocal) === 1 ? "mudança" : "mudanças"}</small></h2>
         ${ordenados.map(({ p, eventos }) => `<details class="hist-pol"${abrir ? " open" : ""}>

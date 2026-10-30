@@ -9,6 +9,7 @@ export const CAMARA_API = "https://dadosabertos.camara.leg.br/api/v2";
 /* Votação com resultado final (aprovada ou rejeitada); sem isso não entra na lista de votações do parlamentar. */
 export const temResultado = (v) => v.aprovada === 0 || v.aprovada === 1;
 export const resultado = (a) => (a === 1 ? ["Aprovada", "aprovada"] : a === 0 ? ["Rejeitada", "rejeitada"] : ["Sem resultado informado", "sem"]);
+export const CADEIRAS_CAMARA = 513;
 /* Quórum que a Constituição exige na Câmara (513 deputados): PLP e PEC não passam só por ter mais Sim que Não. */
 export function quorumCamara(proposicao, descricao) {
   const tipo = /^(PLP|PEC)\b/.exec(proposicao || "")?.[1];

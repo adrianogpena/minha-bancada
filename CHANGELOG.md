@@ -5,6 +5,10 @@ Regra: toda fonte nova ou mudança de coleta ganha uma entrada aqui, no mesmo co
 Datas dos conjuntos que já existiam vêm do primeiro commit que os trouxe (`git log --diff-filter=A`).
 Todas as coletas rodam sozinhas no GitHub Actions (`.github/workflows/atualizar.yml`, todo dia às 05:00 de Brasília), salvo onde indicado.
 
+## Coleta de deputados da Câmara: prazo e cache sempre salvo (2026-10-30)
+- **De onde:** a mesma API da Câmara (`https://dadosabertos.camara.leg.br/api/v2/deputados`), sem fonte nova.
+- **Como:** `coletar_deputados` tem prazo (`CAMARA_PRAZO_DEPUTADOS_MIN`, 45 min): passado o prazo guarda o que leu e mantém a ficha anterior dos demais. O cache de `dados/deputados` é salvo mesmo se o job falhar (`cache/save` com `if: always()`).
+
 ## Emendas parlamentares federais (2026-10-30)
 - **De onde:** API do Portal da Transparência, `https://api.portaldatransparencia.gov.br/api-de-dados/emendas` (`portal_transparencia_emendas` em `ENDPOINTS.md`), com chave gratuita no cabeçalho `chave-api-dados` (secret `PORTAL_TRANSPARENCIA_CHAVE`; sem ela o coletor avisa e pula).
 - **Como:** `scripts/coletar_emendas.py`, job `emendas` do `atualizar.yml`. Pagina por `ano` e `pagina` (a API devolve lista vazia ao fim), de 2019 em diante; grava `dados/emendas/<ano>.json` (autor como veio, local do gasto com município e UF, função, subfunção, empenhado, liquidado e pago). Anos encerrados vêm do git e não são baixados de novo; o ano passado e o corrente são relidos. Pausa de 0,7 s por página. Tempo da coleta e formato dos campos ainda **não medidos contra a API real** (a chave só existe no Actions): conferir a primeira execução e regravar o teste com amostra real.

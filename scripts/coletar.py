@@ -13,6 +13,7 @@ Documentação da API: https://dadosabertos.camara.leg.br/swagger/api.html
 
 import argparse
 import datetime as dt
+import time
 import csv
 import html
 import io
@@ -23,7 +24,7 @@ import sys
 import unicodedata
 import zipfile
 from collections import Counter
-from concurrent.futures import ThreadPoolExecutor, as_completed
+from concurrent.futures import CancelledError, ThreadPoolExecutor, as_completed
 from pathlib import Path
 
 import cadastro_proposicoes
@@ -51,6 +52,7 @@ PALAVRAS_VAZIAS = frozenset(
     "registro comentário comentários defesa críticas crítica apoio homenagem congratulações votação projeto "
     "projetos plenário câmara brasil nacional federal país".split())
 TRABALHADORES_SENADO = 2  # o Senado responde 503 quando apertado
+PRAZO_DEPUTADOS_MIN = int(os.environ.get("CAMARA_PRAZO_DEPUTADOS_MIN", "45"))  # passado o prazo, a coleta de deputados guarda o que leu e segue
 TRABALHADORES = int(os.environ.get("CAMARA_TRABALHADORES", "10"))  # requisições em paralelo; seja gentil com a API pública (429 e 5xx são repetidos com espera)
 
 
@@ -334,7 +336,9 @@ def coletar_complementos(dep: dict, anterior: dict, hoje: dt.date) -> dict:
     return saida
 
 
-def coletar_deputado(dep: dict, ano: int, cota: dict[int, list] | None = None) -> dict:
+def coletar_deputado(dep: dict, ano: int, cota: dict[int, list] | None = None, limite_em: float | None = None) -> dict:
+    if limite_em is not None and time.monotonic() > limite_em:
+        raise CancelledError
     did = dep["id"]
     detalhe = get(f"/deputados/{did}").get("dados", {})
 
@@ -403,15 +407,22 @@ def coletar_deputados(limite: int | None) -> list:
     except Exception as e:  # sem o CSV, a cota vem da API, deputado a deputado
         avisar(f"cota pelo CSV anual: {e}")
         cota = None
-    resumo, falhas = [], 0
+    resumo, falhas, adiados = [], 0, 0
+    limite_em = time.monotonic() + PRAZO_DEPUTADOS_MIN * 60
     with ThreadPoolExecutor(TRABALHADORES) as ex:
-        futuros = {ex.submit(coletar_deputado, d, ano, cota): d for d in lista}
+        futuros = {ex.submit(coletar_deputado, d, ano, cota, limite_em): d for d in lista}
         for i, f in enumerate(as_completed(futuros), 1):
             dep = futuros[f]
             try:
                 dados = f.result()
                 salvar(DADOS / "deputados" / f"{dep['id']}.json", dados)
                 resumo.append(dep["id"])
+            except CancelledError:  # prazo esgotado: fica a ficha da execução anterior, se houver
+                adiados += 1
+                if (DADOS / "deputados" / f"{dep['id']}.json").exists():
+                    resumo.append(dep["id"])
+                else:
+                    falhas += 1
             except Exception as e:  # um deputado com erro não derruba a coleta
                 falhas += 1
                 avisar(f"deputado {dep.get('nome')} ({dep['id']}): {e}")
@@ -419,6 +430,8 @@ def coletar_deputados(limite: int | None) -> list:
                 print(f"  {i}/{len(lista)}")
     cadastro().gravar(forcar=True)
     salvar(DADOS / "deputados.json", sorted(resumo))
+    if adiados:
+        avisar(f"prazo de {PRAZO_DEPUTADOS_MIN} min esgotado: {adiados} deputados ficam para a próxima execução")
     print(f"Deputados salvos: {len(resumo)}, falhas: {falhas}")
     if lista and falhas > len(lista) * 0.2:
         raise SystemExit("Muitas falhas ao coletar deputados; abortando para não publicar dados incompletos.")

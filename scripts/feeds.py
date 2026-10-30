@@ -95,7 +95,7 @@ def arquivo(codigo: str) -> str:
 def rotulos() -> dict[str, str]:
     """código -> nome do feed, a partir do que o site já gerou (cobertura.json e índice dos políticos)."""
     cob = json.loads((SITE_DADOS / "cobertura.json").read_text(encoding="utf-8"))
-    mapa = {"BR": "Tudo: Brasil, estados e capitais", "FEDERAL": "Federal: Câmara, Senado e Presidência"}
+    mapa = {"BR": "Tudo: Brasil, estados e capitais", "FEDERAL": "Federal: Câmara, Senado, Presidência e Ministérios"}
     mapa |= {f"UF:{u}": f"Estado: {UFS.get(u, u)}" for u in cob["estados"]}
     mapa |= {f"MUN:{u}": f"Capital: {m} ({u})" for u, m in cob["capitais"].items()}
     for arq in sorted(INDICE.glob("[A-Z][A-Z].json")):

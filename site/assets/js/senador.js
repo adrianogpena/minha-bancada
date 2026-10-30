@@ -1,6 +1,6 @@
 /* Senador: presença, recursos e abas. */
 import { esc, reais, reaisCentavos, pct, data, carregar, numeroBr, urlSegura } from "./util.js";
-import { itemFicha } from "./comum.js";
+import { itemFicha, selosPar } from "./comum.js";
 import { TIPOS_PROJETO, fontes, UFS, SENADO_API, SENADO_ADM_API, linkMateriaSenado, temResultado } from "./apis.js";
 import { painelGastos } from "./deputado.js";
 import { montarParlamentar } from "./parlamentar.js";
@@ -20,7 +20,7 @@ function painelPresenca(pr) {
 /* Recursos e benefícios do senador (coletar.py: coletar_recursos_senado). */
 function painelRecursos(rec) {
   const selos = (rec.beneficios || []).length
-    ? `<p>${(rec.beneficios).map(([b, u]) => `<span class="selo">${esc(b)}: ${u === "Utilizou" ? "usa" : "não usa"}</span>`).join(" ")}</p>` : "";
+    ? selosPar(rec.beneficios.map(([b, u]) => [b, u === "Utilizou" ? "usa" : "não usa"]), true) : "";
   const pessoal = (rec.pessoal || []).filter(([, n]) => n);
   return `<h2>Recursos e benefícios em ${rec.ano}</h2>
     ${selos}

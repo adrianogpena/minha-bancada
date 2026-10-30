@@ -9,7 +9,7 @@ const CATEGORIAS_HIST = { nova: "Novo", situacao: "Mudou de situação", votacao
 const IMPORTANCIA_HIST = { "": "Tudo", 2: "Projetos e marcos", 3: "Só marcos (votações, aprovações, vetos, eleitos)" };
 const SEM_POLITICO = "Sem político específico (votações e matérias gerais)";
 
-/* Mesma regra dos feeds e e-mails: um estado traz a Assembleia, o governo, a bancada federal e a capital; BR traz Câmara, Senado e Presidência. */
+/* Mesma regra dos feeds e e-mails: um estado traz a Assembleia, o governo, a bancada federal e a capital; BR traz Câmara, Senado, Presidência e Ministérios. */
 function noEscopo(e, codigos) {
   if (!codigos.length) return true;
   return codigos.some((c) => {

@@ -220,7 +220,7 @@ class Contexto:
 
     def nome_local(self, codigo: str) -> str:
         if codigo == "BR":
-            return "Federal: Câmara, Senado e Presidência"
+            return "Federal: Câmara, Senado, Presidência e Ministérios"
         tipo, uf = codigo.split(":")
         if tipo == "UF":
             return f"Estado: {feeds.UFS.get(uf, uf)}"

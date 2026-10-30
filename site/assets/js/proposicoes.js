@@ -48,6 +48,7 @@ export async function paginaProposicao() {
   let leis = {};
   if (f.ls) { try { leis = await carregar("dados/leis.json"); } catch { /* sem o resumo das leis, a ficha segue sem a seção */ } }
   const quem = new Map(politicos.map((x) => [String(x.id), x]));
+  const relator = f.rl ? quem.get(String(f.rl)) : null;   // relator sem ficha no site: o nome continua em "Vida do projeto"
   const nominais = new Map(lista.map((x) => [String(x.id), x]));
   const autores = (f.au || []).map((a) => ({ ...a, ...(a.id ? quem.get(a.id) : {}), principal: !!a.p }));
   const votacoes = (f.v || []).map((v) => ({ ...v, ...(nominais.get(v.id) || {}), nominal: nominais.has(v.id) }));
@@ -62,6 +63,7 @@ export async function paginaProposicao() {
       ${f.ed ? `<details class="texto"><summary>Ementa detalhada</summary>${esc(f.ed)}</details>` : ""}
       <p class="texto-longo"><b>Situação:</b> ${esc(p.s || "ainda não consultada")}${f.o ? ` (${esc(f.o)})` : ""}</p>
       ${f.tr || f.ds ? `<p class="texto-longo"><b>Última tramitação:</b> ${esc(f.tr || "")}${f.ds ? `${f.tr ? ", em " : ""}${data(f.ds)}` : ""}${f.rg ? ` · regime: ${esc(f.rg)}` : ""}</p>` : ""}
+      ${relator ? `<p class="texto-longo"><b>Relator:</b> ${linkPolitico(relator, casa)}${relator.partido ? ` (${esc([relator.partido, relator.uf].filter(Boolean).join("/"))})` : ""}</p>` : ""}
       ${f.tm ? `<p class="texto-longo"><b>Temas:</b> ${esc(f.tm.join(", "))}</p>` : ""}
       ${f.pc ? `<p class="texto-longo"><b>Palavras-chave:</b> ${esc(f.pc)}</p>` : ""}
       ${f.pr ? `<p class="texto-longo"><b>Apensada ao projeto principal:</b> <a href="proposicao.html?k=c-${encodeURIComponent(f.pr)}">ver o projeto principal</a></p>` : ""}
@@ -77,7 +79,7 @@ export async function paginaProposicao() {
     <div id="vida"></div>
     ${fontes([["Tramitação oficial", senado ? linkMateriaSenado(id) : linkTramitacao(id)], ["Inteiro teor", f.tx]])}`;
 
-  if (!senado) vidaDoProjeto($("#vida"), id, p.a);
+  if (!senado) vidaDoProjeto($("#vida"), id, !!relator);
 
   alvo.addEventListener("click", async (e) => {
     const b = e.target.closest("button[data-i]");
@@ -112,13 +114,13 @@ function leisCitadas(ids, leis) {
 }
 
 /* Linha do tempo, relator, comissões e projetos relacionados (coletar.py: coletar_tramitacoes_proposicoes). */
-async function vidaDoProjeto(alvo, id) {
+async function vidaDoProjeto(alvo, id, comRelator) {
   let t;
   try { t = await carregar(`dados/tramitacao/${encodeURIComponent(id)}.json`); } catch { return; }
   const eventos = t.eventos || [], orgaos = [...new Set(eventos.map((e) => e[1]).filter(Boolean))];
   const relacionadas = t.relacionadas || [];
   alvo.innerHTML = `<h2>Vida do projeto (${eventos.length} movimentações)</h2>
-    ${t.relator ? `<p class="texto-longo"><b>Último relator designado:</b> ${esc(t.relator)}</p>` : ""}
+    ${t.relator && !comRelator ? `<p class="texto-longo"><b>Último relator designado:</b> ${esc(t.relator)}</p>` : ""}
     ${orgaos.length ? `<p class="texto-longo"><b>Por onde passou:</b> ${esc(orgaos.join(", "))}</p>` : ""}
     <ol class="itens" id="linha-tempo">${[...eventos].reverse().slice(0, 15).map(evento).join("")}</ol>
     ${eventos.length > 15 ? `<button type="button" class="mais" id="mais-tempo">Ver as ${eventos.length - 15} movimentações mais antigas</button>` : ""}

@@ -62,14 +62,14 @@ def test_ficha_traz_ementa_inteira_e_leis(tmp_path):
     longa = "Altera a Lei nº 9.250, de 26 de dezembro de 1995, " + "para algo muito longo " * 12
     deps = {1: {"nome": "Ana", "partido": "PT", "uf": "SP", "proposicoes": [{"id": 5, "tipo": "PL", "numero": 9, "ano": 2026, "ementa": longa}]}}
     detalhes = {"5": {"regime": ".", "tramitacao": "Apresentação", "dataSituacao": "2026-10-29", "ementaDetalhada": "Detalhe",
-                      "inteiroTeor": "https://www.camara.leg.br/x", "apensadoA": "7"}}
+                      "inteiroTeor": "https://www.camara.leg.br/x", "apensadoA": "7", "relator": "220645"}}
     lei = leis.citacoes(longa)[0]
     gerar_proposicoes.gerar(tmp_path, deps, detalhes, {}, {}, {}, [], {}, [], TIPOS_PROJETO, destino_projeto, {},
                             {"5": ["Saúde"]}, {lei["id"]: {"ementa": "Resumo oficial", "planalto": "https://p"}})
     lido = lambda n: json.loads((tmp_path / n).read_text(encoding="utf-8"))
     ficha = lido("proposicao/c-2026.json")["5"]
     assert ficha["em"] == longa.strip() and len(lido("proposicoes.json")[0]["e"]) == gerar_proposicoes.TAMANHO_EMENTA
-    assert ficha["ed"] == "Detalhe" and ficha["tm"] == ["Saúde"] and ficha["pr"] == "7" and ficha["tx"] == "https://www.camara.leg.br/x"
+    assert ficha["ed"] == "Detalhe" and ficha["tm"] == ["Saúde"] and ficha["pr"] == "7" and ficha["rl"] == "220645" and ficha["tx"] == "https://www.camara.leg.br/x"
     assert "rg" not in ficha   # regime "." é vazio na Câmara
     assert ficha["ls"] == [lei["id"]]
     assert lido("leis.json") == {lei["id"]: {"r": "Lei nº 9.250/1995", "u": leis.url_lexml(lei["urn"]), "e": "Resumo oficial", "p": "https://p"}}

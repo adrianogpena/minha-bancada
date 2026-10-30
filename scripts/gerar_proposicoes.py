@@ -5,7 +5,7 @@ autores (deputados e senadores com ficha no site) e as votações do Plenário e
   site/dados/proposicoes.json        índice, uma linha por proposição (a busca roda no navegador; também dá o cabeçalho da ficha)
   site/dados/proposicao/<casa>-<ano>.json   {id: {o: órgão, ap: apresentação, au: autores, v: votações, em: ementa completa (só se o índice a cortou),
                                      ed: ementa detalhada, pc: palavras-chave, rg: regime, tr: última tramitação, ds: data dela, tx: link do inteiro teor,
-                                     pr: id do projeto principal (se apensada), tm: temas, ls: ids das leis citadas}} das proposições do ano
+                                     pr: id do projeto principal (se apensada), rl: id do deputado relator (nome e partido vêm de deputados.json), tm: temas, ls: ids das leis citadas}} das proposições do ano
                                      (casa: "c" Câmara, "s" Senado)
   site/dados/leis.json               {id da lei: {r: rótulo, u: link do LexML, e: ementa oficial, p: link do Planalto}} só das leis citadas (leis.py,
                                      coletar_leis.py); o texto da ementa citante fica no índice e na ficha, a lei aqui, uma vez só
@@ -56,7 +56,7 @@ def _complemento(p: dict, det: dict, temas: list | None, citadas: dict) -> dict:
     citadas.update({l["id"]: l for l in achadas})
     return {"em": ementa if len(ementa) > TAMANHO_EMENTA else None, "ed": detalhada if detalhada != ementa else None,
             "pc": det.get("palavrasChave"), "rg": regime if regime not in ("", ".") else None, "tr": det.get("tramitacao"),
-            "ds": det.get("dataSituacao"), "tx": det.get("inteiroTeor"), "pr": det.get("apensadoA"), "tm": temas,
+            "ds": det.get("dataSituacao"), "tx": det.get("inteiroTeor"), "pr": det.get("apensadoA"), "rl": det.get("relator"), "tm": temas,
             "ls": [l["id"] for l in achadas]}
 
 

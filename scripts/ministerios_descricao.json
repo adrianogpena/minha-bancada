@@ -184,9 +184,23 @@
    {
     "rotulo": "Lei 14.600/2023, art. 20",
     "url": "https://www.planalto.gov.br/ccivil_03/_ato2023-2026/2023/lei/l14600.htm"
+   },
+   {
+    "rotulo": "Órgãos vinculados (página do ministério)",
+    "url": "https://www.gov.br/cidades/pt-br/composicao/entidades-vinculadas"
    }
   ],
-  "revisadoEm": "2026-10-30"
+  "revisadoEm": "2026-10-30",
+  "vinculados": [
+   {
+    "nome": "Companhia Brasileira de Trens Urbanos",
+    "url": "https://www.gov.br/cidades/pt-br/composicao/entidades-vinculadas/companhia-brasileira-de-trens-urbanos"
+   },
+   {
+    "nome": "Empresa de Trens Urbanos de Porto Alegre S.A.",
+    "url": "https://www.gov.br/cidades/pt-br/composicao/entidades-vinculadas/empresa-de-trens-urbanos-de-porto-alegre-s-a"
+   }
+  ]
  },
  "ciencia": {
   "resumo": "Formula as políticas nacionais de ciência, tecnologia e inovação, incluindo a política espacial e a nuclear.",
@@ -791,9 +805,23 @@
    {
     "rotulo": "Lei 14.600/2023, art. 43",
     "url": "https://www.planalto.gov.br/ccivil_03/_ato2023-2026/2023/lei/l14600.htm"
+   },
+   {
+    "rotulo": "Órgãos vinculados (página do ministério)",
+    "url": "https://www.gov.br/previdencia/pt-br/composicao/autarquias-vinculadas"
    }
   ],
-  "revisadoEm": "2026-10-30"
+  "revisadoEm": "2026-10-30",
+  "vinculados": [
+   {
+    "nome": "Instituto Nacional do Seguro Social (INSS)",
+    "url": "https://www.gov.br/inss/pt-br"
+   },
+   {
+    "nome": "Superintendência Nacional de Previdência Complementar (Previc)",
+    "url": "https://www.gov.br/previc/pt-br"
+   }
+  ]
  },
  "relacoes_exteriores": {
   "resumo": "Conduz a política externa do Brasil: diplomacia, serviços consulares e negociações internacionais (Itamaraty).",
@@ -875,9 +903,19 @@
    {
     "rotulo": "Lei 14.600/2023, art. 46",
     "url": "https://www.planalto.gov.br/ccivil_03/_ato2023-2026/2023/lei/l14600.htm"
+   },
+   {
+    "rotulo": "Órgãos vinculados (página do ministério)",
+    "url": "https://www.gov.br/trabalho-e-emprego/pt-br/composicao/entidades-vinculadas"
    }
   ],
-  "revisadoEm": "2026-10-30"
+  "revisadoEm": "2026-10-30",
+  "vinculados": [
+   {
+    "nome": "Fundação Jorge Duprat Figueiredo de Segurança e Medicina do Trabalho (Fundacentro)",
+    "url": "https://www.gov.br/fundacentro/pt-br"
+   }
+  ]
  },
  "transportes": {
   "resumo": "Cuida da política de transportes ferroviário e rodoviário e da política nacional de trânsito.",

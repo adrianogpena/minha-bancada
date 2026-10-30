@@ -42,6 +42,8 @@ BLOCOS_COMPLEMENTO = ("profissoes", "ocupacoes", "mandatosExternos", "historico"
 DISCURSOS_RECENTES = 5  # os discursos mais recentes do mandato atual que a ficha mostra
 EVENTOS_RECENTES = 5  # os eventos (audiências e reuniões) mais recentes que a ficha lista
 TEMAS_DISCURSO = 8  # palavras mais frequentes nos sumários dos discursos
+JANELA_INCREMENTAL = 7  # discursos e eventos dos últimos N dias são relidos a cada coleta; o que é mais antigo vira contagem guardada
+RENOVAR_COMPLETA_DIAS = 14  # releitura completa de segurança dos discursos e eventos (pega correção em data antiga)
 PALAVRAS_VAZIAS = frozenset(
     "sobre entre contra ainda assim porque quando durante também mesmo todos todas sendo outros outras ações ação "
     "pelo pela pelos pelas deste desta desse dessa nesta neste essa esse esta este seus suas cujo cuja como mais "
@@ -221,7 +223,28 @@ def coletar_complementos(dep: dict, anterior: dict, hoje: dt.date) -> dict:
     did = dep["id"]
     em = anterior.get("complementosEm")
     if em and (hoje - dt.date.fromisoformat(em)).days < 1 + did % 7:
-        return {k: anterior[k] for k in (*BLOCOS_COMPLEMENTO, "complementosEm") if k in anterior}
+        return {k: anterior[k] for k in (*BLOCOS_COMPLEMENTO, "leituraIncremental", "complementosEm") if k in anterior}
+    inc = dict(anterior.get("leituraIncremental") or {})  # por recurso: corte, completaEm e a contagem do que é mais antigo que o corte
+
+    def _data(x):
+        return _dia(x.get("dataHoraInicio")) or ""
+
+    def itens_desde(recurso):
+        """Itens de /deputados/{id}/{recurso} desde o corte guardado, ou da legislatura inteira na primeira leitura e na completa de segurança.
+        Devolve (itens, estado anterior aproveitável ou {}, corte novo)."""
+        est = inc.get(recurso) or {}
+        completa_em = est.get("completaEm")
+        incremental = bool(est.get("base") is not None and est.get("corte") and completa_em
+                           and (hoje - dt.date.fromisoformat(completa_em)).days < RENOVAR_COMPLETA_DIAS)
+        desde = est["corte"] if incremental else INICIO_LEGISLATURA
+        lista = get_todos(f"/deputados/{did}/{recurso}", ordem="DESC", ordenarPor="dataHoraInicio", dataInicio=desde)
+        if incremental:  # não depende de a API tratar dataInicio como inclusivo: o que é anterior ao corte já está na contagem
+            lista = [x for x in lista if _data(x) >= desde]
+        corte = max((hoje - dt.timedelta(days=JANELA_INCREMENTAL)).isoformat(), desde if incremental else "")
+        return lista, (est if incremental else {}), corte
+
+    def guardar(recurso, est, corte, base):
+        inc[recurso] = {"corte": corte, "completaEm": est.get("completaEm") or hoje.isoformat(), "base": base}
 
     def profissoes():
         return [{"titulo": x["titulo"].strip(), "desde": _dia(x.get("dataHora"))}
@@ -253,24 +276,46 @@ def coletar_complementos(dep: dict, anterior: dict, hoje: dt.date) -> dict:
                 for x in r.get("dados", [])]
 
     def discursos_resumo():
-        lista = get_todos(f"/deputados/{did}/discursos", ordem="DESC", ordenarPor="dataHoraInicio", dataInicio=INICIO_LEGISLATURA)
-        por_ano, por_tipo, palavras = Counter(), Counter(), Counter()
+        lista, est, corte = itens_desde("discursos")
+        base = est.get("base") or {}
+        por_ano, por_tipo, palavras = (Counter(base.get(k) or {}) for k in ("porAno", "porTipo", "palavras"))
+        novo = [Counter(c) for c in (por_ano, por_tipo, palavras)]  # a contagem que fica guardada: só o que é anterior ao corte
         for x in lista:
-            por_ano[(x.get("dataHoraInicio") or "")[:4] or "?"] += 1
-            por_tipo[(x.get("tipoDiscurso") or "").strip().title() or "Outros"] += 1
-            palavras.update(set(_palavras_tema(x.get("sumario"))))
-        return {"total": len(lista), "porAno": dict(sorted(por_ano.items(), reverse=True)),
+            ano = _data(x)[:4] or "?"
+            tipo = (x.get("tipoDiscurso") or "").strip().title() or "Outros"
+            tema = set(_palavras_tema(x.get("sumario")))
+            por_ano[ano] += 1
+            por_tipo[tipo] += 1
+            palavras.update(tema)
+            if _data(x) < corte:
+                novo[0][ano] += 1
+                novo[1][tipo] += 1
+                novo[2].update(tema)
+        guardar("discursos", est, corte, {"porAno": dict(novo[0]), "porTipo": dict(novo[1]), "palavras": dict(novo[2])})
+        return {"total": sum(por_ano.values()), "porAno": dict(sorted(por_ano.items(), reverse=True)),
                 "porTipo": dict(por_tipo.most_common()),
                 "temas": [[p, n] for p, n in palavras.most_common(TEMAS_DISCURSO) if n > 1]}
 
     def eventos():
-        lista = get_todos(f"/deputados/{did}/eventos", ordem="DESC", ordenarPor="dataHoraInicio", dataInicio=INICIO_LEGISLATURA)
-        por_ano = Counter((x.get("dataHoraInicio") or "")[:4] or "?" for x in lista)
-        return {"total": len(lista), "porAno": dict(sorted(por_ano.items(), reverse=True)),
-                "recentes": [{"id": x.get("id"), "data": _dia(x.get("dataHoraInicio")), "tipo": x.get("descricaoTipo"),
-                              "titulo": " ".join(html.unescape(x.get("descricao") or "").split())[:200] or None,
-                              "orgao": ", ".join(o["sigla"] for o in x.get("orgaos") or [] if o.get("sigla")) or None}
-                             for x in lista[:EVENTOS_RECENTES]]}
+        lista, est, corte = itens_desde("eventos")
+        por_ano = Counter((est.get("base") or {}).get("porAno") or {})
+        antigos = Counter(por_ano)
+        for x in lista:
+            ano = _data(x)[:4] or "?"
+            por_ano[ano] += 1
+            if _data(x) < corte:
+                antigos[ano] += 1
+        recentes = [{"id": x.get("id"), "data": _dia(x.get("dataHoraInicio")), "tipo": x.get("descricaoTipo"),
+                     "titulo": " ".join(html.unescape(x.get("descricao") or "").split())[:200] or None,
+                     "orgao": ", ".join(o["sigla"] for o in x.get("orgaos") or [] if o.get("sigla")) or None}
+                    for x in lista[:EVENTOS_RECENTES]]
+        if est:  # leitura incremental: completa os mais recentes com os que já estavam guardados
+            vistos = {r["id"] for r in recentes}
+            recentes += [r for r in (anterior.get("eventos") or {}).get("recentes", []) if r.get("id") not in vistos]
+            recentes.sort(key=lambda r: r.get("data") or "", reverse=True)
+        guardar("eventos", est, corte, {"porAno": dict(antigos)})
+        return {"total": sum(por_ano.values()), "porAno": dict(sorted(por_ano.items(), reverse=True)),
+                "recentes": recentes[:EVENTOS_RECENTES]}
 
     saida, falhou = {}, 0
     for nome, f in zip(BLOCOS_COMPLEMENTO, (profissoes, ocupacoes, mandatos_externos, historico, discursos, discursos_resumo, eventos)):
@@ -281,6 +326,7 @@ def coletar_complementos(dep: dict, anterior: dict, hoje: dt.date) -> dict:
             falhou += 1
             if nome in anterior:
                 saida[nome] = anterior[nome]
+    saida["leituraIncremental"] = inc
     if falhou == 0:
         saida["complementosEm"] = hoje.isoformat()
     elif "complementosEm" in anterior:

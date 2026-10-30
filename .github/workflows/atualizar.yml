@@ -34,6 +34,14 @@ jobs:
 
       - run: pip install -r requirements.txt
 
+      - name: Restaurar a ficha dos deputados da execução anterior
+        # dados/deputados/ não vai para o git; sem isto todo dia relê tudo e o escalonamento de complementos (1 + id % 7 dias) não vale
+        uses: actions/cache@v4
+        with:
+          path: dados/deputados
+          key: deputados-${{ github.run_id }}
+          restore-keys: deputados-
+
       - name: Marcar o início (só o que for gravado depois disso vai no pacote)
         run: touch "$RUNNER_TEMP/inicio"
 

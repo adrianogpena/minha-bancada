@@ -5,6 +5,14 @@ Regra: toda fonte nova ou mudança de coleta ganha uma entrada aqui, no mesmo co
 Datas dos conjuntos que já existiam vêm do primeiro commit que os trouxe (`git log --diff-filter=A`).
 Todas as coletas rodam sozinhas no GitHub Actions (`.github/workflows/atualizar.yml`, todo dia às 05:00 de Brasília), salvo onde indicado.
 
+## Coleta da Câmara mais rápida: cache da ficha e leitura incremental (2026-10-30)
+
+O passo "Coletar deputados da Câmara" passou de ~20 min para mais de 22 depois que a ficha ganhou `discursosResumo` e `eventos` (paginam a legislatura inteira de cada deputado). Como `dados/deputados/` não vai para o git, todo dia partia do zero e o escalonamento de complementos (`1 + id % 7` dias) nunca valia no Actions.
+
+- `atualizar.yml`: o job da Câmara restaura `dados/deputados/` com `actions/cache` (chave por execução, `restore-keys` pega a última).
+- `coletar.py`: `discursosResumo` e `eventos` leem só desde o corte guardado em `leituraIncremental` (contagem do que é mais antigo que `JANELA_INCREMENTAL` = 7 dias) e somam; releitura completa a cada `RENOVAR_COMPLETA_DIAS` = 14. Não há endpoint novo.
+- A primeira execução depois disto ainda é completa (cache vazio); as seguintes não.
+
 ## Ministros no histórico, no RSS e no e-mail (2026-10-30)
 - **Sem fonte nova.** `ministros_mudancas.py` decide as novidades (troca na lista do Planalto, pedido novo, resposta, prazo vencido, convocação aprovada) e é usado pelo histórico diário, pelo e-mail e pelo RSS, que dizem a mesma coisa. No histórico tudo fica na categoria `ministro` ("Ministros e ministérios"); o ministro da pasta entra em `politicos` (`codigo: min:<pasta>`, nome e cargo), então o filtro por político da página funciona. Dias já gravados não são reescritos.
 - **Fique informado:** `gerar_ministros.py` grava `site/dados/indice/MIN.json` (o ministro atual de cada pasta, `codigoFeed: min:<pasta>`). O card 2 ganha "Ministros e ministérios" em "Onde atua"; o feed e o e-mail seguem a pasta (continuam valendo quando o ministro troca). `assinaturas.py` aceita o código `min:<pasta>`.

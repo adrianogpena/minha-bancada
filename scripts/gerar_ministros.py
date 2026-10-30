@@ -4,6 +4,7 @@ Ministros de Estado para o site, a partir de dados/ministros/ (coletar_ministros
   site/dados/ministerios.json           [{pasta, nome, ministro: {pessoa, nome, inicio}|None, total, informacao, convocacao, respondidos}]
   site/dados/ministerio/<pasta>.json    {pasta, nome, descricao?: {resumo, areas, site, base: [{rotulo, url}], revisadoEm}, ministros: [{pessoa, nome, cargo, inicio, inicioFonte, nomeadoPor?, inicioUrl?, fim?, atual, requerimentos: [id]}],
                                          requerimentos: [...]}   cada requerimento aparece só na pasta em que a ementa o cita primeiro
+  site/dados/indice/MIN.json            [{id: pasta, nome, cargo, pagina, codigoFeed: min:<pasta>}] o ministro atual de cada pasta, para o "Fique informado"
   site/dados/ministros_autores.json     {id do deputado: nome} dos autores que não estão em deputados.json (já saíram da Câmara)
   site/dados/ministro/<pessoa>.json     {pessoa, nome, cargos: [{pasta, nome, cargo, inicio, inicioFonte, nomeadoPor?, inicioUrl?, fim?, atual, requerimentos: [id]}],
                                          parlamentar: {casa, id, inicio}|None}   os pedidos em si estão em ministerio/<pasta>.json
@@ -151,12 +152,19 @@ def construir(bruto: Path, nucleo: dict, senadores: list[dict], deputados: dict 
     }
     usados = {a for r in pedidos if r["fonte"] == "camara" for a in r["autores"]}
     fora = {a: nomes[a] for a in sorted(usados - {str(d) for d in (deputados or {})}) if a in nomes}
-    return {"ministerios": resumo, **saida, "total": len(pedidos), "autoresFora": fora}
+    indice = []   # lista de quem acompanhar por RSS e e-mail (codigoFeed min:<pasta>): o ministro atual de cada pasta
+    for pasta, titulares in sorted(cargos.items(), key=lambda kv: ministerios.PASTAS[kv[0]][0]):
+        atual = next((c for c in sorted(titulares, key=lambda c: c["inicio"], reverse=True) if c["atual"]), None)
+        if atual:
+            indice.append({"id": pasta, "nome": atual["nome"], "cargo": atual["cargo"], "ordemCargo": 3, "estado": "atual", "partido": None,
+                           "pagina": f"ministro.html?id={atual['pessoa']}", "codigoFeed": f"min:{pasta}"})
+    return {"ministerios": resumo, "indice": indice, **saida, "total": len(pedidos), "autoresFora": fora}
 
 
 def salvar_ministros(res: dict, saida: Path) -> None:
     salvar(saida / "ministerios.json", res["ministerios"])
     salvar(saida / "ministros_autores.json", res["autoresFora"])
+    salvar(saida / "indice" / "MIN.json", res["indice"])
     for pasta, dados in res["ministerio"].items():
         salvar(saida / "ministerio" / f"{pasta}.json", dados)
     for pessoa, dados in res["ministro"].items():

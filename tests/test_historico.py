@@ -339,18 +339,21 @@ def test_ministros_troca_pedidos_resposta_prazo_convocacao_e_licenca(repo, tmp_p
     assert troca["mudanca"] == ["A", "B"] and troca["resumo"] == "Troca de ministro" and troca["relevancia"] == 3
     licenca, = por(ev, categoria="ministro", titulo="Beltrano")
     assert licenca["resumo"] == "Licenciou-se para ser ministro" and licenca["dataDoAto"] == "2026-01-04" and licenca["politicos"][0]["codigo"] == "dep:7"
-    resposta, = por(ev, titulo="RIC 2/2026", categoria="ministerio")
+    resposta, = por(ev, titulo="RIC 2/2026", categoria="ministro")
     assert resposta["mudanca"] == ["Sem resposta", "Respondido no prazo"] and "Saúde" in resposta["resumo"]
-    vencido, = por(ev, titulo="RIC 1/2026", categoria="ministerio")
+    vencido, = por(ev, titulo="RIC 1/2026", categoria="ministro")
     assert vencido["mudanca"][1] == "Prazo vencido sem resposta" and vencido["dataDoAto"] == "2026-01-03"
-    novo, = por(ev, titulo="RIC 3/2026", categoria="ministerio")
+    novo, = por(ev, titulo="RIC 3/2026", categoria="ministro")
     assert novo["relevancia"] == 1 and novo["resumo"] == "Pedido ao ministério: Saúde" and novo["politicos"][0]["codigo"] == "dep:1"
-    convocacao, = por(ev, titulo="REQ 5/2026", categoria="ministerio")
+    convocacao, = por(ev, titulo="REQ 5/2026", categoria="ministro")
     assert convocacao["relevancia"] == 3 and convocacao["resumo"] == "Convocação ou convite a ministro aprovado"
-    senado_aprovado, = por(ev, titulo="RQS 9/2026", categoria="ministerio")
+    senado_aprovado, = por(ev, titulo="RQS 9/2026", categoria="ministro")
     assert senado_aprovado["mudanca"] == ["—", "Aprovado"]
-    assert por(ev, titulo="RQS 10/2026", categoria="ministerio")
-    assert {n for n, _, _ in r.coletar("HEAD~1", "HEAD", "2026-01-04")["ministerios"]} == {"RIC 3/2026", "RQS 10/2026"}   # os mesmos pedidos novos, no e-mail e no RSS
+    assert por(ev, titulo="RQS 10/2026", categoria="ministro")
+    email = {(m["titulo"], m["tipo"]) for m in r.coletar("HEAD~1", "HEAD", "2026-01-04")["ministros"]}   # as mesmas novidades, no e-mail e no RSS
+    assert {("RIC 3/2026", "novo"), ("RQS 10/2026", "novo"), ("RIC 2/2026", "resposta"), ("RIC 1/2026", "prazo"), ("REQ 5/2026", "convocacao"), ("RQS 9/2026", "convocacao"),
+            ("Ministro de Estado da Saúde", "troca")} <= email
+    assert novo["politicos"][-1]["codigo"] == "min:saude" and novo["politicos"][-1]["cargo"]
 
 
 def test_ministros_primeira_coleta_nao_vira_novidade(repo, tmp_path):

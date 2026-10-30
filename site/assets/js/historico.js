@@ -5,7 +5,7 @@ import { fontes } from "./apis.js";
 
 /* ---------- Histórico diário ---------- */
 /* Lê dados/historico/<dia>.json (scripts/historico.py): eventos do dia com local, políticos e fontes. */
-const CATEGORIAS_HIST = { nova: "Novo", situacao: "Mudou de situação", votacao: "Votação", eleicao: "Eleitos (TSE)", ministro: "Ministros", ministerio: "Ministérios", lote: "Em lote" };
+const CATEGORIAS_HIST = { nova: "Novo", situacao: "Mudou de situação", votacao: "Votação", eleicao: "Eleitos (TSE)", ministro: "Ministros e ministérios", lote: "Em lote" };
 const IMPORTANCIA_HIST = { "": "Tudo", 2: "Projetos e marcos", 3: "Só marcos (votações, aprovações, vetos, eleitos)" };
 const SEM_POLITICO = "Sem político específico (votações e matérias gerais)";
 
@@ -22,6 +22,7 @@ function noEscopo(e, codigos) {
 
 /* Cargo exibido ao lado do nome do político. */
 function cargoHist(p) {
+  if (p.cargo) return p.cargo;
   const c = p.codigo || "";
   if (c.startsWith("dep:")) return "Deputado(a) federal";
   if (c.startsWith("est:")) return "Deputado(a) estadual";

@@ -4,7 +4,7 @@ em site/feeds/<código>.xml. Cada dia com novidade no escopo vira um item. Não 
 quem assina é o leitor de RSS dele, que busca o arquivo estático.
 
 Os códigos são os mesmos do campo "a" de site/dados/indice/<UF>.json (ver gerar_politicos.py):
-    BR (tudo)  FEDERAL  UF:<sigla>  MUN:<sigla> (capital)  pres  dep:<id da Câmara>  gov:<UF>  est:<UF>:<id no SAPL>  pref:<UF>
+    BR (tudo)  FEDERAL  UF:<sigla>  MUN:<sigla> (capital)  pres  min:<pasta do ministro>  dep:<id da Câmara>  gov:<UF>  est:<UF>:<id no SAPL>  pref:<UF>
 O nome do arquivo troca ":" por "-" (UF:AC -> UF-AC.xml).
 
 O histórico vem do git: um commit "Dados atualizados em AAAA-MM-DD" por dia, dos últimos DIAS dias.
@@ -74,7 +74,7 @@ def selecionar(d: dict, regras: set[str], deps_uf: dict[str, set[int]]) -> dict:
         "detalhe": (0, 0),
         "executivo": d["executivo"] if pres else [],
         "executivo_situacao": d["executivo_situacao"] if pres else [],
-        "ministerios": d.get("ministerios", []) if br else [],
+        "ministros": [m for m in d.get("ministros", []) if br or m["codigo"] in regras],
         "estaduais": por_uf("estaduais", lambda uf: uf in ufs,
                             lambda uf, m: any(f"est:{uf}:{p}" in regras for p in m.get("idsDeputados", []))),
         "governo": por_uf("governo", lambda uf: uf in ufs or f"gov:{uf}" in regras),
@@ -102,6 +102,8 @@ def rotulos() -> dict[str, str]:
         for x in json.loads(arq.read_text(encoding="utf-8")):
             if x.get("codigoFeed"):
                 mapa.setdefault(x["codigoFeed"], f"{x['cargo']}: {x['nome']}")
+    for x in json.loads((INDICE / "MIN.json").read_text(encoding="utf-8")) if (INDICE / "MIN.json").is_file() else []:
+        mapa.setdefault(x["codigoFeed"], f"{x['cargo']}: {x['nome']}")
     return mapa
 
 

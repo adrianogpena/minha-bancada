@@ -40,7 +40,7 @@ import feeds
 import resumo_email as r
 
 LOCAL = re.compile(r"^(BR|(UF|MUN):[A-Z]{2})$")
-POLITICO = re.compile(r"^(pres|dep:\d+|gov:[A-Z]{2}|est:[A-Z]{2}:\d+|pref:[A-Z]{2})$")
+POLITICO = re.compile(r"^(pres|min:[a-z_]+|dep:\d+|gov:[A-Z]{2}|est:[A-Z]{2}:\d+|pref:[A-Z]{2})$")
 EMAIL = re.compile(r"^[A-Za-z0-9._%+-]+@[A-Za-z0-9-]+(\.[A-Za-z0-9-]+)*\.[A-Za-z]{2,}$")
 ROTULO_INVALIDO = re.compile(r"[^\w ():,.·—-]")
 TOKEN = re.compile(r"^[0-9a-f]{64}$")

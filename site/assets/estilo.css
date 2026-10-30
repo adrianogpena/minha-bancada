@@ -16,7 +16,6 @@
   --ausente: #c9cfcb;
   --foco: #f2b705;
   --raio: 6px;
-  --largura: 1080px;
   --display: "Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
   --texto: "Atkinson Hyperlegible", system-ui, sans-serif;
   color-scheme: light;
@@ -46,7 +45,7 @@ a { color: var(--marca); text-underline-offset: 3px; }
 a:hover { text-decoration-thickness: 2px; }
 :focus-visible { outline: 3px solid var(--foco); outline-offset: 2px; border-radius: 3px; }
 img { max-width: 100%; display: block; }
-.recipiente { max-width: var(--largura); margin: 0 auto; padding: 0 16px; }
+.recipiente { max-width: none; margin: 0 auto; padding: 0 clamp(12px, 2vw, 32px); }
 
 /* topo */
 .topo { border-bottom: 1px solid var(--linha); background: var(--superficie); }

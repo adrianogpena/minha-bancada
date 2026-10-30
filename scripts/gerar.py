@@ -26,6 +26,7 @@ import gerar_politicos
 import gerar_proposicoes
 import gerar_coautoria
 import gerar_ministros
+import gerar_emendas
 from gerar_politicos import ler, salvar
 
 RAIZ = Path(__file__).resolve().parent.parent
@@ -630,6 +631,7 @@ def main():
     for i in nucleo["inabilitados"]:
         por_pessoa[i["pessoa"]].append({k: v for k, v in i.items() if k != "pessoa"})
     salvar(SAIDA / "inabilitados_tcu.json", dict(por_pessoa))
+    print(f"Emendas parlamentares: {gerar_emendas.salvar(nucleo['emendas'], SAIDA)} políticos")
     candidaturas.salvar_candidaturas(candidaturas.construir(BRUTO, nucleo), SAIDA)
     mandatos.salvar_mandatos(mandatos.construir(deputados, BRUTO, nucleo), SAIDA)
     nucleo_fornecedores.salvar_fornecedores(forn, SAIDA)

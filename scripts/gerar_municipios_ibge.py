@@ -8,7 +8,8 @@ A ligação é por UF + nome sem acento; o que não casa pelo nome fica em AJUST
 
 Uso:
     python scripts/baixar_tse.py detalhe_votacao_munzona
-    python scripts/gerar_municipios_ibge.py
+    python scripts/gerar_municipios_ibge.py [--gravar]
+    python scripts/gerar_municipios_ibge.py --nomes   # só refaz dados/municipios_nomes.json, sem internet
 
 Fontes:
     https://cdn.tse.jus.br/estatistica/sead/odsele/detalhe_votacao_munzona/detalhe_votacao_munzona_<ano>.zip
@@ -29,6 +30,7 @@ from pathlib import Path
 RAIZ = Path(__file__).resolve().parent.parent
 ZIPS = RAIZ / "dados" / "tse_bruto" / "detalhe_votacao_munzona"
 DESTINO = RAIZ / "dados" / "municipios_ibge.json"
+NOMES = RAIZ / "dados" / "municipios_nomes.json"   # código IBGE -> [UF, nome], para ligar o município de outras fontes (emendas) à malha
 IBGE = "https://servicodados.ibge.gov.br/api/v1/localidades/municipios"
 ANOS = [2024, 2022]   # 2022 cobre o DF, que não tem eleição municipal
 
@@ -82,7 +84,17 @@ def municipios_tse() -> dict:
     return achados
 
 
+def gravar_nomes() -> None:
+    """Offline: nomes do TSE (sem o ajuste de grafia do IBGE) de cada código IBGE de municipios_ibge.json."""
+    ibge_de_tse = json.loads(DESTINO.read_text(encoding="utf-8"))
+    nomes = {ibge_de_tse[cod]: [uf, nome] for (uf, nome), cod in sorted(municipios_tse().items()) if cod in ibge_de_tse}
+    NOMES.write_text(json.dumps(dict(sorted(nomes.items())), separators=(",", ":"), ensure_ascii=False), encoding="utf-8")
+    print(f"{len(nomes)} nomes gravados em {NOMES}")
+
+
 def main() -> None:
+    if "--nomes" in sys.argv:
+        return gravar_nomes()
     req = urllib.request.Request(IBGE, headers={"Accept-Encoding": "gzip"})
     with urllib.request.urlopen(req, timeout=60) as r:
         corpo = r.read()

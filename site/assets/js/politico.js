@@ -8,6 +8,7 @@ import { EXECUTIVOS, casaLegislativa, itemGoverno, LEGENDA_PRESIDENTE, legendaGo
 import { painelEleicaoDe } from "./eleicao.js";
 import { montarSenador, painelAposentadoria } from "./senador.js";
 import { montarEstadual } from "./estadual.js";
+import { carregarEmendas, painelEmendas } from "./emendas.js";
 
 /* Inabilitação do TCU: a fonte não traz CPF, então a ligação é só por nome completo e UF do caso; o processo deixa conferir se é a mesma pessoa. */
 function avisoInabilitacao(lista, uf) {
@@ -33,6 +34,7 @@ export async function paginaPolitico() {
 
   p.aposentadoria = await carregarAposentadoria(p.pessoa, carregar);
   p.inabilitacoes = await carregarInabilitacoes(p.pessoa, carregar);
+  p.emendas = await carregarEmendas(p.pessoa);
   const nome = p.urna || p.nome;
   const local = p.municipio ? `${p.municipio} (${p.uf})` : p.uf === "BR" ? "Brasil" : UFS[p.uf] || p.uf;
   document.title = `${nome}, ${p.cargo} | Minha Bancada`;
@@ -91,6 +93,7 @@ export async function paginaPolitico() {
     ${p.fonte === "tse" ? fontes([...fonteTse, ["Dados de candidatos (TSE)", arquivoTse("consulta_cand", p)]]) : ""}
     ${painelAposentadoria(p.aposentadoria)}
     ${avisoInabilitacao(p.inabilitacoes, p.uf)}
+    ${painelEmendas(p.emendas)}
 
     ${p.fonte === "tse" ? `
     <h2>Bens declarados em ${esc(p.ano)}</h2>

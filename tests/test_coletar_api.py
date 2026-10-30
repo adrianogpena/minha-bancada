@@ -126,16 +126,26 @@ def test_coletar_deputado_usa_a_cota_do_csv(dados, monkeypatch):
 def test_coletar_deputados_salva_arquivos_e_resume(dados, monkeypatch):
     monkeypatch.setattr(coletar, "get_todos", lambda c, **p: [{"id": 1, "nome": "A"}, {"id": 2, "nome": "B"}, {"id": 3, "nome": "C"}])
     monkeypatch.setattr(coletar, "coletar_cota_csv", lambda ano: {})
-    monkeypatch.setattr(coletar, "coletar_deputado", lambda dep, ano, cota=None: {"id": dep["id"], "nome": dep["nome"]})
+    monkeypatch.setattr(coletar, "coletar_deputado", lambda dep, ano, cota=None, limite_em=None: {"id": dep["id"], "nome": dep["nome"]})
     assert sorted(coletar.coletar_deputados(2)) == [1, 2]
     assert json.loads((dados / "deputados.json").read_text()) == [1, 2]
     assert json.loads((dados / "deputados" / "1.json").read_text())["nome"] == "A"
 
 
+def test_coletar_deputados_prazo_esgotado_mantem_ficha_anterior(dados, monkeypatch):
+    monkeypatch.setattr(coletar, "get_todos", lambda c, **p: [{"id": 1, "nome": "A"}, {"id": 2, "nome": "B"}])
+    monkeypatch.setattr(coletar, "coletar_cota_csv", lambda ano: {})
+    monkeypatch.setattr(coletar, "PRAZO_DEPUTADOS_MIN", -1)
+    (dados / "deputados").mkdir(exist_ok=True)
+    for i in (1, 2):
+        (dados / "deputados" / f"{i}.json").write_text(f'{{"id": {i}}}')
+    assert sorted(coletar.coletar_deputados(None)) == [1, 2]
+
+
 def test_coletar_deputados_aborta_com_muitas_falhas(dados, monkeypatch):
     monkeypatch.setattr(coletar, "get_todos", lambda c, **p: [{"id": i, "nome": str(i)} for i in range(10)])
 
-    def quebra(dep, ano, cota=None):
+    def quebra(dep, ano, cota=None, limite_em=None):
         if dep["id"] < 5:
             raise RuntimeError("API fora")
         return {"id": dep["id"]}
@@ -148,7 +158,7 @@ def test_coletar_deputados_aborta_com_muitas_falhas(dados, monkeypatch):
 def test_coletar_deputados_tolera_poucas_falhas(dados, monkeypatch):
     monkeypatch.setattr(coletar, "get_todos", lambda c, **p: [{"id": i, "nome": str(i)} for i in range(10)])
 
-    def quebra(dep, ano, cota=None):
+    def quebra(dep, ano, cota=None, limite_em=None):
         if dep["id"] == 0:
             raise RuntimeError("API fora")
         return {"id": dep["id"]}

@@ -37,7 +37,7 @@ jobs:
 
       - name: Restaurar a ficha dos deputados da execução anterior
         # dados/deputados/ não vai para o git; sem isto todo dia relê tudo e o escalonamento de complementos (1 + id % 7 dias) não vale
-        uses: actions/cache@v4
+        uses: actions/cache/restore@v4
         with:
           path: dados/deputados
           key: deputados-${{ github.run_id }}
@@ -58,6 +58,13 @@ jobs:
       - name: Coletar o resumo das leis citadas nas proposições
         run: python scripts/coletar_leis.py
         continue-on-error: true
+
+      - name: Guardar a ficha dos deputados (mesmo se a coleta falhar, para a próxima execução não recomeçar do zero)
+        if: always()
+        uses: actions/cache/save@v4
+        with:
+          path: dados/deputados
+          key: deputados-${{ github.run_id }}
 
       - name: Empacotar o resultado
         if: always()

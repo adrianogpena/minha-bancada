@@ -194,7 +194,7 @@ export async function paginaMinisterios() {
         <td>${m.ministro ? `<a href="ministro.html?id=${encodeURIComponent(m.ministro.pessoa)}">${esc(m.ministro.nome)}</a>` : "—"}</td>
         <td>${numeroBr(m.total)}</td><td>${m.informacao ? `<b>${numeroBr(m.respondidos)}</b> de ${numeroBr(m.informacao)} (${pct(m.respondidos, m.informacao)})` : "—"}</td><td>${numeroBr(m.convocacao)}</td></tr>`).join("")}
     </tbody></table></div>
-    <p class="nota-lista">Cada pedido conta na pasta que a ementa cita primeiro. A resposta de um requerimento de informação só é coletada para os da Câmara; os do Senado aparecem sem esse dado.
+    <p class="nota-lista"><b>Pasta</b> é o outro nome de um ministério: a área de governo que o ministro comanda. Cada pedido conta na pasta que a ementa cita primeiro. A resposta de um requerimento de informação só é coletada para os da Câmara; os do Senado aparecem sem esse dado.
       ${fontes([["Ministros e Ministras (Planalto)", PLANALTO], ["Requerimentos (arquivos da Câmara)", "https://dadosabertos.camara.leg.br/arquivos"]])}</p>`;
 }
 
@@ -214,7 +214,7 @@ async function paginaMinisterio(alvo, pasta) {
       : `<p class="vazio">Nenhum ministro desta pasta na lista atual do Planalto.</p>`}
     ${fontes([["Ministros e Ministras (Planalto)", PLANALTO]])}
     <h2>Pedidos do Congresso à pasta</h2>
-    <p>Todos os pedidos que citam esta pasta, de quem era o ministro na época ou não. A pasta pode ter mudado de nome ou de titular.</p>
+    <p><b>Pasta</b> é o outro nome de um ministério: a área de governo que o ministro comanda. Todos os pedidos que citam esta pasta, de quem era o ministro na época ou não. A pasta pode ter mudado de nome ou de titular.</p>
     <div id="pedidos"></div>`;
   montarPedidos($("#pedidos"), p.requerimentos, ctx);
 }

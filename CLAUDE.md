@@ -13,7 +13,7 @@ python scripts/gerar.py               # gera site/dados/ a partir de dados/
 python -m http.server 8000 -d site    # servir local
 ```
 
-Sem build nem linter. CI (`.github/workflows/testes.yml`): pytest + teste JS, fumaça no navegador (job próprio) e `actionlint` nos workflows. Os testes não rodam na master, só em branch/PR.
+Sem build nem linter. CI (`.github/workflows/testes.yml`): pytest + teste JS, fumaça no navegador (job próprio) e `actionlint` nos workflows. Os testes rodam só em PR (não no push); rode `pytest` localmente antes do push.
 
 ## Estrutura
 
@@ -27,6 +27,7 @@ Sem build nem linter. CI (`.github/workflows/testes.yml`): pytest + teste JS, fu
 - Texto, comentários, commits e mensagens em português.
 - Endpoint novo: registrar em `ENDPOINTS.md` e o conjunto no `CHANGELOG.md` (`tests/test_endpoints_doc.py` exige todo host externo consultado em `ENDPOINTS.md`). Ideias pendentes: `FUTURAS_IMPLEMENTACOES.md`.
 - Testes nunca acessam a internet; simule a resposta no formato real da API. Mudou um coletor por mudança na API: regrave amostras com `python scripts/contrato_apis.py --gravar <nome>`.
+- Ligação entre dados (fonte -> pessoa, mandato, ministro, fornecedor, proposição etc.) criada, alterada ou removida: atualize `site/mapa-dados.html` (página "Mapa dos dados", sem nomes de pessoas) no mesmo commit.
 - Commits de dados diários (`Dados atualizados em ...`, `Histórico diário ...`) vêm do Actions; não edite `dados/` à mão.
 - Nunca faça push direto na `master`.
 - `develop` é a branch permanente de integração (nunca apague, nem recrie): a `master` só recebe o que passou no PR e a `develop` tem tudo da `master` mais as implementações novas. A sessão faz commit na própria branch, rebaseia sobre `origin/develop`, roda `pytest`, dá push em `develop` e então apaga a branch da sessão no remoto (`git push origin --delete <branch>`). Não crie PR sem pedido.

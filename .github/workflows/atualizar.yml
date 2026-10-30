@@ -7,6 +7,7 @@ on:
 
 permissions:
   contents: write   # salvar o cache de dados no repositório
+  issues: write   # abrir o aviso quando a develop não sincroniza com a master
   pages: write
   id-token: write
 
@@ -477,6 +478,8 @@ jobs:
       - name: Sincronizar a develop com a master (dados do dia e commits de merge)
         # a develop é a branch de integração das sessões; sem isso ela fica com dados velhos. Usa uma worktree à parte para não mexer no checkout dos passos seguintes
         continue-on-error: true   # conflito ou falha aqui deixa a develop como estava e não impede a publicação
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
           if ! git ls-remote --exit-code --heads origin develop > /dev/null; then echo "Sem develop no remoto; pulando."; exit 0; fi
           sincronizar() {
@@ -487,11 +490,20 @@ jobs:
             git -C "$RUNNER_TEMP/develop" push -q origin develop
           }
           # a primeira tentativa usa histórico raso; sem base comum nele, baixa o histórico inteiro e repete
+          avisar() {
+            echo "::warning::Não foi possível sincronizar a develop com a master (conflito?); resolva à mão."
+            titulo="A develop não sincronizou com a master"
+            corpo="O passo de sincronização do workflow não conseguiu juntar a master na develop (provável conflito). Execução: $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID. Resolva à mão: git checkout develop && git merge origin/master && git push origin develop. A issue fecha sozinha quando a sincronização voltar a funcionar."
+            aberta=$(gh issue list --state open --search "\"$titulo\" in:title" --json number --jq '.[0].number')
+            if [ -n "$aberta" ]; then gh issue comment "$aberta" --body "$corpo" || true; else gh issue create --title "$titulo" --body "$corpo" || true; fi
+          }
           if ! sincronizar; then
             git worktree remove --force "$RUNNER_TEMP/develop" 2> /dev/null || true
             git fetch -q --unshallow origin || true
-            sincronizar || { echo "::warning::Não foi possível sincronizar a develop com a master (conflito?); resolva à mão."; exit 1; }
+            sincronizar || { avisar; exit 1; }
           fi
+          aberta=$(gh issue list --state open --search "\"A develop não sincronizou com a master\" in:title" --json number --jq '.[0].number')
+          if [ -n "$aberta" ]; then gh issue close "$aberta" --comment "Sincronização restabelecida." || true; fi
           git worktree remove --force "$RUNNER_TEMP/develop" 2> /dev/null || true
 
       - name: Atualizar os feeds RSS do Fique informado (últimos 14 dias, a partir do histórico git)

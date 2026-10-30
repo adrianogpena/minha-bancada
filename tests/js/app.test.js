@@ -6,7 +6,7 @@ const path = require("node:path");
 globalThis.window = {};
 const js = (nome) => require(path.join(__dirname, "../../site/assets/js", nome));
 const { esc, reais, reaisCentavos, pct, data, semAcento, urlSegura } = js("util.js");
-const { urlLegivel, fontes, temResultado, movimentadoNoAno, desfecho } = js("apis.js");
+const { urlLegivel, fontes, temResultado, quorumCamara, movimentadoNoAno, desfecho } = js("apis.js");
 const { resumosEstadual } = js("estadual.js");
 const { linksRedes } = js("ficha.js");
 const { foto } = js("comum.js");
@@ -225,4 +225,11 @@ test("blocoDescricao mostra resumo, áreas e fontes, escapa HTML e some sem desc
   assert.match(v, /<li>Sem link<\/li>/);
   assert.doesNotMatch(v, /javascript:/);
   assert.doesNotMatch(blocoDescricao({ resumo: "x" }), /vinculados/);
+});
+
+test("quorumCamara: PLP e PEC têm mínimo; requerimento e projeto comum não", () => {
+  assert.equal(quorumCamara("PLP 281/2019", "Rejeitada a Subemenda").minimo, 257);
+  assert.equal(quorumCamara("PEC 45/2019", "Aprovada a Emenda").minimo, 308);
+  assert.equal(quorumCamara("PLP 281/2019", "Aprovado o Requerimento"), null);
+  assert.equal(quorumCamara("PL 1/2020", "Aprovada"), null);
 });

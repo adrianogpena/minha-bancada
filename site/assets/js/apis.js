@@ -9,6 +9,14 @@ export const CAMARA_API = "https://dadosabertos.camara.leg.br/api/v2";
 /* Votação com resultado final (aprovada ou rejeitada); sem isso não entra na lista de votações do parlamentar. */
 export const temResultado = (v) => v.aprovada === 0 || v.aprovada === 1;
 export const resultado = (a) => (a === 1 ? ["Aprovada", "aprovada"] : a === 0 ? ["Rejeitada", "rejeitada"] : ["Sem resultado informado", "sem"]);
+/* Quórum que a Constituição exige na Câmara (513 deputados): PLP e PEC não passam só por ter mais Sim que Não. */
+export function quorumCamara(proposicao, descricao) {
+  const tipo = /^(PLP|PEC)\b/.exec(proposicao || "")?.[1];
+  if (!tipo || /requerimento/i.test(descricao || "")) return null;
+  return tipo === "PLP"
+    ? { minimo: 257, regra: "projeto de lei complementar exige maioria absoluta: metade mais um de todos os 513 deputados (art. 69 da Constituição)" }
+    : { minimo: 308, regra: "proposta de emenda à Constituição exige três quintos dos 513 deputados (art. 60 da Constituição)" };
+}
 
 // projetos de verdade; o resto (requerimentos, emendas, pareceres) só aparece em "Outros documentos"
 export const TIPOS_PROJETO = { PL: "Projeto de lei", PLP: "Projeto de lei complementar", PEC: "Proposta de emenda à Constituição", PDL: "Projeto de decreto legislativo",

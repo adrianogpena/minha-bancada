@@ -13,7 +13,7 @@ python scripts/gerar.py               # gera site/dados/ a partir de dados/
 python -m http.server 8000 -d site    # servir local
 ```
 
-Sem build nem linter. CI (`.github/workflows/testes.yml`): pytest + teste JS, fumaça no navegador (job próprio) e `actionlint` nos workflows. Os testes não rodam na master, só em branch/PR.
+Sem build nem linter. CI (`.github/workflows/testes.yml`): pytest + teste JS, fumaça no navegador (job próprio) e `actionlint` nos workflows. Os testes rodam só em PR (não no push); rode `pytest` localmente antes do push.
 
 ## Estrutura
 

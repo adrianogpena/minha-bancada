@@ -29,8 +29,8 @@ Sem build nem linter. CI (`.github/workflows/testes.yml`): pytest + teste JS, fu
 - Testes nunca acessam a internet; simule a resposta no formato real da API. Mudou um coletor por mudança na API: regrave amostras com `python scripts/contrato_apis.py --gravar <nome>`.
 - Commits de dados diários (`Dados atualizados em ...`, `Histórico diário ...`) vêm do Actions; não edite `dados/` à mão.
 - Nunca faça push direto na `master`.
-- Branch de integração `develop`: parta dela, faça commit e push nela (não na branch da sessão) e rode `pytest` antes de empurrar. Não crie PR sem pedido; o trabalho de várias sessões se acumula ali.
-- Quando o PR for pedido, abra `develop` -> `master` com auto merge ativado (`enable_pr_auto_merge`), para entrar sozinho quando os testes passarem. Depois do merge, recrie `develop` a partir da `master`.
+- `develop` é a branch permanente de integração (nunca apague, nem recrie): a `master` só recebe o que passou no PR e a `develop` tem tudo da `master` mais as implementações novas. A sessão faz commit na própria branch, rebaseia sobre `origin/develop`, roda `pytest`, dá push em `develop` e então apaga a branch da sessão no remoto (`git push origin --delete <branch>`). Não crie PR sem pedido.
+- Quando o PR for pedido (depois de N implementações), abra `develop` -> `master` com auto merge ativado (`enable_pr_auto_merge`). Depois do merge, traga a `master` de volta: `git checkout develop && git merge origin/master && git push origin develop`.
 
 ## Dados sem duplicação
 

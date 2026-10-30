@@ -248,7 +248,7 @@ export async function paginaDeputado() {
     ${fontes([["Cadastro do deputado (API da Câmara)", `${CAMARA_API}/deputados/${encodeURIComponent(dep.id)}`], ["Portal da Câmara", `https://www.camara.leg.br/deputados/${encodeURIComponent(dep.id)}`]])}`;
 
   montarParlamentar(alvo, {
-    nome: dep.nome, foto: dep, antes: dep.ministro ? await avisoLicenca(dep.ministro, "deputado federal") : "",
+    nome: dep.nome, fichas: [`dep:${dep.id}`], foto: dep, antes: dep.ministro ? await avisoLicenca(dep.ministro, "deputado federal") : "",
     painelEleicao: painelEleicao(dep.nome, dep.eleicao, { suplente: /suplente/i.test(dep.condicao || ""), condicao: dep.condicao, cargoTse: "DEPUTADO FEDERAL",
       fontes: [["Cadastro do deputado (API da Câmara)", `${CAMARA_API}/deputados/${encodeURIComponent(dep.id)}`]] }),
     subtitulo: `<span class="selo">${esc(dep.partido)}/${esc(dep.uf)}</span> ${dep.situacao ? esc(dep.situacao) : ""}`,

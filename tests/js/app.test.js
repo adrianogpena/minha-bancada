@@ -12,7 +12,7 @@ const { linksRedes } = js("ficha.js");
 const { foto } = js("comum.js");
 const { blocoDescricao } = js("ministros.js");
 const { painelEmendas, ehPix } = js("emendas.js");
-const { agruparPeriodos, chaveDe, juntarDias } = js("historico.js");
+const { agruparPeriodos, chaveDe, juntarDias, doPolitico, maisRecente } = js("historico.js");
 
 test("temResultado deixa de fora a votação sem aprovada nem rejeitada", () => {
   assert.equal(temResultado({ aprovada: 1 }), true);
@@ -184,6 +184,21 @@ test("agruparPeriodos junta dias em semanas (segunda a domingo) e meses", () => 
   assert.deepEqual(agruparPeriodos(indice, "semana").map((g) => [g.chave, g.total]), [["2026-10-26", 1], ["2026-10-19", 5], ["2026-09-28", 4]]);
   assert.deepEqual(agruparPeriodos(indice, "mes").map((g) => [g.chave, g.dias.length]), [["2026-10", 3], ["2026-09", 1]]);
   assert.equal(chaveDe("semana", "2026-10-25"), "2026-10-19");
+  const g = agruparPeriodos(indice, "30dias");
+  assert.deepEqual(g.map((x) => [x.chave, x.dias.length, x.total]), [["recentes", 4, 10]]);
+});
+
+test("maisRecente ordena por dia, do mais novo ao mais antigo, e mantém a ordem do arquivo no mesmo dia", () => {
+  const e = [{ t: "a", _dia: "2026-10-19", _n: 0 }, { t: "b", _dia: "2026-10-20", _n: 2 }, { t: "c", _dia: "2026-10-20", _n: 1 }];
+  assert.deepEqual([...e].sort(maisRecente).map((x) => x.t), ["c", "b", "a"]);
+});
+
+test("doPolitico casa o evento pelo código ou pela página do político", () => {
+  const e = { politicos: [{ codigo: null, pagina: "politico.html?f=senado&i=9" }, { codigo: "dep:1" }] };
+  assert.ok(doPolitico(e, ["dep:1"]));
+  assert.ok(doPolitico(e, ["x", "politico.html?f=senado&i=9"]));
+  assert.ok(!doPolitico(e, ["dep:2"]));
+  assert.ok(!doPolitico({}, ["dep:1"]));
 });
 
 test("juntarDias soma contagens, marca o dia de cada evento e só dá cobertura vazia a quem não teve item no período", () => {

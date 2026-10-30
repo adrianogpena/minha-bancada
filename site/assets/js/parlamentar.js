@@ -4,6 +4,7 @@ import { VOTOS, foto, selo, legenda, listaPaginada, abas, ligarAbas } from "./co
 import { CAMARA_API, resultado, desfecho, movimentadoNoAno, fontes } from "./apis.js";
 import { barraPlacar } from "./votacoes.js";
 import { LEGENDA_PROJETOS, avisoDados } from "./executivo.js";
+import { abaEventos, painelEventos, montarEventos } from "./eventos.js";
 
 const TIPOS_SESSAO = { DOR: "Sessão deliberativa ordinária", DEX: "Sessão deliberativa extraordinária", NOR: "Sessão não deliberativa", ESP: "Sessão especial" };
 
@@ -75,13 +76,16 @@ export function montarParlamentar(alvo, c) {
       <button type="button" role="tab" id="aba-eleicao" aria-controls="painel-eleicao" data-aba="eleicao">Quem o elegeu?</button>
       <button type="button" role="tab" id="aba-votacoes" aria-controls="painel-votacoes" data-aba="votacoes">Votações <small>${linhaDoTempo.length}</small></button>
       <button type="button" role="tab" id="aba-propostas" aria-controls="painel-propostas" data-aba="propostas">Propostas <small>${c.proposicoes.length}</small></button>
+      ${abaEventos}
     </div>
     <div role="tabpanel" id="painel-perfil" aria-labelledby="aba-perfil">${c.painelPerfil}</div>
     <div role="tabpanel" id="painel-eleicao" aria-labelledby="aba-eleicao" hidden>${c.painelEleicao}</div>
     <div role="tabpanel" id="painel-votacoes" aria-labelledby="aba-votacoes" hidden>${painelVotacoes}</div>
-    <div role="tabpanel" id="painel-propostas" aria-labelledby="aba-propostas" hidden>${painelPropostas}</div>`;
+    <div role="tabpanel" id="painel-propostas" aria-labelledby="aba-propostas" hidden>${painelPropostas}</div>
+    ${painelEventos}`;
 
   ligarAbas(alvo);
+  montarEventos(alvo, c.fichas);
 
   /* --- aba Votações --- */
   const textoPlacar = (v) => {

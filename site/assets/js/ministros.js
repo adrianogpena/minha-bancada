@@ -3,6 +3,7 @@ import { $, esc, data, param, carregar, numeroBr, pct, urlSegura } from "./util.
 import { erro, listaPaginada, abas, ligarAbas, foto, itemFicha } from "./comum.js";
 import { fontes, CAMARA_API, SENADO_API, linkTramitacao } from "./apis.js";
 import { linkCF, semFonte } from "./ficha.js";
+import { abaEventos, painelEventos, montarEventos } from "./eventos.js";
 
 const PLANALTO = "https://www.gov.br/planalto/pt-br/conheca-a-presidencia/ministros-e-ministras";
 const NATUREZAS = { informacao: "Requerimento de informação", convocacao: "Convocação", convite: "Convite" };
@@ -168,12 +169,15 @@ export async function paginaMinistro() {
     <div class="abas-pagina" role="tablist" aria-label="Seções do perfil">
       <button type="button" role="tab" id="aba-perfil" aria-controls="painel-perfil" data-aba="perfil">Perfil</button>
       <button type="button" role="tab" id="aba-eleicao" aria-controls="painel-eleicao" data-aba="eleicao">Quem o elegeu?</button>
+      ${abaEventos}
       <button type="button" role="tab" id="aba-contas" aria-controls="painel-contas" data-aba="contas">Prestação de contas <small>${numeroBr(m.cargos.reduce((n, c) => n + c.requerimentos.length, 0))}</small></button>
     </div>
     <div role="tabpanel" id="painel-perfil" aria-labelledby="aba-perfil">${painelPerfil}</div>
     <div role="tabpanel" id="painel-eleicao" aria-labelledby="aba-eleicao" hidden>${painelEleicao}</div>
-    <div role="tabpanel" id="painel-contas" aria-labelledby="aba-contas" hidden>${painelContas}</div>`;
+    <div role="tabpanel" id="painel-contas" aria-labelledby="aba-contas" hidden>${painelContas}</div>
+    ${painelEventos}`;
   ligarAbas(alvo);
+  montarEventos(alvo, [...m.cargos.filter((c) => c.atual).map((c) => `min:${c.pasta}`), `ministro.html?id=${id}`]);
   const lista = m.cargos.flatMap((c, i) => pedidosDe(c, i)).sort((a, b) => (b.data || "").localeCompare(a.data || ""));
   montarPedidos($("#pedidos"), lista, ctx);
 }

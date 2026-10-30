@@ -11,6 +11,7 @@ const path = require("node:path");
 
 const RAIZ = path.resolve(__dirname, "../..");
 const TIPOS = { ".html": "text/html; charset=utf-8", ".js": "text/javascript", ".css": "text/css", ".json": "application/json", ".svg": "image/svg+xml" };
+// quem não tem emenda não tem arquivo em /dados/emendas/<pessoa>.json (tratado abaixo, por prefixo)
 // arquivos opcionais: a página trata a ausência (try/catch), mas o navegador registra o 404
 const OPCIONAIS = ["/dados/executivo.json", "/dados/historico/indice.json", "/dados/indice/BR.json", "/dados/municipios_ibge.json", "/dados/status_apis.json", "/geo/br.json", "/dados/tramitacao/900.json", "/chave_publica.json", "/favicon.ico"];
 
@@ -72,7 +73,7 @@ for (const [pagina, texto, estado = "visible"] of PAGINAS) {
     aba.on("console", (m) => { if (m.type() === "error" && !/Failed to load resource/.test(m.text())) problemas.push(`console: ${m.text()}`); });
     aba.on("response", (r) => {
       const u = new URL(r.url());
-      if (r.url().startsWith(base) && r.status() >= 400 && !OPCIONAIS.includes(u.pathname)) problemas.push(`${r.status()} ${u.pathname}`);
+      if (r.url().startsWith(base) && r.status() >= 400 && !OPCIONAIS.includes(u.pathname) && !u.pathname.startsWith("/dados/emendas/")) problemas.push(`${r.status()} ${u.pathname}`);
     });
     // nada de internet no teste: fontes, imagens e APIs externas são cortadas
     await aba.route((u) => !u.href.startsWith(base), (rota) => rota.abort());

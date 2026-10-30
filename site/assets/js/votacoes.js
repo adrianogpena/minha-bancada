@@ -1,7 +1,7 @@
 /* Lista de votações e detalhe de uma votação. */
 import { $, esc, data, dataHora, semAcento, param, carregar } from "./util.js";
 import { VOTOS, selo, listaPaginada, erro, semDadosLocais, filtrosNaUrl, botaoVoltar } from "./comum.js";
-import { CAMARA_API, fontes, SENADO_API, linkMateriaSenado } from "./apis.js";
+import { CAMARA_API, quorumCamara, fontes, SENADO_API, linkMateriaSenado } from "./apis.js";
 
 /* ---------- lista de votações ---------- */
 export function barraPlacar(placar) {
@@ -40,6 +40,9 @@ export async function paginaVotacao() {
   v.votos.sort((a, b) => a.nome.localeCompare(b.nome, "pt-BR"));
   const partidos = Object.entries(v.porPartido).sort((a, b) => Object.values(b[1]).reduce((x, y) => x + y, 0) - Object.values(a[1]).reduce((x, y) => x + y, 0));
 
+  const q = senado ? null : quorumCamara(v.proposicao, v.descricao);
+  const nota = q ? `<p class="aviso">Por que o resultado não depende só de quem tem mais votos: ${esc(q.regra)}. Aqui o mínimo era <b>${q.minimo} votos Sim</b>; foram <b>${v.placar.sim || 0}</b>. Quem não votou ou faltou conta, na prática, como "não".</p>` : "";
+
   alvo.innerHTML = `
     ${botaoVoltar("Votações", "votacoes.html")}
     <section class="abertura">
@@ -51,6 +54,7 @@ export async function paginaVotacao() {
     </section>
     <section class="painel">
       <div class="painel-titulo"><h2>Placar</h2><p>${v.aprovada === 1 ? "Aprovada" : v.aprovada === 0 ? "Rejeitada" : ""}</p></div>
+      ${nota}
       ${v.secreta ? `<p class="aviso">Votação secreta: o Senado informa que cada senador votou, mas não como. O voto individual não é público.</p>` : ""}
       ${barraPlacar(v.placar)}
       <div class="numeros">

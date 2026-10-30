@@ -153,6 +153,7 @@ def test_descricao_cobre_todas_as_pastas():
         assert all(a.strip() for a in d["areas"]), chave
         assert d["site"].startswith("https://www.gov.br/"), chave
         assert all(b["rotulo"] and b["url"].startswith("https://") for b in d["base"]), chave
+        assert all(v["nome"].strip() and v["url"].startswith("https://") for v in d.get("vinculados", [])), chave
 
 
 def test_descricoes_avisa_pasta_sem_descricao(tmp_path, capsys):

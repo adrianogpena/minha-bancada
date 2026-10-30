@@ -220,4 +220,9 @@ test("blocoDescricao mostra resumo, áreas e fontes, escapa HTML e some sem desc
   assert.match(html, /Lei 14\.600\/2023, art\. 45/);
   assert.match(html, /Site oficial do ministério/);
   assert.doesNotMatch(blocoDescricao({ resumo: "x", site: "javascript:alert(1)" }), /javascript:/);
+  const v = blocoDescricao({ resumo: "x", vinculados: [{ nome: "Anvisa <i>", url: "https://www.gov.br/anvisa" }, { nome: "Sem link", url: "javascript:alert(1)" }] });
+  assert.match(v, /<a href="https:\/\/www\.gov\.br\/anvisa" rel="noopener">Anvisa &lt;i&gt;<\/a>/);
+  assert.match(v, /<li>Sem link<\/li>/);
+  assert.doesNotMatch(v, /javascript:/);
+  assert.doesNotMatch(blocoDescricao({ resumo: "x" }), /vinculados/);
 });

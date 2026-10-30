@@ -25,10 +25,12 @@ export function situacaoPedido(r, hoje = hojeIso()) {
 export function blocoDescricao(d) {
   if (!d || !d.resumo) return "";
   const areas = (d.areas || []).map((a) => `<li>${esc(a)}</li>`).join("");
+  const vinc = (d.vinculados || []).filter((v) => v && v.nome).map((v) => `<li>${urlSegura(v.url) ? `<a href="${esc(v.url)}" rel="noopener">${esc(v.nome)}</a>` : esc(v.nome)}</li>`).join("");
   const site = urlSegura(d.site) ? [["Site oficial do ministério", d.site]] : [];
   return `<h2>O que faz</h2>
     <p>${esc(d.resumo)}</p>
     ${areas ? `<p class="quando">Principais áreas de atuação:</p><ul class="lista-simples">${areas}</ul>` : ""}
+    ${vinc ? `<p class="quando">Órgãos e entidades vinculados (como lista a página do ministério):</p><ul class="lista-simples">${vinc}</ul>` : ""}
     <p class="nota-lista">Resumo escrito pelo projeto a partir da lei de organização dos ministérios${d.revisadoEm ? ` (revisado em ${esc(data(d.revisadoEm, true))})` : ""}; vale o texto da lei.</p>
     ${fontes([...(d.base || []).map((b) => [b.rotulo, b.url]), ...site])}`;
 }

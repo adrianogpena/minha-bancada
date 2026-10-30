@@ -669,6 +669,51 @@ def test_coletar_deputado_grava_complementos_da_ficha(dados, monkeypatch):
     assert any(p.get("itens") == coletar.DISCURSOS_RECENTES and p["dataInicio"] == coletar.INICIO_LEGISLATURA for p in discursos)
 
 
+def test_complementos_leitura_incremental_so_pede_o_novo_e_soma_ao_guardado(dados, monkeypatch):
+    monkeypatch.setattr(coletar, "coletar_proposicoes", lambda dep: [])
+    hoje = dt.date.today()
+    corte = (hoje - dt.timedelta(days=10)).isoformat()
+    novo_dia = hoje.isoformat()
+    antigo = (hoje - dt.timedelta(days=30)).isoformat()
+    coletar.salvar(dados / "deputados" / "7.json", {
+        "complementosEm": antigo, "eventos": {"total": 5, "porAno": {"2025": 5}, "recentes": [
+            {"id": 3, "data": "2025-12-01", "tipo": "T", "titulo": None, "orgao": None}]},
+        "leituraIncremental": {
+            "discursos": {"corte": corte, "completaEm": hoje.isoformat(),
+                          "base": {"porAno": {"2025": 4}, "porTipo": {"Pela Ordem": 4}, "palavras": {"saude": 3}}},
+            "eventos": {"corte": corte, "completaEm": hoje.isoformat(), "base": {"porAno": {"2025": 5}}}}})
+    rotas = {**ROTAS_COMPLEMENTOS,
+             "/deputados/7/discursos": lambda **p: {"dados": [{"dataHoraInicio": f"{novo_dia}T10:00", "tipoDiscurso": "PELA ORDEM",
+                                                               "sumario": "Saude publica"}]},
+             "/deputados/7/eventos": lambda **p: {"dados": [{"id": 9, "dataHoraInicio": f"{novo_dia}T10:00", "descricaoTipo": "Audiência",
+                                                             "descricao": "Debate", "orgaos": []}]}}
+    chamadas = roteador(monkeypatch, rotas)
+    d = coletar.coletar_deputado({"id": 7, "nome": "F"}, 2025)
+    pedidos = [p for c, p in chamadas if c in ("/deputados/7/eventos", "/deputados/7/discursos") and p.get("itens") != coletar.DISCURSOS_RECENTES]
+    assert pedidos and all(p["dataInicio"] == corte for p in pedidos)
+    assert d["discursosResumo"]["total"] == 5 and d["discursosResumo"]["porTipo"] == {"Pela Ordem": 5}
+    assert d["discursosResumo"]["temas"] == [["saude", 4]]
+    assert d["eventos"]["total"] == 6 and d["eventos"]["porAno"] == {str(hoje.year): 1, "2025": 5}
+    assert [r["id"] for r in d["eventos"]["recentes"]] == [9, 3]
+    # o do dia fica de fora da contagem guardada (será relido); o antigo permanece
+    assert d["leituraIncremental"]["eventos"]["base"] == {"porAno": {"2025": 5}}
+    assert d["leituraIncremental"]["discursos"]["base"]["porAno"] == {"2025": 4}
+
+
+def test_complementos_leitura_completa_quando_a_de_seguranca_venceu(dados, monkeypatch):
+    monkeypatch.setattr(coletar, "coletar_proposicoes", lambda dep: [])
+    hoje = dt.date.today()
+    velho = (hoje - dt.timedelta(days=coletar.RENOVAR_COMPLETA_DIAS + 1)).isoformat()
+    coletar.salvar(dados / "deputados" / "7.json", {
+        "complementosEm": velho,
+        "leituraIncremental": {"eventos": {"corte": velho, "completaEm": velho, "base": {"porAno": {"2025": 99}}}}})
+    chamadas = roteador(monkeypatch, ROTAS_COMPLEMENTOS)
+    d = coletar.coletar_deputado({"id": 7, "nome": "F"}, 2025)
+    assert any(c == "/deputados/7/eventos" and p["dataInicio"] == coletar.INICIO_LEGISLATURA for c, p in chamadas)
+    assert d["eventos"]["total"] == 2  # a contagem guardada (99) foi descartada
+    assert d["leituraIncremental"]["eventos"]["completaEm"] == hoje.isoformat()
+
+
 def test_coletar_deputado_complementos_recentes_nao_consultam_de_novo(dados, monkeypatch):
     monkeypatch.setattr(coletar, "coletar_proposicoes", lambda dep: [])
     coletar.salvar(dados / "deputados" / "7.json", {"profissoes": [{"titulo": "Médico", "desde": None}], "mandatosExternos": [], "historico": [],

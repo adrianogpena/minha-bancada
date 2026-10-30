@@ -10,6 +10,7 @@ const { urlLegivel, fontes, temResultado, movimentadoNoAno, desfecho } = js("api
 const { resumosEstadual } = js("estadual.js");
 const { linksRedes } = js("ficha.js");
 const { foto } = js("comum.js");
+const { blocoDescricao } = js("ministros.js");
 const { agruparPeriodos, chaveDe, juntarDias } = js("historico.js");
 
 test("temResultado deixa de fora a votação sem aprovada nem rejeitada", () => {
@@ -206,4 +207,17 @@ test("juntarDias: mudança em qualquer dia vale para o período, falha antiga n�
   assert.deepEqual([j.cobertura.A.mudancas, j.cobertura.A.foraDaJanela, j.cobertura.A.ultimaMudanca], [["verbas"], 2, "2026-10-19"]);
   assert.equal(j.cobertura.B.status, "parado");
   assert.equal(j.cobertura.C.status, "irrelevante");
+});
+
+test("blocoDescricao mostra resumo, áreas e fontes, escapa HTML e some sem descrição", () => {
+  assert.equal(blocoDescricao(undefined), "");
+  assert.equal(blocoDescricao({}), "");
+  const html = blocoDescricao({ resumo: "Cuida de <b>tudo</b>", areas: ["Saúde & vida"], site: "https://www.gov.br/saude",
+    base: [{ rotulo: "Lei 14.600/2023, art. 45", url: "https://www.planalto.gov.br/x" }], revisadoEm: "2026-10-30" });
+  assert.match(html, /O que faz/);
+  assert.match(html, /Cuida de &lt;b&gt;tudo&lt;\/b&gt;/);
+  assert.match(html, /Saúde &amp; vida/);
+  assert.match(html, /Lei 14\.600\/2023, art\. 45/);
+  assert.match(html, /Site oficial do ministério/);
+  assert.doesNotMatch(blocoDescricao({ resumo: "x", site: "javascript:alert(1)" }), /javascript:/);
 });

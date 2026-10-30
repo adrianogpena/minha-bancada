@@ -153,3 +153,12 @@ def test_descricao_cobre_todas_as_pastas():
         assert all(a.strip() for a in d["areas"]), chave
         assert d["site"].startswith("https://www.gov.br/"), chave
         assert all(b["rotulo"] and b["url"].startswith("https://") for b in d["base"]), chave
+
+
+def test_descricoes_avisa_pasta_sem_descricao(tmp_path, capsys):
+    arq = tmp_path / "d.json"
+    arq.write_text('{"saude": {"resumo": "x"}, "inexistente": {"resumo": "y"}}', encoding="utf-8")
+    d = gerar_ministros.descricoes(arq)
+    assert list(d) == ["saude"]
+    assert "sem descrição" in capsys.readouterr().err
+    assert set(gerar_ministros.descricoes()) == set(ministerios.PASTAS)

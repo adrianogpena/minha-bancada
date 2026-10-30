@@ -21,6 +21,18 @@ export function situacaoPedido(r, hoje = hojeIso()) {
   return ["Ainda não enviado ao ministério", "sem", "sem-envio"];
 }
 
+/* Bloco "O que faz" de uma pasta (descrição escrita pelo projeto a partir da Lei 14.600/2023); vazio quando a pasta não tem descrição. */
+export function blocoDescricao(d) {
+  if (!d || !d.resumo) return "";
+  const areas = (d.areas || []).map((a) => `<li>${esc(a)}</li>`).join("");
+  const site = urlSegura(d.site) ? [["Site oficial do ministério", d.site]] : [];
+  return `<h2>O que faz</h2>
+    <p>${esc(d.resumo)}</p>
+    ${areas ? `<p class="quando">Principais áreas de atuação:</p><ul class="lista-simples">${areas}</ul>` : ""}
+    <p class="nota-lista">Resumo escrito pelo projeto a partir da lei de organização dos ministérios${d.revisadoEm ? ` (revisado em ${esc(data(d.revisadoEm, true))})` : ""}; vale o texto da lei.</p>
+    ${fontes([...(d.base || []).map((b) => [b.rotulo, b.url]), ...site])}`;
+}
+
 function autoresDe(r, ctx) {
   if (r.fonte === "camara") {
     return r.autores.map((id) => {
@@ -123,9 +135,10 @@ export async function paginaMinistro() {
     return c.requerimentos.map((rid) => todos.get(rid)).filter(Boolean);
   };
 
-  const cargos = m.cargos.map((c) => `
+  const cargos = m.cargos.map((c, i) => `
     <dt>${c.atual ? "Cargo" : "Cargo anterior"}</dt><dd>${esc(nomeCargo(c))} <span class="fonte-link"><span class="rotulo-fonte">Fonte</span> <a href="${PLANALTO}" rel="noopener">Ministros e Ministras (Planalto)</a></span><br>
       <a href="ministerios.html?pasta=${encodeURIComponent(c.pasta)}">Ver o ministério e os pedidos feitos à pasta</a></dd>
+    ${pastas[i].descricao?.resumo ? itemFicha(["O que a pasta faz", `${esc(pastas[i].descricao.resumo)} <a href="ministerios.html?pasta=${encodeURIComponent(c.pasta)}">Ver detalhes</a>`, true]) : ""}
     ${itemFicha(["No cargo desde", textoInicio(c, parl), true])}
     ${c.nomeadoPor ? itemFicha(["Nomeado por", `${esc(c.nomeadoPor)}, presidente na data da posse ${fonteWikipedia(c)}`, true]) : ""}
     ${itemFicha(["No cargo até", c.atual ? semPrazo : `${esc(data(c.fim, true))} (último dia em que o nome constava na lista do Planalto) <span class="fonte-link"><span class="rotulo-fonte">Fonte</span> <a href="${PLANALTO}" rel="noopener">Ministros e Ministras (Planalto)</a></span>`, true])}`).join("");
@@ -192,6 +205,7 @@ async function paginaMinisterio(alvo, pasta) {
   document.title = `Ministério: ${p.nome} | Minha Bancada`;
   alvo.innerHTML = `
     <section class="abertura"><h1>${esc(p.nome)}</h1><p><a href="ministerios.html">Todos os ministérios</a></p></section>
+    ${blocoDescricao(p.descricao)}
     <h2>Ministros</h2>
     ${p.ministros.length ? `<ul class="lista-simples">${p.ministros.map((m) => `<li><a href="ministro.html?id=${encodeURIComponent(m.pessoa)}">${esc(m.nome)}</a>
       <br><span class="quando">${m.atual ? "No cargo" : "Saiu da lista do Planalto"}${m.inicioFonte === "wikipedia" ? `, desde ${esc(data(m.inicio, true))} (posse; nomeado por ${esc(m.nomeadoPor)})` : m.inicioFonte === "licenca" ? `, desde ${esc(data(m.inicio, true))} (dia da licença do mandato)` : `, na lista do Planalto desde ${esc(data(m.inicio, true))} (o Planalto não publica a data da posse)`}${m.fim ? ` até ${esc(data(m.fim, true))}` : ""}</span></li>`).join("")}</ul>`

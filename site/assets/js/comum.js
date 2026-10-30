@@ -197,6 +197,13 @@ export function ligarAbas(alvo) {
     const faixa = $(".abas-pagina", alvo), b = faixa.querySelector("[aria-selected=true]");
     if (b) faixa.scrollTo({ left: b.offsetLeft + b.offsetWidth / 2 - faixa.clientWidth / 2, behavior: "smooth" });
   }
+  /* Rolagem suave só para cima, até o painel começar logo abaixo da faixa fixa de abas (sem voltar à foto). */
+  function subirAteAbas() {
+    const faixa = $(".abas-pagina", alvo), painel = alvo.querySelector("[role=tabpanel]:not([hidden])");
+    const fixa = getComputedStyle(faixa).position === "sticky" ? faixa.getBoundingClientRect().bottom : 0;
+    const dif = painel.getBoundingClientRect().top - fixa;
+    if (dif < 0) window.scrollBy({ top: dif, behavior: "smooth" });
+  }
   function irParaAba(nome, atualizarUrl = true) {
     if (!$(`#painel-${nome}`)) nome = "perfil";
     alvo.querySelectorAll("[data-aba]").forEach((b) => b.setAttribute("aria-selected", b.dataset.aba === nome));
@@ -204,7 +211,7 @@ export function ligarAbas(alvo) {
     centralizarAba();
     if (atualizarUrl) history.replaceState(null, "", nome === "perfil" ? location.pathname + location.search : `${location.pathname}${location.search}#${nome}`);
   }
-  $(".abas-pagina", alvo).addEventListener("click", (e) => { const b = e.target.closest("[data-aba]"); if (b) irParaAba(b.dataset.aba); });
+  $(".abas-pagina", alvo).addEventListener("click", (e) => { const b = e.target.closest("[data-aba]"); if (b) { irParaAba(b.dataset.aba); subirAteAbas(); } });
   irParaAba(location.hash.slice(1), false);
   window.addEventListener("hashchange", () => irParaAba(location.hash.slice(1), false));
 }

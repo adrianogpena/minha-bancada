@@ -184,9 +184,23 @@
    {
     "rotulo": "Lei 14.600/2023, art. 20",
     "url": "https://www.planalto.gov.br/ccivil_03/_ato2023-2026/2023/lei/l14600.htm"
+   },
+   {
+    "rotulo": "Órgãos vinculados (página do ministério)",
+    "url": "https://www.gov.br/cidades/pt-br/composicao/entidades-vinculadas"
    }
   ],
-  "revisadoEm": "2026-10-30"
+  "revisadoEm": "2026-10-30",
+  "vinculados": [
+   {
+    "nome": "Companhia Brasileira de Trens Urbanos",
+    "url": "https://www.gov.br/cidades/pt-br/composicao/entidades-vinculadas/companhia-brasileira-de-trens-urbanos"
+   },
+   {
+    "nome": "Empresa de Trens Urbanos de Porto Alegre S.A.",
+    "url": "https://www.gov.br/cidades/pt-br/composicao/entidades-vinculadas/empresa-de-trens-urbanos-de-porto-alegre-s-a"
+   }
+  ]
  },
  "ciencia": {
   "resumo": "Formula as políticas nacionais de ciência, tecnologia e inovação, incluindo a política espacial e a nuclear.",
@@ -219,9 +233,31 @@
    {
     "rotulo": "Lei 14.600/2023, art. 23",
     "url": "https://www.planalto.gov.br/ccivil_03/_ato2023-2026/2023/lei/l14600.htm"
+   },
+   {
+    "rotulo": "Órgãos vinculados (página do ministério)",
+    "url": "https://www.gov.br/mcom/pt-br/composicao/orgaos-vinculados"
    }
   ],
-  "revisadoEm": "2026-10-30"
+  "revisadoEm": "2026-10-30",
+  "vinculados": [
+   {
+    "nome": "Anatel",
+    "url": "https://www.gov.br/mcom/pt-br/composicao/orgaos-vinculados/anatel"
+   },
+   {
+    "nome": "Correios",
+    "url": "https://www.gov.br/mcom/pt-br/composicao/orgaos-vinculados/correios"
+   },
+   {
+    "nome": "Telebras",
+    "url": "https://www.gov.br/mcom/pt-br/composicao/orgaos-vinculados/telebras"
+   },
+   {
+    "nome": "link para Copiar para área de transferência",
+    "url": "https://www.gov.br/mcom/pt-br/composicao/orgaos-vinculados"
+   }
+  ]
  },
  "cultura": {
   "resumo": "Formula a política nacional de cultura e das artes e protege o patrimônio histórico, artístico e cultural.",
@@ -237,9 +273,47 @@
    {
     "rotulo": "Lei 14.600/2023, art. 21",
     "url": "https://www.planalto.gov.br/ccivil_03/_ato2023-2026/2023/lei/l14600.htm"
+   },
+   {
+    "rotulo": "Órgãos vinculados (página do ministério)",
+    "url": "https://www.gov.br/cultura/pt-br/composicao/entidades-vinculadas"
    }
   ],
-  "revisadoEm": "2026-10-30"
+  "revisadoEm": "2026-10-30",
+  "vinculados": [
+   {
+    "nome": "Agência Nacional do Cinema - Ancine",
+    "url": "https://www.gov.br/cultura/pt-br/entidades-vinculadas/agencia-nacional-do-cinema-ancine"
+   },
+   {
+    "nome": "Instituto do Patrimônio Histórico e Artístico Nacional - Iphan",
+    "url": "https://www.gov.br/cultura/pt-br/entidades-vinculadas/instituto-do-patrimonio-historico-e-artistico-nacional-iphan"
+   },
+   {
+    "nome": "Instituto Brasileiro de Museus - Ibram",
+    "url": "https://www.gov.br/cultura/pt-br/entidades-vinculadas/instituto-brasileiro-de-museus-ibram"
+   },
+   {
+    "nome": "Fundação Biblioteca Nacional - FBN",
+    "url": "https://www.gov.br/cultura/pt-br/entidades-vinculadas/fundacao-biblioteca-nacional-fbn"
+   },
+   {
+    "nome": "Fundação Casa de Rui Barbosa - FCRB",
+    "url": "https://www.gov.br/cultura/pt-br/entidades-vinculadas/fundacao-casa-de-rui-barbosa-fcrb"
+   },
+   {
+    "nome": "Fundação Cultural Palmares - FCP",
+    "url": "https://www.gov.br/cultura/pt-br/entidades-vinculadas/fundacao-cultural-palmares-fcp"
+   },
+   {
+    "nome": "Fundação Nacional de Artes - Funarte",
+    "url": "https://www.gov.br/cultura/pt-br/entidades-vinculadas/fundacao-nacional-de-artes-funarte"
+   },
+   {
+    "nome": "link para Copiar para área de transferência",
+    "url": "https://www.gov.br/cultura/pt-br/entidades-vinculadas"
+   }
+  ]
  },
  "defesa": {
   "resumo": "Dirige a política de defesa do país e as Forças Armadas (Marinha, Exército e Aeronáutica).",
@@ -256,9 +330,55 @@
    {
     "rotulo": "Lei 14.600/2023, art. 24",
     "url": "https://www.planalto.gov.br/ccivil_03/_ato2023-2026/2023/lei/l14600.htm"
+   },
+   {
+    "rotulo": "Órgãos vinculados (página do ministério)",
+    "url": "https://www.gov.br/defesa/pt-br/composicao/orgaos-vinculados"
    }
   ],
-  "revisadoEm": "2026-10-30"
+  "revisadoEm": "2026-10-30",
+  "vinculados": [
+   {
+    "nome": "Marinha do Brasil",
+    "url": "https://www.gov.br/defesa/pt-br/assuntos/marinha"
+   },
+   {
+    "nome": "Exército Brasileiro",
+    "url": "https://www.gov.br/defesa/pt-br/assuntos/exercito"
+   },
+   {
+    "nome": "Força Aérea Brasileira",
+    "url": "https://www.gov.br/defesa/pt-br/assuntos/aeronautica"
+   },
+   {
+    "nome": "Hospital das Forças Armadas - HFA",
+    "url": "https://www.gov.br/hfa/pt-br"
+   },
+   {
+    "nome": "Escola Superior de Guerra - ESG",
+    "url": "https://www.gov.br/esg"
+   },
+   {
+    "nome": "Escola Superior de Defesa - ESD",
+    "url": "https://www.gov.br/esd/pt-br"
+   },
+   {
+    "nome": "Centro de Apoio a Sistemas Logísticos de Defesa",
+    "url": "https://www.gov.br/caslode/pt-br"
+   },
+   {
+    "nome": "Conselho Superior de Governança do Ministério da Defesa",
+    "url": "https://www.gov.br/defesa/pt-br/orgaos-vinculados/conselho-superior-de-governanca-do-ministerio-da-defesa"
+   },
+   {
+    "nome": "Centro Gestor e Operacional do Sistema de Proteção da Amazônia - CENSIPAM",
+    "url": "https://www.gov.br/censipam/pt-br"
+   },
+   {
+    "nome": "Representação do Brasil na Junta Interamericana de Defesa - RBJID",
+    "url": "https://www.gov.br/defesa/pt-br/assuntos/rbjid"
+   }
+  ]
  },
  "desenvolvimento_social": {
   "resumo": "Cuida da assistência social, da transferência de renda (como o Bolsa Família) e da segurança alimentar e do combate à fome.",
@@ -294,9 +414,35 @@
    {
     "rotulo": "Lei 14.600/2023, art. 34",
     "url": "https://www.planalto.gov.br/ccivil_03/_ato2023-2026/2023/lei/l14600.htm"
+   },
+   {
+    "rotulo": "Órgãos vinculados (página do ministério)",
+    "url": "https://www.gov.br/mdic/pt-br/composicao/entidades-vinculadas"
    }
   ],
-  "revisadoEm": "2026-10-30"
+  "revisadoEm": "2026-10-30",
+  "vinculados": [
+   {
+    "nome": "Instituto Nacional da Propriedade Industrial - INPI",
+    "url": "https://www.gov.br/mdic/pt-br/composicao/entidades-vinculadas/instituto-nacional-da-propriedade-industrial-inpi"
+   },
+   {
+    "nome": "Instituto Nacional de Metrologia, Qualidade e Tecnologia - Inmetro",
+    "url": "https://www.gov.br/mdic/pt-br/composicao/entidades-vinculadas/instituto-nacional-de-metrologia-qualidade-e-tecnologia-inmetro"
+   },
+   {
+    "nome": "Superintendência da Zona Franca de Manaus - Suframa",
+    "url": "https://www.gov.br/mdic/pt-br/composicao/entidades-vinculadas/superintendencia-da-zona-franca-de-manaus-suframa"
+   },
+   {
+    "nome": "Banco Nacional de Desenvolvimento Econômico e Social - BNDES",
+    "url": "https://www.gov.br/mdic/pt-br/composicao/entidades-vinculadas/banco-nacional-de-desenvolvimento-economico-e-social-bndes"
+   },
+   {
+    "nome": "link para Copiar para área de transferência",
+    "url": "https://www.gov.br/mdic/pt-br/composicao/entidades-vinculadas"
+   }
+  ]
  },
  "direitos_humanos": {
   "resumo": "Promove e defende os direitos humanos, em especial de idosos, crianças e adolescentes, pessoas com deficiência, LGBTQIA+ e população em situação de rua.",
@@ -443,9 +589,43 @@
    {
     "rotulo": "Lei 14.600/2023, art. 26",
     "url": "https://www.planalto.gov.br/ccivil_03/_ato2023-2026/2023/lei/l14600.htm"
+   },
+   {
+    "rotulo": "Órgãos vinculados (página do ministério)",
+    "url": "https://www.gov.br/mdr/pt-br/composicao/orgaos-vinculados"
    }
   ],
-  "revisadoEm": "2026-10-30"
+  "revisadoEm": "2026-10-30",
+  "vinculados": [
+   {
+    "nome": "Agência Nacional de Águas e Saneamento Básico",
+    "url": "https://www.gov.br/mdr/pt-br/composicao/orgaos-vinculados/agencia-nacional-de-aguas-1"
+   },
+   {
+    "nome": "Companhia de Desenvolvimento dos Vales do São Francisco e do Parnaíba",
+    "url": "https://www.gov.br/mdr/pt-br/composicao/orgaos-vinculados/companhia-de-desenvolvimento-dos-vales-do-sao-francisco-e-do-parnaiba"
+   },
+   {
+    "nome": "Departamento Nacional de Obras Contra as Secas",
+    "url": "https://www.gov.br/mdr/pt-br/composicao/orgaos-vinculados/departamento-nacional-de-obras-contra-as-secas"
+   },
+   {
+    "nome": "Superintendência do Desenvolvimento da Amazônia",
+    "url": "https://www.gov.br/mdr/pt-br/composicao/orgaos-vinculados/superintendencia-do-desenvolvimento-da-amazonia"
+   },
+   {
+    "nome": "Superintendência do Desenvolvimento do Centro-Oeste",
+    "url": "https://www.gov.br/mdr/pt-br/composicao/orgaos-vinculados/superintendencia-do-desenvolvimento-do-centro-oeste"
+   },
+   {
+    "nome": "Superintendência do Desenvolvimento do Nordeste",
+    "url": "https://www.gov.br/mdr/pt-br/composicao/orgaos-vinculados/superintendencia-do-desenvolvimento-do-nordeste"
+   },
+   {
+    "nome": "link para Copiar para área de transferência",
+    "url": "https://www.gov.br/mdr/pt-br/composicao/orgaos-vinculados"
+   }
+  ]
  },
  "justica": {
   "resumo": "Cuida da justiça e da segurança pública, com a Polícia Federal e a Polícia Rodoviária Federal, a política penal nacional e a defesa do consumidor.",
@@ -482,9 +662,27 @@
    {
     "rotulo": "Lei 14.600/2023, art. 36",
     "url": "https://www.planalto.gov.br/ccivil_03/_ato2023-2026/2023/lei/l14600.htm"
+   },
+   {
+    "rotulo": "Órgãos vinculados (página do ministério)",
+    "url": "https://www.gov.br/mma/pt-br/composicao/entidades-vinculadas"
    }
   ],
-  "revisadoEm": "2026-10-30"
+  "revisadoEm": "2026-10-30",
+  "vinculados": [
+   {
+    "nome": "Instituto Brasileiro do Meio Ambiente e dos Recursos Naturais Renováveis - Ibama",
+    "url": "https://www.gov.br/ibama/pt-br/"
+   },
+   {
+    "nome": "Instituto Chico Mendes de Conservação da Biodiversidade - ICMBio",
+    "url": "https://www.gov.br/icmbio"
+   },
+   {
+    "nome": "Instituto de Pesquisas Jardim Botânico do Rio de Janeiro - JBRJ",
+    "url": "https://www.gov.br/jbrj"
+   }
+  ]
  },
  "minas_energia": {
   "resumo": "Cuida das políticas de minas e energia: petróleo, gás, energia elétrica (inclusive nuclear), biocombustíveis e mineração.",
@@ -607,9 +805,23 @@
    {
     "rotulo": "Lei 14.600/2023, art. 43",
     "url": "https://www.planalto.gov.br/ccivil_03/_ato2023-2026/2023/lei/l14600.htm"
+   },
+   {
+    "rotulo": "Órgãos vinculados (página do ministério)",
+    "url": "https://www.gov.br/previdencia/pt-br/composicao/autarquias-vinculadas"
    }
   ],
-  "revisadoEm": "2026-10-30"
+  "revisadoEm": "2026-10-30",
+  "vinculados": [
+   {
+    "nome": "Instituto Nacional do Seguro Social (INSS)",
+    "url": "https://www.gov.br/inss/pt-br"
+   },
+   {
+    "nome": "Superintendência Nacional de Previdência Complementar (Previc)",
+    "url": "https://www.gov.br/previc/pt-br"
+   }
+  ]
  },
  "relacoes_exteriores": {
   "resumo": "Conduz a política externa do Brasil: diplomacia, serviços consulares e negociações internacionais (Itamaraty).",
@@ -645,9 +857,35 @@
    {
     "rotulo": "Lei 14.600/2023, art. 45",
     "url": "https://www.planalto.gov.br/ccivil_03/_ato2023-2026/2023/lei/l14600.htm"
+   },
+   {
+    "rotulo": "Órgãos vinculados (página do ministério)",
+    "url": "https://www.gov.br/saude/pt-br/composicao/entidades-vinculadas"
    }
   ],
-  "revisadoEm": "2026-10-30"
+  "revisadoEm": "2026-10-30",
+  "vinculados": [
+   {
+    "nome": "Anvisa",
+    "url": "https://www.gov.br/anvisa/pt-br"
+   },
+   {
+    "nome": "ANS",
+    "url": "https://www.gov.br/ans/pt-br"
+   },
+   {
+    "nome": "Hemobrás",
+    "url": "https://www.hemobras.gov.br/"
+   },
+   {
+    "nome": "Hospital Nossa Senhora da Conceição S/A",
+    "url": "https://www.ghc.com.br/"
+   },
+   {
+    "nome": "FIOCRUZ",
+    "url": "https://portal.fiocruz.br/"
+   }
+  ]
  },
  "trabalho": {
   "resumo": "Cuida das políticas de emprego e renda, relações de trabalho, fiscalização do trabalho e FGTS e FAT.",
@@ -665,9 +903,19 @@
    {
     "rotulo": "Lei 14.600/2023, art. 46",
     "url": "https://www.planalto.gov.br/ccivil_03/_ato2023-2026/2023/lei/l14600.htm"
+   },
+   {
+    "rotulo": "Órgãos vinculados (página do ministério)",
+    "url": "https://www.gov.br/trabalho-e-emprego/pt-br/composicao/entidades-vinculadas"
    }
   ],
-  "revisadoEm": "2026-10-30"
+  "revisadoEm": "2026-10-30",
+  "vinculados": [
+   {
+    "nome": "Fundação Jorge Duprat Figueiredo de Segurança e Medicina do Trabalho (Fundacentro)",
+    "url": "https://www.gov.br/fundacentro/pt-br"
+   }
+  ]
  },
  "transportes": {
   "resumo": "Cuida da política de transportes ferroviário e rodoviário e da política nacional de trânsito.",

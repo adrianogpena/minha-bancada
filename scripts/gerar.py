@@ -8,6 +8,7 @@ Uso:
 
 import re
 import shutil
+import statistics
 import unicodedata
 from collections import Counter, defaultdict
 from pathlib import Path
@@ -358,6 +359,21 @@ def resumir_presenca(c: Counter) -> dict:
     return {"votacoes": base, **{k: c[k] for k in ("compareceu", "naoCompareceu", "licenca", "missao", "outros") if c[k]}}
 
 
+def resumir_coautoria(itens: list, partido: str | None) -> dict | None:
+    """Com quem o senador mais assina projetos, a partir dos autores que o Senado lista em cada matéria (`parceiros`: [nome, partido, uf]).
+    Só projetos com mais de um parlamentar e até 30 autores. `outroPartido` usa o partido atual do senador."""
+    projetos = [i for i in itens if i.get("tipo") in TIPOS_PROJETO and i.get("parceiros")]
+    if not projetos:
+        return None
+    parceiros, dados = Counter(), {}
+    for i in projetos:
+        for nome, pt, uf in i["parceiros"]:
+            parceiros[nome] += 1
+            dados[nome] = (pt, uf)
+    return {"projetos": len(projetos), "outroPartido": sum(1 for i in projetos if any(pt and pt != partido for _, pt, _ in i["parceiros"])),
+            "parceiros": [[n, dados[n][0], dados[n][1], q] for n, q in parceiros.most_common(10)]}
+
+
 def gerar_senadores(ministro_de: dict | None = None) -> list:
     """Votos e projetos dos senadores em exercício -> site/dados/senador/<id>.json,
     site/dados/votacoes_senado.json (lista, sem o voto de cada um) e
@@ -373,10 +389,12 @@ def gerar_senadores(ministro_de: dict | None = None) -> list:
     ceaps = ler(BRUTO / "senado_ceaps.json", {}) or {}
     recursos = ler(BRUTO / "senado_recursos.json", {}) or {}
     fichas = ler(BRUTO / "senado_ficha.json", {}) or {}
+    atividade = ler(BRUTO / "senado_atividade.json", {}) or {}
 
     por_id = {str(s["id"]): s for s in senadores}
     resumo, votos_por_sen, primeira = [], defaultdict(dict), {}
     presenca = defaultdict(Counter)
+    presenca_ano = defaultdict(lambda: defaultdict(Counter))
     for v in votacoes:
         contagem = Counter(x[1] for x in v["votos"])
         placar = {k: n for k, n in contagem.items() if k != "ausente"}
@@ -412,7 +430,9 @@ def gerar_senadores(ministro_de: dict | None = None) -> list:
                 # fora do exercício hoje: sem ficha no site para ligar
                 **({} if sen else {"anterior": True}),
             })
-            presenca[sid][categoria_presenca(t, resto[0] if resto else "")] += 1
+            cat = categoria_presenca(t, resto[0] if resto else "")
+            presenca[sid][cat] += 1
+            presenca_ano[sid][v["data"][:4]][cat] += 1
             if sid not in primeira or v["data"] < primeira[sid]:
                 primeira[sid] = v["data"]
         salvar(SAIDA / "votacao_senado" / f"{v['id']}.json", {
@@ -422,16 +442,26 @@ def gerar_senadores(ministro_de: dict | None = None) -> list:
         })
     salvar(SAIDA / "votacoes_senado.json", resumo)
 
+    por_ano = {a: sorted(c.get("compareceu", 0) / c["votacoes"] for sid in presenca_ano if (c := resumir_presenca(presenca_ano[sid][a]))["votacoes"])
+               for a in {a for sid in presenca_ano for a in presenca_ano[sid]}}
+    lista = []
     for s in senadores:
         sid = str(s["id"])
         desde = primeira.get(sid)  # antes do primeiro voto o senador pode nem estar em exercício
-        propostas = [{k: v for k, v in a.items() if v not in (None, "")} for a in autorias.get(sid, [])]
+        propostas = [{k: v for k, v in a.items() if v not in (None, "") and k != "parceiros"} for a in autorias.get(sid, [])]
+        coautoria = resumir_coautoria(autorias.get(sid, []), s.get("partido"))
+        autoria = resumir_autoria(propostas)
+        anos = [{"ano": int(a), **{k: v for k, v in resumir_presenca(c).items() if k in ("votacoes", "compareceu")}, "mediana": round(statistics.median(por_ano[a]), 4)}
+                for a, c in sorted(presenca_ano[sid].items()) if resumir_presenca(c)["votacoes"]]
         salvar(SAIDA / "senador" / f"{sid}.json", {
             "id": sid, **({"ministro": ministro_de[("senado", sid)]} if ("senado", sid) in (ministro_de or {}) else {}),
             "votos": [{"id": v["id"], "voto": votos_por_sen[sid].get(v["id"], "ausente")}
                       for v in resumo if desde and v["data"] >= desde],
             "proposicoes": propostas,
             **({"presenca": resumir_presenca(presenca[sid])} if presenca.get(sid) else {}),
+            **({"presencaAno": anos} if anos else {}),
+            **({"coautoria": coautoria} if coautoria else {}),
+            **{k: v for k, v in (atividade.get(sid) or {}).items() if v},
             # sem o arquivo (coleta falhou) o site mostra só o link para o Portal da Transparência
             **({"despesas": resumir_despesas(ceaps["ano"], ceaps["itens"].get(sid, []))} if ceaps else {}),
             **({k: fichas[sid][k] for k in ("comissoes", "mandatos") if k in fichas[sid]} if sid in fichas else {}),
@@ -439,6 +469,16 @@ def gerar_senadores(ministro_de: dict | None = None) -> list:
                              **({"escritorios": recursos["escritorios"][sid]} if sid in recursos.get("escritorios", {}) else {})}}
                if sid in recursos.get("recursos", {}) else {}),
         })
+        pres = resumir_presenca(presenca[sid]) if presenca.get(sid) else None
+        lista.append({
+            "id": sid, "nome": s["nome"], "partido": s.get("partido"), "uf": s.get("uf"), "foto": s.get("foto"),
+            "participacao": s.get("participacao"), "fimMandato": s.get("fimMandato"),
+            "compareceu": pres.get("compareceu", 0) if pres else 0, "votacoes": pres["votacoes"] if pres else 0,
+            "proposicoes": len(propostas), **{k: autoria[k] for k in ("proprias", "aprovadasProprias", "suprapartidarios")},
+            "gasto": resumir_despesas(ceaps["ano"], ceaps["itens"].get(sid, []))["total"] if ceaps else None,
+        })
+    lista.sort(key=lambda x: x["nome"])
+    salvar(SAIDA / "senado.json", lista)
     print(f"Gerado: {len(senadores)} senadores, {len(resumo)} votações nominais do Senado")
     return resumo
 

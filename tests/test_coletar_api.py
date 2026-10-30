@@ -783,6 +783,72 @@ def test_coletar_ficha_senado_grava_por_senador_e_avisa_falha(dados, monkeypatch
     assert any("ficha de senador" in a for a in coletar.AVISOS)
 
 
+def test_autoria_senado_com_coautores_e_partidos():
+    p = {"id": 1, "codigoMateria": 5, "identificacao": "PL 1/2024",
+         "autoria": "Senador Ana Lima (PT/SP), Senadora Bia Souza (PL/RJ), Comissão de Assuntos Econômicos"}
+    a = coletar.autoria_senado(p, "Ana Lima")
+    assert a["principal"] is True and a["totalAutores"] == 2 and a["coautores"] == ["Bia Souza"] and a["partidosDistintos"] == 2
+    assert a["parceiros"] == [["Bia Souza", "PL", "RJ"]]
+    sozinha = coletar.autoria_senado({"id": 2, "codigoMateria": 6, "identificacao": "PL 2/2024", "autoria": "Senador Ana Lima (PT/SP)"}, "Ana Lima")
+    assert "totalAutores" not in sozinha and "parceiros" not in sozinha
+
+
+def test_relatorias_senador_filtra_legislatura_e_resume():
+    itens = [
+        {"codigoMateria": 1, "identificacaoProcesso": "PL 1/2024", "ementaProcesso": "A", "siglaColegiado": "CAE", "dataDesignacao": "2024-03-01 00:00:00", "tramitando": "S", "descricaoTipoRelator": "Relator"},
+        {"codigoMateria": 2, "identificacaoProcesso": "PL 2/2025", "ementaProcesso": "B", "siglaColegiado": "CAE", "dataDesignacao": "2025-03-01 00:00:00", "dataDestituicao": "2025-04-01 00:00:00", "tramitando": "N"},
+        {"codigoMateria": 3, "identificacaoProcesso": "PL 3/2018", "siglaColegiado": "CCJ", "dataDesignacao": "2018-03-01 00:00:00", "tramitando": "N"}]
+    r = coletar.relatorias_senador(itens)
+    assert r["total"] == 2 and r["tramitando"] == 1 and r["porAno"] == [(2024, 1), (2025, 1)] and r["porColegiado"] == [("CAE", 2)]
+    assert [x["materia"] for x in r["recentes"]] == ["PL 2/2025", "PL 1/2024"] and r["recentes"][0]["ate"] == "2025-04-01"
+    assert coletar.relatorias_senador([itens[2]]) is None
+
+
+def test_discursos_senador_junta_anos_ignora_termos_genericos_e_conta_apartes():
+    primeiro = {"CodigoPronunciamento": "1", "DataPronunciamento": "2025-05-01", "Indexacao": "SAÚDE, ALTERAÇÃO", "TextoResumo": "x", "UrlTexto": "https://u/1", "TipoUsoPalavra": {"Descricao": "Pela ordem"}}
+    pron = [primeiro, dict(primeiro),
+            {"CodigoPronunciamento": "2", "DataPronunciamento": "2026-02-01", "Indexacao": "EDUCAÇÃO"},
+            {"CodigoPronunciamento": "3", "DataPronunciamento": "2025-06-01", "Indexacao": "SAÚDE"}]
+    d = coletar.discursos_senador(pron, [{"DataPronunciamento": "2024-01-01"}, {"DataPronunciamento": "2015-01-01"}])
+    assert d["total"] == 3 and d["apartes"] == 1 and d["porAno"] == [(2025, 2), (2026, 1)]
+    assert d["assuntos"] == [("saúde", 2), ("educação", 1)] and d["recentes"][0]["id"] == "2"
+    assert coletar.discursos_senador([], []) is None
+
+
+def test_cargos_licencas_e_liderancas_do_senador():
+    cargos = coletar.cargos_senador([
+        {"IdentificacaoComissao": {"SiglaComissao": "CAE", "NomeComissao": "Assuntos Econômicos"}, "DescricaoCargo": "PRESIDENTE", "DataInicio": "2025-03-01"},
+        {"IdentificacaoComissao": {"SiglaComissao": "CPI"}, "DescricaoCargo": "PRESIDENTE", "DataInicio": "2011-06-28"},
+        {"IdentificacaoComissao": {"SiglaComissao": "CCJ"}, "DescricaoCargo": "VICE-PRESIDENTE", "DataInicio": "2019-03-01", "DataFim": "2020-01-01"}])
+    assert [(c["sigla"], c["fim"]) for c in cargos] == [("CAE", None)]
+    lic = coletar.licencas_senador([{"DataInicio": "2025-05-20", "DataFim": "2025-05-21", "DescricaoTipoAfastamento": "Missão"},
+                                    {"DataInicio": "2020-05-20", "DataFim": "2020-05-21", "DescricaoTipoAfastamento": "Saúde"}])
+    assert lic == [{"inicio": "2025-05-20", "fim": "2025-05-21", "tipo": "Missão"}]
+    lid = coletar.liderancas_senado([
+        {"casa": "SF", "codigoParlamentar": 1, "descricaoTipoLideranca": "Líder", "descricaoTipoUnidadeLideranca": "Liderança de Partido", "siglaPartidoFiliacao": "PT", "dataDesignacao": "2025-02-01"},
+        {"casa": "CD", "codigoParlamentar": 2, "descricaoTipoLideranca": "Líder"}])
+    assert list(lid) == ["1"] and lid["1"][0]["desde"] == "2025-02-01"
+
+
+def test_coletar_atividade_senado_grava_por_senador_e_falha_isolada(dados, monkeypatch):
+    coletar.salvar(dados / "senado.json", [{"id": 1, "nome": "A"}, {"id": 2, "nome": "B"}])
+
+    def falso(caminho, **params):
+        if caminho == "/composicao/lideranca":
+            return [{"casa": "SF", "codigoParlamentar": 1, "descricaoTipoLideranca": "Líder", "dataDesignacao": "2025-02-01"}]
+        if caminho == "/processo/relatoria":
+            if params["codigoParlamentar"] == "2":
+                raise RuntimeError("HTTP 503")
+            return [{"codigoMateria": 1, "identificacaoProcesso": "PL 1/2024", "dataDesignacao": "2024-03-01 00:00:00"}]
+        return {}
+
+    monkeypatch.setattr(coletar, "get_senado", falso)
+    coletar.coletar_atividade_senado()
+    d = json.loads((dados / "senado_atividade.json").read_text(encoding="utf-8"))
+    assert d["1"]["relatorias"]["total"] == 1 and d["1"]["liderancas"][0]["cargo"] == "Líder" and d["2"] == {}
+    assert any("relatorias do senador 2" in a for a in coletar.AVISOS)
+
+
 def test_coletar_temas_proposicoes_agrupa_por_projeto_e_ignora_requerimento(dados, monkeypatch):
     uri = "https://dadosabertos.camara.leg.br/api/v2/proposicoes/"
     linhas = [

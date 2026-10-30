@@ -5,6 +5,7 @@ const PAGINAS = {
   inicio: ["politicos", "paginaPoliticos"],
   politico: ["politico", "paginaPolitico"],
   camara: ["camara", "paginaCamara"],
+  senado: ["senado", "paginaSenado"],
   fornecedores: ["fornecedores", "paginaFornecedores"],
   coautoria: ["coautoria", "paginaCoautoria"],
   ministerios: ["ministros", "paginaMinisterios"],

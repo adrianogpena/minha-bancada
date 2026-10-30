@@ -5,6 +5,18 @@ Regra: toda fonte nova ou mudança de coleta ganha uma entrada aqui, no mesmo co
 Datas dos conjuntos que já existiam vêm do primeiro commit que os trouxe (`git log --diff-filter=A`).
 Todas as coletas rodam sozinhas no GitHub Actions (`.github/workflows/atualizar.yml`, todo dia às 05:00 de Brasília), salvo onde indicado.
 
+## Ficha do senador: relatorias, discursos, cargos, licenças, lideranças, coautoria e presença por ano (2026-10-30)
+- **De onde:** Dados Abertos do Senado (`https://legis.senado.leg.br/dadosabertos`), endpoints novos em `ENDPOINTS.md`: `/processo/relatoria?codigoParlamentar=` (substitui `/senador/{id}/relatorias`, descontinuado), `/senador/{id}/discursos.json`, `/senador/{id}/apartes.json`, `/senador/{id}/cargos.json`, `/senador/{id}/licencas.json` e `/composicao/lideranca` (substitui `/senador/{id}/liderancas`, descontinuado; uma chamada só, para todos).
+- **Como:** `coletar_atividade_senado` (em `coletar.py`, depois da ficha) lê cada senador em exercício e grava `dados/senado_atividade.json` (fora do git, empacotado no cache do job). Só vale a legislatura (desde 2023-02-01). Discursos: a API devolve no máximo um ano por consulta, então é uma consulta por ano. Cada fonte falha sozinha. Tempo medido contra a API real com 2 senadores e 2 conexões: 6 s (cerca de 8 consultas por senador; o `/processo/relatoria` devolve toda a história do senador, ~700 KB); estimativa para 81 senadores: poucos minutos, a conferir na primeira execução.
+- **Coautoria:** nenhuma fonte nova. A autoria de cada matéria (`autoria`, já coletada) passa a guardar total de autores, coautores (até 10 nomes), partidos distintos e a lista de parceiros; `gerar.py` resume em `coautoria` com quem o senador mais assina. A lista de parceiros não vai para `site/dados/senador/`.
+- **Presença por ano:** nenhuma fonte nova; `gerar.py` conta o comparecimento às votações nominais por ano e a mediana dos senadores.
+- **Temas dos projetos:** o Senado não publica tema por projeto; no lugar entram os assuntos indexados nos pronunciamentos (sem termos genéricos).
+- **Site:** `site/dados/senador/<id>.json` ganha `relatorias`, `discursos`, `cargos`, `licencas`, `liderancas`, `coautoria` e `presencaAno`; `senador.js` mostra os painéis; `senado.json` (lista) passa a contar iniciativas próprias só de projetos, com aprovados.
+
+## Página dos senadores (2026-10-30)
+- **De onde:** nenhuma fonte nova; usa o que já é coletado do Senado (votações nominais, processos e CEAPS).
+- **Como:** `gerar.py` (`gerar_senadores`) grava `site/dados/senado.json`, um resumo por senador em exercício (presença, proposições, iniciativas próprias, gasto da cota, fim do mandato); `site/senado.html` lista, filtra e ordena, e cada linha abre a ficha `politico.html?f=senado&i=<id>`.
+
 ## Coleta de deputados da Câmara: prazo e cache sempre salvo (2026-10-30)
 - **De onde:** a mesma API da Câmara (`https://dadosabertos.camara.leg.br/api/v2/deputados`), sem fonte nova.
 - **Como:** `coletar_deputados` tem prazo (`CAMARA_PRAZO_DEPUTADOS_MIN`, 45 min): passado o prazo guarda o que leu e mantém a ficha anterior dos demais. O cache de `dados/deputados` é salvo mesmo se o job falhar (`cache/save` com `if: always()`).

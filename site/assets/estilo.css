@@ -105,6 +105,7 @@ input:focus, select:focus { border-color: var(--marca); outline: none; box-shado
 .metrica span { font-size: 13px; color: var(--tinta-suave); }
 .cabecalho-lista { display: grid; grid-template-columns: 48px 1fr repeat(6, 100px); gap: 14px; padding: 0 6px 6px; font-size: 13px; color: var(--tinta-suave); }
 .cabecalho-lista span:nth-child(n+3) { text-align: right; }
+.linha-sen, .cabecalho-sen { grid-template-columns: 48px 1fr repeat(5, 100px); }
 
 .foto {
   width: 48px; height: 48px; border-radius: 50%; object-fit: cover; background: var(--marca-clara);

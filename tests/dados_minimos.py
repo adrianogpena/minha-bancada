@@ -33,6 +33,14 @@ def montar_bruto(bruto):
     gravar(bruto / "senado.json", [{"id": "7", "nome": "Bia Lima", "partido": "PL", "uf": "RJ"}])
     gravar(bruto / "senado_ficha.json", {"7": {"comissoes": [{"sigla": "CAE", "nome": "Assuntos Econômicos", "inicio": "2023-02-02", "fim": None}],
                                                "mandatos": [{"uf": "RJ", "inicio": "2023-02-01", "fim": "2031-01-31", "partidos": []}]}})
+    gravar(bruto / "senado_atividade.json", {"7": {
+        "relatorias": {"total": 2, "tramitando": 1, "porAno": [[2025, 2]], "porColegiado": [["CAE", 2]], "recentes": [
+            {"id": "55", "materia": "PL 5/2025", "ementa": "Dispõe sobre algo.", "colegiado": "CAE", "tipo": "Relator", "desde": "2025-03-01", "ate": None, "tramitando": True}]},
+        "discursos": {"total": 4, "apartes": 1, "porAno": [[2026, 4]], "assuntos": [["saúde", 3]], "recentes": [
+            {"id": "9", "data": "2026-05-01", "tipo": "Pela ordem", "resumo": "Fala sobre saúde.", "url": "https://www25.senado.leg.br/web/atividade/pronunciamentos/-/p/texto/9"}]},
+        "cargos": [{"sigla": "CAE", "nome": "Assuntos Econômicos", "cargo": "PRESIDENTE", "inicio": "2025-03-01", "fim": None}],
+        "licencas": [{"inicio": "2025-05-20", "fim": "2025-05-21", "tipo": "Missão política"}],
+        "liderancas": [{"unidade": "Liderança de Partido", "cargo": "Líder", "casa": "SF", "partido": "PL", "desde": "2025-02-01"}]}})
     gravar(bruto / "senado_votacoes" / "2026.json", {"9": {
         "id": "9", "data": "2026-02-24", "descricao": "Votação X", "aprovada": 1, "votos": [["7", "sim", "Sim|"]]}})
     gravar(bruto / "tse" / "2024" / "SP.json", [

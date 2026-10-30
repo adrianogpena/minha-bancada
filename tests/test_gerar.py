@@ -71,6 +71,29 @@ def test_gerar_senadores_cria_detalhe_de_cada_votacao(tmp_path, monkeypatch):
     assert por_id["1"]["nome"] == "Ana" and por_id["1"]["uf"] == "SP" and "anterior" not in por_id["1"]
     assert por_id["2"]["motivo"] == "Atividade parlamentar" and por_id["2"]["anterior"] is True
     assert por_id["3"]["nome"] == "Senador 3"
+    lista = json.loads((saida / "senado.json").read_text())
+    assert [(x["id"], x["compareceu"], x["votacoes"], x["gasto"]) for x in lista] == [("1", 1, 1, None)]
+
+
+def test_gerar_senadores_presenca_por_ano_coautoria_e_atividade(tmp_path, monkeypatch):
+    bruto, saida = tmp_path / "dados", tmp_path / "site"
+    gerar.salvar(bruto / "senado.json", [{"id": "1", "nome": "Ana", "partido": "AAA", "uf": "SP"}, {"id": "2", "nome": "Bia", "partido": "BBB", "uf": "RJ"}])
+    gerar.salvar(bruto / "senado_votacoes" / "2026.json", {
+        "8": {"id": "8", "data": "2025-12-01", "descricao": "V8", "votos": [["1", "sim", "Sim|"], ["2", "ausente", "NCOM|Não compareceu"]]},
+        "9": {"id": "9", "data": "2026-02-24", "descricao": "V9", "votos": [["1", "sim", "Sim|"], ["2", "sim", "Sim|"]]}})
+    gerar.salvar(bruto / "senado_autorias.json", {"1": [
+        {"id": "5", "processo": 5, "tipo": "PL", "numero": "1", "ano": 2025, "principal": True, "parceiros": [["Bia", "BBB", "RJ"], ["Caio", "AAA", "MG"]]},
+        {"id": "6", "processo": 6, "tipo": "RQS", "numero": "2", "ano": 2025, "principal": True, "parceiros": [["Bia", "BBB", "RJ"]]}]})
+    gerar.salvar(bruto / "senado_atividade.json", {"1": {"relatorias": {"total": 3}, "licencas": []}})
+    monkeypatch.setattr(gerar, "BRUTO", bruto)
+    monkeypatch.setattr(gerar, "SAIDA", saida)
+    gerar.gerar_senadores()
+    ana = json.loads((saida / "senador" / "1.json").read_text())
+    assert ana["presencaAno"] == [{"ano": 2025, "votacoes": 1, "compareceu": 1, "mediana": 0.5}, {"ano": 2026, "votacoes": 1, "compareceu": 1, "mediana": 1.0}]
+    assert ana["coautoria"] == {"projetos": 1, "outroPartido": 1, "parceiros": [["Bia", "BBB", "RJ", 1], ["Caio", "AAA", "MG", 1]]}
+    assert ana["relatorias"] == {"total": 3} and "licencas" not in ana
+    assert all("parceiros" not in p for p in ana["proposicoes"])
+    assert "coautoria" not in json.loads((saida / "senador" / "2.json").read_text())
 
 
 def test_juntar_autoria_principal_coautores_partido_e_contagens():

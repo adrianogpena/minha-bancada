@@ -47,7 +47,7 @@ export function montarParlamentar(alvo, c) {
       <div class="numeros" id="numeros-prop"></div>
     </section>
     <section id="destaque-ano"></section>
-    <section id="relatorias"></section>
+    <section id="relatorias">${c.painelRelatorias || ""}</section>
     <h2 id="proposicoes">Projetos <small class="sub">(${projetos.length})</small></h2>
     <p>Projetos de lei, emendas à Constituição e similares. ${esc(c.aviso)}</p>
     ${LEGENDA_PROJETOS}

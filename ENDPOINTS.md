@@ -47,6 +47,12 @@ Status: ✅ OK · ❌ ERRO (resposta com falha ou fora do ar) · ❔ não testad
 | senado_votacoes | Senado | https://legis.senado.leg.br/dadosabertos/votacao?dataInicio=2025-03-01&dataFim=2025-03-31 | scripts/coletar.py, site/assets/app.js | ✅ OK | 2026-10-24 | HTTP 200, application/json, 5 KB |
 | senado_processos | Senado | https://legis.senado.leg.br/dadosabertos/processo?codigoParlamentarAutor=5012 | scripts/coletar.py | ✅ OK | 2026-10-24 | HTTP 200, application/json |
 | senado_processo | Senado | https://legis.senado.leg.br/dadosabertos/processo/1582415 | site/assets/app.js (link de fonte) | ✅ OK | 2026-10-24 | HTTP 200, application/json, 2 KB |
+| senado_relatorias | Senado | https://legis.senado.leg.br/dadosabertos/processo/relatoria?codigoParlamentar=5012 | scripts/coletar.py, site/assets/js/senador.js (link de fonte) | ❔ | — | — |
+| senado_discursos | Senado | https://legis.senado.leg.br/dadosabertos/senador/5012/discursos.json?dataInicio=20260101&dataFim=20261030 | scripts/coletar.py, site/assets/js/senador.js (link de fonte) | ❔ | — | — |
+| senado_apartes | Senado | https://legis.senado.leg.br/dadosabertos/senador/5012/apartes.json | scripts/coletar.py, site/assets/js/senador.js (link de fonte) | ❔ | — | — |
+| senado_cargos | Senado | https://legis.senado.leg.br/dadosabertos/senador/5012/cargos.json | scripts/coletar.py, site/assets/js/senador.js (link de fonte) | ❔ | — | — |
+| senado_licencas | Senado | https://legis.senado.leg.br/dadosabertos/senador/5012/licencas.json | scripts/coletar.py, site/assets/js/senador.js (link de fonte) | ❔ | — | — |
+| senado_liderancas | Senado | https://legis.senado.leg.br/dadosabertos/composicao/lideranca | scripts/coletar.py, site/assets/js/senador.js (link de fonte) | ❔ | — | — |
 | senado_afastados | Senado | https://legis.senado.leg.br/dadosabertos/senador/lista/afastados.json | scripts/coletar_ministros.py | ❔ | — | — |
 | senado_requerimentos | Senado | https://legis.senado.leg.br/dadosabertos/processo?sigla=RQS&ano=2026 | scripts/coletar_ministros.py | ❔ | — | — |
 | camara_portal_pessoal | Câmara | https://www.camara.leg.br/deputados/204379/pessoal-gabinete | scripts/coletar.py (raspagem da contagem de pessoal por grupo funcional), site/assets/js/deputado.js (link de fonte) | ❔ | — | — |

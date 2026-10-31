@@ -131,9 +131,12 @@ Sem padrão nacional; cada Casa publica do seu jeito.
 
 ### 4.3 Ministros dos tribunais superiores
 
-Depois dos ministros de Estado (3.3), o objetivo é ter no site todos os ministros: STF, STJ, TST, TSE, STM e TCU.
-Equivalente às abas de votações e propostas: votos em julgamentos, decisões monocráticas e pedidos de vista.
-Fontes de cada tribunal ainda não levantadas.
+Feito em 2026-10-30: a composição atual dos seis tribunais (`coletar_tribunais.py`, página `tribunais.html`), lida da
+Wikipédia porque os sites oficiais bloqueiam coleta automática (ver `CHANGELOG.md`). Falta:
+- Ligar cada ministro à pessoa do núcleo em `identidades.py` (ex-parlamentares no TCU e no STF, como Vital do Rêgo e Flávio Dino).
+- Fonte oficial da lista, se algum tribunal liberar: o bloqueio é por WAF e pode passar de outra rede ou do Actions.
+- Ministros anteriores (antes da primeira coleta) e substitutos do TCU (auditores).
+- Votos em julgamentos, decisões monocráticas e pedidos de vista (equivalente às abas de votações e propostas); fontes de cada tribunal ainda não levantadas.
 
 ### 4.4 Órgãos de controle
 

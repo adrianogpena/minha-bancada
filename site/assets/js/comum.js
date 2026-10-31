@@ -102,7 +102,7 @@ function menuItem(atual) {
 
 /* Navegação do modo celular (estilo em mobile.css; no computador fica escondida): barra inferior + folha "Mais". */
 const BARRA_MOBILE = [["index.html", "Políticos", "inicio"], ["camara.html", "Câmara", "camara"], ["votacoes.html", "Votações", "votacoes"], ["historico.html", "Histórico", "historico"]];
-const MAIS_MOBILE = [["senado.html", "Senado", "senado"], ["proposicoes.html", "Proposições", "proposicoes"], ["ministerios.html", "Ministérios", "ministerios"], ["informado.html", "Fique informado", "informado"], ["sobre.html", "Sobre os dados", "sobre"], ["mapa-dados.html", "Mapa dos dados", "mapadados"]];
+const MAIS_MOBILE = [["senado.html", "Senado", "senado"], ["proposicoes.html", "Proposições", "proposicoes"], ["ministerios.html", "Ministérios", "ministerios"], ["tribunais.html", "Tribunais", "tribunais"], ["informado.html", "Fique informado", "informado"], ["sobre.html", "Sobre os dados", "sobre"], ["mapa-dados.html", "Mapa dos dados", "mapadados"]];
 
 function barraMobile(atual) {
   const link = (classe) => ([h, t, p]) => `<a class="${classe}" href="${h}"${p === atual ? ' aria-current="page"' : ""}>${t}</a>`;
@@ -158,7 +158,7 @@ function rotularTabelasAoMontar() {
 export function moldura(pagina) {
   rotularTabelasAoMontar();
   const links = [
-    ["Políticos", [["index.html", "Buscar políticos", "inicio"], ["camara.html", "Câmara", "camara"], ["senado.html", "Senado", "senado"], ["ministerios.html", "Ministérios", "ministerios"]]],
+    ["Políticos", [["index.html", "Buscar políticos", "inicio"], ["camara.html", "Câmara", "camara"], ["senado.html", "Senado", "senado"], ["ministerios.html", "Ministérios", "ministerios"], ["tribunais.html", "Tribunais", "tribunais"]]],
     ["Atuação", [["proposicoes.html", "Proposições", "proposicoes"], ["votacoes.html", "Votações", "votacoes"]]],
     ["historico.html", "Histórico", "historico"], ["informado.html", "Fique informado", "informado"],
     ["Dados", [["sobre.html", "Sobre os dados", "sobre"], ["mapa-dados.html", "Mapa dos dados", "mapadados"]]]];

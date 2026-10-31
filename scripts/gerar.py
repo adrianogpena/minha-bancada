@@ -27,6 +27,7 @@ import gerar_politicos
 import gerar_proposicoes
 import gerar_coautoria
 import gerar_ministros
+import gerar_tribunais
 import gerar_emendas
 from gerar_politicos import ler, salvar
 
@@ -697,6 +698,7 @@ def main():
     ministros = gerar_ministros.construir(BRUTO, nucleo, ler(BRUTO / "senado.json", []) or [], deputados)   # antes de salvar: grava em ligacoes["ministros"]
     identidades.salvar_nucleo(nucleo, SAIDA / "nucleo")
     gerar_ministros.salvar_ministros(ministros, SAIDA)
+    gerar_tribunais.salvar_tribunais(gerar_tribunais.construir(BRUTO, nucleo["tribunais"], {p["id"]: p.get("fontes", {}) for p in nucleo["pessoas"]}), SAIDA)
     salvar(SAIDA / "aposentados_senado.json", {a["pessoa"]: {k: a[k] for k in ("tipo", "inicio", "valor") if a.get(k) is not None} for a in nucleo["aposentados"]})
     por_pessoa = defaultdict(list)
     for i in nucleo["inabilitados"]:

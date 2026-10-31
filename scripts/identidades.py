@@ -31,6 +31,9 @@ Doador de campanha -> fornecedor das cotas: `ligar_doadores(doadores, fornecedor
   nome (média)  doador sem CNPJ na fonte (coleta antiga): nome padronizado igual ao de um único fornecedor com CNPJ
 Nome que casa com mais de um fornecedor não liga (`ambiguos`). `scripts/doadores.py` só chama; o resultado vai para `ligacoes.json` (`doadores`).
 
+Ministros de tribunais superiores (dados/tribunais/): `ligar_tribunais` liga o ministro à única pessoa do núcleo de mesmo nome civil com mandato na Câmara ou no Senado
+(`ligacao["tribunal"]` = nome, média); sem par ou com mais de uma, não liga e não cria pessoa. Resultado em `nucleo["tribunais"]`.
+
 Ministros de Estado (lista do Planalto, dados/ministros/): `ligar_ministros` liga cada ministro à pessoa do núcleo (`ligacao["planalto"]`):
   nome (alta)   nome civil igual ao de uma única pessoa que é parlamentar licenciado para ser ministro (dados/ministros/licencas.json)
   nome (média)  nome civil igual ao de uma única pessoa do núcleo (TSE, Câmara, Senado, Assembleia); com mais de uma, não liga
@@ -600,6 +603,36 @@ def ligar_ministros(planalto: dict, reg: "_Registro", licenciados: dict, chaves:
     return saida
 
 
+def id_ministro_tribunal(sigla: str, m: dict) -> str:
+    """Id do ministro de tribunal superior: página dele na Wikipédia ou, sem ela, tribunal|nome."""
+    return gerar_id("mtr", "wikipedia", m.get("wiki") or f"{sigla}|{comum.sem_acento(m['nome']).lower()}")
+
+
+def ligar_tribunais(tribunais: dict, reg: "_Registro", ambiguos: list, resumo, sem_ligacao) -> dict:
+    """Liga cada ministro dos tribunais superiores (dados/tribunais/) à pessoa do núcleo de mesmo nome civil (`ligacao["tribunal"]` =
+    nome, média): só quando é uma única pessoa (ex-parlamentares no TCU e no STF). Sem par, não cria pessoa. {id do ministro: pessoa}."""
+    por_nome = defaultdict(set)
+    for pid, p in reg.por_id.items():
+        if p["nome"] and (p["camara"] or p["senado"]):   # candidato sem mandato federal é homônimo provável de juiz
+            por_nome[norm_nome(p["nome"])].add(pid)
+    saida = {}
+    for sigla, t in tribunais.items():
+        for m in t.get("atuais", []):
+            chave = norm_nome(m["nome"])
+            ids = por_nome.get(chave, set())
+            mid = id_ministro_tribunal(sigla, m)
+            if len(ids) == 1:
+                pid = next(iter(ids))
+                reg.por_id[pid]["ligacao"]["tribunal"] = ["nome", "média"]
+                resumo["tribunal"]["nome"] += 1
+                saida[mid] = pid
+            else:
+                if ids:
+                    ambiguos.append({"fonte": "tribunal", "id": f"{sigla}|{chave}", "nome": m["nome"], "uf": None, "candidatos": sorted(ids)})
+                sem_ligacao["tribunal"] += 1
+    return saida
+
+
 def ligar_aposentados(aposentados: dict, reg: "_Registro", ambiguos: list, resumo, sem_ligacao) -> list[dict]:
     """Cada ex-senador aposentado da lista do Senado (só tem o nome) é ligado à pessoa do núcleo de mesmo nome que já foi candidata a
     senador ou senadora; nome repetido não liga. Devolve [{pessoa, nome, tipo, inicio, valor}] só dos ligados."""
@@ -851,6 +884,8 @@ def construir(deputados: dict, bruto: Path) -> dict:
     ministros = ligar_ministros(ler(bruto / "ministros" / "planalto.json", {}) or {}, reg,
                                 ler(bruto / "ministros" / "licencas.json", {}) or {}, chaves, ambiguos, resumo, sem_ligacao)
 
+    tribunais = ligar_tribunais((ler(bruto / "tribunais" / "tribunais.json", {}) or {}).get("tribunais", {}), reg, ambiguos, resumo, sem_ligacao)
+
     aposentados = ligar_aposentados(ler(bruto / "senado_aposentados.json", {}) or {}, reg, ambiguos, resumo, sem_ligacao)
     inabilitados = ligar_inabilitados(ler(bruto / "tcu" / "inabilitados.json", {}) or {}, reg, indice, ambiguos, resumo, sem_ligacao)
 
@@ -888,6 +923,7 @@ def construir(deputados: dict, bruto: Path) -> dict:
                      "registros": registros, "resumoRegistros": resumo_registros},
         "chaves": chaves,
         "ministros": ministros,
+        "tribunais": tribunais,
         "aposentados": aposentados,
         "inabilitados": inabilitados,
         "emendas": emendas,

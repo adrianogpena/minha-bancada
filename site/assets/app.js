@@ -10,6 +10,7 @@ const PAGINAS = {
   coautoria: ["coautoria", "paginaCoautoria"],
   ministerios: ["ministros", "paginaMinisterios"],
   ministro: ["ministros", "paginaMinistro"],
+  tribunais: ["tribunais", "paginaTribunais"],
   deputado: ["deputado", "paginaDeputado"],
   votacoes: ["votacoes", "paginaVotacoes"],
   votacao: ["votacoes", "paginaVotacao"],

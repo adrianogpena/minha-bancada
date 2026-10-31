@@ -96,6 +96,72 @@ def test_presenca_do_contrato():
     assert pr._conferir_presenca(amostra("presenca")) == ([], [])
 
 
+def _falso_vazio(com_dados=()):
+    class Resp:
+        def __init__(self, corpo):
+            self.corpo = corpo
+
+        def raise_for_status(self):
+            pass
+
+        def json(self):
+            return self.corpo
+
+    class Sessao:
+        def post(self, url, **kw):
+            return Resp({"update": "", "data": [{"x": 1}] if "ressarcimento" in com_dados else []})
+
+    def get_json(s, url, **params):
+        nome = url.rsplit("/api/", 1)[1]
+        if nome == "ressarcimento/meses":
+            return {"meses": {"1": "Janeiro"}}
+        if nome == "estoque/meses":
+            return {"meses": {"3": "Março"} if "estoque" in com_dados else []}
+        if nome == "passagens":
+            return [{"x": 1}] if "passagens" in com_dados else []
+        raise AssertionError(url)
+
+    return Sessao(), get_json
+
+
+def test_publicados_no_ano_so_acusa_o_que_passou_a_ter_dados(monkeypatch):
+    sessao, get_json = _falso_vazio()
+    monkeypatch.setattr(pr, "get_json", get_json)
+    assert pr.publicados_no_ano(sessao, pr.date(2026, 10, 31)) == []
+    sessao, get_json = _falso_vazio({"ressarcimento", "passagens", "estoque"})
+    monkeypatch.setattr(pr, "get_json", get_json)
+    assert pr.publicados_no_ano(sessao, pr.date(2026, 10, 31)) == ["ressarcimento", "passagens", "estoque"]
+
+
+def test_orgao_do_contrato():
+    assert pr._conferir_orgao(amostra("orgao")) == ([], [])
+
+
+def test_fornecedor_do_orgao_tira_cnpj_so_quando_valido():
+    assert pr.fornecedor_do_orgao("CS CAD CAM SERVICOS DE SOFTWARE LTDA - 23.324.543/0001-60") == ("CS CAD CAM SERVICOS DE SOFTWARE LTDA", "23324543000160")
+    assert pr.fornecedor_do_orgao("ACME - FILIAL SUL") == ("ACME - FILIAL SUL", None)
+    assert pr.fornecedor_do_orgao("EMPRESA - 11.111.111/1111-11") == ("EMPRESA - 11.111.111/1111-11", None)
+
+
+def test_itens_do_orgao_id_estavel_sem_servidores_e_sem_despublicados():
+    linha = {"id": 7, "publicado": 1, "fornecedor": "ACME LTDA", "objeto": "  serviço   x ", "contrato": "001/2026", "valor": 10.5, "fiscal": "Fulano",
+             "gestor": "Beltrano", "inicio_vigencia": "2026-10-01T03:00:00.000000Z", "fim_vigencia": "2027-10-01T03:00:00.000000Z",
+             "anexos": [{"nome_documento": "Contrato.pdf", "url": "https://x/y.pdf"}]}
+    a = pr.itens_do_orgao("contrato", [linha, {**linha, "id": 8, "publicado": 0}, {**linha, "id": 9, "deleted_at": "2026-10-02"}])
+    b = pr.itens_do_orgao("contrato", [linha])
+    assert list(a) == list(b) and len(a) == 1
+    item = next(iter(a.values()))
+    assert item["objeto"] == "serviço x" and item["inicio"] == "2026-10-01" and item["fim"] == "2027-10-01" and item["arquivos"] == [{"nome": "Contrato.pdf", "url": "https://x/y.pdf"}]
+    assert "fiscal" not in item and "gestor" not in item
+    assert next(iter(pr.itens_do_orgao("ata_registro", [linha]))) != next(iter(a))
+
+
+def test_contratos_do_ano_percorre_as_paginas(monkeypatch):
+    paginas = {1: {"data": [{"id": 1}], "last_page": 2}, 2: {"data": [{"id": 2}], "last_page": 2}}
+    monkeypatch.setattr(pr, "get_json", lambda s, url, ano, page: {"contratos": paginas[page]})
+    assert [x["id"] for x in pr.contratos_do_ano(None, 2026)] == [1, 2]
+
+
 def test_materias_liga_autores_e_ignora_quem_nao_e_deputado():
     lista = [
         {"codigo": 10, "numero": 54, "ano": 2025, "autor": "DEPUTADA ANA JÚLIA, DEPUTADO BAZANA", "dataRecebimento": "2025-02-17T19:08:35.000+0000",
@@ -253,3 +319,95 @@ def test_normas_so_de_deputado_ligado():
     assert list(achadas) == ["1"]
     assert achadas["1"] == {"tipo": "Lei", "numero": 23051, "ano": 2026, "data": "2026-03-19", "ementa": "CONCEDE O TÍTULO.", "situacao": "SANCIONADO(A)",
                             "idsDeputados": ["alexandre-curi", "ana-julia"], "fonte": pr.NORMAS_PAGINA}
+
+
+def test_pautas_do_contrato():
+    falhas, _ = pr._conferir_pautas(amostra("pautas"))
+    assert falhas == []
+
+
+def test_itens_pauta_normaliza_fuso_arquivos_e_comissoes():
+    ordem = {"s1": [{"id": 7, "publicado": True, "titulo": " 14ª  SESSÃO ", "data_sessao": "2026-11-03T01:30:00.000000Z", "arquivo": None,
+                     "arquivos": [{"titulo": "PDF", "url": "https://x/a.pdf"}, {"titulo": "PDF", "url": "https://x/a.pdf"}, {"titulo": "sem", "url": None}]},
+                    {"id": 8, "publicado": False, "titulo": "rascunho", "data_sessao": "2026-11-04T12:00:00Z", "arquivos": [{"url": "https://x/b.pdf"}]},
+                    {"id": 9, "publicado": True, "titulo": "sem arquivo", "data_sessao": "2026-11-05T12:00:00Z", "arquivos": []}]}
+    itens = pr.itens_pauta("ordem-do-dia", ordem)
+    assert itens == [{"id": "7", "tipo": "ordem-do-dia", "titulo": "14ª SESSÃO", "data": "2026-11-02", "arquivos": [{"nome": "PDF", "url": "https://x/a.pdf"}]}]
+    comissoes = {"s": {"Comissão X": [{"comissao": "Comissão X", "data": "2026-11-03", "nome_reuniao": "5ª Reunião", "arquivos": {"pauta": [{"titulo": "p", "url": "https://x/c.pdf"}], "ata": []}}]}}
+    c = pr.itens_pauta("comissoes", comissoes)[0]
+    assert c["id"] is None and c["comissao"] == "Comissão X" and c["arquivos"][0]["url"] == "https://x/c.pdf"
+    assert pr.chave_pauta(c) == "comissoes|Comissão X|2026-11-03|5ª Reunião"
+
+
+def test_pautas_do_ano_incremental_para_na_pagina_antiga(monkeypatch):
+    hoje = pr.date(2026, 10, 31)
+    paginas = {1: {"s": [{"id": 3, "titulo": "nova", "data_sessao": "2026-10-28T15:00:00Z", "arquivos": [{"url": "https://x/3.pdf"}]}]},
+               2: {"s": [{"id": 2, "titulo": "velha", "data_sessao": "2026-02-10T15:00:00Z", "arquivos": [{"url": "https://x/2.pdf"}]}]},
+               3: {"s": [{"id": 1, "titulo": "mais velha", "data_sessao": "2026-02-03T15:00:00Z", "arquivos": [{"url": "https://x/1.pdf"}]}]}}
+    pedidas = []
+
+    class Resp:
+        def __init__(self, dados):
+            self.dados = dados
+
+        def raise_for_status(self):
+            pass
+
+        def json(self):
+            return {"data": self.dados}
+
+    class Sessao:
+        def get(self, url, params, **kw):
+            pedidas.append((url.rsplit("/", 2)[-2], params["page"]))
+            return Resp(paginas.get(params["page"]) if "ordem" in url else None)
+
+    monkeypatch.setattr(pr.time, "sleep", lambda s: None)
+    todas = pr.pautas_do_ano(Sessao(), 2026, hoje, {}, True)
+    assert sorted(i["id"] for i in todas.values()) == ["1", "2", "3"]
+    pedidas.clear()
+    anterior = {pr.chave_pauta(i): i for i in todas.values() if i["id"] == "1"}
+    inc = pr.pautas_do_ano(Sessao(), 2026, hoje, anterior, False)
+    assert sorted(i["id"] for i in inc.values()) == ["1", "2", "3"]
+    assert ("ordem-do-dia", 3) not in pedidas and ("ordem-do-dia", 2) in pedidas
+
+
+def test_gabinete_do_contrato():
+    assert pr._conferir_gabinete(amostra("gabinete")) == ([], [])
+
+
+def test_servidores_do_gabinete_liga_so_lotacao_de_deputado():
+    linhas = [["FUNCIONARIO", "NOME", "SIGLA", "LOTAÇÃO CARGO"],
+              ["1", "FULANO  DA SILVA", "G-7", "GAB. DEP. ANA JÚLIA"],
+              ["2", "BELTRANO", "G-3", "GAB. DEP. LUIS CORTI"],
+              ["3", "CICLANO", "G-3", "LIDERANÇA DO PSD"],
+              ["4", "SEM LOTACAO", "SDP", ""],
+              ["5", "DE OUTRO", "G-1", "GAB. DEP. NINGUEM CONHECIDO"],
+              ["6", "SEM SIMBOLO", "", "GAB. DEP. ANA JÚLIA"]]
+    itens = pr.servidores_do_gabinete(linhas, DEPUTADOS)
+    assert itens == [{"idDeputado": "ana-julia", "matricula": "6", "nome": "SEM SIMBOLO", "simbolo": None},
+                     {"idDeputado": "ana-julia", "matricula": "1", "nome": "FULANO DA SILVA", "simbolo": "G-7"},
+                     {"idDeputado": "luis-raimundo-corti", "matricula": "2", "nome": "BELTRANO", "simbolo": "G-3"}]
+
+
+def test_gabinete_atual_decodifica_utf8_e_rejeita_lista_vazia():
+    class Resp:
+        def __init__(self, corpo):
+            self.content = corpo
+
+        def raise_for_status(self):
+            pass
+
+    class Sessao:
+        def __init__(self, corpo):
+            self.corpo = corpo
+
+        def get(self, url, **kw):
+            return Resp(self.corpo)
+
+    bom = json.dumps([["F", "N", "S", "L"], ["1", "JOSÉ", "G-1", "GAB. DEP. ANA JÚLIA"]], ensure_ascii=False).encode("utf-8")
+    assert pr.gabinete_atual(Sessao(bom), DEPUTADOS)[0]["nome"] == "JOSÉ"
+    try:
+        pr.gabinete_atual(Sessao(b"[]"), DEPUTADOS)
+    except RuntimeError:
+        return
+    raise AssertionError("lista vazia deveria falhar")

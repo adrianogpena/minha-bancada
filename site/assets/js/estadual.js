@@ -6,7 +6,7 @@ import { fontes, UFS } from "./apis.js";
 import { montarParlamentar } from "./parlamentar.js";
 import { painelEleicaoDe } from "./eleicao.js";
 
-/* Resumos que o gerar_estaduais.py acrescenta ao JSON do deputado estadual quando a coleta da UF tem os arquivos (verba, remuneração, presença, diárias, emendas). Cada bloco traz a fonte. */
+/* Resumos que o gerar_estaduais.py acrescenta ao JSON do deputado estadual quando a coleta da UF tem os arquivos (verba, remuneração, presença, diárias, emendas, gabinete). Cada bloco traz a fonte. */
 const MESES_CURTOS = ["jan", "fev", "mar", "abr", "mai", "jun", "jul", "ago", "set", "out", "nov", "dez"];
 function rotuloMes(m) {
   const n = parseInt(String(m).split("-").pop(), 10);
@@ -33,6 +33,12 @@ export function resumosEstadual(dep) {
     const r = dep.remuneracao;
     html += secaoEstadual("Remuneração", `Último mês publicado: <b>${esc(rotuloMes(r.mes))}${r.ano ? `/${esc(r.ano)}` : ""}</b>. Bruto <b>${reaisCentavos(r.bruto)}</b>, líquido <b>${reaisCentavos(r.liquido)}</b>.`, "", r.fonte, "Remuneração (Assembleia)");
   }
+  if (dep.gabinete?.total) {
+    const g = dep.gabinete;
+    html += secaoEstadual("Gabinete", `${esc(g.total)} ${g.total === 1 ? "servidor lotado" : "servidores lotados"} no gabinete${g.coletadoEm ? ` em ${esc(dataBr(g.coletadoEm))}` : ""}, por símbolo do cargo. Sem valores: o salário de cada servidor está no portal.`,
+      tabela(["Símbolo", "Servidores"], g.simbolos.map((s) => [esc(s.simbolo || "sem símbolo"), s.quantidade]))
+      + `<details><summary>Quem são</summary>${tabela(["Servidor", "Símbolo"], g.servidores.map((s) => [esc(s.nome), esc(s.simbolo || "")]))}</details>`, g.fonte, "Servidores comissionados (Assembleia)");
+  }
   if (dep.presenca?.periodos?.length) {
     html += secaoEstadual("Presença", "Presença em sessões da Assembleia.", tabela(["Período", "Presente", "Ausente", "Licença", "Total de sessões"],
       dep.presenca.periodos.map((x) => [esc(x.periodo), x.presente ?? "", x.ausente ?? "", x.licenca ?? "", x.totalSessoes ?? ""])), dep.presenca.fonte, "Presença (Assembleia)");
@@ -45,6 +51,10 @@ export function resumosEstadual(dep) {
     html += secaoEstadual("Emendas", "Emendas ao orçamento indicadas pelo deputado, por ano.", tabela(["Ano", "Empenhado", "Pago"],
       dep.emendas.anos.map((a) => [esc(a.ano), reais(a.empenhado), reais(a.pago)])) + (dep.emendas.pagamentos?.length ? `<h3>Pagamentos das emendas</h3>${tabela(["Data", "Credor", "Objeto", "Valor", "Situação"],
       dep.emendas.pagamentos.map((x) => [esc(dataBr(x.data)), esc(x.credor || ""), esc(x.objeto || ""), reaisCentavos(x.valor), x.efetivado === false ? "não efetivado" : x.efetivado ? "efetivado" : ""]))}` : ""), dep.emendas.fonte, "Emendas (Assembleia)");
+  }
+  if (dep.normas?.length) {
+    html += `<h2>Leis e normas de sua autoria</h2><p>Leis, decretos legislativos e resoluções que nasceram de projetos do deputado.</p>${tabela(["Norma", "Data", "Ementa", "Fonte"],
+      dep.normas.map((n) => [esc(`${n.tipo} ${n.numero}/${n.ano}`), esc(dataBr(n.data)), esc(n.ementa || ""), linkFonte(n.fonte, "fonte") || semFonte()]))}`;
   }
   return html;
 }
@@ -84,7 +94,7 @@ export async function montarEstadual(alvo, p, nome, ficha, situacao) {
     linkTramitacao: (x) => x.fonte || (dep.host ? `https://${dep.host}/materia/${encodeURIComponent(x.id)}` : null),
     linkApi: (x) => (x.fonte || !api ? null : `${api}/materia/materialegislativa/${encodeURIComponent(x.id)}/`),
     hrefVotacao: null,
-    fontesVotacao: (v) => [v.fonte ? ["Dados da votação (Assembleia)", v.fonte] : api ? ["Dados da votação (API da Assembleia)", `${api}/sessao/registrovotacao/${encodeURIComponent(v.id)}/`] : null],
+    fontesVotacao: (v) => [v.fonte ? ["Dados da votação (Assembleia)", v.fonte] : api ? ["Dados da votação (API da Assembleia)", `${api}/sessao/registrovotacao/${encodeURIComponent(v.id)}/`] : null, ...(v.documentos || [])],
   });
   listaPaginada($("#lista-bens"), bens, ([tipo, desc, valor]) => `<li>
       <span class="quando"><b>${esc(tipo)}</b></span><b>${reais(valor)}</b>

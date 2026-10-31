@@ -116,3 +116,69 @@ def test_total_de_autores_conta_quem_nao_e_deputado(tmp_path, monkeypatch):
     ge.gerar_assembleia("AC", pasta)
     p = json.loads((tmp_path / "saida" / "estadual" / "AC" / "1.json").read_text(encoding="utf-8"))["proposicoes"][0]
     assert p["coautores"] == ["Bia"] and p["totalAutores"] == 3
+
+
+def test_normas_na_ficha_do_deputado(tmp_path, monkeypatch):
+    bruto = preparar(tmp_path, monkeypatch)
+    pasta = bruto / "AC"
+    base(pasta)
+    escrever(pasta, "normas_2026.json", {"normas": {
+        "10": {"tipo": "Lei Ordinária", "numero": 5, "ano": 2026, "data": "2026-03-01", "ementa": "A", "situacao": "Publicada", "idsDeputados": [1], "fonte": "https://n/10"},
+        "11": {"tipo": "Resolução", "numero": 2, "ano": 2026, "data": "2026-05-01", "ementa": "B", "situacao": None, "idsDeputados": [1], "fonte": "https://n/11"}}})
+    ge.gerar_assembleia("AC", pasta)
+    saida = json.loads((tmp_path / "saida" / "estadual" / "AC" / "1.json").read_text(encoding="utf-8"))
+    assert [n["id"] for n in saida["normas"]] == ["11", "10"]
+    assert saida["normas"][0]["fonte"] == "https://n/11"
+
+
+def test_votacao_recebe_pauta_e_ata_do_dia(tmp_path, monkeypatch):
+    bruto = preparar(tmp_path, monkeypatch)
+    pasta = bruto / "AC"
+    base(pasta)
+    escrever(pasta, "votacoes.json", {"votacoes": {"v1": {
+        "idMateria": 1, "data": "2026-10-21", "votos": [], "sim": 1, "nao": 0, "abstencoes": 0, "aprovada": True}}})
+    escrever(pasta, "pautas_2026.json", {"itens": {
+        "a": {"tipo": "atas", "data": "2026-10-21", "arquivos": [{"nome": "Ata 88", "url": "https://x/ata.pdf"}]},
+        "b": {"tipo": "ccj", "data": "2026-10-21", "arquivos": [{"nome": "CCJ", "url": "https://x/ccj.pdf"}]},
+        "c": {"tipo": "ordem-do-dia", "data": "2026-10-22", "arquivos": [{"nome": "Outra", "url": "https://x/o.pdf"}]}}})
+    ge.gerar_assembleia("AC", pasta)
+    v = json.loads((tmp_path / "saida" / "votacoes_estadual_AC.json").read_text(encoding="utf-8"))[0]
+    assert v["documentos"] == [["Ata da sessão: Ata 88", "https://x/ata.pdf"]]
+
+
+def test_gabinete_na_ficha_do_deputado(tmp_path, monkeypatch):
+    bruto = preparar(tmp_path, monkeypatch)
+    pasta = bruto / "AC"
+    base(pasta)
+    escrever(pasta, "gabinete.json", {"coletadoEm": "2026-10-31", "fonte": "https://g/pessoal", "itens": [
+        {"idDeputado": 1, "matricula": "2", "nome": "B", "simbolo": "G-7"},
+        {"idDeputado": 1, "matricula": "1", "nome": "A", "simbolo": "G-7"},
+        {"idDeputado": 1, "matricula": "3", "nome": "C", "simbolo": "G-3"}]})
+    ge.gerar_assembleia("AC", pasta)
+    g = json.loads((tmp_path / "saida" / "estadual" / "AC" / "1.json").read_text(encoding="utf-8"))["gabinete"]
+    assert g["total"] == 3 and g["coletadoEm"] == "2026-10-31" and g["fonte"] == "https://g/pessoal"
+    assert g["simbolos"] == [{"simbolo": "G-3", "quantidade": 1}, {"simbolo": "G-7", "quantidade": 2}]
+    assert [s["nome"] for s in g["servidores"]] == ["C", "A", "B"] and "matricula" not in g["servidores"][0]
+
+
+def test_orgao_agrupa_fornecedor_e_separa_valor_registrado(tmp_path, monkeypatch):
+    bruto = preparar(tmp_path, monkeypatch)
+    pasta = bruto / "PR"
+    base(pasta)
+    escrever(tmp_path / "saida" / "nucleo", "fornecedores.json", [{"id": "for_23324543"}])
+
+    def item(tipo, nome, cnpj, valor, inicio):
+        return {"tipo": tipo, "fornecedor": nome, "nomeChave": nome, "cnpj": cnpj, "valor": valor, "inicio": inicio, "arquivos": []}
+
+    escrever(pasta, "orgao_2026.json", {"itens": {
+        "ctr_a": item("contrato", "CS", "23324543000160", 100.0, "2026-01-01"),
+        "ctr_b": item("ata_adesao", "CS", "23324543000160", 50.0, "2026-02-01"),
+        "ctr_c": item("ata_registro", "CS", "23324543000160", 900.0, "2026-03-01"),
+        "ctr_d": item("contrato", "SEM CNPJ", None, 10.0, "2026-04-01")}})
+    escrever(pasta, "regras_ressarcimento.json", {"url": "https://r.pdf", "ano": 2025})
+    ge.gerar_assembleia("PR", pasta)
+    o = json.loads((tmp_path / "saida" / "orgao" / "PR.json").read_text(encoding="utf-8"))
+    cs, sem = o["fornecedores"]
+    assert cs["contratos"] == 2 and cs["valorContratado"] == 150.0 and cs["atas"] == 1 and cs["valorRegistrado"] == 900.0 and cs["idFornecedor"] == "for_23324543"
+    assert sem["nome"] == "SEM CNPJ" and "idFornecedor" not in sem
+    assert [i["id"] for i in o["itens"]] == ["ctr_d", "ctr_c", "ctr_b", "ctr_a"] and o["regrasRessarcimento"]["ano"] == 2025

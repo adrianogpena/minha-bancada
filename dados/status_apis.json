@@ -643,36 +643,450 @@
   "grupo": "Assembleias (estaduais)",
   "ok": true,
   "primeiraVerificacao": "2026-10-24T18:31:15Z",
-  "ultimoOk": "2026-10-30T04:06:25Z",
+  "ultimoOk": "2026-10-31T09:20:40Z",
   "url": "https://consultas.assembleia.pr.leg.br/#/pesquisa-legislativa",
-  "verificadoEm": "2026-10-30T04:06:25Z"
+  "verificadoEm": "2026-10-31T09:20:40Z"
  },
  "pr_site": {
   "detalhe": "HTTP 200, text/html",
   "grupo": "Assembleias (estaduais)",
   "ok": true,
   "primeiraVerificacao": "2026-10-24T18:31:15Z",
-  "ultimoOk": "2026-10-30T04:06:25Z",
+  "ultimoOk": "2026-10-31T09:20:40Z",
   "url": "https://www.assembleia.pr.leg.br/deputados/conheca",
-  "verificadoEm": "2026-10-30T04:06:25Z"
+  "verificadoEm": "2026-10-31T09:20:40Z"
  },
- "pr_transparencia": {
+ "pr_storage_votacao": {
+  "detalhe": "HTTP 200, application/zip, 57 KB",
+  "grupo": "Assembleias (estaduais)",
+  "ok": true,
+  "primeiraVerificacao": "2026-10-31T09:20:40Z",
+  "ultimoOk": "2026-10-31T09:20:40Z",
+  "url": "https://storage2.assembleia.pr.leg.br/file/public-media/transparencia/sessoes/2026/dados_abertos_32_SESS_O_ORDIN_RIA_1700.zip",
+  "verificadoEm": "2026-10-31T09:20:40Z"
+ },
+ "pr_t_atas": {
+  "detalhe": "HTTP 200, application/json",
+  "grupo": "Assembleias (estaduais)",
+  "ok": true,
+  "primeiraVerificacao": "2026-10-31T09:20:40Z",
+  "ultimoOk": "2026-10-31T09:20:40Z",
+  "url": "https://transparencia.assembleia.pr.leg.br/plenario/atas-sessoes-plenarias/ajax?ano=2026&mes=10",
+  "verificadoEm": "2026-10-31T09:20:40Z"
+ },
+ "pr_t_atas_adesao_meses": {
+  "detalhe": "HTTP 200, application/json",
+  "grupo": "Assembleias (estaduais)",
+  "ok": true,
+  "primeiraVerificacao": "2026-10-31T09:20:40Z",
+  "ultimoOk": "2026-10-31T09:20:40Z",
+  "url": "https://transparencia.assembleia.pr.leg.br/api/atas-adesao/meses?ano=2026",
+  "verificadoEm": "2026-10-31T09:20:40Z"
+ },
+ "pr_t_atas_registro_meses": {
+  "detalhe": "HTTP 200, application/json",
+  "grupo": "Assembleias (estaduais)",
+  "ok": true,
+  "primeiraVerificacao": "2026-10-31T09:20:40Z",
+  "ultimoOk": "2026-10-31T09:20:40Z",
+  "url": "https://transparencia.assembleia.pr.leg.br/api/atas-registro-preco/meses?ano=2026",
+  "verificadoEm": "2026-10-31T09:20:40Z"
+ },
+ "pr_t_atos_normativos": {
+  "detalhe": "HTTP 200, application/json",
+  "grupo": "Assembleias (estaduais)",
+  "ok": true,
+  "primeiraVerificacao": "2026-10-31T09:20:40Z",
+  "ultimoOk": "2026-10-31T09:21:11Z",
+  "url": "https://transparencia.assembleia.pr.leg.br/api/atos-normativos?tipo=4",
+  "verificadoEm": "2026-10-31T09:21:11Z"
+ },
+ "pr_t_cartoes": {
+  "detalhe": "HTTP 200, application/json",
+  "grupo": "Assembleias (estaduais)",
+  "ok": true,
+  "primeiraVerificacao": "2026-10-31T09:20:40Z",
+  "ultimoOk": "2026-10-31T09:20:40Z",
+  "url": "https://transparencia.assembleia.pr.leg.br/api/cartoes?ano=2026&mes=10&tipo=1",
+  "verificadoEm": "2026-10-31T09:20:40Z"
+ },
+ "pr_t_contratos": {
+  "detalhe": "HTTP 200, application/json",
+  "grupo": "Assembleias (estaduais)",
+  "ok": true,
+  "primeiraVerificacao": "2026-10-31T09:20:40Z",
+  "ultimoOk": "2026-10-31T09:20:40Z",
+  "url": "https://transparencia.assembleia.pr.leg.br/compras-e-licitacoes/contratos/contratos",
+  "verificadoEm": "2026-10-31T09:20:40Z"
+ },
+ "pr_t_diarias": {
+  "detalhe": "HTTP 200, application/json",
+  "grupo": "Assembleias (estaduais)",
+  "ok": true,
+  "primeiraVerificacao": "2026-10-31T09:20:40Z",
+  "ultimoOk": "2026-10-31T09:20:40Z",
+  "url": "https://transparencia.assembleia.pr.leg.br/api/diarias/meses?ano=2026",
+  "verificadoEm": "2026-10-31T09:20:40Z"
+ },
+ "pr_t_diarias_ultimo": {
+  "detalhe": "HTTP 200, application/json",
+  "grupo": "Assembleias (estaduais)",
+  "ok": true,
+  "primeiraVerificacao": "2026-10-31T09:20:40Z",
+  "ultimoOk": "2026-10-31T09:20:40Z",
+  "url": "https://transparencia.assembleia.pr.leg.br/api/diarias/ultimo-periodo",
+  "verificadoEm": "2026-10-31T09:20:40Z"
+ },
+ "pr_t_dispensas_meses": {
+  "detalhe": "HTTP 200, application/json",
+  "grupo": "Assembleias (estaduais)",
+  "ok": true,
+  "primeiraVerificacao": "2026-10-31T09:20:40Z",
+  "ultimoOk": "2026-10-31T09:20:40Z",
+  "url": "https://transparencia.assembleia.pr.leg.br/api/dispensas/meses?ano=2026",
+  "verificadoEm": "2026-10-31T09:20:40Z"
+ },
+ "pr_t_estoque_meses": {
+  "detalhe": "HTTP 200, application/json",
+  "grupo": "Assembleias (estaduais)",
+  "ok": true,
+  "primeiraVerificacao": "2026-10-31T09:20:40Z",
+  "ultimoOk": "2026-10-31T09:20:40Z",
+  "url": "https://transparencia.assembleia.pr.leg.br/api/estoque/meses?ano=2026",
+  "verificadoEm": "2026-10-31T09:20:40Z"
+ },
+ "pr_t_gestao_fiscal": {
   "detalhe": "HTTP 403",
   "grupo": "Assembleias (estaduais)",
   "ok": false,
-  "primeiraVerificacao": "2026-10-24T18:31:15Z",
+  "primeiraVerificacao": "2026-10-31T09:20:40Z",
   "ultimoOk": null,
-  "url": "https://transparencia.assembleia.pr.leg.br/api/remuneracao",
-  "verificadoEm": "2026-10-30T04:06:25Z"
+  "url": "https://transparencia.assembleia.pr.leg.br/api/gestao_fiscal",
+  "verificadoEm": "2026-10-31T09:20:40Z"
  },
- "pr_webservices": {
-  "detalhe": "SSLError: HTTPSConnectionPool(host='webservices.assembleia.pr.leg.br', port=443): Max retries exceeded with ur",
+ "pr_t_licitacoes_meses": {
+  "detalhe": "HTTP 200, application/json",
+  "grupo": "Assembleias (estaduais)",
+  "ok": true,
+  "primeiraVerificacao": "2026-10-31T09:20:40Z",
+  "ultimoOk": "2026-10-31T09:20:40Z",
+  "url": "https://transparencia.assembleia.pr.leg.br/api/licitacoes/meses?ano=2026",
+  "verificadoEm": "2026-10-31T09:20:40Z"
+ },
+ "pr_t_obras": {
+  "detalhe": "HTTP 200, application/json",
+  "grupo": "Assembleias (estaduais)",
+  "ok": true,
+  "primeiraVerificacao": "2026-10-31T09:20:40Z",
+  "ultimoOk": "2026-10-31T09:20:40Z",
+  "url": "https://transparencia.assembleia.pr.leg.br/api/obras/2026",
+  "verificadoEm": "2026-10-31T09:20:40Z"
+ },
+ "pr_t_ordem_cronologica_anos": {
+  "detalhe": "HTTP 200, application/json",
+  "grupo": "Assembleias (estaduais)",
+  "ok": true,
+  "primeiraVerificacao": "2026-10-31T09:20:40Z",
+  "ultimoOk": "2026-10-31T09:20:40Z",
+  "url": "https://transparencia.assembleia.pr.leg.br/receitas-e-despesas/ordem-cronologica-pagamentos/anos-com-dados",
+  "verificadoEm": "2026-10-31T09:20:40Z"
+ },
+ "pr_t_passagens": {
+  "detalhe": "HTTP 200, application/json",
+  "grupo": "Assembleias (estaduais)",
+  "ok": true,
+  "primeiraVerificacao": "2026-10-31T09:20:40Z",
+  "ultimoOk": "2026-10-31T09:20:40Z",
+  "url": "https://transparencia.assembleia.pr.leg.br/api/passagens?ano=2026&mes=10",
+  "verificadoEm": "2026-10-31T09:20:40Z"
+ },
+ "pr_t_passagens_meses": {
+  "detalhe": "HTTP 200, application/json",
+  "grupo": "Assembleias (estaduais)",
+  "ok": true,
+  "primeiraVerificacao": "2026-10-31T09:20:40Z",
+  "ultimoOk": "2026-10-31T09:20:40Z",
+  "url": "https://transparencia.assembleia.pr.leg.br/api/passagens/meses?ano=2026",
+  "verificadoEm": "2026-10-31T09:20:40Z"
+ },
+ "pr_t_pauta_ccj": {
+  "detalhe": "HTTP 200, application/json",
+  "grupo": "Assembleias (estaduais)",
+  "ok": true,
+  "primeiraVerificacao": "2026-10-31T09:20:40Z",
+  "ultimoOk": "2026-10-31T09:20:40Z",
+  "url": "https://transparencia.assembleia.pr.leg.br/plenario/pautas/ccj/ajax?ano=2026&mes=10",
+  "verificadoEm": "2026-10-31T09:20:40Z"
+ },
+ "pr_t_pauta_comissoes": {
+  "detalhe": "HTTP 200, application/json",
+  "grupo": "Assembleias (estaduais)",
+  "ok": true,
+  "primeiraVerificacao": "2026-10-31T09:20:40Z",
+  "ultimoOk": "2026-10-31T09:20:40Z",
+  "url": "https://transparencia.assembleia.pr.leg.br/plenario/pautas/comissoes-tematicas/ajax?ano=2026&mes=10",
+  "verificadoEm": "2026-10-31T09:20:40Z"
+ },
+ "pr_t_pauta_ordem_dia": {
+  "detalhe": "HTTP 200, application/json",
+  "grupo": "Assembleias (estaduais)",
+  "ok": true,
+  "primeiraVerificacao": "2026-10-31T09:20:40Z",
+  "ultimoOk": "2026-10-31T09:20:40Z",
+  "url": "https://transparencia.assembleia.pr.leg.br/plenario/pautas/ordem-do-dia/ajax?ano=2026&mes=10",
+  "verificadoEm": "2026-10-31T09:20:40Z"
+ },
+ "pr_t_pessoal_adidos": {
+  "detalhe": "HTTP 200, text/html",
+  "grupo": "Assembleias (estaduais)",
+  "ok": true,
+  "primeiraVerificacao": "2026-10-31T09:20:40Z",
+  "ultimoOk": "2026-10-31T09:20:40Z",
+  "url": "https://transparencia.assembleia.pr.leg.br/pessoal/adidos",
+  "verificadoEm": "2026-10-31T09:20:40Z"
+ },
+ "pr_t_pessoal_cedidos": {
+  "detalhe": "HTTP 200, text/html",
+  "grupo": "Assembleias (estaduais)",
+  "ok": true,
+  "primeiraVerificacao": "2026-10-31T09:20:40Z",
+  "ultimoOk": "2026-10-31T09:20:40Z",
+  "url": "https://transparencia.assembleia.pr.leg.br/pessoal/cedidos-por-outros-orgaos",
+  "verificadoEm": "2026-10-31T09:20:40Z"
+ },
+ "pr_t_pessoal_comissionados": {
+  "detalhe": "HTTP 200, text/html",
+  "grupo": "Assembleias (estaduais)",
+  "ok": true,
+  "primeiraVerificacao": "2026-10-31T09:20:40Z",
+  "ultimoOk": "2026-10-31T09:20:40Z",
+  "url": "https://transparencia.assembleia.pr.leg.br/pessoal/comissionados",
+  "verificadoEm": "2026-10-31T09:20:40Z"
+ },
+ "pr_t_pessoal_estagiarios": {
+  "detalhe": "HTTP 200, text/html",
+  "grupo": "Assembleias (estaduais)",
+  "ok": true,
+  "primeiraVerificacao": "2026-10-31T09:20:40Z",
+  "ultimoOk": "2026-10-31T09:20:40Z",
+  "url": "https://transparencia.assembleia.pr.leg.br/pessoal/estagiarios",
+  "verificadoEm": "2026-10-31T09:20:40Z"
+ },
+ "pr_t_pessoal_estaveis": {
+  "detalhe": "HTTP 200, text/html",
+  "grupo": "Assembleias (estaduais)",
+  "ok": true,
+  "primeiraVerificacao": "2026-10-31T09:20:40Z",
+  "ultimoOk": "2026-10-31T09:20:40Z",
+  "url": "https://transparencia.assembleia.pr.leg.br/pessoal/estaveis",
+  "verificadoEm": "2026-10-31T09:20:40Z"
+ },
+ "pr_t_pessoal_inativos": {
+  "detalhe": "HTTP 200, text/html",
+  "grupo": "Assembleias (estaduais)",
+  "ok": true,
+  "primeiraVerificacao": "2026-10-31T09:20:40Z",
+  "ultimoOk": "2026-10-31T09:20:40Z",
+  "url": "https://transparencia.assembleia.pr.leg.br/pessoal/inativos",
+  "verificadoEm": "2026-10-31T09:20:40Z"
+ },
+ "pr_t_pessoal_pensionistas": {
+  "detalhe": "HTTP 200, text/html",
+  "grupo": "Assembleias (estaduais)",
+  "ok": true,
+  "primeiraVerificacao": "2026-10-31T09:20:40Z",
+  "ultimoOk": "2026-10-31T09:20:40Z",
+  "url": "https://transparencia.assembleia.pr.leg.br/pessoal/pensionistas",
+  "verificadoEm": "2026-10-31T09:20:40Z"
+ },
+ "pr_t_pessoal_temporarios": {
+  "detalhe": "HTTP 200, text/html",
+  "grupo": "Assembleias (estaduais)",
+  "ok": true,
+  "primeiraVerificacao": "2026-10-31T09:20:40Z",
+  "ultimoOk": "2026-10-31T09:20:40Z",
+  "url": "https://transparencia.assembleia.pr.leg.br/pessoal/temporarios",
+  "verificadoEm": "2026-10-31T09:20:40Z"
+ },
+ "pr_t_pessoal_terceirizados": {
+  "detalhe": "HTTP 200, text/html",
+  "grupo": "Assembleias (estaduais)",
+  "ok": true,
+  "primeiraVerificacao": "2026-10-31T09:20:40Z",
+  "ultimoOk": "2026-10-31T09:20:40Z",
+  "url": "https://transparencia.assembleia.pr.leg.br/pessoal/terceirizados",
+  "verificadoEm": "2026-10-31T09:20:40Z"
+ },
+ "pr_t_presenca": {
+  "detalhe": "HTTP 200, application/json",
+  "grupo": "Assembleias (estaduais)",
+  "ok": true,
+  "primeiraVerificacao": "2026-10-31T09:20:40Z",
+  "ultimoOk": "2026-10-31T09:20:40Z",
+  "url": "https://transparencia.assembleia.pr.leg.br/api/presenca/ano?ano=2026",
+  "verificadoEm": "2026-10-31T09:20:40Z"
+ },
+ "pr_t_presenca_datas": {
+  "detalhe": "HTTP 200, application/json",
+  "grupo": "Assembleias (estaduais)",
+  "ok": true,
+  "primeiraVerificacao": "2026-10-31T09:20:40Z",
+  "ultimoOk": "2026-10-31T09:20:40Z",
+  "url": "https://transparencia.assembleia.pr.leg.br/api/presenca/datas?ano=2026&mes=10",
+  "verificadoEm": "2026-10-31T09:20:40Z"
+ },
+ "pr_t_presenca_mensal": {
+  "detalhe": "HTTP 404",
   "grupo": "Assembleias (estaduais)",
   "ok": false,
-  "primeiraVerificacao": "2026-10-24T18:31:15Z",
+  "primeiraVerificacao": "2026-10-31T09:20:40Z",
   "ultimoOk": null,
-  "url": "https://webservices.assembleia.pr.leg.br/api/public/proposicao/filtrar",
-  "verificadoEm": "2026-10-30T04:06:25Z"
+  "url": "https://transparencia.assembleia.pr.leg.br/api/presenca/mensal?ano=2026&mes=10",
+  "verificadoEm": "2026-10-31T09:20:40Z"
+ },
+ "pr_t_presenca_meses": {
+  "detalhe": "HTTP 200, application/json",
+  "grupo": "Assembleias (estaduais)",
+  "ok": true,
+  "primeiraVerificacao": "2026-10-31T09:20:40Z",
+  "ultimoOk": "2026-10-31T09:20:40Z",
+  "url": "https://transparencia.assembleia.pr.leg.br/api/presenca/meses?ano=2026",
+  "verificadoEm": "2026-10-31T09:20:40Z"
+ },
+ "pr_t_receitas": {
+  "detalhe": "HTTP 200, text/html",
+  "grupo": "Assembleias (estaduais)",
+  "ok": true,
+  "primeiraVerificacao": "2026-10-31T09:20:40Z",
+  "ultimoOk": "2026-10-31T09:20:40Z",
+  "url": "https://transparencia.assembleia.pr.leg.br/receitas-e-despesas/receitas/compilado-de-receitas",
+  "verificadoEm": "2026-10-31T09:20:40Z"
+ },
+ "pr_t_remuneracao_recente": {
+  "detalhe": "HTTP 200, application/json",
+  "grupo": "Assembleias (estaduais)",
+  "ok": true,
+  "primeiraVerificacao": "2026-10-31T09:20:40Z",
+  "ultimoOk": "2026-10-31T09:20:40Z",
+  "url": "https://transparencia.assembleia.pr.leg.br/api/remuneracao/recente",
+  "verificadoEm": "2026-10-31T09:20:40Z"
+ },
+ "pr_t_ressarcimento_meses": {
+  "detalhe": "HTTP 200, application/json",
+  "grupo": "Assembleias (estaduais)",
+  "ok": true,
+  "primeiraVerificacao": "2026-10-31T09:20:40Z",
+  "ultimoOk": "2026-10-31T09:20:40Z",
+  "url": "https://transparencia.assembleia.pr.leg.br/api/ressarcimento/meses?ano=2026",
+  "verificadoEm": "2026-10-31T09:20:40Z"
+ },
+ "pr_t_rreo": {
+  "detalhe": "HTTP 403",
+  "grupo": "Assembleias (estaduais)",
+  "ok": false,
+  "primeiraVerificacao": "2026-10-31T09:20:40Z",
+  "ultimoOk": null,
+  "url": "https://transparencia.assembleia.pr.leg.br/api/rreo",
+  "verificadoEm": "2026-10-31T09:20:40Z"
+ },
+ "pr_t_siafic_meses": {
+  "detalhe": "HTTP 200, application/json",
+  "grupo": "Assembleias (estaduais)",
+  "ok": true,
+  "primeiraVerificacao": "2026-10-31T09:20:40Z",
+  "ultimoOk": "2026-10-31T09:20:40Z",
+  "url": "https://transparencia.assembleia.pr.leg.br/siafic/ordem-bancaria/meses",
+  "verificadoEm": "2026-10-31T09:20:40Z"
+ },
+ "pr_t_votacoes_datas": {
+  "detalhe": "HTTP 200, application/json",
+  "grupo": "Assembleias (estaduais)",
+  "ok": true,
+  "primeiraVerificacao": "2026-10-31T09:20:40Z",
+  "ultimoOk": "2026-10-31T09:20:40Z",
+  "url": "https://transparencia.assembleia.pr.leg.br/api/votacoes/datas?ano=2026&mes=10",
+  "verificadoEm": "2026-10-31T09:20:40Z"
+ },
+ "pr_t_votacoes_itens": {
+  "detalhe": "HTTP 200, application/json",
+  "grupo": "Assembleias (estaduais)",
+  "ok": true,
+  "primeiraVerificacao": "2026-10-31T09:20:40Z",
+  "ultimoOk": "2026-10-31T09:20:40Z",
+  "url": "https://transparencia.assembleia.pr.leg.br/api/votacoes?ano=2026&mes=10&data=2026-10-01&sessao=2116",
+  "verificadoEm": "2026-10-31T09:20:40Z"
+ },
+ "pr_t_votacoes_meses": {
+  "detalhe": "HTTP 200, application/json",
+  "grupo": "Assembleias (estaduais)",
+  "ok": true,
+  "primeiraVerificacao": "2026-10-31T09:20:40Z",
+  "ultimoOk": "2026-10-31T09:20:40Z",
+  "url": "https://transparencia.assembleia.pr.leg.br/api/votacoes/meses?ano=2026",
+  "verificadoEm": "2026-10-31T09:20:40Z"
+ },
+ "pr_t_votacoes_sessoes": {
+  "detalhe": "HTTP 200, application/json",
+  "grupo": "Assembleias (estaduais)",
+  "ok": true,
+  "primeiraVerificacao": "2026-10-31T09:20:40Z",
+  "ultimoOk": "2026-10-31T09:20:40Z",
+  "url": "https://transparencia.assembleia.pr.leg.br/api/votacoes/sessoes?ano=2026&mes=10&data=2026-10-01",
+  "verificadoEm": "2026-10-31T09:20:40Z"
+ },
+ "pr_t_votacoes_zip": {
+  "detalhe": "HTTP 200, application/json",
+  "grupo": "Assembleias (estaduais)",
+  "ok": true,
+  "primeiraVerificacao": "2026-10-31T09:20:40Z",
+  "ultimoOk": "2026-10-31T09:20:40Z",
+  "url": "https://transparencia.assembleia.pr.leg.br/api/votacoes/dados-abertos?sessao=1700",
+  "verificadoEm": "2026-10-31T09:20:40Z"
+ },
+ "pr_transparencia": {
+  "detalhe": "HTTP 200, application/json",
+  "grupo": "Assembleias (estaduais)",
+  "ok": true,
+  "primeiraVerificacao": "2026-10-24T18:31:15Z",
+  "ultimoOk": "2026-10-31T09:20:40Z",
+  "url": "https://transparencia.assembleia.pr.leg.br/api/remuneracao/meses?ano=2026",
+  "verificadoEm": "2026-10-31T09:20:40Z"
+ },
+ "pr_webservices": {
+  "detalhe": "HTTP 200, application/json",
+  "grupo": "Assembleias (estaduais)",
+  "ok": true,
+  "primeiraVerificacao": "2026-10-24T18:31:15Z",
+  "ultimoOk": "2026-10-31T09:20:40Z",
+  "url": "http://webservices.assembleia.pr.leg.br/api/public/proposicao/campos",
+  "verificadoEm": "2026-10-31T09:20:40Z"
+ },
+ "pr_webservices_norma": {
+  "detalhe": "HTTP 200, application/json",
+  "grupo": "Assembleias (estaduais)",
+  "ok": true,
+  "primeiraVerificacao": "2026-10-31T09:20:40Z",
+  "ultimoOk": "2026-10-31T09:20:40Z",
+  "url": "http://webservices.assembleia.pr.leg.br/api/public/norma-legal/63009",
+  "verificadoEm": "2026-10-31T09:20:40Z"
+ },
+ "pr_webservices_norma_campos": {
+  "detalhe": "HTTP 200, application/json",
+  "grupo": "Assembleias (estaduais)",
+  "ok": true,
+  "primeiraVerificacao": "2026-10-31T09:20:40Z",
+  "ultimoOk": "2026-10-31T09:20:40Z",
+  "url": "http://webservices.assembleia.pr.leg.br/api/public/norma-legal/campos",
+  "verificadoEm": "2026-10-31T09:20:40Z"
+ },
+ "pr_webservices_proposicao": {
+  "detalhe": "HTTP 200, application/json",
+  "grupo": "Assembleias (estaduais)",
+  "ok": true,
+  "primeiraVerificacao": "2026-10-31T09:20:40Z",
+  "ultimoOk": "2026-10-31T09:20:40Z",
+  "url": "http://webservices.assembleia.pr.leg.br/api/public/proposicao/121701",
+  "verificadoEm": "2026-10-31T09:20:40Z"
  },
  "receita_cnpj": {
   "detalhe": "HTTP 200, application/zip, 21 KB",

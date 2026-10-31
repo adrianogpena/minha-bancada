@@ -28,6 +28,7 @@ ARQUIVO = RAIZ / "ENDPOINTS.md"
 STATUS = RAIZ / "dados" / "status_apis.json"
 UA = "Mozilla/5.0 (compatible; minha-bancada; projeto de transparencia; teste de endpoints)"
 LIMITE_JSON = 2_000_000   # só confere o JSON se couber nisso
+HOSTS_XHR = ("transparencia.assembleia.pr.leg.br",)   # o /api/ do portal responde 403 sem o cabeçalho de chamada AJAX
 OK, ERRO = "✅ OK", "❌ ERRO"
 
 
@@ -52,7 +53,10 @@ def bundle_extra() -> str:
 
 def testar(url: str, verify=True, tentativa: int = 0) -> tuple[bool, str]:
     try:
-        with requests.get(url, stream=True, timeout=60, verify=verify, headers={"User-Agent": UA, "Accept": "*/*"}) as r:
+        cabecalhos = {"User-Agent": UA, "Accept": "*/*"}
+        if any(h in url for h in HOSTS_XHR):
+            cabecalhos.update({"Accept": "application/json", "X-Requested-With": "XMLHttpRequest"})
+        with requests.get(url, stream=True, timeout=60, verify=verify, headers=cabecalhos) as r:
             tipo = r.headers.get("Content-Type", "").split(";")[0]
             if not r.ok:
                 return False, f"HTTP {r.status_code}"

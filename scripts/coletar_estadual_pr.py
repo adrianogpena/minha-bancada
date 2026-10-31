@@ -8,21 +8,36 @@ Fontes lidas aqui (abertas, sem login nem captcha):
   - diárias de viagem (linhas com cargo "DEPUTADO"/"DEPUTADA", ligadas pelo nome civil): /api/diarias
   - presença em plenário por sessão: /api/presenca/ano (página /plenario/presenca-em-plenario)
   - proposições (autoria só por nome, sem id): POST http://webservices.assembleia.pr.leg.br/api/public/proposicao/filtrar
+  - normas legais (leis, decretos legislativos, resoluções; autoria só por nome): POST .../norma-legal/filtrar
+  - voto nominal por deputado: /api/votacoes/{meses,datas,sessoes} (a sessão vem pelo dia, `data=06`), /api/votacoes (PDF de cada item)
+    e /api/votacoes/dados-abertos?sessao=<id> (JSON com a URL do ZIP no storage2; uma planilha por item, uma linha por deputado)
 
-Não coletado: ressarcimento (cota parlamentar) exige token reCAPTCHA, bloqueado; votações nominais só em PDF por item
-(/api/votacoes devolve o PDF da sessão); passagens aéreas e cartões não trazem o deputado.
+Só 2026 (`PRIMEIRO_ANO`): os arquivos de 2023 a 2025 que já existem ficam como estão e continuam valendo no site, mas não são
+relidos nem criados de novo.
+
+Votações, leitura incremental: sessão com ZIP já lido não é baixada de novo; sessão sem ZIP (o arquivo sai com atraso, e há
+sessões extraordinárias e audiências sem planilha) é conferida de novo nos últimos RELER_SEM_ZIP_DIAS dias; a cada
+RENOVAR_COMPLETA_DIAS a coleta lista todos os meses do ano (a diária só lista os recentes) e confere também as sem ZIP antigas e as
+que tinham nome sem deputado ligado. Proposições e normas são lidas inteiras (o ano de 2026 inteiro leva ~2 s: o filtro
+`dataInicial` do webservice não segue a data de recebimento, então não vale como incremental).
+
+Não coletado: ressarcimento (cota parlamentar) exige token reCAPTCHA, bloqueado; votação simbólica e item sem planilha (só o PDF);
+passagens aéreas e cartões não trazem o deputado.
 """
 
 import html as html_lib
+import io
 import re
 import time
-from datetime import date
+import zipfile
+from datetime import date, timedelta
 from functools import partial
 
 import requests
 
 import estaduais_comum as comum
 import identidades
+import ids
 
 UF = "PR"
 PORTAL = "https://transparencia.assembleia.pr.leg.br"
@@ -34,7 +49,12 @@ DIARIAS_PAGINA = f"{PORTAL}/receitas-e-despesas/diarias-de-viagem"
 PRESENCA_PAGINA = f"{PORTAL}/plenario/presenca-em-plenario"
 PROPOSICOES_PAGINA = "https://consultas.assembleia.pr.leg.br/#/pesquisa-legislativa"
 TIPO_REMUNERACAO = "deputado estadual"
-PRIMEIRO_ANO = 2023
+NORMAS_PAGINA = PROPOSICOES_PAGINA
+VOTACOES_API = f"{PORTAL}/api/votacoes"
+PRIMEIRO_ANO = 2026   # só 2026; o que já existe de 2023 a 2025 fica como está
+FONTE_ID = "alep_pr"
+RELER_SEM_ZIP_DIAS = 45   # sessão sem ZIP é conferida de novo até esta idade (o ZIP sai com atraso)
+RENOVAR_COMPLETA_DIAS = 14   # de tempos em tempos lista o ano todo, por segurança contra o que a leitura incremental não enxergue
 MESES_RECENTES = 2   # meses de diárias relidos todo dia; os anteriores vêm do arquivo
 RELER_ULTIMO_MES_DIAS = 7   # o último mês da remuneração (um POST por deputado) é relido uma vez por semana, para pegar correções
 PAUSA = 1.2
@@ -46,8 +66,8 @@ SIGLAS = {"PROJETO DE LEI": "PRO", "PROJETO DE LEI COMPLEMENTAR": "PLC", "PROJET
 TOTAIS = {"Total Bruto": "bruto", "Valor Bruto (- Descontos Obrigatórios)": "liquido"}
 
 
-def get_json(sessao, url: str, **params):
-    r = sessao.get(url, params=params, headers={"Accept": "application/json", "X-Requested-With": "XMLHttpRequest"}, timeout=60)
+def get_json(s, url: str, **params):
+    r = s.get(url, params=params, headers={"Accept": "application/json", "X-Requested-With": "XMLHttpRequest"}, timeout=60)
     r.raise_for_status()
     return r.json()
 
@@ -266,6 +286,170 @@ def proposicoes_do_ano(sessao, ano: int) -> list[dict]:
     return j.get("lista") or []
 
 
+# ---------------------------------------------------------------- normas legais
+
+def normas_do_ano(sessao, ano: int) -> list[dict]:
+    r = sessao.post(f"{API_PROPOSICOES}/norma-legal/filtrar", json={"ano": ano}, timeout=180)
+    r.raise_for_status()
+    j = r.json()
+    if not j.get("sucesso"):
+        raise RuntimeError(f"norma-legal/filtrar {ano}: {str(j.get('erro'))[:120]}")
+    return j.get("lista") or []
+
+
+def normas(lista: list[dict], deputados: list[dict]) -> dict:
+    """{código da norma: dados}, só as de autoria de deputado (autor vem como texto, ligado pelo nome)."""
+    ids_por_nome = ligar({a for n in lista for a in autores_deputados(n.get("autores"))}, deputados)
+    achadas = {}
+    for n in lista:
+        autores = sorted({ids_por_nome[a] for a in autores_deputados(n.get("autores")) if a in ids_por_nome})
+        if not autores:
+            continue
+        ementa = " ".join((n.get("ementa") or "").split())
+        if len(ementa) > LIMITE_EMENTA:
+            ementa = ementa[:LIMITE_EMENTA].rsplit(" ", 1)[0] + "..."
+        achadas[str(n["codigo"])] = {
+            "tipo": (n.get("descricaoTipoNormaLegal") or "").strip().title(), "numero": n.get("numero"), "ano": n.get("ano"),
+            "data": comum.data_iso(n.get("data")), "ementa": ementa, "situacao": n.get("tipoMovimentacao"),
+            "idsDeputados": autores, "fonte": NORMAS_PAGINA}
+    return achadas
+
+
+# ---------------------------------------------------------------- votação nominal
+
+def votacao_da_planilha(linhas: list[dict]) -> dict | None:
+    """Uma planilha de item votado (cabeçalho em A/B, depois PARLAMENTAR/PARTIDO/VOTO); None se a votação não for nominal."""
+    cab: dict = {}
+    votos: list[tuple[str, str]] = []
+    em_votos = False
+    for i, lin in enumerate(linhas):
+        a = lin.get("A", "")
+        if em_votos:
+            if a and lin.get("C"):
+                votos.append((" ".join(a.split()), lin["C"].strip()))
+        elif a.upper() == "PARLAMENTAR":
+            em_votos = True
+        elif i == 0 and a.upper().startswith("ITEM"):
+            cab["ITEM"], cab["TITULO"] = a[4:].strip(), lin.get("B", "")
+        else:
+            cab[a.rstrip(":").strip().upper()] = lin.get("B", "")
+    if (cab.get("TIPO VOTAÇÃO") or "").upper() != "NOMINAL" or not votos:
+        return None
+    return {"item": cab.get("ITEM"), "titulo": cab.get("TITULO", ""), "modelo": cab.get("MODELO"), "ementa": cab.get("EMENTA"),
+            "resultado": cab.get("RESULTADO DA VOTAÇÃO"), "votos": votos,
+            "apuracao": {"sim": cab.get("VOTOS SIM"), "nao": cab.get("VOTO NÃO"), "abstencao": cab.get("VOTO ABSTER")}}
+
+
+def voto_normalizado(texto: str) -> str:
+    return {"sim": "sim", "nao": "não", "abster": "abstenção", "abstencao": "abstenção"}.get(comum.sem_acento(texto).lower(), texto.lower())
+
+
+def aprovada(resultado: str | None) -> bool | None:
+    r = comum.sem_acento(resultado or "").upper()
+    if r.startswith(("NAO APROV", "REJEIT", "REPROV", "PREJUDIC", "DERROT")):
+        return False
+    if r.startswith("APROV"):
+        return True
+    return None
+
+
+def votacoes_do_zip(conteudo: bytes, sessao: str, data: str, pdfs: dict, url_zip: str, deputados: list[dict]) -> tuple[dict, dict, set]:
+    """(votações, matérias votadas, nomes sem deputado ligado) de um ZIP de sessão, uma planilha por item.
+    Id da votação: `ids.gerar_id("vot", "alep_pr", "<sessão>|<id do item no nome do arquivo>")`; o voto de nome sem par não é gravado."""
+    lidas = []
+    with zipfile.ZipFile(io.BytesIO(conteudo)) as z:
+        for nome in sorted(z.namelist()):
+            if not nome.lower().endswith(".xlsx"):
+                continue
+            v = votacao_da_planilha(comum.xlsx_linhas(z.read(nome)))
+            m = re.search(r"ITEM-[^-]+-(\d+)-", nome)
+            if v:
+                lidas.append((m.group(1) if m else nome, v))
+    ligacao = ligar({n for _, v in lidas for n, _ in v["votos"]}, [{**d, "nome": d["nomeCivil"] or d["nome"]} for d in deputados])
+    sem_par = {n for _, v in lidas for n, _ in v["votos"] if n not in ligacao}
+    votacoes, materias_votadas = {}, {}
+    for chave, v in sorted(lidas, key=lambda x: x[0]):
+        vid = ids.gerar_id("vot", FONTE_ID, f"{sessao}|{chave}")
+        votos = [[ligacao[n], voto_normalizado(x)] for n, x in v["votos"] if n in ligacao]
+        numero_item = re.match(r"\d+", v["item"] or "")
+        pdf = pdfs.get(numero_item.group(0)) if numero_item else None
+        contagem = {k: int(v["apuracao"][k]) if str(v["apuracao"].get(k) or "").isdigit() else sum(1 for _, x in v["votos"] if voto_normalizado(x) == nome)
+                    for k, nome in (("sim", "sim"), ("nao", "não"), ("abstencao", "abstenção"))}
+        votacoes[vid] = {"data": data, "idMateria": vid, "aprovada": aprovada(v["resultado"]), "resultado": v["resultado"],
+                         "sim": contagem["sim"], "nao": contagem["nao"], "abstencoes": contagem["abstencao"], "votos": votos,
+                         "fonte": pdf or url_zip, "fonteZip": url_zip, "sessao": sessao}
+        t = re.match(r"(.*?)\s+(\d+)/(\d{4})$", " ".join(v["titulo"].split()))
+        tipo = (t.group(1) if t else v["titulo"]).strip()
+        modelo = f" ({v['modelo'].lower()})" if v.get("modelo") else ""
+        materias_votadas[vid] = {"tipo": SIGLAS.get(tipo, tipo[:4].upper()), "tipoDescricao": tipo.capitalize() + modelo,
+                                 "numero": int(t.group(2)) if t else None, "ano": int(t.group(3)) if t else None, "ementa": v["ementa"] or None}
+    return votacoes, materias_votadas, sem_par
+
+
+def precisa_ler(estado: dict | None, data: str, hoje: date, completa: bool) -> bool:
+    """Sessão nova lê; com ZIP já lido só relê na coleta completa e se ficou nome sem par; sem ZIP, até RELER_SEM_ZIP_DIAS de idade."""
+    if estado is None:
+        return True
+    if estado["zip"]:
+        return completa and bool(estado.get("semPar"))
+    return completa or (hoje - date.fromisoformat(data)).days <= RELER_SEM_ZIP_DIAS
+
+
+def sessoes_do_ano(sessao, ano: int, hoje: date, completa: bool) -> list[tuple[str, str, int, str]]:
+    """[(id da sessão, data ISO, mês, dia)]: todos os meses na coleta completa; senão só os de RELER_SEM_ZIP_DIAS atrás até agora."""
+    meses = sorted(int(m) for m in (get_json(sessao, f"{VOTACOES_API}/meses", ano=ano).get("meses") or {}))
+    corte = hoje - timedelta(days=RELER_SEM_ZIP_DIAS)
+    achadas = []
+    for mes in meses:
+        if not completa and (ano, mes) < (corte.year, corte.month):
+            continue
+        for dia in get_json(sessao, f"{VOTACOES_API}/datas", ano=ano, mes=mes):
+            for sid in get_json(sessao, f"{VOTACOES_API}/sessoes", ano=ano, mes=mes, data=dia):
+                achadas.append((str(sid), f"{ano:04d}-{mes:02d}-{int(dia):02d}", mes, dia))
+    return achadas
+
+
+def zip_da_sessao(sessao, sid: str) -> str | None:
+    r = sessao.get(f"{VOTACOES_API}/dados-abertos", params={"sessao": sid}, headers={"Accept": "application/json", "X-Requested-With": "XMLHttpRequest"}, timeout=60)
+    if r.status_code >= 500:
+        r.raise_for_status()
+    try:
+        return r.json().get("arquivo") or None
+    except ValueError:
+        return None
+
+
+def pdfs_da_sessao(sessao, ano: int, mes: int, dia: str, sid: str) -> dict:
+    """{número do item: URL do PDF}, para a fonte de cada votação."""
+    itens = get_json(sessao, VOTACOES_API, ano=ano, mes=mes, data=dia, sessao=sid)
+    return {m.group(1): i["arquivo"] for i in itens if i.get("arquivo") and (m := re.match(r"ITEM\s+(\d+)", i.get("item") or ""))}
+
+
+def votacoes_do_ano(sessao, ano: int, deputados: list[dict], arquivo: dict, hoje: date) -> tuple[dict, dict, dict, bool]:
+    """Devolve (votações, matérias votadas, estado por sessão, coleta completa?) juntando o novo ao que o arquivo já tinha."""
+    completa_em = arquivo.get("completaEm")
+    completa = not arquivo.get("sessoes") or not completa_em or (hoje - date.fromisoformat(completa_em)).days >= RENOVAR_COMPLETA_DIAS
+    votacoes, estado = dict(arquivo.get("votacoes") or {}), dict(arquivo.get("sessoes") or {})
+    materias_votadas = dict(arquivo.get("materiasVotadas") or {})
+    sem_par: set = set()
+    for sid, data, mes, dia in sessoes_do_ano(sessao, ano, hoje, completa):
+        if not precisa_ler(estado.get(sid), data, hoje, completa):
+            continue
+        url_zip = zip_da_sessao(sessao, sid)
+        if not url_zip:
+            estado[sid] = {"data": data, "zip": False, "lidoEm": hoje.isoformat()}
+            continue
+        novas, mats, faltou = votacoes_do_zip(comum.baixar(sessao, url_zip, timeout=120), sid, data, pdfs_da_sessao(sessao, ano, mes, dia, sid), url_zip, deputados)
+        votacoes = {k: v for k, v in votacoes.items() if v.get("sessao") != sid} | novas
+        materias_votadas = {k: v for k, v in materias_votadas.items() if k in votacoes} | mats
+        estado[sid] = {"data": data, "zip": True, "lidoEm": hoje.isoformat(), "semPar": len(faltou)}
+        sem_par |= faltou
+        time.sleep(PAUSA)
+    if sem_par:
+        comum.avisar(f"PR: votos de nomes sem deputado ligado (não gravados): {', '.join(sorted(sem_par))}")
+    return votacoes, materias_votadas, estado, completa
+
+
 # ---------------------------------------------------------------- coleta
 
 def coletar() -> None:
@@ -315,8 +499,8 @@ def coletar() -> None:
 
     def presenca():
         arq = pasta / "presenca.json"
-        guardados = [i for i in comum.ler(arq, {"itens": []})["itens"] if int(i["periodo"][:4]) < hoje.year - 1]
-        primeiro = hoje.year - 1 if guardados else PRIMEIRO_ANO   # anos encerrados não mudam: vêm do arquivo
+        primeiro = max(PRIMEIRO_ANO, hoje.year - 1)   # anos encerrados e anteriores a PRIMEIRO_ANO não são relidos: vêm do arquivo
+        guardados = [i for i in comum.ler(arq, {"itens": []})["itens"] if int(i["periodo"][:4]) < primeiro]
         sessoes = []
         for ano in range(primeiro, hoje.year + 1):
             sessoes += get_json(s, f"{PORTAL}/api/presenca/ano", ano=ano).get("sessoes") or []
@@ -324,8 +508,27 @@ def coletar() -> None:
         comum.salvar(arq, {"coletadoEm": agora, "fonte": PRESENCA_PAGINA, "itens": itens})
         print(f"PR: presença {len(itens)} linhas")
 
+    def normas_legais(ano):
+        arq = pasta / f"normas_{ano}.json"
+        if comum.ano_encerrado(ano, hoje, arq):
+            return
+        achadas = normas(normas_do_ano(s, ano), deputados)
+        comum.salvar(arq, {"coletadoEm": agora, "fonte": NORMAS_PAGINA, "normas": achadas})
+        print(f"PR: {ano} normas {len(achadas)}")
+
+    def votacoes(ano):
+        arq = pasta / "votacoes.json"
+        anterior = comum.ler(arq, {})
+        votos, mats, estado, completa = votacoes_do_ano(s, ano, deputados, {**anterior, "materiasVotadas": comum.ler(pasta / "materias_votadas.json", {})}, hoje)
+        comum.salvar(arq, {"coletadoEm": agora, "completaEm": agora if completa else anterior.get("completaEm"), "fonte": f"{PORTAL}/plenario/votacoes",
+                           "sessoes": estado, "votacoes": votos})
+        comum.salvar(pasta / "materias_votadas.json", mats)
+        print(f"PR: {ano} votações {len(votos)} em {sum(1 for e in estado.values() if e['zip'])} sessões com ZIP ({len(estado)} no total)")
+
     for ano in range(PRIMEIRO_ANO, hoje.year + 1):
         tentar(f"proposições {ano}", partial(proposicoes, ano))
+        tentar(f"normas {ano}", partial(normas_legais, ano))
+        tentar(f"votações {ano}", partial(votacoes, ano))
         tentar(f"diárias {ano}", partial(diarias, ano))
         if ano == hoje.year:
             tentar(f"remuneração {ano}", partial(remuneracao, ano))
@@ -427,12 +630,59 @@ def _conferir_proposicoes(registro):
     return falhas, []
 
 
+def _contrato_votacoes(ctx):
+    s = comum.sessao()
+    hoje = date.today()
+    for sid, _, mes, dia in reversed(sessoes_do_ano(s, hoje.year, hoje, False)):
+        url_zip = zip_da_sessao(s, sid)
+        if not url_zip:
+            continue
+        with zipfile.ZipFile(io.BytesIO(comum.baixar(s, url_zip, timeout=120))) as z:
+            nomes = sorted(n for n in z.namelist() if n.lower().endswith(".xlsx"))
+            linhas = comum.xlsx_linhas(z.read(nomes[0]))
+        itens = get_json(s, VOTACOES_API, ano=hoje.year, mes=mes, data=dia, sessao=sid)
+        return {"zip": url_zip, "arquivo": nomes[0], "linhas": linhas[:32], "itens": itens[:3]}
+    raise RuntimeError("nenhuma sessão com ZIP este ano")
+
+
+def _conferir_votacoes(registro):
+    falhas = comum.campos_vazios(registro, ("zip", "arquivo", "itens"), "votação", vazios=(None, "", []))
+    if not re.search(r"ITEM-[^-]+-\d+-", registro["arquivo"]):
+        falhas.append("nome do arquivo sem o id do item")
+    v = votacao_da_planilha(registro["linhas"])
+    if not v:
+        return falhas + ["planilha sem votação nominal"], []
+    falhas += comum.campos_vazios(v, ("item", "titulo", "resultado", "ementa"), "votação", vazios=(None, ""))
+    if not re.search(r"\d+/\d{4}$", v["titulo"]):
+        falhas.append("título do item sem número/ano")
+    novos = {voto_normalizado(x) for _, x in v["votos"]} - {"sim", "não", "abstenção", "não votou"}
+    if novos:
+        falhas.append(f"voto novo: {sorted(novos)}")
+    for i in registro["itens"]:
+        falhas += comum.campos_vazios(i, ("item",), "item da sessão", vazios=(None, ""))
+    return falhas, []
+
+
+def _contrato_normas(ctx):
+    lista = normas_do_ano(comum.sessao(), date.today().year)
+    return {"lista": [n for n in lista if autores_deputados(n.get("autores"))][:3]}
+
+
+def _conferir_normas(registro):
+    falhas = [] if registro["lista"] else ["nenhuma norma de deputado"]
+    for n in registro["lista"]:
+        falhas += comum.campos_vazios(n, ("codigo", "numero", "ano", "data", "ementa", "autores", "descricaoTipoNormaLegal"), "norma", vazios=(None, ""))
+    return falhas, []
+
+
 CONTRATOS = [
     {"nome": "estadual_pr_deputados", "fonte": DEPUTADOS_URL, "buscar": _contrato_deputados, "html": _conferir_deputados},
     {"nome": "estadual_pr_remuneracao", "fonte": f"{PORTAL}/api/remuneracao", "buscar": _contrato_remuneracao, "html": _conferir_remuneracao},
     {"nome": "estadual_pr_diarias", "fonte": f"{PORTAL}/api/diarias", "buscar": _contrato_diarias, "html": _conferir_diarias},
     {"nome": "estadual_pr_presenca", "fonte": f"{PORTAL}/api/presenca/ano", "buscar": _contrato_presenca, "html": _conferir_presenca},
     {"nome": "estadual_pr_proposicoes", "fonte": f"{API_PROPOSICOES}/proposicao/filtrar", "buscar": _contrato_proposicoes, "html": _conferir_proposicoes},
+    {"nome": "estadual_pr_votacoes", "fonte": f"{VOTACOES_API}/dados-abertos", "buscar": _contrato_votacoes, "html": _conferir_votacoes},
+    {"nome": "estadual_pr_normas", "fonte": f"{API_PROPOSICOES}/norma-legal/filtrar", "buscar": _contrato_normas, "html": _conferir_normas},
 ]
 
 

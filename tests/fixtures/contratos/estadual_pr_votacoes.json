@@ -1,0 +1,165 @@
+{
+ "fonte": "https://transparencia.assembleia.pr.leg.br/api/votacoes/dados-abertos",
+ "capturadoEm": "2026-10-31",
+ "amostra": {
+  "zip": "https://storage2.assembleia.pr.leg.br/file/public-media/transparencia/sessoes/2026/dados_abertos_83_SESS_O_ORDIN_RIA_sess_o_postergada_do_dia_05_10_1763.zip",
+  "arquivo": "SESSAO_PLENARIA_ORDINÁRIA_83--ITEM-134-33638-PROJETO DE LEI.xlsx",
+  "linhas": [
+   {
+    "A": "ITEM 2.0",
+    "B": "PROJETO DE LEI 134/2026"
+   },
+   {
+    "A": "AUTORES",
+    "B": "DEPUTADO BAZANA"
+   },
+   {
+    "A": "SESSÃO / REUNIÃO:",
+    "B": "83ª SESSÃO ORDINÁRIA"
+   },
+   {
+    "A": "DATA:",
+    "B": "06/10/2026 02:30:00"
+   },
+   {
+    "A": "TIPO VOTAÇÃO:",
+    "B": "NOMINAL"
+   },
+   {
+    "A": "MODELO:",
+    "B": "TURNO ÚNICO"
+   },
+   {
+    "A": "QUORUM:",
+    "B": "MAIORIA SIMPLES"
+   },
+   {
+    "A": "ASSUNTO:",
+    "B": "UTILIDADE PÚBLICA"
+   },
+   {
+    "A": "EMENTA:",
+    "B": "CONCEDE O TÍTULO DE UTILIDADE PÚBLICA À ASSOCIAÇÃO DE VOLEIBOL DE APUCARANA, COM SEDE NO MUNICÍPIO DE APUCARANA."
+   },
+   {
+    "A": "OBSERVAÇÃO:",
+    "B": "PARECER FAVORÁVEL: COMISSÃO DE CONSTITUIÇÃO E JUSTIÇA."
+   },
+   {
+    "A": "TOTAL DE PRESENTES:",
+    "B": "39"
+   },
+   {
+    "A": "PRESIDÊNCIA:",
+    "B": "FLAVIA CAROLINA RESENDE JABER FRANCISCHINI"
+   },
+   {
+    "A": "1ª SECRETARIA:",
+    "B": "ALDINO JORGE BUENO"
+   },
+   {
+    "A": "2ª SECRETARIA:",
+    "B": "CLOARA PINHEIRO LIMA"
+   },
+   {
+    "A": "RESULTADO DA VOTAÇÃO:",
+    "B": "APROVADO"
+   },
+   {
+    "A": "VOTOS SIM",
+    "B": "29"
+   },
+   {
+    "A": "VOTO NÃO",
+    "B": "0"
+   },
+   {
+    "A": "VOTO ABSTER",
+    "B": "0"
+   },
+   {
+    "A": "TOTAL DE VOTOS",
+    "B": "29"
+   },
+   {
+    "A": "PARLAMENTAR",
+    "B": "PARTIDO",
+    "C": "VOTO"
+   },
+   {
+    "A": "ADAO FERNANDES DA SILVA",
+    "B": "PSD",
+    "C": "SIM"
+   },
+   {
+    "A": "ADEMAR LUIZ TRAIANO",
+    "B": "PSD",
+    "C": "NÃO VOTOU"
+   },
+   {
+    "A": "ADRIANO JOSE DA SILVA",
+    "B": "PSD",
+    "C": "NÃO VOTOU"
+   },
+   {
+    "A": "ALDINO JORGE BUENO",
+    "B": "PSD",
+    "C": "SIM"
+   },
+   {
+    "A": "ALEXANDRE AMARO",
+    "B": "REPUB",
+    "C": "SIM"
+   },
+   {
+    "A": "ALEXANDRE MARANHAO KHURY",
+    "B": "REPUB",
+    "C": "NÃO VOTOU"
+   },
+   {
+    "A": "ALISSON ANTHONY WANDSCHEER",
+    "B": "PP",
+    "C": "SIM"
+   },
+   {
+    "A": "ANA JULIA PIRES RIBEIRO",
+    "B": "PT",
+    "C": "NÃO VOTOU"
+   },
+   {
+    "A": "ANTENOR GOMES DE LIMA",
+    "B": "PT",
+    "C": "NÃO VOTOU"
+   },
+   {
+    "A": "ANTONIO ANNIBELLI NETO",
+    "B": "MDB",
+    "C": "SIM"
+   },
+   {
+    "A": "ARILSON MAROLDI CHIORATO",
+    "B": "PT",
+    "C": "NÃO VOTOU"
+   },
+   {
+    "A": "ARTAGAO DE MATTOS LEAO JUNIOR",
+    "B": "PSD",
+    "C": "SIM"
+   }
+  ],
+  "itens": [
+   {
+    "item": "ITEM 1 1º TURNO DO PROJETO DE LEI N°292/2026 AUTORIA DO(A) DEPUTADO COBRA REPÓRTER",
+    "arquivo": "https://storage2.assembleia.pr.leg.br/file/public-media/transparencia/sessoes/2026/mux2mfz1_7823.pdf"
+   },
+   {
+    "item": "ITEM 2 TURNO ÚNICO DO PROJETO DE LEI N°134/2026 AUTORIA DO(A) DEPUTADO BAZANA",
+    "arquivo": "https://storage2.assembleia.pr.leg.br/file/public-media/transparencia/sessoes/2026/mux2mk1x_89ac.pdf"
+   },
+   {
+    "item": "ITEM 3 TURNO ÚNICO DO PROJETO DE LEI N°151/2026 AUTORIA DO(A) DEPUTADO HUSSEIN BAKRI",
+    "arquivo": "https://storage2.assembleia.pr.leg.br/file/public-media/transparencia/sessoes/2026/mux2mnr6_832c.pdf"
+   }
+  ]
+ }
+}

@@ -14,7 +14,7 @@ Revisado em 2026-10-29 contra o código e o `CHANGELOG.md`.
 |---|---|---|
 | 1 | Acabamentos do que já existe | 1.1 Restos de pacotes feitos |
 | 3 | Raspagem de HTML ou chave de API | 3.2 Emendas e Portal da Transparência · 3.3 Ministros de Estado: o que fica para depois · 3.4 Ministérios em números · 3.5 Atuação de cada ministro |
-| 4 | Fontes grandes, sem padrão ou cruzamentos sensíveis | 4.1 Fornecedores e doadores · 4.2 Assembleias e Câmaras Municipais · 4.3 Ministros dos tribunais superiores · 4.4 Órgãos de controle (resto) |
+| 4 | Fontes grandes, sem padrão ou cruzamentos sensíveis | 4.1 Fornecedores e doadores · 4.2 Assembleias e Câmaras Municipais · 4.3 Ministros dos tribunais superiores · 4.4 Órgãos de controle (resto) · 4.5 Assembleia do Paraná: portal e webservices (2026) |
 
 ## Nível 1: acabamentos
 
@@ -144,6 +144,52 @@ Wikipédia porque os sites oficiais bloqueiam coleta automática (ver `CHANGELOG
   Os `inidoneos` (proibidos de licitar, só CNPJ) também foram feitos em 2026-10-29: aviso nos fornecedores por CNPJ.
   Hoje o cruzamento de inabilitados dá zero ligações (5 nomes iguais, todos homônimos de outra UF), porque o TSE não
   publica CPF; o aviso aparece sozinho quando surgir um caso com nome e UF iguais.
+
+### 4.5 Assembleia do Paraná: portal e webservices (levantado em 2026-10-31)
+
+**Foco: só 2026.** Coletar apenas 2026 (o `PRIMEIRO_ANO` de 2023 do coletor continua para o que já existe); 2023 a 2025 ficam
+como carga futura, com a cobertura abaixo medida para decidir.
+
+O coletor atual (`coletar_estadual_pr.py`) usa remuneração, diárias, presença por sessão e proposições. O portal
+`transparencia.assembleia.pr.leg.br` e os webservices têm mais. Os 46 endpoints novos estão registrados no `ENDPOINTS.md`
+(grupo "Assembleias (estaduais)", nomes `pr_t_*`, `pr_storage_*`, `pr_webservices_*`). O `/api/` do portal só responde com
+`Accept: application/json` e `X-Requested-With: XMLHttpRequest`; o `testar_endpoints.py` passou a mandar os dois para esse host.
+Em 2026-10-31 três seguem com erro, sem ser falha do site: `pr_t_presenca_mensal` (404 em todo mês testado) e
+`pr_t_rreo` e `pr_t_gestao_fiscal` (403: exigem reCAPTCHA).
+
+**Cobertura dos ZIPs de voto nominal (medida em 2026-10-31):**
+
+| Ano | Sessões | Com ZIP | Itens votados | Planilhas (itens com voto nominal) |
+|---|---|---|---|---|
+| 2023 | 153 | 137 (90%) | 1.512 | 1.215 (80%) |
+| 2024 | 126 | 108 (86%) | 1.379 | 1.048 (76%) |
+| 2025 | 139 | 124 (89%) | 1.801 | 1.185 (66%) |
+| **2026** | **105** | **87 (83%)** | **958** | **687 (72%)** |
+
+- Todas as planilhas são `NOMINAL`: uma linha por deputado (parlamentar, partido, voto), com item, projeto, autores, ementa,
+  sessão, data, turno, quórum, presentes, presidência e resultado. O ZIP traz uma planilha por item.
+- Sem ZIP em 2026 (18 sessões): extraordinárias, audiências públicas e sessões recentes. Em outubro só 2 de 10 sessões têm ZIP
+  (as de 27/10 ainda dão 404), então o ZIP sai com atraso: reler os últimos 45 dias a cada coleta.
+- Votação simbólica e item sem planilha só têm o PDF (campo `arquivo` de `/api/votacoes`); fica como link, sem voto por deputado.
+
+**Pacotes, em ordem de valor** (todos seguem "Dados sem duplicação" e "Coletores de Assembleias estaduais" do `CLAUDE.md`):
+
+| Pacote | Fonte | O que daria no site | Observações |
+|---|---|---|---|
+| 1. Voto nominal por deputado | `/api/votacoes/{meses,datas,sessoes}` (a sessão vem por dia, com `data=<dia>`, não por data completa), `/api/votacoes` (itens e PDF), `/api/votacoes/dados-abertos?sessao=<id>` (JSON com a URL do ZIP em `storage2.assembleia.pr.leg.br`) | aba de votos na ficha do deputado estadual; alinhamento ao partido e ao governo; presença em votação | Planilha: ler com `openpyxl` ou XML (o `sharedStrings` não serve, repete valores). Id da votação por `ids.gerar_id` de `alep_pr` + sessão + item; guardar sessão, item e URL do ZIP e do PDF como fonte. Deputado por `identidades.ligar_nomes` (UF PR; o nome vem civil, ex. "PEDRO PAULO BAZANA"), partido da planilha só como informação. Projeto ligado à proposição por tipo, número e ano do título. Incremental: sessões já lidas ficam guardadas; reler as dos últimos 45 dias e as sem ZIP. |
+| 2. Normas legais | `POST /norma-legal/filtrar`, `GET /norma-legal/{código}` (webservices; leis, decretos legislativos, resoluções: tipo, número, ano, ementa, autores, Diário Oficial, movimentações, proposições ligadas) | "leis de sua autoria" e a lei que nasceu de cada projeto; fecha o ciclo da proposição | Autor vem como texto; ligar por `ligar_nomes`. `dataInicial` evita reler o ano. Registrar o host `http://` (sem HTTPS). |
+| 3. Proposições pelo webservice, incremental | `POST /proposicao/filtrar` com `dataInicial`; `GET /proposicao/campos` (tipos, assuntos, situações) | menos tempo de coleta; tabela de situações oficial | `GET /proposicao/{código}` está quebrado no servidor (erro Oracle `ORA-00942`, com HTTP 200 e `sucesso:false`), então os trâmites não vêm; o testador acusa "OK" por isso. Revisar a cada trimestre. |
+| 4. Pautas e atas | `/plenario/pautas/{ordem-do-dia,ccj,comissoes-tematicas}/ajax`, `/plenario/atas-sessoes-plenarias/ajax` | "na pauta desta semana" na proposição; link da ata na sessão | Arquivos em PDF; ligar item da pauta à proposição pelo número e ano. Sem partes estruturadas. |
+| 5. Gabinete do deputado | `/api/remuneracao/recente` (matrícula, nome, símbolo do cargo, lotação, ex.: "GAB. DEP. FULANO"); páginas `/pessoal/comissionados`, `estaveis`, etc. | tamanho e composição do gabinete (como na Câmara: contagem por grupo) | Ligar a lotação ao deputado em `ESTRATEGIAS`, nunca por função própria. Decidir antes se mostra nomes de servidores ou só contagem por símbolo (o "Mapa dos dados" não leva nomes de pessoas). Sem valores: o salário já vem de `/api/remuneracao/{matrícula}`. |
+| 6. Presença e diárias mais enxutas | `/api/presenca/{meses,datas}`, `/api/diarias/ultimo-periodo` | menos requisições; saber o último mês publicado sem testar um a um | `presenca/mensal` devolve 404 sempre; só reavaliar. |
+| 7. Monitorar o que vem vazio | `/api/ressarcimento` (POST; `meses` lista só janeiro de 2026 e o POST volta `data: []`), `/api/passagens`, `/api/cartoes`, `/api/estoque` | verba de ressarcimento, passagens e cartões, se publicarem por deputado | 200 sem registros em 2026. Conferir o corpo do POST de ressarcimento em `ressarcimento.min.js` e rever todo mês; hoje as passagens e cartões não trazem o deputado. |
+| 8. Despesas do órgão (não são de deputado) | contratos, licitações, dispensas, atas de registro de preço e de adesão, obras, ordem cronológica, SIAFIC, receitas, atos normativos (`/api/atos-normativos?tipo=4`, atos do presidente, e o de ressarcimento da atividade parlamentar) | maiores fornecedores da Assembleia, ligados a `nucleo/fornecedores` por CNPJ; regras da verba | Prioridade baixa. Só os endpoints de `meses` foram abertos, o conteúdo não foi medido. O ato de ressarcimento da atividade parlamentar vale ler primeiro: explica o que a verba cobre. |
+| Fora | `/api/rreo`, `/api/gestao_fiscal` | | Exigem reCAPTCHA. A despesa com pessoal e o RGF já vêm do SICONFI (4.2). |
+
+**Antes de cada pacote** (regras do projeto): endpoint já está no `ENDPOINTS.md`; amostra real em `tests/fixtures/contratos/`
+(`CONTRATOS` do coletor) e teste offline em `tests/test_coletar_estadual_pr.py`; ligação em `identidades.py`; entrada no
+`CHANGELOG.md` e no `site/mapa-dados.html`; fonte com link ao lado de cada dado (votos: URL do PDF e do ZIP da sessão; normas:
+página da norma). Medir uma coleta do zero e uma com cache e anotar no `CHANGELOG.md`; o job do PR já tem prazo próprio.
 
 ## Pendências de cobertura do que já existe
 

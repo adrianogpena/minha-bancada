@@ -34,6 +34,6 @@ def test_tabela_bem_formada():
     nomes = []
     for _, c in t.ler_tabela(linhas):
         assert len(c) == 7, c
-        assert c[2].startswith("https://"), c
+        assert c[2].startswith(("https://", "http://")), c
         nomes.append(c[0])
     assert len(nomes) == len(set(nomes))

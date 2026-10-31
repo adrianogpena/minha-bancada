@@ -9,7 +9,8 @@ os dados são processados de novo.
 contador, data da coleta nem id que o próprio projeto gerou. O registro guarda a fonte e o id original (`fontes`, `eleicao` +
 `sequencial`...), então o id se refaz a qualquer momento. `gerar_id` recusa fonte ou id vazio, para não nascer id de "None".
 
-Prefixos: pes (pessoa), man (mandato), can (candidatura), dsp (disputa), for_pf e for_n (fornecedor sem CNPJ).
+Prefixos: pes (pessoa), man (mandato), can (candidatura), dsp (disputa), for_pf e for_n (fornecedor sem CNPJ), vot (votação nominal de Assembleia sem id
+próprio na fonte: `alep_pr`, sessão e id do item).
 
 Ficam fora, de propósito:
   - ids que a própria fonte publica e o projeto só repassa (id do deputado na Casa, do projeto, do CNPJ base em `for_<8 dígitos>`);

@@ -145,3 +145,111 @@ def test_remuneracao_rele_ultimo_mes_so_uma_vez_por_semana(monkeypatch):
     assert lidos == [9] and marca == {"mes": 9, "dia": "2026-10-27"} and len(itens) == 2
     itens, marca = pr.remuneracao_do_ano(None, 2026, DEPUTADOS, {"itens": [], "ultimoMesLidoEm": None}, pr.date(2026, 10, 22))
     assert lidos == [9, 8, 9] and marca == {"mes": 9, "dia": "2026-10-22"}
+
+
+DEPUTADOS_VOTO = [
+    {"id": "arilson-maroldi-chiorato", "nome": "ARILSON CHIORATO", "nomeCivil": "ARILSON MAROLDI CHIORATO", "partido": "PT"},
+    {"id": "artagao-junior", "nome": "ARTAGÃO JUNIOR", "nomeCivil": "ARTAGAO DE MATTOS LEAO JUNIOR", "partido": "PSD"},
+]
+
+
+def zip_com(*nomes):
+    import io
+    import zipfile
+
+    buf = io.BytesIO()
+    with zipfile.ZipFile(buf, "w") as z:
+        for n in nomes:
+            z.writestr(n, b"x")
+    return buf.getvalue()
+
+
+def test_votacoes_do_contrato():
+    assert pr._conferir_votacoes(amostra("votacoes")) == ([], [])
+
+
+def test_planilha_nominal_e_ignora_outros_tipos():
+    linhas = amostra("votacoes")["linhas"]
+    v = pr.votacao_da_planilha(linhas)
+    assert v["titulo"].endswith("/2026") and v["item"].startswith("2") and v["resultado"] and len(v["votos"]) >= 2
+    assert pr.votacao_da_planilha([{**lin, "B": "SIMBÓLICA"} if lin.get("A") == "TIPO VOTAÇÃO:" else lin for lin in linhas]) is None
+
+
+def test_votacoes_do_zip_liga_deputado_grava_pdf_como_fonte_e_deixa_sem_par_de_fora(monkeypatch):
+    linhas = amostra("votacoes")["linhas"]
+    monkeypatch.setattr(pr.comum, "xlsx_linhas", lambda conteudo: linhas)
+    zipado = zip_com("SESSAO--ITEM-134-33638-PROJETO DE LEI.xlsx", "leiame.txt")
+    pdfs = {"2": "https://storage2/item2.pdf"}
+    votacoes, materias, sem_par = pr.votacoes_do_zip(zipado, "1763", "2026-10-05", pdfs, "https://storage2/s.zip", DEPUTADOS_VOTO)
+    (vid, v), = votacoes.items()
+    assert vid == pr.ids.gerar_id("vot", "alep_pr", "1763|33638") and v["idMateria"] == vid
+    assert v["data"] == "2026-10-05" and v["fonte"] == "https://storage2/item2.pdf" and v["fonteZip"] == "https://storage2/s.zip"
+    assert {i for i, _ in v["votos"]} <= {"arilson-maroldi-chiorato", "artagao-junior"} and v["votos"]
+    assert dict(v["votos"])["artagao-junior"] == "sim" and dict(v["votos"])["arilson-maroldi-chiorato"] == "não votou"
+    assert sem_par and not sem_par & {"ARTAGAO DE MATTOS LEAO JUNIOR"}
+    assert materias[vid]["tipo"] == "PRO" and materias[vid]["numero"] == 134 and materias[vid]["ano"] == 2026 and "turno" in materias[vid]["tipoDescricao"]
+    sem_pdf = pr.votacoes_do_zip(zipado, "1763", "2026-10-05", {}, "https://storage2/s.zip", DEPUTADOS_VOTO)[0][vid]
+    assert sem_pdf["fonte"] == "https://storage2/s.zip"
+
+
+def test_aprovada_e_voto_normalizado():
+    assert [pr.aprovada(x) for x in ("APROVADO", "NÃO APROVADO", "REJEITADO", "EM VOTAÇÃO", None)] == [True, False, False, None, None]
+    assert [pr.voto_normalizado(x) for x in ("SIM", "NÃO", "ABSTENÇÃO", "NÃO VOTOU")] == ["sim", "não", "abstenção", "não votou"]
+
+
+def test_precisa_ler_sessao():
+    hoje = pr.date(2026, 10, 31)
+    assert pr.precisa_ler(None, "2026-02-01", hoje, False)
+    com_zip = {"data": "2026-02-01", "zip": True, "semPar": 0}
+    assert not pr.precisa_ler(com_zip, "2026-02-01", hoje, False) and not pr.precisa_ler(com_zip, "2026-02-01", hoje, True)
+    assert not pr.precisa_ler({**com_zip, "semPar": 2}, "2026-02-01", hoje, False) and pr.precisa_ler({**com_zip, "semPar": 2}, "2026-02-01", hoje, True)
+    sem_zip = {"data": "2026-10-20", "zip": False}
+    assert pr.precisa_ler(sem_zip, "2026-10-20", hoje, False)
+    assert not pr.precisa_ler({"data": "2026-02-01", "zip": False}, "2026-02-01", hoje, False)
+    assert pr.precisa_ler({"data": "2026-02-01", "zip": False}, "2026-02-01", hoje, True)
+
+
+def test_votacoes_do_ano_incremental(monkeypatch):
+    hoje = pr.date(2026, 10, 31)
+    lidas = []
+    sessoes = [("1", "2026-02-10", 2, "10"), ("2", "2026-09-10", 9, "10"), ("3", "2026-10-27", 10, "27")]
+    zips = {"1": "u/1.zip", "2": None, "3": "u/3.zip"}
+    monkeypatch.setattr(pr, "sessoes_do_ano", lambda s, ano, h, completa: sessoes)
+    monkeypatch.setattr(pr, "zip_da_sessao", lambda s, sid: zips[sid])
+    monkeypatch.setattr(pr, "pdfs_da_sessao", lambda *a: {})
+    monkeypatch.setattr(pr.comum, "baixar", lambda s, url, **kw: url.encode())
+    monkeypatch.setattr(pr.time, "sleep", lambda s: None)
+
+    def zip_falso(conteudo, sid, data, pdfs, url, deputados):
+        lidas.append(sid)
+        return {f"v{sid}": {"data": data, "sessao": sid, "votos": []}}, {f"v{sid}": {"tipo": "PRO"}}, set()
+
+    monkeypatch.setattr(pr, "votacoes_do_zip", zip_falso)
+    votos, mats, estado, completa = pr.votacoes_do_ano(None, 2026, DEPUTADOS_VOTO, {}, hoje)
+    assert completa and lidas == ["1", "3"] and sorted(votos) == ["v1", "v3"] and sorted(mats) == ["v1", "v3"]
+    assert estado["2"]["zip"] is False and estado["1"]["zip"] is True
+
+    lidas.clear()
+    arquivo = {"completaEm": "2026-10-25", "sessoes": estado, "votacoes": votos, "materiasVotadas": mats}
+    zips["2"], zips["3"] = "u/2.zip", "u/3.zip"
+    votos, mats, estado, completa = pr.votacoes_do_ano(None, 2026, DEPUTADOS_VOTO, arquivo, hoje)
+    assert not completa and lidas == []   # a 2 é antiga e sem ZIP: só a coleta completa confere
+    assert sorted(votos) == ["v1", "v3"]
+
+    arquivo["completaEm"] = "2026-10-01"
+    votos, mats, estado, completa = pr.votacoes_do_ano(None, 2026, DEPUTADOS_VOTO, arquivo, hoje)
+    assert completa and lidas == ["2"] and sorted(votos) == ["v1", "v2", "v3"] and sorted(mats) == ["v1", "v2", "v3"]
+
+
+def test_normas_so_de_deputado_ligado():
+    amostra_normas = amostra("normas")
+    assert pr._conferir_normas(amostra_normas) == ([], [])
+    lista = [
+        {"codigo": 1, "numero": 23051, "ano": 2026, "data": "2026-03-19T03:00:00.000+0000", "ementa": "CONCEDE  O TÍTULO.",
+         "autores": "DEPUTADO ALEXANDRE CURI, DEPUTADA ANA JÚLIA", "descricaoTipoNormaLegal": "Lei", "tipoMovimentacao": "SANCIONADO(A)"},
+        {"codigo": 2, "numero": 1, "ano": 2026, "data": None, "ementa": "x", "autores": "COMISSÃO EXECUTIVA", "descricaoTipoNormaLegal": "Lei"},
+    ]
+    achadas = pr.normas(lista, DEPUTADOS)
+    assert list(achadas) == ["1"]
+    assert achadas["1"] == {"tipo": "Lei", "numero": 23051, "ano": 2026, "data": "2026-03-19", "ementa": "CONCEDE O TÍTULO.", "situacao": "SANCIONADO(A)",
+                            "idsDeputados": ["alexandre-curi", "ana-julia"], "fonte": pr.NORMAS_PAGINA}

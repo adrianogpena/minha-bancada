@@ -1,6 +1,6 @@
 /* Histórico por dia, semana ou mês. */
 import { $, esc, data, semAcento, carregar, urlSegura } from "./util.js";
-import { erro } from "./comum.js";
+import { erro, botaoVoltar } from "./comum.js";
 import { fontes } from "./apis.js";
 
 /* ---------- Histórico diário ---------- */
@@ -20,6 +20,9 @@ function noEscopo(e, codigos) {
   });
 }
 
+/* `fichas`: códigos do "Fique informado" ou páginas do site (o senador não tem código); vale se o evento cita qualquer um. */
+export const doPolitico = (e, fichas) => (e.politicos || []).some((p) => fichas.includes(p.codigo) || fichas.includes(p.pagina));
+
 /* Cargo exibido ao lado do nome do político. */
 function cargoHist(p) {
   if (p.cargo) return p.cargo;
@@ -33,22 +36,28 @@ function cargoHist(p) {
   return "";
 }
 
+/* Do mais recente ao mais antigo; no mesmo dia, a ordem do arquivo. É a ordem da aba Eventos da ficha. */
+export const maisRecente = (a, b) => (b._dia || "").localeCompare(a._dia || "") || (a._n ?? 0) - (b._n ?? 0);
+
 const somar = (eventos) => eventos.reduce((t, e) => t + (e.quantidade || 1), 0);   // um evento "lote" resume vários registros
 
 /* ---------- Semana e mês ---------- */
 /* Não há arquivo de semana nem de mês: o período é a junção, no navegador, dos arquivos diários que ele cobre. */
-const PERIODOS = { dia: "Dia", semana: "Semana", mes: "Mês" };
+const PERIODOS = { dia: "Dia", semana: "Semana", mes: "Mês", "30dias": "Últimos 30 dias" };
+const JANELA_RECENTE = 30;
 const dataHora = (iso) => new Date(iso).toLocaleString("pt-BR", { timeZone: "America/Sao_Paulo", day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" }).replace(",", "");
 const somarDias = (iso, n) => { const d = new Date(iso + "T12:00:00Z"); d.setUTCDate(d.getUTCDate() + n); return d.toISOString().slice(0, 10); };
 const segunda = (iso) => somarDias(iso, -((new Date(iso + "T12:00:00Z").getUTCDay() + 6) % 7));
 
 /* Chave do período que contém o dia: o próprio dia, a segunda-feira da semana ou AAAA-MM. */
-export const chaveDe = (periodo, iso) => periodo === "semana" ? segunda(iso) : periodo === "mes" ? iso.slice(0, 7) : iso;
+export const chaveDe = (periodo, iso) => periodo === "30dias" ? "recentes" : periodo === "semana" ? segunda(iso) : periodo === "mes" ? iso.slice(0, 7) : iso;
 
 /* Agrupa o índice (do mais novo ao mais antigo) por período; `dias` guarda os dias do grupo na mesma ordem. */
 export function agruparPeriodos(indice, periodo) {
   const grupos = new Map();
+  const corte = periodo === "30dias" && indice.length ? somarDias(indice[0].data, 1 - JANELA_RECENTE) : "";   // 30 dias contados do dado mais novo
   for (const x of indice) {
+    if (x.data < corte) continue;
     const chave = chaveDe(periodo, x.data);
     if (!grupos.has(chave)) grupos.set(chave, { chave, dias: [], total: 0 });
     const g = grupos.get(chave);
@@ -59,6 +68,7 @@ export function agruparPeriodos(indice, periodo) {
 }
 
 function rotuloPeriodo(g, periodo) {
+  if (periodo === "30dias") return `Últimos ${JANELA_RECENTE} dias`;
   if (periodo === "semana") return `Semana de ${data(g.chave)} a ${data(somarDias(g.chave, 6))}`;
   if (periodo === "mes") return new Date(g.chave + "-15T12:00:00Z").toLocaleDateString("pt-BR", { month: "long", year: "numeric", timeZone: "UTC" });
   return data(g.chave);
@@ -89,7 +99,7 @@ export function juntarDias(dias, chave) {
       acc.ultimaColeta ??= x.ultimaColeta;
       if (statusDe(x) === "irrelevante" && ["parado", "falha"].includes(statusDe(acc))) { acc.status = "irrelevante"; acc.mudou = true; }   // mudança em qualquer dia vale para o período; falha só vale se for a do dia mais novo e nada mudou
     }
-    for (const e of d.eventos) eventos.push({ ...e, _dia: d.data });
+    for (const e of d.eventos) eventos.push({ ...e, _dia: d.data, _n: eventos.length });   // _n: ordem original (dia mais novo primeiro, ordem do arquivo)
   }
   const ordem = Object.keys(locais).sort((a, b) => (chaveLocal(a) < chaveLocal(b) ? -1 : 1));
   eventos.sort((a, b) => (chaveLocal(a.local) < chaveLocal(b.local) ? -1 : chaveLocal(a.local) > chaveLocal(b.local) ? 1 : 0));
@@ -125,7 +135,7 @@ function coberturaSemNovidade(dia, codigos, local, mostrar, unidade = "dia") {
     + (sem.length ? `<section class="painel hist-sem"><h2>Sem cobertura <small>${sem.length}</small></h2><p class="texto">Ainda não coletamos estes locais (sem fonte conectada): ${sem.map(([, x]) => `<b>${esc(x.nome)}</b>`).join(", ")}.</p></section>` : "");
 }
 
-function itemHistorico(e) {
+export function itemHistorico(e) {
   const mudanca = e.mudanca ? `<p class="hist-mudanca"><span>${esc(e.mudanca[0])}</span> → <b>${esc(e.mudanca[1])}</b></p>` : "";
   return `<li class="hist-item r-${e.relevancia || 2}">
     <div class="hist-cab"><span class="hist-tag k-${esc(e.categoria)}">${esc(CATEGORIAS_HIST[e.categoria] || e.categoria)}</span> <b>${esc(e.titulo)}</b>${e.dataDoAto ? (e.dataDoAtoAproximada ? ` <span class="quando" title="A fonte não informa a data desta mudança; vale o dia em que o site a encontrou">apresentado em ${esc(data(e.dataDoAto))}, data da mudança desconhecida</span>` : ` <span class="quando">${esc(data(e.dataDoAto))}</span>`) : ""}${e._dia ? ` <span class="quando">registrado em ${esc(data(e._dia))}</span>` : ""}</div>
@@ -140,6 +150,7 @@ export async function paginaHistorico() {
   if (!indice.length) { alvo.innerHTML = `<p class="vazio">O histórico começa no próximo dia com novidades nos dados.</p>`; return; }
   const q = new URLSearchParams(location.search);
   let codigos = (q.get("locais") || "").split(",").filter(Boolean);
+  const fichas = (q.get("politico") || "").split(",").filter(Boolean);
   let periodo = PERIODOS[q.get("periodo")] ? q.get("periodo") : "dia";
   let grupos = agruparPeriodos(indice, periodo);
   const diaPedido = /^\d{4}-\d{2}-\d{2}/.test(q.get("dia") || "") ? chaveDe(periodo, q.get("dia").slice(0, 10)) : /^\d{4}-\d{2}$/.test(q.get("dia") || "") ? q.get("dia") : "";
@@ -151,6 +162,7 @@ export async function paginaHistorico() {
   };
 
   alvo.innerHTML = `
+    ${fichas.length ? botaoVoltar("Voltar ao político", "index.html") : ""}
     <div class="filtros hist-filtros">
       <label class="campo">Ver por<select id="h-periodo">${Object.entries(PERIODOS).map(([k, v]) => `<option value="${k}">${v}</option>`).join("")}</select></label>
       <label class="campo">Quando<select id="h-dia"></select></label>
@@ -159,6 +171,7 @@ export async function paginaHistorico() {
       <label class="campo">Importância<select id="h-imp">${Object.entries(IMPORTANCIA_HIST).map(([k, v]) => `<option value="${k}">${esc(v)}</option>`).join("")}</select></label>
       <label class="campo">Buscar<input id="h-busca" type="search" placeholder="Político, projeto ou assunto" autocomplete="off" value="${esc(q.get("busca") || "")}"></label>
     </div>
+    <p class="quando" id="h-politico" hidden></p>
     <p class="contagem" id="h-contagem" aria-live="polite"></p>
     <div id="h-lista"></div>`;
   $("#h-periodo").value = periodo;
@@ -185,12 +198,13 @@ export async function paginaHistorico() {
 
   function desenhar() {
     const tipo = $("#h-tipo").value, imp = Number($("#h-imp").value) || 0, busca = semAcento($("#h-busca").value.trim());
-    const filtrados = dia.eventos.filter((e) => noEscopo(e, codigos) && (!tipo || e.categoria === tipo) && (e.relevancia || 2) >= imp
+    const filtrados = dia.eventos.filter((e) => noEscopo(e, codigos) && (!fichas.length || doPolitico(e, fichas)) && (!tipo || e.categoria === tipo) && (e.relevancia || 2) >= imp
       && (!busca || semAcento([e.titulo, e.texto, e.resumo, ...(e.politicos || []).map((p) => p.nome)].join(" ")).includes(busca)));
     const novo = new URLSearchParams();
     novo.set("dia", dia.data);
     if (periodo !== "dia") novo.set("periodo", periodo);
     if (codigos.length) novo.set("locais", codigos.join(","));
+    if (fichas.length) novo.set("politico", fichas.join(","));
     if (tipo) novo.set("tipo", tipo);
     if (imp || periodo !== "dia") novo.set("imp", $("#h-imp").value);
     if (busca) novo.set("busca", $("#h-busca").value.trim());
@@ -199,10 +213,20 @@ export async function paginaHistorico() {
     const locais = [...new Set(filtrados.map((e) => e.local))];
     const quando = periodo === "dia" ? `em ${data(dia.data, true)}${dia.coletaEm ? ` (novidades ${dia.coletaAnterior ? `entre ${dataHora(dia.coletaAnterior)} e` : "até"} ${dataHora(dia.coletaEm)})` : ""}` : `de ${data(dia.de, true)} a ${data(dia.ate, true)}`;
     const unidade = periodo === "dia" ? "dia" : "período";
+    const aviso = $("#h-politico");
+    aviso.hidden = !fichas.length;
+    if (fichas.length) {
+      const nomes = [...new Set(dia.eventos.flatMap((e) => (e.politicos || []).filter((p) => fichas.includes(p.codigo) || fichas.includes(p.pagina)).map((p) => p.nome)))];
+      aviso.innerHTML = `Só os eventos de <b>${esc(nomes.join(", ") || "um político")}</b>. <a href="historico.html?periodo=${esc(periodo)}">Ver todos os políticos</a>`;
+    }
     $("#h-contagem").textContent = `${somar(filtrados)} de ${somar(dia.eventos)} mudanças ${quando}, em ${locais.length} ${locais.length === 1 ? "local" : "locais"}.`;
-    const semNovidade = coberturaSemNovidade(dia, codigos, $("#h-local").value, tipo || busca || imp ? 0 : 1, unidade);
+    const semNovidade = coberturaSemNovidade(dia, codigos, $("#h-local").value, tipo || busca || imp || fichas.length ? 0 : 1, unidade);
     if (!filtrados.length) { $("#h-lista").innerHTML = `<p class="vazio">Nada com esses filtros neste ${unidade}. Tente outro ${unidade} ou limpe os filtros.</p>${semNovidade}`; return; }
     const abrir = filtrados.length <= 60;
+    if (fichas.length) {   // um político só: uma lista corrida, sem agrupar por local nem por relevância
+      $("#h-lista").innerHTML = `<section class="painel hist-local"><ul class="hist-itens">${[...filtrados].sort(maisRecente).map(itemHistorico).join("")}</ul></section>`;
+      return;
+    }
     $("#h-lista").innerHTML = locais.map((l) => {
       const doLocal = filtrados.filter((e) => e.local === l);
       const grupos = new Map();   // nome do político -> {p, eventos}
@@ -211,7 +235,7 @@ export async function paginaHistorico() {
         grupos.get(p.nome).eventos.push(e);
       }
       const peso = (g) => Math.max(...g.eventos.map((e) => e.relevancia || 2));   // o presidente sempre abre a lista; depois, o político com o fato mais importante
-      for (const g of grupos.values()) g.eventos.sort((a, b) => (b.relevancia || 2) - (a.relevancia || 2));
+      for (const g of grupos.values()) g.eventos.sort(maisRecente);
       const ordenados = [...grupos.values()].sort((a, b) => (b.p.codigo === "pres") - (a.p.codigo === "pres") || peso(b) - peso(a) || (a.p.codigo ? 0 : 1) - (b.p.codigo ? 0 : 1) || b.eventos.length - a.eventos.length || a.p.nome.localeCompare(b.p.nome, "pt-BR"));
       return `<section class="painel hist-local">
         <h2>${esc(dia.locais[l])} <small>${somar(doLocal)} ${somar(doLocal) === 1 ? "mudança" : "mudanças"}</small></h2>

@@ -2,8 +2,8 @@
 import { $, esc, reais, reaisCentavos, pct, data, param, carregar, pctBr, urlSegura } from "./util.js";
 import { VOTOS, itemFicha, selosPar, semDadosLocais } from "./comum.js";
 import { linhaNoCargoAte, linhaSubsidio } from "./ficha.js";
-import { CAMARA_API, TIPOS_PROJETO, linkTramitacao, fontes, temResultado } from "./apis.js";
-import { montarParlamentar } from "./parlamentar.js";
+import { CAMARA_API, TIPOS_PROJETO, linkTramitacao, linkParlamentar, fontes, temResultado } from "./apis.js";
+import { montarParlamentar, painelCoautoria } from "./parlamentar.js";
 import { avisoLicenca } from "./ministros.js";
 import { painelEleicao } from "./eleicao.js";
 import { carregarEmendas, painelEmendas } from "./emendas.js";
@@ -88,18 +88,16 @@ function painelTrajetoria(dep) {
 }
 
 /* Com quem o deputado mais assina projetos (scripts/gerar_coautoria.py). `lista` é dados/deputados.json, para nome e partido dos parceiros. */
-function painelCoautoria(dep, lista) {
-  const c = dep.coautoria;
-  if (!c) return `<h2>Com quem assina projetos</h2><p class="vazio">Nenhum projeto assinado junto com outro deputado, entre os que já tiveram a autoria coletada.</p>`;
+function coautoriaDeputado(dep, lista) {
   const por = new Map(lista.map((d) => [String(d.id), d]));
-  return `
-    <h2>Com quem assina projetos</h2>
-    <p>${c.projetos} ${c.projetos === 1 ? "projeto assinado" : "projetos assinados"} com outros deputados, ${c.outroPartido} com deputado de outro partido (${pct(c.outroPartido, c.projetos)}). <a href="coautoria.html">Ver a rede entre os partidos</a>.</p>
-    <div class="rolagem"><table class="tabela"><thead><tr><th>Deputado</th><th>Partido</th><th>Projetos em comum</th></tr></thead><tbody>
-      ${c.parceiros.map(([j, n]) => { const d = por.get(String(j)); return `<tr><td>${d ? `<a href="deputado.html?id=${encodeURIComponent(j)}">${esc(d.nome)}</a>` : `Deputado ${esc(j)}`}</td><td>${d ? `${esc(d.partido)}/${esc(d.uf)}` : "—"}</td><td>${n}</td></tr>`; }).join("")}
-    </tbody></table></div>
-    <p class="quando">Só projetos (PL, PEC e afins) com mais de um deputado em exercício entre os autores; não entram autores que não são deputados nem projetos com mais de 30 deputados.</p>
-    ${fontes([["Autores de cada proposição (API da Câmara)", `${CAMARA_API}/proposicoes`]])}`;
+  return painelCoautoria({
+    c: dep.coautoria, quem: "Deputado",
+    vazio: "Nenhum projeto assinado junto com outro deputado, entre os que já tiveram a autoria coletada.",
+    intro: ' <a href="coautoria.html">Ver a rede entre os partidos</a>.',
+    linhas: (dep.coautoria?.parceiros || []).map(([j, n]) => { const d = por.get(String(j)); return [d ? `<a href="${linkParlamentar("camara", j)}">${esc(d.nome)}</a>` : `Deputado ${esc(j)}`, d ? `${esc(d.partido)}/${esc(d.uf)}` : "—", n]; }),
+    nota: "Só projetos (PL, PEC e afins) com mais de um deputado em exercício entre os autores; não entram autores que não são deputados nem projetos com mais de 30 deputados.",
+    fonte: ["Autores de cada proposição (API da Câmara)", `${CAMARA_API}/proposicoes`],
+  });
 }
 
 const ARQUIVOS_CAMARA = "https://dadosabertos.camara.leg.br/arquivos";
@@ -229,7 +227,7 @@ export async function paginaDeputado() {
 
     ${painelTematico(dep)}
 
-    ${painelCoautoria(dep, lista)}
+    ${coautoriaDeputado(dep, lista)}
 
     ${painelTrajetoria(dep)}
 
@@ -248,7 +246,7 @@ export async function paginaDeputado() {
     ${fontes([["Cadastro do deputado (API da Câmara)", `${CAMARA_API}/deputados/${encodeURIComponent(dep.id)}`], ["Portal da Câmara", `https://www.camara.leg.br/deputados/${encodeURIComponent(dep.id)}`]])}`;
 
   montarParlamentar(alvo, {
-    nome: dep.nome, foto: dep, antes: dep.ministro ? await avisoLicenca(dep.ministro, "deputado federal") : "",
+    nome: dep.nome, fichas: [`dep:${dep.id}`], foto: dep, antes: dep.ministro ? await avisoLicenca(dep.ministro, "deputado federal") : "",
     painelEleicao: painelEleicao(dep.nome, dep.eleicao, { suplente: /suplente/i.test(dep.condicao || ""), condicao: dep.condicao, cargoTse: "DEPUTADO FEDERAL",
       fontes: [["Cadastro do deputado (API da Câmara)", `${CAMARA_API}/deputados/${encodeURIComponent(dep.id)}`]] }),
     subtitulo: `<span class="selo">${esc(dep.partido)}/${esc(dep.uf)}</span> ${dep.situacao ? esc(dep.situacao) : ""}`,

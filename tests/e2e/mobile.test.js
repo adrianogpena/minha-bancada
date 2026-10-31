@@ -21,6 +21,8 @@ const TELAS = [
 const PAGINAS = [
   ["index.html", "Minha Bancada"],
   ["camara.html", "Ana Souza"],
+  ["senado.html", "Bia Lima"],
+  ["politico.html?f=senado&i=7", "Discursos e apartes"],
   ["deputado.html?id=101", "Ana Souza"],
   ["proposicoes.html", "PL 1/2026"],
   ["proposicao.html?k=c-900", "Ana Souza"],

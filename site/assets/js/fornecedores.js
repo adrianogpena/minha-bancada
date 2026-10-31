@@ -1,6 +1,7 @@
 /* Fornecedores que mais recebem das cotas e verbas: Câmara, Senado e Assembleias. */
 import { $, esc, reais, data, semAcento, carregar, urlSegura } from "./util.js";
 import { listaPaginada, erro } from "./comum.js";
+import { linkParlamentar } from "./apis.js";
 
 const CASAS = { camara: "Câmara", senado: "Senado", estadual: "Assembleias" };
 
@@ -48,7 +49,7 @@ async function doadoresEFornecedores(casas, empresa, inidonea) {
   const cadastro = new Map(forn.map((f) => [f.id, f]));
   const pessoa = new Map(pessoas.map((p) => [p.id, p]));
   const fonte = (f) => (f && urlSegura(f.url) ? `<a href="${esc(f.url)}" rel="noopener">${esc(f.nome)}</a>` : esc(f ? f.nome : ""));
-  const paginaPaga = (p) => (p.casa === "camara" ? `deputado.html?id=${encodeURIComponent(p.id)}` : p.casa === "senado" ? `politico.html?f=senado&i=${encodeURIComponent(p.id)}` : null);
+  const paginaPaga = (p) => (p.casa === "camara" || p.casa === "senado" ? linkParlamentar(p.casa, p.id) : null);
   const doacao = (d) => {
     const quem = pessoa.get(d.pessoa);
     const nome = quem ? esc(quem.nome) : "um eleito";

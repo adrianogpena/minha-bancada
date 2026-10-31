@@ -1,7 +1,7 @@
 // Abre o site numa janela de celular (toque ligado, janela 412x800 por padrão, a área visível do Galaxy M55 no Chrome) servindo site/ com os dados já gerados.
 // Com --desktop abre a janela com o layout de navegador de computador (1280x800 por padrão, sem toque).
 // Uso: npm run dev:mobile [-- <página>] [--largura=360] [--altura=740]  |  npm run dev:window [-- <página>] [--largura=1280] [--altura=800]
-// Fechar a janela encerra o servidor. Recarregue (F5) para ver mudanças no CSS/JS.
+// Fechar a janela encerra o servidor. Mudou CSS em site/: as folhas são trocadas sem recarregar. Mudou outra coisa: a janela recarrega mantendo rolagem, <details> e campos.
 const { execFileSync } = require("node:child_process");
 const fs = require("node:fs");
 const http = require("node:http");
@@ -62,7 +62,61 @@ function carregarPlaywright() {
   const [w, h] = await aba.evaluate(() => [innerWidth, innerHeight]);
   console.log(`Modo ${desktop ? "desktop" : "celular"} ${w}x${h} (pedido ${largura}x${altura}) em ${base}/${pagina}. Feche a janela para encerrar.`);
 
-  const encerrar = () => { servidor.close(); process.exit(0); };
+  // Mudou só CSS: troca as folhas sem recarregar (todo o estado da página fica). Mudou outra coisa: recarrega
+  // guardando rolagem, <details> abertos e campos, e devolve tudo quando a página termina de montar.
+  const trocarCss = () => aba.evaluate(() => {
+    for (const velha of document.querySelectorAll("link[rel=stylesheet]")) {
+      const url = new URL(velha.href);
+      if (url.origin !== location.origin) continue;
+      url.searchParams.set("_", Date.now());
+      const nova = velha.cloneNode();
+      nova.href = url;
+      nova.onload = () => velha.remove();
+      velha.after(nova);
+    }
+  });
+  const capturar = () => aba.evaluate(() => ({
+    y: scrollY,
+    abertos: [...document.querySelectorAll("details")].map((d) => d.open),
+    campos: [...document.querySelectorAll("input, select, textarea")].map((c) => (c.type === "checkbox" || c.type === "radio" ? c.checked : c.value)),
+  }));
+  const restaurar = (estado) => aba.evaluate(async (e) => {
+    let abertos = false, campos = false;
+    for (let i = 0; i < 40; i++) {
+      const ds = [...document.querySelectorAll("details")], cs = [...document.querySelectorAll("input, select, textarea")];
+      if (!abertos && ds.length === e.abertos.length) { ds.forEach((d, k) => { d.open = e.abertos[k]; }); abertos = ds.length > 0; }
+      if (!campos && cs.length === e.campos.length) {
+        cs.forEach((c, k) => {
+          const caixa = c.type === "checkbox" || c.type === "radio", v = e.campos[k];
+          if ((caixa ? c.checked : c.value) === v) return;
+          if (caixa) c.checked = v; else c.value = v;
+          c.dispatchEvent(new Event(caixa || c.tagName === "SELECT" ? "change" : "input", { bubbles: true }));
+        });
+        campos = cs.length > 0;
+      }
+      scrollTo(0, e.y);
+      if (Math.abs(scrollY - e.y) < 2 && document.readyState === "complete" && i > 4) break;
+      await new Promise((ok) => setTimeout(ok, 150));
+    }
+  }, estado);
+  const recarregar = async () => {
+    const estado = await capturar().catch(() => null);
+    await aba.reload();
+    if (estado) await restaurar(estado).catch(() => {});
+  };
+
+  let pendente, alterados = new Set();
+  const observador = fs.watch(SITE, { recursive: true }, (_, arquivo) => {
+    alterados.add(arquivo ? path.extname(arquivo) : "");
+    clearTimeout(pendente);
+    pendente = setTimeout(() => {
+      const soCss = alterados.size === 1 && alterados.has(".css");
+      alterados = new Set();
+      (soCss ? trocarCss() : recarregar()).catch(() => {});
+    }, 200);
+  });
+
+  const encerrar = () => { observador.close(); servidor.close(); process.exit(0); };
   contexto.on("close", encerrar);
   process.on("SIGINT", () => contexto.close().finally(encerrar));
 })();

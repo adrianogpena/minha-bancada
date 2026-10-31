@@ -102,7 +102,7 @@ function menuItem(atual) {
 
 /* Navegação do modo celular (estilo em mobile.css; no computador fica escondida): barra inferior + folha "Mais". */
 const BARRA_MOBILE = [["index.html", "Políticos", "inicio"], ["camara.html", "Câmara", "camara"], ["votacoes.html", "Votações", "votacoes"], ["historico.html", "Histórico", "historico"]];
-const MAIS_MOBILE = [["proposicoes.html", "Proposições", "proposicoes"], ["ministerios.html", "Ministérios", "ministerios"], ["informado.html", "Fique informado", "informado"], ["sobre.html", "Sobre os dados", "sobre"], ["mapa-dados.html", "Mapa dos dados", "mapadados"]];
+const MAIS_MOBILE = [["senado.html", "Senado", "senado"], ["proposicoes.html", "Proposições", "proposicoes"], ["ministerios.html", "Ministérios", "ministerios"], ["tribunais.html", "Tribunais", "tribunais"], ["informado.html", "Fique informado", "informado"], ["sobre.html", "Sobre os dados", "sobre"], ["mapa-dados.html", "Mapa dos dados", "mapadados"]];
 
 function barraMobile(atual) {
   const link = (classe) => ([h, t, p]) => `<a class="${classe}" href="${h}"${p === atual ? ' aria-current="page"' : ""}>${t}</a>`;
@@ -158,7 +158,7 @@ function rotularTabelasAoMontar() {
 export function moldura(pagina) {
   rotularTabelasAoMontar();
   const links = [
-    ["Políticos", [["index.html", "Buscar políticos", "inicio"], ["camara.html", "Câmara", "camara"], ["ministerios.html", "Ministérios", "ministerios"]]],
+    ["Políticos", [["index.html", "Buscar políticos", "inicio"], ["camara.html", "Câmara", "camara"], ["senado.html", "Senado", "senado"], ["ministerios.html", "Ministérios", "ministerios"], ["tribunais.html", "Tribunais", "tribunais"]]],
     ["Atuação", [["proposicoes.html", "Proposições", "proposicoes"], ["votacoes.html", "Votações", "votacoes"]]],
     ["historico.html", "Histórico", "historico"], ["informado.html", "Fique informado", "informado"],
     ["Dados", [["sobre.html", "Sobre os dados", "sobre"], ["mapa-dados.html", "Mapa dos dados", "mapadados"]]]];
@@ -176,7 +176,7 @@ export function moldura(pagina) {
       Projeto independente, sem vínculo com órgãos públicos ou partidos. Encontrou um erro? Confira sempre a fonte oficial.
     </div></footer>`);
   carregar("dados/meta.json").then((m) => {
-    if (m.atualizadoEm) $("#rodape").insertAdjacentHTML("beforeend", ` Última atualização: ${new Date(m.atualizadoEm).toLocaleString("pt-BR", { day: "2-digit", month: "2-digit", year: "2-digit", hour: "2-digit", minute: "2-digit", timeZoneName: "short" })}.`);
+    if (m.atualizadoEm) $("#rodape").insertAdjacentHTML("beforeend", ` Última atualização: ${new Date(m.atualizadoEm).toLocaleString("pt-BR", { day: "2-digit", month: "2-digit", year: "2-digit", hour: "2-digit", minute: "2-digit" })}.`);
   }).catch(() => {});
 }
 

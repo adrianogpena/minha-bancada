@@ -48,6 +48,11 @@ after(async () => {
 const PAGINAS = [
   ["index.html", "Minha Bancada"],
   ["camara.html", "Ana Souza"],
+  ["senado.html", "Bia Lima"],
+  ["politico.html?f=senado&i=7", "Discursos e apartes", "attached"],
+  ["politico.html?f=senado&i=7", "Relatorias", "attached"],
+  ["politico.html?f=senado&i=7", "Presença por ano", "attached"],
+  ["politico.html?f=senado&i=7", "Lideranças e cargos", "attached"],
   ["deputado.html?id=101", "Ana Souza"],
   ["proposicoes.html", "PL 1/2026"],
   ["proposicao.html?k=c-900", "Ana Souza"],

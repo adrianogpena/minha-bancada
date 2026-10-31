@@ -9,6 +9,7 @@ import { painelEleicaoDe } from "./eleicao.js";
 import { montarSenador, painelAposentadoria } from "./senador.js";
 import { montarEstadual } from "./estadual.js";
 import { carregarEmendas, painelEmendas } from "./emendas.js";
+import { abaEventos, painelEventos, montarEventos } from "./eventos.js";
 
 /* Inabilitação do TCU: a fonte não traz CPF, então a ligação é só por nome completo e UF do caso; o processo deixa conferir se é a mesma pessoa. */
 function avisoInabilitacao(lista, uf) {
@@ -18,6 +19,16 @@ function avisoInabilitacao(lista, uf) {
     <p class="aviso">O Tribunal de Contas da União publica uma pessoa de mesmo nome${lista.length > 1 ? " em " + lista.length + " processos" : ""} como proibida de exercer cargo ou função pública. A lista não traz CPF nem data de nascimento: confira o processo antes de concluir que é a mesma pessoa.</p>
     <ul>${lista.map(caso).join("")}</ul>
     ${fontes([["Inabilitados (TCU)", TCU_INABILITADOS]])}`;
+}
+
+/* Como o histórico cita este político: o código do "Fique informado" (só de quem está no cargo) ou a página do senador. */
+function fichasEventos(p) {
+  if (p.fonte === "senado") return [`politico.html?f=senado&i=${p.id}`];
+  if (p.estado !== "atual") return [];
+  if (p.cargoTse === "PRESIDENTE") return ["pres"];
+  if (p.cargoTse === "GOVERNADOR") return [`gov:${p.uf}`];
+  if (p.cargoTse === "PREFEITO") return [`pref:${p.uf}`];
+  return [];
 }
 
 export async function paginaPolitico() {
@@ -81,6 +92,7 @@ export async function paginaPolitico() {
   const divulga = divulgaUrl(p);
   const fonteTse = divulga ? [["Candidatura no DivulgaCandContas (TSE)", divulga]] : [];
 
+  const fichas = fichasEventos(p);
   const painelPerfil = `
     <p class="situacao">${situacao}</p>
     ${urlSegura(p.paginaAtual, true) ? `<p class="aviso">Já tem mandato hoje. <a href="${esc(p.paginaAtual)}">Ver votos, projetos e gastos do mandato atual</a>.</p>` : ""}
@@ -181,12 +193,15 @@ export async function paginaPolitico() {
       <button type="button" role="tab" id="aba-eleicao" aria-controls="painel-eleicao" data-aba="eleicao">Quem o elegeu?</button>
       <button type="button" role="tab" id="aba-votacoes" aria-controls="painel-votacoes" data-aba="votacoes">${comDados ? "Sanções e vetos" : comGoverno ? "Vetos" : "Votações"}</button>
       <button type="button" role="tab" id="aba-propostas" aria-controls="painel-propostas" data-aba="propostas">Propostas</button>
+      ${fichas.length ? abaEventos : ""}
     </div>
     <div role="tabpanel" id="painel-perfil" aria-labelledby="aba-perfil">${painelPerfil}</div>
     <div role="tabpanel" id="painel-eleicao" aria-labelledby="aba-eleicao" hidden>${painelEleicaoDe(p, nome)}</div>
     <div role="tabpanel" id="painel-votacoes" aria-labelledby="aba-votacoes" hidden>${painelVotacoes}</div>
-    <div role="tabpanel" id="painel-propostas" aria-labelledby="aba-propostas" hidden>${painelPropostas}</div>`;
+    <div role="tabpanel" id="painel-propostas" aria-labelledby="aba-propostas" hidden>${painelPropostas}</div>
+    ${fichas.length ? painelEventos : ""}`;
   ligarAbas(alvo);
+  if (fichas.length) montarEventos(alvo, fichas);
   if (comGoverno) {
     listaPaginada($("#lista-vetos"), vetosGov, itemGoverno(prefeito), 15, "Nenhum veto registrado.");
     listaPaginada($("#lista-enviados-gov"), enviadosGov, itemGoverno(prefeito), 15);

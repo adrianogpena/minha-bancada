@@ -1208,13 +1208,27 @@ def primeiro_autor_senado(autoria: str | None, nome: str | None) -> bool:
     return bool(m and nome and m.group(1).strip().lower() == nome.strip().lower())
 
 
+AUTOR_SENADO = re.compile(r"(?:Senador(?:a)?|Deputad[oa](?: Federal)?)\s+([^()]+?)\s*\(([^/()]*)/([A-Z]{2})?\)")
+MAX_COAUTORES = 10  # nomes guardados por projeto; o total fica em totalAutores
+
+
+def autores_senado(autoria: str | None) -> list:
+    """Parlamentares do campo `autoria` ("Senador A (PT/SP), Senadora B (PL/RJ)") como [nome, partido, uf], na ordem de assinatura."""
+    return [[n.strip(), (pt or "").strip() or None, uf or None] for n, pt, uf in AUTOR_SENADO.findall(autoria or "")]
+
+
 def autoria_senado(p: dict, nome: str | None) -> dict | None:
     """Processo do endpoint /processo -> item de autoria. None para o que o site não mostra (antes de 2019 ou sem número)."""
     m = IDENTIFICACAO_SENADO.match(p.get("identificacao") or "")
     if not m or not p.get("codigoMateria") or int(m["ano"]) < 2019:  # mandato mais antigo em exercício começou em 2019
         return None
+    autores = autores_senado(p.get("autoria"))
+    outros = [a for a in autores if not (nome and a[0].lower() == nome.strip().lower())]
     return {"id": str(p["codigoMateria"]), "processo": p["id"], "tipo": m["tipo"], "numero": m["numero"].replace(".", ""), "ano": int(m["ano"]),
             "ementa": (p.get("ementa") or "").strip(), "principal": primeiro_autor_senado(p.get("autoria"), nome),
+            **({"totalAutores": len(autores), "coautores": [a[0] for a in outros[:MAX_COAUTORES]],
+                "partidosDistintos": len({a[1] for a in autores if a[1]})} if len(autores) > 1 else {}),
+            **({"parceiros": outros} if 1 < len(autores) <= 30 else {}),
             "dataApresentacao": comum.data_iso(p.get("dataApresentacao")),
             "situacao": p.get("situacaoAtual"), "dataSituacao": comum.data_iso(p.get("dataSituacaoAtual"))}
 
@@ -1252,6 +1266,142 @@ def coletar_autorias_senado() -> None:
         materias = {**ler(arquivo, {}), **materias}
     salvar(arquivo, materias)
     print(f"Matérias do Senado: {len(materias)} projetos")
+
+
+# ---------------------------------------------------------------- senado: relatorias, discursos, cargos, licenças e lideranças
+
+def _ano(d: str | None) -> int | None:
+    return int(d[:4]) if d and d[:4].isdigit() else None
+
+
+def relatorias_senador(itens: list) -> dict | None:
+    """Relatorias do senador na legislatura (endpoint /processo/relatoria): totais por ano e por colegiado e as mais recentes."""
+    itens = [i for i in itens if (comum.data_iso(i.get("dataDesignacao")) or "") >= INICIO_LEGISLATURA and i.get("codigoMateria")]
+    if not itens:
+        return None
+    itens.sort(key=lambda i: i.get("dataDesignacao") or "", reverse=True)
+    return {
+        "total": len(itens), "tramitando": sum(1 for i in itens if i.get("tramitando") == "S"),
+        "porAno": sorted(Counter(_ano(i["dataDesignacao"]) for i in itens).items()),
+        "porColegiado": Counter(i.get("siglaColegiado") or "?" for i in itens).most_common(8),
+        "recentes": [{"id": str(i["codigoMateria"]), "materia": i.get("identificacaoProcesso"), "ementa": (i.get("ementaProcesso") or "").strip()[:300],
+                      "colegiado": i.get("siglaColegiado"), "tipo": i.get("descricaoTipoRelator"), "desde": comum.data_iso(i.get("dataDesignacao")),
+                      "ate": comum.data_iso(i.get("dataDestituicao")), "tramitando": i.get("tramitando") == "S"} for i in itens[:20]],
+    }
+
+
+# termos de indexação que só descrevem o tipo de ato e não dizem do que o pronunciamento trata
+ASSUNTOS_GENERICOS = {"alteração", "criação", "lei federal", "projeto de lei", "congresso nacional", "apreciação", "criterios", "critérios", "definição",
+                      "competencia", "competência", "fixação", "regulamentação", "instituição", "constituição federal", "veto", "veto (vet)", "veto parcial",
+                      "registro", "apresentação", "requerimento", "senado federal", "medida provisória (mpv)", "projeto de lei complementar (plp)"}
+
+
+def discursos_senador(pronunciamentos: list, apartes: list) -> dict | None:
+    """Pronunciamentos do senador (um ano por consulta, juntos aqui) e apartes na legislatura: total, por ano, assuntos mais indexados e os mais recentes."""
+    pronunciamentos = sorted({p["CodigoPronunciamento"]: p for p in pronunciamentos}.values(), key=lambda p: p.get("DataPronunciamento") or "", reverse=True)
+    apartes = [a for a in apartes if (a.get("DataPronunciamento") or "") >= INICIO_LEGISLATURA]
+    if not pronunciamentos and not apartes:
+        return None
+    assuntos = Counter(t.strip().lower() for p in pronunciamentos for t in (p.get("Indexacao") or "").split(",") if t.strip() and t.strip().lower() not in ASSUNTOS_GENERICOS)
+    return {
+        "total": len(pronunciamentos), "apartes": len(apartes),
+        "porAno": sorted(Counter(_ano(p["DataPronunciamento"]) for p in pronunciamentos).items()),
+        "assuntos": assuntos.most_common(12),
+        "recentes": [{"id": str(p["CodigoPronunciamento"]), "data": p.get("DataPronunciamento"), "tipo": (p.get("TipoUsoPalavra") or {}).get("Descricao"),
+                      "resumo": (p.get("TextoResumo") or "").strip()[:300], "url": p.get("UrlTexto")} for p in pronunciamentos[:5]],
+    }
+
+
+def cargos_senador(cargos: list) -> list:
+    """Cargos em comissões (presidente, vice, relator) desde o início da legislatura. Sem data de fim, só vale o que começou nela."""
+    itens = []
+    for c in cargos:
+        inicio, fim = comum.data_iso(c.get("DataInicio")), comum.data_iso(c.get("DataFim"))
+        if (fim and fim < INICIO_LEGISLATURA) or (not fim and (inicio or "") < INICIO_LEGISLATURA):
+            continue
+        ident = c.get("IdentificacaoComissao") or {}
+        itens.append({"sigla": ident.get("SiglaComissao"), "nome": ident.get("NomeComissao"), "cargo": c.get("DescricaoCargo"), "inicio": inicio, "fim": fim})
+    return sorted(itens, key=lambda c: (c["fim"] is None, c["fim"] or "", c["inicio"] or ""), reverse=True)
+
+
+def licencas_senador(licencas: list) -> list:
+    """Licenças e afastamentos desde o início da legislatura, da mais recente para a mais antiga."""
+    itens = [{"inicio": comum.data_iso(x.get("DataInicio")), "fim": comum.data_iso(x.get("DataFim")), "tipo": x.get("DescricaoTipoAfastamento")}
+             for x in licencas if (comum.data_iso(x.get("DataFim") or x.get("DataInicio")) or "") >= INICIO_LEGISLATURA]
+    return sorted(itens, key=lambda x: x["inicio"] or "", reverse=True)
+
+
+def liderancas_senado(lista: list) -> dict:
+    """{código do senador: [lideranças atuais]} a partir de /composicao/lideranca (Senado e Congresso; a Câmara fica de fora)."""
+    por: dict[str, list] = {}
+    for x in lista:
+        if x.get("casa") not in ("SF", "CN") or not x.get("codigoParlamentar"):
+            continue
+        por.setdefault(str(x["codigoParlamentar"]), []).append({
+            "unidade": x.get("descricaoTipoUnidadeLideranca"), "cargo": x.get("descricaoTipoLideranca"), "casa": x["casa"],
+            "partido": x.get("siglaPartidoFiliacao"), "desde": comum.data_iso(x.get("dataDesignacao"))})
+    return por
+
+
+def _itens_senado(resposta: dict, *caminho: str) -> list:
+    for k in caminho[:-1]:
+        resposta = (resposta or {}).get(k) or {}
+    return _lista((resposta or {}).get(caminho[-1]))
+
+
+def coletar_atividade_senado() -> None:
+    """Relatorias, discursos e apartes, cargos em comissões, licenças e lideranças de cada senador em exercício.
+    Fica em dados/senado_atividade.json (não vai para o git). Cada fonte falha sozinha: o senador guarda o que conseguiu ler."""
+    senadores = ler(DADOS / "senado.json", [])
+    if not senadores:
+        raise RuntimeError("lista de senadores vazia; atividade não coletada")
+    hoje = dt.date.today()
+    try:
+        liderancas = liderancas_senado(get_senado("/composicao/lideranca"))
+    except Exception as e:
+        avisar(f"lideranças do Senado: {e}")
+        liderancas = {}
+    falhas = Counter()
+
+    def buscar(s: dict) -> tuple[str, dict]:
+        sid, r = str(s["id"]), {}
+
+        def tentar(campo, fn):
+            try:
+                r[campo] = fn()
+            except Exception as e:
+                falhas[campo] += 1
+                if falhas[campo] <= 3:
+                    avisar(f"{campo} do senador {sid}: {e}")
+
+        def falas():
+            pron = []
+            for ano in range(int(INICIO_LEGISLATURA[:4]), hoje.year + 1):  # a API devolve no máximo um ano por consulta
+                fim = min(hoje, dt.date(ano, 12, 31))
+                pron += _itens_senado(get_senado(f"/senador/{sid}/discursos.json", dataInicio=f"{ano}0101", dataFim=f"{fim:%Y%m%d}"),
+                                      "DiscursosParlamentar", "Parlamentar", "Pronunciamentos", "Pronunciamento")
+            apartes = _itens_senado(get_senado(f"/senador/{sid}/apartes.json"), "ApartesParlamentar", "Parlamentar", "Apartes", "Aparte")
+            return discursos_senador(pron, apartes)
+
+        tentar("relatorias", lambda: relatorias_senador(_lista(get_senado("/processo/relatoria", codigoParlamentar=sid))))
+        tentar("discursos", falas)
+        tentar("cargos", lambda: cargos_senador(_itens_senado(get_senado(f"/senador/{sid}/cargos.json"), "CargoParlamentar", "Parlamentar", "Cargos", "Cargo")))
+        tentar("licencas", lambda: licencas_senador(_itens_senado(get_senado(f"/senador/{sid}/licencas.json"), "LicencaParlamentar", "Parlamentar", "Licencas", "Licenca")))
+        return sid, {k: v for k, v in r.items() if v}
+
+    atividade: dict[str, dict] = {}
+    with ThreadPoolExecutor(TRABALHADORES_SENADO) as ex:
+        for f in as_completed([ex.submit(buscar, s) for s in senadores]):
+            try:
+                sid, a = f.result()
+                atividade[sid] = a
+            except Exception as e:
+                avisar(f"atividade de senador: {e}")
+    for sid, itens in liderancas.items():
+        if sid in atividade:
+            atividade[sid]["liderancas"] = itens
+    salvar(DADOS / "senado_atividade.json", atividade)
+    print(f"Atividade de {len(atividade)} senadores, falhas: {dict(falhas)}")
 
 
 # ---------------------------------------------------------------- votações
@@ -1552,7 +1702,7 @@ def main():
             coletar_senado()
         except Exception as e:
             avisar(f"senado: {e}")
-        for etapa in (coletar_votacoes_senado, coletar_autorias_senado, coletar_ceaps_senado, coletar_recursos_senado, coletar_aposentados_senado, coletar_ficha_senado):  # complementos: cada um falha sozinho
+        for etapa in (coletar_votacoes_senado, coletar_autorias_senado, coletar_ceaps_senado, coletar_recursos_senado, coletar_aposentados_senado, coletar_ficha_senado, coletar_atividade_senado):  # complementos: cada um falha sozinho
             try:
                 etapa()
             except Exception as e:

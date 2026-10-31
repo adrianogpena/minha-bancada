@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Senadores | Minha Bancada</title>
+<meta name="description" content="Veja como cada senador vota, o que propõe e quanto gasta, com dados oficiais do Senado.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Bricolage+Grotesque:opsz,wght@12..96,700;12..96,800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/estilo.css">
+<link rel="stylesheet" href="assets/mobile.css" media="(max-width: 760px)">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 9 9'%3E%3Crect width='4' height='4' fill='%232456c9'/%3E%3Crect x='5' width='4' height='4' fill='%23c13b1d'/%3E%3Crect y='5' width='4' height='4' fill='%23c13b1d'/%3E%3Crect x='5' y='5' width='4' height='4' fill='%232456c9'/%3E%3C/svg%3E">
+</head>
+<body data-pagina="senado">
+<main class="recipiente">
+<section class="abertura">
+  <h1>Senadores</h1>
+  <p>Presença nas votações do Plenário, projetos apresentados e gastos da cota parlamentar de cada senador em exercício, com dados oficiais do Senado atualizados todo dia. Veja também os <a href="fornecedores.html">fornecedores que mais recebem da cota</a>.</p>
+</section>
+<form class="filtros" role="search" onsubmit="return false">
+  <label class="campo">Nome do senador<input id="busca" type="search" placeholder="Ex.: Maria" autocomplete="off"></label>
+  <label class="campo">Estado<select id="uf"><option value="">Todos</option></select></label>
+  <label class="campo">Partido<select id="partido"><option value="">Todos</option></select></label>
+  <label class="campo">Ordenar por<select id="ordem">
+    <option value="nome">Nome</option><option value="presenca">Maior presença</option>
+    <option value="proposicoes">Mais proposições</option><option value="proprias">Mais iniciativas próprias</option>
+    <option value="gasto">Maiores gastos</option><option value="partido">Mais alinhados ao partido</option><option value="emendas">Maiores emendas</option></select></label>
+</form>
+<p class="contagem" id="contagem" aria-live="polite">Carregando…</p>
+<p class="nota-lista">Emendas: <a href="https://portaldatransparencia.gov.br/emendas/consulta" rel="noopener">Portal da Transparência</a>, ligadas ao autor só pelo nome (confira no portal); o valor soma os anos coletados. Passe o mouse sobre fiel, pró-governo e gastos para comparar com a média do partido e da bancada do estado. Presença conta como comparecimento quem votou ou registrou presença nas votações nominais do Plenário. "Com o partido" é o voto Sim ou Não igual ao da maioria dos colegas de partido na mesma votação; o Senado não publica orientação de bancada nem de governo, então não há "pró-governo". Iniciativa própria é um projeto em que o senador é o primeiro a assinar. Fontes: <a href="https://legis.senado.leg.br/dadosabertos/votacao" rel="noopener">votações</a>, <a href="https://legis.senado.leg.br/dadosabertos/processo" rel="noopener">processos</a> e <a href="https://adm.senado.gov.br/adm-dadosabertos/api/v1/senadores/despesas_ceaps" rel="noopener">cota CEAPS</a> do Senado.</p>
+<div id="resultado"></div>
+</main>
+<script type="module" src="assets/app.js"></script>
+</body>
+</html>

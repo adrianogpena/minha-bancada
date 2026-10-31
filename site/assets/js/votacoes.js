@@ -1,7 +1,7 @@
 /* Lista de votações e detalhe de uma votação. */
 import { $, esc, data, dataHora, semAcento, param, carregar } from "./util.js";
 import { VOTOS, selo, listaPaginada, erro, semDadosLocais, filtrosNaUrl, botaoVoltar } from "./comum.js";
-import { CAMARA_API, CADEIRAS_CAMARA, quorumCamara, fontes, SENADO_API, linkMateriaSenado } from "./apis.js";
+import { CAMARA_API, CADEIRAS_CAMARA, quorumCamara, fontes, SENADO_API, linkMateriaSenado, linkParlamentar } from "./apis.js";
 
 /* ---------- lista de votações ---------- */
 export function barraPlacar(placar) {
@@ -35,7 +35,7 @@ export async function paginaVotacao() {
   let v;
   try { v = await carregar(`dados/${senado ? "votacao_senado" : "votacao"}/${encodeURIComponent(param("id"))}.json`); } catch (e) { return semDadosLocais(alvo, e, senado ? null : `${CAMARA_API}/votacoes/${encodeURIComponent(param("id"))}`); }
   const quem = senado ? "senador" : "deputado";
-  const linkQuem = (d) => senado ? (d.anterior ? "" : `politico.html?f=senado&i=${encodeURIComponent(d.id)}`) : `deputado.html?id=${d.id}`;
+  const linkQuem = (d) => senado ? (d.anterior ? "" : linkParlamentar("senado", d.id)) : linkParlamentar("camara", d.id);
   document.title = `${v.proposicao || "Votação"} em ${data(v.data)} | Minha Bancada`;
   v.votos.sort((a, b) => a.nome.localeCompare(b.nome, "pt-BR"));
   const partidos = Object.entries(v.porPartido).sort((a, b) => Object.values(b[1]).reduce((x, y) => x + y, 0) - Object.values(a[1]).reduce((x, y) => x + y, 0));

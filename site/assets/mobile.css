@@ -72,6 +72,7 @@ summary { display: flex; cursor: pointer; }
 .linha-dep .metrica { grid-column: 2; text-align: left; }
 .linha-dep .metrica b { display: inline; font-size: 15px; margin-right: 4px; }
 .linha-dep .so-largo { display: none; }
+.linha-dep .so-largo.ativa { display: block; } /* a métrica da ordenação escolhida aparece no cartão */
 .linha-pol { grid-template-columns: 44px 1fr; min-height: var(--alvo); }
 .itens li { grid-template-columns: 1fr; padding: 14px 2px; }
 .itens .quando { justify-self: start; }

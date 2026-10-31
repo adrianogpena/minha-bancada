@@ -61,7 +61,7 @@ export async function montarEstadual(alvo, p, nome, ficha, situacao) {
   if (!p.email && dep.email) ficha.push(["E-mail", `<a href="mailto:${esc(dep.email)}">${esc(dep.email)}</a>`, true]);
   if (dep.titular === false) ficha.push(["Exercício", "Suplente em exercício"]);
   montarParlamentar(alvo, {
-    nome, foto: { nome, foto: p.foto || dep.foto }, painelEleicao: painelEleicaoDe(p, nome),
+    nome, fichas: [`est:${uf}:${id}`], foto: { nome, foto: p.foto || dep.foto }, painelEleicao: painelEleicaoDe(p, nome),
     subtitulo: `<span class="selo">${esc(p.partido || "")}/${esc(p.uf)}</span> ${esc(p.cargo)}`,
     painelPerfil: `<p class="situacao">${situacao}</p>
       <h2>Ficha</h2>

@@ -26,11 +26,11 @@
     <option value="nome">Nome</option><option value="participacao">Quem mais votou</option>
     <option value="proposicoes">Mais proposições</option><option value="proprias">Mais iniciativas próprias</option>
     <option value="aprovadas">Mais projetos aprovados (autor principal)</option><option value="suprapartidarios">Mais projetos suprapartidários</option>
-    <option value="fidelidade">Mais fiéis ao partido</option><option value="governismo">Mais alinhados ao governo</option>
+    <option value="fidelidade">Mais fiéis ao partido</option><option value="governismo">Mais alinhados ao governo</option><option value="contraPartido">Mais votos contra o partido</option><option value="emendas">Maiores emendas</option>
     <option value="gasto">Maiores gastos</option></select></label>
 </form>
 <p class="contagem" id="contagem" aria-live="polite">Carregando…</p>
-<p class="nota-lista">Iniciativa própria é um projeto (de lei, emenda à Constituição e afins) em que o deputado é o primeiro a assinar; "aprovados" são os que já passaram por uma Casa ou viraram lei. Só conta projetos cuja ordem de assinatura já foi coletada, então os números crescem a cada dia até completar. Fonte: <a href="https://dadosabertos.camara.leg.br/api/v2/proposicoes" rel="noopener">API de proposições da Câmara</a>.</p>
+<p class="nota-lista">Emendas: <a href="https://portaldatransparencia.gov.br/emendas/consulta" rel="noopener">Portal da Transparência</a>, ligadas ao autor só pelo nome (confira no portal); o valor soma os anos coletados. Passe o mouse sobre fiel, pró-governo e gastos para comparar com a média do partido e da bancada do estado. Iniciativa própria é um projeto (de lei, emenda à Constituição e afins) em que o deputado é o primeiro a assinar; "aprovados" são os que já passaram por uma Casa ou viraram lei. Só conta projetos cuja ordem de assinatura já foi coletada, então os números crescem a cada dia até completar. Fonte: <a href="https://dadosabertos.camara.leg.br/api/v2/proposicoes" rel="noopener">API de proposições da Câmara</a>.</p>
 <div id="resultado"></div>
 </main>
 <script type="module" src="assets/app.js"></script>

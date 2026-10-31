@@ -4,6 +4,20 @@ import { VOTOS, foto, selo, legenda, listaPaginada, abas, ligarAbas } from "./co
 import { CAMARA_API, resultado, desfecho, movimentadoNoAno, fontes } from "./apis.js";
 import { barraPlacar } from "./votacoes.js";
 import { LEGENDA_PROJETOS, avisoDados } from "./executivo.js";
+import { abaEventos, painelEventos, montarEventos } from "./eventos.js";
+
+/* Tabela "Com quem assina projetos" das duas Casas. `c` traz projetos e outroPartido; `linhas` são as células [parceiro, partido, projetos] já em HTML. */
+export function painelCoautoria({ c, quem, linhas, nota, fonte, vazio = "", intro = "" }) {
+  if (!c) return vazio ? `<h2>Com quem assina projetos</h2><p class="vazio">${vazio}</p>` : "";
+  return `
+    <h2>Com quem assina projetos</h2>
+    <p>${c.projetos} ${c.projetos === 1 ? "projeto assinado" : "projetos assinados"} com outros ${quem === "Deputado" ? "deputados" : "parlamentares"}, ${c.outroPartido} com ${quem === "Deputado" ? "deputado" : "parlamentar"} de outro partido (${pct(c.outroPartido, c.projetos)}).${intro}</p>
+    <div class="rolagem"><table class="tabela"><thead><tr><th>${quem}</th><th>Partido</th><th>Projetos em comum</th></tr></thead><tbody>
+      ${linhas.map(([n, pt, q]) => `<tr><td>${n}</td><td>${pt}</td><td>${q}</td></tr>`).join("")}
+    </tbody></table></div>
+    <p class="quando">${nota}</p>
+    ${fontes([fonte])}`;
+}
 
 const TIPOS_SESSAO = { DOR: "Sessão deliberativa ordinária", DEX: "Sessão deliberativa extraordinária", NOR: "Sessão não deliberativa", ESP: "Sessão especial" };
 
@@ -46,7 +60,7 @@ export function montarParlamentar(alvo, c) {
       <div class="numeros" id="numeros-prop"></div>
     </section>
     <section id="destaque-ano"></section>
-    <section id="relatorias"></section>
+    <section id="relatorias">${c.painelRelatorias || ""}</section>
     <h2 id="proposicoes">Projetos <small class="sub">(${projetos.length})</small></h2>
     <p>Projetos de lei, emendas à Constituição e similares. ${esc(c.aviso)}</p>
     ${LEGENDA_PROJETOS}
@@ -75,13 +89,16 @@ export function montarParlamentar(alvo, c) {
       <button type="button" role="tab" id="aba-eleicao" aria-controls="painel-eleicao" data-aba="eleicao">Quem o elegeu?</button>
       <button type="button" role="tab" id="aba-votacoes" aria-controls="painel-votacoes" data-aba="votacoes">Votações <small>${linhaDoTempo.length}</small></button>
       <button type="button" role="tab" id="aba-propostas" aria-controls="painel-propostas" data-aba="propostas">Propostas <small>${c.proposicoes.length}</small></button>
+      ${abaEventos}
     </div>
     <div role="tabpanel" id="painel-perfil" aria-labelledby="aba-perfil">${c.painelPerfil}</div>
     <div role="tabpanel" id="painel-eleicao" aria-labelledby="aba-eleicao" hidden>${c.painelEleicao}</div>
     <div role="tabpanel" id="painel-votacoes" aria-labelledby="aba-votacoes" hidden>${painelVotacoes}</div>
-    <div role="tabpanel" id="painel-propostas" aria-labelledby="aba-propostas" hidden>${painelPropostas}</div>`;
+    <div role="tabpanel" id="painel-propostas" aria-labelledby="aba-propostas" hidden>${painelPropostas}</div>
+    ${painelEventos}`;
 
   ligarAbas(alvo);
+  montarEventos(alvo, c.fichas);
 
   /* --- aba Votações --- */
   const textoPlacar = (v) => {

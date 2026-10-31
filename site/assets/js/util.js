@@ -28,7 +28,7 @@ export const dataHora = (iso, longo = false) => {
   const d = iso && new Date(iso);
   if (!d || isNaN(d)) return "";
   const dia = d.toLocaleDateString("pt-BR", longo ? { day: "numeric", month: "long", year: "numeric" } : { day: "2-digit", month: "short", year: "numeric" });
-  return `${dia}, ${longo ? "às " : ""}${d.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit", timeZoneName: "short" })}`;
+  return `${dia}, ${longo ? "às " : ""}${d.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}`;
 };
 export const semAcento = (s) => String(s ?? "").normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
 export const param = (nome) => new URLSearchParams(location.search).get(nome);

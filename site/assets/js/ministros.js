@@ -1,8 +1,9 @@
 /* Ministros de Estado e ministérios (dados/ministerios.json, dados/ministerio/<pasta>.json, dados/ministro/<pessoa>.json; scripts/gerar_ministros.py). */
 import { $, esc, data, param, carregar, numeroBr, pct, urlSegura } from "./util.js";
 import { erro, listaPaginada, abas, ligarAbas, foto, itemFicha } from "./comum.js";
-import { fontes, CAMARA_API, SENADO_API, linkTramitacao } from "./apis.js";
+import { fontes, CAMARA_API, SENADO_API, linkTramitacao, linkParlamentar } from "./apis.js";
 import { linkCF, semFonte } from "./ficha.js";
+import { abaEventos, painelEventos, montarEventos } from "./eventos.js";
 
 const PLANALTO = "https://www.gov.br/planalto/pt-br/conheca-a-presidencia/ministros-e-ministras";
 const NATUREZAS = { informacao: "Requerimento de informação", convocacao: "Convocação", convite: "Convite" };
@@ -39,11 +40,11 @@ function autoresDe(r, ctx) {
   if (r.fonte === "camara") {
     return r.autores.map((id) => {
       const nome = ctx.deputados.get(id) || ctx.fora[id] || `deputado ${id}`;
-      return ctx.deputados.has(id) ? `<a href="deputado.html?id=${encodeURIComponent(id)}">${esc(nome)}</a>`
+      return ctx.deputados.has(id) ? `<a href="${linkParlamentar("camara", id)}">${esc(nome)}</a>`
         : `<a href="https://www.camara.leg.br/deputados/${encodeURIComponent(id)}" rel="noopener">${esc(nome)}</a>`;
     }).join(", ");
   }
-  const sen = r.autores.map((id) => ctx.senadores.has(id) ? `<a href="politico.html?f=senado&i=${encodeURIComponent(id)}">${esc(ctx.senadores.get(id))}</a>` : null).filter(Boolean);
+  const sen = r.autores.map((id) => ctx.senadores.has(id) ? `<a href="${linkParlamentar("senado", id)}">${esc(ctx.senadores.get(id))}</a>` : null).filter(Boolean);
   return [...sen, r.autoria && !sen.length ? esc(r.autoria) : null].filter(Boolean).join(", ");
 }
 
@@ -131,7 +132,7 @@ export async function paginaMinistro() {
   document.title = `${m.nome}, ${nomeCargo(atual)} | Minha Bancada`;
   const parl = m.parlamentar;
   const casaParl = parl?.casa === "senado" ? "senador" : "deputado federal";
-  const paginaParl = parl ? (parl.casa === "senado" ? `politico.html?f=senado&i=${encodeURIComponent(parl.id)}` : `deputado.html?id=${encodeURIComponent(parl.id)}`) : null;
+  const paginaParl = parl ? linkParlamentar(parl.casa, parl.id) : null;
   const pedidosDe = (c, i) => {
     const todos = new Map(pastas[i].requerimentos.map((r) => [r.id, r]));
     return c.requerimentos.map((rid) => todos.get(rid)).filter(Boolean);
@@ -168,12 +169,15 @@ export async function paginaMinistro() {
     <div class="abas-pagina" role="tablist" aria-label="Seções do perfil">
       <button type="button" role="tab" id="aba-perfil" aria-controls="painel-perfil" data-aba="perfil">Perfil</button>
       <button type="button" role="tab" id="aba-eleicao" aria-controls="painel-eleicao" data-aba="eleicao">Quem o elegeu?</button>
+      ${abaEventos}
       <button type="button" role="tab" id="aba-contas" aria-controls="painel-contas" data-aba="contas">Prestação de contas <small>${numeroBr(m.cargos.reduce((n, c) => n + c.requerimentos.length, 0))}</small></button>
     </div>
     <div role="tabpanel" id="painel-perfil" aria-labelledby="aba-perfil">${painelPerfil}</div>
     <div role="tabpanel" id="painel-eleicao" aria-labelledby="aba-eleicao" hidden>${painelEleicao}</div>
-    <div role="tabpanel" id="painel-contas" aria-labelledby="aba-contas" hidden>${painelContas}</div>`;
+    <div role="tabpanel" id="painel-contas" aria-labelledby="aba-contas" hidden>${painelContas}</div>
+    ${painelEventos}`;
   ligarAbas(alvo);
+  montarEventos(alvo, [...m.cargos.filter((c) => c.atual).map((c) => `min:${c.pasta}`), `ministro.html?id=${id}`]);
   const lista = m.cargos.flatMap((c, i) => pedidosDe(c, i)).sort((a, b) => (b.data || "").localeCompare(a.data || ""));
   montarPedidos($("#pedidos"), lista, ctx);
 }

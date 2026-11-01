@@ -244,6 +244,7 @@ _LOG: dict = defaultdict(lambda: {"nomes": {}, "ambiguos": {}, "semPar": set()})
 
 TITULOS_UF = {
     "PA": {"dr", "dra", "prof", "profa", "deleg", "delegado", "delegada", "dep", "deputado", "deputada"},
+    "PE": {"del", "delegado", "delegada", "dr", "dra", "prof", "profa", "dep", "de", "da", "do", "dos", "das"},
     "PR": {"dr", "dra", "doutor", "doutora", "secretaria"},
     "RJ": {"dr", "dra", "prof", "profa", "delegado", "delegada", "dep"},
     "RR": {"dr", "dra", "prof", "profa", "coronel", "dep", "de", "da", "do", "dos", "das"},
@@ -322,7 +323,9 @@ def _estrategia_ms(nomes, deputados, uf):
 
 
 def _estrategia_pe(nomes, deputados, uf):
-    """"João Paulo do PT" também tenta "João Paulo" entre os deputados do PT, quando "PT" é partido de um deputado."""
+    """"João Paulo do PT" também tenta "João Paulo" entre os deputados do PT, quando "PT" é partido de um deputado. Por fim,
+    palavras sem título abreviado nem preposição ("DEL. GLEIDE ANGELO" e "Delegada Gleide Ângelo", "NINO ENOQUE" e "Nino de
+    Enoque", na lotação do gabinete)."""
     ligados, ambiguos = _casar_exato(nomes, deputados)
     partidos = {comum.sem_acento(d["partido"]) for d in deputados if d.get("partido")}
     for n in nomes:
@@ -333,6 +336,7 @@ def _estrategia_pe(nomes, deputados, uf):
         achado, _ = _casar_exato([m.group(1)], do_partido)
         if m.group(1) in achado:
             ligados[n] = (achado[m.group(1)][0], "nome+partido", "média")
+    _por_palavras(nomes, deputados, ligados, ambiguos, TITULOS_UF[uf])
     return ligados, ambiguos
 
 
@@ -355,6 +359,23 @@ def _estrategia_rr(nomes, deputados, uf):
 def _estrategia_palavras(nomes, deputados, uf):
     ligados, ambiguos = _casar_exato(nomes, deputados)
     _por_palavras(nomes, deputados, ligados, ambiguos, TITULOS_UF[uf])
+    return ligados, ambiguos
+
+
+def _estrategia_pa(nomes, deputados, uf):
+    """Como `_estrategia_palavras`; o que sobra liga quando o nome parlamentar de uma só palavra (seis letras ou mais, "Torrinho") é a
+    primeira palavra do nome da fonte ("TORRINHO TORRES") e nenhum outro deputado tem essa palavra."""
+    ligados, ambiguos = _estrategia_palavras(nomes, deputados, uf)
+    ignorar = TITULOS_UF[uf]
+    unicos = {}
+    for d in deputados:
+        p = comum.palavras(d["nome"], ignorar)
+        if len(p) == 1 and len(p[0]) >= 6:
+            unicos.setdefault(p[0], set()).add(d["id"])
+    for n in nomes:
+        p = comum.palavras(n, ignorar)
+        if n not in ligados and n not in ambiguos and len(p) >= 2 and len(unicos.get(p[0], ())) == 1:
+            ligados[n] = (next(iter(unicos[p[0]])), "palavras", "baixa")
     return ligados, ambiguos
 
 
@@ -424,7 +445,7 @@ def _estrategia_ce(nomes, deputados, uf):
     return _casar_exato(nomes, deputados, prep=_sem_ponto)
 
 
-ESTRATEGIAS = {"CE": _estrategia_ce, "MS": _estrategia_ms, "PA": _estrategia_palavras, "PE": _estrategia_pe, "PR": _estrategia_pr,
+ESTRATEGIAS = {"CE": _estrategia_ce, "MS": _estrategia_ms, "PA": _estrategia_pa, "PE": _estrategia_pe, "PR": _estrategia_pr,
                "RJ": _estrategia_palavras, "RR": _estrategia_rr, "SC": _estrategia_sc}
 
 

@@ -1,0 +1,35 @@
+{
+ "fonte": "https://bancodeleis.alepa.pa.gov.br/api/leis.php",
+ "capturadoEm": "2026-11-01",
+ "amostra": {
+  "resultados": [
+   {
+    "id": 32818,
+    "numero": "209",
+    "ano": "2026",
+    "tipo": "Lei Complementar",
+    "ementa": "Altera e acrescenta dispositivos à Lei Complementar nº 054, de 7 de fevereiro de 2006, que dispõe sobre a reorganização da Defensoria Pública do Estado do Pará e da carreira de seus membros.",
+    "arquivo": "lei_20260901102155_23382170.pdf",
+    "link_pdf": "https://bancodeleis.alepa.pa.gov.br/arquivos/lei_20260901102155_23382170.pdf"
+   },
+   {
+    "id": 32473,
+    "numero": "208",
+    "ano": "2026",
+    "tipo": "Lei Complementar",
+    "ementa": "Altera a Lei Estadual nº 5.008, de 10 de dezembro de 1981 que dispõe sobre o Código de Organização Judiciária do Estado do Pará.",
+    "arquivo": "lei_20260722094620_149ec062.pdf",
+    "link_pdf": "https://bancodeleis.alepa.pa.gov.br/arquivos/lei_20260722094620_149ec062.pdf"
+   },
+   {
+    "id": 33497,
+    "numero": "207",
+    "ano": "2026",
+    "tipo": "Lei Complementar",
+    "ementa": "Altera a Lei Complementar nº 022, de 15 de março de 1994; cria cargos de provimento em comissão, na estrutura da Polícia Civil do Estado do Pará (PCPA); e cria a Delegacia Especializada de Repressão a Crimes Rurais, Roubo e Furto de Gado (Deleagro).",
+    "arquivo": "lei_20260929113119_cb632d63.pdf",
+    "link_pdf": "https://bancodeleis.alepa.pa.gov.br/arquivos/lei_20260929113119_cb632d63.pdf"
+   }
+  ]
+ }
+}

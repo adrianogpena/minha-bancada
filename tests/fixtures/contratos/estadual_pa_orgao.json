@@ -1,0 +1,146 @@
+{
+ "fonte": "https://alepa.pa.gov.br/Transparencia/Page/Contratos",
+ "capturadoEm": "2026-11-01",
+ "amostra": {
+  "contratos": {
+   "EncodeMaps": {
+    "DataItem1": [
+     "2026-07-30T00:00:00.0000000",
+     "2026-07-13T00:00:00.0000000",
+     "2026-06-30T00:00:00.0000000"
+    ],
+    "DataItem2": [
+     "Em andamento"
+    ],
+    "DataItem8": [
+     "011/2026",
+     "010/2026",
+     "009/2026"
+    ],
+    "DataItem4": [
+     "QUARTER SERVICOS DE TECNOLOGIA S/S LTDA",
+     "TRANSCIDADE SERVIÇOS AMBIENTAIS EIRELI",
+     "FUNDACAO CETAP"
+    ],
+    "DataItem3": [
+     "008/2026 Pregão",
+     "001/2026 Dispensa",
+     "002/2026 Dispensa"
+    ],
+    "DataItem7": [
+     "Alessandra Suellen Santos de Almeida",
+     "Ruth Leia da Silva Bezerra",
+     "Mauro Santos"
+    ],
+    "DataItem0": [
+     " FORNECIMENTO DE LICENÇA DE SOFTWARE NO FORMATO SaaS",
+     "Resíduos Patológicos - DBES",
+     "Concurso Alepa"
+    ]
+   },
+   "Slices": [
+    {
+     "KeyIds": [
+      "DataItem1",
+      "DataItem2",
+      "DataItem8",
+      "DataItem4",
+      "DataItem3",
+      "DataItem7",
+      "DataItem0"
+     ],
+     "ValueIds": {
+      "DataItem5": 0,
+      "DataItem10": 1,
+      "DataItem11": 2,
+      "DataItem12": 3,
+      "DataItem15": 4
+     },
+     "Data": {
+      "[0,0,0,0,0,0,0]": {
+       "0": 237,
+       "1": 237,
+       "2": 237,
+       "3": 237,
+       "4": "2026-07-30T00:00:00.0000000"
+      },
+      "[1,0,1,1,1,1,1]": {
+       "0": 236,
+       "1": 236,
+       "2": 236,
+       "3": 236,
+       "4": "2026-07-13T00:00:00.0000000"
+      },
+      "[2,0,2,2,2,2,2]": {
+       "0": 240,
+       "1": 240,
+       "2": 240,
+       "3": 240,
+       "4": "2026-06-30T00:00:00.0000000"
+      }
+     }
+    }
+   ]
+  },
+  "licitacoes": {
+   "EncodeMaps": {
+    "DataItem6": [
+     "2026"
+    ],
+    "DataItem13": [
+     2
+    ],
+    "DataItem2": [
+     "003",
+     "001"
+    ],
+    "DataItem0": [
+     "Pregão"
+    ],
+    "DataItem12": [
+     " "
+    ],
+    "DataItem1": [
+     "DISPÕE SOBRE REGISTRO DE PREÇOS PARA CONTRATAÇÃO DE EMPRESA ESPECIALIZADA NA CONFECÇÃO DE MEDALHAS DESTINADAS A AGRACIAR AUTORIDADES E INSTITUIÇÕES COM AS HONRARIAS OUTORGADAS PELA ASSEMBLEIA LEGISLATIVA DO ESTADO DO PARÁ",
+     "Registro de Preços para aquisição de material de expediente, processamento de dados e descartáveis, por demanda, para atender às necessidades da Assembleia Legislativa do Estado do Pará"
+    ],
+    "DataItem9": [
+     "2026-02-27T00:00:00.0000000",
+     "2026-02-02T00:00:00.0000000"
+    ],
+    "DataItem10": [
+     "Suspenso",
+     "Fracassado"
+    ],
+    "DataItem11": [
+     128310.23,
+     663739.8
+    ],
+    "DataItem7": [
+     "FAX COMUNICAÇÃO LTDA"
+    ]
+   },
+   "Slices": [
+    {
+     "KeyIds": [
+      "DataItem6",
+      "DataItem13",
+      "DataItem2",
+      "DataItem0",
+      "DataItem12",
+      "DataItem1",
+      "DataItem9",
+      "DataItem10",
+      "DataItem11",
+      "DataItem7"
+     ],
+     "ValueIds": {},
+     "Data": {
+      "[0,0,0,0,0,0,0,0,0,0]": {},
+      "[0,0,1,0,0,1,1,1,1,0]": {}
+     }
+    }
+   ]
+  }
+ }
+}

@@ -168,7 +168,6 @@ def resumos_novos(pasta: Path) -> dict:
     return saida
 
 
-ORGAO_FONTE = "https://transparencia.assembleia.pr.leg.br/compras-e-licitacoes/contratos/contratos"
 ROTULOS_PAUTA = {"ordem-do-dia": "Pauta da sessão", "atas": "Ata da sessão"}
 
 
@@ -195,10 +194,13 @@ def gerar_orgao(uf: str, pasta: Path) -> None:
 
     Fornecedor liga a nucleo/fornecedores só por CNPJ (a ata de adesão traz; o contrato só o nome, então fica sem ligação).
     Valor de ata de registro é teto do registro de preços, não gasto: vai separado do valor contratado."""
-    itens = {}
+    itens, fonte = {}, None
     for arq in sorted(pasta.glob("orgao_[0-9]*.json")):
-        itens |= ler(arq, {}).get("itens", {})
-    if not itens:
+        env = ler(arq, {})
+        itens |= env.get("itens", {})
+        fonte = env.get("fonte") or fonte
+    regras = ler(pasta / "regras_ressarcimento.json")
+    if not itens and not regras:
         return
     nucleo = {f["id"] for f in ler(SAIDA / "nucleo" / "fornecedores.json", [])}
     grupos = {}
@@ -216,8 +218,21 @@ def gerar_orgao(uf: str, pasta: Path) -> None:
     ranking = sorted(({**g, "valorContratado": round(g["valorContratado"], 2), "valorRegistrado": round(g["valorRegistrado"], 2)} for g in grupos.values()),
                      key=lambda g: (-g["valorContratado"], -g["valorRegistrado"], g["nome"]))
     lista = sorted(({"id": iid, **i} for iid, i in itens.items()), key=lambda i: (i["inicio"] or "", i["id"]), reverse=True)
-    salvar(SAIDA / "orgao" / f"{uf}.json", {"fonte": ORGAO_FONTE, "regrasRessarcimento": ler(pasta / "regras_ressarcimento.json"),
+    salvar(SAIDA / "orgao" / f"{uf}.json", {"fonte": fonte, "regrasRessarcimento": regras,
                                               "fornecedores": ranking, "itens": lista})
+
+
+def gerar_leis(uf: str, pasta: Path) -> None:
+    """site/dados/leis/<UF>.json: catálogo de normas legais que a Assembleia publica sem autoria (`leis_<ano>.json`), da mais nova à mais antiga."""
+    normas, fonte = [], None
+    for arq in sorted(pasta.glob("leis_[0-9]*.json")):
+        env = ler(arq, {})
+        fonte = env.get("fonte") or fonte
+        normas += [{"id": nid, **n} for nid, n in env.get("normas", {}).items()]
+    if not normas:
+        return
+    normas.sort(key=lambda n: (n["ano"] or 0, int(n["numero"]) if n["numero"].isdigit() else 0, n["id"]), reverse=True)
+    salvar(SAIDA / "leis" / f"{uf}.json", {"fonte": fonte, "normas": normas})
 
 
 def gerar_assembleia(uf: str, pasta: Path) -> list[dict]:
@@ -293,6 +308,7 @@ def gerar_assembleia(uf: str, pasta: Path) -> list[dict]:
         })
     gerar_governo(uf, pasta, host)
     gerar_orgao(uf, pasta)
+    gerar_leis(uf, pasta)
     print(f"Gerado: {uf}, {len(deputados)} deputados, {len(resumo)} votações nominais, "
           f"{sum(len(v) for v in projetos.values())} autorias de projetos")
     return list(deputados.values())

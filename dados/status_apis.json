@@ -557,6 +557,15 @@
   "url": "https://al.ms.gov.br/Pauta",
   "verificadoEm": "2026-11-02T14:59:49Z"
  },
+ "ms_pauta": {
+  "detalhe": "HTTP 200, text/html",
+  "grupo": "Assembleias (estaduais)",
+  "ok": true,
+  "primeiraVerificacao": "2026-11-02T14:16:02Z",
+  "ultimoOk": "2026-11-02T14:16:02Z",
+  "url": "https://al.ms.gov.br/Pauta",
+  "verificadoEm": "2026-11-02T14:16:02Z"
+ },
  "ms_transparencia": {
   "detalhe": "HTTP 200, text/html, 9 KB",
   "grupo": "Assembleias (estaduais)",
@@ -574,6 +583,15 @@
   "ultimoOk": "2026-11-02T14:59:49Z",
   "url": "https://www.transparencia.al.ms.gov.br/pages/index.php/gerdocumento/1201",
   "verificadoEm": "2026-11-02T14:59:49Z"
+ },
+ "ms_transparencia_antigo": {
+  "detalhe": "HTTP 200, text/html",
+  "grupo": "Assembleias (estaduais)",
+  "ok": true,
+  "primeiraVerificacao": "2026-11-02T14:16:02Z",
+  "ultimoOk": "2026-11-02T14:16:02Z",
+  "url": "https://www.transparencia.al.ms.gov.br/pages/index.php/gerdocumento/1201",
+  "verificadoEm": "2026-11-02T14:16:02Z"
  },
  "mt_eloweb": {
   "detalhe": "HTTP 200, text/html",

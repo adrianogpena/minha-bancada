@@ -180,8 +180,8 @@ Status: ✅ OK · ❌ ERRO (resposta com falha ou fora do ar) · ❔ não testad
 | ce_proposicoes | Assembleias (estaduais) | https://www2.al.ce.gov.br/legislativo/proposicoes/numero.php | scripts/coletar_estadual_ce.py | ✅ OK | 2026-10-24 | HTTP 200, text/html, 0 KB |
 | ce_transparencia | Assembleias (estaduais) | https://transparencia.al.ce.gov.br | scripts/coletar_estadual_ce.py | ✅ OK | 2026-10-24 | HTTP 200, text/html |
 | ms_transparencia | Assembleias (estaduais) | https://transparencia2.al.ms.gov.br | scripts/coletar_estadual_ms.py | ✅ OK | 2026-10-24 | HTTP 200, text/html, 9 KB |
-| ms_pauta | Assembleias (estaduais) | https://al.ms.gov.br/Pauta | scripts/coletar_estadual_ms.py | ❔ não testado |  |  |
-| ms_transparencia_antigo | Assembleias (estaduais) | https://www.transparencia.al.ms.gov.br/pages/index.php/gerdocumento/1201 | scripts/coletar_estadual_ms.py | ❔ não testado |  |  |
+| ms_pauta | Assembleias (estaduais) | https://al.ms.gov.br/Pauta | scripts/coletar_estadual_ms.py | ✅ OK | 2026-11-02 | HTTP 200, text/html |
+| ms_transparencia_antigo | Assembleias (estaduais) | https://www.transparencia.al.ms.gov.br/pages/index.php/gerdocumento/1201 | scripts/coletar_estadual_ms.py | ✅ OK | 2026-11-02 | HTTP 200, text/html |
 | pe_dadosabertos | Assembleias (estaduais) | https://dadosabertos.alepe.pe.gov.br/api/v1/parlamentares/ | scripts/coletar_estadual_pe.py | ✅ OK | 2026-10-24 | HTTP 200, application/json, 2 KB |
 | pe_transparencia | Assembleias (estaduais) | https://transparencia.alepe.pe.gov.br/financas/verbas-indenizatorias | scripts/coletar_estadual_pe.py | ✅ OK | 2026-10-24 | HTTP 200, text/html, 0 KB |
 | pe_legis | Assembleias (estaduais) | https://legis.alepe.pe.gov.br | scripts/coletar_estadual_pe.py | ✅ OK | 2026-10-24 | HTTP 200, text/html, 144 KB |

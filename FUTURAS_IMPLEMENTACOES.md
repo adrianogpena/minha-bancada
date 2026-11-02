@@ -14,7 +14,7 @@ Revisado em 2026-10-29 contra o código e o `CHANGELOG.md`.
 |---|---|---|
 | 1 | Acabamentos do que já existe | 1.1 Restos de pacotes feitos |
 | 3 | Raspagem de HTML ou chave de API | 3.2 Emendas e Portal da Transparência · 3.3 Ministros de Estado: o que fica para depois · 3.4 Ministérios em números · 3.5 Atuação de cada ministro |
-| 4 | Fontes grandes, sem padrão ou cruzamentos sensíveis | 4.1 Fornecedores e doadores · 4.2 Assembleias e Câmaras Municipais · 4.3 Ministros dos tribunais superiores · 4.4 Órgãos de controle (resto) · 4.5 Assembleia do Paraná: portal e webservices (2026) · 4.6 Levar às outras Assembleias o que o PR coleta |
+| 4 | Fontes grandes, sem padrão ou cruzamentos sensíveis | 4.1 Fornecedores e doadores · 4.2 Assembleias e Câmaras Municipais · 4.3 Ministros dos tribunais superiores · 4.4 Órgãos de controle (resto) · 4.5 Assembleia do Paraná: portal e webservices (2026) · 4.6 Levar às outras Assembleias o que o PR coleta · 4.7 Dados coletados que o site ainda não mostra |
 
 ## Nível 1: acabamentos
 
@@ -251,6 +251,28 @@ itens; ES, MG e RS dependem de abrir o acesso.
 - Regras da verba como link: CE, GO, SC, SP, BA, MG, MS (como no `regras_ressarcimento.json` do PR).
 - Comentários desatualizados nos coletores a corrigir quando o estado for tocado: PA ("projetos e votações: sem fonte") e SC ("sem exportação").
 - Recomenda-se um job de teste no Actions (ou outra rede) que bata nos endpoints de ES, MG, RS, SE, GO, MT e RJ antes de planejar; o resultado decide quais desses viram implementação.
+
+### 4.7 Dados já coletados que o site ainda não mostra (levantado em 2026-11-02)
+
+Os coletores estaduais e o `gerar_estaduais.py` já gravam estes dados, mas nenhuma página do site os lê (nenhum arquivo em
+`site/assets/js` abre `dados/orgao/`; o `site/mapa-dados.html` marca cada um como "Ainda não aparece no site"). O que
+aparece hoje, na ficha do deputado estadual (`politico.html?f=t/2022/<UF>&i=<sequencial>`, `estadual.js`), é verba,
+remuneração, gabinete, presença, diárias, emendas e normas de autoria.
+
+| Dado | Onde está | UFs | O que daria no site |
+|---|---|---|---|
+| Contratos e atas de registro de preço do órgão, com maiores fornecedores | `site/dados/orgao/<UF>.json` (`itens`, `fornecedores`, `regrasRessarcimento`, `fonte`) | gerados em 2026-11-02: BA CE GO MS PA PE RN SC SE SP; RR (47 KB) e RJ (3,5 KB, só links de PDF) gerados após a coleta de 2026-11-02; MT falhou (`451 Unavailable For Legal Reasons` em `almt.eloweb.net`, testar do Actions ou de outra rede) e PR não tem `orgao_*.json` local | página "Assembleia de <UF>" com contratos, atas e maiores fornecedores; as regras da verba como links |
+| Fornecedor do órgão ligado ao núcleo | `nucleo/fornecedores`, só pelo CNPJ que a fonte publica | SP (795 fornecedores), RN (244), CE, PE, SC, GO, BA, PA | os mesmos contratos em `fornecedores.html` (empresa que também vende ao Legislativo ou doou em campanha) |
+| Contratos só com título e link de PDF | `orgao/<UF>.json` (`fornecedores` vazio) | SE (367 itens), MS (87) | lista com link do PDF; fornecedor e valor estão dentro do PDF e não são lidos |
+| Pautas e atas de sessão e de comissão | `dados/estaduais/<UF>/pautas_<ano>.json` | PR, PA, RN, SP, RJ, MS, MT | "na pauta desta semana" e link da ata na sessão; a ata já entra como fonte da votação quando houver |
+| Licitações e contratações diretas | `dados/estaduais/RR/licitacoes_<ano>.json`, licitações do PA | RR, PA | lista junto dos contratos do órgão |
+| Leis e normas sem autoria | `site/dados/leis/PA.json` | PA | página de normas da UF (sem autoria não cabe na ficha do deputado) |
+
+Falta decidir e fazer:
+- Uma página de órgão por UF (`assembleia.html?uf=XX`), no padrão de `tribunais.html`, com fonte e link ao lado de cada linha.
+- Valor e fornecedor dos contratos só em PDF (SE, MS, parte de BA): ler o PDF ou deixar como link, sem inventar valor.
+- Depois da tela, trocar "Ainda não aparece no site" por onde aparece, nas linhas do `site/mapa-dados.html`.
+- Os itens de órgão do PR (4.5, pacote 8) e das demais UFs (4.6) ficam registrados nos respectivos pacotes; a tela é a mesma.
 
 ## Pendências de cobertura do que já existe
 

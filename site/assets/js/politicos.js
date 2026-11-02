@@ -1,7 +1,7 @@
 /* Página inicial: todos os políticos. */
 import { $, esc, semAcento, carregar, carregarMalha } from "./util.js";
 import { abas, erro } from "./comum.js";
-import { UFS, UF_COD, COD_UF, MALHAS } from "./apis.js";
+import { UFS, CAPITAIS, UF_COD, COD_UF, MALHAS } from "./apis.js";
 import { GRUPOS, linhaPolitico, svgMapa, desenharEleitorado, desenharPerfilCasas } from "./mapa.js";
 
 export async function paginaPoliticos() {
@@ -75,7 +75,7 @@ export async function paginaPoliticos() {
         lista = cache[uf];
         lista.forEach((x) => x.codigoMunicipio && nomes.set(x.codigoMunicipio, x.municipio));
         selMun.disabled = !nomes.size;
-        selMun.insertAdjacentHTML("beforeend", [...nomes].sort((a, b) => a[1].localeCompare(b[1], "pt-BR"))
+        selMun.insertAdjacentHTML("beforeend", [...nomes].sort((a, b) => (semAcento(b[1]) === semAcento(CAPITAIS[uf] || "")) - (semAcento(a[1]) === semAcento(CAPITAIS[uf] || "")) || a[1].localeCompare(b[1], "pt-BR"))
           .map(([g, m]) => `<option value="${esc(g)}">${esc(m)}</option>`).join(""));
       }
       mapa.innerHTML = `<p class="vazio">Carregando mapa…</p>`;

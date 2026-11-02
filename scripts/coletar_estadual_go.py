@@ -10,6 +10,9 @@ Fontes lidas aqui:
       diarias?ano=&favorecido=<nome civil>&pagina=   diárias (a API traz também assessores: filtra-se pelo beneficiário)
       requerimentos?ano=&pagina=   requerimentos com autor (a API só lista até 2023)
       votacoes.json?tipo=detalhes&ano=   um registro por voto nominal (ano inteiro numa resposta)
+      contratos-e-convenios/contratos   contratos do órgão (empenhado e pago, PDF; ~710, lidos inteiros)
+      contratos-e-convenios/atas-de-registro-de-preco   atas de registro de preço (fornecedor só pelo nome, PDF)
+      legislacoes   a Resolução 1.531/2015 (CEAP, a verba) e os decretos de diárias, como links (regras_ressarcimento.json)
   - desde 2023 (início da legislatura).
 
 Não coletado: presença (a API só dá datas e pauta das sessões), emendas (não existem na fonte), projetos de lei e outras
@@ -39,6 +42,11 @@ DIARIAS_PAGINA = f"{TRANSP}/prestacao-de-contas/diarias-e-ajudas-de-custo"
 DIARIA_FONTE = f"{DIARIAS_PAGINA}/{{id}}"
 REQUERIMENTOS_PAGINA = f"{TRANSP}/gestao-parlamentar/assuntos-legislativos/requerimentos"
 VOTACOES_PAGINA = f"{TRANSP}/gestao-parlamentar/painel-votacao-parlamentar/votacoes"
+ORGAO_PAGINA = f"{API}/contratos-e-convenios/contratos"   # a tela do portal é SPA; a API pública é a fonte conferível
+ATAS_PAGINA = f"{API}/contratos-e-convenios/atas-de-registro-de-preco"
+LEGISLACOES_API = f"{API}/legislacoes"
+FONTE_ID = "alego_go"
+POR_PAGINA_ORGAO = 100
 ANO_INICIAL = 2023
 ANO_REQUERIMENTOS_FINAL = 2023
 ANO_INICIAL_REMUNERACAO = 2026   # a API devolve vazio para 2023 a 2025 (conferido em 2026-10-22)
@@ -354,6 +362,87 @@ def coletar_requerimentos(s, deputados: list[dict]) -> None:
         print(f"GO: requerimentos {ano}: {len(materias)} de {len(registros)}")
 
 
+# ---------------------------------------------------------------- contratos e atas do órgão, regras da CEAP
+
+def vigencia(inicio, fim) -> tuple[str | None, str | None]:
+    """A API às vezes troca início e fim (contrato 662: início 2027, fim 2026): vale a menor como início."""
+    datas = sorted(d for d in (comum.data_iso(inicio), comum.data_iso(fim)) if d)
+    return (datas[0], datas[-1]) if datas else (None, None)
+
+
+def itens_contratos(linhas: list[dict]) -> dict:
+    itens = {}
+    for c in linhas:
+        if not c.get("id"):
+            continue
+        inicio, fim = vigencia(c.get("data_inicio"), c.get("data_fim"))
+        iid, item = comum.item_orgao(
+            FONTE_ID, "contrato", c["id"], fornecedor_nome=c.get("nome_favorecido"), documento=c.get("cpf_cnpj"),
+            valor=c.get("valor_empenhado"), objeto=c.get("descricao"), inicio=inicio, fim=fim, numero=comum.compactar(c.get("numero")),
+            fonte=ORGAO_PAGINA, valorPago=c.get("valor_pago"), processo=c.get("numero_processo"), especie=comum.compactar(c.get("tipo_contrato")),
+            licitacao=comum.compactar((c.get("licitacao") or {}).get("identificador")),
+            arquivos=[{"nome": "Contrato (PDF)", "url": c.get("url")}] + [{"nome": "Termo aditivo", "url": a.get("url_aditivo")} for a in c.get("aditivo") or []])
+        itens[iid] = item
+    return itens
+
+
+def itens_atas(linhas: list[dict]) -> dict:
+    """Atas de registro de preço: sem CNPJ nem valor na fonte; o ano e o mês da ata viram a data de início (dia 1)."""
+    itens = {}
+    for a in linhas:
+        if not a.get("id"):
+            continue
+        ano, mes = str(a.get("ano") or ""), str(a.get("mes") or "")
+        inicio = f"{int(ano):04d}-{int(mes):02d}-01" if ano.isdigit() and mes.isdigit() and 1 <= int(mes) <= 12 else None
+        iid, item = comum.item_orgao(
+            FONTE_ID, "ata_registro", a["id"], fornecedor_nome=(a.get("fornecedor") or {}).get("nome"), objeto=a.get("objeto"),
+            inicio=inicio, numero=comum.compactar(a.get("numero")), fonte=ATAS_PAGINA, carona=bool(a.get("carona")),
+            licitacao=comum.compactar((a.get("licitacao") or {}).get("identificador")),
+            arquivos=[{"nome": "Ata (PDF)", "url": a.get("url_ata")}])
+        itens[iid] = item
+    return itens
+
+
+def coletar_orgao(s) -> None:
+    """Contratos e atas lidos inteiros (poucas páginas de 100) e gravados por ano de início."""
+    itens = itens_contratos(paginar(s, "contratos-e-convenios/contratos", por_pagina=POR_PAGINA_ORGAO))
+    itens |= itens_atas(paginar(s, "contratos-e-convenios/atas-de-registro-de-preco", por_pagina=POR_PAGINA_ORGAO))
+    if not itens:
+        raise RuntimeError("contratos e atas vazios; mantém os arquivos anteriores")
+    por_ano: dict[int, dict] = {}
+    for iid, i in itens.items():
+        if i["inicio"] and int(i["inicio"][:4]) >= ANO_INICIAL:
+            por_ano.setdefault(int(i["inicio"][:4]), {})[iid] = i
+    hoje = date.today().isoformat()
+    for ano, do_ano in por_ano.items():
+        comum.salvar(PASTA / f"orgao_{ano}.json", {"coletadoEm": hoje, "fonte": ORGAO_PAGINA, "itens": do_ano})
+    print(f"GO: contratos e atas do órgão {sum(len(x) for x in por_ano.values())} em {len(por_ano)} anos")
+
+
+def regras_da_ceap(legislacoes: dict) -> dict | None:
+    """Resolução da CEAP (a verba) e decretos de diárias da lista de legislações; o texto consolidado da CEAP vem primeiro."""
+    docs = {}
+    for grupo in legislacoes.get("legislacoes") or []:
+        for lei in grupo.get("leis") or []:
+            desc = comum.compactar(lei.get("descricao")) or ""
+            if lei.get("get_arquivo_view_url") and re.search(r"Cota para o Exerc\S+cio da Atividade Parlamentar|di\S+rias", desc, re.I):
+                anos = re.findall(r"(?:19|20)\d\d", desc.split(" - ")[0].split(". ")[0])
+                docs[lei["id"]] = {"titulo": desc, "url": lei["get_arquivo_view_url"], "ano": int(anos[0]) if anos else None,
+                                   "consolidado": grupo.get("tipo") == "Atos Normativos Consolidados", "atualizadoEm": lei.get("ultima_atualizacao")}
+    ceap = sorted((d for d in docs.values() if re.search(r"Cota para o Exerc", d["titulo"], re.I)), key=lambda d: (not d["consolidado"], -(d["ano"] or 0)))
+    if not ceap:
+        return None
+    return {"url": ceap[0]["url"], "ano": ceap[0]["ano"], "titulo": ceap[0]["titulo"], "fonte": LEGISLACOES_API,
+            "documentos": sorted(docs.values(), key=lambda d: (d["ano"] or 0, d["titulo"]))}
+
+
+def coletar_regras(s) -> None:
+    regra = regras_da_ceap(pegar_json(s, "legislacoes"))
+    if not regra:
+        raise RuntimeError("resolução da CEAP não achada nas legislações; mantém o arquivo anterior")
+    comum.salvar(PASTA / "regras_ressarcimento.json", regra)
+
+
 def coletar() -> None:
     s = comum.sessao()
     deputados = coletar_deputados(s)
@@ -364,7 +453,8 @@ def coletar() -> None:
     print(f"GO: {len(deputados)} deputados")
     comum.rodar_etapas(UF, [("verbas", lambda: coletar_verbas(s, deputados)), ("remuneração", lambda: coletar_remuneracao(s, deputados)),
                             ("votações", lambda: coletar_votacoes(s, deputados)), ("requerimentos", lambda: coletar_requerimentos(s, deputados)),
-                            ("diárias", lambda: coletar_diarias(s, deputados))])
+                            ("diárias", lambda: coletar_diarias(s, deputados)), ("contratos e atas", lambda: coletar_orgao(s)),
+                            ("regras da CEAP", lambda: coletar_regras(s))])
 
 
 def _contrato_lista(ctx):

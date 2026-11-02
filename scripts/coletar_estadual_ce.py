@@ -8,11 +8,18 @@ Fontes lidas aqui:
   - remuneração dos deputados (CSV mensal de todo o pessoal, só as linhas DEPUTADOS) e diárias (CSV anual);
   - votações nominais: a página /consultas-gerais/votacao-nominal traz todas as matérias com o link do XLSX de cada uma
     (o XLSX tem blocos SIM / NÃO / ABSTENÇÃO por deputado; quem não votou fica em branco);
-  - proposições (autoria, ementa, situação): https://www2.al.ce.gov.br/legislativo/proposicoes/numero.php, só tipos de projeto.
+  - proposições (autoria, ementa, situação): https://www2.al.ce.gov.br/legislativo/proposicoes/numero.php, tipos de projeto e
+    indicações; as mensagens do Executivo (tabela projeto_mens) vão para governo_<ano>.json;
+  - contratos e atas de registro de preço do órgão: API JSON https://transparencia.al.ce.gov.br/api/contratos (filtro ano_contrato);
+  - normativos da VDP (regras da verba): links da página /despesas/verba-desempenho-parlamentar;
+  - gabinete: lotação "GABINETE DEPUTADO(A) <nome>" no modal (base64) de cada linha de /gestao-de-pessoas/pessoal (o CSV não traz
+    a lotação); ~170 páginas, lidas uma vez por mês publicado.
 
-Não coletado: emendas (a página só publica o quadro consolidado da LOA, sem arquivo aberto), presença (não existe).
+Não coletado: emendas (a página só publica o quadro consolidado da LOA, sem arquivo aberto), presença (não existe), atas de
+sessão (a busca volta vazia), leis promulgadas com autoria (não publica).
 """
 
+import base64
 import csv
 import io
 import re
@@ -37,6 +44,12 @@ LEGISLATURA = "31ª (2023-2027)"
 ANO_VDP = 2021
 ANO_REMUNERACAO = 2023
 ANO_PROPOSICOES = 2023
+CONTRATOS_API = f"{TRANSP}/api/contratos"
+CONTRATOS_PAGINA = f"{TRANSP}/licitacoes-e-contratos/contratos"
+ANO_ORGAO = 2023
+FONTE_ID = "alece_ce"
+GABINETE_LOTACAO = re.compile(r"^\s*GABINETE\s+(?:DO\s+|DA\s+)?DEPUTAD[OA]\s+(.+)$", re.I)
+GABINETE_DIAS = 30   # o gabinete (≈170 páginas) só é relido quando sai mês novo ou a foto passa desta idade
 TIMEOUT = 20
 TIMEOUT_CSV = 90
 EM_PARALELO = 2
@@ -47,7 +60,9 @@ TABELAS = {  # tabela em numero.php -> (sigla, descrição)
     "projeto_emen": ("PEC", "Proposta de Emenda à Constituição"),
     "projeto_decre": ("PDL", "Projeto de Decreto Legislativo"),
     "projeto_reso": ("PR", "Projeto de Resolução"),
+    "projeto_indi": ("IND", "Projeto de Indicação"),
 }
+TABELAS_GOVERNO = {"projeto_mens": ("MSG", "Mensagem do Poder Executivo")}   # autor "PODER EXECUTIVO": vai para governo_<ano>.json
 ligar = partial(identidades.ligar_nomes, uf=UF)
 
 
@@ -398,7 +413,7 @@ def autores(texto: str) -> list[str]:
 def coletar_proposicoes(s, deputados: list[dict]) -> None:
     brutos = {}
     sem_par = set()
-    for tabela, (sigla, descricao) in TABELAS.items():
+    for tabela, (sigla, descricao) in (TABELAS | TABELAS_GOVERNO).items():
         for opcao in ("T", "D"):
             base = f"{PROPOSICOES}?nome=31_legislatura&tabela={tabela}&opcao={opcao}"
             try:
@@ -419,10 +434,14 @@ def coletar_proposicoes(s, deputados: list[dict]) -> None:
                 paginas.update(ex.map(pagina, range(2, ultima_pagina(primeira) + 1)))
             for h in paginas.values():
                 for p in proposicoes_da_pagina(h):
+                    if p["ano"] > date.today().year and p["dataApresentacao"]:   # erro de digitação na fonte ("75/2075" entrado em 2025)
+                        p["ano"] = int(p["dataApresentacao"][:4])
                     if p["ano"] >= ANO_PROPOSICOES:
                         brutos[(sigla, p["numero"], p["ano"])] = {**p, "tipo": sigla, "tipoDescricao": descricao, "emTramitacao": opcao == "T",
                                                                  "fonte": base}
             print(f"CE: proposições {tabela}/{opcao}: {len(paginas)} páginas")
+    siglas_governo = {sigla for sigla, _ in TABELAS_GOVERNO.values()}
+    governo = {k: brutos.pop(k) for k in [k for k in brutos if k[0] in siglas_governo]}
     ligacao = ligar({a for p in brutos.values() for a in autores(p["autor"])}, deputados)
     por_ano: dict[int, dict] = {}
     for (sigla, numero, ano), p in sorted(brutos.items()):
@@ -436,9 +455,143 @@ def coletar_proposicoes(s, deputados: list[dict]) -> None:
             "idsAutores": ids, "idsDeputados": ids, "fonte": p["fonte"]}
     for ano, materias in por_ano.items():
         comum.salvar(PASTA / f"materias_{ano}.json", {"coletadoEm": date.today().isoformat(), "fonte": PROPOSICOES, "materias": materias})
+    do_governo: dict[int, dict] = {}
+    for (sigla, numero, ano), p in sorted(governo.items()):
+        do_governo.setdefault(ano, {})[f"{sigla}-{numero}-{ano}"] = {
+            "tipo": sigla, "tipoDescricao": p["tipoDescricao"], "numero": numero, "ano": ano, "dataApresentacao": p["dataApresentacao"],
+            "ementa": p["ementa"], "situacao": p["situacao"], "linkTexto": p["linkTexto"], "fonte": p["fonte"]}
+    for ano, materias in do_governo.items():
+        comum.salvar(PASTA / f"governo_{ano}.json", {"coletadoEm": date.today().isoformat(), "fonte": PROPOSICOES, "materias": materias})
     print(f"CE: {sum(len(m) for m in por_ano.values())} projetos de deputados em {len(por_ano)} anos ({len(brutos)} lidos)")
     if sem_par:
         comum.avisar(f"CE: autores sem deputado da lista ({len(sem_par)}): {sorted(sem_par)[:15]}")
+
+
+# ---------------------------------------------------------------- despesas do órgão e regras da verba
+
+def tipo_orgao(especie: str | None) -> str:
+    return "ata_registro" if re.search(r"ATA\s+DE\s+REGISTRO", especie or "", re.I) else "contrato"
+
+
+def itens_do_orgao(linhas: list[dict]) -> dict:
+    """{id: item} dos contratos da API; a API repete a linha por lote, então vale o id_contrato. Fiscal e gestor (servidores) ficam de fora."""
+    itens = {}
+    for lin in linhas:
+        if not lin.get("id_contrato"):
+            continue
+        especie = comum.compactar(lin.get("especie_contrato"))
+        iid, item = comum.item_orgao(
+            FONTE_ID, tipo_orgao(especie), str(lin["id_contrato"]), fornecedor_nome=lin.get("contratado_contrato"),
+            documento=lin.get("cpfcnpj_contrato"), valor=lin.get("valorvencedor_contrato"), objeto=lin.get("objeto_contrato"),
+            inicio=comum.data_br_iso(lin.get("iniciovigencia_contrato")), fim=comum.data_br_iso(lin.get("fimvigencia_contrato")),
+            numero=f"{lin.get('numero_contrato')}/{lin.get('ano_contrato')}", fonte=CONTRATOS_PAGINA, especie=especie,
+            aditivos=len(lin.get("aditivos") or []))
+        itens[iid] = item
+    return itens
+
+
+def contratos_do_ano(s, ano: int) -> list[dict]:
+    linhas, pagina = [], 1
+    while True:
+        r = comum.get(s, CONTRATOS_API, TIMEOUT, params={"ano_contrato": ano, "page": pagina}).json()
+        linhas += r.get("data") or []
+        if pagina >= ((r.get("pagination") or {}).get("last_page") or 1):
+            return linhas
+        pagina += 1
+
+
+def coletar_orgao(s) -> None:
+    hoje = date.today()
+    for ano in range(ANO_ORGAO, hoje.year + 1):
+        arq = PASTA / f"orgao_{ano}.json"
+        if comum.ano_encerrado(ano, hoje, arq):
+            continue
+        itens = itens_do_orgao(contratos_do_ano(s, ano))
+        if not itens and comum.ler(arq, {}).get("itens"):
+            comum.avisar(f"CE: contratos {ano}: API devolveu lista vazia; mantém o arquivo anterior")
+            continue
+        comum.salvar(arq, {"coletadoEm": hoje.isoformat(), "fonte": CONTRATOS_PAGINA, "itens": itens})
+        print(f"CE: {ano} contratos e atas do órgão {len(itens)}")
+
+
+def regras_da_vdp(html: str) -> dict | None:
+    """Normativos da VDP listados na página ("<a href=PDF>Título</a> (vigente)"); url e ano = o vigente mais novo."""
+    docs = []
+    for url, titulo, estado in re.findall(r'<li>\s*<a[^>]*href="([^"]+)"[^>]*>([^<]*)</a>(?:\s|&nbsp;)*\(([^)]+)\)', html, re.S):
+        nome = comum.limpar(titulo)
+        anos = re.findall(r"(?:19|20)\d\d", nome)
+        docs.append({"titulo": nome, "url": url, "ano": int(anos[-1]) if anos else None, "vigente": "vigente" in estado.lower()})
+    vigentes = [d for d in docs if d["vigente"] and d["ano"]]
+    if not vigentes:
+        return None
+    atual = max(vigentes, key=lambda d: d["ano"])
+    return {"url": atual["url"], "ano": atual["ano"], "titulo": atual["titulo"], "fonte": VDP_PAGINA, "documentos": docs}
+
+
+def coletar_regras(s) -> None:
+    regra = regras_da_vdp(decodificar(baixar(s, VDP_PAGINA), "utf-8"))
+    if not regra:
+        raise RuntimeError("nenhum normativo vigente na página da VDP; mantém o arquivo anterior")
+    comum.salvar(PASTA / "regras_ressarcimento.json", regra)
+
+
+# ---------------------------------------------------------------- gabinete
+
+def registros_pessoal(html: str) -> list[list[str]]:
+    """Campos do modal de cada linha (base64 em latin-1, separados por "_"): matrícula, nome, lotação, situação, cargo, nível, ...,
+    ano, mês, ... O documento do servidor, que também vem ali, não é guardado."""
+    saida = []
+    for b in re.findall(r'data-bs-remuneracao="([^"]+)"', html):
+        try:
+            saida.append(base64.b64decode(b).decode("latin-1").split("_"))
+        except ValueError:
+            continue
+    return [r for r in saida if len(r) >= 10]
+
+
+def servidores_do_gabinete(registros: list[list[str]], deputados: list[dict]) -> list[dict]:
+    """Servidores lotados em "GABINETE DEPUTADO(A) <nome>"; só com lotação ligada a um único deputado (`ligar`). Sem valores."""
+    lotacoes = {r[2]: m.group(1).strip() for r in registros if (m := GABINETE_LOTACAO.match(r[2] or ""))}
+    ligados = ligar(set(lotacoes.values()), deputados)
+    itens = {}
+    for r in registros:
+        id_dep = ligados.get(lotacoes.get(r[2]))
+        if id_dep and r[0] and r[1]:
+            itens[r[0]] = {"idDeputado": id_dep, "matricula": r[0], "nome": " ".join(r[1].split()),
+                           "simbolo": comum.compactar(r[5].strip("- ")) or comum.compactar(r[4]), "cargo": comum.compactar(r[4])}
+    return sorted(itens.values(), key=lambda i: (i["idDeputado"], i["simbolo"] or "", i["nome"], i["matricula"]))
+
+
+def ultima_pagina_pessoal(html: str) -> int:
+    return max([int(n) for n in re.findall(r"[?&;]page=(\d+)", html)] or [1])
+
+
+def coletar_gabinete(s, deputados: list[dict]) -> None:
+    arq = PASTA / "gabinete.json"
+    anterior = comum.ler(arq, {})
+    primeira = decodificar(baixar(s, PESSOAL_PAGINA), "utf-8")
+    regs = registros_pessoal(primeira)
+    if not regs:
+        raise RuntimeError("página de pessoal sem registros; mantém o arquivo anterior")
+    ano, mes = int(regs[0][8]), int(regs[0][9])
+    hoje = date.today()
+    if (anterior.get("ano"), anterior.get("mes")) == (ano, mes) and anterior.get("coletadoEm") and \
+            (hoje - date.fromisoformat(anterior["coletadoEm"])).days < GABINETE_DIAS:
+        return
+
+    def pagina(n):
+        return decodificar(baixar(s, PESSOAL_PAGINA, {"mes": f"{mes:02d}", "ano": ano, "page": n}), "utf-8")
+
+    primeira = pagina(1)   # a página sem filtro não traz os links de paginação
+    regs = registros_pessoal(primeira)
+    with ThreadPoolExecutor(EM_PARALELO) as ex:
+        for h in ex.map(pagina, range(2, ultima_pagina_pessoal(primeira) + 1)):
+            regs += registros_pessoal(h)
+    itens = servidores_do_gabinete(regs, deputados)
+    if not itens:
+        raise RuntimeError("nenhum servidor ligado a gabinete de deputado; mantém o arquivo anterior")
+    comum.salvar(arq, {"coletadoEm": hoje.isoformat(), "ano": ano, "mes": mes, "fonte": f"{PESSOAL_PAGINA}?mes={mes:02d}&ano={ano}", "itens": itens})
+    print(f"CE: gabinetes {len(itens)} servidores de {len({i['idDeputado'] for i in itens})} deputados ({mes:02d}/{ano})")
 
 
 # ---------------------------------------------------------------- execução
@@ -448,7 +601,8 @@ def coletar() -> None:
     deputados = coletar_deputados(s)
     comum.rodar_etapas(UF, [("verba", lambda: coletar_vdp(s, deputados)), ("votações", lambda: coletar_votacoes(s, deputados)),
                             ("proposições", lambda: coletar_proposicoes(s, deputados)), ("remuneração", lambda: coletar_remuneracao(s, deputados)),
-                            ("diárias", lambda: coletar_diarias(s, deputados))])
+                            ("diárias", lambda: coletar_diarias(s, deputados)), ("contratos e atas", lambda: coletar_orgao(s)),
+                            ("regras da VDP", lambda: coletar_regras(s)), ("gabinete", lambda: coletar_gabinete(s, deputados))])
 
 
 # ---------------------------------------------------------------- contratos (amostras reduzidas das respostas reais)

@@ -214,3 +214,159 @@ def test_coletar_grava_deputados_verbas_e_diarias(tmp_path, monkeypatch):
     assert verbas["itens"][0]["fonte"] == "http://x/v.pdf?wpdf_download=true&i=2"
     diarias = json.loads((pasta / f"diarias_{ano}.json").read_text(encoding="utf-8"))
     assert diarias["itens"][0]["data"] == f"{ano}-02-05" and diarias["itens"][0]["valor"] == 1250.0
+
+
+CAB_PESSOAL = ["Matrícula", "Nome", "Desc. Vínculo", "Dt. Admissão", "Cargo", "Função", "Setor", "Unidade"]
+
+
+def test_gabinete_do_contrato():
+    a = amostra("estadual_rr_gabinete")
+    assert rr._conferir_gabinete(a) == ([], [])
+
+
+def test_servidores_do_gabinete_liga_ao_deputado_e_ignora_outros_setores():
+    linhas = [CAB_PESSOAL,
+              ["36499", "ABADI JONATHAN ALMEIDA", "COMISSIONADOS", "01/04/2026", "FS-11 Secretario Parlamentar ", "x", "GAB. DEP. JOILMA TEODORA", "DEP. JOILMA TEODORA"],
+              ["36499", "ABADI JONATHAN ALMEIDA", "COMISSIONADOS", "01/04/2026", "FS-11 Secretario Parlamentar ", "x", "GAB. DEP. JOILMA TEODORA", "DEP. JOILMA TEODORA"],
+              ["3416252", "ABRAAO DE CASTELO", "ADIDOS/ CEDIDOS/REMOVIDOS", "13/08/2024", "MOTORISTA", "MOTORISTA", "GAB. DEP. MARCOS JORGE", "DEP. MARCOS JORGE"],
+              ["10", "FULANO", "COMISSIONADOS", "01/01/2026", "FS-1 Chefe", "x", "GAB. DEP. SEM PAR NENHUM", "x"],
+              ["11", "CICLANO", "COMISSIONADOS", "01/01/2026", "FS-1 Chefe", "x", "GABINETE DA PRESIDENCIA ", "x"]]
+    itens = rr.servidores_do_gabinete(linhas, DEPUTADOS)
+    assert [(i["idDeputado"], i["matricula"], i["nome"], i["simbolo"], i["cargo"], i["admissao"]) for i in itens] == [
+        ("joilma", "36499", "Abadi Jonathan Almeida", "FS-11", "Secretario Parlamentar", "2026-04-01"),
+        ("marcos", "3416252", "Abraao de Castelo", None, "MOTORISTA", "2024-08-13")]
+    assert itens[0]["id"].startswith("srv_") and itens[0]["id"] == rr.servidores_do_gabinete(linhas[:2], DEPUTADOS)[0]["id"]
+    assert rr.servidores_do_gabinete([["x"]], DEPUTADOS) == []
+
+
+def arq(nome):
+    return {"nome": nome, "tipo": "pdf", "url": f"http://x/{nome}"}
+
+
+def test_contratos_do_contrato():
+    a = amostra("estadual_rr_contratos")
+    assert rr._conferir_contratos(a) == ([], [])
+
+
+def test_contratos_da_pasta_um_por_numero_com_links_e_sem_fornecedor():
+    pasta = "Processo Eletrônico nº 97-2024"
+    arquivos = [arq("CONTRATO 11-2025.pdf"), arq("CONTRATO 11-2025 PUBLICACAO DO CONTRATO.pdf"), arq("CONTRATO 12-2025.pdf"),
+                arq("PRIMEIRO TERMO ADITIVO CONTRATO 12-2025.pdf"), arq("PUBLICAÇÃO DO CONTRATO 83-2025.pdf")]
+    itens = rr.contratos_da_pasta(pasta, arquivos, "http://fonte")
+    por_numero = {i["numero"]: i for i in itens.values()}
+    assert sorted(por_numero) == ["11/2025", "12/2025"] and all(k.startswith("ctr_") for k in itens)
+    assert [x["nome"] for x in por_numero["11/2025"]["arquivos"]] == ["Contrato", "Publicação: contrato"]
+    assert [x["nome"] for x in por_numero["12/2025"]["arquivos"]] == ["Contrato", "Termo aditivo"]
+    assert por_numero["11/2025"]["processo"] == "97/2024" and por_numero["11/2025"]["fornecedor"] is None and por_numero["11/2025"]["tipo"] == "contrato"
+    assert rr.contratos_da_pasta(pasta, arquivos, "http://fonte") == itens
+
+
+def test_contratos_da_pasta_publicacao_com_numero_de_processo_vai_para_o_unico_contrato_e_empenho_nao_gera_item():
+    unico = rr.contratos_da_pasta("Processo Eletrônico nº 83-2025", [arq("CONTRATO 23-2025.pdf"), arq("PUBLICACAO DO CONTRATO 83-2025.pdf")], "f")
+    assert [len(i["arquivos"]) for i in unico.values()] == [2]
+    assert rr.contratos_da_pasta("Processo Eletrônico nº 51-2026", [arq("EMPENHO 767-2026.pdf")], "f") == {}
+
+
+def test_licitacoes_do_contrato():
+    a = amostra("estadual_rr_licitacoes")
+    assert rr._conferir_licitacoes(a) == ([], [])
+
+
+def test_itens_licitacoes_colunas_pelo_cabecalho():
+    licitacoes = [["LICITAÇÕES - 2026"], ["SETEMBRO"],
+                  ["Nº DO PROCESSO", "Nº DO EDITAL", "MODALIDADE/ FORMA/ PROCEDIMENTO", "OBJETO", "DESPESA MÁXIMA ACEITÁVEL / VALOR ESTIMADO",
+                   "VENCEDOR (ES)", "DATA", "VALOR HOMOLOGADO", "SITUAÇÃO"],
+                  ["18/2025", "90014/2025", "PREGÃO ELETRÔNICO", "Conexão de dados", "5007156.84", "LOTE ÚNICO: GRZ LTDA CNPJ: 07.872.397/0001-50", "46044", "2770116", "HOMOLOGADO"],
+                  ["22/2025", "90003/2025", "PREGÃO ELETRÔNICO", "Outsourcing", "7585200", "DOALE ED.Nº 4724", "46288", "-", "ABERTO"],
+                  ["Fonte da informação: SCP"]]
+    itens = rr.itens_licitacoes(licitacoes, "licitacao", "http://pdf", 9)
+    assert len(itens) == 2 and all(k.startswith("lic_") for k in itens)
+    homologada, aberta = sorted(itens.values(), key=lambda i: i["processo"])
+    assert (homologada["cnpj"], homologada["data"], homologada["valorEstimado"], homologada["valorHomologado"], homologada["edital"]) == (
+        "07872397000150", "2026-01-22", 5007156.84, 2770116.0, "90014/2025")
+    assert (aberta["vencedor"], aberta["referenciaDiario"], aberta["valorHomologado"], aberta["fonte"]) == (None, "DOALE ED.Nº 4724", None, "http://pdf")
+
+
+def test_itens_licitacoes_contratacao_direta_distingue_procedimentos_do_mesmo_processo():
+    linhas = [["DISPENSAS / INEXIGIBILIDADES"],
+              ["PROCEDIMENTO", "PROCESSO", "MODALIDADE/ FORMA/ PROCEDIMENTO", "OBJETO", "VENCEDOR (ES)", "DATA", "VALOR HOMOLOGADO", "SITUAÇÃO"],
+              ["001/2024", "23/2024", "DISPENSA ELETRÔNICA", "Materiais", "-", "29/01/2025", "-", "REVOGADA"],
+              ["001/2025", "23/2024", "DISPENSA ELETRÔNICA", "Materiais", "-", "45702", "54128.88", "ABERTA"]]
+    itens = rr.itens_licitacoes(linhas, "contratacao_direta", "f", 1)
+    assert sorted((i["procedimento"], i["data"], i["valorHomologado"]) for i in itens.values()) == [
+        ("001/2024", "2025-01-29", None), ("001/2025", "2025-02-14", 54128.88)]
+    assert rr.itens_licitacoes([["x"]], "licitacao", "f", 1) == {}
+
+
+def test_coletar_grava_gabinete_contratos_e_licitacoes(tmp_path, monkeypatch):
+    hoje = date.today()
+    ano = hoje.year
+    pessoal = xlsx([CAB_PESSOAL, ["36499", "ABADI JONATHAN", "COMISSIONADOS", "01/04/2026", "FS-11 Secretario", "x", "GAB. DEP. JOILMA TEODORA", "x"]])
+    direta = xlsx([["PROCEDIMENTO", "PROCESSO", "MODALIDADE", "OBJETO", "VENCEDOR (ES)", "DATA", "VALOR HOMOLOGADO", "SITUAÇÃO"],
+                   ["001/2026", "271/2025", "DISPENSA", "Limpeza", "NEW SERVICE LTDA", "46036", "4854031.68", "HOMOLOGADA"]])
+
+    def pagina(sid):
+        return f'<script>var w = {{"wpdf_nonce":"abc"}};</script><div data-sid="{sid}"></div><li data-type="folder" data-name="Ano {ano}" data-path="Ano {ano}/"></li>'
+
+    def li(nome, tipo, url):
+        return f'<li class="file_record" data-name="{nome}" data-file-type="{tipo}"><a href="http://x/{url}?wpdf_download=true"></a></li>'
+
+    mes = f'<li data-type="folder" data-name="3-Março" data-path="Ano {ano}/3-Março/"></li>'
+    arquivos = {"7": li("CONSULTA SERVIDORES.xlsx", "xlsx", "p.xlsx"),
+                "5": li("CONTRATACOES DIRETAS MARCO.xlsx", "xlsx", "d.xlsx") + li("CONTRATACOES DIRETAS MARCO.pdf", "pdf", "d.pdf")}
+    contratos = {f"Ano {ano}/": f'<li data-type="folder" data-name="Processo Eletrônico nº 5-2025" data-path="Ano {ano}/P5/"></li>',
+                 f"Ano {ano}/P5/": li("CONTRATO 02-2026.pdf", "pdf", "c.pdf") + li("PUBLICACAO DO CONTRATO 02-2026.pdf", "pdf", "cp.pdf")}
+    paginas = {rr.GESTAO_PAGINA: "7", rr.CONTRATOS_PAGINA: "6", rr.LICITACOES_PAGINA: "5"}
+    ficha = ('<title>Joilma Teodora | ALE-RR</title><h1>Joilma Teodora</h1><meta property="og:description" content="Nome: Joilma Teodora de Araújo Silva '
+             'Data de Nascimento: 01-01 Partido: PP Gabinete: 1 e-mail: j@al.rr.leg.br" />')
+
+    class Resp:
+        def __init__(self, texto=None, conteudo=None, dados=None):
+            self.text, self.content, self._dados = texto, conteudo, dados
+
+        def raise_for_status(self):
+            pass
+
+        def json(self):
+            return self._dados
+
+    class Sessao:
+        def get(self, url, timeout=None):
+            if url == rr.LISTA_DEPUTADOS:
+                return Resp(texto=f'<a href="{rr.SITE}/deputados/joilma/" target="_self"><img src="https://al.rr.leg.br/f.jpg" />')
+            if url.endswith("/deputados/joilma/"):
+                return Resp(texto=ficha)
+            if url in paginas:
+                return Resp(texto=pagina(paginas[url]))
+            if url.startswith("http://x/p.xlsx"):
+                return Resp(conteudo=pessoal)
+            if url.startswith("http://x/d.xlsx"):
+                return Resp(conteudo=direta)
+            raise AssertionError(url)
+
+        def post(self, url, data=None, timeout=None):
+            caminho, sid = data["folder_path"], data["sid"]
+            if sid == "6":
+                return Resp(dados={"inner_content": contratos[caminho]})
+            if caminho == f"Ano {ano}/":
+                return Resp(dados={"inner_content": mes})
+            return Resp(dados={"inner_content": arquivos[sid]})
+
+    sessao = Sessao()
+    monkeypatch.setattr(comum, "DADOS", tmp_path)
+    monkeypatch.setattr(comum, "sessao", lambda: sessao)
+    monkeypatch.setattr(rr, "coletar_verbas", lambda *a: None)
+    monkeypatch.setattr(rr, "coletar_diarias", lambda *a: None)
+    rr.coletar()
+    pasta = tmp_path / "RR"
+    gabinete = json.loads((pasta / "gabinete.json").read_text(encoding="utf-8"))
+    assert gabinete["fonte"] == rr.GESTAO_PAGINA and gabinete["referencia"] == f"{ano}-03"
+    assert [(i["idDeputado"], i["matricula"], i["simbolo"]) for i in gabinete["itens"]] == [("joilma", "36499", "FS-11")]
+    orgao = json.loads((pasta / f"orgao_{ano}.json").read_text(encoding="utf-8"))
+    (contrato,) = orgao["itens"].values()
+    assert contrato["numero"] == "02/2026" and contrato["fonte"] == rr.CONTRATOS_PAGINA
+    assert [a["nome"] for a in contrato["arquivos"]] == ["Contrato", "Publicação: contrato"]
+    licitacoes = json.loads((pasta / f"licitacoes_{ano}.json").read_text(encoding="utf-8"))
+    (direta_item,) = licitacoes["itens"].values()
+    assert licitacoes["referencia"] == {"contratacao_direta": f"{ano}-03"} and direta_item["fonte"] == "http://x/d.pdf?wpdf_download=true"
+    assert direta_item["vencedor"] == "NEW SERVICE LTDA" and direta_item["data"] == "2026-01-14"

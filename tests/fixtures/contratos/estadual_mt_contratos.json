@@ -1,0 +1,59 @@
+{
+ "fonte": "https://almt.eloweb.net/portaltransparencia/1/contratos",
+ "capturadoEm": "2026-11-02",
+ "amostra": {
+  "ano": 2026,
+  "content": [
+   {
+    "contrato": "120",
+    "numeroContrato": 202620,
+    "displayContrato": "202620/2026",
+    "cnpjCpf": "12345678000195",
+    "nome": "EMPRESA EXEMPLO DE SERVICOS LTDA",
+    "inicioVigencia": "2026-03-01",
+    "terminoVigencia": "2027-02-28",
+    "valorContratado": 120000.5,
+    "valorAditivo": 0.0,
+    "descricaoTipoAto": "Contrato",
+    "situacao": "Vigente",
+    "tipoContrato": "1 - Serviço",
+    "descricaoTipoLicitacao": "Dispensa",
+    "displayLicitacao": "3/2026",
+    "objeto": "Prestação de serviços de manutenção.",
+    "itens": []
+   },
+   {
+    "contrato": "214",
+    "numeroContrato": 202645,
+    "displayContrato": "202645/2026",
+    "cnpjCpf": "50390402000118",
+    "nome": "SEVEN DIGITAL GRAFICA E EDITORA LTDA",
+    "inicioVigencia": "2026-07-15",
+    "terminoVigencia": "2027-07-15",
+    "valorContratado": 316125.0,
+    "valorAditivo": 0.0,
+    "descricaoTipoAto": "Registro de Preço",
+    "situacao": "Vigente",
+    "tipoContrato": "2 - Compra",
+    "descricaoTipoLicitacao": "Pregão Eletrônico",
+    "displayLicitacao": "17/2025",
+    "objeto": "Registro de preços para impressão de material gráfico.",
+    "itens": []
+   }
+  ],
+  "totalElements": 129,
+  "arquivos": [
+   {
+    "idArquivo": 93826,
+    "dataPublicacao": "2026-07-20",
+    "nomeArquivo": "ATA DE REGISTRO DE PREÇO 45-2026 P.E 017.pdf"
+   }
+  ],
+  "atualizacoes": [
+   {
+    "modulo": "10",
+    "ultimoAcesso": "2026-10-29T16:23:58"
+   }
+  ]
+ }
+}

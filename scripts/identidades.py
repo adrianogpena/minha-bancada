@@ -243,6 +243,7 @@ CAMPOS_NOME = ("nome", "nomeCivil")
 _LOG: dict = defaultdict(lambda: {"nomes": {}, "ambiguos": {}, "semPar": set()})   # uf -> o que `ligar_nomes` decidiu neste processo
 
 TITULOS_UF = {
+    "MT": {"dr", "dra", "prof", "profa", "dep", "deputado", "deputada", "de", "da", "do", "dos", "das", "e"},
     "PA": {"dr", "dra", "prof", "profa", "deleg", "delegado", "delegada", "dep", "deputado", "deputada"},
     "PE": {"del", "delegado", "delegada", "dr", "dra", "prof", "profa", "dep", "de", "da", "do", "dos", "das"},
     "PR": {"dr", "dra", "doutor", "doutora", "secretaria"},
@@ -351,7 +352,11 @@ def _estrategia_rr(nomes, deputados, uf):
     def por_extremos(nome, deps):
         return {d["id"] for d in deps if _extremos(nome, ignorar) and any(d.get(c) and _extremos(nome, ignorar) == _extremos(d[c], ignorar) for c in CAMPOS_NOME)}
 
-    ligados, ambiguos = _casar_exato(nomes, deputados)
+    manuais = MANUAIS.get(uf, {})
+    fixos = {n: manuais[_chave_manual(uf, n)] for n in nomes if _chave_manual(uf, n) in manuais}
+    ligados, ambiguos = _casar_exato([n for n in nomes if n not in fixos], deputados)
+    alvos, _ = _casar_exato(set(fixos.values()), deputados)
+    ligados |= {n: (alvos[alvo][0], "manual", "alta") for n, alvo in fixos.items() if alvo in alvos}
     _por_palavras(nomes, deputados, ligados, ambiguos, ignorar, extra=[("extremos", "baixa", por_extremos)])
     return ligados, ambiguos
 
@@ -359,6 +364,21 @@ def _estrategia_rr(nomes, deputados, uf):
 def _estrategia_palavras(nomes, deputados, uf):
     ligados, ambiguos = _casar_exato(nomes, deputados)
     _por_palavras(nomes, deputados, ligados, ambiguos, TITULOS_UF[uf])
+    return ligados, ambiguos
+
+
+def _estrategia_mt(nomes, deputados, uf):
+    """Nome inteiro; o que sobra liga quando as palavras (sem títulos e "de", "da"...) são as mesmas, na ordem, do nome ou do nome civil
+    de um só deputado ("GAB DEP JULIO DE CAMPOS" da lotação contra "Júlio Campos"). Sem casar por subconjunto: serve também ao nome
+    de assessor nas diárias."""
+    ligados, ambiguos = _casar_exato(nomes, deputados)
+    ignorar = TITULOS_UF[uf]
+    for n in nomes:
+        alvo = comum.palavras(n, ignorar)
+        if n in ligados or not alvo:
+            continue
+        ids = {d["id"] for d in deputados for c in CAMPOS_NOME if d.get(c) and comum.palavras(d[c], ignorar) == alvo}
+        _decidir(n, ids, "palavras", "baixa", ligados, ambiguos)
     return ligados, ambiguos
 
 
@@ -445,7 +465,7 @@ def _estrategia_ce(nomes, deputados, uf):
     return _casar_exato(nomes, deputados, prep=_sem_ponto)
 
 
-ESTRATEGIAS = {"CE": _estrategia_ce, "MS": _estrategia_ms, "PA": _estrategia_pa, "PE": _estrategia_pe, "PR": _estrategia_pr,
+ESTRATEGIAS = {"CE": _estrategia_ce, "MS": _estrategia_ms, "MT": _estrategia_mt, "PA": _estrategia_pa, "PE": _estrategia_pe, "PR": _estrategia_pr,
                "RJ": _estrategia_palavras, "RR": _estrategia_rr, "SC": _estrategia_sc}
 
 

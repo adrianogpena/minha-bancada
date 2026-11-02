@@ -1,0 +1,102 @@
+{
+ "fonte": "https://transparencia.al.rr.leg.br/execucao-orcamentaria-e-financeira/licitacoes-a-partir-de-out25/",
+ "capturadoEm": "2026-11-02",
+ "amostra": {
+  "contratacao_direta": {
+   "arquivo": "CONTRATAÇÕES DIRETAS SETEMBRO 2026.xlsx",
+   "linhas": [
+    [
+     "DISPENSAS / INEXIGIBILIDADES"
+    ],
+    [
+     "SETEMBRO -  2026"
+    ],
+    [
+     "PROCEDIMENTO",
+     "PROCESSO",
+     "MODALIDADE/ FORMA/ PROCEDIMENTO",
+     "OBJETO",
+     "VENCEDOR (ES)",
+     "DATA",
+     "VALOR HOMOLOGADO",
+     "SITUAÇÃO"
+    ],
+    [
+     "001/2025",
+     "23/2024",
+     "DISPENSA ELETRÔNICA",
+     "Aquisição de materiais pedagógicos, esportivos e diversos para atender crianças e adolescentes com características do Transtorno do Espectro Autista – TEA, acolhidas por meio do Centro de Acolhimento ao Autista – TEAMARR e através do Programa Desenvolver.",
+     "-",
+     "45702",
+     "54128.88",
+     "ABERTA"
+    ],
+    [
+     "001/2026",
+     "271/2025",
+     "DISPENSA ELETRÔNICA",
+     "Contratação emergencial de empresa especializada para a prestação de serviços de limpeza e conservação, com fornecimento de dedicação exclusiva de mão de obra, materiais e insumos, abrangendo as atividades de higienização, limpeza e asseio da Sede e das demais unidades administrativas da Assembleia Legislativa do Estado de Roraima - ALE/RR.",
+     "NEW SERVICE SERVIÇOS ADMINISTRATIVOS E CONSTRUÇÃO LTDA",
+     "46036",
+     "4854031.68",
+     "HOMOLOGADA"
+    ]
+   ]
+  },
+  "licitacao": {
+   "arquivo": "LICITAÇÕES SETEMBRO 2026.xlsx",
+   "linhas": [
+    [
+     "LICITAÇÕES - 2026"
+    ],
+    [
+     "SETEMBRO"
+    ],
+    [
+     "Nº DO PROCESSO",
+     "Nº DO EDITAL",
+     "MODALIDADE/ FORMA/ PROCEDIMENTO",
+     "OBJETO",
+     "DESPESA MÁXIMA ACEITÁVEL / VALOR ESTIMADO",
+     "VENCEDOR (ES)",
+     "DATA",
+     "VALOR HOMOLOGADO",
+     "SITUAÇÃO"
+    ],
+    [
+     "18/2025",
+     "90014/2025",
+     "PREGÃO ELETRÔNICO",
+     "Contratação de serviço de conexão de dados de acesso dedicado e full, tanto para download quanto para upload, para interligação dos polos/ anexos da capital e do interior a Sede da ALERR, conectando-os à sua rede corporativa via fibra",
+     "5007156.84",
+     "LOTE ÚNICO: GRZ SERVIÇOS E TECNOLOGIAS LTDA CNPJ: 07.872.397/0001-50",
+     "46044",
+     "2770116",
+     "HOMOLOGADO"
+    ],
+    [
+     "22/2025",
+     "90003/2025",
+     "PREGÃO ELETRÔNICO",
+     "Contratação de empresa especializada em locação de equipamentos de impressão com os insumos e serviços (outsourcing de impressão) exceto papel, nos termos da tabela abaixo, conforme condições e exigências estabelecidas neste instrumento",
+     "7585200",
+     "DOALE ED.Nº 4724",
+     "46288",
+     "-",
+     "ABERTO"
+    ],
+    [
+     "38/2024",
+     "90007/2025",
+     "PREGÃO ELETRÔNICO",
+     "Contratação de empresa especializada na prestação de serviços de manutenção preventiva e corretiva, de aparelhos de ar-condicionado do tipo split e outros equipamentos de refrigeração, como bebedouros, freezers, frigobares e geladeiras, com fornecimento de materiais, peças novas, mão de obra e por demanda",
+     "4148179.46",
+     "DOALE ED. Nº 4690",
+     "46224",
+     "-",
+     "REVOGADO"
+    ]
+   ]
+  }
+ }
+}

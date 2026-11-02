@@ -1,0 +1,59 @@
+{
+ "fonte": "https://transparencia.al.rr.leg.br/execucao-orcamentaria-e-financeira/gestao-de-pessoal-a-partir-de-set25/",
+ "capturadoEm": "2026-11-02",
+ "amostra": {
+  "arquivo": "CONSULTA SERVIDORES.xlsx",
+  "linhas": [
+   [
+    "Matrícula",
+    "Nome",
+    "Desc. Vínculo",
+    "Dt. Admissão",
+    "Cargo",
+    "Função",
+    "Setor",
+    "Unidade"
+   ],
+   [
+    "36499",
+    "ABADI JONATHAN ALMEIDA DE OLIVEIRA",
+    "COMISSIONADOS",
+    "01/04/2026",
+    "FS-11 Secretario Parlamentar ",
+    "FS-11 Secretario Parlamentar",
+    "GAB. DEP. ANGELA PORTELLA",
+    "DEP. ANGELA PORTELLA"
+   ],
+   [
+    "37791",
+    "ABRAAO SOUSA NEVES",
+    "COMISSIONADOS",
+    "01/08/2026",
+    "FSR-11 Auxiliar de Gabinete Regional II",
+    "FSR-11 Auxiliar de Gabinete Regional II",
+    "GAB. DEP. ISAMAR JUNIOR",
+    "DEP. ISAMAR JUNIOR"
+   ],
+   [
+    "36388",
+    "ADA GABRIELY PEREIRA BARROS",
+    "COMISSIONADOS",
+    "01/04/2026",
+    "FS-13 Auxiliar de Gabinete II",
+    "FS-13 Auxiliar de Gabinete II",
+    "GAB. DEP. RARISON BARBOSA",
+    "DEP. RARISON BARBOSA"
+   ],
+   [
+    "38692",
+    "ABDIAS SIMIAO DE SOUZA FILHO",
+    "COMISSIONADOS",
+    "01/09/2026",
+    "SL-XIII Assistente Parlamentar",
+    "SL-XIII Assistente Parlamentar",
+    "SUPERINTENDENCIA LEGISLATIVA",
+    "SUPERINTENDENCIA LEGISLATIVA"
+   ]
+  ]
+ }
+}

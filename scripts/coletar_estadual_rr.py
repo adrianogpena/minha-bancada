@@ -6,11 +6,14 @@ Fontes abertas e lidas aqui:
   - verba indenizatória (ressarcimento de despesas parlamentares): um ODT por deputado e mês no portal da transparência, a partir de
     setembro de 2025 (resolução 036/2021), lido como tabela: uma linha por item de despesa com valor;
   - diárias: planilha mensal (XLSX/ODS) a partir de outubro de 2025; só as linhas de cargo "DEPUTADO(A)".
-  Os dois últimos ficam em listas de arquivos do plugin WP Display Files (admin-ajax `wpdf_load_folder_data`).
+  Os dois últimos ficam em listas de arquivos do plugin WP Display Files (admin-ajax `wpdf_load_folder_data`), como as três seguintes;
+  - gabinete: "CONSULTA SERVIDORES.xlsx" mensal (gestão de pessoal), só o setor "GAB. DEP. <nome>"; sem remuneração;
+  - contratos do órgão: pastas por processo com os PDFs do contrato (só os links; fornecedor e valor estão só no PDF);
+  - licitações e contratações diretas (dispensa, inexigibilidade): XLSX mensal, acumulado no ano.
 
 Bloqueado: `https://sapl.al.rr.leg.br` (projetos, votações, presença) responde 403 Forbidden.
 Só PDF (não coletado): verbas até agosto/2025, diárias até setembro/2025 (página própria), resumos da folha.
-Sem dado por deputado: gestão de pessoal (planilha de servidores sem remuneração). Emendas parlamentares: link vazio no portal.
+Sem dado: remuneração (a planilha de pessoal não traz valores). Emendas parlamentares: link vazio no portal.
 """
 
 import re
@@ -23,6 +26,7 @@ from defusedxml import ElementTree
 
 import estaduais_comum as comum
 import identidades
+import ids
 
 UF = "RR"
 SITE = "https://al.rr.leg.br"
@@ -30,7 +34,12 @@ LISTA_DEPUTADOS = f"{SITE}/deputados-estaduais-2023/"
 TRANSP = "https://transparencia.al.rr.leg.br"
 VERBAS_PAGINA = f"{TRANSP}/execucao-orcamentaria-e-financeira/verbas-indenizatorias-a-partir-de-set25/"
 DIARIAS_PAGINA = f"{TRANSP}/execucao-orcamentaria-e-financeira/diarias-e-passagens-a-partir-de-out25/"
+GESTAO_PAGINA = f"{TRANSP}/execucao-orcamentaria-e-financeira/gestao-de-pessoal-a-partir-de-set25/"
+CONTRATOS_PAGINA = f"{TRANSP}/execucao-orcamentaria-e-financeira/contratos-a-partir-de-out25/"
+LICITACOES_PAGINA = f"{TRANSP}/execucao-orcamentaria-e-financeira/licitacoes-a-partir-de-out25/"
 AJAX = f"{TRANSP}/wp-admin/admin-ajax.php"
+FONTE_ID = "alerr_rr"
+PEQUENAS = {"de", "da", "do", "das", "dos", "e"}
 MESES_REVISTOS = 2
 NS_ODF = {"t": "urn:oasis:names:tc:opendocument:xmlns:table:1.0"}
 
@@ -286,6 +295,226 @@ def itens_diarias(registros: list[dict], deputados: list[dict], fonte: str) -> l
     return itens
 
 
+# ---------------------------------------------------------------- gabinete
+
+def titulo(nome: str) -> str:
+    palavras = (nome or "").lower().split()
+    return " ".join(p if (i and p in PEQUENAS) else p.capitalize() for i, p in enumerate(palavras))
+
+
+def simbolo_do_cargo(cargo: str | None) -> tuple[str | None, str | None]:
+    """"FS-11 Secretario Parlamentar " -> ("FS-11", "Secretario Parlamentar"); cargo sem símbolo ("MOTORISTA") -> (None, cargo)."""
+    c = comum.compactar(cargo)
+    m = re.match(r"([A-Z]{1,4}-[A-Z0-9]+)\s+(.*)$", c or "")
+    return (m.group(1), m.group(2)) if m else (None, c)
+
+
+def servidores_do_gabinete(linhas: list[list[str]], deputados: list[dict]) -> list[dict]:
+    """Servidores lotados em "GAB. DEP. <nome>" da planilha de pessoal (colunas pelo cabeçalho). O gabinete só vale se o nome liga a um
+    único deputado (`ligar`); presidência, lideranças e unidades ficam de fora. A planilha só lista quem está na folha do mês, sem
+    remuneração. O id sai da matrícula que a fonte publica."""
+    cab = next((i for i, lin in enumerate(linhas) if {"matricula", "nome", "setor"} <= {comum.sem_acento(c) for c in lin}), None)
+    if cab is None:
+        return []
+    col = {comum.sem_acento(c): i for i, c in enumerate(linhas[cab])}
+
+    def campo(lin, nome):
+        i = next((i for c, i in col.items() if c.startswith(nome)), None)
+        return lin[i].strip() if i is not None and i < len(lin) else ""
+
+    registros = [lin for lin in linhas[cab + 1:] if re.match(r"GAB\. DEP\. \S", campo(lin, "setor"))]
+    nomes = {campo(lin, "setor"): campo(lin, "setor")[len("GAB. DEP. "):].strip() for lin in registros}
+    ligados = ligar(set(nomes.values()), deputados)
+    itens = {}
+    for lin in registros:
+        id_dep, matricula, nome = ligados.get(nomes[campo(lin, "setor")]), campo(lin, "matricula"), campo(lin, "nome")
+        if not id_dep or not matricula or not nome:
+            continue
+        simbolo, cargo = simbolo_do_cargo(campo(lin, "cargo"))
+        iid = ids.gerar_id("srv", FONTE_ID, matricula)
+        itens[iid] = {"id": iid, "idDeputado": id_dep, "matricula": matricula, "nome": titulo(nome), "cargo": cargo, "simbolo": simbolo,
+                      "vinculo": comum.compactar(campo(lin, "desc")), "admissao": comum.data_br_iso(campo(lin, "dt"))}
+    return sorted(itens.values(), key=lambda i: (i["idDeputado"], i["simbolo"] or "", i["nome"], i["matricula"]))
+
+
+def coletar_gabinete(s, deputados: list[dict], pasta, hoje: date) -> None:
+    lista = Lista(s, GESTAO_PAGINA)
+    for ano, mes, caminho in reversed(_meses(lista)):
+        planilha = next((a for a in lista.pasta(caminho)[1] if a["tipo"] == "xlsx" and "servidores" in comum.sem_acento(a["nome"])), None)
+        if planilha:
+            break
+    else:
+        raise RuntimeError("gestão de pessoal sem planilha CONSULTA SERVIDORES")
+    itens = servidores_do_gabinete(linhas_xlsx(_baixar(s)(planilha["url"])), deputados)
+    if not itens:
+        raise RuntimeError("nenhum servidor ligado a gabinete de deputado; mantém o arquivo anterior")
+    comum.salvar(pasta / "gabinete.json", {"coletadoEm": hoje.isoformat(), "referencia": f"{ano}-{mes:02d}", "fonte": GESTAO_PAGINA, "itens": itens})
+    print(f"RR: gabinetes {len(itens)} servidores de {len({i['idDeputado'] for i in itens})} deputados ({mes:02d}/{ano})")
+
+
+# ---------------------------------------------------------------- contratos do órgão (pastas por processo, só links)
+
+NUMERO_CONTRATO = re.compile(r"CONTRATO[\s\-]+0*(\d+)-(\d{4})", re.I)
+
+
+def rotulo_do_arquivo(nome: str) -> str:
+    base = "Documento"
+    for padrao, rotulo in ((r"ADITIVO", "Termo aditivo"), (r"APOSTIL", "Termo de apostilamento"), (r"RERRATIFIC", "Termo de rerratificação"),
+                           (r"CONTRATO", "Contrato")):
+        if re.search(padrao, nome, re.I):
+            base = rotulo
+            break
+    return f"Publicação: {base.lower()}" if re.search(r"PUBLIC", nome, re.I) else base
+
+
+def contratos_da_pasta(nome_pasta: str, arquivos: list[dict], fonte: str) -> dict:
+    """{id: item} dos contratos de uma pasta de processo, no formato de `comum.item_orgao`. Um contrato por número "NN-AAAA" dos
+    arquivos que começam com CONTRATO (sem publicação); os demais PDFs vão para o contrato do mesmo número ou, sendo um só na pasta,
+    para ele. Pasta sem contrato (só empenho) não gera item. Fornecedor, valor e vigência ficam só no PDF: não são lidos."""
+    pdfs = [a for a in arquivos if a["tipo"] == "pdf"]
+    contratos = {}
+    for a in pdfs:
+        m = NUMERO_CONTRATO.match(a["nome"])
+        if m and not re.search(r"PUBLIC", a["nome"], re.I):
+            contratos.setdefault((int(m.group(2)), int(m.group(1))), [])
+    if not contratos:
+        return {}
+    for a in sorted(pdfs, key=lambda a: (bool(re.search(r"PUBLIC", a["nome"], re.I)), a["nome"])):
+        m = NUMERO_CONTRATO.search(a["nome"])
+        chave = (int(m.group(2)), int(m.group(1))) if m else None
+        if chave not in contratos:
+            if len(contratos) != 1:
+                continue
+            chave = next(iter(contratos))
+        contratos[chave].append({"url": a["url"], "nome": rotulo_do_arquivo(a["nome"]), "data": None})
+    processo = re.search(r"(\d+)-(\d{4})\s*$", nome_pasta.strip())
+    itens = {}
+    for (ano, n), arquivos_c in sorted(contratos.items()):
+        numero = f"{n:02d}/{ano}"
+        iid, item = comum.item_orgao(FONTE_ID, "contrato", numero, fornecedor_nome=None, numero=numero, arquivos=arquivos_c, fonte=fonte,
+                                     processo=f"{int(processo.group(1))}/{processo.group(2)}" if processo else None)
+        itens[iid] = item
+    return itens
+
+
+def coletar_contratos(s, pasta, hoje: date) -> None:
+    lista = Lista(s, CONTRATOS_PAGINA)
+    for nome_ano, caminho_ano in lista.raiz[0]:
+        ano = ano_da_pasta(nome_ano)
+        if not ano or comum.ano_encerrado(ano, hoje, pasta / f"orgao_{ano}.json"):
+            continue
+        comum.tentar(UF, f"contratos {ano}", partial(contratos_do_ano, lista, caminho_ano, ano, pasta / f"orgao_{ano}.json", hoje))
+
+
+def contratos_do_ano(lista: Lista, caminho_ano: str, ano: int, arq, hoje: date) -> None:
+    itens = {}
+    for nome, caminho in lista.pasta(caminho_ano)[0]:
+        itens |= contratos_da_pasta(nome, lista.pasta(caminho)[1], CONTRATOS_PAGINA)
+    if not itens and comum.ler(arq, {}).get("itens"):
+        raise RuntimeError(f"{ano} sem contrato na lista; mantém o arquivo anterior")
+    comum.salvar(arq, {"coletadoEm": hoje.isoformat(), "fonte": CONTRATOS_PAGINA, "itens": itens})
+    print(f"RR: {ano} contratos {len(itens)} do órgão (só links dos PDFs)")
+
+
+# ---------------------------------------------------------------- licitações e contratações diretas (XLSX mensal acumulado no ano)
+
+CNPJ_NO_TEXTO = re.compile(r"\d{2}\.?\d{3}\.?\d{3}/\d{4}-?\d{2}")
+TIPOS_LICITACAO = ("licitacao", "contratacao_direta")
+
+
+def tipo_da_planilha(nome: str) -> str | None:
+    n = nome.upper()
+    if not n.endswith(".XLSX"):
+        return None
+    return "contratacao_direta" if "DIRETAS" in n else "licitacao" if "LICITA" in n else None
+
+
+def cnpj_do_texto(texto: str | None) -> str | None:
+    """CNPJ válido quando o texto do vencedor traz exatamente um ("LOTE ÚNICO: GRZ LTDA CNPJ: 07.872.397/0001-50")."""
+    import fornecedores
+    achados = {re.sub(r"\D", "", c) for c in CNPJ_NO_TEXTO.findall(texto or "")}
+    doc = fornecedores.documento(next(iter(achados))) if len(achados) == 1 else None
+    return doc[1] if doc and doc[0] == "cnpj" else None
+
+
+def itens_licitacoes(linhas: list[list[str]], tipo: str, fonte: str, mes: int) -> dict:
+    """{id: item} de uma planilha de licitações ou de contratações diretas (dispensa e inexigibilidade). As colunas vêm do cabeçalho
+    (mudam de ordem entre meses); a planilha de cada mês traz o ano inteiro, então a mais nova vale. Id do processo (e do número do
+    procedimento nas diretas, em que um processo tem várias dispensas); se ainda repetir, acrescenta o edital."""
+    cab = next((i for i, lin in enumerate(linhas) if any(comum.sem_acento(c) == "objeto" for c in lin)), None)
+    if cab is None:
+        return {}
+    col = [comum.sem_acento(c) for c in linhas[cab]]
+
+    def achar(teste):
+        return next((i for i, c in enumerate(col) if teste(c)), None)
+
+    pos = {"procedimento": achar(lambda c: c.startswith("procedimento")), "processo": achar(lambda c: "processo" in c),
+           "edital": achar(lambda c: "edital" in c), "modalidade": achar(lambda c: c.startswith("modalidade")),
+           "objeto": achar(lambda c: c == "objeto"), "estimado": achar(lambda c: c.startswith("despesa")),
+           "vencedor": achar(lambda c: c.startswith("vencedor")), "data": achar(lambda c: c == "data"),
+           "valor": achar(lambda c: c.startswith("valor homologado")), "situacao": achar(lambda c: c.startswith("situa"))}
+    itens, vistos = {}, set()
+    for lin in linhas[cab + 1:]:
+        def campo(nome, lin=lin):
+            i = pos.get(nome)
+            return lin[i].strip() if i is not None and i < len(lin) else ""
+
+        def valor(nome):
+            return comum.valor_br(campo(nome)) if campo(nome) not in ("", "-") else None
+        if not campo("objeto") or not campo("processo"):
+            continue
+        base = f"{campo('procedimento')}|{campo('processo')}" if tipo == "contratacao_direta" else campo("processo")
+        idf = base if base not in vistos else f"{base}|{campo('edital')}"
+        vistos.add(base)
+        vencedor = comum.compactar(campo("vencedor"))
+        diario = bool(vencedor and re.match(r"DOALE", vencedor, re.I))
+        iid = ids.gerar_id("lic", f"{FONTE_ID}_{tipo}", idf)
+        itens[iid] = {"tipo": tipo, "idFonte": idf, "processo": campo("processo"), "procedimento": campo("procedimento") or None,
+                      "edital": campo("edital") or None, "modalidade": comum.compactar(campo("modalidade")), "objeto": comum.compactar(campo("objeto")),
+                      "valorEstimado": valor("estimado"), "vencedor": None if diario or vencedor in (None, "-") else vencedor,
+                      "cnpj": cnpj_do_texto(vencedor), "referenciaDiario": vencedor if diario else None,
+                      "data": periodo_para_datas(campo("data"))[1], "valorHomologado": valor("valor"),
+                      "situacao": comum.compactar(campo("situacao")), "mes": mes, "fonte": fonte}
+    return itens
+
+
+def coletar_licitacoes(s, pasta, hoje: date) -> None:
+    lista = Lista(s, LICITACOES_PAGINA)
+    baixar = _baixar(s)
+    meses_por_ano: dict[int, list] = {}
+    for ano, mes, caminho in _meses(lista):
+        meses_por_ano.setdefault(ano, []).append((mes, caminho))
+    for ano, meses in sorted(meses_por_ano.items()):
+        arq = pasta / f"licitacoes_{ano}.json"
+        if comum.ano_encerrado(ano, hoje, arq):
+            continue
+        comum.tentar(UF, f"licitações {ano}", partial(licitacoes_do_ano, lista, baixar, ano, sorted(meses, reverse=True), arq, hoje))
+
+
+def licitacoes_do_ano(lista: Lista, baixar, ano: int, meses: list, arq, hoje: date) -> None:
+    """Lê o mês mais novo que tem planilha de cada tipo: a planilha traz o ano acumulado. A fonte de cada item é o PDF do mesmo mês."""
+    itens, referencia = {}, {}
+    for mes, caminho in meses:
+        arquivos = lista.pasta(caminho)[1]
+        for a in arquivos:
+            tipo = tipo_da_planilha(a["nome"])
+            if not tipo or tipo in referencia:
+                continue
+            pdf = next((p for p in arquivos if p["tipo"] == "pdf" and tipo_da_planilha(re.sub(r"\.pdf$", ".xlsx", p["nome"], flags=re.I)) == tipo), None)
+            itens |= itens_licitacoes(linhas_xlsx(baixar(a["url"])), tipo, (pdf or a)["url"], mes)
+            referencia[tipo] = f"{ano}-{mes:02d}"
+        if len(referencia) == len(TIPOS_LICITACAO):
+            break
+    if not itens:
+        if comum.ler(arq, {}).get("itens"):
+            raise RuntimeError(f"{ano} sem planilha de licitações na lista; mantém o arquivo anterior")
+        return
+    comum.salvar(arq, {"coletadoEm": hoje.isoformat(), "referencia": referencia, "fonte": LICITACOES_PAGINA, "itens": itens})
+    print(f"RR: {ano} licitações {sum(i['tipo'] == 'licitacao' for i in itens.values())} e contratações diretas "
+          f"{sum(i['tipo'] == 'contratacao_direta' for i in itens.values())} do órgão")
+
+
 # ---------------------------------------------------------------- coleta
 
 def _baixar(s):
@@ -367,9 +596,12 @@ def coletar() -> None:
     print(f"RR: {len(deputados)} deputados")
     coletar_verbas(s, deputados, pasta, hoje)
     coletar_diarias(s, deputados, pasta, hoje)
+    comum.rodar_etapas(UF, [("gabinete", lambda: coletar_gabinete(s, deputados, pasta, hoje)),
+                            ("contratos do órgão", lambda: coletar_contratos(s, pasta, hoje)),
+                            ("licitações e contratações diretas", lambda: coletar_licitacoes(s, pasta, hoje))])
 
 
-# ---------------------------------------------------------------- contratos
+# ---------------------------------------------------------------- contratos (amostras reais das fontes)
 
 def _get(url: str):
     r = comum.sessao().get(url, timeout=30)
@@ -474,11 +706,98 @@ def _conferir_diarias(registro):
     return falhas, []
 
 
+def _contrato_gabinete(ctx):
+    lista = Lista(comum.sessao(), GESTAO_PAGINA)
+    for _, _, caminho in reversed(_meses(lista)):
+        planilha = next((a for a in lista.pasta(caminho)[1] if a["tipo"] == "xlsx" and "servidores" in comum.sem_acento(a["nome"])), None)
+        if planilha:
+            linhas = linhas_xlsx(_get(planilha["url"]).content)
+            cab = next(i for i, lin in enumerate(linhas) if "Nome" in lin)
+            gabinetes = {}
+            for lin in linhas[cab + 1:]:
+                if len(lin) > 6 and lin[6].startswith("GAB. DEP.") and lin[6] not in gabinetes and "-" in lin[5][:6]:
+                    gabinetes[lin[6]] = lin
+            outro = next(lin for lin in linhas[cab + 1:] if len(lin) > 6 and not lin[6].startswith("GAB."))
+            return {"arquivo": planilha["nome"], "linhas": [*linhas[: cab + 1], *list(gabinetes.values())[:3], outro]}
+    raise RuntimeError("gestão de pessoal sem planilha CONSULTA SERVIDORES")
+
+
+def _conferir_gabinete(registro):
+    falhas = []
+    cab = registro["linhas"][0] if registro["linhas"] and "Setor" in registro["linhas"][0] else next((lin for lin in registro["linhas"] if "Setor" in lin), None)
+    if cab is None:
+        return ["planilha de pessoal sem o cabeçalho (Matrícula, Nome, Setor...)"], []
+    deputados = [{"id": "x", "nome": lin[6][len("GAB. DEP. "):], "nomeCivil": lin[6][len("GAB. DEP. "):]} for lin in registro["linhas"] if len(lin) > 6 and lin[6].startswith("GAB. DEP.")]
+    itens = servidores_do_gabinete(registro["linhas"], deputados)
+    if not itens:
+        falhas.append("planilha de pessoal sem servidor em setor 'GAB. DEP. <nome>'")
+    for i in itens:
+        falhas += comum.campos_vazios(i, ("matricula", "nome", "cargo", "admissao"), "servidor de gabinete")
+    return falhas, [] if any(i["simbolo"] for i in itens) else ["cargo de gabinete sem símbolo (FS-11...)"]
+
+
+def _contrato_contratos(ctx):
+    lista = Lista(comum.sessao(), CONTRATOS_PAGINA)
+    for nome_ano, caminho_ano in reversed(lista.raiz[0]):
+        for nome, caminho in reversed(lista.pasta(caminho_ano)[0]):
+            arquivos = lista.pasta(caminho)[1]
+            if contratos_da_pasta(nome, arquivos, CONTRATOS_PAGINA) and len(arquivos) > 2:
+                return {"pasta": nome, "arquivos": arquivos}
+    raise RuntimeError("nenhuma pasta de processo com contrato")
+
+
+def _conferir_contratos(registro):
+    itens = contratos_da_pasta(registro["pasta"], registro["arquivos"], CONTRATOS_PAGINA)
+    if not itens:
+        return ["pasta de processo sem arquivo 'CONTRATO NN-AAAA'"], []
+    falhas = []
+    for i in itens.values():
+        falhas += comum.campos_vazios(i, ("numero", "processo", "arquivos"), "contrato")
+        if not any(a["nome"] == "Contrato" for a in i["arquivos"]):
+            falhas.append("contrato sem o PDF do contrato")
+    return falhas, [] if any(a["nome"].startswith("Publicação") for i in itens.values() for a in i["arquivos"]) else ["pasta sem PDF de publicação"]
+
+
+def _contrato_licitacoes(ctx):
+    lista = Lista(comum.sessao(), LICITACOES_PAGINA)
+    saida = {}
+    for _, _, caminho in reversed(_meses(lista)):
+        for a in lista.pasta(caminho)[1]:
+            tipo = tipo_da_planilha(a["nome"])
+            if tipo and tipo not in saida:
+                linhas = linhas_xlsx(_get(a["url"]).content)
+                cab = next(i for i, lin in enumerate(linhas) if any(comum.sem_acento(c) == "objeto" for c in lin))
+                comcnpj = [lin for lin in linhas[cab + 1:] if CNPJ_NO_TEXTO.search(" ".join(lin))]
+                resto = [lin for lin in linhas[cab + 1:] if lin not in comcnpj and len(lin) > 4 and lin[0].strip()]
+                saida[tipo] = {"arquivo": a["nome"], "linhas": [*linhas[: cab + 1], *comcnpj[:1], *resto[:2]]}
+        if len(saida) == len(TIPOS_LICITACAO):
+            return saida
+    raise RuntimeError("licitações sem planilha de licitação e de contratação direta")
+
+
+def _conferir_licitacoes(registro):
+    falhas = []
+    for tipo in TIPOS_LICITACAO:
+        itens = itens_licitacoes(registro[tipo]["linhas"], tipo, LICITACOES_PAGINA, 1)
+        if not itens:
+            falhas.append(f"planilha de {tipo} sem linha com objeto e processo (cabeçalho mudou?)")
+        for i in itens.values():
+            falhas += comum.campos_vazios(i, ("processo", "modalidade", "objeto", "situacao"), tipo)
+            if tipo == "contratacao_direta" and not i["procedimento"]:
+                falhas.append("contratação direta sem número do procedimento")
+        if itens and not any(i["data"] for i in itens.values()):
+            falhas.append(f"{tipo}: nenhuma data legível")
+    return falhas, []
+
+
 CONTRATOS = [
     {"nome": "estadual_rr_deputados", "fonte": LISTA_DEPUTADOS, "buscar": _contrato_deputados, "html": _conferir_deputados},
     {"nome": "estadual_rr_listagem", "fonte": VERBAS_PAGINA, "buscar": _contrato_listagem, "html": _conferir_listagem},
     {"nome": "estadual_rr_verba", "fonte": VERBAS_PAGINA, "buscar": _contrato_verba, "html": _conferir_verba},
     {"nome": "estadual_rr_diarias", "fonte": DIARIAS_PAGINA, "buscar": _contrato_diarias, "html": _conferir_diarias},
+    {"nome": "estadual_rr_gabinete", "fonte": GESTAO_PAGINA, "buscar": _contrato_gabinete, "html": _conferir_gabinete},
+    {"nome": "estadual_rr_contratos", "fonte": CONTRATOS_PAGINA, "buscar": _contrato_contratos, "html": _conferir_contratos},
+    {"nome": "estadual_rr_licitacoes", "fonte": LICITACOES_PAGINA, "buscar": _contrato_licitacoes, "html": _conferir_licitacoes},
 ]
 
 

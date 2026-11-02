@@ -206,6 +206,8 @@ def gerar_orgao(uf: str, pasta: Path) -> None:
     grupos = {}
     for iid, i in itens.items():
         chave = i["cnpj"] or i["nomeChave"]
+        if not chave:   # só os links do PDF (sem fornecedor): fica na lista, fora do ranking
+            continue
         g = grupos.setdefault(chave, {"nome": i["fornecedor"], "cnpj": i["cnpj"], "contratos": 0, "valorContratado": 0.0, "atas": 0, "valorRegistrado": 0.0})
         if i["tipo"] == "ata_registro":
             g["atas"] += 1

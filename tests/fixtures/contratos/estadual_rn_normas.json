@@ -1,0 +1,212 @@
+{
+ "fonte": "https://api-transparencialegislativa.al.rn.leg.br/elegis-api-transp-legislativa/processo/51724/tramitacao",
+ "capturadoEm": "2026-11-02",
+ "amostra": {
+  "lista": [
+   {
+    "id": 64167,
+    "ementa": "Altera a Lei Estadual nº 11.756, de 15 de maio de 2024, para ampliar a transparência das contrapartidas vinculadas às renúncias fiscais estaduais.",
+    "propositura": {
+     "tipo": {
+      "id": 1,
+      "sigla": "PL",
+      "descricao": "PROJETO DE LEI"
+     },
+     "numero": 438,
+     "ano": 2026
+    },
+    "iniciativa": {
+     "id": 10,
+     "tipo": "PARLAMENTAR",
+     "descricao": "DEP. GUSTAVO CARVALHO",
+     "parlamentar": {
+      "id": 16,
+      "nomeParlamentar": "DEPUTADO GUSTAVO CARVALHO",
+      "partido": {
+       "id": 17,
+       "nome": "PL",
+       "nomeOriginal": "Partido Liberal"
+      }
+     }
+    },
+    "dataEntrada": "2026-10-20T11:48:03.083Z",
+    "dataArquivamento": null
+   },
+   {
+    "id": 64158,
+    "ementa": "Projeto de Lei Reconhece o profissional de Educação Física como profissional de saúde no âmbito do Estado do Rio Grande do Norte",
+    "propositura": {
+     "tipo": {
+      "id": 1,
+      "sigla": "PL",
+      "descricao": "PROJETO DE LEI"
+     },
+     "numero": 430,
+     "ano": 2026
+    },
+    "iniciativa": {
+     "id": 40,
+     "tipo": "PARLAMENTAR",
+     "descricao": "DEP. CORONEL AZEVEDO",
+     "parlamentar": {
+      "id": 7,
+      "nomeParlamentar": "DEPUTADO CORONEL AZEVEDO",
+      "partido": {
+       "id": 17,
+       "nome": "PL",
+       "nomeOriginal": "Partido Liberal"
+      }
+     }
+    },
+    "dataEntrada": "2026-10-20T10:00:33.690Z",
+    "dataArquivamento": null
+   },
+   {
+    "id": 64152,
+    "ementa": "Reconhece como de Utilidade Pública Estadual a Fundação Pública Vereador Aldenor Nogueira - FPVAN.",
+    "propositura": {
+     "tipo": {
+      "id": 1,
+      "sigla": "PL",
+      "descricao": "PROJETO DE LEI"
+     },
+     "numero": 431,
+     "ano": 2026
+    },
+    "iniciativa": {
+     "id": 1318,
+     "tipo": "PARLAMENTAR",
+     "descricao": "DEP. NEILTON DIOGENES",
+     "parlamentar": {
+      "id": 62,
+      "nomeParlamentar": "DEPUTADO NEILTON DIÓGENES",
+      "partido": {
+       "id": 23,
+       "nome": "PP",
+       "nomeOriginal": "Partido Progressista"
+      }
+     }
+    },
+    "dataEntrada": "2026-10-20T09:30:40.323Z",
+    "dataArquivamento": null
+   },
+   {
+    "id": 64150,
+    "ementa": "Altera a Lei Estadual nº 9.419, de 29 de novembro de 2010, que dispõe sobre o Fundo de Reaparelhamento do Ministério Público (FRMP), e dá outras providências.",
+    "propositura": {
+     "tipo": {
+      "id": 1,
+      "sigla": "PL",
+      "descricao": "PROJETO DE LEI"
+     },
+     "numero": 436,
+     "ano": 2026
+    },
+    "iniciativa": {
+     "id": 51,
+     "tipo": "ORGAO",
+     "descricao": "MINISTÉRIO PÚBLICO",
+     "parlamentar": null
+    },
+    "dataEntrada": "2026-10-20T00:00:00.000Z",
+    "dataArquivamento": null
+   },
+   {
+    "id": 64148,
+    "ementa": "Reconhece como de Utilidade Pública Estadual ASSOCIAÇÃO DOS COMERCIANTES UNIDOS DA ORLA DE PONTA NEGRA ASCUOPON",
+    "propositura": {
+     "tipo": {
+      "id": 1,
+      "sigla": "PL",
+      "descricao": "PROJETO DE LEI"
+     },
+     "numero": 432,
+     "ano": 2026
+    },
+    "iniciativa": {
+     "id": 47,
+     "tipo": "PARLAMENTAR",
+     "descricao": "DEP. UBALDO FERNANDES",
+     "parlamentar": {
+      "id": 27,
+      "nomeParlamentar": "DEPUTADO UBALDO FERNANDES",
+      "partido": {
+       "id": 20,
+       "nome": "PV",
+       "nomeOriginal": "Partido Verde"
+      }
+     }
+    },
+    "dataEntrada": "2026-10-19T18:35:35.980Z",
+    "dataArquivamento": null
+   }
+  ],
+  "processo": {
+   "id": 51724,
+   "ementa": "Reconhece a Festa da Santa Maria Mãe do Conjunto Santa Catarina, em Natal, como Patrimônio Cultural e Imaterial do Estado do Rio Grande do Norte.",
+   "propositura": {
+    "tipo": {
+     "id": 1,
+     "sigla": "PL",
+     "descricao": "PROJETO DE LEI"
+    },
+    "numero": 508,
+    "ano": 2023
+   },
+   "iniciativa": {
+    "id": 1314,
+    "tipo": "PARLAMENTAR",
+    "descricao": "DEP. DIVANEIDE BASILIO",
+    "parlamentar": {
+     "id": 56,
+     "nomeParlamentar": "DEPUTADA DIVANEIDE BASÍLIO",
+     "partido": {
+      "id": 1,
+      "nome": "PT",
+      "nomeOriginal": "Partido dos Trabalhadores"
+     }
+    }
+   },
+   "dataEntrada": "2023-12-11T12:00:56.660Z",
+   "dataArquivamento": null
+  },
+  "tramitacao": [
+   {
+    "id": 443195,
+    "observacao": "Processo faltando a publicação do arquivo com a Lei Sancionada",
+    "linkDOE": null,
+    "origem": {
+     "setor": {
+      "id": 97,
+      "nome": "CHEFIA DE GABINETE DA PRESIDÊNCIA",
+      "sigla": "CGP",
+      "comissao": null
+     },
+     "data": "2025-08-06T09:02:38.000Z"
+    },
+    "situacaoProcesso": {
+     "id": 27,
+     "nome": "Lei Sancionada"
+    }
+   },
+   {
+    "id": 324359,
+    "observacao": null,
+    "linkDOE": null,
+    "origem": {
+     "setor": {
+      "id": 1263,
+      "nome": "GABINETE DEP. DIVANEIDE BASILIO",
+      "sigla": "GABDIV",
+      "comissao": null
+     },
+     "data": "2023-12-11T12:00:57.870Z"
+    },
+    "situacaoProcesso": {
+     "id": 38,
+     "nome": "Encaminhado para leitura no expediente"
+    }
+   }
+  ]
+ }
+}

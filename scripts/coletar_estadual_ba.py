@@ -8,8 +8,14 @@ Fontes lidas aqui:
   - proposições (autoria, data, ementa, situação): lista por tipo em /atividade-legislativa-nova/proposicoes e a página de cada uma;
   - emendas parlamentares estaduais: ZIP do CKAN https://dados.ba.gov.br/dataset/emendas-parlamentares (VW_PAINEL_EMENDAS_PARLAMENTARES_DESPESAS.csv).
 
-Não coletado: votações e presença (só no NoPaper, atrás de Cloudflare: 403 até no Firefox; não contornado), remuneração dos
-deputados (só PDF), diárias (o portal de RH só lista servidores), fornecedor e CNPJ da verba (só na página de cada lançamento).
+  - presença em plenário: /atividade-legislativa/sessoes-plenarias (lista de sessões) e /atividade-legislativa/frequencia-sessao/<id>
+    (deputado, Sim/Não), de 2021 até 18/06/2025; depois a ALBA migrou para o NoPaper (403), então não há presença mais nova;
+  - contratos do órgão: /transparencia/contratos-convenios (HTML, sem CNPJ: fornecedor só pelo nome);
+  - regras da verba: /transparencia/verbas-regula (PDFs das normas, só como link).
+
+Não coletado: votações (só no NoPaper, atrás de Cloudflare: 403 até no Firefox; não contornado), remuneração dos
+deputados (só PDF), diárias (o portal de RH só lista servidores), gabinete e normas com autoria (não publicados), fornecedor e CNPJ da
+verba (só na página de cada lançamento) e atas de registro de preços (a licitação em licita.alba.ba.gov.br não traz ata).
 """
 
 import csv
@@ -23,6 +29,7 @@ from concurrent.futures import ThreadPoolExecutor
 from datetime import date, timedelta
 from functools import partial
 from pathlib import Path
+from urllib.parse import quote
 
 import certifi
 import requests
@@ -45,7 +52,13 @@ EMENDAS_API = f"{CKAN}/api/3/action/package_show?id=emendas-parlamentares"
 EMENDAS_CSV = "VW_PAINEL_EMENDAS_PARLAMENTARES_DESPESAS.csv"
 PAGAMENTOS_CSV = "VW_PAINEL_EMENDAS_PARLAMENTARES_PAGAMENTOS.csv"
 ANO_PAGAMENTOS = 2026
-LEGISLATURA = "20ª (2023-2027)"
+SESSOES = f"{SITE}/atividade-legislativa/sessoes-plenarias"
+FREQUENCIA = f"{SITE}/atividade-legislativa/frequencia-sessao"
+CONTRATOS_PAGINA = f"{SITE}/transparencia/contratos-convenios"
+REGRAS_PAGINA = f"{SITE}/transparencia/verbas-regula"
+ANO_PRESENCA = 2021
+ANO_CONTRATOS = 2023
+LEGISLATURA ="20ª (2023-2027)"
 ANO_VERBA = 2023
 ANO_PROPOSICOES = 2023
 TIMEOUT = 30
@@ -405,13 +418,184 @@ def coletar_emendas(s, deputados: list[dict]) -> None:
         comum.avisar(f"BA: emendas sem deputado atual ({len(sem_par)}): {sorted(sem_par)[:10]}")
 
 
+# ---------------------------------------------------------------- presença em plenário
+
+def sessoes_da_lista(html: str) -> list[dict]:
+    """Linhas da lista de sessões (número, tipo, data e o link da frequência, depois dos vídeos por orador): id, número, tipo e data ISO."""
+    padrao = (r'<td width="100"><span>(.*?)</span></td>\s*<td><span>(.*?)</span></td>\s*<td><span>(\d{2}/\d{2}/\d{4})</span></td>'
+              r'(?:(?!<td width="100"><span>).)*?/atividade-legislativa/frequencia-sessao/(\d+)')
+    return [{"id": m.group(4), "numero": comum.limpar(m.group(1)), "tipo": comum.limpar(m.group(2)), "data": iso_data(m.group(3))}
+            for m in re.finditer(padrao, html, re.S) if iso_data(m.group(3))]
+
+
+def frequencia_da_sessao(html: str) -> dict | None:
+    """{"data": ISO, "titulo": "52ª Sessão Ordinária", "presencas": {nome: True/False}} da página de frequência; None se o formato mudou."""
+    cab = re.search(r'titulo-presidente">\s*(.*?)\s+-\s+(\d{2}/\d{2}/\d{4})', html, re.S)
+    data = iso_data(cab.group(2)) if cab else None
+    if not data:
+        return None
+    presencas = {}
+    for nome, resposta in re.findall(r'<tr class="table-itens[^"]*">\s*<td><span>(.*?)</span></td>\s*<td><span>(.*?)</span></td>', html, re.S):
+        nome, resposta = sem_espacos(comum.limpar(nome)), comum.sem_acento(comum.limpar(resposta)).lower()
+        if nome and resposta in ("sim", "nao"):
+            presencas[nome] = resposta == "sim"
+    return {"data": data, "titulo": comum.limpar(cab.group(1)), "presencas": presencas}
+
+
+def listar_sessoes(s, desde: int, hoje: date) -> dict:
+    """{id: sessão} das sessões plenárias de `desde` até hoje; lê as páginas de cada ano até uma vir sem sessão nova."""
+    achadas = {}
+    for ano in range(desde, hoje.year + 1):
+        params = {"dataInicio": f"{ano}-01-01", "dataFim": f"{ano}-12-31"}
+        for pagina in range(0, 60):
+            novas = [x for x in sessoes_da_lista(decodificar(baixar(s, SESSOES, {**params, "page": pagina}))) if x["id"] not in achadas]
+            if not novas:
+                break
+            achadas.update({x["id"]: x for x in novas})
+    return achadas
+
+
+def somar_presenca(contagem: dict, frequencia: dict, ligacao: dict) -> None:
+    """Soma uma sessão em `contagem` {(idDeputado, período): [presente, ausente]} para o ano e para o mês."""
+    ano, mes = frequencia["data"][:4], frequencia["data"][:7]
+    for nome, presente in frequencia["presencas"].items():
+        pid = ligacao.get(nome)
+        for periodo in ((pid, ano), (pid, mes)) if pid else ():
+            contagem.setdefault(periodo, [0, 0])[0 if presente else 1] += 1
+
+
+def itens_presenca(contagem: dict) -> list[dict]:
+    return [{"idDeputado": pid, "periodo": periodo, "presente": p, "ausente": a, "licenca": 0, "totalSessoes": p + a, "fonte": SESSOES}
+            for (pid, periodo), (p, a) in sorted(contagem.items())]
+
+
+def coletar_presenca(s, deputados: list[dict]) -> None:
+    """Cada sessão é lida uma vez: `lidas` guarda o que já entrou na contagem e a presença nova se soma ao que está no arquivo."""
+    hoje = date.today()
+    arq = PASTA / "presenca.json"
+    antigo = comum.ler(arq, {})
+    lidas = dict(antigo.get("lidas", {}))
+    contagem = {(i["idDeputado"], i["periodo"]): [i["presente"], i["ausente"]] for i in antigo.get("itens", [])}
+    ultimo = max(lidas.values(), default=None)
+    desde = max(ANO_PRESENCA, int(ultimo[:4])) if ultimo else ANO_PRESENCA
+    sessoes = listar_sessoes(s, desde, hoje)
+    pendentes = [x for i, x in sorted(sessoes.items()) if i not in lidas]
+
+    def ler_sessao(x):
+        try:
+            return x, frequencia_da_sessao(decodificar(baixar(s, f"{FREQUENCIA}/{x['id']}")))
+        except comum.PrazoEsgotado:
+            raise
+        except Exception as e:
+            comum.avisar(f"BA: frequência da sessão {x['id']}: {e}")
+            return x, None
+
+    def salvar():
+        comum.salvar(arq, {"coletadoEm": hoje.isoformat(), "fonte": SESSOES, "lidas": dict(sorted(lidas.items())), "itens": itens_presenca(contagem)})
+
+    novas = 0
+    try:
+        for inicio in range(0, len(pendentes), 40):
+            with ThreadPoolExecutor(EM_PARALELO) as ex:
+                lidos = list(ex.map(ler_sessao, pendentes[inicio: inicio + 40]))
+            ligacao = identidades.ligar_nomes({n for _, f in lidos if f for n in f["presencas"]}, deputados, UF)
+            for x, f in lidos:
+                if not f or f["data"] != x["data"]:
+                    continue
+                if not f["presencas"]:   # solene ou especial, sem quadro de presença: depois de 60 dias não volta a ser lida
+                    if (hoje - date.fromisoformat(f["data"])).days > 60:
+                        lidas[x["id"]] = f["data"]
+                    continue
+                somar_presenca(contagem, f, ligacao)
+                lidas[x["id"]] = f["data"]
+                novas += 1
+            salvar()
+    except comum.PrazoEsgotado:
+        salvar()
+        comum.avisar("BA: prazo esgotado na presença; as sessões lidas ficaram guardadas")
+    print(f"BA: presença: {novas} sessões novas de {len(pendentes)} pendentes ({len(lidas)} lidas), {len(contagem)} contagens")
+    if not lidas:
+        raise RuntimeError("nenhuma sessão lida")
+
+
+# ---------------------------------------------------------------- contratos do órgão
+
+def contratos_da_pagina(html: str) -> dict:
+    """{id: item} dos contratos da tabela (`comum.item_orgao`); sem CNPJ, o fornecedor é só o nome."""
+    itens = {}
+    for tr in re.findall(r'<tr class="table-itens[^"]*">(.*?)</tr>', html, re.S):
+        link = re.search(r'href="(/transparencia/contratos-convenios/detalhar/(\d+))"', tr)
+        celulas = re.findall(r"<td[^>]*>(.*?)</td>", tr, re.S)
+        if not link or len(celulas) < 8:
+            continue
+        numero = comum.limpar(celulas[0])
+        inicio = iso_data(comum.limpar(celulas[1]))
+        if not numero or not inicio:
+            continue
+        arquivos = [{"url": f"{SITE}{u}" if u.startswith("/") else u, "nome": nome, "data": None}
+                    for nome, c in (("Aditivos", celulas[6]), ("Anexo", celulas[7])) for u in re.findall(r'href="([^"#][^"]*)"', c)]
+        iid, item = comum.item_orgao("alba_ba", "contrato", link.group(2), fornecedor_nome=comum.limpar(celulas[2]), valor=comum.limpar(celulas[5]),
+                                     inicio=inicio, numero=numero, arquivos=arquivos, fonte=f"{SITE}{link.group(1)}",
+                                     modalidade=comum.limpar(celulas[3]) or None, situacao=comum.limpar(celulas[4]) or None)
+        itens[iid] = item
+    return itens
+
+
+def coletar_contratos(s) -> None:
+    hoje = date.today()
+    itens = {}
+    for pagina in range(0, 20):
+        params = {"dataInicio": f"{ANO_CONTRATOS}-01-01", "dataFim": f"{hoje.year}-12-31", "page": pagina, "size": 200}
+        novos = {k: v for k, v in contratos_da_pagina(decodificar(baixar(s, CONTRATOS_PAGINA, params))).items() if k not in itens}
+        if not novos:
+            break
+        itens |= novos
+    if not itens:
+        raise RuntimeError("página de contratos sem linhas; mantém os arquivos anteriores")
+    por_ano: dict[int, dict] = {}
+    for iid, i in itens.items():
+        por_ano.setdefault(int(i["inicio"][:4]), {})[iid] = i
+    for ano, grupo in sorted(por_ano.items()):
+        arq = PASTA / f"orgao_{ano}.json"
+        if comum.ano_encerrado(ano, hoje, arq):
+            continue
+        comum.salvar(arq, {"coletadoEm": hoje.isoformat(), "fonte": CONTRATOS_PAGINA, "itens": grupo})
+    print(f"BA: contratos do órgão: {len(itens)} em {len(por_ano)} anos")
+
+
+# ---------------------------------------------------------------- regras da verba (PDFs como link)
+
+def normas_da_verba(html: str) -> list[dict]:
+    normas = []
+    for tr in re.findall(r'<tr class="table-itens[^"]*">(.*?)</tr>', html, re.S):
+        titulo = re.search(r"<strong>(.*?)</strong>", tr, re.S)
+        pdf = re.search(r'href="(/fserver/[^"]+\.pdf)"', tr)
+        ano = re.match(r"\s*(\d{4})\s*-", comum.limpar(titulo.group(1))) if titulo else None
+        if titulo and pdf and ano:
+            normas.append({"titulo": comum.limpar(titulo.group(1)), "url": SITE + quote(pdf.group(1), safe=":/%"), "ano": int(ano.group(1)),
+                           "atualizadoEm": None})
+    return normas
+
+
+def coletar_regras(s) -> None:
+    normas = normas_da_verba(decodificar(baixar(s, REGRAS_PAGINA)))
+    if not normas:
+        raise RuntimeError("nenhuma norma da verba na página; mantém o arquivo anterior")
+    nova = max(normas, key=lambda n: n["ano"])
+    comum.salvar(PASTA / "regras_ressarcimento.json", {"url": nova["url"], "ano": nova["ano"], "titulo": nova["titulo"], "fonte": REGRAS_PAGINA,
+                                                       "documentos": normas})
+    print(f"BA: regras da verba: {len(normas)} normas")
+
+
 # ---------------------------------------------------------------- execução
 
 def coletar() -> None:
     s = comum.sessao()
     deputados = coletar_deputados(s)
     comum.rodar_etapas(UF, [("verba", lambda: coletar_verba(s, deputados)), ("proposições", lambda: coletar_proposicoes(s, deputados)),
-                            ("emendas", lambda: coletar_emendas(s, deputados))])
+                            ("emendas", lambda: coletar_emendas(s, deputados)),
+                            ("presença", lambda: coletar_presenca(s, deputados)), ("contratos do órgão", lambda: coletar_contratos(s)),
+                            ("regras da verba", lambda: coletar_regras(s))])
 
 
 # ---------------------------------------------------------------- contratos (amostras reduzidas das respostas reais)
@@ -508,11 +692,67 @@ def _conferir_emendas(registro):
     return falhas, []
 
 
+def _trecho_linhas(html, quantas):
+    inicio = [m.start() for m in re.finditer(r'<tr class="table-itens', html)]
+    return html[inicio[0]: html.index("</tr>", inicio[min(quantas, len(inicio)) - 1]) + 5]
+
+
+def _contrato_presenca(ctx):
+    s = comum.sessao()
+    lista = decodificar(baixar(s, SESSOES, {"dataInicio": "2025-06-01", "dataFim": "2025-06-30", "page": 0}))
+    freq = decodificar(baixar(s, f"{FREQUENCIA}/{sessoes_da_lista(lista)[0]['id']}"))
+    cab = freq.index("titulo-presidente")
+    linhas = [m.start() for m in re.finditer(r'<tr class="table-itens">\s*<td width="100">', lista)]
+    return {"lista": lista[linhas[0]: linhas[1]], "frequencia": freq[cab - 40: cab + 160] + "\n" + _trecho_linhas(freq, 4)}
+
+
+def _conferir_presenca(registro):
+    falhas = []
+    sessoes = sessoes_da_lista(registro["lista"])
+    if not sessoes or not all(x["id"] and x["tipo"] and x["data"] for x in sessoes):
+        falhas.append("lista de sessões sem id, tipo ou data")
+    f = frequencia_da_sessao(registro["frequencia"])
+    if not f or not f["presencas"]:
+        falhas.append("frequência da sessão sem data ou sem deputados")
+    return falhas, []
+
+
+def _contrato_contratos(ctx):
+    params = {"dataInicio": f"{ANO_CONTRATOS}-01-01", "dataFim": f"{date.today().year}-12-31", "page": 0, "size": 200}
+    pagina = decodificar(baixar(comum.sessao(), CONTRATOS_PAGINA, params))
+    cab = pagina.index("<thead")
+    return {"html": pagina[cab: pagina.index("</tr>", cab) + 5] + "<tbody>" + _trecho_linhas(pagina, 2)}
+
+
+def _conferir_contratos(registro):
+    itens = contratos_da_pagina(registro["html"])
+    if not itens:
+        return ["tabela de contratos sem linhas reconhecidas"], []
+    falhas = []
+    for i in itens.values():
+        falhas += comum.campos_vazios(i, ("numero", "fornecedor", "inicio", "valor", "fonte"), "contrato")
+    return falhas, []
+
+
+def _contrato_regras(ctx):
+    return {"html": _trecho_linhas(decodificar(baixar(comum.sessao(), REGRAS_PAGINA)), 2)}
+
+
+def _conferir_regras(registro):
+    normas = normas_da_verba(registro["html"])
+    if not normas or not all(n["url"].endswith(".pdf") for n in normas):
+        return ["tabela de normas da verba sem PDF"], []
+    return [], []
+
+
 CONTRATOS = [
     {"nome": "estadual_ba_deputados", "fonte": LISTA_URL, "buscar": _contrato_deputados, "html": _conferir_deputados},
     {"nome": "estadual_ba_verba", "fonte": VERBA_PAGINA, "buscar": _contrato_verba, "html": _conferir_verba},
     {"nome": "estadual_ba_proposicoes", "fonte": PROPOSICOES, "buscar": _contrato_proposicoes, "html": _conferir_proposicoes},
     {"nome": "estadual_ba_emendas", "fonte": EMENDAS_PAGINA, "buscar": _contrato_emendas, "html": _conferir_emendas},
+    {"nome": "estadual_ba_presenca", "fonte": SESSOES, "buscar": _contrato_presenca, "html": _conferir_presenca},
+    {"nome": "estadual_ba_contratos", "fonte": CONTRATOS_PAGINA, "buscar": _contrato_contratos, "html": _conferir_contratos},
+    {"nome": "estadual_ba_regras", "fonte": REGRAS_PAGINA, "buscar": _contrato_regras, "html": _conferir_regras},
 ]
 
 

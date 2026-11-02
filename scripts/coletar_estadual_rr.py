@@ -432,8 +432,8 @@ def tipo_da_planilha(nome: str) -> str | None:
 def cnpj_do_texto(texto: str | None) -> str | None:
     """CNPJ válido quando o texto do vencedor traz exatamente um ("LOTE ÚNICO: GRZ LTDA CNPJ: 07.872.397/0001-50")."""
     import fornecedores
-    achados = {re.sub(r"\D", "", c) for c in CNPJ_NO_TEXTO.findall(texto or "")}
-    doc = fornecedores.documento(next(iter(achados))) if len(achados) == 1 else None
+    achados = {fornecedores.documento(c) for c in CNPJ_NO_TEXTO.findall(texto or "")}
+    doc = next(iter(achados)) if len(achados) == 1 else None
     return doc[1] if doc and doc[0] == "cnpj" else None
 
 

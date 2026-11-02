@@ -466,7 +466,7 @@ def _estrategia_ce(nomes, deputados, uf):
 
 
 ESTRATEGIAS = {"CE": _estrategia_ce, "MS": _estrategia_ms, "MT": _estrategia_mt, "PA": _estrategia_pa, "PE": _estrategia_pe, "PR": _estrategia_pr,
-               "RJ": _estrategia_palavras, "RR": _estrategia_rr, "SC": _estrategia_sc}
+               "RJ": _estrategia_palavras, "RR": _estrategia_rr, "SC": _estrategia_sc, "SE": _estrategia_mt}
 
 
 def ligar_nomes(nomes, deputados: list[dict], uf: str | None = None) -> dict:

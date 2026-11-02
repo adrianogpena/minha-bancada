@@ -1,0 +1,76 @@
+{
+ "fonte": "https://legis-api-portal-prd.al.sp.gov.br/colegiado/reunioes",
+ "capturadoEm": "2026-11-02",
+ "amostra": {
+  "reunioes": [
+   {
+    "idReuniao": 1000007357,
+    "nuReuniao": 0,
+    "tituloReuniao": "Reunião de Pauta Cancelada",
+    "dtReuniao": "2025-12-17T15:00",
+    "status": {
+     "idStatus": 5,
+     "txNome": "Cancelada"
+    },
+    "colegiadosRelacionados": [
+     {
+      "id": 12444,
+      "nome": "Comissão de Constituição, Justiça e Redação",
+      "tipo": null,
+      "sigla": "CCJR"
+     }
+    ],
+    "documentosReuniao": [
+     {
+      "idDocumento": 200121673324,
+      "tipo": "Comunicado de colegiado",
+      "descricao": "Comunicado de colegiado",
+      "linkArquivo": "https://www.al.sp.gov.br/spl/2025/12/Comunicado/1000673324_1000842968_Comunicado.docx",
+      "linkArquivoPDF": null
+     },
+     {
+      "idDocumento": 200111673343,
+      "tipo": "Pauta de colegiado",
+      "descricao": "Pauta de colegiado",
+      "linkArquivo": "https://www.al.sp.gov.br/spl/Arquivo/1000673343_1000842989_2025_12_15_Pauta_1000673343.pdf",
+      "linkArquivoPDF": "https://www.al.sp.gov.br/spl/Arquivo/1000673343_1000842990_2025_12_15_Pauta_1000673343.txt"
+     }
+    ]
+   },
+   {
+    "idReuniao": 1000007302,
+    "nuReuniao": 0,
+    "tituloReuniao": "Reunião de Pauta Cancelada",
+    "dtReuniao": "2025-12-16T15:30",
+    "status": {
+     "idStatus": 5,
+     "txNome": "Cancelada"
+    },
+    "colegiadosRelacionados": [
+     {
+      "id": 12455,
+      "nome": "Comissão de Defesa dos Direitos da Pessoa Humana, da Cidadania, da Participação e das Questões Sociais",
+      "tipo": null,
+      "sigla": "CDD"
+     }
+    ],
+    "documentosReuniao": [
+     {
+      "idDocumento": 200121673050,
+      "tipo": "Comunicado de colegiado",
+      "descricao": "Comunicado de colegiado",
+      "linkArquivo": "https://www.al.sp.gov.br/spl/2025/12/Comunicado/1000673050_1000842621_Comunicado.docx",
+      "linkArquivoPDF": null
+     },
+     {
+      "idDocumento": 200111673052,
+      "tipo": "Pauta de colegiado",
+      "descricao": "Pauta de colegiado",
+      "linkArquivo": "https://www.al.sp.gov.br/spl/Arquivo/1000673052_1000842622_2025_12_12_Pauta_1000673052.pdf",
+      "linkArquivoPDF": "https://www.al.sp.gov.br/spl/Arquivo/1000673052_1000842623_2025_12_12_Pauta_1000673052.txt"
+     }
+    ]
+   }
+  ]
+ }
+}

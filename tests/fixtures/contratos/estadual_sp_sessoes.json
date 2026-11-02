@@ -1,0 +1,29 @@
+{
+ "fonte": "https://legis-api-portal-prd.al.sp.gov.br/sessoes-plenarias/<id>/pauta",
+ "capturadoEm": "2026-11-02",
+ "amostra": {
+  "sessao": {
+   "id": 24176,
+   "titulo": "151ª Sessão Ordinária",
+   "dtInicio": "2026-10-14T14:03",
+   "temPauta": true,
+   "temOrdemDoDia": true,
+   "temIntegra": true
+  },
+  "pauta": {
+   "titulo": "PAUTA PARA EMENDAS E RECURSOS PARA A 151ª SESSÃO ORDINÁRIA, EM 14 DE OUTUBRO DE 2026",
+   "urlDocumento": "https://www.al.sp.gov.br/legis/docs/2026/10/13/310000006933.html"
+  },
+  "ordemDoDia": {
+   "txTitulo": "Ordem do Dia para a 151ª Sessão Ordinária, em 14 de outubro de 2026",
+   "urlDocumento": "https://www.al.sp.gov.br/legis/docs/2026/10/13/310000006985.html"
+  },
+  "integra": {
+   "tituloIntegra": "Íntegra da Sessão publicada no Diário Oficial em 28/10/2026",
+   "urlIntegra": "https://www.al.sp.gov.br/legis/docs/2026/10/28/310000010207.html",
+   "urlIntegraDO": "https://doe.sp.gov.br/legislativo/debates/sessao-ordinaria-n-151-de-14-de-outubro-de-2026-2026102721185712239184",
+   "urlIntegraMensagem": null,
+   "dataPublicacaoIntegra": "28/10/2026"
+  }
+ }
+}

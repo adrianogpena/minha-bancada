@@ -6,15 +6,31 @@ Fonte: API aberta, sem login, do portal Transparência Legislativa (a mesma que 
   - parlamentar: deputados com nome civil e filiação;
   - processo?iniciativa=<id>: proposições de cada deputado (aqui só projetos e propostas, desde 2023);
   - reuniao e reuniao/presenca/<id>: presença nas sessões plenárias ordinárias e extraordinárias, desde 2023;
-  - processo/ultimas-votacoes e processo/<id>/detalhamento-votacao/<reunião>: votos nominais nas sessões plenárias, desde 2023.
+  - processo/ultimas-votacoes e processo/<id>/detalhamento-votacao/<reunião>: votos nominais nas sessões plenárias, desde 2023;
+  - pautas: processo?reuniao=<id>&faseReuniao=1 (ordem do dia) e 2 (expediente) de cada sessão plenária, ligadas ao deputado pelo id de
+    `iniciativa.parlamentar` (pautas_<ano>.json, tipo "ordem-do-dia");
+  - atas: legis-videos/reuniao/<id> devolve o vídeo da sessão e, quando a Mesa publicou, o texto da ata (`ata`); o coletor guarda só o link
+    https://api-legisvideos.al.rn.leg.br/video/ata/<hash> (a página da ata, 200 sem cabeçalho de tipo), em pautas_<ano>.json com tipo "atas".
+    Cobertura parcial: em 188 vídeos recentes 101 tinham ata;
+  - normas: processo?tipoPropositura=<1 PL, 2 PLC, 6 PDL, 8 resolução, 22 título honorífico> de iniciativa de deputado, confirmadas pela
+    tramitação (processo/<id>/tramitacao com situação 27 Lei Sancionada, 26 Lei Promulgada, 127 Decreto Legislativo Promulgado ou 128
+    Resolução promulgada); normas_<ano>.json. O número oficial da lei não vem no cadastro (`numeroExterno` não é o da lei): a norma leva o
+    número do projeto de origem, a data da tramitação e o link do Diário Oficial (`linkDOE`) quando existe;
+  - contratos e atas de registro de preços do órgão: PNCP (https://pncp.gov.br/api/consulta/v1, aberta), CNPJ da Assembleia 08.493.371/0001-64,
+    janela máxima de 365 dias lida ano a ano (orgao_<ano>.json). A ata do PNCP não traz fornecedor nem valor.
 
 Não coletado: cotas parlamentares (https://transparencia.al.rn.leg.br/verbas; a API em api-transparencia.al.rn.leg.br só responde com um
-token embutido no código do site, que não foi usado), votações de comissão (o contrato não tem campo de comissão e quem não é
+token embutido no código do site, que não foi usado; o mesmo vale para gabinete, remuneração e regras do ressarcimento), votações de comissão (o contrato não tem campo de comissão e quem não é
 membro apareceria como ausente), remuneração dos deputados, diárias e emendas (não encontradas).
 """
 
+import re
+import time
+import zlib
 from concurrent.futures import ThreadPoolExecutor
-from datetime import date, timedelta
+from datetime import date, datetime, timedelta
+from functools import partial
+from zoneinfo import ZoneInfo
 
 import requests
 from requests.adapters import HTTPAdapter
@@ -36,6 +52,21 @@ RENOVAR_FALHA_DIAS = 7   # sessão cuja presença deu erro só é consultada de 
 MINUSCULAS = {"de", "da", "do", "dos", "das", "e"}
 VOTOS = {1: "Sim", 0: "Não", 2: "Abstenção"}
 TIPO_PLENARIO = {1, 2, 12}
+FUSO = ZoneInfo("America/Fortaleza")
+PNCP = "https://pncp.gov.br/api/consulta/v1"
+PNCP_SITE = "https://pncp.gov.br/app"
+CNPJ_ORGAO = "08493371000164"
+FONTE_ID = "alrn_pncp"
+PNCP_TAMANHO = 500
+PAUSA_PNCP = 2   # segundos entre requisições: o PNCP responde 429 depois de poucas seguidas
+ESPERA_429 = 20
+TENTATIVAS_PNCP = 4
+ATAS_SITE = "https://api-legisvideos.al.rn.leg.br"
+RELER_PAUTAS_DIAS = 7   # pauta e ata de sessão mais nova que isso é lida de novo todo dia (a Mesa publica depois)
+TIPOS_NORMA = (1, 2, 6, 8, 22)
+SITUACOES_NORMA = {27: "sancionado", 26: "promulgado", 127: "promulgado", 128: "promulgado"}
+RELER_NORMA_DIAS = 7   # projeto de deputado ainda sem norma é relido a cada 7 a 13 dias (escalonado por id)
+LIMITE_EMENTA = 300
 
 
 def sessao() -> requests.Session:
@@ -317,6 +348,308 @@ def coletar_votacoes(s, deputados: list[dict], sessoes: list[dict]) -> None:
         comum.avisar(f"RN: a API respondeu erro no detalhe de {len(sem_detalhe)} votações de plenário")
 
 
+# ---------------------------------------------------------------- contratos e atas de registro de preços do órgão (PNCP)
+
+def sessao_pncp() -> requests.Session:
+    """Sessão que não repete 429 por conta própria: `pncp_pagina` espera mais tempo entre as tentativas."""
+    s = comum.sessao()
+    retry = Retry(total=2, backoff_factor=1, status_forcelist=(502, 503, 504), allowed_methods=("GET",))
+    s.mount("https://", HTTPAdapter(max_retries=retry, pool_connections=comum.CONEXOES_POR_HOST, pool_maxsize=comum.CONEXOES_POR_HOST, pool_block=True))
+    return s
+
+
+def pncp_pagina(s, recurso: str, **params) -> dict:
+    """Uma página de /contratos ou /atas. 204 (sem registro na janela) vale como lista vazia; 429 espera e tenta de novo."""
+    for tentativa in range(TENTATIVAS_PNCP):
+        r = s.get(f"{PNCP}/{recurso}", params=params, timeout=TIMEOUT)
+        if r.status_code == 204:
+            return {"data": [], "totalPaginas": 0}
+        if r.status_code == 429:
+            time.sleep(ESPERA_429 * (tentativa + 1))
+            continue
+        r.raise_for_status()
+        return r.json()
+    raise RuntimeError(f"PNCP {recurso}: limite de requisições excedido (HTTP 429)")
+
+
+def registros_pncp(s, recurso: str, ano: int) -> list[dict]:
+    """Registros publicados no PNCP na janela do ano (máximo de 365 dias por consulta)."""
+    filtro = {"cnpjOrgao": CNPJ_ORGAO} if recurso == "contratos" else {"cnpj": CNPJ_ORGAO}
+    pagina, tudo = 1, []
+    while True:
+        d = pncp_pagina(s, recurso, dataInicial=f"{ano}0101", dataFinal=f"{ano}1231", pagina=pagina, tamanhoPagina=PNCP_TAMANHO, **filtro)
+        tudo += d.get("data") or []
+        if pagina >= (d.get("totalPaginas") or 0):
+            return tudo
+        pagina += 1
+        time.sleep(PAUSA_PNCP)
+
+
+def link_contrato(r: dict) -> str | None:
+    """Página do contrato no PNCP, a partir do número de controle "<cnpj>-2-<sequencial>/<ano>"."""
+    m = re.fullmatch(r"(\d{14})-\d-(\d+)/(\d{4})", r.get("numeroControlePNCP") or "")
+    return f"{PNCP_SITE}/contratos/{m[1]}/{m[3]}/{int(m[2])}" if m else None
+
+
+def link_ata(r: dict) -> str | None:
+    """Página da ata no PNCP, a partir do número de controle "<cnpj>-1-<sequencial da compra>/<ano>-<sequencial da ata>"."""
+    m = re.fullmatch(r"(\d{14})-\d-(\d+)/(\d{4})-(\d+)", r.get("numeroControlePNCPAta") or "")
+    return f"{PNCP_SITE}/atas/{m[1]}/{m[3]}/{int(m[2])}/{int(m[4])}" if m else None
+
+
+def itens_do_orgao(contratos: list[dict], atas: list[dict]) -> dict:
+    """{id: item} no formato de `comum.item_orgao`. Id de (fonte, tipo, número de controle do PNCP). A ata do PNCP não traz fornecedor
+    nem valor; o CPF de contratado pessoa física não é gravado (só o nome que o PNCP publica)."""
+    itens = {}
+    for r in sorted(contratos, key=lambda x: x.get("numeroControlePNCP") or ""):
+        if not r.get("numeroControlePNCP"):
+            continue
+        link = link_contrato(r)
+        numero = f"{r['numeroContratoEmpenho']}/{r['anoContrato']}" if r.get("numeroContratoEmpenho") and r.get("anoContrato") else None
+        arquivos = [{"url": link, "nome": "Contrato no PNCP", "data": comum.data_iso(r.get("dataPublicacaoPncp"))}] if link else ()
+        iid, item = comum.item_orgao(FONTE_ID, "contrato", r["numeroControlePNCP"], fornecedor_nome=r.get("nomeRazaoSocialFornecedor"),
+                                     documento=r.get("niFornecedor"), valor=r.get("valorGlobal"), inicio=comum.data_iso(r.get("dataVigenciaInicio")),
+                                     fim=comum.data_iso(r.get("dataVigenciaFim")), objeto=r.get("objetoContrato"), numero=numero, arquivos=arquivos,
+                                     fonte=link or PNCP_SITE, tipoContrato=comum.compactar((r.get("tipoContrato") or {}).get("nome")),
+                                     categoria=comum.compactar((r.get("categoriaProcesso") or {}).get("nome")), processo=comum.compactar(r.get("processo")),
+                                     assinatura=comum.data_iso(r.get("dataAssinatura")))
+        itens[iid] = item
+    for r in sorted(atas, key=lambda x: x.get("numeroControlePNCPAta") or ""):
+        if not r.get("numeroControlePNCPAta"):
+            continue
+        link = link_ata(r)
+        arquivos = [{"url": link, "nome": "Ata de registro de preços no PNCP", "data": comum.data_iso(r.get("dataPublicacaoPncp"))}] if link else ()
+        iid, item = comum.item_orgao(FONTE_ID, "ata_registro", r["numeroControlePNCPAta"], fornecedor_nome=None, valor=None,
+                                     inicio=comum.data_iso(r.get("vigenciaInicio")), fim=comum.data_iso(r.get("vigenciaFim")), objeto=r.get("objetoContratacao"),
+                                     numero=comum.compactar(r.get("numeroAtaRegistroPreco")), arquivos=arquivos, fonte=link or PNCP_SITE,
+                                     situacao="Cancelada" if r.get("cancelado") else None, assinatura=comum.data_iso(r.get("dataAssinatura")))
+        itens[iid] = item
+    return itens
+
+
+def orgao_do_ano(s, pasta, ano: int, hoje: date) -> None:
+    arq = pasta / f"orgao_{ano}.json"
+    if comum.ano_encerrado(ano, hoje, arq):
+        return
+    contratos = registros_pncp(s, "contratos", ano)
+    time.sleep(PAUSA_PNCP)
+    atas = registros_pncp(s, "atas", ano)
+    itens = itens_do_orgao(contratos, atas)
+    if not itens and comum.ler(arq, {}).get("itens"):
+        raise RuntimeError(f"PNCP devolveu lista vazia para {ano}; mantém o arquivo anterior")
+    comum.salvar(arq, {"coletadoEm": hoje.isoformat(), "fonte": f"{PNCP_SITE}/contratos", "itens": itens})
+    n_atas = sum(i["tipo"] == "ata_registro" for i in itens.values())
+    print(f"RN: {ano} contratos {len(itens) - n_atas} e atas de registro {n_atas} do órgão (PNCP)")
+
+
+def coletar_orgao(s, pasta, hoje: date) -> None:
+    for ano in range(ANO_INICIAL, hoje.year + 1):
+        comum.tentar(UF, f"contratos e atas de registro {ano}", partial(orgao_do_ano, s, pasta, ano, hoje))
+        time.sleep(PAUSA_PNCP)
+
+
+# ---------------------------------------------------------------- pautas e atas das sessões plenárias
+
+def dia_local(texto) -> str | None:
+    """'2026-10-29T02:30:00.000Z' (UTC) -> '2026-10-28' no horário do Rio Grande do Norte."""
+    if not texto:
+        return None
+    try:
+        return datetime.fromisoformat(str(texto).replace("Z", "+00:00")).astimezone(FUSO).date().isoformat()
+    except ValueError:
+        return comum.data_iso(texto)
+
+
+def curta(texto, limite: int = LIMITE_EMENTA) -> str:
+    t = " ".join((texto or "").split())
+    return t if len(t) <= limite else t[:limite].rsplit(" ", 1)[0] + "..."
+
+
+def processos_da_pauta(por_fase: dict[int, list[dict]], ids: set) -> list[dict]:
+    """Processos de uma sessão (fase 1 ordem do dia, 2 expediente), ligados ao deputado pelo id de `iniciativa.parlamentar`."""
+    achados = []
+    for fase, lista in sorted(por_fase.items()):
+        for p in lista:
+            prop = p.get("propositura") or {}
+            pid = str(((p.get("iniciativa") or {}).get("parlamentar") or {}).get("id") or "")
+            achados.append({"id": p["id"], "tipo": (prop.get("tipo") or {}).get("sigla"), "numero": prop.get("numero"), "ano": prop.get("ano"),
+                            "fase": fase, "ementa": curta(p.get("ementa")), "idDeputado": pid if pid in ids else None})
+    return achados
+
+
+def item_pauta(r: dict, processos: list[dict]) -> dict | None:
+    if not processos:
+        return None
+    tipo = (r.get("tipoReuniao") or {}).get("nome")
+    titulo_sessao = comum.compactar(f"{tipo or 'Sessão'} {r.get('numero') or ''}")
+    link = f"{SITE}/evento-legislativo/{r['id']}"
+    return {"id": str(r["id"]), "reuniao": r["id"], "tipo": "ordem-do-dia", "titulo": titulo_sessao, "data": dia_local(r.get("dataInicio")),
+            "arquivos": [{"nome": titulo_sessao, "url": link}], "processos": processos,
+            "idsDeputados": sorted({p["idDeputado"] for p in processos if p["idDeputado"]}), "fonte": link}
+
+
+def itens_ata(r: dict, videos: list[dict]) -> list[dict]:
+    """Uma ata por vídeo da sessão que tem o texto da ata publicado (`ata`); só o link é guardado."""
+    achados = []
+    for v in videos:
+        if v.get("ata") and v.get("hash"):
+            nome = comum.compactar(v.get("titulo")) or "Ata da sessão"
+            achados.append({"id": str(v["id"]), "reuniao": r["id"], "tipo": "atas", "titulo": nome, "data": dia_local(r.get("dataInicio")),
+                            "arquivos": [{"nome": nome, "url": f"{ATAS_SITE}/video/ata/{v['hash']}"}], "fonte": f"{SITE}/evento-legislativo/{r['id']}"})
+    return achados
+
+
+def ler_reuniao(s, r: dict, ids: set) -> list[dict]:
+    por_fase = {fase: pegar(s, "processo", reuniao=r["id"], faseReuniao=fase).get("dados") or [] for fase in (1, 2)}
+    videos = pegar(s, f"legis-videos/reuniao/{r['id']}").get("dados") or []
+    return [i for i in [item_pauta(r, processos_da_pauta(por_fase, ids)), *itens_ata(r, videos)] if i]
+
+
+def coletar_pautas_atas(s, deputados: list[dict], sessoes: list[dict]) -> None:
+    ids = {d["id"] for d in deputados}
+    hoje = date.today()
+    agora = hoje.isoformat()
+    estado = {a: comum.ler(PASTA / f"pautas_{a}.json", {}) for a in range(ANO_INICIAL, hoje.year + 1)}
+    for e in estado.values():
+        e.setdefault("itens", {})
+        e.setdefault("lidas", {})
+        e.setdefault("falhas", {})
+    recentes = (hoje - timedelta(days=RELER_PAUTAS_DIAS)).isoformat()
+    recentes_falha = hoje - timedelta(days=RENOVAR_FALHA_DIAS)
+
+    def ano_de(r):
+        return int(r["dataInicio"][:4])
+
+    pendentes = [r for r in sessoes if ano_de(r) in estado and (str(r["id"]) not in estado[ano_de(r)]["lidas"] or (r["dataInicio"] or "") >= recentes)
+                 and date.fromisoformat(estado[ano_de(r)]["falhas"].get(str(r["id"]), "2000-01-01")) <= recentes_falha]
+
+    def uma(r):
+        try:
+            return r, ler_reuniao(s, r, ids)
+        except comum.PrazoEsgotado:
+            raise
+        except Exception:
+            return r, None
+
+    try:
+        with ThreadPoolExecutor(EM_PARALELO) as ex:
+            for r, itens in ex.map(uma, pendentes):
+                e, rid = estado[ano_de(r)], str(r["id"])
+                if itens is None:
+                    e["falhas"][rid] = agora
+                    continue
+                e["itens"] = {k: v for k, v in e["itens"].items() if v.get("reuniao") != r["id"]}
+                for i in itens:
+                    e["itens"][f"{i['tipo']}|{i['id']}"] = i
+                e["lidas"][rid] = agora
+                e["falhas"].pop(rid, None)
+    finally:
+        for a, e in estado.items():
+            comum.salvar(PASTA / f"pautas_{a}.json", {"coletadoEm": agora, "fonte": f"{SITE}/eventos-legislativos", "itens": e["itens"],
+                                                      "lidas": e["lidas"], "falhas": e["falhas"]})
+    todas = [i for e in estado.values() for i in e["itens"].values()]
+    print(f"RN: pautas {sum(i['tipo'] == 'ordem-do-dia' for i in todas)} e atas {sum(i['tipo'] == 'atas' for i in todas)} em {len(sessoes)} sessões plenárias "
+          f"({len(pendentes)} lidas agora)")
+    falhas = sum(len(e["falhas"]) for e in estado.values())
+    if falhas:
+        comum.avisar(f"RN: pauta ou ata de {falhas} sessões plenárias respondeu erro; tentadas de novo em {RENOVAR_FALHA_DIAS} dias")
+
+
+# ---------------------------------------------------------------- normas legais (projetos de deputado que viraram lei, decreto legislativo ou resolução)
+
+def eh_de_deputado(p: dict, ids: set) -> bool:
+    ini = p.get("iniciativa") or {}
+    return ini.get("tipo") == "PARLAMENTAR" and str((ini.get("parlamentar") or {}).get("id")) in ids
+
+
+def situacao_da_norma(tramitacao: list[dict]) -> dict | None:
+    """Andamento que fez do projeto uma norma (27 Lei Sancionada, 26 Lei Promulgada, 127 Decreto Legislativo, 128 Resolução): o que tem
+    link do Diário Oficial e, entre iguais, o mais antigo."""
+    achadas = []
+    for t in tramitacao:
+        sit = t.get("situacaoProcesso") or {}
+        if sit.get("id") in SITUACOES_NORMA:
+            achadas.append({"id": sit["id"], "nome": sit.get("nome"), "data": dia_local((t.get("origem") or {}).get("data")), "linkDOE": t.get("linkDOE")})
+    return min(achadas, key=lambda a: (not a["linkDOE"], a["data"] or "9999", a["id"])) if achadas else None
+
+
+def norma(p: dict, sit: dict) -> tuple[str, dict]:
+    """(chave do projeto de origem, norma). Número e ano são os do projeto: o cadastro não traz o número oficial da norma."""
+    prop = p["propositura"]
+    tipo = prop["tipo"]
+    return f"{tipo['sigla']}-{prop['numero']}-{prop['ano']}", {
+        "tipo": f"{titulo(tipo['descricao'])} {SITUACOES_NORMA[sit['id']]}", "numero": prop["numero"], "ano": prop["ano"], "data": sit["data"],
+        "ementa": curta(p.get("ementa")), "situacao": sit["nome"], "idsDeputados": [str(p["iniciativa"]["parlamentar"]["id"])],
+        "fonte": sit["linkDOE"] or f"{SITE}/projeto/{p['id']}", "idProcesso": p["id"]}
+
+
+def candidatos_a_norma(s, ids: set, desde: str, ate: str) -> dict[int, dict]:
+    achados = {}
+    for tipo in TIPOS_NORMA:
+        for p in paginas(s, "processo", tipoPropositura=tipo, dataInicio=desde, dataFinal=ate):
+            if eh_de_deputado(p, ids):
+                achados[p["id"]] = p
+    return achados
+
+
+def devido(visto: str, pid, hoje: date) -> bool:
+    return (hoje - date.fromisoformat(visto)).days >= RELER_NORMA_DIAS + zlib.crc32(str(pid).encode()) % RELER_NORMA_DIAS
+
+
+def coletar_normas(s, deputados: list[dict]) -> None:
+    ids = {d["id"] for d in deputados}
+    hoje = date.today()
+    agora = hoje.isoformat()
+    arq = PASTA / "normas_vistas.json"
+    estado = comum.ler(arq, {})
+    vistos = estado.get("processos") or {}
+    completa = not estado.get("completaEm") or not estado.get("coletadoEm") or (hoje - date.fromisoformat(estado["completaEm"])).days >= RENOVAR_COMPLETA_DIAS
+    desde = DESDE if completa else (date.fromisoformat(estado["coletadoEm"]) - timedelta(days=1)).isoformat()
+    candidatas = candidatos_a_norma(s, ids, desde, f"{hoje.year}-12-31")
+    fila = [pid for pid, p in candidatas.items() if str(pid) not in vistos
+            or (p.get("dataArquivamento") and not vistos[str(pid)]["arquivado"] and not vistos[str(pid)].get("norma"))]
+    pedidos = set(fila)
+    fila += [int(pid) for pid, v in vistos.items() if int(pid) not in pedidos and not v["arquivado"] and not v.get("norma") and devido(v["visto"], pid, hoje)]
+    anos = {a: comum.ler(PASTA / f"normas_{a}.json", {}) for a in range(ANO_INICIAL, hoje.year + 1)}
+    achadas, falhas = 0, []
+
+    def uma(pid):
+        try:
+            sit = situacao_da_norma(pegar(s, f"processo/{pid}/tramitacao"))
+            if not sit:
+                return pid, None
+            return pid, norma(candidatas.get(pid) or pegar(s, f"processo/{pid}"), sit)
+        except comum.PrazoEsgotado:
+            raise
+        except Exception:
+            falhas.append(pid)
+            return pid, None
+
+    try:
+        with ThreadPoolExecutor(EM_PARALELO) as ex:
+            for pid, n in ex.map(uma, fila):
+                if pid in falhas:
+                    continue
+                antigo = vistos.get(str(pid)) or {}
+                arquivado = bool(candidatas[pid].get("dataArquivamento")) if pid in candidatas else antigo.get("arquivado", False)
+                vistos[str(pid)] = {"visto": agora, "arquivado": arquivado, **({"norma": True} if n else {})}
+                if n:
+                    chave, item = n
+                    ano = int(item["data"][:4]) if item["data"] else item["ano"]
+                    anos.setdefault(ano, {}).setdefault("normas", {})[chave] = item
+                    achadas += 1
+    finally:
+        for a, e in anos.items():
+            if e.get("normas") is not None:
+                comum.salvar(PASTA / f"normas_{a}.json", {"coletadoEm": agora, "fonte": f"{SITE}/projetos", "normas": e["normas"]})
+        comum.salvar(arq, {"coletadoEm": agora, "completaEm": agora if completa else estado.get("completaEm"), "processos": vistos})
+    total = sum(len(e.get("normas") or {}) for e in anos.values())
+    print(f"RN: {total} normas de autoria de deputado ({achadas} novas; {len(fila)} projetos lidos de {len(vistos)} acompanhados)"
+          + ("" if completa else f" (lista desde {desde})"))
+    if falhas:
+        comum.avisar(f"RN: a API respondeu erro na tramitação de {len(falhas)} projetos (tentados de novo na próxima coleta)")
+
+
 def coletar() -> None:
     s = sessao()
     deputados = coletar_deputados(s)
@@ -325,8 +658,11 @@ def coletar() -> None:
         sessoes = sessoes_plenarias(s)
     except Exception as e:
         comum.avisar(f"RN: lista de reuniões: {e}")
+    hoje = date.today()
     etapas = [("projetos", lambda: coletar_projetos(s, deputados)), ("presença", lambda: coletar_presenca(s, deputados, sessoes)),
-              ("votações", lambda: coletar_votacoes(s, deputados, sessoes))]
+              ("votações", lambda: coletar_votacoes(s, deputados, sessoes)),
+              ("contratos e atas de registro do órgão", lambda: coletar_orgao(sessao_pncp(), PASTA, hoje)),
+              ("pautas e atas", lambda: coletar_pautas_atas(s, deputados, sessoes)), ("normas", lambda: coletar_normas(s, deputados))]
     comum.rodar_etapas(UF, etapas)
 
 
@@ -420,11 +756,117 @@ def _conferir_votacao(registro):
     return falhas, []
 
 
+def _contrato_orgao(ctx):
+    s = sessao_pncp()
+    ano = date.today().year
+    janela = dict(dataInicial=f"{ano}0101", dataFinal=f"{ano}1231", pagina=1, tamanhoPagina=50)
+    contratos = pncp_pagina(s, "contratos", cnpjOrgao=CNPJ_ORGAO, **janela)["data"]
+    time.sleep(PAUSA_PNCP)
+    atas = pncp_pagina(s, "atas", cnpj=CNPJ_ORGAO, **janela)["data"]
+    return {"contratos": [c for c in contratos if c.get("tipoPessoa") == "PJ"][:2], "atas": atas[:2]}
+
+
+def _conferir_orgao(registro):
+    falhas = []
+    itens = itens_do_orgao(registro["contratos"], registro["atas"])
+    if not any(i["tipo"] == "contrato" for i in itens.values()):
+        falhas.append("PNCP /contratos sem contrato do órgão no ano")
+    if not any(i["tipo"] == "ata_registro" for i in itens.values()):
+        falhas.append("PNCP /atas sem ata de registro de preços do órgão no ano")
+    for r in registro["contratos"]:
+        falhas += comum.campos_vazios(r, ("numeroControlePNCP", "objetoContrato", "valorGlobal", "dataVigenciaInicio", "dataVigenciaFim",
+                                          "niFornecedor", "nomeRazaoSocialFornecedor"), "contrato", vazios=(None, ""))
+    for r in registro["atas"]:
+        falhas += comum.campos_vazios(r, ("numeroControlePNCPAta", "numeroAtaRegistroPreco", "objetoContratacao", "vigenciaInicio", "vigenciaFim"), "ata", vazios=(None, ""))
+    falhas += ["contrato ou ata sem link do PNCP" for i in itens.values() if not i["arquivos"]]
+    return falhas, []
+
+
+def _plenaria_com_pauta(s):
+    for r in paginas(s, "reuniao", situacao="R", tipoOrdenacao="DESC"):
+        if (r.get("tipoReuniao") or {}).get("id") in TIPO_PLENARIO:
+            fases = {fase: pegar(s, "processo", reuniao=r["id"], faseReuniao=fase).get("dados") or [] for fase in (1, 2)}
+            if any(fases.values()):
+                return r, fases
+    raise RuntimeError("nenhuma sessão plenária com pauta entre as reuniões realizadas")
+
+
+def _contrato_pauta(ctx):
+    s = sessao()
+    r, fases = _plenaria_com_pauta(s)
+    reduzida = {k: r[k] for k in ("id", "numero", "situacao", "dataInicio", "tipoReuniao")}
+    return {"reuniao": reduzida, "fases": {str(f): [_sem_cpf(p) for p in lista[:2]] for f, lista in fases.items()}}
+
+
+def _conferir_pauta(registro):
+    falhas = []
+    ids = {str(p["iniciativa"]["parlamentar"]["id"]) for lista in registro["fases"].values() for p in lista if (p.get("iniciativa") or {}).get("parlamentar")}
+    processos = processos_da_pauta({int(f): lista for f, lista in registro["fases"].items()}, ids)
+    item = item_pauta(registro["reuniao"], processos)
+    if not item:
+        return ["pauta da sessão sem processos"], []
+    falhas += comum.campos_vazios(item, ("titulo", "data", "fonte"), "pauta")
+    for p in processos:
+        falhas += comum.campos_vazios(p, ("id", "tipo", "numero", "ano", "ementa"), "processo da pauta")
+    if not any(p["idDeputado"] for p in processos):
+        falhas.append("nenhum processo da pauta com iniciativa de deputado")
+    return falhas, []
+
+
+def _contrato_atas(ctx):
+    s = sessao()
+    for r in paginas(s, "reuniao", situacao="R", tipoOrdenacao="DESC"):
+        if (r.get("tipoReuniao") or {}).get("id") not in TIPO_PLENARIO:
+            continue
+        videos = pegar(s, f"legis-videos/reuniao/{r['id']}").get("dados") or []
+        com_ata = [v for v in videos if v.get("ata") and v.get("hash")]
+        if com_ata:
+            v = {k: com_ata[0][k] for k in ("id", "reuniao", "hash", "titulo", "dataVideo")}
+            return {"reuniao": {k: r[k] for k in ("id", "numero", "dataInicio", "tipoReuniao")}, "videos": [{**v, "ata": "<p>texto da ata omitido da amostra</p>"}]}
+    raise RuntimeError("nenhuma sessão plenária com ata publicada entre as reuniões realizadas")
+
+
+def _conferir_atas(registro):
+    itens = itens_ata(registro["reuniao"], registro["videos"])
+    if not itens:
+        return ["legis-videos sem ata (campos ata e hash)"], []
+    return comum.campos_vazios(itens[0], ("titulo", "data", "fonte"), "ata"), []
+
+
+PROCESSO_NORMA = 51724
+
+
+def _contrato_normas(ctx):
+    s = sessao()
+    lista = pegar(s, "processo", pagina=0, tamanhoPagina=5, tipoPropositura=1)["dados"]
+    p = pegar(s, f"processo/{PROCESSO_NORMA}")
+    tram = pegar(s, f"processo/{PROCESSO_NORMA}/tramitacao")
+    chaves = ("id", "ementa", "propositura", "iniciativa", "dataEntrada", "dataArquivamento")
+    return {"lista": [{k: x[k] for k in chaves} for x in lista], "processo": {k: p[k] for k in chaves},
+            "tramitacao": [t for t in tram if (t.get("situacaoProcesso") or {}).get("id") in SITUACOES_NORMA][:2] + tram[-1:]}
+
+
+def _conferir_normas(registro):
+    falhas = []
+    sit = situacao_da_norma(registro["tramitacao"])
+    if not sit:
+        return ["tramitação sem situação de lei sancionada ou promulgada (ids 26, 27, 127, 128)"], []
+    chave, n = norma(registro["processo"], sit)
+    falhas += comum.campos_vazios(n, ("tipo", "numero", "ano", "data", "ementa", "situacao", "fonte"), "norma")
+    if not registro["lista"] or not all((p.get("iniciativa") or {}).get("tipo") for p in registro["lista"]):
+        falhas.append("lista de processos por tipo sem iniciativa")
+    return falhas, []
+
+
 CONTRATOS = [
     {"nome": "estadual_rn_deputados", "fonte": f"{API}/parlamentar", "buscar": _contrato_deputados, "html": _conferir_deputados},
     {"nome": "estadual_rn_projetos", "fonte": f"{API}/processo", "buscar": _contrato_projetos, "html": _conferir_projetos},
     {"nome": "estadual_rn_presenca", "fonte": f"{API}/reuniao", "buscar": _contrato_presenca, "html": _conferir_presenca},
     {"nome": "estadual_rn_votacao", "fonte": f"{API}/processo/ultimas-votacoes", "buscar": _contrato_votacao, "html": _conferir_votacao},
+    {"nome": "estadual_rn_orgao", "fonte": f"{PNCP}/contratos", "buscar": _contrato_orgao, "html": _conferir_orgao},
+    {"nome": "estadual_rn_pauta", "fonte": f"{API}/processo?reuniao=", "buscar": _contrato_pauta, "html": _conferir_pauta},
+    {"nome": "estadual_rn_atas", "fonte": f"{API}/legis-videos/reuniao", "buscar": _contrato_atas, "html": _conferir_atas},
+    {"nome": "estadual_rn_normas", "fonte": f"{API}/processo/{PROCESSO_NORMA}/tramitacao", "buscar": _contrato_normas, "html": _conferir_normas},
 ]
 
 

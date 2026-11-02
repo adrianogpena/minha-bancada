@@ -212,8 +212,15 @@ proposições), MT (www.al.mt.gov.br dá timeout: proposições, normas, voto, p
 
 **Andamento (2026-11-01):**
 - **PA feito e commitado** (`066fa803`): voto nominal (155 votações; 4 nomes de urna sem ligação: Delegado Toni Cunha, Eliel Faustino, Igor Normando, Torrinho Torres), normas (sem autoria), pautas e atas, contratos e licitações/registro de preço, gabinete (`srv_`) e remuneração. Ver `CHANGELOG.md`. Falta no PA: **proposições** (paginação do pager DevExpress não resolvida; usar janela de datas ou inspecionar no DevTools); **remuneração 2026 só de janeiro a maio** (a coleta foi interrompida; o Actions completa, conferir) e tempo do zero não medido; anexos de contratos (URL não achada).
-- **CE, PE, SC e GO: código e dados na árvore, NÃO commitados nem conferidos** (`scripts/coletar_estadual_{ce,pe,sc,go}.py`, `estaduais_comum.py`, `dados/estaduais/{CE,PE,SC,GO}/`). Conferir cada um (testes offline, `CHANGELOG.md`, `ENDPOINTS.md`, `mapa-dados.html`) antes de commitar. `tests/test_endpoints_doc.py` falha por `leis.alesc.sc.gov.br` (SC) até registrar o host em `ENDPOINTS.md`. Um agente por estado, em sequência (todos editam `estaduais_comum.py`/`identidades.py`).
-- **Próximos:** MT, RR, RN, SP, RJ, SE, MS, BA (3 itens); ES, MG, RS dependem de acesso.
+- **CE, PE, SC, GO, MT e RR commitados** (`2cc4eef0`, `2cc1013a`).
+- **RN, SP, RJ, SE, MS e BA feitos em 2026-11-02, NÃO commitados** (um agente por estado, em sequência: todos editam `estaduais_comum.py`/`identidades.py`). Detalhes de cada um no `CHANGELOG.md`. Pendências:
+  - RN: coleta do zero 18 min; gabinete, remuneração, verba e regras exigem token do site (não usado).
+  - SP: coleta do zero ~30 min, acima dos 25 min do job `sp` (a primeira no Actions fecha na segunda execução); gabinete parado em 2023.
+  - RJ: só as normas de 2023 e 2024 foram coletadas ao vivo (parciais); proposições, pautas, atas e órgão só testados em amostra; resoluções de 2025 e 2026 batem o teto de 1000 linhas (divisão por deputado não exercitada ao vivo). Rodar `gerar.py` antes de commitar.
+  - SE: diárias e folha de 2023-2024 fora; Alese Legis segue recusando conexão; `pypdf` entrou em `requirements.txt`.
+  - MS: hosts em `ENDPOINTS.md` como "não testado" (rodar `scripts/testar_endpoints.py`); `verbas_2026.json` foi restaurado por `git checkout` após a coleta.
+  - BA: presença 2021 a 06/2025, contratos e regras da verba; atas de registro de preço fora.
+- **Próximos:** ES, MG, RS dependem de acesso (testar do Actions ou de outra rede).
 
 **Ordem sugerida** (mais valor com menos esforço primeiro): CE, PE, SC, depois GO, PA, MT, RR, RN, SP, RJ, SE, MS; BA só três
 itens; ES, MG e RS dependem de abrir o acesso.

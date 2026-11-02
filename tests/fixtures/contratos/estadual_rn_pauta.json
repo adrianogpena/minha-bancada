@@ -1,0 +1,394 @@
+{
+ "fonte": "https://api-transparencialegislativa.al.rn.leg.br/elegis-api-transp-legislativa/processo?reuniao=",
+ "capturadoEm": "2026-11-02",
+ "amostra": {
+  "reuniao": {
+   "id": 3048,
+   "numero": 98,
+   "situacao": "R",
+   "dataInicio": "2026-10-28T10:30:00.000Z",
+   "tipoReuniao": {
+    "id": 1,
+    "sigla": "Sessão Ordinária",
+    "nome": "Sessão Plenária Ordinária"
+   }
+  },
+  "fases": {
+   "1": [
+    {
+     "id": 64090,
+     "numero": 3142,
+     "ano": 2026,
+     "numeroExterno": null,
+     "anoExterno": null,
+     "ementa": "Realização de Sessão Solene em homenagem ao Dia do Cerimonialista, em reconhecimento à sua relevante contribuição para com toda a sociedade ao aplicar as regras e procedimentos em eventos.",
+     "informacaoLei": null,
+     "dataEntrada": "2026-10-14T10:09:03.937Z",
+     "dataArquivamento": null,
+     "propositura": {
+      "tipo": {
+       "id": 9,
+       "sigla": "REQ",
+       "descricao": "REQUERIMENTO"
+      },
+      "numero": 2147,
+      "ano": 2026
+     },
+     "inclusao": {
+      "data": "2026-10-14T10:09:03.937Z"
+     },
+     "exclusao": {
+      "data": null
+     },
+     "iniciativa": {
+      "id": 43,
+      "tipo": "PARLAMENTAR",
+      "descricao": "DEP. FRANCISCO DO PT",
+      "parlamentar": {
+       "id": 12,
+       "nomeParlamentar": "DEPUTADO FRANCISCO DO PT",
+       "partido": {
+        "id": 1,
+        "nome": "PT",
+        "nomeOriginal": "Partido dos Trabalhadores"
+       }
+      }
+     },
+     "apensamentos": [],
+     "apensamento": null,
+     "documento": {
+      "id": 307001,
+      "ementa": "Realização de Sessão Solene em homenagem ao Dia do Cerimonialista, em reconhecimento à sua relevante contribuição para com toda a sociedade ao aplicar as regras e procedimentos em eventos.",
+      "tipoDocumento": {
+       "id": 8,
+       "descricao": "Requerimento"
+      }
+     },
+     "reuniaoProcesso": [
+      {
+       "id": 60200,
+       "dataSituacaoAbertura": null,
+       "dataSituacaoFechamento": null,
+       "resultadoVotacao": "N",
+       "reuniaoEvento": null
+      }
+     ],
+     "tipoVotacao": null,
+     "resultadoVotacao": {
+      "id": 60200,
+      "dataSituacaoAbertura": null,
+      "dataSituacaoFechamento": null,
+      "resultadoVotacao": "N",
+      "reuniaoEvento": null
+     },
+     "publicacao": [],
+     "emenda": [],
+     "comissao": []
+    },
+    {
+     "id": 62715,
+     "numero": 1893,
+     "ano": 2026,
+     "numeroExterno": null,
+     "anoExterno": null,
+     "ementa": "Institui o Programa Estadual de Prevenção de Quedas da Pessoa Idosa no âmbito do Estado do Rio Grande do Norte e dá outras providências",
+     "informacaoLei": null,
+     "dataEntrada": "2026-06-09T22:07:09.717Z",
+     "dataArquivamento": null,
+     "propositura": {
+      "tipo": {
+       "id": 1,
+       "sigla": "PL",
+       "descricao": "PROJETO DE LEI"
+      },
+      "numero": 261,
+      "ano": 2026
+     },
+     "inclusao": {
+      "data": "2026-06-09T22:07:09.717Z"
+     },
+     "exclusao": {
+      "data": null
+     },
+     "iniciativa": {
+      "id": 3,
+      "tipo": "PARLAMENTAR",
+      "descricao": "DEP. CRISTIANE DANTAS",
+      "parlamentar": {
+       "id": 8,
+       "nomeParlamentar": "DEPUTADA CRISTIANE DANTAS",
+       "partido": {
+        "id": 7,
+        "nome": "PSDB",
+        "nomeOriginal": "Partido da Social Democracia Brasileira"
+       }
+      }
+     },
+     "apensamentos": [],
+     "apensamento": null,
+     "documento": {
+      "id": 293525,
+      "ementa": "Institui o Programa Estadual de Prevenção de Quedas da Pessoa Idosa no âmbito do Estado do Rio Grande do Norte e dá outras providências",
+      "tipoDocumento": {
+       "id": 9,
+       "descricao": "Projeto de Lei"
+      }
+     },
+     "reuniaoProcesso": [
+      {
+       "id": 60205,
+       "dataSituacaoAbertura": null,
+       "dataSituacaoFechamento": null,
+       "resultadoVotacao": "N",
+       "reuniaoEvento": null
+      }
+     ],
+     "tipoVotacao": null,
+     "resultadoVotacao": {
+      "id": 60205,
+      "dataSituacaoAbertura": null,
+      "dataSituacaoFechamento": null,
+      "resultadoVotacao": "N",
+      "reuniaoEvento": null
+     },
+     "publicacao": [
+      {
+       "id": 507817,
+       "observacao": "Publicado no DLE do dia 11/06/2026.",
+       "linkDOE": "https://dle.al.rn.leg.br/abrearquivo/A6273C54-B58A-47AE-AF09-C2F54F8738D0-N/",
+       "origem": {
+        "setor": {
+         "id": 22,
+         "nome": "DIÁRIO OFICIAL ELETRÔNICO DA ALRN",
+         "sigla": "DOE AL/RN",
+         "comissao": null
+        },
+        "data": "2026-06-11T07:17:46.000Z"
+       },
+       "situacaoProcesso": {
+        "id": 13,
+        "nome": "Publicado no Diário Oficial Eletrônico da ALRN"
+       }
+      }
+     ],
+     "emenda": [
+      {
+       "id": 302932,
+       "documento": {
+        "id": 304630,
+        "ementa": "Suprime  o  art.  6º  do  Projeto  de  Lei  nº\n261/2026.",
+        "sigiloso": false,
+        "publico": false,
+        "tipoDocumento": {
+         "id": 43,
+         "descricao": "Emenda"
+        },
+        "emenda": {
+         "id": 5174,
+         "numero": 1,
+         "ano": 2026,
+         "tipoEmenda": {
+          "id": 3,
+          "descricao": "Supressiva"
+         },
+         "iniciativa": {
+          "id": 1269,
+          "tipo": "ORGAO",
+          "descricao": "COMISSÃO DE CONSTITUIÇÃO, JUSTIÇA E REDAÇÃO",
+          "parlamentar": null
+         }
+        }
+       },
+       "tipoVotacao": null
+      },
+      {
+       "id": 302935,
+       "documento": {
+        "id": 304633,
+        "ementa": "Suprime  o  art.  7º  do  Projeto  de  Lei  nº\n261/2026.",
+        "sigiloso": false,
+        "publico": false,
+        "tipoDocumento": {
+         "id": 43,
+         "descricao": "Emenda"
+        },
+        "emenda": {
+         "id": 5175,
+         "numero": 2,
+         "ano": 2026,
+         "tipoEmenda": {
+          "id": 3,
+          "descricao": "Supressiva"
+         },
+         "iniciativa": {
+          "id": 1269,
+          "tipo": "ORGAO",
+          "descricao": "COMISSÃO DE CONSTITUIÇÃO, JUSTIÇA E REDAÇÃO",
+          "parlamentar": null
+         }
+        }
+       },
+       "tipoVotacao": null
+      }
+     ],
+     "comissao": [
+      {
+       "sigla": "CCJR",
+       "descricao": "Comissão de Constituição, Justiça e Redação",
+       "assessor": "Victor Augusto Gonçalves Soares",
+       "relator": "DEPUTADO CORONEL AZEVEDO"
+      },
+      {
+       "sigla": "CS",
+       "descricao": "Comissão de Saúde",
+       "assessor": "PRISCILLA QUEIROGA CÂMARA",
+       "relator": "DEPUTADA TEREZINHA MAIA"
+      }
+     ]
+    }
+   ],
+   "2": [
+    {
+     "id": 64236,
+     "numero": 3279,
+     "ano": 2026,
+     "numeroExterno": null,
+     "anoExterno": null,
+     "ementa": "Requerimento solicitando a limpeza do acostamento da RN-002, no trecho que liga o município de Lagoa Salgada ao município de Boa Saúde. ",
+     "informacaoLei": null,
+     "dataEntrada": "2026-10-28T10:14:49.237Z",
+     "dataArquivamento": null,
+     "propositura": {
+      "tipo": {
+       "id": 9,
+       "sigla": "REQ",
+       "descricao": "REQUERIMENTO"
+      },
+      "numero": 2247,
+      "ano": 2026
+     },
+     "inclusao": {
+      "data": "2026-10-28T10:14:49.237Z"
+     },
+     "exclusao": {
+      "data": null
+     },
+     "iniciativa": {
+      "id": 45,
+      "tipo": "PARLAMENTAR",
+      "descricao": "DEP. KLEBER RODRIGUES",
+      "parlamentar": {
+       "id": 21,
+       "nomeParlamentar": "DEPUTADO KLEBER RODRIGUES",
+       "partido": {
+        "id": 23,
+        "nome": "PP",
+        "nomeOriginal": "Partido Progressista"
+       }
+      }
+     },
+     "apensamentos": [],
+     "apensamento": null,
+     "documento": {
+      "id": 287015,
+      "ementa": "Requerimento solicitando a limpeza do acostamento da RN-002, no trecho que liga o município de Lagoa Salgada ao município de Boa Saúde. ",
+      "tipoDocumento": {
+       "id": 8,
+       "descricao": "Requerimento"
+      }
+     },
+     "reuniaoProcesso": [
+      {
+       "id": 60218,
+       "dataSituacaoAbertura": null,
+       "dataSituacaoFechamento": null,
+       "resultadoVotacao": null,
+       "reuniaoEvento": null
+      }
+     ],
+     "tipoVotacao": null,
+     "resultadoVotacao": {
+      "id": 60218,
+      "dataSituacaoAbertura": null,
+      "dataSituacaoFechamento": null,
+      "resultadoVotacao": null,
+      "reuniaoEvento": null
+     },
+     "publicacao": [],
+     "emenda": [],
+     "comissao": []
+    },
+    {
+     "id": 64235,
+     "numero": 3280,
+     "ano": 2026,
+     "numeroExterno": null,
+     "anoExterno": null,
+     "ementa": "Requerimento solicitando a limpeza do acostamento da RN-177, no trecho que liga o município de Venha ver ao município de São miguel.",
+     "informacaoLei": null,
+     "dataEntrada": "2026-10-28T10:14:42.307Z",
+     "dataArquivamento": null,
+     "propositura": {
+      "tipo": {
+       "id": 9,
+       "sigla": "REQ",
+       "descricao": "REQUERIMENTO"
+      },
+      "numero": 2248,
+      "ano": 2026
+     },
+     "inclusao": {
+      "data": "2026-10-28T10:14:42.307Z"
+     },
+     "exclusao": {
+      "data": null
+     },
+     "iniciativa": {
+      "id": 45,
+      "tipo": "PARLAMENTAR",
+      "descricao": "DEP. KLEBER RODRIGUES",
+      "parlamentar": {
+       "id": 21,
+       "nomeParlamentar": "DEPUTADO KLEBER RODRIGUES",
+       "partido": {
+        "id": 23,
+        "nome": "PP",
+        "nomeOriginal": "Partido Progressista"
+       }
+      }
+     },
+     "apensamentos": [],
+     "apensamento": null,
+     "documento": {
+      "id": 288750,
+      "ementa": "Requerimento solicitando a limpeza do acostamento da RN-177, no trecho que liga o município de Venha ver ao município de São miguel.",
+      "tipoDocumento": {
+       "id": 8,
+       "descricao": "Requerimento"
+      }
+     },
+     "reuniaoProcesso": [
+      {
+       "id": 60217,
+       "dataSituacaoAbertura": null,
+       "dataSituacaoFechamento": null,
+       "resultadoVotacao": null,
+       "reuniaoEvento": null
+      }
+     ],
+     "tipoVotacao": null,
+     "resultadoVotacao": {
+      "id": 60217,
+      "dataSituacaoAbertura": null,
+      "dataSituacaoFechamento": null,
+      "resultadoVotacao": null,
+      "reuniaoEvento": null
+     },
+     "publicacao": [],
+     "emenda": [],
+     "comissao": []
+    }
+   ]
+  }
+ }
+}

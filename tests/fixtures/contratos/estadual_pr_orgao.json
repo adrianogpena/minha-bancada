@@ -1,0 +1,213 @@
+{
+ "fonte": "https://transparencia.assembleia.pr.leg.br/compras-e-licitacoes/contratos/contratos",
+ "capturadoEm": "2026-10-31",
+ "amostra": {
+  "contratos": [
+   {
+    "id": 358,
+    "publicado": 1,
+    "diretoria": "Diretoria de Apoio Técnico",
+    "protocolo": "17272662026",
+    "fornecedor": "SERVICO FEDERAL DE PROCESSAMENTO DE DADOS (SERPRO)",
+    "objeto": "Contratação de serviço especializado de correio eletrônico institucional SerproMail, prestado pelo Serviço Federal de Processamento de Dados – SERPRO, destinado a assegurar a continuidade do serviço d",
+    "fiscal": "Guilherme Masahiro Iwamoto Scarduelli",
+    "gestor": "Kelly Aparecida Selinger",
+    "contrato": "031/2026",
+    "status": "Publicado",
+    "mod": "Dispensa",
+    "numero_mod": "008/2026",
+    "inicio_vigencia": "2026-10-01T03:00:00.000000Z",
+    "fim_vigencia": "2027-10-01T03:00:00.000000Z",
+    "valor": 104569.2,
+    "renovacao": false,
+    "observacao": null,
+    "deleted_by": null,
+    "created_at": "2026-10-01T18:12:09.000000Z",
+    "updated_at": "2026-10-01T18:12:57.000000Z",
+    "deleted_at": null,
+    "anexos": [
+     {
+      "id": 940,
+      "contrato_id": "358",
+      "nome_documento": "Contrato 031-2026 - SERPRO.pdf",
+      "caminho": "transparencia/Anexos_Contratos/2026/mupupuob_51b6.pdf",
+      "valor": null,
+      "created_at": "2026-10-01T18:12:09.000000Z",
+      "updated_at": "2026-10-01T18:12:09.000000Z",
+      "deleted_by": null,
+      "deleted_at": null,
+      "id_documento_externo": null,
+      "url": "https://storage2.assembleia.pr.leg.br/file/public-media/transparencia/Anexos_Contratos/2026/mupupuob_51b6.pdf",
+      "extension": "pdf"
+     }
+    ],
+    "arquivos": []
+   },
+   {
+    "id": 356,
+    "publicado": 1,
+    "diretoria": "Diretoria de Apoio ao Plenário e Diretoria de Comunicação",
+    "protocolo": "18920-96.2025",
+    "fornecedor": "SOLOTECH SOLUÇÕES E SERVIÇOS EM TELECOMUNICAÇÕES LTDA",
+    "objeto": "A aquisição de equipamentos de áudio, destinados à implantação de infraestrutura integrada de sonorização para atendimento das atividades legislativas e de comunicação institucional da Assembleia Legi",
+    "fiscal": "Everton Adroal Assunção e Christian Eduardo Perez Diaz",
+    "gestor": "João Luiz Nascimento",
+    "contrato": "030/2026",
+    "status": "Vigente",
+    "mod": "Pregão Eletrônico",
+    "numero_mod": "016/2026",
+    "inicio_vigencia": "2026-09-21T03:00:00.000000Z",
+    "fim_vigencia": "2027-01-21T03:00:00.000000Z",
+    "valor": 228359.5,
+    "renovacao": false,
+    "observacao": null,
+    "deleted_by": null,
+    "created_at": "2026-09-22T18:42:14.000000Z",
+    "updated_at": "2026-09-22T18:42:14.000000Z",
+    "deleted_at": null,
+    "anexos": [
+     {
+      "id": 929,
+      "contrato_id": "356",
+      "nome_documento": "LOTE 2 - Contrato nº.  030_2026 - Assinado.pdf",
+      "caminho": "transparencia/Anexos_Contratos/2026/mud0tvgc_b91e.pdf",
+      "valor": null,
+      "created_at": "2026-09-22T18:42:14.000000Z",
+      "updated_at": "2026-09-22T18:42:14.000000Z",
+      "deleted_by": null,
+      "deleted_at": null,
+      "id_documento_externo": null,
+      "url": "https://storage2.assembleia.pr.leg.br/file/public-media/transparencia/Anexos_Contratos/2026/mud0tvgc_b91e.pdf",
+      "extension": "pdf"
+     }
+    ],
+    "arquivos": []
+   },
+   {
+    "id": 357,
+    "publicado": 1,
+    "diretoria": "Diretoria de Comunicação",
+    "protocolo": "04898-96.2026",
+    "fornecedor": "VRS CONSULTORIA E DISTRIBUIDORA LTDA",
+    "objeto": "Aquisição de celulares e tablets, a fim de atender as necessidades da Diretoria de Comunicação e a TV Assembleia, bem como da Escola do Legislativo desta Casa de Leis.",
+    "fiscal": "Ana Cláudia Zimmermann Sachser",
+    "gestor": "Rodrigo Augusto Evers Nascimento",
+    "contrato": "029/2026",
+    "status": "Vigente",
+    "mod": "Pregão Eletrônico",
+    "numero_mod": "020/2026",
+    "inicio_vigencia": "2026-09-22T03:00:00.000000Z",
+    "fim_vigencia": "2027-03-22T03:00:00.000000Z",
+    "valor": 92900,
+    "renovacao": false,
+    "observacao": null,
+    "deleted_by": null,
+    "created_at": "2026-09-23T13:10:14.000000Z",
+    "updated_at": "2026-09-23T13:10:14.000000Z",
+    "deleted_at": null,
+    "anexos": [
+     {
+      "id": 931,
+      "contrato_id": "357",
+      "nome_documento": "Contrato N° 029-2026.pdf",
+      "caminho": "transparencia/Anexos_Contratos/2026/mue4esbl_e244.pdf",
+      "valor": null,
+      "created_at": "2026-09-23T13:10:15.000000Z",
+      "updated_at": "2026-09-23T13:10:15.000000Z",
+      "deleted_by": null,
+      "deleted_at": null,
+      "id_documento_externo": null,
+      "url": "https://storage2.assembleia.pr.leg.br/file/public-media/transparencia/Anexos_Contratos/2026/mue4esbl_e244.pdf",
+      "extension": "pdf"
+     }
+    ],
+    "arquivos": []
+   }
+  ],
+  "atas": [
+   {
+    "id": 90,
+    "diretoria": "Diretoria Administrativa",
+    "protocolo": "05091-26.2026",
+    "fornecedor": "CHICO CHAVEIRO LTDA",
+    "objeto": "Formação de Registro de Preços para contratação de empresa especializada na prestação de serviços de chaveiro, compreendendo abertura, desbloqueio e fechamento de portas, portões, gavetas e armários; ",
+    "fiscal": "Albari Josebel Ferreira Padilha",
+    "gestor": "João Luiz Nascimento",
+    "contrato": "ARP 020/2026",
+    "status": "Vigente",
+    "mod": "Pregão Eletrônico para Registro de Preços",
+    "numero_mod": "019/2026",
+    "inicio_vigencia": "05/10/2026",
+    "fim_vigencia": "05/10/2027",
+    "valor": 98794.85,
+    "valor_formatado": "R$ 98.794,85",
+    "renovacao": true,
+    "observacao": null,
+    "arquivos": [
+     {
+      "descricao": "ARP_020_2026 - Servicos de Chaveiro- Assinado.pdf",
+      "arquivo": "https://storage2.assembleia.pr.leg.br/file/public-media/transparencia/atas_registro_preco/2026/mux3wn8d_4c22.pdf",
+      "tipo": "pdf"
+     }
+    ],
+    "anexos": []
+   },
+   {
+    "id": 86,
+    "diretoria": "Diretoria Administrativa",
+    "protocolo": "25332-20.2025",
+    "fornecedor": "PRODUFLORES, PRODUÇÃO DE FLORES LTDA - CNPJ sob o nº 55.844.758/0001-06",
+    "objeto": "LOTE 1 - Formação de registro de preços pelo período de 1 (um) ano, para futura e eventual aquisição de insumos de jardinagem, compreendendo plantas\r\nornamentais, gramas, mudas, insumos complementares",
+    "fiscal": "Temilyn Shigutsi",
+    "gestor": "João Luiz Nascimento",
+    "contrato": "ARP 019/2026",
+    "status": "Vigente",
+    "mod": "Pregão Eletrônico para Registro de Preços",
+    "numero_mod": "018/2026",
+    "inicio_vigencia": "14/09/2026",
+    "fim_vigencia": "14/09/2027",
+    "valor": 157091.84,
+    "valor_formatado": "R$ 157.091,84",
+    "renovacao": true,
+    "observacao": "LOTE 1",
+    "arquivos": [
+     {
+      "descricao": "LOTE 1- ATA DE REGISTRO DE PREÇOS Nº 019_2026 Assinado.pdf",
+      "arquivo": "https://storage2.assembleia.pr.leg.br/file/public-media/transparencia/atas_registro_preco/2026/mu5lnt3b_7ed8.pdf",
+      "tipo": "pdf"
+     }
+    ],
+    "anexos": []
+   }
+  ],
+  "adesoes": [
+   {
+    "id": 25,
+    "diretoria": "Diretoria Administrativa",
+    "protocolo": "26341-34.2025",
+    "fornecedor": "CS CAD CAM SERVICOS DE SOFTWARE LTDA - 23.324.543/0001-60",
+    "objeto": "Adesão à Ata de Registro de Preços nº 198/2023/SEI/CED - PREG-e Nº 1037/2023-SEAP - O objeto deste Contrato consiste na contratação da prestação de serviços de subscrição (assinatura) das licenças de ",
+    "fiscal": "Marcos Vinicius Schoenberger",
+    "gestor": "João Luiz Nascimento",
+    "contrato": "001/2026",
+    "status": "VIGENTE",
+    "mod": "Adesão a Ata de Registro de Preços",
+    "numero_mod": "PE 1037/2023 SEAP",
+    "inicio_vigencia": "15/01/2026",
+    "fim_vigencia": "15/07/2029",
+    "valor": 171917.4,
+    "valor_formatado": "R$ 171.917,40",
+    "renovacao": true,
+    "observacao": "Migrado da tela de Licitacoes.",
+    "arquivos": [
+     {
+      "descricao": "Documento de Formalização da Demanda - DFD",
+      "arquivo": "https://storage2.assembleia.pr.leg.br/file/public-media/transparencia/atas_adesao/2024/rn4vNclSpkOVuv9O7k0dYpmtG7Ea8f5L.pdf",
+      "tipo": "pdf"
+     }
+    ],
+    "anexos": []
+   }
+  ]
+ }
+}

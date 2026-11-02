@@ -9,6 +9,8 @@ Fontes lidas aqui (abertas, sem login nem captcha):
   - presença em plenário por sessão: /api/presenca/ano (página /plenario/presenca-em-plenario)
   - proposições (autoria só por nome, sem id): POST http://webservices.assembleia.pr.leg.br/api/public/proposicao/filtrar
   - normas legais (leis, decretos legislativos, resoluções; autoria só por nome): POST .../norma-legal/filtrar
+  - gabinete (servidores por símbolo de cargo, lotação "GAB. DEP. <nome>"): /api/remuneracao/recente (página /pessoal/comissionados);
+    um GET, foto do dia (sem histórico), relido todo dia
   - voto nominal por deputado: /api/votacoes/{meses,datas,sessoes} (a sessão vem pelo dia, `data=06`), /api/votacoes (PDF de cada item)
     e /api/votacoes/dados-abertos?sessao=<id> (JSON com a URL do ZIP no storage2; uma planilha por item, uma linha por deputado)
 
@@ -27,15 +29,19 @@ passagens aéreas e cartões não trazem o deputado.
 
 import html as html_lib
 import io
+import json
 import re
 import time
 import zipfile
-from datetime import date, timedelta
+from datetime import date, datetime, timedelta
 from functools import partial
+from urllib.parse import quote
+from zoneinfo import ZoneInfo
 
 import requests
 
 import estaduais_comum as comum
+import fornecedores
 import identidades
 import ids
 
@@ -53,10 +59,19 @@ NORMAS_PAGINA = PROPOSICOES_PAGINA
 VOTACOES_API = f"{PORTAL}/api/votacoes"
 PRIMEIRO_ANO = 2026   # só 2026; o que já existe de 2023 a 2025 fica como está
 FONTE_ID = "alep_pr"
+CONTRATOS_URL = f"{PORTAL}/compras-e-licitacoes/contratos/contratos"
+RESSARCIMENTO_REGRAS_PAGINA = f"{PORTAL}/legislacao/atos-normativos-proprios/ressarcimento-atividade-parlamentar"
+ORGAO_PAGINAS = {"contrato": CONTRATOS_URL, "ata_registro": f"{PORTAL}/compras-e-licitacoes/atas-de-registro-de-preco",
+                 "ata_adesao": f"{PORTAL}/compras-e-licitacoes/atas-de-adesao"}
+ORGAO_APIS = {"ata_registro": f"{PORTAL}/api/atas-registro-preco", "ata_adesao": f"{PORTAL}/api/atas-adesao"}
 RELER_SEM_ZIP_DIAS = 45   # sessão sem ZIP é conferida de novo até esta idade (o ZIP sai com atraso)
 RENOVAR_COMPLETA_DIAS = 14   # de tempos em tempos lista o ano todo, por segurança contra o que a leitura incremental não enxergue
+RELER_PAUTAS_DIAS = 60   # pautas e atas: leitura diária só até esta idade; o resto vem do arquivo anterior
 MESES_RECENTES = 2   # meses de diárias relidos todo dia; os anteriores vêm do arquivo
 RELER_ULTIMO_MES_DIAS = 7   # o último mês da remuneração (um POST por deputado) é relido uma vez por semana, para pegar correções
+GABINETE_API = f"{PORTAL}/api/remuneracao/recente"
+GABINETE_PAGINA = f"{PORTAL}/pessoal/comissionados"
+LOTACAO_GABINETE = re.compile(r"^\s*GAB\.?\s*DEP\.?\s+(.+)$", re.I)
 PAUSA = 1.2
 LIMITE_EMENTA = 400
 SIGLAS = {"PROJETO DE LEI": "PRO", "PROJETO DE LEI COMPLEMENTAR": "PLC", "PROJETO DECRETO LEGISLATIVO": "PDL",
@@ -177,6 +192,36 @@ def remuneracao_do_ano(sessao, ano: int, deputados: list[dict], anterior: dict, 
     return sorted(itens, key=lambda i: (i["mes"], i["idDeputado"])), marca
 
 
+# ---------------------------------------------------------------- gabinete
+
+def servidores_do_gabinete(linhas: list, deputados: list[dict]) -> list[dict]:
+    """Servidores lotados em "GAB. DEP. <nome>" da lista `remuneracao/recente` ([cabeçalho, [matrícula, nome, símbolo, lotação]...]).
+    O gabinete só vale se a lotação liga a um único deputado (`ligar`); lotação de liderança, comissão ou diretoria fica de fora.
+    Sem valores: o salário de cada um é outro endpoint e não entra no site."""
+    registros = [l for l in linhas[1:] if isinstance(l, list) and len(l) >= 4]
+    gabinete = {}
+    for l in registros:
+        m = LOTACAO_GABINETE.match(l[3] or "")
+        if m and m.group(1).strip():
+            gabinete[l[3]] = m.group(1).strip()
+    ligados = ligar(set(gabinete.values()), deputados)
+    itens = []
+    for matricula, nome, simbolo, lotacao in (l[:4] for l in registros):
+        id_dep = ligados.get(gabinete.get(lotacao))
+        if id_dep and matricula and nome:
+            itens.append({"idDeputado": id_dep, "matricula": str(matricula), "nome": " ".join(nome.split()), "simbolo": " ".join((simbolo or "").split()) or None})
+    return sorted(itens, key=lambda i: (i["idDeputado"], i["simbolo"] or "", i["nome"], i["matricula"]))
+
+
+def gabinete_atual(sessao, deputados: list[dict]) -> list[dict]:
+    r = sessao.get(GABINETE_API, headers=CABECALHO_AJAX, timeout=60)
+    r.raise_for_status()
+    linhas = json.loads(r.content.decode("utf-8"))   # o servidor não informa o charset e o requests erra a detecção
+    if not isinstance(linhas, list) or len(linhas) < 2:
+        raise RuntimeError("lista de servidores vazia ou em formato novo")
+    return servidores_do_gabinete(linhas, deputados)
+
+
 # ---------------------------------------------------------------- diárias
 
 def data_br(texto) -> str | None:
@@ -241,6 +286,96 @@ def itens_presenca(contagem: dict, deputados: list[dict]) -> list[dict]:
                 soma[i] += v
     return [{"idDeputado": i, "periodo": p, "presente": s[0], "ausente": s[2], "licenca": s[1], "totalSessoes": sum(s), "fonte": PRESENCA_PAGINA}
             for (i, p), s in sorted(somas.items())]
+
+
+# ---------------------------------------------------------------- endpoints que vêm vazios
+
+def publicados_no_ano(sessao, hoje: date) -> list[str]:
+    """Fontes que a Assembleia mantinha vazias e hoje trazem registros (ressarcimento, passagens, estoque).
+
+    Cartões ficam de fora: `/api/cartoes` tipo 2 traz só rendimentos do cartão de pagamento da Assembleia, sem deputado (pacote 8).
+
+    Só avisa: o conteúdo não é coletado enquanto não houver amostra real (FUTURAS_IMPLEMENTACOES.md, 4.5, pacote 7)."""
+    ano = hoje.year
+    meses = lambda nome: sorted(int(m) for m in (get_json(sessao, f"{PORTAL}/api/{nome}/meses", ano=ano).get("meses") or {}))
+    recentes = [m for m in range(max(1, hoje.month - MESES_RECENTES), hoje.month + 1)]
+    achadas = []
+    for mes in meses("ressarcimento"):
+        r = sessao.post(f"{PORTAL}/api/ressarcimento", data={"ano": ano, "mes": mes}, headers={"Accept": "application/json", "X-Requested-With": "XMLHttpRequest"}, timeout=60)
+        r.raise_for_status()
+        if r.json().get("data"):
+            achadas.append("ressarcimento")
+            break
+    if any(get_json(sessao, f"{PORTAL}/api/passagens", ano=ano, mes=m) for m in recentes):
+        achadas.append("passagens")
+    if meses("estoque"):
+        achadas.append("estoque")
+    return achadas
+
+
+def avisar_publicados(sessao, hoje: date) -> None:
+    achadas = publicados_no_ano(sessao, hoje)
+    if achadas:
+        comum.avisar(f"PR: {', '.join(achadas)} passaram a trazer registros; levantar o formato e coletar (FUTURAS_IMPLEMENTACOES.md, 4.5, pacote 7)")
+
+
+# ---------------------------------------------------------------- despesas do órgão
+
+def fornecedor_do_orgao(texto) -> tuple[str, str | None]:
+    """("nome", CNPJ ou None): a ata de adesão traz "NOME - 00.000.000/0001-00" no mesmo campo; o contrato só o nome."""
+    nome = " ".join(str(texto or "").split())
+    m = re.match(r"^(.*?)\s+-\s+([\d./-]{11,18})$", nome)
+    if m and (doc := fornecedores.documento(m.group(2))) and doc[0] == "cnpj":
+        return m.group(1).strip(), doc[1]
+    return nome, None
+
+
+def dia_iso(texto) -> str | None:
+    """"2026-10-01T03:00:00.000000Z" (contrato) ou "05/10/2026" (ata) -> "2026-10-05"; o contrato vem em UTC, 3 h à frente do dia local."""
+    if not texto:
+        return None
+    if re.match(r"\d{2}/\d{2}/\d{4}$", texto):
+        return comum.data_br_iso(texto)
+    return dia_local(texto)
+
+
+def itens_do_orgao(tipo: str, linhas: list[dict]) -> dict:
+    """{id: item}; o id sai de (tipo, id na fonte). Fiscal e gestor (servidores) ficam de fora."""
+    itens = {}
+    for lin in linhas:
+        if not lin.get("id") or lin.get("deleted_at") or lin.get("publicado") == 0:
+            continue
+        nome, cnpj = fornecedor_do_orgao(lin.get("fornecedor"))
+        arquivos = [{"nome": a.get("nome_documento") or a.get("descricao"), "url": a.get("url") or a.get("arquivo")} for a in (lin.get("anexos") or lin.get("arquivos") or [])]
+        itens[ids.gerar_id("ctr", f"{FONTE_ID}_{tipo}", lin["id"])] = {
+            "tipo": tipo, "idFonte": lin["id"], "numero": lin.get("contrato"), "protocolo": lin.get("protocolo"), "fornecedor": nome,
+            "nomeChave": fornecedores.nome_chave(nome), "cnpj": cnpj, "objeto": " ".join(str(lin.get("objeto") or "").split()),
+            "diretoria": lin.get("diretoria"), "modalidade": lin.get("mod"), "numeroModalidade": lin.get("numero_mod"), "situacao": lin.get("status"),
+            "inicio": dia_iso(lin.get("inicio_vigencia")), "fim": dia_iso(lin.get("fim_vigencia")),
+            "valor": comum.valor_br(lin.get("valor")) if isinstance(lin.get("valor"), str) else lin.get("valor"),
+            "arquivos": [a for a in arquivos if a["url"]], "fonte": ORGAO_PAGINAS[tipo]}
+    return itens
+
+
+def contratos_do_ano(sessao, ano: int) -> list[dict]:
+    linhas, pagina = [], 1
+    while True:
+        r = get_json(sessao, CONTRATOS_URL, ano=ano, page=pagina)["contratos"]
+        linhas += r.get("data") or []
+        if pagina >= (r.get("last_page") or 1):
+            return linhas
+        pagina += 1
+
+
+def regras_do_ressarcimento(sessao) -> dict | None:
+    """Resolução mais nova que regula as verbas de ressarcimento (PDF), lida da página de atos próprios; None se mudar o formato."""
+    r = sessao.get(RESSARCIMENTO_REGRAS_PAGINA, timeout=60)
+    r.raise_for_status()
+    pdfs = re.findall(r'href="([^"]*/ressarcimento_da_atividade_parlamentar/(\d{4})/[^"]+\.pdf)"', r.content.decode("utf-8"))
+    if not pdfs:
+        return None
+    url, ano = max(pdfs, key=lambda x: x[1])
+    return {"url": quote(url, safe=":/%"), "ano": int(ano), "fonte": RESSARCIMENTO_REGRAS_PAGINA}
 
 
 # ---------------------------------------------------------------- proposições
@@ -450,6 +585,86 @@ def votacoes_do_ano(sessao, ano: int, deputados: list[dict], arquivo: dict, hoje
     return votacoes, materias_votadas, estado, completa
 
 
+# ---------------------------------------------------------------- pautas e atas
+
+PAUTAS = {"ordem-do-dia": "plenario/pautas/ordem-do-dia/ajax", "ccj": "plenario/pautas/ccj/ajax",
+          "comissoes": "plenario/pautas/comissoes-tematicas/ajax", "atas": "plenario/atas-sessoes-plenarias/ajax"}
+CABECALHO_AJAX = {"Accept": "application/json", "X-Requested-With": "XMLHttpRequest"}
+FUSO = ZoneInfo("America/Sao_Paulo")
+
+
+def dia_local(texto) -> str | None:
+    """'2026-11-03T17:35:00.000000Z' (UTC) -> '2026-11-03' no horário de Brasília."""
+    if not texto:
+        return None
+    try:
+        return datetime.fromisoformat(str(texto).replace("Z", "+00:00")).astimezone(FUSO).date().isoformat()
+    except ValueError:
+        return comum.data_iso(texto)
+
+
+def arquivos_da_pauta(item: dict) -> list[dict]:
+    """[{nome, url}] com o arquivo principal e os anexos (PDF e DOCX), só com URL http(s)."""
+    achados = [{"nome": item.get("titulo") or item.get("reuniao") or "Arquivo", "url": item.get("url")}] if item.get("arquivo") else []
+    anexos = item.get("arquivos") or []
+    if isinstance(anexos, dict):
+        anexos = [a for grupo in anexos.values() for a in grupo]
+    achados += [{"nome": a.get("titulo") or a.get("file_name") or "Anexo", "url": a.get("url")} for a in anexos]
+    vistos, saida = set(), []
+    for a in achados:
+        if str(a["url"] or "").startswith("http") and a["url"] not in vistos:
+            vistos.add(a["url"])
+            saida.append(a)
+    return saida
+
+
+def itens_pauta(tipo: str, dados: dict) -> list[dict]:
+    """Normaliza a resposta de uma consulta mensal: [{id, tipo, titulo, data, [comissao], arquivos}]; sem arquivo não entra."""
+    itens = []
+    for semana in (dados or {}).values():
+        if tipo == "comissoes":
+            reunioes = [r for lista in semana.values() for r in lista]
+            for r in reunioes:
+                arquivos = arquivos_da_pauta({"arquivos": r.get("arquivos") or {}})
+                if arquivos:
+                    itens.append({"id": None, "tipo": tipo, "titulo": r.get("nome_reuniao") or r.get("reuniao_original"), "comissao": r.get("comissao"),
+                                  "data": r.get("data"), "arquivos": arquivos})
+            continue
+        for i in semana:
+            if not i.get("publicado", True):
+                continue
+            arquivos = arquivos_da_pauta(i)
+            if arquivos:
+                itens.append({"id": str(i["id"]), "tipo": tipo, "titulo": " ".join((i.get("titulo") or i.get("reuniao") or "").split()),
+                              "data": dia_local(i.get("data_sessao") or i.get("data")), "arquivos": arquivos})
+    return itens
+
+
+def chave_pauta(i: dict) -> str:
+    return f"{i['tipo']}|{i['id']}" if i["id"] else f"{i['tipo']}|{i['comissao']}|{i['data']}|{i['titulo']}"
+
+
+def pautas_do_ano(sessao, ano: int, hoje: date, anterior: dict, completa: bool) -> dict:
+    """{chave: item}. O portal ignora `mes` e devolve 20 itens por `page`, do mais novo ao mais antigo, dentro de data_inicio..data_fim.
+    Completa lê todas as páginas do ano e recomeça do zero; senão para na primeira página só com itens mais velhos que RELER_PAUTAS_DIAS e junta ao arquivo anterior."""
+    corte = (hoje - timedelta(days=RELER_PAUTAS_DIAS)).isoformat()
+    achados = {} if completa else dict(anterior)
+    for tipo, caminho in PAUTAS.items():
+        for pagina in range(1, 60):
+            r = sessao.get(f"{PORTAL}/{caminho}", params={"data_inicio": f"{ano}-01-01", "data_fim": f"{ano}-12-31", "page": pagina}, headers=CABECALHO_AJAX, timeout=60)
+            r.raise_for_status()
+            dados = r.json().get("data")
+            if not dados:
+                break
+            itens = itens_pauta(tipo, dados)
+            for i in itens:
+                achados[chave_pauta(i)] = i
+            time.sleep(PAUSA)
+            if not completa and itens and all(i["data"] and i["data"] < corte for i in itens):
+                break
+    return achados
+
+
 # ---------------------------------------------------------------- coleta
 
 def coletar() -> None:
@@ -479,7 +694,10 @@ def coletar() -> None:
     def proposicoes(ano):
         if comum.ano_encerrado(ano, hoje, pasta / f"materias_{ano}.json"):
             return
-        achadas = materias(proposicoes_do_ano(s, ano), deputados)
+        lista = proposicoes_do_ano(s, ano)
+        if not lista and comum.ler(pasta / f"materias_{ano}.json", {}).get("materias"):
+            raise RuntimeError(f"webservice devolveu lista vazia para {ano}; mantém o arquivo anterior")
+        achadas = materias(lista, deputados)
         comum.salvar(pasta / f"materias_{ano}.json", {"coletadoEm": agora, "fonte": PROPOSICOES_PAGINA, "materias": achadas})
         print(f"PR: {ano} proposições {len(achadas)}")
 
@@ -508,11 +726,40 @@ def coletar() -> None:
         comum.salvar(arq, {"coletadoEm": agora, "fonte": PRESENCA_PAGINA, "itens": itens})
         print(f"PR: presença {len(itens)} linhas")
 
+    def orgao(ano):
+        arq = pasta / f"orgao_{ano}.json"
+        if comum.ano_encerrado(ano, hoje, arq):
+            return
+        itens = itens_do_orgao("contrato", contratos_do_ano(s, ano))
+        for tipo, api in ORGAO_APIS.items():
+            itens |= itens_do_orgao(tipo, get_json(s, api, ano=ano).get("data") or [])
+        if not itens and comum.ler(arq, {}).get("itens"):
+            raise RuntimeError(f"portal devolveu lista vazia para {ano}; mantém o arquivo anterior")
+        comum.salvar(arq, {"coletadoEm": agora, "fonte": CONTRATOS_URL, "itens": itens})
+        print(f"PR: {ano} contratos e atas do órgão {len(itens)}")
+
+    def regras_ressarcimento():
+        regra = regras_do_ressarcimento(s)
+        if not regra:
+            raise RuntimeError("nenhum PDF de resolução do ressarcimento na página; mantém o arquivo anterior")
+        comum.salvar(pasta / "regras_ressarcimento.json", regra)
+
+    def gabinete():
+        arq = pasta / "gabinete.json"
+        itens = gabinete_atual(s, deputados)
+        if not itens:
+            raise RuntimeError("nenhum servidor ligado a gabinete de deputado; mantém o arquivo anterior")
+        comum.salvar(arq, {"coletadoEm": agora, "fonte": GABINETE_PAGINA, "itens": itens})
+        print(f"PR: gabinetes {len(itens)} servidores de {len({i['idDeputado'] for i in itens})} deputados")
+
     def normas_legais(ano):
         arq = pasta / f"normas_{ano}.json"
         if comum.ano_encerrado(ano, hoje, arq):
             return
-        achadas = normas(normas_do_ano(s, ano), deputados)
+        lista = normas_do_ano(s, ano)
+        if not lista and comum.ler(arq, {}).get("normas"):
+            raise RuntimeError(f"webservice devolveu lista vazia para {ano}; mantém o arquivo anterior")
+        achadas = normas(lista, deputados)
         comum.salvar(arq, {"coletadoEm": agora, "fonte": NORMAS_PAGINA, "normas": achadas})
         print(f"PR: {ano} normas {len(achadas)}")
 
@@ -525,14 +772,27 @@ def coletar() -> None:
         comum.salvar(pasta / "materias_votadas.json", mats)
         print(f"PR: {ano} votações {len(votos)} em {sum(1 for e in estado.values() if e['zip'])} sessões com ZIP ({len(estado)} no total)")
 
+    def pautas(ano):
+        arq = pasta / f"pautas_{ano}.json"
+        anterior = comum.ler(arq, {})
+        completa = not anterior.get("itens") or not anterior.get("completaEm") or (hoje - date.fromisoformat(anterior["completaEm"])).days >= RENOVAR_COMPLETA_DIAS
+        itens = pautas_do_ano(s, ano, hoje, anterior.get("itens") or {}, completa)
+        comum.salvar(arq, {"coletadoEm": agora, "completaEm": agora if completa else anterior["completaEm"], "fonte": f"{PORTAL}/plenario/pautas/ordem-do-dia", "itens": itens})
+        print(f"PR: {ano} pautas e atas {len(itens)}")
+
     for ano in range(PRIMEIRO_ANO, hoje.year + 1):
+        tentar(f"pautas e atas {ano}", partial(pautas, ano))
         tentar(f"proposições {ano}", partial(proposicoes, ano))
         tentar(f"normas {ano}", partial(normas_legais, ano))
         tentar(f"votações {ano}", partial(votacoes, ano))
         tentar(f"diárias {ano}", partial(diarias, ano))
+        tentar(f"contratos e atas {ano}", partial(orgao, ano))
         if ano == hoje.year:
             tentar(f"remuneração {ano}", partial(remuneracao, ano))
     tentar("presença", presenca)
+    tentar("gabinete", gabinete)
+    tentar("regras do ressarcimento", regras_ressarcimento)
+    tentar("fontes vazias", partial(avisar_publicados, s, hoje))
 
 
 # ---------------------------------------------------------------- contratos
@@ -675,6 +935,59 @@ def _conferir_normas(registro):
     return falhas, []
 
 
+def _contrato_pautas(ctx):
+    r = comum.sessao().get(f"{PORTAL}/{PAUTAS['ordem-do-dia']}", params={"data_inicio": f"{date.today().year}-01-01", "data_fim": f"{date.today().year}-12-31", "page": 1}, headers=CABECALHO_AJAX, timeout=60)
+    r.raise_for_status()
+    dados = r.json().get("data") or {}
+    primeira = list(dados)[:1]
+    return {"data": {k: [{c: i.get(c) for c in ("id", "publicado", "titulo", "data_sessao", "arquivo", "url")} | {"arquivos": [{c: a.get(c) for c in ("titulo", "url")} for a in (i.get("arquivos") or [])[:2]]}
+                         for i in dados[k][:2]] for k in primeira}}
+
+
+def _conferir_pautas(registro):
+    itens = itens_pauta("ordem-do-dia", registro["data"])
+    falhas = [] if itens else ["nenhuma pauta com arquivo"]
+    for i in itens:
+        falhas += comum.campos_vazios(i, ("id", "titulo", "data", "arquivos"), "pauta", vazios=(None, ""))
+        falhas += ["data da pauta fora do formato ISO"] if not re.match(r"\d{4}-\d\d-\d\d$", i["data"] or "") else []
+    return falhas, []
+
+
+def _contrato_gabinete(ctx):
+    linhas = json.loads(comum.sessao().get(GABINETE_API, headers=CABECALHO_AJAX, timeout=60).content.decode("utf-8"))
+    gab = [l for l in linhas[1:] if LOTACAO_GABINETE.match(l[3] or "")]
+    outras = [l for l in linhas[1:] if not LOTACAO_GABINETE.match(l[3] or "")]
+    return {"linhas": linhas[:1] + gab[:4] + outras[:1]}
+
+
+def _conferir_gabinete(registro):
+    linhas = registro["linhas"]
+    falhas = [] if linhas[0] == ["FUNCIONARIO", "NOME", "SIGLA", "LOTAÇÃO CARGO"] else [f"cabeçalho mudou: {linhas[0]}"]
+    for l in linhas[1:]:
+        falhas += [] if len(l) == 4 and l[0] and l[1] else ["servidor sem matrícula, nome ou colunas esperadas"]
+    return falhas or ([] if any(LOTACAO_GABINETE.match(l[3] or "") for l in linhas[1:]) else ["nenhuma lotação GAB. DEP."]), []
+
+
+def _contrato_orgao(ctx):
+    s = comum.sessao()
+    contratos = get_json(s, CONTRATOS_URL, ano=2026)["contratos"]["data"]
+    atas = get_json(s, ORGAO_APIS["ata_registro"], ano=2026)["data"]
+    adesoes = get_json(s, ORGAO_APIS["ata_adesao"], ano=2026)["data"]
+    enxuto = lambda lin: {**lin, "objeto": (lin.get("objeto") or "")[:200], "anexos": (lin.get("anexos") or [])[:1], "arquivos": (lin.get("arquivos") or [])[:1]}
+    return {"contratos": [enxuto(x) for x in contratos[:3]], "atas": [enxuto(x) for x in atas[:2]], "adesoes": [enxuto(x) for x in adesoes[:1]]}
+
+
+def _conferir_orgao(registro):
+    falhas = []
+    for tipo, chave in (("contrato", "contratos"), ("ata_registro", "atas"), ("ata_adesao", "adesoes")):
+        itens = itens_do_orgao(tipo, registro[chave])
+        if not itens:
+            falhas.append(f"{chave}: nenhum item lido")
+        for i in itens.values():
+            falhas += [f"{chave}: faltou {c}" for c in ("fornecedor", "valor", "inicio") if not i[c]]
+    return falhas, []
+
+
 CONTRATOS = [
     {"nome": "estadual_pr_deputados", "fonte": DEPUTADOS_URL, "buscar": _contrato_deputados, "html": _conferir_deputados},
     {"nome": "estadual_pr_remuneracao", "fonte": f"{PORTAL}/api/remuneracao", "buscar": _contrato_remuneracao, "html": _conferir_remuneracao},
@@ -682,6 +995,9 @@ CONTRATOS = [
     {"nome": "estadual_pr_presenca", "fonte": f"{PORTAL}/api/presenca/ano", "buscar": _contrato_presenca, "html": _conferir_presenca},
     {"nome": "estadual_pr_proposicoes", "fonte": f"{API_PROPOSICOES}/proposicao/filtrar", "buscar": _contrato_proposicoes, "html": _conferir_proposicoes},
     {"nome": "estadual_pr_votacoes", "fonte": f"{VOTACOES_API}/dados-abertos", "buscar": _contrato_votacoes, "html": _conferir_votacoes},
+    {"nome": "estadual_pr_pautas", "fonte": f"{PORTAL}/{PAUTAS['ordem-do-dia']}", "buscar": _contrato_pautas, "html": _conferir_pautas},
+    {"nome": "estadual_pr_gabinete", "fonte": GABINETE_API, "buscar": _contrato_gabinete, "html": _conferir_gabinete},
+    {"nome": "estadual_pr_orgao", "fonte": CONTRATOS_URL, "buscar": _contrato_orgao, "html": _conferir_orgao},
     {"nome": "estadual_pr_normas", "fonte": f"{API_PROPOSICOES}/norma-legal/filtrar", "buscar": _contrato_normas, "html": _conferir_normas},
 ]
 

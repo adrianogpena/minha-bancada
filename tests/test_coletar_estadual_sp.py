@@ -3,6 +3,8 @@ import json
 import zipfile
 from datetime import date
 
+import pytest
+
 import coletar_estadual_sp as sp
 from conftest import RAIZ
 
@@ -152,3 +154,212 @@ def test_presenca_do_ano_so_busca_o_que_falta(monkeypatch):
     assert sorted(chamadas) == [("1", 3), ("1", 4)]
     por_periodo = {i["periodo"]: i for i in itens}
     assert por_periodo["2026-01"]["presente"] == 9 and por_periodo["2026-03"]["presente"] == 1 and por_periodo["2026"]["presente"] == 9 + 9 + 1 + 1
+
+
+MATRICULAS = {"300396", "300631"}
+
+
+def detalhe_norma(**mudancas):
+    base = {"idProcesso": 1000671453, "descricao": "Projeto de Lei 1.332/2025", "resumo": "Declara de utilidade pública a Associação X.", "transformadoNorma": True,
+            "urlNorma": "/norma/212580", "descricaoNorma": "Lei nº 18.462, de 11/05/2026",
+            "autores": [{"matricula": 300396, "nome": "VALDOMIRO LOPES"}, {"matricula": None, "nome": "Governador"}]}
+    return {**base, **mudancas}
+
+
+def test_normas_do_contrato():
+    assert sp._conferir_normas(amostra("normas")) == ([], [])
+
+
+def test_norma_do_detalhe_liga_autor_pela_matricula():
+    nid, norma = sp.norma_do_detalhe(detalhe_norma(), MATRICULAS)
+    assert nid == "212580" and norma["idsDeputados"] == ["300396"]
+    assert (norma["tipo"], norma["numero"], norma["ano"], norma["data"]) == ("Lei", 18462, 2026, "2026-05-11")
+    assert norma["fonte"] == "https://www.al.sp.gov.br/norma/212580" and norma["linkProjeto"].endswith("?id=1000671453")
+
+
+def test_norma_do_detalhe_tipos_e_casos_sem_deputado():
+    _, lc = sp.norma_do_detalhe(detalhe_norma(descricaoNorma="Lei Complementar nº 1.418, de 26/12/2024", urlNorma="/norma/210419"), MATRICULAS)
+    assert (lc["tipo"], lc["numero"], lc["ano"]) == ("Lei Complementar", 1418, 2024)
+    assert sp.norma_do_detalhe(detalhe_norma(), {"1"}) is None
+    assert sp.norma_do_detalhe(detalhe_norma(transformadoNorma=False), MATRICULAS) is None
+    assert sp.norma_do_detalhe(detalhe_norma(urlNorma=None, descricaoNorma=None), MATRICULAS) is None
+
+
+def test_precisa_do_detalhe_so_para_deputado_ou_varios_autores():
+    assert sp.precisa_do_detalhe({"tipoAutorPrincipal": "Parlamentar", "numeroAutorPrincipal": 300396}, MATRICULAS)
+    assert sp.precisa_do_detalhe({"tipoAutorPrincipal": "varios", "numeroAutorPrincipal": 1}, MATRICULAS)
+    assert not sp.precisa_do_detalhe({"tipoAutorPrincipal": "Pessoa", "numeroAutorPrincipal": 105}, MATRICULAS)
+
+
+def test_coletar_normas_le_so_o_que_falta(tmp_path, monkeypatch):
+    monkeypatch.setattr(sp, "PASTA", tmp_path)
+    candidatas = {1: {"idProcesso": 1, "tipoProcesso": "PL", "anoTipo": 2025, "numeroTipo": 1}}
+    lidos = []
+
+    def detalhe(s, caminho, **params):
+        lidos.append(caminho)
+        return detalhe_norma(idProcesso=1)
+
+    monkeypatch.setattr(sp, "normas_candidatas", lambda s, matriculas, anos: candidatas)
+    monkeypatch.setattr(sp, "pegar_json", detalhe)
+    sp.coletar_normas(None, [{"id": "300396"}], date(2026, 11, 2))
+    assert lidos == ["/processo/detalhes/todos/PL/2025/1"]
+    assert list(json.loads((tmp_path / "normas_2026.json").read_text(encoding="utf-8"))["normas"]) == ["212580"]
+    candidatas[2] = {"idProcesso": 2, "tipoProcesso": "PL", "anoTipo": 2025, "numeroTipo": 2}
+    lidos.clear()
+    sp.coletar_normas(None, [{"id": "300396"}], date(2026, 11, 3))
+    assert lidos == ["/processo/detalhes/todos/PL/2025/2"]
+
+
+def test_sessoes_do_contrato():
+    assert sp._conferir_sessoes(amostra("sessoes")) == ([], [])
+
+
+def test_ler_sessao_pede_so_o_que_existe(monkeypatch):
+    chamadas = []
+    registro = amostra("sessoes")
+
+    def falso(s, caminho, **params):
+        chamadas.append(caminho.rsplit("/", 1)[1])
+        return {"pauta": registro["pauta"], "ordem-do-dia": registro["ordemDoDia"], "integra": registro["integra"]}[chamadas[-1]]
+
+    monkeypatch.setattr(sp, "pegar_json", falso)
+    itens = sp.ler_sessao(None, {**registro["sessao"], "temOrdemDoDia": False})
+    assert chamadas == ["pauta", "integra"]
+    assert sorted(i["tipo"] for i in itens) == ["atas", "ordem-do-dia"]
+    assert sp.ler_sessao(None, {**registro["sessao"], "temPauta": False, "temOrdemDoDia": False, "temIntegra": False}) == []
+
+
+def test_reunioes_do_contrato():
+    assert sp._conferir_reunioes(amostra("reunioes")) == ([], [])
+
+
+def test_itens_comissoes_so_documento_com_arquivo():
+    reuniao = {"idReuniao": 5, "nuReuniao": 7, "tituloReuniao": "Reunião de Pauta", "dtReuniao": "2026-11-04T15:00", "status": {"txNome": "Convocada"},
+               "colegiadosRelacionados": [{"sigla": "CCJR", "nome": "Comissão de Constituição"}],
+               "documentosReuniao": [{"idDocumento": 11, "tipo": "Pauta de colegiado", "descricao": "Pauta nº 8/2026", "linkArquivo": "https://x/p.html", "linkArquivoPDF": None},
+                                     {"idDocumento": 12, "tipo": "Ata de Reunião de Comissão", "descricao": "Ata", "linkArquivo": None, "linkArquivoPDF": None},
+                                     {"idDocumento": 13, "tipo": "Comunicado de colegiado", "descricao": "Comunicado", "linkArquivo": "https://x/c.docx"}]}
+    itens = sp.itens_comissoes([reuniao])
+    assert [(i["id"], i["tipo"], i["data"], i["titulo"], i["fonte"]) for i in itens] == [("11", "ordem-do-dia", "2026-11-04", "CCJR - Reunião de Pauta nº 7", "https://x/p.html")]
+
+
+def test_pautas_e_atas_so_relem_o_recente(tmp_path, monkeypatch):
+    monkeypatch.setattr(sp, "PASTA", tmp_path)
+    sessoes = [{"id": 1, "titulo": "1ª Sessão", "dtInicio": "2026-09-01T14:00"}, {"id": 2, "titulo": "2ª Sessão", "dtInicio": "2026-10-30T14:00"}]
+    lidas = []
+
+    def paginas(s, caminho, **params):
+        return iter(sessoes if caminho.startswith("/sessoes") and params["ano"] == 2026 else [])
+
+    def ler(s, sessao):
+        lidas.append(sessao["id"])
+        return [{"id": str(sessao["id"]), "reuniao": f"s{sessao['id']}", "origem": "plenario", "tipo": "atas", "titulo": sessao["titulo"], "data": sessao["dtInicio"][:10],
+                 "arquivos": [], "fonte": "https://x"}]
+
+    monkeypatch.setattr(sp, "paginas", paginas)
+    monkeypatch.setattr(sp, "ler_sessao", ler)
+    sp.coletar_pautas_atas(None, date(2026, 11, 2))
+    assert sorted(lidas) == [1, 2]
+    lidas.clear()
+    sp.coletar_pautas_atas(None, date(2026, 11, 3))
+    assert lidas == [2]
+    assert set(json.loads((tmp_path / "pautas_2026.json").read_text(encoding="utf-8"))["itens"]) == {"atas|1", "atas|2"}
+
+
+def test_pautas_e_atas_ano_encerrado_nao_e_lido(tmp_path, monkeypatch):
+    monkeypatch.setattr(sp, "PASTA", tmp_path)
+    (tmp_path / "pautas_2023.json").write_text('{"itens":{"atas|9":{"origem":"plenario","tipo":"atas","id":"9"}},"lidas":{"9":"2024-01-01"},"falhas":{}}', encoding="utf-8")
+    anos = []
+    monkeypatch.setattr(sp, "paginas", lambda s, caminho, **params: anos.append(params["ano"]) or iter([]))
+    sp.coletar_pautas_atas(None, date(2026, 11, 2))
+    assert 2023 not in anos and set(anos) == {2024, 2025, 2026}
+    assert "atas|9" in json.loads((tmp_path / "pautas_2023.json").read_text(encoding="utf-8"))["itens"]
+
+
+def test_contratos_do_contrato():
+    assert sp._conferir_contratos(amostra("contratos")) == ([], [])
+
+
+def test_parse_listagem_separa_tipo_encerrado_e_aditamento():
+    pagina = (
+        '<div class="modulo_atas" style="display: none"><li class="card"><a href="/alesp/contratos/detalhe/?detContrato=' + "a" * 32 + '"> 1. <strong>Processo Digital 188 / 2026</strong></a>'
+        '<b class="badge badge-secondary">Pregão para Registro de Preço</b><i style="color: #666">Leite &amp; derivados</i>'
+        '<a href="https://www.al.sp.gov.br/repositorio/contratos/188-2026 ATA Leite.pdf">pdf</a>'
+        '<ul class="tree"><li><a href="/alesp/contratos/detalhe/?detContrato=' + "b" * 32 + '"><strong>Processo Digital 188 / 2026 - 1º Aditamento</strong></a></li></ul></div>'
+        '<div class="modulo_contratos_encerrado" style="display: none"><li class="card"><a href="/alesp/contratos/detalhe/?detContrato=' + "c" * 32 + '">'
+        '<strong>Processo Digital 7 / 2021</strong></a><b class="badge">Pregão</b><i style="color: #666">Obra</i></div>'
+        '<div id="blocoConvenio"><li class="card"><a href="https://www.al.sp.gov.br/alesp/convenio/?idContrato=1"><strong>Processo 1 / 2025</strong></a></div>'
+    )
+    a, c = sp.parse_listagem(pagina)
+    assert (a["modulo"], a["encerrado"], a["numero"], a["ano"], a["aditamentos"], a["objeto"]) == ("atas", False, 188, 2026, 1, "Leite & derivados")
+    assert a["pdf"] == "https://www.al.sp.gov.br/repositorio/contratos/188-2026%20ATA%20Leite.pdf" and a["modalidade"] == "Pregão para Registro de Preço"
+    assert (c["modulo"], c["encerrado"], c["ano"], c["pdf"]) == ("contratos", True, 2021, None)
+
+
+def detalhe_html(contratada="MADARP LTDA. - 54.456.948/0001-85", valor="R$ 67.200,00"):
+    linhas = {"PROCESSO": "144 / 2026", "CONTRATADA": contratada, "OBJETO": "Locação de contêineres", "MODALIDADE": "Pregão", "VIG&Ecirc;NCIA": "de 17/08/2026 a 30/06/2027",
+              "VALOR TOTAL": valor, "ASSINATURA": "14/08/2026", "No. DO EMPENHO": "2026NE00712"}
+    corpo = "".join(f"<tr><td><b>{k}</b></td><td><font>{v}</font></td></tr>" for k, v in linhas.items())
+    corpo += '<tr><td><b>DOCUMENTOS</b></td><td><a href="https://www.al.sp.gov.br/repositorio/contratos/144-2026 Contrato.pdf"></a></td></tr>'
+    return f'<table class="tabela"><tbody>{corpo}</tbody></table><h6>Informações Financeiras</h6><table><tr><td>1</td><td>2</td></tr></table>'
+
+
+def test_item_contrato_separa_cnpj_valor_e_vigencia():
+    lista = {"hash": "a" * 32, "numero": 144, "ano": 2026, "modulo": "contratos", "encerrado": False, "modalidade": "Pregão", "objeto": "x", "pdf": None, "aditamentos": 0}
+    iid, item = sp.item_contrato(lista, sp.parse_detalhe(detalhe_html()))
+    assert iid.startswith("ctr_") and item["tipo"] == "contrato" and item["cnpj"] == "54456948000185" and item["fornecedor"] == "MADARP LTDA."
+    assert (item["valor"], item["inicio"], item["fim"], item["assinatura"], item["numero"]) == (67200.0, "2026-08-17", "2027-06-30", "2026-08-14", "144/2026")
+    assert item["arquivos"][0]["url"].endswith("144-2026%20Contrato.pdf") and item["fonte"].endswith("detContrato=" + "a" * 32)
+    ata = sp.item_contrato({**lista, "modulo": "atas"}, sp.parse_detalhe(detalhe_html(valor="Sem Valor Registrado")))[1]
+    assert ata["tipo"] == "ata_registro" and ata["valor"] is None
+    assert sp.item_contrato(lista, sp.parse_detalhe(detalhe_html(contratada="JOAO DA SILVA")))[1]["cnpj"] is None
+
+
+class RespostaFalsa:
+    def __init__(self, conteudo):
+        self.content = conteudo
+
+    def raise_for_status(self):
+        pass
+
+
+def test_coletar_contratos_incremental(tmp_path, monkeypatch):
+    monkeypatch.setattr(sp, "PASTA", tmp_path)
+    monkeypatch.setattr(sp.time, "sleep", lambda x: None)
+    cartao = ('<li class="card"><a href="/alesp/contratos/detalhe/?detContrato={h}"><strong>Processo Digital {n} / 2026</strong></a>'
+              '<b class="badge">Pregão</b><i style="color: #666">Obj {n}</i>')
+    pagina = {"texto": '<div class="modulo_contratos" style="display: none">' + cartao.format(h="a" * 32, n=1) + "</div>"}
+    pedidos = []
+
+    class Sessao:
+        def get(self, url, timeout):
+            pedidos.append(url[-32:])
+            return RespostaFalsa(detalhe_html().encode("latin-1"))
+
+    monkeypatch.setattr(sp, "baixar", lambda s, url: pagina["texto"].encode("latin-1"))
+    sp.coletar_contratos(Sessao(), date(2026, 11, 2))
+    assert pedidos == ["a" * 32]
+    pedidos.clear()
+    pagina["texto"] = '<div class="modulo_contratos" style="display: none">' + cartao.format(h="a" * 32, n=1) + cartao.format(h="b" * 32, n=2) + "</div>"
+    sp.coletar_contratos(Sessao(), date(2026, 11, 3))
+    assert pedidos == ["b" * 32]
+    itens = json.loads((tmp_path / "orgao_2026.json").read_text(encoding="utf-8"))["itens"]
+    assert len(itens) == 2 and {i["idFonte"] for i in itens.values()} == {"a" * 32, "b" * 32}
+
+
+def test_coletar_contratos_pagina_vazia_nao_apaga_arquivo(tmp_path, monkeypatch):
+    monkeypatch.setattr(sp, "PASTA", tmp_path)
+    monkeypatch.setattr(sp, "baixar", lambda s, url: b"<html></html>")
+    (tmp_path / "orgao_2026.json").write_text('{"itens":{"ctr_x":{"idFonte":"z"}},"lidos":{}}', encoding="utf-8")
+    with pytest.raises(RuntimeError):
+        sp.coletar_contratos(None, date(2026, 11, 2))
+    assert "ctr_x" in json.loads((tmp_path / "orgao_2026.json").read_text(encoding="utf-8"))["itens"]
+
+
+def test_regras_do_contrato():
+    assert sp._conferir_regras(amostra("regras")) == ([], [])
+    regra = sp.regras_da_verba(amostra("regras")["trecho"])
+    assert [d["ano"] for d in regra["documentos"]] == [2002, 2001, 2002] and regra["ano"] == 2002
+    assert regra["documentos"][0]["url"] == "https://www.al.sp.gov.br/norma/?id=234"
+    assert sp.regras_da_verba("<p>sem links</p>") is None

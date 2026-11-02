@@ -1,0 +1,25 @@
+{
+ "fonte": "https://almt.eloweb.net/portaltransparencia/1/publicacoes",
+ "capturadoEm": "2026-11-02",
+ "amostra": {
+  "ano": 2026,
+  "grupos": [
+   {
+    "id": 1084,
+    "valor": "Legislações de Diárias",
+    "arquivos": [
+     {
+      "idArquivo": 92658,
+      "nomeArquivo": "Tabela Diárias Atualizada.xlsx",
+      "dataArquivo": "2026-05-13"
+     },
+     {
+      "idArquivo": 92472,
+      "nomeArquivo": "Resolução Administrativa nº 006.2025.MD.ALMT.pdf",
+      "dataArquivo": "2025-12-10"
+     }
+    ]
+   }
+  ]
+ }
+}

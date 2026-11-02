@@ -196,6 +196,27 @@ def fornecedor(nome, doc=None) -> dict:
     return {"fornecedor": compactar(nome), "cnpj": achado[1] if achado else None}
 
 
+TIPOS_ORGAO = ("contrato", "ata_registro", "ata_adesao")
+
+
+def item_orgao(fonte_id: str, tipo: str, id_fonte, *, fornecedor_nome, documento=None, valor=None, inicio=None, fim=None,
+               objeto=None, numero=None, arquivos=(), fonte=None, **extra) -> tuple[str, dict]:
+    """(id, item) de contrato ou ata de registro de preço da Assembleia (despesa do órgão, não de deputado), no formato que
+    `gerar_estaduais.gerar_orgao` lê. Id estável de (fonte, tipo, id na fonte). Só CNPJ fica: CPF de contratado pessoa física
+    não é gravado. Datas já em ISO; valor em número ou texto BR. `extra`: campos próprios da fonte (modalidade, situação...)."""
+    import fornecedores
+    import ids
+    if tipo not in TIPOS_ORGAO:
+        raise ValueError(f"tipo de item do órgão desconhecido: {tipo}")
+    nome = compactar(fornecedor_nome)
+    doc = fornecedores.documento(documento) if documento else None
+    item = {"tipo": tipo, "idFonte": id_fonte, "numero": numero, "fornecedor": nome, "nomeChave": fornecedores.nome_chave(nome),
+            "cnpj": doc[1] if doc and doc[0] == "cnpj" else None, "objeto": compactar(objeto), "inicio": inicio, "fim": fim,
+            "valor": valor if isinstance(valor, (int, float)) or valor is None else valor_br(valor),
+            "arquivos": [a for a in arquivos if a.get("url")], "fonte": fonte, **extra}
+    return ids.gerar_id("ctr", f"{fonte_id}_{tipo}", id_fonte), item
+
+
 def data_br_iso(texto: str | None, inteiro: bool = False) -> str | None:
     """"31/12/2024" (com espaços nas pontas) -> "2024-12-31". `inteiro`: recusa texto depois da data (hora)."""
     padrao = r"\s*(\d\d)/(\d\d)/(\d{4})" + (r"\s*" if inteiro else "")

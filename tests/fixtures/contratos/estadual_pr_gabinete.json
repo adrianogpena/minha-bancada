@@ -1,0 +1,44 @@
+{
+ "fonte": "https://transparencia.assembleia.pr.leg.br/api/remuneracao/recente",
+ "capturadoEm": "2026-10-31",
+ "amostra": {
+  "linhas": [
+   [
+    "FUNCIONARIO",
+    "NOME",
+    "SIGLA",
+    "LOTAÇÃO CARGO"
+   ],
+   [
+    "3027118",
+    "SERVIDOR EXEMPLO 1",
+    "G-3",
+    "GAB. DEP. CANTORA MARA LIMA"
+   ],
+   [
+    "3026593",
+    "SERVIDOR EXEMPLO 2",
+    "G-7",
+    "GAB. DEP. SOLDADO ADRIANO JOSÉ"
+   ],
+   [
+    "3027196",
+    "SERVIDOR EXEMPLO 3",
+    "G-7",
+    "GAB. DEP. MARCIO NUNES"
+   ],
+   [
+    "3024276",
+    "SERVIDOR EXEMPLO 4",
+    "G-3",
+    "GAB. DEP. BATATINHA"
+   ],
+   [
+    "3026393",
+    "SERVIDOR EXEMPLO 5",
+    "G-3",
+    "LIDERANÇA DO PP"
+   ]
+  ]
+ }
+}

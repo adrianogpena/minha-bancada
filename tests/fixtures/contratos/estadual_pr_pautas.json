@@ -1,0 +1,46 @@
+{
+ "fonte": "https://transparencia.assembleia.pr.leg.br/plenario/pautas/ordem-do-dia/ajax",
+ "capturadoEm": "2026-10-31",
+ "amostra": {
+  "data": {
+   "02/11/2026 - 08/11/2026": [
+    {
+     "id": 3203,
+     "publicado": true,
+     "titulo": "14ª SESSÃO EXTRAORDINÁRIA",
+     "data_sessao": "2026-11-03T17:35:00.000000Z",
+     "arquivo": null,
+     "url": null,
+     "arquivos": [
+      {
+       "titulo": "14ª SESSÃO EXTRAORDINÁRIA - PDF",
+       "url": "https://storage2.assembleia.pr.leg.br/file/public-media/ordem/arquivos/mvtrpvwy_ab95.pdf"
+      },
+      {
+       "titulo": "14ª SESSÃO EXTRAORDINÁRIA - DOC",
+       "url": "https://storage2.assembleia.pr.leg.br/file/public-media/ordem/arquivos/mvtrpvxy_e6c8.docx"
+      }
+     ]
+    },
+    {
+     "id": 3202,
+     "publicado": true,
+     "titulo": "92ª SESSÃO ORDINÁRIA",
+     "data_sessao": "2026-11-03T17:30:00.000000Z",
+     "arquivo": null,
+     "url": null,
+     "arquivos": [
+      {
+       "titulo": "92ª SESSÃO ORDINÁRIA - PDF",
+       "url": "https://storage2.assembleia.pr.leg.br/file/public-media/ordem/arquivos/mvtrohvm_61f6.pdf"
+      },
+      {
+       "titulo": "92ª SESSÃO ORDINÁRIA - DOC",
+       "url": "https://storage2.assembleia.pr.leg.br/file/public-media/ordem/arquivos/mvtrohx3_eb1b.docx"
+      }
+     ]
+    }
+   ]
+  }
+ }
+}

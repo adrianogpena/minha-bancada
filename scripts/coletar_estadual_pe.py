@@ -8,6 +8,8 @@ Fontes lidas aqui (abertas, sem login):
     adm/verbaindenizatoria-dep-meses.php, adm/verbaindenizatoria.php (lançamento: tipo P = pedido, C = complemento)
     e adm/verbaindenizatorianotas.php (rubrica, data, CNPJ, empresa, valor); rubricas em adm/verbaindenizatoria-rubricas.php
   - projetos, indicações e requerimentos (XML) em https://dadosabertos.alepe.pe.gov.br/api/v1/proposicoes/<tipo>/?ano=
+  - gabinete (servidores com lotação "GAB.DEP. <nome>", sem valores): https://dadosabertos.alepe.pe.gov.br/api/v1/servidores/
+  - contratos do órgão (lista inteira, ~650, de 2013 em diante): https://dadosabertos.alepe.pe.gov.br/api/v1/contratos/
 
 Não coletado: remuneração (a API só dá a tabela por cargo, não por pessoa); presença e votações (não existem nas fontes abertas;
 o sistema legislativo https://legis.alepe.pe.gov.br pede login).
@@ -39,6 +41,12 @@ NOTAS_URL = f"{PORTAL}/adm/verbaindenizatorianotas.php"
 VERBA_PAGINA = "https://transparencia.alepe.pe.gov.br/financas/verbas-indenizatorias"
 PROPOSICOES_PAGINA = "https://transparencia.alepe.pe.gov.br/proposicoes"
 TIPOS_PROPOSICAO = ("projetos", "indicacoes", "requerimentos")
+SERVIDORES_URL = f"{API}/servidores/?formato=json"
+CONTRATOS_URL = f"{API}/contratos/?formato=json"
+CONTRATOS_PAGINA = CONTRATOS_URL   # a tela do portal é SPA, sem endereço próprio
+SERVIDORES_PAGINA = SERVIDORES_URL
+LOTACAO_GABINETE = re.compile(r"^\s*GAB\.?\s*DEP\.?\s+(.+)$", re.I)
+FONTE_ID = "alepe_pe"
 PRIMEIRO_ANO = 2023
 MESES_RECENTES = 2
 LIMITE_EMENTA = 400
@@ -226,6 +234,69 @@ def coletar() -> None:
                 coletar_proposicoes(s, deputados, ano, pasta, agora)
             except Exception as e:
                 comum.avisar(f"PE: proposições {ano}: {type(e).__name__}: {str(e)[:120]}")
+    comum.tentar(UF, "gabinete", partial(coletar_gabinete, s, deputados, pasta, agora))
+    comum.tentar(UF, "contratos do órgão", partial(coletar_orgao, s, pasta, agora))
+
+
+# ---------------------------------------------------------------- gabinete e contratos do órgão
+
+def servidores_do_gabinete(linhas: list[dict], deputados: list[dict]) -> list[dict]:
+    """Servidores lotados em "GAB.DEP. <nome>", só com lotação ligada a um único deputado; lideranças e diretorias ficam de fora.
+    A fonte não publica matrícula nem salário por servidor."""
+    lotacoes = {l["NOME_LOTACAO"]: m.group(1).strip() for l in linhas if (m := LOTACAO_GABINETE.match(l.get("NOME_LOTACAO") or ""))}
+    ligados = ligar(set(lotacoes.values()), deputados)
+    itens = []
+    for l in linhas:
+        id_dep = ligados.get(lotacoes.get(l.get("NOME_LOTACAO")))
+        if id_dep and l.get("NOME"):
+            itens.append({"idDeputado": id_dep, "nome": " ".join(l["NOME"].split()),
+                          "simbolo": comum.compactar(l.get("CARGO_NIVEL") or l.get("CARGO_EFETIVO")), "vinculo": comum.compactar(l.get("VINCULO"))})
+    return sorted(itens, key=lambda i: (i["idDeputado"], i["simbolo"] or "", i["nome"]))
+
+
+def inteiro(texto) -> str | None:
+    """"18.00" -> "18" (a API manda número como texto com casas decimais)."""
+    try:
+        return str(int(float(texto)))
+    except (TypeError, ValueError):
+        return None
+
+
+def contratos_por_ano(linhas: list[dict]) -> dict[int, dict]:
+    """{ano: {id: item}}. `numeroContrato` repete o CNPJ na maioria das linhas, então o id sai de CNPJ, licitação e início da
+    vigência; o CNPJ perde o zero à esquerda (restaurado por `fornecedores.documento`)."""
+    por_ano: dict[int, dict] = {}
+    for l in linhas:
+        ano = inteiro(l.get("ano"))
+        inicio = comum.data_iso((l.get("vigenciaInicio") or {}).get("date"))
+        doc = inteiro(l.get("cpfCnpj")) or l.get("cpfCnpj")
+        if not ano or int(ano) < PRIMEIRO_ANO:
+            continue
+        chave = "|".join(str(x or "") for x in (doc, inteiro(l.get("numeroLicitacao")), inteiro(l.get("anoLicitacao")), inicio))
+        iid, item = comum.item_orgao(
+            FONTE_ID, "contrato", chave, fornecedor_nome=l.get("contratada"), documento=doc, valor=comum.valor_br(l.get("valor")),
+            objeto=l.get("objeto"), inicio=inicio, fim=comum.data_iso((l.get("vigenciaFim") or {}).get("date")),
+            fonte=CONTRATOS_PAGINA, modalidade=comum.compactar(l.get("modalidade")),
+            licitacao=f"{inteiro(l['numeroLicitacao'])}/{inteiro(l.get('anoLicitacao'))}" if inteiro(l.get("numeroLicitacao")) else None)
+        por_ano.setdefault(int(ano), {})[iid] = item
+    return por_ano
+
+
+def coletar_gabinete(s, deputados: list[dict], pasta, agora: str) -> None:
+    itens = servidores_do_gabinete(get_json_utf8(s, SERVIDORES_URL), deputados)
+    if not itens:
+        raise RuntimeError("nenhum servidor ligado a gabinete de deputado; mantém o arquivo anterior")
+    comum.salvar(pasta / "gabinete.json", {"coletadoEm": agora, "fonte": SERVIDORES_PAGINA, "itens": itens})
+    print(f"PE: gabinetes {len(itens)} servidores de {len({i['idDeputado'] for i in itens})} deputados")
+
+
+def coletar_orgao(s, pasta, agora: str) -> None:
+    por_ano = contratos_por_ano(get_json_utf8(s, CONTRATOS_URL))
+    if not por_ano:
+        raise RuntimeError("API de contratos devolveu lista vazia; mantém os arquivos anteriores")
+    for ano, itens in por_ano.items():
+        comum.salvar(pasta / f"orgao_{ano}.json", {"coletadoEm": agora, "fonte": CONTRATOS_PAGINA, "itens": itens})
+    print(f"PE: contratos do órgão {sum(len(i) for i in por_ano.values())} em {len(por_ano)} anos")
 
 
 # ---------------------------------------------------------------- contratos

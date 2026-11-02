@@ -1,0 +1,72 @@
+{
+ "fonte": "https://legis-api-portal-prd.al.sp.gov.br/processo/detalhes/todos/<sigla>/<ano>/<número>",
+ "capturadoEm": "2026-11-02",
+ "amostra": {
+  "lista": [
+   {
+    "idProcesso": 1000671453,
+    "tipoProcesso": "PL",
+    "numeroProcesso": 50165,
+    "anoProcesso": 2025,
+    "numeroTipo": 1332,
+    "anoTipo": 2025,
+    "numeroRg": null,
+    "anoRg": null,
+    "descricao": "Projeto de Lei 1.332/2025",
+    "resumo": "Declara de utilidade pública a Associação Clínica de Bebês de São José do Rio Preto - ACBb, com sede naquele Município.",
+    "urlProcesso": "/processo/1000671453",
+    "urlSemPapel": "https://sempapel.al.sp.gov.br/Sistema/Protocolo/Processo2/Digital.aspx?id=268771",
+    "dtPublicacao": "2025-12-04",
+    "transformadoNorma": null,
+    "houveVeto": null,
+    "tipoVeto": null,
+    "deliberacaoAlesp": null,
+    "numeroAutorPrincipal": 300396,
+    "autorPrincipal": "VALDOMIRO LOPES",
+    "tipoAutorPrincipal": "Parlamentar",
+    "siglaPartidoPrincipal": "PSB",
+    "urlAutorPrincipal": "/parlamentar/300396",
+    "flPropositura": true
+   },
+   {
+    "idProcesso": 1000672745,
+    "tipoProcesso": "PL",
+    "numeroProcesso": 51524,
+    "anoProcesso": 2025,
+    "numeroTipo": 1373,
+    "anoTipo": 2025,
+    "numeroRg": null,
+    "anoRg": null,
+    "descricao": "Projeto de Lei 1.373/2025",
+    "resumo": "Altera a Lei nº 13.296, de 23 de dezembro de 2008, que estabelece o tratamento tributário do Imposto sobre a Propriedade de Veículos Automotores - IPVA.",
+    "urlProcesso": "/processo/1000672745",
+    "urlSemPapel": "https://sempapel.al.sp.gov.br/Sistema/Protocolo/Processo2/Digital.aspx?id=271122",
+    "dtPublicacao": "2025-12-11",
+    "transformadoNorma": null,
+    "houveVeto": null,
+    "tipoVeto": null,
+    "deliberacaoAlesp": null,
+    "numeroAutorPrincipal": 105,
+    "autorPrincipal": "Governador",
+    "tipoAutorPrincipal": "Pessoa",
+    "siglaPartidoPrincipal": null,
+    "urlAutorPrincipal": null,
+    "flPropositura": true
+   }
+  ],
+  "detalhe": {
+   "idProcesso": 1000671453,
+   "descricao": "Projeto de Lei 1.332/2025",
+   "resumo": "Declara de utilidade pública a Associação Clínica de Bebês de São José do Rio Preto - ACBb, com sede naquele Município.",
+   "transformadoNorma": true,
+   "urlNorma": "/norma/212580",
+   "descricaoNorma": "Lei nº 18.462, de 11/05/2026",
+   "autores": [
+    {
+     "matricula": 300396,
+     "nome": "VALDOMIRO LOPES"
+    }
+   ]
+  }
+ }
+}

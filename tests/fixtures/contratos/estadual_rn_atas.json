@@ -1,0 +1,26 @@
+{
+ "fonte": "https://api-transparencialegislativa.al.rn.leg.br/elegis-api-transp-legislativa/legis-videos/reuniao",
+ "capturadoEm": "2026-11-02",
+ "amostra": {
+  "reuniao": {
+   "id": 3045,
+   "numero": 97,
+   "dataInicio": "2026-10-27T10:30:00.000Z",
+   "tipoReuniao": {
+    "id": 1,
+    "sigla": "Sessão Ordinária",
+    "nome": "Sessão Plenária Ordinária"
+   }
+  },
+  "videos": [
+   {
+    "id": 4346,
+    "reuniao": 3045,
+    "hash": "34214e4cd2c6d02887da552b1b84a310",
+    "titulo": "Sessão Ordinária - 27/10/2026",
+    "dataVideo": "2026-10-27T00:00:00.000Z",
+    "ata": "<p>texto da ata omitido da amostra</p>"
+   }
+  ]
+ }
+}

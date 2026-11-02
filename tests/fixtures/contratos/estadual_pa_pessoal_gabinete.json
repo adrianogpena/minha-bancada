@@ -1,0 +1,7 @@
+{
+ "fonte": "https://sigep.alepa.pa.gov.br/transp/frame_relacaopessoal.php",
+ "capturadoEm": "2026-11-01",
+ "amostra": {
+  "csv": "Matricula;Nome;Admissao;Exoneracao;Cargo/Funcao;Classificacao;Lotacao;Situacao\n24201;\"ABIAS MARIA DA SILVA DE ANDRADE\";01/02/2019;;\"FUNCAO PUB. APOIO LEGISLATIVO FPAL-04\";\"FUNCAO PUB. APOIO LEGISLATIVO\";\"10430 - GAB. DEP. GUSTAVO SEFER\";Ativo\n305834;\"ADECIMO GOMES DOS SANTOS\";01/04/2026;;\"FUNCAO PUB. APOIO LEGISLATIVO FPAL-14\";Acolhidos;\"10430 - GAB. DEP. GUSTAVO SEFER\";Ativo\n29661;\"ANA CLARA DA SILVA ASSIS\";01/06/2024;31/03/2025;;Estagiários;\"10430 - GAB. DEP. GUSTAVO SEFER\";Inativo"
+ }
+}

@@ -8,14 +8,22 @@ Fontes lidas aqui (abertas, sem login):
   - gabinetes parlamentares (cota de exercício parlamentar), CSV por ano: /gabinetes-parlamentares/csv/<ano>
   - diárias e passagens, CSV por ano (só linhas com vínculo "Deputado"): /diarias/csv/<ano>
   - presença em sessões plenárias, uma página por sessão: https://portalelegis.alesc.sc.gov.br/sessoes-plenarias/<codigo>/presenca
+  - proposições do processo legislativo (autoria por nome): https://portalelegis.alesc.sc.gov.br/proposicoes/processo-legislativo,
+    10 por página; os filtros `inicio`/`fim` (data de abertura) dão a leitura incremental; de autoria do governador vão para
+    governo_<ano>.json
+  - gabinete (servidores por vínculo, sem valores): https://transparencia.alesc.sc.gov.br/servidores?setor_id=<id>, um setor
+    "GAB DEP <nome>" por deputado
+  - contratos e atas de registro de preço do órgão (cards HTML, 20 por página): https://transparencia.alesc.sc.gov.br/contratos?ano_vigencia=
+  - regras da cota de gabinete: seção "Gabinetes Parlamentares" de https://leis.alesc.sc.gov.br/alesc/regulamentacao-interna
 
-Não coletado: proposições e votações (e-Legis, um documento por proposição, sem exportação), presença em comissões.
+Não coletado: votações (as sessões amostradas só têm votação simbólica), presença em comissões, normas com autoria (a busca de
+leis não exporta; a autoria vem da proposição).
 """
 
 import csv
 import io
 import re
-from datetime import date
+from datetime import date, timedelta
 from html import unescape
 from functools import partial
 
@@ -31,6 +39,16 @@ GABINETES_PAGINA = f"{TRANSPARENCIA}/gabinetes-parlamentares"
 DIARIAS_PAGINA = f"{TRANSPARENCIA}/diarias"
 SESSOES_URL = f"{ELEGIS}/sessoes-plenarias"
 CABECALHO_AJAX = {"X-Requested-With": "XMLHttpRequest"}
+PROPOSICOES_URL = f"{ELEGIS}/proposicoes/processo-legislativo"
+SERVIDORES_URL = f"{TRANSPARENCIA}/servidores"
+CONTRATOS_URL = f"{TRANSPARENCIA}/contratos"
+REGRAS_URL = "https://leis.alesc.sc.gov.br/alesc/regulamentacao-interna"
+LEIS = "https://leis.alesc.sc.gov.br"
+FONTE_ID = "alesc_sc"
+SETOR_GABINETE = re.compile(r"^\s*GAB\.?\s*DEP\.?\s+(.+)$", re.I)
+GABINETE_DIAS = 7   # ~130 páginas (um setor por deputado): relido uma vez por semana
+RENOVAR_COMPLETA_DIAS = 14   # cada ano de proposições é relido inteiro nesta frequência (um ano por coleta), pela situação
+FOLGA_DIAS = 1
 PRIMEIRO_ANO = 2023
 ANOS_REMUNERACAO = 2
 MESES_RECENTES = 2
@@ -242,7 +260,217 @@ def coletar() -> None:
         print(f"SC: {ano} gabinetes {len(gab)}, diárias {len(dia)}")
     coletar_presenca(s, pasta, deputados, hoje, agora)
     coletar_remuneracao(s, pasta, hoje, agora)
+    comum.tentar(UF, "proposições", partial(coletar_proposicoes, s, pasta, deputados, hoje, agora))
+    comum.tentar(UF, "gabinete", partial(coletar_gabinete, s, pasta, deputados, hoje, agora))
+    comum.tentar(UF, "contratos do órgão", partial(coletar_orgao, s, pasta, hoje, agora))
+    comum.tentar(UF, "regras da cota", partial(coletar_regras, s, pasta))
     print(f"SC: {len(deputados)} deputados")
+
+
+# ---------------------------------------------------------------- proposições
+
+def proposicoes_da_pagina(html: str) -> list[dict]:
+    """Cards da lista: código (id da fonte, 5 caracteres), "PL./0667/2026", ementa, entrada, autores e situação."""
+    itens = []
+    for card in html.split('<div class="card card-alesc')[1:]:
+        m = re.search(r'<a href="/proposicoes/(\w+)">\s*([A-Za-z]+)\.?/(\d+)/(\d{4})\s*</a>', card)
+        if not m:
+            continue
+        ementa = re.search(r'<p class="mb-1 fst-italic"[^>]*>(.*?)</p>', card, re.S)
+        campo = lambda rotulo: re.search(rf'fw-bold[^"]*">\s*{rotulo}\s*</div>\s*<div class="col-lg-10">(.*?)</div>', card, re.S)  # noqa: E731
+        autoria, entrada, situacao = campo("Autoria"), campo("Entrada"), campo("Situa\\S+o atual")
+        itens.append({"codigo": m.group(1), "tipo": m.group(2).upper(), "numero": int(m.group(3)), "ano": int(m.group(4)),
+                      "ementa": comum.limpar(ementa.group(1)) if ementa else "", "dataApresentacao": comum.data_br_iso(comum.limpar(entrada.group(1))) if entrada else None,
+                      "autores": [comum.limpar(a) for a in re.findall(r"<li>(.*?)</li>", autoria.group(1), re.S)] if autoria else [],
+                      "situacao": comum.limpar(situacao.group(1)) if situacao else None})
+    return itens
+
+
+def total_proposicoes(html: str) -> int:
+    m = re.search(r"Exibindo\s+[\d.]+\s*-\s*[\d.]+\s+de\s+([\d.]+)", html)
+    return int(m.group(1).replace(".", "")) if m else 0
+
+
+def ler_proposicoes(s, ano: int, inicio: str | None = None) -> list[dict]:
+    """Proposições abertas no ano (ou só a partir de `inicio`), página a página. O parâmetro `ano` da página não filtra: o ano
+    sai da janela de datas de abertura."""
+    filtros = {"arquivados": 1, "inicio": inicio or f"{ano}-01-01", "fim": f"{ano}-12-31"}
+    lidas, pagina = [], 1
+    while True:
+        html = baixar(s, PROPOSICOES_URL, params={**filtros, "page": pagina}).text
+        achadas = proposicoes_da_pagina(html)
+        lidas += achadas
+        if not achadas or len(lidas) >= total_proposicoes(html):
+            return lidas
+        pagina += 1
+
+
+def autor_deputado(nome: str) -> str | None:
+    """"Deputado Jerry Comper" -> "Jerry Comper"; governador, comissões e Mesa -> None."""
+    m = re.match(r"^\s*Deputad[oa]\s+(.+)$", nome or "", re.I)
+    return m.group(1).strip() if m else None
+
+
+def do_governador(p: dict) -> bool:
+    return any(re.search(r"governador", a, re.I) for a in p["autores"])
+
+
+def separar_proposicoes(lidas: list[dict], deputados: list[dict]) -> tuple[dict, dict]:
+    """({chave: matéria de deputado}, {chave: matéria do governador}) no formato de materias_/governo_<ano>.json."""
+    ligacao = ligar({n for p in lidas for a in p["autores"] if (n := autor_deputado(a))}, deputados)
+    materias, governo = {}, {}
+    for p in lidas:
+        chave = f"{p['tipo']}-{p['numero']}-{p['ano']}"
+        base = {"tipo": p["tipo"], "numero": p["numero"], "ano": p["ano"], "dataApresentacao": p["dataApresentacao"], "ementa": p["ementa"],
+                "situacao": p["situacao"], "idFonte": p["codigo"], "linkTexto": f"{ELEGIS}/proposicoes/{p['codigo']}/documentos",
+                "fonte": f"{ELEGIS}/proposicoes/{p['codigo']}"}
+        ids = sorted({ligacao[n] for a in p["autores"] if (n := autor_deputado(a)) in ligacao})
+        if ids:
+            materias[chave] = {**base, "idsAutores": ids, "idsDeputados": ids}
+        elif do_governador(p):
+            governo[chave] = {**base, "tipoDescricao": p["tipo"]}
+    return materias, governo
+
+
+def coletar_proposicoes(s, pasta, deputados: list[dict], hoje: date, agora: str) -> None:
+    """Ano sem arquivo: leitura inteira. Os demais: incremental pela data de abertura (desde a coleta anterior, com folga) e, um ano
+    por coleta, releitura inteira quando a última passou de RENOVAR_COMPLETA_DIAS (a situação muda sem mudar a data de abertura)."""
+    def idade(env):
+        return (hoje - date.fromisoformat(env["completaEm"])).days if env.get("completaEm") else 10 ** 6
+
+    anos = range(PRIMEIRO_ANO, hoje.year + 1)
+    envs = {ano: comum.ler(pasta / f"materias_{ano}.json", {}) for ano in anos}
+    vencidos = sorted((a for a in anos if envs[a] and idade(envs[a]) >= RENOVAR_COMPLETA_DIAS), key=lambda a: idade(envs[a]), reverse=True)
+    completa_hoje = vencidos[:1]
+    for ano in anos:
+        env = envs[ano]
+        completa = not env or ano in completa_hoje
+        if not completa and comum.ano_encerrado(ano, hoje, pasta / f"materias_{ano}.json"):
+            continue
+        inicio = None if completa else (date.fromisoformat(env["coletadoEm"]) - timedelta(days=FOLGA_DIAS)).isoformat()
+        materias, governo = separar_proposicoes(ler_proposicoes(s, ano, inicio), deputados)
+        if completa and not materias and env.get("materias"):
+            raise RuntimeError(f"proposições {ano}: lista vazia; mantém o arquivo anterior")
+        if not completa:
+            materias = {**env.get("materias", {}), **materias}
+            governo = {**comum.ler(pasta / f"governo_{ano}.json", {}).get("materias", {}), **governo}
+        comum.salvar(pasta / f"materias_{ano}.json", {"coletadoEm": agora, "completaEm": agora if completa else env.get("completaEm"),
+                                                      "fonte": PROPOSICOES_URL, "materias": materias})
+        comum.salvar(pasta / f"governo_{ano}.json", {"coletadoEm": agora, "fonte": PROPOSICOES_URL, "materias": governo})
+        print(f"SC: {ano} proposições de deputados {len(materias)}, do governador {len(governo)}{' (completa)' if completa else ''}")
+
+
+# ---------------------------------------------------------------- gabinete
+
+def setores_de_gabinete(html: str) -> dict[str, str]:
+    """{setor_id: nome do deputado} das opções "GAB DEP <nome>" do filtro de lotação."""
+    return {i: m.group(1).strip() for i, rotulo in re.findall(r'<option value="(\d+)"[^>]*>\s*([^<]+)', html)
+            if (m := SETOR_GABINETE.match(comum.limpar(rotulo)))}
+
+
+def servidores_da_pagina(html: str) -> list[dict]:
+    return [{"nome": comum.limpar(n), "vinculo": comum.limpar(v), "lotacao": comum.limpar(l), "matricula": i}
+            for n, v, l, i in re.findall(r'<td class="fw-semibold">(.*?)</td>\s*<td>(.*?)</td>\s*<td class="small">(.*?)</td>.*?/servidores/contracheque/(\d+)', html, re.S)]
+
+
+def coletar_gabinete(s, pasta, deputados: list[dict], hoje: date, agora: str) -> None:
+    arq = pasta / "gabinete.json"
+    anterior = comum.ler(arq, {})
+    if anterior.get("coletadoEm") and (hoje - date.fromisoformat(anterior["coletadoEm"])).days < GABINETE_DIAS:
+        return
+    setores = setores_de_gabinete(baixar(s, SERVIDORES_URL).text)
+    ligados = ligar(set(setores.values()), deputados)
+    itens = []
+    for setor, nome in sorted(setores.items()):
+        id_dep = ligados.get(nome)
+        if not id_dep:
+            continue
+        vistos, pagina = set(), 1
+        while True:
+            linhas = [l for l in servidores_da_pagina(baixar(s, SERVIDORES_URL, params={"setor_id": setor, "page": pagina}).text) if l["matricula"] not in vistos]
+            if not linhas:
+                break
+            vistos |= {l["matricula"] for l in linhas}
+            itens += [{"idDeputado": id_dep, "matricula": l["matricula"], "nome": l["nome"], "simbolo": l["vinculo"] or None}
+                      for l in linhas if (l["vinculo"] or "").lower() != "deputado"]
+            pagina += 1
+    if not itens:
+        raise RuntimeError("nenhum servidor ligado a gabinete de deputado; mantém o arquivo anterior")
+    comum.salvar(arq, {"coletadoEm": agora, "fonte": SERVIDORES_URL, "itens": sorted(itens, key=lambda i: (i["idDeputado"], i["simbolo"] or "", i["nome"]))})
+    print(f"SC: gabinetes {len(itens)} servidores de {len({i['idDeputado'] for i in itens})} deputados")
+
+
+# ---------------------------------------------------------------- contratos e atas do órgão, regras da cota
+
+def contratos_da_pagina(html: str) -> dict:
+    itens = {}
+    for card in html.split('<article class="card card-alesc')[1:]:
+        m = re.search(r'href="/contratos/(\d+)"[^>]*>\s*N\S*\s*([^<]+)</a>', card)
+        if not m:
+            continue
+        especie = re.search(r'text-uppercase small fw-semibold">([^<]*)', card)
+        especie = comum.limpar(especie.group(1)) if especie else ""
+        nome = re.search(r'<div class="fw-bold">(.*?)</div>\s*<div class="text-muted small">\s*(?:CNPJ|CPF)?:?\s*([^<]*)</div>', card, re.S)
+        objeto = re.search(r'Objeto</span>\s*</div>\s*<p[^>]*>(.*?)</p>', card, re.S)
+        valor = re.search(r'Valor Original</div>\s*<div[^>]*>(.*?)</div>', card, re.S)
+        modalidade = re.search(r'Modalidade</div>\s*<div>(.*?)</div>', card, re.S)
+        vigencia = re.search(r'Vig\S+ncia\s*</div>\s*<div>\s*(\d\d/\d\d/\d{4})\s*-\s*(\d\d/\d\d/\d{4})?', card)
+        situacao = re.search(r'<span class="badge[^"]*">([^<]*)</span>', card)
+        download = re.search(r'href="(/contratos/download/\d+)"', card)
+        iid, item = comum.item_orgao(
+            FONTE_ID, "ata_registro" if re.search(r"registro\s+de\s+pre", especie, re.I) else "contrato", m.group(1),
+            fornecedor_nome=comum.limpar(nome.group(1)) if nome else None, documento=nome.group(2) if nome else None,
+            valor=comum.valor_br(comum.limpar(valor.group(1))) if valor else None, objeto=comum.limpar(objeto.group(1)) if objeto else None,
+            inicio=comum.data_br_iso(vigencia.group(1)) if vigencia else None, fim=comum.data_br_iso(vigencia.group(2)) if vigencia and vigencia.group(2) else None,
+            numero=comum.limpar(m.group(2)), fonte=f"{CONTRATOS_URL}/{m.group(1)}", especie=especie or None,
+            modalidade=(comum.limpar(modalidade.group(1)).strip("- ") or None) if modalidade else None,
+            situacao=comum.limpar(situacao.group(1)) if situacao else None,
+            arquivos=[{"nome": "Contrato (PDF)", "url": TRANSPARENCIA + download.group(1)}] if download else [])
+        itens[iid] = item
+    return itens
+
+
+def coletar_orgao(s, pasta, hoje: date, agora: str) -> None:
+    for ano in range(PRIMEIRO_ANO, hoje.year + 1):
+        arq = pasta / f"orgao_{ano}.json"
+        if comum.ano_encerrado(ano, hoje, arq):
+            continue
+        itens, pagina = {}, 1
+        while True:
+            novos = contratos_da_pagina(baixar(s, CONTRATOS_URL, params={"ano_vigencia": ano, "page": pagina}).text)
+            if not novos or novos.keys() <= itens.keys():
+                break
+            itens |= novos
+            pagina += 1
+        if not itens and comum.ler(arq, {}).get("itens"):
+            comum.avisar(f"SC: contratos {ano}: lista vazia; mantém o arquivo anterior")
+            continue
+        comum.salvar(arq, {"coletadoEm": agora, "fonte": f"{CONTRATOS_URL}?ano_vigencia={ano}", "itens": itens})
+        print(f"SC: {ano} contratos e atas do órgão {len(itens)}")
+
+
+def regras_da_cota(html: str) -> dict | None:
+    """Atos da seção "Gabinetes Parlamentares"; url e ano = o mais novo que trata das cotas de custeio do gabinete."""
+    partes = html.split('id="gabinetes-parlamentares"')
+    if len(partes) < 2:
+        return None
+    secao = partes[1].split('class="card-title h5" id="')[0]
+    docs = []
+    for url, titulo, ementa in re.findall(r'<a href="(/ato-normativo/legislativo/\d+)">([^<]*)</a>.*?fst-italic mb-2">([^<]*)', secao, re.S):
+        anos = re.findall(r"(?:19|20)\d\d", titulo)
+        docs.append({"titulo": comum.limpar(titulo), "ementa": comum.compactar(ementa), "url": LEIS + url, "ano": int(anos[-1]) if anos else None})
+    cotas = [d for d in docs if d["ano"] and re.search(r"\bcotas?\b", d["ementa"] or "", re.I)]
+    if not cotas:
+        return None
+    atual = max(cotas, key=lambda d: d["ano"])
+    return {"url": atual["url"], "ano": atual["ano"], "titulo": atual["titulo"], "fonte": f"{REGRAS_URL}#gabinetes-parlamentares", "documentos": docs}
+
+
+def coletar_regras(s, pasta) -> None:
+    regra = regras_da_cota(baixar(s, REGRAS_URL).text)
+    if not regra:
+        raise RuntimeError("seção de gabinetes parlamentares sem ato sobre as cotas; mantém o arquivo anterior")
+    comum.salvar(pasta / "regras_ressarcimento.json", regra)
 
 
 # ---------------------------------------------------------------- contratos

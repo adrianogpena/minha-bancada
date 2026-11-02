@@ -1,0 +1,51 @@
+{
+ "fonte": "https://almt.eloweb.net/portaltransparencia/1/servidores",
+ "capturadoEm": "2026-11-02",
+ "amostra": {
+  "content": [
+   {
+    "matricula": 50063,
+    "nome": "ABIQUEILA PIRES FRANÇA",
+    "descricaoCargo": "ASSESSOR PARLAMENTAR",
+    "codigoLotacao": "006733001",
+    "descricaoLotacao": "GAB DEP DILMAR DAL BOSCO",
+    "descricaoClasse": "AP",
+    "faixa": "AP-2",
+    "situacao": "ATIVO",
+    "dataAdmissao": "2026-03-02",
+    "dataDemissao": null,
+    "horasSemanais": 40,
+    "remuneracao": 3971.0
+   },
+   {
+    "matricula": 50071,
+    "nome": "CARLOS EDUARDO LIMA",
+    "descricaoCargo": "ASSESSOR DE IMPRENSA DE GABINETE",
+    "codigoLotacao": "006733001",
+    "descricaoLotacao": "GAB DEP DILMAR DAL BOSCO",
+    "descricaoClasse": "AP",
+    "faixa": "AP-4",
+    "situacao": "ATIVO",
+    "dataAdmissao": "2025-02-03",
+    "dataDemissao": null,
+    "horasSemanais": 40,
+    "remuneracao": 3971.0
+   },
+   {
+    "matricula": 50090,
+    "nome": "MARIA SOUZA",
+    "descricaoCargo": "ASSESSOR PARLAMENTAR",
+    "codigoLotacao": "006733001",
+    "descricaoLotacao": "GAB PRESIDENCIA",
+    "descricaoClasse": "AP",
+    "faixa": "AP-1",
+    "situacao": "EXONERADO",
+    "dataAdmissao": "2024-01-10",
+    "dataDemissao": "2025-06-30",
+    "horasSemanais": 40,
+    "remuneracao": 3971.0
+   }
+  ],
+  "totalElements": 2005
+ }
+}

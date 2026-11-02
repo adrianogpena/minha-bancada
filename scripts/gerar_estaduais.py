@@ -3,7 +3,7 @@ Monta, a partir de dados/estaduais/<UF>/ (coletar_estaduais.py), os arquivos
 que o site lê para deputados estaduais:
 
   site/dados/estadual/<UF>/<id>.json     votos e projetos de um deputado, mais (quando a coleta tem os
-                                         arquivos) resumos de verba, remuneração, presença, diárias e emendas
+                                         arquivos) resumos de verba, remuneração, presença, diárias, emendas e gabinete
   site/dados/votacoes_estadual_<UF>.json lista das votações nominais da Assembleia
 
 Devolve o mapa nome -> (UF, id), que o gerar_politicos usa para ligar a ficha
@@ -139,12 +139,23 @@ def resumo_presenca(itens: list, fonte) -> dict:
     return {"fonte": fonte, "periodos": sorted(({k: it.get(k) for k in campos} for _, it in itens), key=lambda x: str(x["periodo"]))}
 
 
+def resumo_gabinete(itens: list, fonte, coletado_em=None) -> dict:
+    """Foto do gabinete na última coleta: total, quantidade por símbolo de cargo e os servidores (nome e símbolo, sem valores)."""
+    servidores = sorted(({"nome": it["nome"], "simbolo": it.get("simbolo")} for _, it in itens), key=lambda s: (s["simbolo"] or "", s["nome"]))
+    simbolos = defaultdict(int)
+    for s in servidores:
+        simbolos[s["simbolo"]] += 1
+    return {"fonte": fonte, "coletadoEm": coletado_em, "total": len(servidores),
+            "simbolos": [{"simbolo": k, "quantidade": q} for k, q in sorted(simbolos.items(), key=lambda kv: kv[0] or "")], "servidores": servidores}
+
+
 def resumos_novos(pasta: Path) -> dict:
     """{idDeputado: {bloco: resumo}} só com os arquivos que a coleta da UF tem."""
     verba = partial(resumo_verba, lancamentos=pasta.name in UFS_LANCAMENTOS)
     blocos = (("verba", "verbas_*.json", verba), ("remuneracao", "remuneracao_*.json", resumo_remuneracao),
               ("presenca", "presenca.json", resumo_presenca), ("diarias", "diarias_*.json", resumo_diarias),
-              ("emendas", "emendas_*.json", resumo_emendas))
+              ("emendas", "emendas_*.json", resumo_emendas),
+              ("gabinete", "gabinete.json", partial(resumo_gabinete, coletado_em=(ler(pasta / "gabinete.json", {}) or {}).get("coletadoEm"))))
     saida = defaultdict(dict)
     for nome, padrao, f in blocos:
         por_dep, fonte = itens_por_deputado(pasta, padrao)
@@ -155,6 +166,9 @@ def resumos_novos(pasta: Path) -> dict:
             for pid, pagamentos in pagamentos_de_emendas(pasta, por_dep).items():
                 saida[pid][nome]["pagamentos"] = pagamentos
     return saida
+
+
+ROTULOS_PAUTA = {"ordem-do-dia": "Pauta da sessão", "atas": "Ata da sessão"}
 
 
 def tipo_voto(v: str) -> str:
@@ -175,6 +189,54 @@ def gerar_governo(uf: str, pasta: Path, host: str) -> None:
     salvar(SAIDA / "governo" / f"{uf}.json", {"host": host, "materias": itens})
 
 
+def gerar_orgao(uf: str, pasta: Path) -> None:
+    """site/dados/orgao/<UF>.json: contratos e atas da Assembleia (despesa do órgão, não de deputado) e maiores fornecedores.
+
+    Fornecedor liga a nucleo/fornecedores só por CNPJ (a ata de adesão traz; o contrato só o nome, então fica sem ligação).
+    Valor de ata de registro é teto do registro de preços, não gasto: vai separado do valor contratado."""
+    itens, fonte = {}, None
+    for arq in sorted(pasta.glob("orgao_[0-9]*.json")):
+        env = ler(arq, {})
+        itens |= env.get("itens", {})
+        fonte = env.get("fonte") or fonte
+    regras = ler(pasta / "regras_ressarcimento.json")
+    if not itens and not regras:
+        return
+    nucleo = {f["id"] for f in ler(SAIDA / "nucleo" / "fornecedores.json", [])}
+    grupos = {}
+    for iid, i in itens.items():
+        chave = i["cnpj"] or i["nomeChave"]
+        if not chave:   # só os links do PDF (sem fornecedor): fica na lista, fora do ranking
+            continue
+        g = grupos.setdefault(chave, {"nome": i["fornecedor"], "cnpj": i["cnpj"], "contratos": 0, "valorContratado": 0.0, "atas": 0, "valorRegistrado": 0.0})
+        if i["tipo"] == "ata_registro":
+            g["atas"] += 1
+            g["valorRegistrado"] += numero(i["valor"])
+        else:
+            g["contratos"] += 1
+            g["valorContratado"] += numero(i["valor"])
+        if i["cnpj"] and f"for_{i['cnpj'][:8]}" in nucleo:
+            g["idFornecedor"] = f"for_{i['cnpj'][:8]}"
+    ranking = sorted(({**g, "valorContratado": round(g["valorContratado"], 2), "valorRegistrado": round(g["valorRegistrado"], 2)} for g in grupos.values()),
+                     key=lambda g: (-g["valorContratado"], -g["valorRegistrado"], g["nome"]))
+    lista = sorted(({"id": iid, **i} for iid, i in itens.items()), key=lambda i: (i["inicio"] or "", i["id"]), reverse=True)
+    salvar(SAIDA / "orgao" / f"{uf}.json", {"fonte": fonte, "regrasRessarcimento": regras,
+                                              "fornecedores": ranking, "itens": lista})
+
+
+def gerar_leis(uf: str, pasta: Path) -> None:
+    """site/dados/leis/<UF>.json: catálogo de normas legais que a Assembleia publica sem autoria (`leis_<ano>.json`), da mais nova à mais antiga."""
+    normas, fonte = [], None
+    for arq in sorted(pasta.glob("leis_[0-9]*.json")):
+        env = ler(arq, {})
+        fonte = env.get("fonte") or fonte
+        normas += [{"id": nid, **n} for nid, n in env.get("normas", {}).items()]
+    if not normas:
+        return
+    normas.sort(key=lambda n: (n["ano"] or 0, int(n["numero"]) if n["numero"].isdigit() else 0, n["id"]), reverse=True)
+    salvar(SAIDA / "leis" / f"{uf}.json", {"fonte": fonte, "normas": normas})
+
+
 def gerar_assembleia(uf: str, pasta: Path) -> list[dict]:
     info = ler(pasta / "deputados.json")
     if not info:
@@ -184,6 +246,13 @@ def gerar_assembleia(uf: str, pasta: Path) -> list[dict]:
     deputados = {d["id"]: d for d in info["deputados"]}
     votacoes = ler(pasta / "votacoes.json", {"votacoes": {}})["votacoes"]
     materias_votadas = ler(pasta / "materias_votadas.json", {})
+
+    documentos_do_dia = defaultdict(list)  # data -> [[rótulo, url]]: pauta e ata da sessão, só quando a Assembleia publica (PR)
+    for arq in sorted(pasta.glob("pautas_[0-9]*.json")):
+        for i in ler(arq, {}).get("itens", {}).values():
+            rotulo = ROTULOS_PAUTA.get(i["tipo"])
+            if rotulo and i["data"]:
+                documentos_do_dia[i["data"]] += [[f"{rotulo}: {a['nome']}", a["url"]] for a in i["arquivos"][:2]]
 
     lista = []
     for vid, v in votacoes.items():
@@ -196,6 +265,7 @@ def gerar_assembleia(uf: str, pasta: Path) -> list[dict]:
             "ementa": mat.get("ementa") or None, "aprovada": v["aprovada"], "resultadoTexto": v.get("resultado"),
             "placar": placar, "_votos": votos,
             **({"fonte": v["fonte"]} if v.get("fonte") else {}),
+            **({"documentos": documentos_do_dia[v["data"]]} if documentos_do_dia.get(v["data"]) else {}),
         })
     lista.sort(key=lambda v: (v["data"], v["id"]), reverse=True)
 
@@ -219,6 +289,12 @@ def gerar_assembleia(uf: str, pasta: Path) -> list[dict]:
                                       **({"coautores": coautores, "totalAutores": max(len(m.get("idsAutores") or []), len(m["idsDeputados"]))} if coautores else {}),
                                       **({"fonte": m["fonte"]} if m.get("fonte") else {})})
 
+    normas_dep = defaultdict(list)
+    for arq in sorted(pasta.glob("normas_[0-9]*.json")):
+        for nid, n in ler(arq, {}).get("normas", {}).items():
+            for pid in n["idsDeputados"]:
+                normas_dep[pid].append({"id": nid, **{k: n.get(k) for k in ("tipo", "numero", "ano", "data", "ementa", "situacao", "fonte")}})
+
     for pid in deputados:
         desde = primeira.get(pid)  # antes do primeiro voto o deputado pode nem estar em exercício
         meus = sorted(projetos.get(pid, []), key=lambda p: (p["dataApresentacao"] or "", p["id"]), reverse=True)
@@ -228,10 +304,13 @@ def gerar_assembleia(uf: str, pasta: Path) -> list[dict]:
             "votos": [{"id": v["id"], "voto": votos_dep[pid].get(v["id"], "ausente")}
                       for v in resumo if desde and v["data"] >= desde],
             "proposicoes": meus,
+            **({"normas": sorted(normas_dep[pid], key=lambda n: (n["data"] or "", n["id"]), reverse=True)} if normas_dep.get(pid) else {}),
             **({"fonte": deputados[pid]["fonte"]} if deputados[pid].get("fonte") else {}),
             **novos.get(str(pid), {}),
         })
     gerar_governo(uf, pasta, host)
+    gerar_orgao(uf, pasta)
+    gerar_leis(uf, pasta)
     print(f"Gerado: {uf}, {len(deputados)} deputados, {len(resumo)} votações nominais, "
           f"{sum(len(v) for v in projetos.values())} autorias de projetos")
     return list(deputados.values())

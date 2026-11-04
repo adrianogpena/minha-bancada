@@ -1,5 +1,16 @@
 [
 {
+"id": 2650051,
+"tipo": "PL",
+"numero": 5742,
+"ano": 2026,
+"ementa": "Dispõe sobre medidas tributárias e aduaneiras referentes à realização da Copa do Mundo Feminina da Fédération Internationale de Football Association – FIFA 2027 na República Federativa do Brasil.",
+"dataApresentacao": "2026-11-03",
+"situacao": null,
+"dataSituacao": "2026-11-03",
+"inteiroTeor": "https://www.camara.leg.br/proposicoesWeb/prop_mostrarintegra?codteor=3188506"
+},
+{
 "id": 2648653,
 "tipo": "PEC",
 "numero": 18,
@@ -17,8 +28,8 @@
 "ano": 2026,
 "ementa": "Abre crédito extraordinário, em favor do Ministério da Integração e do Desenvolvimento Regional, no valor de R$ 300.000.000,00, para o fim que especifica.",
 "dataApresentacao": "2026-10-21",
-"situacao": "Aguardando Deliberação",
-"dataSituacao": "2026-10-29",
+"situacao": "Pronta para Pauta",
+"dataSituacao": "2026-11-03",
 "inteiroTeor": "https://www.camara.leg.br/proposicoesWeb/prop_mostrarintegra?codteor=3185402"
 },
 {
@@ -138,8 +149,8 @@
 "ano": 2026,
 "ementa": "Abre crédito extraordinário, em favor do Ministério de Minas e Energia, no valor de R$ 6.605.000.000,00, para os fins que especifica.",
 "dataApresentacao": "2026-09-09",
-"situacao": null,
-"dataSituacao": "2026-09-16",
+"situacao": "Aguardando Deliberação",
+"dataSituacao": "2026-10-31",
 "inteiroTeor": "https://www.camara.leg.br/proposicoesWeb/prop_mostrarintegra?codteor=3179188"
 },
 {
@@ -193,8 +204,8 @@
 "ano": 2026,
 "ementa": "Abre crédito extraordinário, em favor dos Ministérios do Desenvolvimento Agrário e Agricultura Familiar e do Desenvolvimento e Assistência Social, Família e Combate à Fome, no valor de R$ 924.985.960,00, para os fins que especifica.",
 "dataApresentacao": "2026-08-13",
-"situacao": "Aguardando Deliberação",
-"dataSituacao": "2026-10-08",
+"situacao": "Pronta para Pauta",
+"dataSituacao": "2026-10-28",
 "inteiroTeor": "https://www.camara.leg.br/proposicoesWeb/prop_mostrarintegra?codteor=3171701"
 },
 {
@@ -204,8 +215,8 @@
 "ano": 2026,
 "ementa": "Abre crédito extraordinário, em favor do Ministério da Integração e do Desenvolvimento Regional, no valor de R$ 360.000.000,00, para o fim que especifica.",
 "dataApresentacao": "2026-08-13",
-"situacao": "Aguardando Parecer",
-"dataSituacao": "2026-10-27",
+"situacao": "Aguardando Deliberação",
+"dataSituacao": "2026-11-03",
 "inteiroTeor": "https://www.camara.leg.br/proposicoesWeb/prop_mostrarintegra?codteor=3171692"
 },
 {
@@ -1520,8 +1531,8 @@
 "ano": 2025,
 "ementa": "Institui o Dia Nacional da Consolidação da Independência do Brasil.",
 "dataApresentacao": "2025-07-01",
-"situacao": "Aguardando Deliberação",
-"dataSituacao": "2026-10-13",
+"situacao": "Aguardando Encaminhamento",
+"dataSituacao": "2026-11-03",
 "inteiroTeor": "https://www.camara.leg.br/proposicoesWeb/prop_mostrarintegra?codteor=2948514"
 },
 {
@@ -2179,8 +2190,8 @@
 "ano": 2024,
 "ementa": "Altera a Lei nº 9.605, de 12 de fevereiro de 1998, que dispõe sobre as sanções penais e administrativas derivadas de condutas e atividades lesivas ao meio ambiente.",
 "dataApresentacao": "2024-10-17",
-"situacao": "Aguardando Deliberação",
-"dataSituacao": "2026-10-27",
+"situacao": "Aguardando Encaminhamento",
+"dataSituacao": "2026-11-03",
 "inteiroTeor": "https://www.camara.leg.br/proposicoesWeb/prop_mostrarintegra?codteor=2486713"
 },
 {

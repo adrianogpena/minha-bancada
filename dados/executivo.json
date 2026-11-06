@@ -1,12 +1,34 @@
 [
 {
+"id": 2651102,
+"tipo": "PEC",
+"numero": 22,
+"ano": 2026,
+"ementa": "Altera o Ato das Disposições Constitucionais Transitórias para disciplinar a transição para a cobrança do Imposto Seletivo.",
+"dataApresentacao": "2026-11-05",
+"situacao": "Aguardando Despacho do Presidente da Câmara dos Deputados",
+"dataSituacao": "2026-11-05",
+"inteiroTeor": "https://www.camara.leg.br/proposicoesWeb/prop_mostrarintegra?codteor=3190384"
+},
+{
+"id": 2651183,
+"tipo": "MPV",
+"numero": 1399,
+"ano": 2026,
+"ementa": "Estabelece alíquotas e normas complementares aplicáveis ao Imposto Seletivo para o ano-calendário de 2027, em Regime de Implementação Gradual",
+"dataApresentacao": "2026-11-04",
+"situacao": null,
+"dataSituacao": "2026-11-04",
+"inteiroTeor": "https://www.camara.leg.br/proposicoesWeb/prop_mostrarintegra?codteor=3190528"
+},
+{
 "id": 2650051,
 "tipo": "PL",
 "numero": 5742,
 "ano": 2026,
 "ementa": "Dispõe sobre medidas tributárias e aduaneiras referentes à realização da Copa do Mundo Feminina da Fédération Internationale de Football Association – FIFA 2027 na República Federativa do Brasil.",
 "dataApresentacao": "2026-11-03",
-"situacao": null,
+"situacao": "Aguardando Despacho do Presidente da Câmara dos Deputados",
 "dataSituacao": "2026-11-03",
 "inteiroTeor": "https://www.camara.leg.br/proposicoesWeb/prop_mostrarintegra?codteor=3188506"
 },
@@ -292,7 +314,7 @@
 "ementa": "Altera a Lei nº 15.473, de 22 de julho de 2026, que altera a Lei nº 9.818, de 23 de agosto de 1999, e a Lei nº 12.712, de 30 de agosto de 2012, para fortalecer e modernizar o sistema brasileiro de apoio oficial ao crédito à exportação.",
 "dataApresentacao": "2026-07-22",
 "situacao": null,
-"dataSituacao": "2026-09-17",
+"dataSituacao": "2026-11-05",
 "inteiroTeor": "https://www.camara.leg.br/proposicoesWeb/prop_mostrarintegra?codteor=3166455"
 },
 {
@@ -1531,8 +1553,8 @@
 "ano": 2025,
 "ementa": "Institui o Dia Nacional da Consolidação da Independência do Brasil.",
 "dataApresentacao": "2025-07-01",
-"situacao": "Aguardando Encaminhamento",
-"dataSituacao": "2026-11-03",
+"situacao": "Aguardando Envio ao Senado Federal",
+"dataSituacao": "2026-11-04",
 "inteiroTeor": "https://www.camara.leg.br/proposicoesWeb/prop_mostrarintegra?codteor=2948514"
 },
 {
@@ -2190,8 +2212,8 @@
 "ano": 2024,
 "ementa": "Altera a Lei nº 9.605, de 12 de fevereiro de 1998, que dispõe sobre as sanções penais e administrativas derivadas de condutas e atividades lesivas ao meio ambiente.",
 "dataApresentacao": "2024-10-17",
-"situacao": "Aguardando Encaminhamento",
-"dataSituacao": "2026-11-03",
+"situacao": "Aguardando Designação de Relator(a)",
+"dataSituacao": "2026-11-06",
 "inteiroTeor": "https://www.camara.leg.br/proposicoesWeb/prop_mostrarintegra?codteor=2486713"
 },
 {

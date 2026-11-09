@@ -67,6 +67,6 @@ jobs:
             --jq '.[] | select(.conclusion == "success") | .databaseId' |
           while read -r id; do
             enviou=$(gh run view "$id" --json jobs --jq '[.jobs[].steps[] | select(.name == "Confirmação enviada" and .conclusion == "success")] | length')
-            [ "$enviou" = "0" ] && gh run delete "$id"
+            if [ "$enviou" = "0" ]; then gh run delete "$id"; fi
           done
           exit 0

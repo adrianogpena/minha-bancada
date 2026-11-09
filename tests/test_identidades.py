@@ -1,4 +1,5 @@
 import json
+from collections import defaultdict
 
 import identidades as ident
 
@@ -233,3 +234,126 @@ def test_emendas_ligam_so_por_nome_unico_de_parlamentar_federal(tmp_path):
     ana = next(p for p in n["pessoas"] if p["id"] == n["emendas"][0]["pessoa"])
     assert ana["ligacao"]["emendas"] == ["nome+cargo", "média"]
     assert n["ligacoes"]["semLigacao"]["emendas"] == 2
+
+
+def test_estrategia_ms_liga_por_nome_e_nao_liga_ambiguo():
+    deps = [{"id": "1", "nome": "Ana Souza", "nomeCivil": None}, {"id": "2", "nome": "Beto Lima", "nomeCivil": None},
+            {"id": "3", "nome": "Beto Lima", "nomeCivil": None}]
+    assert ident.ligar_nomes(["DEP. Ana Souza", "Beto Lima"], deps, "MS") == {"DEP. Ana Souza": "1"}
+    assert ident._LOG["MS"]["nomes"]["DEP. Ana Souza"][1:] == ["nome", "média"]
+    assert ident._LOG["MS"]["ambiguos"]["Beto Lima"] == ["2", "3"]
+
+
+def test_estrategia_pe_liga_por_partido_e_palavras_e_nao_liga_ambiguo():
+    deps = [{"id": "1", "nome": "João Paulo", "nomeCivil": None, "partido": "PT"},
+            {"id": "2", "nome": "João Paulo", "nomeCivil": None, "partido": "PL"},
+            {"id": "3", "nome": "Delegada Gleide Ângelo", "nomeCivil": None, "partido": "PSB"},
+            {"id": "4", "nome": "Ana Lima", "nomeCivil": None, "partido": "PSB"},
+            {"id": "5", "nome": "Ana Souza", "nomeCivil": None, "partido": "PSB"}]
+    r = ident.ligar_nomes(["João Paulo do PT", "DEL. GLEIDE ANGELO", "Ana"], deps, "PE")
+    assert r == {"João Paulo do PT": "1", "DEL. GLEIDE ANGELO": "3"}
+    assert ident._LOG["PE"]["nomes"]["João Paulo do PT"][1:] == ["nome+partido", "média"]
+    assert ident._LOG["PE"]["nomes"]["DEL. GLEIDE ANGELO"][1:] == ["palavras", "baixa"]
+    assert ident._LOG["PE"]["ambiguos"]["Ana"] == ["4", "5"]
+
+
+def test_estrategia_rr_liga_manual_extremos_e_nao_liga_ambiguo():
+    deps = [{"id": "1", "nome": "Coronel Chagas", "nomeCivil": None},
+            {"id": "2", "nome": "José Silva", "nomeCivil": None},
+            {"id": "3", "nome": "Paulo Souza", "nomeCivil": None},
+            {"id": "4", "nome": "Paulo Alves Souza", "nomeCivil": None}]
+    r = ident.ligar_nomes(["CEL CHAGAS", "Dr. José Carlos Silva", "Paulo Pereira Souza"], deps, "RR")
+    assert r == {"CEL CHAGAS": "1", "Dr. José Carlos Silva": "2"}
+    assert ident._LOG["RR"]["nomes"]["CEL CHAGAS"][1:] == ["manual", "alta"]
+    assert ident._LOG["RR"]["nomes"]["Dr. José Carlos Silva"][1:] == ["extremos", "baixa"]
+    assert ident._LOG["RR"]["ambiguos"]["Paulo Pereira Souza"] == ["3", "4"]
+
+
+def test_estrategia_mt_liga_palavras_na_ordem_e_nao_liga_ambiguo_nem_subconjunto():
+    deps = [{"id": "1", "nome": "Júlio Campos", "nomeCivil": None},
+            {"id": "2", "nome": "Ana Dias", "nomeCivil": "Ana Maria Dias"},
+            {"id": "3", "nome": "Ana Dias", "nomeCivil": "Ana Paula Dias"},
+            {"id": "4", "nome": "Beto Rocha Lima", "nomeCivil": None}]
+    r = ident.ligar_nomes(["DEP JULIO DE CAMPOS", "Dra. Ana Dias", "Beto Lima"], deps, "MT")
+    assert r == {"DEP JULIO DE CAMPOS": "1"}
+    assert ident._LOG["MT"]["nomes"]["DEP JULIO DE CAMPOS"][1:] == ["palavras", "baixa"]
+    assert "Dra. Ana Dias" in ident._LOG["MT"]["ambiguos"] or "Dra. Ana Dias" in ident._LOG["MT"]["semPar"]
+    assert "Dra. Ana Dias" not in ident._LOG["MT"]["nomes"] and "Beto Lima" in ident._LOG["MT"]["semPar"]
+
+
+def test_estrategia_pa_liga_palavras_e_primeira_palavra_unica_e_nao_liga_ambiguo():
+    deps = [{"id": "1", "nome": "Torrinho", "nomeCivil": "João Silva"},
+            {"id": "2", "nome": "Ana Lima Souza", "nomeCivil": None},
+            {"id": "3", "nome": "Ana Souza Pinto", "nomeCivil": None},
+            {"id": "4", "nome": "Beto Rocha", "nomeCivil": None}]
+    r = ident.ligar_nomes(["TORRINHO TORRES", "Rocha Beto", "Ana Souza"], deps, "PA")
+    assert r == {"TORRINHO TORRES": "1", "Rocha Beto": "4"}
+    assert ident._LOG["PA"]["nomes"]["TORRINHO TORRES"][1:] == ["palavras", "baixa"]
+    assert ident._LOG["PA"]["ambiguos"]["Ana Souza"] == ["2", "3"]
+
+
+def test_estrategia_pa_primeira_palavra_repetida_nao_liga():
+    deps = [{"id": "1", "nome": "Torrinho", "nomeCivil": None}, {"id": "2", "nome": "Torrinho", "nomeCivil": None}]
+    assert ident.ligar_nomes(["TORRINHO TORRES"], deps, "PA") == {}
+
+
+def test_estrategia_sc_liga_por_palavras_apelido_e_nao_liga_ambiguo():
+    deps = [{"id": "1", "nome": "Maria Silva", "nomeCivil": None},
+            {"id": "2", "nome": "Paulinha", "nomeCivil": None},
+            {"id": "3", "nome": "Pedro Lima Souza", "nomeCivil": None},
+            {"id": "4", "nome": "Pedro Lima Alves", "nomeCivil": None}]
+    r = ident.ligar_nomes(["Maria Paula da Silva", "Ana Costa (Paulinha)", "Pedro Lima", "Zé Ninguém"], deps, "SC")
+    assert r == {"Maria Paula da Silva": "1", "Ana Costa (Paulinha)": "2"}
+    assert ident._LOG["SC"]["nomes"]["Maria Paula da Silva"][1:] == ["palavras", "baixa"]
+    assert ident._LOG["SC"]["nomes"]["Ana Costa (Paulinha)"][1:] == ["palavras", "baixa"]
+    assert ident._LOG["SC"]["ambiguos"]["Pedro Lima"] == ["3", "4"]
+    assert "Zé Ninguém" in ident._LOG["SC"]["semPar"]
+
+
+def test_estrategia_pr_liga_nome_partido_palavras_similaridade_e_nao_liga_ambiguo():
+    deps = [{"id": "1", "nome": "Ana Júlia", "nomeCivil": None, "partido": "PT"},
+            {"id": "2", "nome": "Pedro Paulo Bazana", "nomeCivil": None, "partido": "PL"},
+            {"id": "3", "nome": "Roberto Almeida", "nomeCivil": None, "partido": "PL"},
+            {"id": "4", "nome": "Carlos Silva", "nomeCivil": None, "partido": "PL"},
+            {"id": "5", "nome": "Dani Silva", "nomeCivil": None, "partido": "PL"}]
+    r = ident.ligar_nomes(["ANA JÚLIA DO PT", "Ana Julia", "BAZANA", "Roberto Almeda", "Silva"], deps, "PR")
+    assert r == {"ANA JÚLIA DO PT": "1", "Ana Julia": "1", "BAZANA": "2", "Roberto Almeda": "3"}
+    log = ident._LOG["PR"]["nomes"]
+    assert log["Ana Julia"][1:] == ["nome", "média"]
+    assert log["ANA JÚLIA DO PT"][1:] == ["nome", "média"]
+    assert log["BAZANA"][1:] == ["palavras", "baixa"]
+    assert log["Roberto Almeda"][1:] == ["similaridade", "baixa"]
+    assert ident._LOG["PR"]["ambiguos"]["Silva"] == ["4", "5"]
+
+
+def _reg_com_pessoas(*pessoas):
+    reg = ident._Registro()
+    for i, (nome, camara, senado) in enumerate(pessoas):
+        p = reg.obter("nn", f"{nome}|{i}")
+        p["nome"], p["camara"], p["senado"] = nome, camara, senado
+    return reg
+
+
+def _ligar_tribunais(tribunais, reg):
+    ambiguos, resumo, sem = [], defaultdict(lambda: defaultdict(int)), defaultdict(int)
+    saida = ident.ligar_tribunais(tribunais, reg, ambiguos, resumo, sem)
+    return saida, ambiguos, resumo, sem
+
+
+def test_ligar_tribunais_liga_nome_unico_com_mandato_federal():
+    reg = _reg_com_pessoas(("Fulano de Tal", 10, None), ("Beltrano Candidato", None, None))
+    tribunais = {"TCU": {"atuais": [{"nome": "FULANO DE TAL", "wiki": "Fulano"}, {"nome": "Beltrano Candidato"}, {"nome": "Sem Par"}]}}
+    saida, ambiguos, resumo, sem = _ligar_tribunais(tribunais, reg)
+    pessoa = next(p for p in reg.por_id.values() if p["nome"] == "Fulano de Tal")
+    assert saida == {ident.id_ministro_tribunal("TCU", {"nome": "FULANO DE TAL", "wiki": "Fulano"}): pessoa["id"]}
+    assert pessoa["ligacao"]["tribunal"] == ["nome", "média"]
+    assert resumo["tribunal"]["nome"] == 1 and sem["tribunal"] == 2 and ambiguos == []
+
+
+def test_ligar_tribunais_nome_repetido_fica_ambiguo_e_nao_liga():
+    reg = _reg_com_pessoas(("Maria Souza", 1, None), ("Maria Souza", None, 2))
+    saida, ambiguos, resumo, sem = _ligar_tribunais({"STF": {"atuais": [{"nome": "Maria Souza"}]}}, reg)
+    assert saida == {} and sem["tribunal"] == 1 and not resumo
+    (a,) = ambiguos
+    assert a["fonte"] == "tribunal" and a["id"] == "STF|maria souza" and a["uf"] is None and len(a["candidatos"]) == 2
+    assert all("tribunal" not in p["ligacao"] for p in reg.por_id.values())

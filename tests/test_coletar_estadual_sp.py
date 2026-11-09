@@ -363,3 +363,334 @@ def test_regras_do_contrato():
     assert [d["ano"] for d in regra["documentos"]] == [2002, 2001, 2002] and regra["ano"] == 2002
     assert regra["documentos"][0]["url"] == "https://www.al.sp.gov.br/norma/?id=234"
     assert sp.regras_da_verba("<p>sem links</p>") is None
+
+
+class RespostaSp:
+    def __init__(self, conteudo=b"", status=200):
+        self.content = conteudo
+        self.status_code = status
+
+    def raise_for_status(self):
+        if self.status_code >= 400:
+            raise RuntimeError(f"HTTP {self.status_code}")
+
+    def json(self):
+        return json.loads(self.content)
+
+
+class SessaoSp:
+    def __init__(self, *respostas):
+        self.respostas = list(respostas)
+        self.chamadas = []
+
+    def get(self, url, params=None, timeout=None):
+        self.chamadas.append((url, params))
+        return self.respostas.pop(0)
+
+
+def test_pegar_json_404_e_corpo_vazio_viram_none(monkeypatch):
+    monkeypatch.setattr(sp.time, "sleep", lambda x: None)
+    s = SessaoSp(RespostaSp(status=404), RespostaSp(b"  \n"), RespostaSp(b'{"a": 1}'), RespostaSp(status=500))
+    assert sp.pegar_json(s, "/x") is None
+    assert sp.pegar_json(s, "/x") is None
+    assert sp.pegar_json(s, "/processo", ano=2026) == {"a": 1}
+    assert s.chamadas[0] == (f"{sp.API}/x", None) and s.chamadas[2] == (f"{sp.API}/processo", {"ano": 2026})
+    with pytest.raises(RuntimeError, match="HTTP 500"):
+        sp.pegar_json(s, "/x")
+
+
+def test_paginas_segue_ate_a_ultima_ou_ate_o_total(monkeypatch):
+    monkeypatch.setattr(sp.time, "sleep", lambda x: None)
+    s = SessaoSp(RespostaSp(b'{"content":[1,2],"last":false,"totalPages":2}'), RespostaSp(b'{"content":[3],"last":true,"totalPages":2}'))
+    assert list(sp.paginas(s, "/processo", ano=2026)) == [1, 2, 3]
+    assert [p["page"] for _, p in s.chamadas] == [0, 1] and s.chamadas[0][1]["size"] == sp.TAMANHO_PAGINA and s.chamadas[0][1]["ano"] == 2026
+    s = SessaoSp(RespostaSp(b'{"content":[1],"last":false,"totalPages":1}'))
+    assert list(sp.paginas(s, "/processo")) == [1] and len(s.chamadas) == 1
+    assert list(sp.paginas(SessaoSp(RespostaSp(status=404)), "/processo")) == []
+
+
+def test_coletar_regras_grava_e_nao_apaga_sem_links(tmp_path, monkeypatch, capsys):
+    monkeypatch.setattr(sp, "PASTA", tmp_path)
+    monkeypatch.setattr(sp, "baixar", lambda s, url: amostra("regras")["trecho"].encode("utf-8"))
+    sp.coletar_regras(None)
+    salvo = json.loads((tmp_path / "regras_ressarcimento.json").read_text(encoding="utf-8"))
+    assert salvo["ano"] == 2002 and len(salvo["documentos"]) == 3 and salvo["fonte"] == sp.DESPESAS_PAGINA
+    assert "SP: regras da verba 3 textos legais" in capsys.readouterr().out
+    monkeypatch.setattr(sp, "baixar", lambda s, url: b"<p>sem links</p>")
+    with pytest.raises(RuntimeError, match="mantém o arquivo anterior"):
+        sp.coletar_regras(None)
+    assert json.loads((tmp_path / "regras_ressarcimento.json").read_text(encoding="utf-8")) == salvo
+
+
+def candidata(n):
+    return {"idProcesso": n, "tipoProcesso": "PL", "anoTipo": 2025, "numeroTipo": n}
+
+
+def test_coletar_normas_erro_no_detalhe_vira_aviso_e_fica_para_a_proxima(tmp_path, monkeypatch, capsys):
+    monkeypatch.setattr(sp, "PASTA", tmp_path)
+    monkeypatch.setattr(sp, "normas_candidatas", lambda s, matriculas, anos: {1: candidata(1), 2: candidata(2)})
+
+    def detalhe(s, caminho, **params):
+        if caminho.endswith("/1"):
+            raise RuntimeError("HTTP 500")
+        return None
+
+    monkeypatch.setattr(sp, "pegar_json", detalhe)
+    sp.coletar_normas(None, [{"id": "300396"}], date(2026, 11, 2))
+    assert "AVISO: SP: a API respondeu erro no detalhe de 1 projetos" in capsys.readouterr().err
+    assert list(json.loads((tmp_path / "normas_vistas.json").read_text(encoding="utf-8"))["processos"]) == ["2"]
+
+
+def test_coletar_normas_prazo_esgotado_salva_o_que_leu(tmp_path, monkeypatch):
+    monkeypatch.setattr(sp, "PASTA", tmp_path)
+    monkeypatch.setattr(sp, "normas_candidatas", lambda s, matriculas, anos: {1: candidata(1)})
+
+    def detalhe(s, caminho, **params):
+        raise sp.comum.PrazoEsgotado("prazo de coleta esgotado")
+
+    monkeypatch.setattr(sp, "pegar_json", detalhe)
+    with pytest.raises(sp.comum.PrazoEsgotado):
+        sp.coletar_normas(None, [{"id": "300396"}], date(2026, 11, 2))
+    assert json.loads((tmp_path / "normas_vistas.json").read_text(encoding="utf-8"))["processos"] == {}
+
+
+def test_coletar_normas_ano_sem_norma_nao_cria_arquivo(tmp_path, monkeypatch):
+    monkeypatch.setattr(sp, "PASTA", tmp_path)
+    monkeypatch.setattr(sp, "normas_candidatas", lambda s, matriculas, anos: {})
+    sp.coletar_normas(None, [{"id": "300396"}], date(2026, 11, 2))
+    assert [p.name for p in tmp_path.iterdir()] == ["normas_vistas.json"]
+
+
+def reuniao_de_comissao():
+    return {"idReuniao": 5, "nuReuniao": 7, "tituloReuniao": "Reunião de Pauta", "dtReuniao": "2026-11-04T15:00", "status": {"txNome": "Convocada"},
+            "colegiadosRelacionados": [{"sigla": "CCJR"}],
+            "documentosReuniao": [{"idDocumento": 11, "tipo": "Pauta de colegiado", "descricao": "Pauta nº 8/2026", "linkArquivo": "https://x/p.html"}]}
+
+
+def test_pautas_e_atas_junta_comissoes_e_troca_as_antigas(tmp_path, monkeypatch):
+    monkeypatch.setattr(sp, "PASTA", tmp_path)
+    (tmp_path / "pautas_2026.json").write_text(json.dumps({"itens": {"ordem-do-dia|99": {"origem": "comissao", "tipo": "ordem-do-dia", "id": "99"}}}), encoding="utf-8")
+
+    def paginas(s, caminho, **params):
+        if caminho == "/colegiado/reunioes" and params["ano"] == 2026:
+            return iter([reuniao_de_comissao()])
+        return iter([])
+
+    monkeypatch.setattr(sp, "paginas", paginas)
+    sp.coletar_pautas_atas(None, date(2026, 11, 2))
+    itens = json.loads((tmp_path / "pautas_2026.json").read_text(encoding="utf-8"))["itens"]
+    assert list(itens) == ["ordem-do-dia|11"] and itens["ordem-do-dia|11"]["origem"] == "comissao" and itens["ordem-do-dia|11"]["data"] == "2026-11-04"
+
+
+def test_pautas_e_atas_erro_na_lista_de_um_ano_vira_aviso(tmp_path, monkeypatch, capsys):
+    monkeypatch.setattr(sp, "PASTA", tmp_path)
+    anos = []
+
+    def paginas(s, caminho, **params):
+        if caminho.startswith("/sessoes"):
+            anos.append(params["ano"])
+            if params["ano"] == 2024:
+                raise RuntimeError("HTTP 500")
+        return iter([])
+
+    monkeypatch.setattr(sp, "paginas", paginas)
+    sp.coletar_pautas_atas(None, date(2026, 11, 2))
+    assert anos == [2023, 2024, 2025, 2026]
+    assert "AVISO: SP: lista de sessões plenárias 2024: HTTP 500" in capsys.readouterr().err
+
+
+def test_pautas_e_atas_erro_na_sessao_vira_falha_e_prazo_esgotado_salva_estado(tmp_path, monkeypatch, capsys):
+    monkeypatch.setattr(sp, "PASTA", tmp_path)
+    sessoes = [{"id": 2, "titulo": "2ª Sessão", "dtInicio": "2026-10-30T14:00"}]
+    monkeypatch.setattr(sp, "paginas", lambda s, caminho, **params: iter(sessoes if caminho.startswith("/sessoes") and params["ano"] == 2026 else []))
+
+    def ler_com_erro(s, sessao):
+        raise RuntimeError("HTTP 500")
+
+    monkeypatch.setattr(sp, "ler_sessao", ler_com_erro)
+    sp.coletar_pautas_atas(None, date(2026, 11, 2))
+    assert "AVISO: SP: pauta ou ata de 1 sessões plenárias respondeu erro" in capsys.readouterr().err
+    salvo = json.loads((tmp_path / "pautas_2026.json").read_text(encoding="utf-8"))
+    assert salvo["falhas"] == {"2": "2026-11-02"} and salvo["lidas"] == {}
+
+    def ler_sem_prazo(s, sessao):
+        raise sp.comum.PrazoEsgotado("prazo de coleta esgotado")
+
+    monkeypatch.setattr(sp, "ler_sessao", ler_sem_prazo)
+    with pytest.raises(sp.comum.PrazoEsgotado):
+        sp.coletar_pautas_atas(None, date(2026, 11, 20))
+    assert json.loads((tmp_path / "pautas_2026.json").read_text(encoding="utf-8"))["falhas"] == {"2": "2026-11-02"}
+
+
+def test_pautas_e_atas_prazo_esgotado_ao_listar_sessoes_propaga(tmp_path, monkeypatch):
+    monkeypatch.setattr(sp, "PASTA", tmp_path)
+
+    def paginas(s, caminho, **params):
+        raise sp.comum.PrazoEsgotado("prazo de coleta esgotado")
+
+    monkeypatch.setattr(sp, "paginas", paginas)
+    with pytest.raises(sp.comum.PrazoEsgotado):
+        sp.coletar_pautas_atas(None, date(2026, 11, 2))
+
+
+CARTAO_CONTRATO = ('<li class="card"><a href="/alesp/contratos/detalhe/?detContrato={h}"><strong>Processo Digital {n} / {ano}</strong></a>'
+                   '<b class="badge">Pregão</b><i style="color: #666">Obj {n}</i>')
+
+
+def pagina_de_contratos(*cartoes):
+    return ('<div class="modulo_contratos" style="display: none">' + "".join(CARTAO_CONTRATO.format(h=h * 32, n=n, ano=ano) for h, n, ano in cartoes) + "</div>").encode("latin-1")
+
+
+def test_coletar_contratos_detalhe_com_erro_ou_sem_tabela_vira_aviso(tmp_path, monkeypatch, capsys):
+    monkeypatch.setattr(sp, "PASTA", tmp_path)
+    monkeypatch.setattr(sp.time, "sleep", lambda x: None)
+    monkeypatch.setattr(sp, "baixar", lambda s, url: pagina_de_contratos(("a", 1, 2026), ("b", 2, 2026), ("c", 3, 2026)))
+
+    class Sessao:
+        def get(self, url, timeout):
+            if url.endswith("a" * 32):
+                raise RuntimeError("HTTP 500")
+            if url.endswith("b" * 32):
+                return RespostaSp(b"<html>sem tabela</html>")
+            return RespostaSp(detalhe_html().encode("latin-1"))
+
+    sp.coletar_contratos(Sessao(), date(2026, 11, 2))
+    erro = capsys.readouterr().err
+    assert "AVISO: SP: 1 detalhes de contrato sem resposta" in erro and "AVISO: SP: 1 contratos da página sem tabela no detalhe" in erro
+    salvo = json.loads((tmp_path / "orgao_2026.json").read_text(encoding="utf-8"))
+    assert {i["idFonte"] for i in salvo["itens"].values()} == {"b" * 32, "c" * 32} and set(salvo["lidos"]) == {"b" * 32, "c" * 32}
+
+
+def test_coletar_contratos_prazo_esgotado_mantem_o_que_ja_estava_gravado(tmp_path, monkeypatch):
+    monkeypatch.setattr(sp, "PASTA", tmp_path)
+    (tmp_path / "orgao_2026.json").write_text('{"itens":{"ctr_x":{"idFonte":"z","encerrado":false,"aditamentos":0}},"lidos":{"z":"2026-11-01"}}', encoding="utf-8")
+    monkeypatch.setattr(sp, "baixar", lambda s, url: pagina_de_contratos(("a", 1, 2026)))
+
+    class Sessao:
+        def get(self, url, timeout):
+            raise sp.comum.PrazoEsgotado("prazo de coleta esgotado")
+
+    with pytest.raises(sp.comum.PrazoEsgotado):
+        sp.coletar_contratos(Sessao(), date(2026, 11, 2))
+    assert "ctr_x" in json.loads((tmp_path / "orgao_2026.json").read_text(encoding="utf-8"))["itens"]
+
+
+def test_coletar_contratos_so_rele_ano_recente_e_mudanca_em_ano_antigo(tmp_path, monkeypatch):
+    monkeypatch.setattr(sp, "PASTA", tmp_path)
+    monkeypatch.setattr(sp.time, "sleep", lambda x: None)
+    antigo = {"tipo": "contrato", "idFonte": "a" * 32, "encerrado": False, "aditamentos": 0}
+    recente = {"tipo": "contrato", "idFonte": "b" * 32, "encerrado": False, "aditamentos": 0}
+    mudou = {"tipo": "contrato", "idFonte": "c" * 32, "encerrado": False, "aditamentos": 0}
+    for ano, item in ((2023, antigo), (2026, recente)):
+        sp.comum.salvar(tmp_path / f"orgao_{ano}.json", {"itens": {f"ctr_{ano}": item}, "lidos": {item["idFonte"]: "2000-01-01"}})
+    sp.comum.salvar(tmp_path / "orgao_2024.json", {"itens": {"ctr_2024": mudou}, "lidos": {mudou["idFonte"]: "2024-01-01"}})
+    encerrado = b'<div class="modulo_contratos_encerrado" style="display: none">' + CARTAO_CONTRATO.format(h="c" * 32, n=3, ano=2024).encode("latin-1") + b"</div>"
+    pagina = pagina_de_contratos(("a", 1, 2023), ("b", 2, 2026)) + encerrado
+    monkeypatch.setattr(sp, "baixar", lambda s, url: pagina)
+    pedidos = []
+
+    class Sessao:
+        def get(self, url, timeout):
+            pedidos.append(url[-32:])
+            return RespostaSp(detalhe_html().encode("latin-1"))
+
+    sp.coletar_contratos(Sessao(), date(2026, 11, 2))
+    assert sorted(pedidos) == ["b" * 32, "c" * 32]
+
+
+def preparar_coleta(monkeypatch, tmp_path, fotos_ok=True, xml=XML_DEPUTADOS):
+    monkeypatch.setattr(sp.comum, "DADOS", tmp_path)
+    monkeypatch.setattr(sp.comum, "RAIZ", tmp_path)
+    folha = ('<table><tr><td>DANILO MASCARENHAS DE BALAS</td><td>34.774,64</td><td>9.000,00</td><td>25.774,64</td></tr></table>')
+    indice = 'href="/x/folha-deputados-2022-12.html" href="/x/folha-deputados-2026-09.html" href="/x/folha-deputados-2026-10.html"'
+    propositura = ("<proposituras><propositura><AnoLegislativo>2025</AnoLegislativo><Ementa>Institui.</Ementa><DtPublicacao>2025-02-03T00:00:00-03:00</DtPublicacao>"
+                   "<IdDocumento>100</IdDocumento><IdNatureza>1</IdNatureza><NroLegislativo>12</NroLegislativo></propositura></proposituras>")
+    autores = ("<documentos_autores><DocumentoAutor><IdAutor>1000000335</IdAutor><IdDocumento>100</IdDocumento>"
+               "<NomeAutor>Agente Federal Danilo Balas</NomeAutor></DocumentoAutor></documentos_autores>")
+    verba = (b"<despesas><despesa><Ano>2025</Ano><Matricula>300607</Matricula><Mes>3</Mes><Valor>9200.0</Valor><CNPJ>00192198000152</CNPJ>"
+             b"<Deputado>Danilo</Deputado><Tipo>D - MATERIAIS</Tipo><Fornecedor>GRAFICA PARATODOS</Fornecedor></despesa></despesas>")
+
+    def baixar(s, url):
+        if url == sp.DEPUTADOS_XML:
+            return xml
+        if url == sp.PROPOSITURAS_ZIP:
+            return zip_de("p.xml", propositura)
+        if url == sp.AUTORES_ZIP:
+            return zip_de("a.xml", autores)
+        if url.endswith("despesas_gabinetes_2024.xml"):
+            raise RuntimeError("HTTP 500")
+        if "despesas_gabinetes_" in url:
+            return verba
+        raise AssertionError(url)
+
+    class Sessao:
+        def get(self, url, params=None, timeout=None):
+            if url == sp.PARLAMENTARES_API:
+                if not fotos_ok:
+                    raise RuntimeError("HTTP 500")
+                return RespostaSp(json.dumps({"content": [{"nuMatricula": 300607, "txFoto": "/biografia/a.jpeg"}]}).encode())
+            if url == sp.FOLHA_INDICE:
+                return RespostaSp(indice.encode("latin-1"))
+            if url in (sp.FOLHA.format(ano=2026, mes=9), sp.FOLHA.format(ano=2026, mes=10)):
+                return RespostaSp(folha.encode("latin-1"))
+            raise AssertionError(url)
+
+    etapas = []
+    monkeypatch.setattr(sp.comum, "sessao", lambda: Sessao())
+    monkeypatch.setattr(sp, "baixar", baixar)
+    monkeypatch.setattr(sp, "coletar_normas", lambda s, deputados, hoje: etapas.append("normas"))
+    monkeypatch.setattr(sp, "coletar_pautas_atas", lambda s, hoje: etapas.append("pautas"))
+    monkeypatch.setattr(sp, "coletar_contratos", lambda s, hoje: etapas.append("contratos"))
+    monkeypatch.setattr(sp, "coletar_regras", lambda s: etapas.append("regras"))
+    monkeypatch.setattr(sp, "presenca_do_ano", lambda s, deputados, ano, existentes, hoje: [
+        {"idDeputado": "300607", "periodo": str(ano), "presente": 3, "ausente": 0, "licenca": 0, "totalSessoes": 3, "fonte": sp.PRESENCA_PAGINA}])
+    return etapas
+
+
+def test_coletar_lista_de_deputados_vazia_para_na_hora(tmp_path, monkeypatch, capsys):
+    etapas = preparar_coleta(monkeypatch, tmp_path, xml=b"<Deputados></Deputados>")
+    sp.coletar()
+    assert "AVISO: SP: lista de deputados vazia" in capsys.readouterr().err
+    assert etapas == [] and not (tmp_path / "SP").exists()
+
+
+def test_coletar_grava_deputados_subsidio_verba_materias_presenca_e_roda_as_etapas(tmp_path, monkeypatch, capsys):
+    etapas = preparar_coleta(monkeypatch, tmp_path)
+    pasta = tmp_path / "SP"
+    sp.comum.salvar(pasta / "remuneracao_2026.json", {"itens": [{"idDeputado": "300607", "mes": 9, "bruto": 1.0, "liquido": 1.0}]})
+    sp.comum.salvar(pasta / "verbas_2023.json", {"itens": [{"marca": "antiga"}]})
+    sp.comum.salvar(pasta / "presenca.json", {"itens": [{"idDeputado": "300607", "periodo": "2020", "presente": 1, "ausente": 0, "licenca": 0, "totalSessoes": 1}]})
+    sp.coletar()
+    erro = capsys.readouterr().err
+    deputados = json.loads((pasta / "deputados.json").read_text(encoding="utf-8"))["deputados"]
+    assert [d["id"] for d in deputados] == ["300607", "300001"] and all("idAutor" not in d for d in deputados)
+    assert deputados[0]["nomeCivil"] == "DANILO MASCARENHAS DE BALAS" and deputados[1]["nomeCivil"] is None
+    assert deputados[0]["foto"] == "https://www3.al.sp.gov.br/legis/biografia/a.jpeg" and deputados[1]["foto"] is None
+    assert "AVISO: SP: 1 deputados sem nome civil ligado (sem subsídio): Letícia Aguiar" in erro
+    remuneracao = json.loads((pasta / "remuneracao_2026.json").read_text(encoding="utf-8"))["itens"]
+    assert [(i["mes"], i["idDeputado"]) for i in remuneracao] == [(9, "300607"), (10, "300607")] and remuneracao[1]["bruto"] == 34774.64
+    assert json.loads((pasta / "verbas_2023.json").read_text(encoding="utf-8"))["itens"] == [{"marca": "antiga"}]
+    assert not (pasta / "verbas_2024.json").exists() and (pasta / "verbas_2025.json").exists()
+    assert "AVISO: SP: verba 2024: HTTP 500" in erro
+    materias = json.loads((pasta / "materias_2025.json").read_text(encoding="utf-8"))["materias"]
+    assert list(materias) == ["100"] and materias["100"]["idsDeputados"] == ["300607"]
+    assert (pasta / "materias_2023.json").exists() and (pasta / "materias_2026.json").exists()
+    assert etapas == ["normas", "pautas", "contratos", "regras"]
+    presenca = json.loads((pasta / "presenca.json").read_text(encoding="utf-8"))["itens"]
+    assert [i["periodo"] for i in presenca] == ["2020", str(sp.date.today().year)]
+
+
+def test_coletar_sem_fotos_continua_e_etapa_com_erro_nao_para_a_presenca(tmp_path, monkeypatch, capsys):
+    etapas = preparar_coleta(monkeypatch, tmp_path, fotos_ok=False)
+
+    def pautas(s, hoje):
+        raise RuntimeError("quebrou")
+
+    monkeypatch.setattr(sp, "coletar_pautas_atas", pautas)
+    monkeypatch.setattr(sp, "presenca_do_ano", lambda *a: (_ for _ in ()).throw(RuntimeError("HTTP 500")))
+    sp.coletar()
+    erro = capsys.readouterr().err
+    assert "AVISO: SP: sem fotos (HTTP 500)" in erro and "AVISO: SP: pautas e atas: quebrou" in erro and "AVISO: SP: presença: HTTP 500" in erro
+    assert etapas == ["normas", "contratos", "regras"]
+    deputados = json.loads((tmp_path / "SP" / "deputados.json").read_text(encoding="utf-8"))["deputados"]
+    assert all(d["foto"] is None for d in deputados) and not (tmp_path / "SP" / "presenca.json").exists()

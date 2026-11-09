@@ -297,3 +297,35 @@ def test_segue_maioria_do_partido_desconta_o_proprio_voto_e_ignora_empate_e_pouc
     assert gerar.segue_maioria_do_partido("sim", Counter(sim=2, nao=1)) is None
     assert gerar.segue_maioria_do_partido("sim", Counter(sim=2)) is None
     assert gerar.segue_maioria_do_partido("nao", Counter(sim=2, nao=2)) is False
+
+
+def test_gerar_eleitorado_usa_o_ano_mais_recente_de_cada_estado(tmp_path, monkeypatch):
+    bruto, saida = tmp_path / "dados", tmp_path / "site"
+    eleitorado = bruto / "tse" / "eleitorado"
+    for ano, uf in ((2022, "SP"), (2024, "SP"), (2022, "RJ")):
+        (eleitorado / str(ano)).mkdir(parents=True, exist_ok=True)
+        (eleitorado / str(ano) / f"{uf}.json").write_text(json.dumps([{"ano": ano, "uf": uf}]), encoding="utf-8")
+    monkeypatch.setattr(gerar, "BRUTO", bruto)
+    monkeypatch.setattr(gerar, "SAIDA", saida)
+    gerar.gerar_eleitorado()
+    assert json.loads((saida / "eleitorado" / "SP.json").read_text(encoding="utf-8")) == {"ano": 2024, "locais": [{"ano": 2024, "uf": "SP"}]}
+    assert json.loads((saida / "eleitorado" / "RJ.json").read_text(encoding="utf-8"))["ano"] == 2022
+
+
+def test_gerar_eleitorado_sem_pasta_nao_gera_nada(tmp_path, monkeypatch):
+    monkeypatch.setattr(gerar, "BRUTO", tmp_path / "dados")
+    monkeypatch.setattr(gerar, "SAIDA", tmp_path / "site")
+    gerar.gerar_eleitorado()
+    assert not (tmp_path / "site" / "eleitorado").exists()
+
+
+def test_copiar_status_apis_com_e_sem_arquivo(tmp_path, monkeypatch):
+    bruto, saida = tmp_path / "dados", tmp_path / "site"
+    bruto.mkdir()
+    monkeypatch.setattr(gerar, "BRUTO", bruto)
+    monkeypatch.setattr(gerar, "SAIDA", saida)
+    gerar.copiar_status_apis()
+    assert not (saida / "status_apis.json").exists()
+    (bruto / "status_apis.json").write_text(json.dumps({"camara": "ok"}), encoding="utf-8")
+    gerar.copiar_status_apis()
+    assert json.loads((saida / "status_apis.json").read_text(encoding="utf-8")) == {"camara": "ok"}

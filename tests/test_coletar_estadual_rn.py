@@ -325,3 +325,286 @@ def test_coletar_normas_le_so_o_que_falta(tmp_path, monkeypatch):
     chamadas.clear()
     rn.coletar_normas(None, [{"id": parlamentar}])
     assert chamadas == []
+
+
+class SessaoFalsa:
+    def __init__(self, respostas):
+        self.respostas = respostas
+        self.chamadas = []
+
+    def get(self, url, params=None, timeout=None):
+        self.chamadas.append((url, params))
+        return self.respostas.pop(0)
+
+
+def test_pegar_monta_url_e_levanta_em_erro_http():
+    s = SessaoFalsa([Resp({"dados": [1]}), Resp({"dados": []}), Resp(status=500)])
+    assert rn.pegar(s, "parlamentar") == {"dados": [1]}
+    assert s.chamadas[0] == (f"{rn.API}/parlamentar", None)
+    rn.pegar(s, "processo", iniciativa=3)
+    assert s.chamadas[1] == (f"{rn.API}/processo", {"iniciativa": 3})
+    with pytest.raises(RuntimeError, match="HTTP 500"):
+        rn.pegar(s, "processo")
+
+
+def test_paginas_segue_ate_pagina_incompleta(monkeypatch):
+    monkeypatch.setattr(rn, "TAMANHO", 2)
+    s = SessaoFalsa([Resp({"dados": [1, 2]}), Resp({"dados": [3, 4]}), Resp({"dados": [5]})])
+    assert list(rn.paginas(s, "processo", iniciativa=7)) == [1, 2, 3, 4, 5]
+    assert [p["pagina"] for _, p in s.chamadas] == [0, 1, 2]
+    assert all(p["tamanhoPagina"] == 2 and p["iniciativa"] == 7 for _, p in s.chamadas)
+    assert list(rn.paginas(SessaoFalsa([Resp({})]), "reuniao")) == []
+
+
+def test_sessao_nao_repete_erro_500():
+    retry = rn.sessao().get_adapter("https://api").max_retries
+    assert 500 not in retry.status_forcelist and 429 in retry.status_forcelist and retry.total == 3
+
+
+def test_coletar_deputados_grava_sem_iniciativas(tmp_path, monkeypatch):
+    brutos = amostra("estadual_rn_deputados")["parlamentar"]
+    monkeypatch.setattr(rn, "PASTA", tmp_path)
+    monkeypatch.setattr(rn, "pegar", lambda s, caminho, **kw: {"dados": brutos})
+    deputados = rn.coletar_deputados(None)
+    assert [d["id"] for d in deputados] == [str(p["id"]) for p in brutos]
+    assert deputados[0]["iniciativas"] == [3]
+    salvo = json.loads((tmp_path / "deputados.json").read_text(encoding="utf-8"))
+    assert len(salvo["deputados"]) == len(brutos) and all("iniciativas" not in d for d in salvo["deputados"])
+    assert salvo["legislatura"] == "63ª (2023-2027)"
+
+
+def test_projetos_do_deputado_para_na_data_limite_e_ignora_nao_projetos(monkeypatch):
+    processos = amostra("estadual_rn_projetos")["processos"]
+    projeto = next(p for p in processos if rn.eh_projeto(p))
+    outro = next(p for p in processos if not rn.eh_projeto(p))
+    novo = {**projeto, "id": 1, "dataEntrada": "2025-05-01T10:00:00.000Z"}
+    velho = {**projeto, "id": 2, "dataEntrada": "2020-05-01T10:00:00.000Z"}
+    lidos = []
+
+    def paginas(s, caminho, **kw):
+        lidos.append(kw["iniciativa"])
+        yield {**outro, "dataEntrada": "2025-06-01T10:00:00.000Z"}
+        yield novo
+        yield velho
+        yield {**projeto, "id": 3, "dataEntrada": "2025-07-01T10:00:00.000Z"}
+
+    monkeypatch.setattr(rn, "paginas", paginas)
+    achados = rn.projetos_do_deputado(None, {"iniciativas": [10, 11]}, "2023-01-01")
+    assert [p["id"] for p in achados] == [1, 1] and lidos == [10, 11]
+
+
+def test_coletar_projetos_erro_de_um_deputado_vira_aviso(tmp_path, monkeypatch, capsys):
+    projeto = next(p for p in amostra("estadual_rn_projetos")["processos"] if rn.eh_projeto(p))
+    monkeypatch.setattr(rn, "PASTA", tmp_path)
+
+    def falso(s, d, desde=rn.DESDE):
+        if d["id"] == "9":
+            raise RuntimeError("HTTP 500")
+        return [projeto]
+
+    monkeypatch.setattr(rn, "projetos_do_deputado", falso)
+    rn.coletar_projetos(None, [{"id": "8", "nome": "A", "iniciativas": []}, {"id": "9", "nome": "B", "iniciativas": []}])
+    assert "AVISO: RN: projetos de B: HTTP 500" in capsys.readouterr().err
+    salvo = json.loads((tmp_path / f"materias_{projeto['propositura']['ano']}.json").read_text(encoding="utf-8"))
+    assert [m["idsDeputados"] for m in salvo["materias"].values()] == [["8"]]
+
+
+def test_sessoes_plenarias_filtra_tipo_e_para_antes_de_2023(monkeypatch):
+    chamadas = []
+
+    def paginas(s, caminho, **kw):
+        chamadas.append((caminho, kw))
+        yield {"id": 1, "dataInicio": "2026-05-01T10:00:00.000Z", "tipoReuniao": {"id": 1}}
+        yield {"id": 2, "dataInicio": "2026-04-01T10:00:00.000Z", "tipoReuniao": {"id": 5}}
+        yield {"id": 3, "dataInicio": "2025-04-01T10:00:00.000Z", "tipoReuniao": {"id": 12}}
+        yield {"id": 4, "dataInicio": "2022-12-31T10:00:00.000Z", "tipoReuniao": {"id": 1}}
+        yield {"id": 5, "dataInicio": "2024-12-31T10:00:00.000Z", "tipoReuniao": {"id": 1}}
+
+    monkeypatch.setattr(rn, "paginas", paginas)
+    assert [r["id"] for r in rn.sessoes_plenarias(None)] == [1, 3]
+    assert chamadas == [("reuniao", {"situacao": "R", "tipoOrdenacao": "DESC"})]
+
+
+def processo_votado(pid, reuniao, tipo="A", abertura="2026-10-20T10:41:30.000Z"):
+    base = amostra("estadual_rn_votacao")["processo"]
+    return {**base, "id": pid, "tipoVotacao": tipo,
+            "resultadoVotacao": {**base["resultadoVotacao"], "dataSituacaoAbertura": abertura, "reuniao": {"id": reuniao}}}
+
+
+def test_coletar_votacoes_filtra_candidatas_guarda_existentes_e_avisa(tmp_path, monkeypatch, capsys):
+    a = amostra("estadual_rn_votacao")
+    ids = {str(v["parlamentar"]["id"]) for v in a["detalhe"]["votacao"]["dados"]}
+    monkeypatch.setattr(rn, "PASTA", tmp_path)
+    ultimas = [processo_votado(1, 3029), processo_votado(2, 3029, tipo="S"), processo_votado(3, 9999),
+               processo_votado(4, 3029, abertura="2022-01-01T10:00:00.000Z"), processo_votado(5, 3029), processo_votado(6, 3029)]
+    monkeypatch.setattr(rn, "paginas", lambda s, caminho, **kw: iter(ultimas))
+    rn.comum.salvar(tmp_path / "votacoes.json", {"votacoes": {"6-3029": {"data": "2026-01-01"}}})
+    pedidos = []
+
+    def pegar(s, caminho, **kw):
+        pedidos.append(caminho)
+        if caminho.startswith("processo/5/"):
+            raise RuntimeError("HTTP 500")
+        return a["detalhe"]
+
+    monkeypatch.setattr(rn, "pegar", pegar)
+    rn.coletar_votacoes(None, [{"id": i} for i in ids], [{"id": 3029}])
+    assert pedidos == ["processo/1/detalhamento-votacao/3029", "processo/5/detalhamento-votacao/3029"]
+    salvo = json.loads((tmp_path / "votacoes.json").read_text(encoding="utf-8"))["votacoes"]
+    assert set(salvo) == {"1-3029", "6-3029"} and salvo["6-3029"] == {"data": "2026-01-01"}
+    assert salvo["1-3029"]["idMateria"] == "PL-394-2026"
+    materias = json.loads((tmp_path / "materias_votadas.json").read_text(encoding="utf-8"))
+    assert list(materias) == ["PL-394-2026"]
+    assert "AVISO: RN: a API respondeu erro no detalhe de 1 votações de plenário" in capsys.readouterr().err
+
+
+def test_coletar_orgao_erro_de_um_ano_nao_para_os_outros(monkeypatch, capsys, tmp_path):
+    anos = []
+
+    def orgao_do_ano(s, pasta, ano, hoje):
+        anos.append(ano)
+        if ano == 2024:
+            raise RuntimeError("PNCP fora do ar")
+
+    monkeypatch.setattr(rn, "orgao_do_ano", orgao_do_ano)
+    monkeypatch.setattr(rn.time, "sleep", lambda x: None)
+    rn.coletar_orgao("s", tmp_path, rn.date(2025, 3, 1))
+    assert anos == [2023, 2024, 2025]
+    assert "AVISO: RN: contratos e atas de registro 2024: PNCP fora do ar" in capsys.readouterr().err
+
+
+def test_pncp_pagina_204_vazio_e_erro_http_levanta():
+    assert rn.pncp_pagina(SessaoFalsa([Resp(status=204)]), "atas", pagina=1) == {"data": [], "totalPaginas": 0}
+    with pytest.raises(RuntimeError, match="HTTP 400"):
+        rn.pncp_pagina(SessaoFalsa([Resp(status=400)]), "contratos", pagina=1)
+
+
+def test_sessao_pncp_nao_repete_429():
+    retry = rn.sessao_pncp().get_adapter("https://pncp.gov.br").max_retries
+    assert 429 not in retry.status_forcelist and retry.total == 2
+
+
+def test_presenca_erro_vira_aviso_e_prazo_esgotado_guarda_o_lido(tmp_path, monkeypatch, capsys):
+    monkeypatch.setattr(rn, "PASTA", tmp_path)
+    sessoes = [{"id": 1, "dataInicio": "2024-05-01"}, {"id": 2, "dataInicio": "2024-06-01"}]
+
+    def pegar(s, caminho, **kw):
+        if caminho.endswith("/2"):
+            raise RuntimeError("HTTP 500")
+        return {"dados": [{"id": 8, "evento": {"chave": "presenca"}}]}
+
+    monkeypatch.setattr(rn, "pegar", pegar)
+    rn.coletar_presenca(None, [{"id": "8"}], sessoes)
+    assert "AVISO: RN: a API respondeu erro em 1 sessões plenárias (ids 2 a 2)" in capsys.readouterr().err
+
+    def prazo(s, caminho, **kw):
+        if caminho.endswith("/3"):
+            raise rn.comum.PrazoEsgotado("prazo de coleta esgotado")
+        return {"dados": [{"id": 8, "evento": {"chave": "presenca"}}]}
+
+    monkeypatch.setattr(rn, "pegar", prazo)
+    novas = [{"id": 1, "dataInicio": "2024-05-01"}, {"id": 3, "dataInicio": "2024-07-01"}]
+    with pytest.raises(rn.comum.PrazoEsgotado):
+        rn.coletar_presenca(None, [{"id": "8"}], novas)
+    guardado = json.loads((tmp_path / "presenca_sessoes.json").read_text(encoding="utf-8"))
+    assert "1" in guardado["sessoes"] and "3" not in guardado["sessoes"]
+
+
+def test_pautas_e_atas_prazo_esgotado_salva_o_estado_e_erro_vira_aviso(tmp_path, monkeypatch, capsys):
+    monkeypatch.setattr(rn, "PASTA", tmp_path)
+    tipo = {"nome": "Sessão"}
+    sessoes = [{"id": 1, "numero": 1, "dataInicio": f"{rn.ANO_INICIAL}-05-02T13:00:00.000Z", "tipoReuniao": tipo}]
+
+    def prazo(s, caminho, **kw):
+        raise rn.comum.PrazoEsgotado("prazo de coleta esgotado")
+
+    monkeypatch.setattr(rn, "pegar", prazo)
+    with pytest.raises(rn.comum.PrazoEsgotado):
+        rn.coletar_pautas_atas(None, [{"id": "16"}], sessoes)
+    assert (tmp_path / f"pautas_{rn.ANO_INICIAL}.json").exists()
+
+    def erro(s, caminho, **kw):
+        raise RuntimeError("HTTP 500")
+
+    monkeypatch.setattr(rn, "pegar", erro)
+    rn.coletar_pautas_atas(None, [{"id": "16"}], sessoes)
+    assert "AVISO: RN: pauta ou ata de 1 sessões plenárias respondeu erro" in capsys.readouterr().err
+    salvo = json.loads((tmp_path / f"pautas_{rn.ANO_INICIAL}.json").read_text(encoding="utf-8"))
+    assert list(salvo["falhas"]) == ["1"] and salvo["lidas"] == {}
+
+
+def test_pautas_e_atas_ignora_sessao_de_ano_fora_da_janela(tmp_path, monkeypatch):
+    monkeypatch.setattr(rn, "PASTA", tmp_path)
+    chamadas = []
+    monkeypatch.setattr(rn, "pegar", lambda s, caminho, **kw: chamadas.append(caminho))
+    rn.coletar_pautas_atas(None, [], [{"id": 1, "dataInicio": "2019-05-02T13:00:00.000Z"}])
+    assert chamadas == []
+
+
+def test_normas_erro_na_tramitacao_vira_aviso_e_prazo_esgotado_salva_estado(tmp_path, monkeypatch, capsys):
+    a = amostra("estadual_rn_normas")
+    processo = {**a["processo"], "dataArquivamento": None}
+    parlamentar = str(processo["iniciativa"]["parlamentar"]["id"])
+    monkeypatch.setattr(rn, "PASTA", tmp_path)
+    monkeypatch.setattr(rn, "paginas", lambda s, caminho, **kw: [processo] if kw["tipoPropositura"] == 1 else [])
+
+    def erro(s, caminho, **kw):
+        raise RuntimeError("HTTP 500")
+
+    monkeypatch.setattr(rn, "pegar", erro)
+    rn.coletar_normas(None, [{"id": parlamentar}])
+    assert "AVISO: RN: a API respondeu erro na tramitação de 1 projetos" in capsys.readouterr().err
+    assert json.loads((tmp_path / "normas_vistas.json").read_text(encoding="utf-8"))["processos"] == {}
+
+    def prazo(s, caminho, **kw):
+        raise rn.comum.PrazoEsgotado("prazo de coleta esgotado")
+
+    monkeypatch.setattr(rn, "pegar", prazo)
+    with pytest.raises(rn.comum.PrazoEsgotado):
+        rn.coletar_normas(None, [{"id": parlamentar}])
+    assert (tmp_path / "normas_vistas.json").exists()
+
+
+def test_coletar_normas_incremental_le_lista_desde_a_ultima_coleta(tmp_path, monkeypatch):
+    hoje = rn.date.today()
+    monkeypatch.setattr(rn, "PASTA", tmp_path)
+    rn.comum.salvar(tmp_path / "normas_vistas.json", {"coletadoEm": hoje.isoformat(), "completaEm": hoje.isoformat(), "processos": {}})
+    janelas = []
+
+    def paginas(s, caminho, **kw):
+        janelas.append((kw["dataInicio"], kw["dataFinal"]))
+        return []
+
+    monkeypatch.setattr(rn, "paginas", paginas)
+    rn.coletar_normas(None, [{"id": "1"}])
+    assert janelas[0] == ((hoje - rn.timedelta(days=1)).isoformat(), f"{hoje.year}-12-31")
+    assert json.loads((tmp_path / "normas_vistas.json").read_text(encoding="utf-8"))["completaEm"] == hoje.isoformat()
+
+
+def test_coletar_roda_etapas_em_ordem_e_falha_de_uma_nao_para_as_outras(monkeypatch, capsys):
+    chamadas = []
+    deputados = [{"id": "8"}]
+    monkeypatch.setattr(rn, "sessao", lambda: "s")
+    monkeypatch.setattr(rn, "sessao_pncp", lambda: "pncp")
+    monkeypatch.setattr(rn, "coletar_deputados", lambda s: deputados)
+
+    def lista_reunioes(s):
+        raise RuntimeError("HTTP 500")
+
+    monkeypatch.setattr(rn, "sessoes_plenarias", lista_reunioes)
+    monkeypatch.setattr(rn, "coletar_projetos", lambda s, d: chamadas.append(("projetos", s, d)))
+
+    def presenca(s, d, sessoes):
+        chamadas.append(("presenca", sessoes))
+        raise RuntimeError("quebrou")
+
+    monkeypatch.setattr(rn, "coletar_presenca", presenca)
+    monkeypatch.setattr(rn, "coletar_votacoes", lambda s, d, sessoes: chamadas.append(("votacoes", sessoes)))
+    monkeypatch.setattr(rn, "coletar_orgao", lambda s, pasta, hoje: chamadas.append(("orgao", s, pasta)))
+    monkeypatch.setattr(rn, "coletar_pautas_atas", lambda s, d, sessoes: chamadas.append(("pautas", sessoes)))
+    monkeypatch.setattr(rn, "coletar_normas", lambda s, d: chamadas.append(("normas", d)))
+    rn.coletar()
+    assert chamadas == [("projetos", "s", deputados), ("presenca", []), ("votacoes", []), ("orgao", "pncp", rn.PASTA),
+                        ("pautas", []), ("normas", deputados)]
+    erro = capsys.readouterr().err
+    assert "AVISO: RN: lista de reuniões: HTTP 500" in erro and "AVISO: RN: presença: quebrou" in erro

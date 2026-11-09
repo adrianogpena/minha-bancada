@@ -75,3 +75,81 @@ def gerar_tudo(raiz):
     montar_bruto(bruto)
     gerar_site(bruto, saida)
     return saida
+
+
+def eleito_tse(seq, nome, cargo, partido, receitas=None, votos=10, uf="SP", urna=None, situacao="eleito", nascimento="1980-01-02", **extra):
+    return {"sequencial": seq, "nome": nome, "urna": urna or nome, "cargo": cargo, "situacao": situacao, "partido": partido, "uf": uf,
+            "unidadeEleitoral": uf, "nascimento": nascimento, "genero": "FEMININO", "resultado": "Eleito", "titular": True, "eleicao": "2022",
+            "votos": [{"turno": 1, "data": "2022-10-02", "votos": votos}], "totalBens": 1000.0, **extra}
+
+
+def montar_tse_federal(bruto):
+    """TSE 2018/2022 de SP e RJ com contas, seções, disputa, partidos e coligações: 6 deputados federais eleitos (custo do voto 10 a 60),
+    um não eleito, um vice, deputado estadual e senadores de 2018 e 2022 (vereadores de 2024: os de montar_bruto), mais DCA do SICONFI."""
+    dep = [eleito_tse(f"s{i}", nome, "DEPUTADO FEDERAL", "PT", i * 100.0, urna=urna,
+                      instrucao="SUPERIOR COMPLETO", corRaca="Parda", ocupacao="advogado")
+           for i, (nome, urna) in enumerate([("Ana Maria Souza", "Ana Souza"), ("Beto Dois", "Beto"), ("Caio Tres", "Caio"),
+                                              ("Davi Quatro", "Davi"), ("Edu Cinco", "Edu")], 1)]
+    dep.append(eleito_tse("s6", "Fabio Seis", "DEPUTADO FEDERAL", "PL", 600.0))
+    dep.append(eleito_tse("s7", "Gil Sete", "DEPUTADO FEDERAL", "PT", 700.0, situacao="nao eleito"))
+    dep.append(eleito_tse("s8", "Hugo Vice", "VICE-GOVERNADOR", "PT", 800.0, sequencialChapa="s9"))
+    dep.append(eleito_tse("e1", "Ines Estadual", "DEPUTADO ESTADUAL", "PT", 100.0))
+    gravar(bruto / "tse" / "2022" / "SP.json", dep)
+    gravar(bruto / "tse" / "2022" / "RJ.json", [eleito_tse("r1", "Bia Lima", "SENADOR", "PL", None, uf="RJ")])
+    gravar(bruto / "tse" / "2022" / "BR.json", [eleito_tse("b1", "Pres Ident", "PRESIDENTE", "PT", None, uf="BR")])
+    gravar(bruto / "tse" / "2018" / "RJ.json", [eleito_tse("r0", "Bia Lima", "SENADOR", "PL", None, uf="RJ", eleicao="2018")])
+    gravar(bruto / "tse" / "contas" / "2022" / "SP.json", {f"s{i}": {"receitas": i * 100.0, "origensReceita": []} for i in range(1, 8)}
+            | {"s9": {"receitas": 800.0, "origensReceita": []}, "e1": {"receitas": 100.0, "origensReceita": []}})
+    gravar(bruto / "tse" / "secoes" / "2022" / "SP.json", {"s1": {"secoes": 12}})
+    gravar(bruto / "tse" / "disputa" / "2022" / "SP.json", {"DEPUTADO FEDERAL|SP": {"vagas": 70}, "GOVERNADOR|SP": {"vagas": 1}})
+    gravar(bruto / "tse" / "partidos" / "2022" / "SP.json", {"DEPUTADO FEDERAL|SP": {"totalVotos": 1000, "partidos": {
+        "PT": [10, 500, "Fed X"], "PC do B": [5, 50, "Fed X"], "PL": [1, 2, ""]}}})
+    gravar(bruto / "tse" / "coligacoes" / "2022" / "SP.json", {"DEPUTADO FEDERAL|SP": {
+        "coligacoes": [["F", "Fed X", "PT/PC do B", "Deferido"], ["I", "PL", "PL", "Deferido"]], "coligacaoDoPartido": {"PT": 0, "PL": 1}}})
+    gravar(bruto / "municipios_ibge.json", {"71072": "3550308"})   # sobrescreve o {} de montar_bruto
+    gravar(bruto / "siconfi" / "SP.json", {"anos": {"2022": {"legislativa": {"acaoLegislativa": {"liquidada": 999.0}}},
+                                                    "2023": {"legislativa": {"acaoLegislativa": {"liquidada": 2000.0}, "fonte": "https://dca"}}}})
+    gravar(bruto / "siconfi_municipios" / "SP.json", {"ano": 2023, "municipios": {"3550308": {"liquidada": 500.0, "fonte": "https://dca-mun"}}})
+
+
+def montar_tribunais_e_ministros(bruto):
+    """TCU e STJ com relatorias, e requerimentos de ministros da Câmara e do Senado."""
+    gravar(bruto / "tribunais" / "tribunais.json", {"coletadoEm": "2026-10-30", "tribunais": {
+        "TCU": {"nome": "Tribunal de Contas da União", "fonte": "https://tcu", "wikipedia": "https://w/tcu",
+                "atuais": [{"nome": "Aroldo Cedraz de Oliveira", "wiki": "Aroldo_Cedraz", "posse": "2007-01-01", "vistoDesde": "2026-10-30"},
+                           {"nome": "Bruno Dantas", "wiki": "Bruno_Dantas", "vistoDesde": "2026-10-30"}],
+                "anteriores": [{"nome": "Ex Ministro", "vistoDesde": "2026-01-01", "vistoAte": "2026-06-01"}]},
+        "STJ": {"nome": "Superior Tribunal de Justiça", "fonte": "https://stj", "wikipedia": "https://w/stj",
+                "atuais": [{"nome": "Herman Benjamin", "wiki": "Herman_Benjamin", "vistoDesde": "2026-10-30"}], "anteriores": []},
+        "STF": {"nome": "Supremo Tribunal Federal", "fonte": "https://stf", "wikipedia": "https://w/stf",
+                "atuais": [{"nome": "Gilmar Mendes", "wiki": "Gilmar_Mendes", "vistoDesde": "2026-10-30"}]}}})
+    gravar(bruto / "tribunais" / "relatorias_tcu.json", {
+        "dias": {"2026-03-10": {"AROLDO CEDRAZ": {"Acordao": 3, "Outro": 1}, "ANDRE SUBSTITUTO": {"Acordao": 1}},
+                 "2025-05-02": {"AROLDO CEDRAZ": {"Acordao": 2}}, "2024-01-05": {"ANDRE SUBSTITUTO": {"Acordao": 5}}},
+        "recentes": {"AROLDO CEDRAZ": [{"numero": 1, "ano": 2026}]}})
+    gravar(bruto / "tribunais" / "relatorias_stj.json", {"recursos": {
+        "r1": {"contagem": {"HERMAN BENJAMIN": {"2025": 4, "2026": 1}, "FANTASMA": {"2020": 0}}},
+        "r2": {"contagem": {"HERMAN BENJAMIN": {"2025": 2}}}}})
+    gravar(bruto / "ministros" / "camara_2026.json", {"itens": {
+        "10": {"tipo": "RIC", "numero": 1, "ano": 2026, "ementa": "Requer informações ao Ministro de Estado da Saúde sobre vacinas.",
+               "situacao": "Aguardando", "dataApresentacao": "2026-03-01", "resposta": "Respondido", "remessa": "",
+               "autores": [[101, "Ana Souza"], [999, "Antigo Deputado"]]}}})
+    gravar(bruto / "ministros" / "senado_2026.json", {"itens": {
+        "20": {"identificacao": "RQS 5/2026", "ementa": "Requer a convocação do Ministro de Estado da Saúde.", "autoria": "Senador Bia Lima (PL/RJ)",
+               "tipoConteudo": "Convocação", "dataApresentacao": "2026-03-02", "tramitando": True},
+        "21": {"identificacao": None, "ementa": "Requer providências sobre a obra X.", "autoria": None}}})
+
+
+def montar_bruto_completo(bruto):
+    montar_bruto(bruto)
+    montar_tse_federal(bruto)
+    montar_tribunais_e_ministros(bruto)
+
+
+def gerar_tudo_completo(raiz):
+    bruto, saida = raiz / "dados", raiz / "site" / "dados"
+    montar_bruto_completo(bruto)
+    gerar_politicos._RESUMOS.clear()
+    gerar_politicos._CUSTOS.clear()
+    gerar_site(bruto, saida)
+    return saida

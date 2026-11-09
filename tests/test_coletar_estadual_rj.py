@@ -380,3 +380,239 @@ def test_coletar_orgao_grava_links_por_ano(tmp_path):
     env = json.loads((pasta / "orgao_2026.json").read_text(encoding="utf-8"))
     assert env["fonte"] == rj.CONTRATOS_URL and any(i["tipo"] == "contrato" for i in env["itens"].values())
     assert any(i["tipo"] == "ata_registro" for f in pasta.glob("orgao_*.json") for i in json.loads(f.read_text(encoding="utf-8"))["itens"].values())
+
+
+def avisos(capsys):
+    return capsys.readouterr().err
+
+
+def test_parsers_com_entrada_vazia_ou_incompleta():
+    assert rj.hora_24(None) is None and rj.hora_24("sem hora") is None and rj.hora_24("12:30:00 PM") == "12:30"
+    assert rj.data_us_iso(None) is None
+    assert rj.consulta_nome("Yuri") == '"yuri"'
+    assert rj.url_documento("http://x/y?OpenDocument&amp;Highlight=0,2026") == "http://x/y?OpenDocument"
+    assert rj.url_documento("/a/b?OpenDocument") == rj.BASE + "/a/b?OpenDocument"
+    assert rj.unid_documento("http://x/a?OpenDocument") is None and rj.unid_documento(None) is None
+    assert rj.unid_documento(f"http://x/{'a' * 32}?OpenDocument") == "a" * 32
+    assert rj.limpar_ementa(None) is None and rj.limpar_ementa("Dispõe   sobre => outra coisa") == "Dispõe sobre"
+    assert rj.parse_normas("", "lei") == [] and rj.parse_proposicoes("<html></html>") == []
+    assert rj.data_da_norma("<p>sem data</p>") is None and rj.data_da_norma("Data da promulgação 10/14/2026") == "2026-10-14"
+    assert rj.links_emendas("<html></html>") == {} and rj.emendas_da_aba([{"A": "Emenda", "B": "Valor"}]) == []
+
+
+def test_celulas_de_linha_com_colunas_a_menos():
+    linha = '<tr valign="top"><td><a href="/contlei.nsf/v/' + "a" * 32 + '?OpenDocument">12</a></td><td>2026</td></tr>'
+    normas = rj.parse_normas("<table>" + linha + "</table>", "lei")
+    assert normas == [{"numero": 12, "ano": 2026, "situacao": None, "ementa": None, "autoria": [], "url": rj.BASE + "/contlei.nsf/v/" + "a" * 32 + "?OpenDocument"}]
+    assert rj.celulas("<td>sem link</td>") == (["sem link"], None, None)
+
+
+def test_itens_presenca_sem_total_de_sessoes():
+    doc = {"periodo": "2026-09", "totalSessoes": None, "faltas": {"ALAN LOPES": 2}}
+    item = rj.itens_presenca(doc, "u", DEPUTADOS)[0]
+    assert item["presente"] is None and item["ausente"] == 2 and item["totalSessoes"] is None
+
+
+class RespostaComErro(Resposta):
+    def __init__(self, conteudo, erro):
+        super().__init__(conteudo)
+        self.erro = erro
+
+    def raise_for_status(self):
+        raise self.erro
+
+
+class SessaoContada:
+    def __init__(self, resposta=None, erro=None):
+        self.resposta, self.erro, self.n = resposta, erro, 0
+
+    def get(self, url, timeout=None):
+        self.n += 1
+        if self.erro:
+            raise self.erro
+        return self.resposta
+
+
+def test_pegar_nao_repete_erro_http_nem_timeout_de_conexao():
+    http = SessaoContada(RespostaComErro(b"", requests.HTTPError("403")))
+    with pytest.raises(requests.HTTPError):
+        rj.pegar(http, "http://x")
+    assert http.n == 1
+    lenta = SessaoContada(erro=requests.ConnectTimeout("sem conexão"))
+    with pytest.raises(requests.ConnectTimeout):
+        rj.pegar(lenta, "http://x")
+    assert lenta.n == 1
+    caida = SessaoContada(erro=requests.ConnectionError("derrubada"))
+    with pytest.raises(requests.ConnectionError):
+        rj.pegar(caida, "http://x")
+    assert caida.n == rj.TENTATIVAS
+
+
+def test_coletar_normas_falha_de_uma_norma_avisa_e_grava_sem_data(tmp_path, capsys):
+    pasta = tmp_path / "RJ"
+    pasta.mkdir()
+    for ano in (2023, 2024):
+        comum.salvar(pasta / f"normas_{ano}.json", {"normas": {}})
+    sessao = SessaoRoteada([
+        (rj.NORMAS["lei"]["visao"] + "?SearchView", pagina(linha_norma(5, 2026, "Alan Lopes", "b" * 32))),
+        ("/contlei.nsf/a99e", pagina()), ("/contlei.nsf/1103", pagina()), ("/contlei.nsf/8037", pagina()),
+        ("/contlei.nsf/v/", requests.ConnectionError("derrubada"))])
+    rj.coletar_normas(sessao, DEPUTADOS_NOMES, pasta, date(2026, 11, 2))
+    normas = json.loads((pasta / "normas_2026.json").read_text(encoding="utf-8"))["normas"]
+    assert normas[rj.id_norma("lei", 5, 2026)]["data"] is None and normas[rj.id_norma("lei", 5, 2026)]["idsDeputados"] == ["1"]
+    assert "RJ: data da norma" in avisos(capsys)
+    assert json.loads((pasta / "normas_2025.json").read_text(encoding="utf-8"))["normas"] == {}
+
+
+def test_coletar_pautas_do_ano_recente_nao_duplica_ao_reler(tmp_path):
+    a = amostra("estadual_rj_pautas")
+    pasta = tmp_path / "RJ"
+    pasta.mkdir()
+    sessao = SessaoRoteada([(rj.PAUTAS[t]["visao"], a[t]) for t in rj.PAUTAS])
+    rj.coletar_pautas(sessao, pasta, date(2026, 11, 2))
+    primeira = json.loads((pasta / "pautas_2026.json").read_text(encoding="utf-8"))["itens"]
+    rj.coletar_pautas(sessao, pasta, date(2026, 11, 3))
+    segunda = json.loads((pasta / "pautas_2026.json").read_text(encoding="utf-8"))
+    assert segunda["itens"] == primeira and segunda["coletadoEm"] == "2026-11-03"
+
+
+class SessaoHtml(SessaoRoteada):
+    def get(self, url, timeout=None):
+        r = super().get(url, timeout)
+        r.text = r.content.decode("utf-8")
+        return r
+
+
+def test_coletar_orgao_junta_com_o_arquivo_anterior(tmp_path):
+    a = amostra("estadual_rj_orgao")
+    pasta = tmp_path / "RJ"
+    pasta.mkdir()
+    comum.salvar(pasta / "orgao_2026.json", {"coletadoEm": "2026-10-01", "itens": {"antigo": {"tipo": "contrato"}}})
+    rj.coletar_orgao(SessaoHtml([("report/118", a["contratos"]), ("report/51", a["atas"])]), pasta, date(2026, 11, 2))
+    env = json.loads((pasta / "orgao_2026.json").read_text(encoding="utf-8"))
+    assert env["itens"]["antigo"] == {"tipo": "contrato"} and len(env["itens"]) > 1 and env["coletadoEm"] == "2026-11-02"
+
+
+def test_coletar_orgao_erro_http_nao_grava(tmp_path):
+    pasta = tmp_path / "RJ"
+    pasta.mkdir()
+    sessao = SessaoHtml([("report/118", requests.ConnectionError("fora do ar"))])
+    with pytest.raises(requests.ConnectionError):
+        rj.coletar_orgao(sessao, pasta, date(2026, 11, 2))
+    assert list(pasta.iterdir()) == []
+
+
+def test_coletar_presenca_le_cada_documento_e_sem_links_grava_vazio(tmp_path):
+    a = amostra("estadual_rj_presenca")
+    pasta = tmp_path / "RJ"
+    pasta.mkdir()
+    indice = '<a href="/ordemdia.nsf/x/abc?OpenDocument">10/15/2026</a><a href="/ordemdia.nsf/x/def?OpenDocument">09/20/2025</a>'
+    sessao = SessaoRoteada([("presint", indice), ("x/abc", a["html"]), ("x/def", a["html"])])
+    rj.coletar_presenca(sessao, DEPUTADOS, pasta, date(2026, 11, 2))
+    gravado = json.loads((pasta / "presenca.json").read_text(encoding="utf-8"))
+    assert gravado["coletadoEm"] == "2026-11-02" and gravado["fonte"] == rj.PRESENCA_URL
+    assert sorted((i["periodo"], i["idDeputado"]) for i in gravado["itens"]) == [("2025-09", "1"), ("2025-09", "2"), ("2026-09", "1"), ("2026-09", "2")]
+    assert {i["fonte"] for i in gravado["itens"]} == {f"{rj.PRESENCA_BASE}/ordemdia.nsf/x/abc?OpenDocument", f"{rj.PRESENCA_BASE}/ordemdia.nsf/x/def?OpenDocument"}
+    vazio = tmp_path / "vazio"
+    vazio.mkdir()
+    rj.coletar_presenca(SessaoRoteada([("presint", "<html></html>")]), DEPUTADOS, vazio, date(2026, 11, 2))
+    assert json.loads((vazio / "presenca.json").read_text(encoding="utf-8"))["itens"] == []
+
+
+def test_coletar_presenca_erro_http_nao_grava(tmp_path):
+    class SessaoErro:
+        def get(self, url, timeout=None):
+            return RespostaComErro(b"", requests.HTTPError("500"))
+
+    with pytest.raises(requests.HTTPError):
+        rj.coletar_presenca(SessaoErro(), DEPUTADOS, tmp_path, date(2026, 11, 2))
+    assert list(tmp_path.iterdir()) == []
+
+
+def test_coletar_presenca_documento_com_erro_aborta_sem_gravar(tmp_path):
+    a = amostra("estadual_rj_presenca")
+    indice = '<a href="/ordemdia.nsf/x/abc?OpenDocument">10/15/2026</a><a href="/ordemdia.nsf/x/def?OpenDocument">09/20/2025</a>'
+    sessao = SessaoRoteada([("presint", indice), ("x/abc", a["html"]), ("x/def", requests.ConnectionError("fora do ar"))])
+    with pytest.raises(requests.ConnectionError):
+        rj.coletar_presenca(sessao, DEPUTADOS, tmp_path, date(2026, 11, 2))
+    assert list(tmp_path.iterdir()) == []
+
+
+def pagina_de_emendas(*anos):
+    return "".join(f'<div id="collapse-{ano}"><a href="/download-spic?file=ano{ano}"><i><span>excel</span></i></a></div>' for ano in anos)
+
+
+CABECALHO_EMENDAS = {"A": "Emenda", "B": "Autor", "D": "Valor", "M": "Objeto"}
+
+
+def test_coletar_emendas_pula_ano_encerrado_e_grava_os_demais(tmp_path):
+    pasta = tmp_path / "RJ"
+    pasta.mkdir()
+    comum.salvar(pasta / "emendas_2023.json", {"itens": ["guardado"]})
+    sessao = SessaoRoteada([("report/121", pagina_de_emendas(2023, 2026)),
+                            ("file=ano2026", xlsx([CABECALHO_EMENDAS, {"A": "1", "B": "Alan Lopes", "D": "1000", "M": "Obra"},
+                                                   {"A": "2", "B": "Desconhecido", "D": "5", "M": "Outra"}]))])
+    rj.coletar_emendas(sessao, DEPUTADOS, pasta, date(2026, 11, 2))
+    assert not any("ano2023" in u for u in sessao.pedidos)
+    assert json.loads((pasta / "emendas_2023.json").read_text(encoding="utf-8")) == {"itens": ["guardado"]}
+    gravado = json.loads((pasta / "emendas_2026.json").read_text(encoding="utf-8"))
+    assert gravado["coletadoEm"] == "2026-11-02" and gravado["fonte"] == rj.EMENDAS_URL
+    assert [(i["idDeputado"], i["numero"], i["valor"]) for i in gravado["itens"]] == [("1", "1", 1000.0)]
+
+
+def test_coletar_emendas_planilha_sem_aba_impositivas_grava_lista_vazia(tmp_path, monkeypatch):
+    pasta = tmp_path / "RJ"
+    pasta.mkdir()
+    monkeypatch.setattr(rj.comum, "xlsx_abas", lambda conteudo: {"Outra": [{"A": "x"}]})
+    sessao = SessaoRoteada([("report/121", pagina_de_emendas(2026)), ("file=ano2026", b"x")])
+    rj.coletar_emendas(sessao, DEPUTADOS, pasta, date(2026, 11, 2))
+    assert json.loads((pasta / "emendas_2026.json").read_text(encoding="utf-8"))["itens"] == []
+
+
+def test_coletar_emendas_pagina_sem_links_nao_grava_e_erro_http_propaga(tmp_path):
+    rj.coletar_emendas(SessaoRoteada([("report/121", "<html></html>")]), DEPUTADOS, tmp_path, date(2026, 11, 2))
+    assert list(tmp_path.iterdir()) == []
+
+    class SessaoErro:
+        def get(self, url, timeout=None):
+            return RespostaComErro(b"", requests.HTTPError("503"))
+
+    with pytest.raises(requests.HTTPError):
+        rj.coletar_emendas(SessaoErro(), DEPUTADOS, tmp_path, date(2026, 11, 2))
+
+
+ETAPAS_RJ = ["coletar_presenca", "coletar_emendas", "coletar_normas", "coletar_proposicoes", "coletar_pautas", "coletar_orgao"]
+
+
+def test_coletar_sem_deputados_so_avisa_e_nao_roda_etapas(tmp_path, monkeypatch, capsys):
+    monkeypatch.setattr(comum, "DADOS", tmp_path / "estaduais")
+    monkeypatch.setattr(comum, "sessao", lambda: "sessao")
+    monkeypatch.setattr(rj, "deputados_do_tse", lambda: [])
+    chamadas = []
+    monkeypatch.setattr(rj, "coletar_presenca", lambda *a: chamadas.append("presenca"))
+    rj.coletar()
+    assert chamadas == [] and not (tmp_path / "estaduais").exists()
+    assert "sem eleitos de 2022" in avisos(capsys)
+
+
+def test_coletar_roda_etapas_na_ordem_e_isola_erro(tmp_path, monkeypatch, capsys):
+    monkeypatch.setattr(comum, "DADOS", tmp_path / "estaduais")
+    monkeypatch.setattr(comum, "sessao", lambda: "sessao")
+    monkeypatch.setattr(rj, "deputados_do_tse", lambda: DEPUTADOS)
+    chamadas = []
+    for nome in ETAPAS_RJ:
+        def etapa(*args, nome=nome):
+            chamadas.append((nome, args))
+            if nome == "coletar_emendas":
+                raise RuntimeError("planilha fora")
+
+        monkeypatch.setattr(rj, nome, etapa)
+    rj.coletar()
+    assert [c[0] for c in chamadas] == ETAPAS_RJ
+    pasta = tmp_path / "estaduais" / "RJ"
+    hoje = date.today()
+    assert chamadas[0][1] == ("sessao", DEPUTADOS, pasta, hoje) and chamadas[4][1] == ("sessao", pasta, hoje) and chamadas[5][1] == ("sessao", pasta, hoje)
+    gravado = json.loads((pasta / "deputados.json").read_text(encoding="utf-8"))
+    assert gravado["legislatura"] == "2023-2027" and gravado["host"] is None and gravado["deputados"] == DEPUTADOS
+    saida = capsys.readouterr()
+    assert "RJ: emendas: planilha fora" in saida.err and "RJ: 4 deputados" in saida.out

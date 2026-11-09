@@ -1,12 +1,23 @@
 [
 {
+"id": 2651386,
+"tipo": "MPV",
+"numero": 1400,
+"ano": 2026,
+"ementa": "Altera a Lei nº 14.237, de 19 de novembro de 2021, para prorrogar o prazo de vigência do Auxílio Gás do Povo.",
+"dataApresentacao": "2026-11-09",
+"situacao": null,
+"dataSituacao": "2026-11-09",
+"inteiroTeor": "https://www.camara.leg.br/proposicoesWeb/prop_mostrarintegra?codteor=3191410"
+},
+{
 "id": 2651102,
 "tipo": "PEC",
 "numero": 22,
 "ano": 2026,
 "ementa": "Altera o Ato das Disposições Constitucionais Transitórias para disciplinar a transição para a cobrança do Imposto Seletivo.",
 "dataApresentacao": "2026-11-05",
-"situacao": "Aguardando Despacho do Presidente da Câmara dos Deputados",
+"situacao": "Tramitação Finalizada",
 "dataSituacao": "2026-11-05",
 "inteiroTeor": "https://www.camara.leg.br/proposicoesWeb/prop_mostrarintegra?codteor=3190384"
 },
@@ -18,7 +29,7 @@
 "ementa": "Estabelece alíquotas e normas complementares aplicáveis ao Imposto Seletivo para o ano-calendário de 2027, em Regime de Implementação Gradual",
 "dataApresentacao": "2026-11-04",
 "situacao": null,
-"dataSituacao": "2026-11-04",
+"dataSituacao": "2026-11-06",
 "inteiroTeor": "https://www.camara.leg.br/proposicoesWeb/prop_mostrarintegra?codteor=3190528"
 },
 {

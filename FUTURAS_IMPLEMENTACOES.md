@@ -6,7 +6,7 @@ perfil temático, discursos e eventos, aposentadoria de ex-senadores, carreira, 
 doadores, recursos, pessoal, verba e presença em plenário do deputado pelo portal, despesa com pessoal e das Casas pelo SICONFI, ministros de Estado em sua primeira etapa, coletores de 17 Assembleias).
 
 Ao implementar um endpoint novo, registre-o no `ENDPOINTS.md` e o conjunto no `CHANGELOG.md`.
-Revisado em 2026-10-29 contra o código e o `CHANGELOG.md`.
+Revisado em 2026-11-09 contra o código, os dados em `dados/` e o `CHANGELOG.md`.
 
 **Resumo**
 
@@ -37,10 +37,13 @@ Raspagem é frágil: fonte opcional, com teste de contrato em `scripts/contrato_
 
 ### 3.2 Emendas e Portal da Transparência
 
-**Emendas feitas em 2026-10-30, sem ter rodado contra a API real** (chave só no secret `PORTAL_TRANSPARENCIA_CHAVE` do Actions): coletor
+**Emendas feitas em 2026-10-30** (chave no secret `PORTAL_TRANSPARENCIA_CHAVE` do Actions): coletor
 `coletar_emendas.py`, ligação do autor por nome, `site/dados/emendas/<pessoa>.json` e painel na ficha (ver `CHANGELOG.md`).
-Falta conferir na primeira execução do Actions: nomes dos campos e formato do autor (`autor` x `nomeAutor`), tempo da coleta e se o tipo das Pix vem como "Transferências Especiais", quantos municípios casam com o IBGE e quantos autores
-ligam (`site/dados/nucleo/ligacoes.json`, `emendas`); depois regravar `tests/test_coletar_emendas.py` com amostra real.
+Conferido em 2026-11-09: o Actions já coletou 2019 a 2026 (`dados/emendas/`, 54 mil linhas), o campo é `autor` e o tipo das Pix
+vem como "Emenda Individual - Transferências Especiais" (5.108 linhas). Ligaram 553 autores (`nome+cargo`) e 747 ficaram sem
+ligação (`semLigacao.emendas`; vale ver quantos são bancada, comissão ou nome repetido). Falta: medir o tempo da coleta no
+Actions, conferir quantos municípios casam com o IBGE e regravar `tests/test_coletar_emendas.py` com amostra real em
+`tests/fixtures/contratos/` (hoje o teste usa dados inventados).
 
 Ainda não feito, com a mesma chave:
 - Totais por área (função) das emendas.
@@ -133,7 +136,8 @@ Sem padrão nacional; cada Casa publica do seu jeito.
 
 Feito em 2026-10-30: a composição atual dos seis tribunais (`coletar_tribunais.py`, página `tribunais.html`), lida da
 Wikipédia porque os sites oficiais bloqueiam coleta automática (ver `CHANGELOG.md`). Falta:
-- Ligar cada ministro à pessoa do núcleo em `identidades.py` (ex-parlamentares no TCU e no STF, como Vital do Rêgo e Flávio Dino).
+- (Feito: `identidades.ligar_tribunais` liga o ministro à pessoa do núcleo pelo nome civil, só com mandato na Câmara ou no
+  Senado; 106 sem par em 2026-11-09, esperado para quem nunca foi parlamentar.)
 - Fonte oficial da lista, se algum tribunal liberar: o bloqueio é por WAF e pode passar de outra rede ou do Actions.
 - Ministros anteriores (antes da primeira coleta) e substitutos do TCU (auditores).
 - Votos em julgamentos, decisões monocráticas e pedidos de vista (equivalente às abas de votações e propostas); fontes de cada tribunal ainda não levantadas.
@@ -213,14 +217,16 @@ proposições), MT (www.al.mt.gov.br dá timeout: proposições, normas, voto, p
 **Andamento (2026-11-01):**
 - **PA feito e commitado** (`066fa803`): voto nominal (155 votações; 4 nomes de urna sem ligação: Delegado Toni Cunha, Eliel Faustino, Igor Normando, Torrinho Torres), normas (sem autoria), pautas e atas, contratos e licitações/registro de preço, gabinete (`srv_`) e remuneração. Ver `CHANGELOG.md`. Falta no PA: **proposições** (paginação do pager DevExpress não resolvida; usar janela de datas ou inspecionar no DevTools); **remuneração 2026 só de janeiro a maio** (a coleta foi interrompida; o Actions completa, conferir) e tempo do zero não medido; anexos de contratos (URL não achada).
 - **CE, PE, SC, GO, MT e RR commitados** (`2cc4eef0`, `2cc1013a`).
-- **RN, SP, RJ, SE, MS e BA feitos em 2026-11-02, NÃO commitados** (um agente por estado, em sequência: todos editam `estaduais_comum.py`/`identidades.py`). Detalhes de cada um no `CHANGELOG.md`. Pendências:
+- **RN, SP, RJ, SE, MS e BA feitos em 2026-11-02 e commitados** (`e85eeb26`). Detalhes de cada um no `CHANGELOG.md`. Pendências:
   - RN: coleta do zero 18 min; gabinete, remuneração, verba e regras exigem token do site (não usado).
   - SP: coleta do zero ~30 min, acima dos 25 min do job `sp` (a primeira no Actions fecha na segunda execução); gabinete parado em 2023.
-  - RJ: só as normas de 2023 e 2024 foram coletadas ao vivo (parciais); proposições, pautas, atas e órgão só testados em amostra; resoluções de 2025 e 2026 batem o teto de 1000 linhas (divisão por deputado não exercitada ao vivo). Rodar `gerar.py` antes de commitar.
+  - RJ: só as normas de 2023 e 2024 foram coletadas ao vivo (parciais); proposições, pautas, atas e órgão só testados em amostra; resoluções de 2025 e 2026 batem o teto de 1000 linhas (divisão por deputado não exercitada ao vivo). `site/dados/orgao/RJ.json` já existe.
   - SE: diárias e folha de 2023-2024 fora; Alese Legis segue recusando conexão; `pypdf` entrou em `requirements.txt`.
   - MS: hosts em `ENDPOINTS.md` como "não testado" (rodar `scripts/testar_endpoints.py`); `verbas_2026.json` foi restaurado por `git checkout` após a coleta.
   - BA: presença 2021 a 06/2025, contratos e regras da verba; atas de registro de preço fora.
-- **Próximos:** ES, MG, RS dependem de acesso (testar do Actions ou de outra rede).
+- **Próximos:** ES, MG, RS dependem de acesso (testar do Actions ou de outra rede). Conferido em 2026-11-09: `coletar_estadual_es.py`,
+  `_mg.py` e `_rs.py` não têm nada de órgão, pautas, gabinete ou normas, e `dados/estaduais/PA/` não tem proposições
+  (nem `materias_<ano>.json`).
 
 **Ordem sugerida** (mais valor com menos esforço primeiro): CE, PE, SC, depois GO, PA, MT, RR, RN, SP, RJ, SE, MS; BA só três
 itens; ES, MG e RS dependem de abrir o acesso.
@@ -233,7 +239,7 @@ itens; ES, MG e RS dependem de abrir o acesso.
 | GO | deputados, diárias, ligações, proposições, matérias votadas, remuneração, verbas, votações | **Contratos**: `/contratos-e-convenios/contratos` (710, com aditivos e PDF). **Atas de registro de preço**: `/contratos-e-convenios/atas-de-registro-de-preco`. **Normas** (resoluções, decretos legislativos e administrativos, com PDF, **sem autoria**): `/legislacoes?tipo=&ano=`. **Regras do ressarcimento e das diárias**: Resolução 1.531/2015 (CEAP) e Decretos 3.017 e 3.018 em `/legislacoes`. **Votação simbólica e total de presentes**: `votacoes.json?tipo=resumo`. Tudo esforço baixo | Atas: `/atas_plenarias` só até 09/2023 (depois, alegodigital). Pautas: só agenda em HTML (`portal.al.go.leg.br/agenda?data=`), sem itens. Gabinete: lotação só "Gabinete Parlamentar". Presença: só derivada do voto. Proposições (projetos de lei): `processos/busca-avancada` vazio, `busca-simples` erro 500, alegodigital reseta (testar no Actions). Requerimentos: API só até 2023 |
 | PA | deputados, diárias, ligações, presença, verbas, total mensal de gabinete | **Voto nominal**: HTML, lista mensal e detalhe por votação (SIM, NÃO, ABSTENÇÃO, NÃO VOTARAM), de 2015 em diante, ligação só por nome (médio); é o único estado fora o PR com voto nominal estruturado. **Normas**: API JSON `bancodeleis.alepa.pa.gov.br/api/leis.php`, 50 por chamada, sem autoria (baixo). **Pautas e atas** (links e PDF): callback mês a mês (baixo). **Contratos e licitações/registro de preço**: dashboards 52 e 59, mesma API que o coletor já usa (baixo; URL de download dos anexos não achada). **Gabinete** (lista de servidores): `sigep`, mas a resposta trunca em 103 linhas, então particionar a consulta (médio). **Remuneração por deputado**: `sigep` em dois passos (busca por nome e página de detalhe) (médio). **Proposições**: autor por nome, 10 por chamada, paginação não funcionou; particionar por janela de datas (alto; ver o pager no DevTools). O comentário "projetos e votações: sem fonte" no coletor está desatualizado | Regras do ressarcimento: não publica |
 | MT | deputados, diárias, ligações, remuneração | **Gabinete**: portal Elotech `almt.eloweb.net/servidores?lotacao=GAB`, 2.005 servidores em 2026, 5 páginas; o filtro `situacao` não funciona; ligação pelo texto da lotação (baixo). **Contratos e atas**: `/contratos` (2023 a 2026, 91 a 129 por ano), atas são `tipoAto=2` (46 em 2026), PDFs em `/contratos/arquivos` e `/files/arquivo/{id}`, `/contratos/ultimas-atualizacoes` serve de incremental (baixo a médio). **Regras de diárias**: `/publicacoes` (resolução e tabela de diárias, resoluções administrativas, adesões a ARP) | Verba/ressarcimento: não publica (`/servidores/verbas`, `/reembolsos`, `/emendas-parlamentares` vazios). Proposições, normas, voto, presença, pautas e atas: bloqueado, só URLs vistas pela busca (`/proposicao`, `/parlamento/ordem-do-dia`, PDFs em `storage.al.mt.gov.br`); o SAPL `sapl.al.mt.leg.br` está abandonado (2015 a 2018) |
-| RR | deputados, diárias, ligações, verbas | **Gabinete**: XLSX mensal `CONSULTA SERVIDORES.xlsx` em `transparencia.al.rr.leg.br/.../gestao-de-pessoal-a-partir-de-set25/`, setor "GAB. DEP. <NOME>", 24 gabinetes, ligação por nome; mesma lista de arquivos (WP Display Files) que o coletor já lê (baixo). **Contratos**: pastas por processo com PDFs em `contratos-a-partir-de-out25`, só links estruturados (médio). **Licitações e contratações diretas**: XLSX mensal em `licitacoes-a-partir-de-out25` (colunas não inspecionadas) | Todo o `sapl.al.rr.leg.br`, inclusive PDFs de ata, responde 403 (proposições, normas, voto, presença, pautas, atas). Remuneração: só resumos de folha em PDF. Diário Oficial (`diarios.al.rr.leg.br`): PDF com texto, sem estrutura, normas só com esforço alto e baixa precisão |
+| RR | deputados, diárias, ligações, verbas | **Gabinete**: XLSX mensal `CONSULTA SERVIDORES.xlsx` em `transparencia.al.rr.leg.br/.../gestao-de-pessoal-a-partir-de-set25/`, setor "GAB. DEP. <NOME>", 24 gabinetes, ligação por nome; mesma lista de arquivos (WP Display Files) que o coletor já lê (baixo). **Contratos**: pastas por processo com PDFs em `contratos-a-partir-de-out25`, só links estruturados (médio). **Licitações e contratações diretas**: XLSX mensal em `licitacoes-a-partir-de-out25` (colunas não inspecionadas). **Outras páginas do portal `transparencia.al.rr.leg.br/execucao-orcamentaria-e-financeira/` vistas em 2026-11-09 (só índice e links; arquivos não baixados) e que o coletor não usa**: histórico anterior (`gestao-de-pessoal-ate-ago-25/`, `verbas-indenizatorias-de-gabinete-ate-ago25/`, `diarias-e-passagens-ate-set25/`, `repasses-ate-set25/`), `resumos-da-folha-a-partir-de-set25/` e `resumos-da-folha-ate-ago25/` (PDF), repasses do Estado à Assembleia (`repasses-a-partir-de-out25/`), `/index.php/execucao-orcamentaria-e-financeira/despesas/`, `gestao-fiscal-intro/`, `/planejamento-e-prestacao-de-contas-intro/lei-orcamentaria-anual/` (LOA), `/prestacao-de-contas-intro/parcerias/` e a seção `/funesple/` (receitas, gestão fiscal, prestação de contas). Índices: `*-intro/` de cada tema. Falta baixar cada um para ver colunas e formato | Todo o `sapl.al.rr.leg.br`, inclusive PDFs de ata, responde 403 (proposições, normas, voto, presença, pautas, atas); o portal de transparência não tem essas áreas. Remuneração: só resumos de folha em PDF (links acima). Diário Oficial (`diarios.al.rr.leg.br`): PDF com texto, sem estrutura, normas só com esforço alto e baixa precisão |
 | RN | deputados, proposições, matérias votadas, presença, votações | **Contratos e atas de registro de preço**: PNCP com o CNPJ da Assembleia (08493371000164), em 2026 116 contratos e 200 atas; janela máxima de 365 dias, ler ano a ano (baixo). **Pautas**: `processo?reuniao=<id>&faseReuniao=1\|2` na API legislativa aberta, liga ao deputado por id (baixo). **Atas**: link em `api-legisvideos.al.rn.leg.br`, cobertura parcial, formato do PDF não verificado. **Normas**: a API filtra por tipo e data, mas o número oficial da lei não é confiável; usar `publicacao[].linkDOE` e a tramitação. **Extras**: comissões, bancadas, cargos em comissão | Gabinete, remuneração, verba e regras do ressarcimento: exigem token embutido no site (não usado; alternativa é pedir acesso à Assembleia). Diárias: `api-transparencia/diarias` aberta mas só servidores, quase vazia, com registro de teste |
 | SP | deputados, ligações, proposições, presença, remuneração, verbas | **Normas com autoria**: XML `legislacao_normas.zip` (sem autor) e API do portal `/processo/detalhes/todos/PL/<ano>/<n>` com `urlNorma` e `autores`. **Pautas e atas**: `/sessoes-plenarias/consulta`, `/sessoes-plenarias/{id}/integra`, `/colegiado/reunioes`. **Contratos e atas de registro de preço**: HTML `/alesp/contratos/` e detalhe com CNPJ e valores (não usar `/processo?listaIdTipoProcesso=134`: traz ofícios do TCE). **Regras da verba**: links das normas (Ato 02/2002, Resolução 822/2001, Resolução 824/2002), HTML | Voto nominal de plenário: só resultado e PDF; existe voto de comissão por deputado em `comissoes_permanentes_votacoes.xml`. Diárias: não publica. Gabinete: `funcionarios_lotacoes.xml` e `funcionarios_cargos.xml` ligam por nome, mas estão parados em 2023 |
 | RJ | deputados, emendas, ligações, presença | **Normas com autoria**: `alerjln1 contlei.nsf/LeiOrdInt`, `LeiCompInt`, `DecretoInt`, `ResolucaoInt`. **Proposições**: `scpro2327.nsf/Internet/*Int`, lista com autor, mais nova primeiro. **Pautas plenárias**: `ordemdia.nsf/OrdemInt`. **Atas de comissões**: `compcom.nsf/AtasInt`, `comtemp.nsf/AtasInt`. Baixo a médio, ligação só por nome. Em PDF: contratos (`/section/report/118`), atas de registro de preço (`/51`), folha (`/73`), diárias (`/119`, as da amostra são de servidores civis); subsídio (`/62`) em HTML, só o valor atual | Voto nominal 2023 a 2027: só a pauta, sem resultado. Gabinete: a folha mostra lotação só "DEPUTADO ESTADUAL". Regras e despesas do ressarcimento: não publica. Formato exato (campos, paginação) a confirmar com `comum.sessao()`; `deputadosint` e `DecretoInt` deram "socket hang up"; PDFs de ARP, `docigp.alerj.rj.gov.br` e licitações em `www2` não abertos |
@@ -249,13 +255,13 @@ itens; ES, MG e RS dependem de abrir o acesso.
 - Gabinete por deputado: sem fonte em BA, GO, MS, RJ e SP; com fonte em CE, PE, SC, MT, RR, SE, PA. RN exige token.
 - Contratos e atas do órgão (quando existem) não trazem CNPJ na maioria (BA, PE, GO, RR, SE, MS): só em SP, e via PNCP em RN. O vínculo a `nucleo/fornecedores` fica para depois, como no PR.
 - Regras da verba como link: CE, GO, SC, SP, BA, MG, MS (como no `regras_ressarcimento.json` do PR).
-- Comentários desatualizados nos coletores a corrigir quando o estado for tocado: PA ("projetos e votações: sem fonte") e SC ("sem exportação").
 - Recomenda-se um job de teste no Actions (ou outra rede) que bata nos endpoints de ES, MG, RS, SE, GO, MT e RJ antes de planejar; o resultado decide quais desses viram implementação.
 
 ### 4.7 Dados já coletados que o site ainda não mostra (levantado em 2026-11-02)
 
-Os coletores estaduais e o `gerar_estaduais.py` já gravam estes dados, mas nenhuma página do site os lê (nenhum arquivo em
-`site/assets/js` abre `dados/orgao/`; o `site/mapa-dados.html` marca cada um como "Ainda não aparece no site"). O que
+Conferido em 2026-11-09: `site/dados/orgao/` tem BA CE GO MS PA PE RJ RN RR SC SE SP (sem MT e PR), `site/dados/leis/` só PA, e
+não existe `assembleia.html`. Os coletores estaduais e o `gerar_estaduais.py` já gravam estes dados, mas nenhuma página do
+site os lê (nenhum arquivo em `site/assets/js` abre `dados/orgao/`; o `site/mapa-dados.html` marca cada um como "Ainda não aparece no site"). O que
 aparece hoje, na ficha do deputado estadual (`politico.html?f=t/2022/<UF>&i=<sequencial>`, `estadual.js`), é verba,
 remuneração, gabinete, presença, diárias, emendas e normas de autoria.
 

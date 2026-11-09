@@ -1,0 +1,49 @@
+name: Testar hosts das Assembleias sem coletor
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  testar:
+    name: Testar se o runner alcança os hosts bloqueados
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - name: Testar os hosts
+        run: |
+          {
+            echo "## Hosts de Assembleias vistos do runner do Actions"
+            echo
+            echo "IP do runner: $(curl -s -m 10 https://ipinfo.io/ip) (país: $(curl -s -m 10 https://ipinfo.io/country))"
+            echo
+            echo "| UF | URL | Resultado |"
+            echo "|---|---|---|"
+          } >> "$GITHUB_STEP_SUMMARY"
+          testar() {
+            uf="$1"; url="$2"
+            saida=$(curl -sL -m 20 --retry 1 -A "Mozilla/5.0" -o /dev/null -w "HTTP %{http_code}, %{size_download} bytes, %{time_total}s" "$url" 2>&1) || saida="falha: ${saida:-sem resposta} (curl $?)"
+            echo "$uf $url $saida"
+            echo "| $uf | $url | $saida |" >> "$GITHUB_STEP_SUMMARY"
+          }
+          testar AP http://www.al.ap.gov.br
+          testar AP http://www.al.ap.leg.br
+          testar AP https://sapl.al.ap.leg.br/
+          testar DF https://www.cl.df.gov.br/web/portal-transparencia
+          testar DF "https://sapl.cl.df.gov.br/api/parlamentares/legislatura/?page_size=1"
+          testar MA https://sistemas.al.ma.leg.br/transparencia/index.html
+          testar MA https://www.al.ma.leg.br/sitealema/
+          testar ES https://www.al.es.gov.br
+          testar ES https://www3.al.es.gov.br/observatorio/
+          testar MG https://www.almg.gov.br/transparencia/prestacao-de-contas/deputados/verba-indenizatoria/
+          testar MG https://dadosabertos.almg.gov.br/api/v2
+          testar RS https://www.al.rs.gov.br
+          testar RS https://ww2.al.rs.gov.br
+          testar SE https://aleselegis.al.se.leg.br/spl/parlamentar.aspx
+          testar GO https://alegodigital.al.go.leg.br
+          testar MT https://www.al.mt.gov.br
+          testar MT https://almt.eloweb.net/servidores
+          testar RR https://sapl.al.rr.leg.br
+          testar RJ "https://alerjln1.alerj.rj.gov.br/contlei.nsf/LeiOrdInt"

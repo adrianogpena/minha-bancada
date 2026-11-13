@@ -6,6 +6,7 @@ globalThis.window = {};
 const { paginaCoautoria } = js("coautoria.js");
 const { paginaFonte } = js("fonte.js");
 const { paginaTribunais } = js("tribunais.js");
+const { paginaAssembleia, textoValor, vigencia } = js("assembleia.js");
 const { paginaMinistro, paginaMinisterios, avisoLicenca } = js("ministros.js");
 const { paginaFornecedores } = js("fornecedores.js");
 const { paginaVotacoes, paginaVotacao } = js("votacoes.js");
@@ -692,4 +693,70 @@ test("montarEstadual devolve false quando faltam os arquivos do deputado ou das 
   await comPagina({}, { "dados/estadual/SP/1.json": { votos: [] } }, async () => {
     assert.equal(await montarEstadual(new Elemento(), { estadual: { uf: "SP", id: "1" } }, "Ana", [], ""), false);
   });
+});
+
+test("paginaAssembleia mostra o erro sem índice, lista as Assembleias e cai no índice com UF sem dados", async () => {
+  await comPagina({}, {}, async (dom) => {
+    await paginaAssembleia();
+    assert.match(dom.el("#conteudo").innerHTML, /class="aviso"/);
+  });
+  const indice = [{ uf: "PR", contratos: 2, atas: 1, regras: 1 }, { uf: "PA", normas: 1 }];
+  await comPagina({ search: "?uf=ZZ" }, { "dados/assembleias.json": indice }, async (dom) => {
+    await paginaAssembleia();
+    const html = dom.el("#conteudo").innerHTML;
+    assert.match(html, /<a href="assembleia\.html\?uf=PR"><b>Paraná<\/b><\/a>/);
+    assert.match(html, /2 contratos · 1 ata · 1 regra da verba/);
+    assert.match(html, /Pará<\/b><\/a>\s*<br><span class="quando">1 norma/);
+  });
+});
+
+test("paginaAssembleia monta fornecedores, regras, contratos com filtro e normas da UF", async () => {
+  const orgao = {
+    fonte: "https://alep.exemplo/contratos",
+    regrasRessarcimento: { fonte: "https://alep.exemplo/regras", documentos: [{ titulo: "Res. <6>", url: "https://alep.exemplo/r.pdf" }, { titulo: "Antiga", url: "javascript:1", vigente: false }] },
+    fornecedores: [{ nome: "Limpa <Tudo>", cnpj: "23324543000160", contratos: 1, valorContratado: 1200.5, atas: 0, valorRegistrado: 0, idFornecedor: "for_23324543" }],
+    itens: [
+      { id: "ctr_1", tipo: "contrato", numero: "1/2026", objeto: "Limpeza", fornecedor: "Limpa <Tudo>", cnpj: "23324543000160", valor: 1200.5, inicio: "2026-01-02", fim: "2026-12-31", fonte: "https://alep.exemplo/c/1", arquivos: [{ nome: "PDF", url: "https://alep.exemplo/c/1.pdf" }] },
+      { id: "ctr_2", tipo: "ata_registro", numero: "2/2026", objeto: "Papel", fornecedor: "Papelaria", cnpj: null, valor: 900, inicio: "2026-03-01", fonte: "https://alep.exemplo/a/2", arquivos: [] },
+      { id: "ctr_3", tipo: "contrato", objeto: "Aditivo em PDF", fornecedor: null, cnpj: null, valor: null, fonte: "https://alep.exemplo/p", arquivos: [] },
+    ],
+  };
+  const leis = { fonte: "https://leis.exemplo", normas: [{ tipo: "Lei", numero: "10", ano: 2026, ementa: "Diretrizes <LDO>", link: "https://leis.exemplo/10.pdf" }, { tipo: "Lei", numero: "9", ano: 2025, ementa: "Outra" }] };
+  const respostas = { "dados/assembleias.json": [{ uf: "PR", contratos: 2, atas: 1, regras: 1, normas: 2 }], "dados/orgao/PR.json": orgao, "dados/leis/PR.json": leis };
+  await comPagina({ search: "?uf=pr" }, respostas, async (dom) => {
+    await paginaAssembleia();
+    const alvo = dom.el("#conteudo");
+    const html = alvo.innerHTML;
+    assert.equal(document.title, "Assembleia do Paraná | Minha Bancada");
+    assert.match(html, /<h1>Assembleia Legislativa do Paraná<\/h1>/);
+    assert.match(html, /3 contratos e atas · 1 fornecedor/);
+    assert.match(html, /Limpa &lt;Tudo&gt;<br><span class="quando">CNPJ 23324543000160<\/span><br><a class="ver-legivel" href="fornecedores\.html\?busca=23324543">/);
+    assert.match(html, /<a href="https:\/\/alep\.exemplo\/r\.pdf" rel="noopener">Res\. &lt;6&gt;<\/a>/);
+    assert.match(html, /<li>Antiga <span class="quando">\(revogado ou substituído\)<\/span><\/li>/);
+    const [contratos, normas] = alvo.children;
+    const lista = () => contratos.querySelector("#lista-orgao").querySelector("ul").innerHTML;
+    assert.equal(contratos.querySelector("#contagem-orgao").textContent, "3 de 3 documentos, do mais novo ao mais antigo");
+    assert.match(lista(), /<b>Contrato 1\/2026<\/b>: Limpeza/);
+    assert.match(lista(), /até R\$\s900,00 \(teto registrado\)/);
+    assert.match(lista(), /fornecedor e valor só no PDF/);
+    assert.match(lista(), /href="https:\/\/alep\.exemplo\/c\/1\.pdf"/);
+    contratos.querySelector("#tipo-orgao").value = "ata";
+    await contratos.querySelector("#tipo-orgao").disparar("change");
+    assert.equal(contratos.querySelector("#contagem-orgao").textContent, "1 de 3 documentos, do mais novo ao mais antigo");
+    contratos.querySelector("#tipo-orgao").value = "";
+    contratos.querySelector("#busca-orgao").value = "2332";
+    await contratos.querySelector("#busca-orgao").disparar("input");
+    assert.equal(contratos.querySelector("#contagem-orgao").textContent, "1 de 3 documentos, do mais novo ao mais antigo");
+    assert.equal(normas.querySelector("#contagem-normas").textContent, "2 de 2 normas");
+    assert.match(normas.querySelector("#lista-normas").querySelector("ul").innerHTML, /<b>Lei 10\/2026<\/b>: Diretrizes &lt;LDO&gt;/);
+    normas.querySelector("#busca-normas").value = "outra";
+    await normas.querySelector("#busca-normas").disparar("input");
+    assert.equal(normas.querySelector("#contagem-normas").textContent, "1 de 2 normas");
+  });
+});
+
+test("textoValor e vigencia não inventam valor nem data", () => {
+  assert.equal(textoValor({ fornecedor: "X", valor: null }), "valor não publicado");
+  assert.equal(vigencia({ ano: 2023 }), "ano 2023");
+  assert.equal(vigencia({}), "");
 });

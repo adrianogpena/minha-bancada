@@ -59,6 +59,13 @@ def montar_bruto(bruto):
         "coligacaoDoPartido": {"PT": 0, "PC do B": 0, "PL": 1}}})
     gravar(bruto / "municipios_ibge.json", {})
     gravar(bruto / "meta.json", {"coletadoEm": "2026-10-01"})
+    pr = bruto / "estaduais" / "PR"
+    gravar(pr / "deputados.json", {"deputados": []})
+    gravar(pr / "orgao_2026.json", {"fonte": "https://transparencia.exemplo/contratos", "itens": {"ctr_1": {
+        "tipo": "contrato", "numero": "1/2026", "objeto": "Limpeza predial", "fornecedor": "Limpa Tudo Ltda", "nomeChave": "LIMPA TUDO",
+        "cnpj": "23324543000160", "valor": 1200.5, "inicio": "2026-01-02", "fim": "2026-12-31", "fonte": "https://transparencia.exemplo/c/1",
+        "arquivos": [{"nome": "Contrato (PDF)", "url": "https://transparencia.exemplo/c/1.pdf"}]}}})
+    gravar(pr / "regras_ressarcimento.json", {"ano": 2025, "fonte": "https://transparencia.exemplo/regras", "url": "https://transparencia.exemplo/r.pdf"})
 
 
 def gerar_site(bruto, saida):

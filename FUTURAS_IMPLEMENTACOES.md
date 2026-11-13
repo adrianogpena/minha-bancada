@@ -3,7 +3,7 @@
 Ideias levantadas e ainda não feitas, em ordem de complexidade. O que já foi implantado está no `CHANGELOG.md`
 (autoria, cota, salário, campanha e patrimônio, perfil das Casas, presença e votações, recursos do senador,
 perfil temático, discursos e eventos, aposentadoria de ex-senadores, carreira, vida do projeto, rede de coautoria, fornecedores com dados da Receita e cruzamento com
-doadores, recursos, pessoal, verba e presença em plenário do deputado pelo portal, despesa com pessoal e das Casas pelo SICONFI, ministros de Estado em sua primeira etapa, coletores de 17 Assembleias).
+doadores, recursos, pessoal, verba e presença em plenário do deputado pelo portal, despesa com pessoal e das Casas pelo SICONFI, ministros de Estado em sua primeira etapa, coletores de 17 Assembleias, página das Assembleias como órgão).
 
 Ao implementar um endpoint novo, registre-o no `ENDPOINTS.md` e o conjunto no `CHANGELOG.md`.
 Revisado em 2026-11-09 contra o código, os dados em `dados/` e o `CHANGELOG.md`.
@@ -255,9 +255,11 @@ itens; ES, MG e RS dependem de abrir o acesso.
 - Gabinete por deputado: sem fonte em BA, GO, MS, RJ e SP; com fonte em CE, PE, SC, MT, RR, SE, PA. RN exige token.
 - Contratos e atas do órgão (quando existem) não trazem CNPJ na maioria (BA, PE, GO, RR, SE, MS): só em SP, e via PNCP em RN. O vínculo a `nucleo/fornecedores` fica para depois, como no PR.
 - Regras da verba como link: CE, GO, SC, SP, BA, MG, MS (como no `regras_ressarcimento.json` do PR).
-- Recomenda-se um job de teste no Actions (ou outra rede) que bata nos endpoints de ES, MG, RS, SE, GO, MT e RJ antes de planejar; o resultado decide quais desses viram implementação.
+- O job manual `.github/workflows/testar-hosts.yml` testa do Actions os hosts de ES, MG, RS, SE, GO, MT, RR, RJ, AP, DF e MA; o resultado decide quais viram implementação. **Ainda não rodou** (conferido em 2026-11-13): o GitHub só dispara `workflow_dispatch` de arquivo que está na `master`, e ele está só na `develop`. Rodar depois do próximo PR `develop` -> `master` (`gh workflow run testar-hosts.yml`) e ler o resumo do job.
 
 ### 4.7 Dados já coletados que o site ainda não mostra (levantado em 2026-11-02)
+
+**Feito em 2026-11-13:** `assembleia.html?uf=XX` com contratos, atas, maiores fornecedores, regras da verba e as leis do PA (13 UFs: BA CE GO MS PA PE PR RJ RN RR SC SE SP), índice em `site/dados/assembleias.json`; ver `CHANGELOG.md`. Contrato só em PDF fica como link, sem valor. **Falta:** pautas e atas (`pautas_<ano>.json`, só em `dados/`), licitações de RR e PA, ler fornecedor e valor dos PDFs (SE, MS, RR, RJ) e MT (sem `orgao/MT.json`).
 
 Conferido em 2026-11-09: `site/dados/orgao/` tem BA CE GO MS PA PE RJ RN RR SC SE SP (sem MT e PR), `site/dados/leis/` só PA, e
 não existe `assembleia.html`. Os coletores estaduais e o `gerar_estaduais.py` já gravam estes dados, mas nenhuma página do
@@ -274,11 +276,9 @@ remuneração, gabinete, presença, diárias, emendas e normas de autoria.
 | Licitações e contratações diretas | `dados/estaduais/RR/licitacoes_<ano>.json`, licitações do PA | RR, PA | lista junto dos contratos do órgão |
 | Leis e normas sem autoria | `site/dados/leis/PA.json` | PA | página de normas da UF (sem autoria não cabe na ficha do deputado) |
 
-Falta decidir e fazer:
-- Uma página de órgão por UF (`assembleia.html?uf=XX`), no padrão de `tribunais.html`, com fonte e link ao lado de cada linha.
-- Valor e fornecedor dos contratos só em PDF (SE, MS, parte de BA): ler o PDF ou deixar como link, sem inventar valor.
-- Depois da tela, trocar "Ainda não aparece no site" por onde aparece, nas linhas do `site/mapa-dados.html`.
-- Os itens de órgão do PR (4.5, pacote 8) e das demais UFs (4.6) ficam registrados nos respectivos pacotes; a tela é a mesma.
+Falta:
+- Valor e fornecedor dos contratos só em PDF (SE, MS, RR, RJ): ler o PDF; hoje ficam como link.
+- Pautas e atas na página da Assembleia (ou "na pauta desta semana" na proposição) e licitações de RR e PA.
 
 ## Pendências de cobertura do que já existe
 

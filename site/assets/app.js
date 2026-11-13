@@ -11,6 +11,7 @@ const PAGINAS = {
   ministerios: ["ministros", "paginaMinisterios"],
   ministro: ["ministros", "paginaMinistro"],
   tribunais: ["tribunais", "paginaTribunais"],
+  assembleia: ["assembleia", "paginaAssembleia"],
   deputado: ["deputado", "paginaDeputado"],
   votacoes: ["votacoes", "paginaVotacoes"],
   votacao: ["votacoes", "paginaVotacao"],

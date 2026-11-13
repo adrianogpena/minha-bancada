@@ -616,7 +616,7 @@ def regras_da_verba(pagina: str) -> dict | None:
 
 
 def coletar_regras(s) -> None:
-    regra = regras_da_verba(baixar(s, DESPESAS_PAGINA).decode("utf-8", "replace"))
+    regra = regras_da_verba(baixar(s, DESPESAS_PAGINA).decode("latin-1"))
     if not regra:
         raise RuntimeError("nenhum ato ou resolução citado na página de prestação de contas; mantém o arquivo anterior")
     comum.salvar(PASTA / "regras_ressarcimento.json", regra)
@@ -902,7 +902,7 @@ def _conferir_contratos(registro):
 
 
 def _contrato_regras(ctx):
-    pagina = baixar(comum.sessao(), DESPESAS_PAGINA).decode("utf-8", "replace")
+    pagina = baixar(comum.sessao(), DESPESAS_PAGINA).decode("latin-1")
     i = pagina.index("Sugerimos a leitura")
     return {"trecho": pagina[i:pagina.index("</p>", i) + 4]}
 

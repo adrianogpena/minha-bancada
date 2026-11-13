@@ -103,6 +103,7 @@ class Ambiente:
             d.mkdir()
         for nome, texto in SHIMS.items():
             (self.bin / nome).write_bytes(texto.encode("utf-8"))
+            (self.bin / nome).chmod(0o755)
         self.log = tmp_path / "log.txt"
         self.log.write_text("")
         self.saida = tmp_path / "output.txt"

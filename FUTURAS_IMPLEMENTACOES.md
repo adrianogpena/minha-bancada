@@ -255,7 +255,7 @@ itens; ES, MG e RS dependem de abrir o acesso.
 - Gabinete por deputado: sem fonte em BA, GO, MS, RJ e SP; com fonte em CE, PE, SC, MT, RR, SE, PA. RN exige token.
 - Contratos e atas do órgão (quando existem) não trazem CNPJ na maioria (BA, PE, GO, RR, SE, MS): só em SP, e via PNCP em RN. O vínculo a `nucleo/fornecedores` fica para depois, como no PR.
 - Regras da verba como link: CE, GO, SC, SP, BA, MG, MS (como no `regras_ressarcimento.json` do PR).
-- O job manual `.github/workflows/testar-hosts.yml` testa do Actions os hosts de ES, MG, RS, SE, GO, MT, RR, RJ, AP, DF e MA; o resultado decide quais viram implementação. **Ainda não rodou** (conferido em 2026-11-13): o GitHub só dispara `workflow_dispatch` de arquivo que está na `master`, e ele está só na `develop`. Rodar depois do próximo PR `develop` -> `master` (`gh workflow run testar-hosts.yml`) e ler o resumo do job.
+- O job manual `.github/workflows/testar-hosts.yml` testa do Actions os hosts das Assembleias sem coletor. **Resultado de 2026-11-13** (run 43412347819): respondem do Actions **MG** (página da verba indenizatória 200; `dadosabertos.almg.gov.br/api/v2` 404 na raiz, testar uma rota), **MT** (`www.al.mt.gov.br` 200; `almt.eloweb.net/servidores` 404, a rota mudou ou exige parâmetro) e **RJ** (`alerjln1` 200). **RR** segue 403 no SAPL. Sem resposta (timeout) também do Actions: AP, DF, MA, ES, RS e SE (Alese Legis); GO alegodigital falha no TLS (curl 35); `sapl.al.ap.leg.br` e `sapl.cl.df.gov.br` não resolvem no DNS. Próximos possíveis: MG, MT e RJ pelo Actions; os outros dependem de outra rede ou de pedido à Casa.
 
 ### 4.7 Dados já coletados que o site ainda não mostra (levantado em 2026-11-02)
 

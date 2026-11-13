@@ -1,12 +1,12 @@
 {
  "ba_contratos": {
-  "detalhe": "HTTP 200, text/html, 256 KB",
+  "detalhe": "HTTP 200, text/html, 258 KB",
   "grupo": "Assembleias (estaduais)",
   "ok": true,
   "primeiraVerificacao": "2026-11-02T14:59:49Z",
-  "ultimoOk": "2026-11-02T14:59:49Z",
+  "ultimoOk": "2026-11-12T16:59:50Z",
   "url": "https://www.al.ba.gov.br/transparencia/contratos-convenios?dataInicio=2023-01-01&dataFim=2026-12-31&page=0&size=200",
-  "verificadoEm": "2026-11-02T14:59:49Z"
+  "verificadoEm": "2026-11-12T16:59:50Z"
  },
  "ba_dados_emendas": {
   "detalhe": "SSLError: HTTPSConnectionPool(host='dados.ba.gov.br', port=443): Max retries exceeded with url: /dataset/emend",
@@ -15,475 +15,475 @@
   "primeiraVerificacao": "2026-10-24T18:31:15Z",
   "ultimoOk": null,
   "url": "https://dados.ba.gov.br/dataset/emendas-parlamentares",
-  "verificadoEm": "2026-11-02T14:59:49Z"
+  "verificadoEm": "2026-11-12T16:59:50Z"
  },
  "ba_deputados": {
   "detalhe": "HTTP 200, text/html, 105 KB",
   "grupo": "Assembleias (estaduais)",
   "ok": true,
   "primeiraVerificacao": "2026-10-24T18:31:15Z",
-  "ultimoOk": "2026-11-02T14:59:49Z",
+  "ultimoOk": "2026-11-12T16:59:50Z",
   "url": "https://www.al.ba.gov.br/deputados/deputados-estaduais",
-  "verificadoEm": "2026-11-02T14:59:49Z"
+  "verificadoEm": "2026-11-12T16:59:50Z"
  },
  "ba_frequencia": {
   "detalhe": "HTTP 200, text/html, 62 KB",
   "grupo": "Assembleias (estaduais)",
   "ok": true,
   "primeiraVerificacao": "2026-11-02T14:59:49Z",
-  "ultimoOk": "2026-11-02T14:59:49Z",
+  "ultimoOk": "2026-11-12T16:59:50Z",
   "url": "https://www.al.ba.gov.br/atividade-legislativa/frequencia-sessao/6420",
-  "verificadoEm": "2026-11-02T14:59:49Z"
+  "verificadoEm": "2026-11-12T16:59:50Z"
  },
  "ba_salvador": {
   "detalhe": "HTTP 200, text/html, 44 KB",
   "grupo": "Câmara de Salvador",
   "ok": true,
   "primeiraVerificacao": "2026-10-24T18:31:15Z",
-  "ultimoOk": "2026-11-02T14:59:49Z",
+  "ultimoOk": "2026-11-12T16:59:50Z",
   "url": "https://cmsalvador.sys.inf.br/cl/prop_interna/",
-  "verificadoEm": "2026-11-02T14:59:49Z"
+  "verificadoEm": "2026-11-12T16:59:50Z"
  },
  "ba_salvador_tram": {
   "detalhe": "HTTP 200, text/html, 0 KB",
   "grupo": "Câmara de Salvador",
   "ok": true,
   "primeiraVerificacao": "2026-10-24T18:31:15Z",
-  "ultimoOk": "2026-11-02T14:59:49Z",
+  "ultimoOk": "2026-11-12T16:59:50Z",
   "url": "https://cmsalvador.sys.inf.br/cl/prop_interna_tram/",
-  "verificadoEm": "2026-11-02T14:59:49Z"
+  "verificadoEm": "2026-11-12T16:59:50Z"
  },
  "ba_sessoes": {
   "detalhe": "HTTP 200, text/html, 109 KB",
   "grupo": "Assembleias (estaduais)",
   "ok": true,
   "primeiraVerificacao": "2026-11-02T14:59:49Z",
-  "ultimoOk": "2026-11-02T14:59:49Z",
+  "ultimoOk": "2026-11-12T16:59:50Z",
   "url": "https://www.al.ba.gov.br/atividade-legislativa/sessoes-plenarias?dataInicio=2025-06-01&dataFim=2025-06-30&page=0",
-  "verificadoEm": "2026-11-02T14:59:49Z"
+  "verificadoEm": "2026-11-12T16:59:50Z"
  },
  "ba_verbas_regula": {
   "detalhe": "HTTP 200, text/html, 65 KB",
   "grupo": "Assembleias (estaduais)",
   "ok": true,
   "primeiraVerificacao": "2026-11-02T14:59:49Z",
-  "ultimoOk": "2026-11-02T14:59:49Z",
+  "ultimoOk": "2026-11-12T16:59:50Z",
   "url": "https://www.al.ba.gov.br/transparencia/verbas-regula",
-  "verificadoEm": "2026-11-02T14:59:49Z"
+  "verificadoEm": "2026-11-12T16:59:50Z"
  },
  "camara_arquivo_autores": {
   "detalhe": "HTTP 200, application/json",
   "grupo": "Câmara",
   "ok": true,
   "primeiraVerificacao": "2026-10-29T14:56:47Z",
-  "ultimoOk": "2026-11-02T14:59:49Z",
+  "ultimoOk": "2026-11-12T16:59:50Z",
   "url": "https://dadosabertos.camara.leg.br/arquivos/proposicoesAutores/json/proposicoesAutores-2026.json",
-  "verificadoEm": "2026-11-02T14:59:49Z"
+  "verificadoEm": "2026-11-12T16:59:50Z"
  },
  "camara_arquivo_eventos": {
   "detalhe": "HTTP 200, application/json",
   "grupo": "Câmara",
   "ok": true,
   "primeiraVerificacao": "2026-10-24T18:31:15Z",
-  "ultimoOk": "2026-11-02T14:59:49Z",
+  "ultimoOk": "2026-11-12T16:59:50Z",
   "url": "https://dadosabertos.camara.leg.br/arquivos/eventos/json/eventos-2026.json",
-  "verificadoEm": "2026-11-02T14:59:49Z"
+  "verificadoEm": "2026-11-12T16:59:50Z"
  },
  "camara_arquivo_orgaos": {
   "detalhe": "HTTP 200, application/json",
   "grupo": "Câmara",
   "ok": true,
   "primeiraVerificacao": "2026-10-24T18:31:15Z",
-  "ultimoOk": "2026-11-02T14:59:49Z",
+  "ultimoOk": "2026-11-12T16:59:50Z",
   "url": "https://dadosabertos.camara.leg.br/arquivos/orgaosDeputados/json/orgaosDeputados-L57.json",
-  "verificadoEm": "2026-11-02T14:59:49Z"
+  "verificadoEm": "2026-11-12T16:59:50Z"
  },
  "camara_arquivo_orientacoes": {
   "detalhe": "HTTP 200, application/json",
   "grupo": "Câmara",
   "ok": true,
   "primeiraVerificacao": "2026-10-24T18:31:15Z",
-  "ultimoOk": "2026-11-02T14:59:49Z",
+  "ultimoOk": "2026-11-12T16:59:50Z",
   "url": "https://dadosabertos.camara.leg.br/arquivos/votacoesOrientacoes/json/votacoesOrientacoes-2026.json",
-  "verificadoEm": "2026-11-02T14:59:49Z"
+  "verificadoEm": "2026-11-12T16:59:50Z"
  },
  "camara_arquivo_presenca": {
   "detalhe": "HTTP 200, application/json",
   "grupo": "Câmara",
   "ok": true,
   "primeiraVerificacao": "2026-10-24T18:31:15Z",
-  "ultimoOk": "2026-11-02T14:59:49Z",
+  "ultimoOk": "2026-11-12T16:59:50Z",
   "url": "https://dadosabertos.camara.leg.br/arquivos/eventosPresencaDeputados/json/eventosPresencaDeputados-2026.json",
-  "verificadoEm": "2026-11-02T14:59:49Z"
+  "verificadoEm": "2026-11-12T16:59:50Z"
  },
  "camara_arquivo_proposicoes": {
   "detalhe": "HTTP 200, application/json",
   "grupo": "Câmara",
   "ok": true,
   "primeiraVerificacao": "2026-10-29T14:56:47Z",
-  "ultimoOk": "2026-11-02T14:59:49Z",
+  "ultimoOk": "2026-11-12T16:59:50Z",
   "url": "https://dadosabertos.camara.leg.br/arquivos/proposicoes/json/proposicoes-2026.json",
-  "verificadoEm": "2026-11-02T14:59:49Z"
+  "verificadoEm": "2026-11-12T16:59:50Z"
  },
  "camara_arquivo_temas": {
   "detalhe": "HTTP 200, application/json",
   "grupo": "Câmara",
   "ok": true,
   "primeiraVerificacao": "2026-10-24T18:31:15Z",
-  "ultimoOk": "2026-11-02T14:59:49Z",
+  "ultimoOk": "2026-11-12T16:59:50Z",
   "url": "https://dadosabertos.camara.leg.br/arquivos/proposicoesTemas/json/proposicoesTemas-2025.json",
-  "verificadoEm": "2026-11-02T14:59:49Z"
+  "verificadoEm": "2026-11-12T16:59:50Z"
  },
  "camara_arquivo_votacoes_proposicoes": {
   "detalhe": "HTTP 200, application/json",
   "grupo": "Câmara",
   "ok": true,
   "primeiraVerificacao": "2026-10-24T18:31:15Z",
-  "ultimoOk": "2026-11-02T14:59:49Z",
+  "ultimoOk": "2026-11-12T16:59:50Z",
   "url": "https://dadosabertos.camara.leg.br/arquivos/votacoesProposicoes/json/votacoesProposicoes-2025.json",
-  "verificadoEm": "2026-11-02T14:59:49Z"
+  "verificadoEm": "2026-11-12T16:59:50Z"
  },
  "camara_autores": {
   "detalhe": "HTTP 200, application/json",
   "grupo": "Câmara",
   "ok": true,
   "primeiraVerificacao": "2026-10-24T18:31:15Z",
-  "ultimoOk": "2026-11-02T14:59:49Z",
+  "ultimoOk": "2026-11-12T16:59:50Z",
   "url": "https://dadosabertos.camara.leg.br/api/v2/proposicoes/2270800/autores",
-  "verificadoEm": "2026-11-02T14:59:49Z"
+  "verificadoEm": "2026-11-12T16:59:50Z"
  },
  "camara_blocos": {
   "detalhe": "HTTP 200, application/json",
   "grupo": "Câmara",
   "ok": true,
   "primeiraVerificacao": "2026-10-24T18:31:15Z",
-  "ultimoOk": "2026-11-02T14:59:49Z",
+  "ultimoOk": "2026-11-12T16:59:50Z",
   "url": "https://dadosabertos.camara.leg.br/api/v2/blocos?idLegislatura=57&itens=100",
-  "verificadoEm": "2026-11-02T14:59:49Z"
+  "verificadoEm": "2026-11-12T16:59:50Z"
  },
  "camara_cota_csv": {
-  "detalhe": "HTTP 200, application/zip, 4.5 MB",
+  "detalhe": "HTTP 200, application/zip, 4.6 MB",
   "grupo": "Câmara",
   "ok": true,
   "primeiraVerificacao": "2026-10-24T18:31:15Z",
-  "ultimoOk": "2026-11-02T14:59:49Z",
+  "ultimoOk": "2026-11-12T16:59:50Z",
   "url": "https://www.camara.leg.br/cotas/Ano-2026.csv.zip",
-  "verificadoEm": "2026-11-02T14:59:49Z"
+  "verificadoEm": "2026-11-12T16:59:50Z"
  },
  "camara_cota_limites": {
   "detalhe": "HTTP 200, text/html",
   "grupo": "Links e recursos do site",
   "ok": true,
   "primeiraVerificacao": "2026-10-24T18:31:15Z",
-  "ultimoOk": "2026-11-02T14:59:49Z",
+  "ultimoOk": "2026-11-12T16:59:50Z",
   "url": "https://www2.camara.leg.br/comunicacao/assessoria-de-imprensa/guia-para-jornalistas/cota-parlamentar",
-  "verificadoEm": "2026-11-02T14:59:49Z"
+  "verificadoEm": "2026-11-12T16:59:50Z"
  },
  "camara_decreto_legislativo_172": {
   "detalhe": "HTTP 200, text/html, 8 KB",
   "grupo": "Links e recursos do site",
   "ok": true,
   "primeiraVerificacao": "2026-10-24T18:31:15Z",
-  "ultimoOk": "2026-11-02T14:59:49Z",
+  "ultimoOk": "2026-11-12T16:59:50Z",
   "url": "https://www2.camara.leg.br/legin/fed/decleg/2022/decretolegislativo-172-21-dezembro-2022-793529-republicacao-166629-pl.html",
-  "verificadoEm": "2026-11-02T14:59:49Z"
+  "verificadoEm": "2026-11-12T16:59:50Z"
  },
  "camara_deputado": {
   "detalhe": "HTTP 200, application/json",
   "grupo": "Câmara",
   "ok": true,
   "primeiraVerificacao": "2026-10-24T18:31:15Z",
-  "ultimoOk": "2026-11-02T14:59:49Z",
+  "ultimoOk": "2026-11-12T16:59:50Z",
   "url": "https://dadosabertos.camara.leg.br/api/v2/deputados/204379",
-  "verificadoEm": "2026-11-02T14:59:49Z"
+  "verificadoEm": "2026-11-12T16:59:50Z"
  },
  "camara_deputados": {
   "detalhe": "HTTP 200, application/json",
   "grupo": "Câmara",
   "ok": true,
   "primeiraVerificacao": "2026-10-24T18:31:15Z",
-  "ultimoOk": "2026-11-02T14:59:49Z",
+  "ultimoOk": "2026-11-12T16:59:50Z",
   "url": "https://dadosabertos.camara.leg.br/api/v2/deputados?itens=1",
-  "verificadoEm": "2026-11-02T14:59:49Z"
+  "verificadoEm": "2026-11-12T16:59:50Z"
  },
  "camara_despesas": {
   "detalhe": "HTTP 200, application/json",
   "grupo": "Câmara",
   "ok": true,
   "primeiraVerificacao": "2026-10-24T18:31:15Z",
-  "ultimoOk": "2026-11-02T14:59:49Z",
+  "ultimoOk": "2026-11-12T16:59:50Z",
   "url": "https://dadosabertos.camara.leg.br/api/v2/deputados/204379/despesas?ano=2025&itens=1",
-  "verificadoEm": "2026-11-02T14:59:49Z"
+  "verificadoEm": "2026-11-12T16:59:50Z"
  },
  "camara_discursos": {
   "detalhe": "HTTP 200, application/json",
   "grupo": "Câmara",
   "ok": true,
   "primeiraVerificacao": "2026-10-24T18:31:15Z",
-  "ultimoOk": "2026-11-02T14:59:49Z",
+  "ultimoOk": "2026-11-12T16:59:50Z",
   "url": "https://dadosabertos.camara.leg.br/api/v2/deputados/204379/discursos?itens=2&ordem=DESC&ordenarPor=dataHoraInicio&dataInicio=2023-02-01",
-  "verificadoEm": "2026-11-02T14:59:49Z"
+  "verificadoEm": "2026-11-12T16:59:50Z"
  },
  "camara_eventos": {
   "detalhe": "HTTP 200, application/json",
   "grupo": "Câmara",
   "ok": true,
   "primeiraVerificacao": "2026-10-30T04:06:25Z",
-  "ultimoOk": "2026-11-02T14:59:49Z",
+  "ultimoOk": "2026-11-12T16:59:50Z",
   "url": "https://dadosabertos.camara.leg.br/api/v2/deputados/204379/eventos?itens=2&ordem=DESC&ordenarPor=dataHoraInicio&dataInicio=2023-02-01",
-  "verificadoEm": "2026-11-02T14:59:49Z"
+  "verificadoEm": "2026-11-12T16:59:50Z"
  },
  "camara_executivo": {
-  "detalhe": "HTTP 200, application/json",
+  "detalhe": "HTTP 504",
   "grupo": "Câmara",
-  "ok": true,
+  "ok": false,
   "primeiraVerificacao": "2026-10-24T18:31:15Z",
-  "ultimoOk": "2026-11-02T14:59:49Z",
+  "ultimoOk": "2026-11-11T16:21:15Z",
   "url": "https://dadosabertos.camara.leg.br/api/v2/proposicoes?autor=Poder%20Executivo&siglaTipo=PL&ano=2025&itens=1",
-  "verificadoEm": "2026-11-02T14:59:49Z"
+  "verificadoEm": "2026-11-12T16:59:50Z"
  },
  "camara_ficha_tramitacao": {
   "detalhe": "HTTP 200, text/html",
   "grupo": "Links e recursos do site",
   "ok": true,
   "primeiraVerificacao": "2026-10-24T18:31:15Z",
-  "ultimoOk": "2026-11-02T14:59:49Z",
+  "ultimoOk": "2026-11-12T16:59:50Z",
   "url": "https://www.camara.leg.br/proposicoesWeb/fichadetramitacao?idProposicao=2270800",
-  "verificadoEm": "2026-11-02T14:59:49Z"
+  "verificadoEm": "2026-11-12T16:59:50Z"
  },
  "camara_frentes_deputado": {
   "detalhe": "HTTP 200, application/json",
   "grupo": "Câmara",
   "ok": true,
   "primeiraVerificacao": "2026-10-24T18:31:15Z",
-  "ultimoOk": "2026-11-02T14:59:49Z",
+  "ultimoOk": "2026-11-12T16:59:50Z",
   "url": "https://dadosabertos.camara.leg.br/api/v2/deputados/204379/frentes",
-  "verificadoEm": "2026-11-02T14:59:49Z"
+  "verificadoEm": "2026-11-12T16:59:50Z"
  },
  "camara_historico": {
   "detalhe": "HTTP 200, application/json",
   "grupo": "Câmara",
   "ok": true,
   "primeiraVerificacao": "2026-10-24T18:31:15Z",
-  "ultimoOk": "2026-11-02T14:59:49Z",
+  "ultimoOk": "2026-11-12T16:59:50Z",
   "url": "https://dadosabertos.camara.leg.br/api/v2/deputados/204379/historico",
-  "verificadoEm": "2026-11-02T14:59:49Z"
+  "verificadoEm": "2026-11-12T16:59:50Z"
  },
  "camara_mandatos_externos": {
   "detalhe": "HTTP 200, application/json",
   "grupo": "Câmara",
   "ok": true,
   "primeiraVerificacao": "2026-10-24T18:31:15Z",
-  "ultimoOk": "2026-11-02T14:59:49Z",
+  "ultimoOk": "2026-11-12T16:59:50Z",
   "url": "https://dadosabertos.camara.leg.br/api/v2/deputados/204379/mandatosExternos",
-  "verificadoEm": "2026-11-02T14:59:49Z"
+  "verificadoEm": "2026-11-12T16:59:50Z"
  },
  "camara_ocupacoes": {
   "detalhe": "HTTP 200, application/json",
   "grupo": "Câmara",
   "ok": true,
   "primeiraVerificacao": "2026-10-24T18:31:15Z",
-  "ultimoOk": "2026-11-02T14:59:49Z",
+  "ultimoOk": "2026-11-12T16:59:50Z",
   "url": "https://dadosabertos.camara.leg.br/api/v2/deputados/204379/ocupacoes",
-  "verificadoEm": "2026-11-02T14:59:49Z"
+  "verificadoEm": "2026-11-12T16:59:50Z"
  },
  "camara_portal": {
   "detalhe": "HTTP 200, text/html",
   "grupo": "Links e recursos do site",
   "ok": true,
   "primeiraVerificacao": "2026-10-24T18:31:15Z",
-  "ultimoOk": "2026-11-02T14:59:49Z",
+  "ultimoOk": "2026-11-12T16:59:50Z",
   "url": "https://www.camara.leg.br/deputados/204379",
-  "verificadoEm": "2026-11-02T14:59:49Z"
+  "verificadoEm": "2026-11-12T16:59:50Z"
  },
  "camara_portal_pessoal": {
   "detalhe": "HTTP 200, text/html",
   "grupo": "Câmara",
   "ok": true,
   "primeiraVerificacao": "2026-10-30T04:06:25Z",
-  "ultimoOk": "2026-11-02T14:59:49Z",
+  "ultimoOk": "2026-11-12T16:59:50Z",
   "url": "https://www.camara.leg.br/deputados/204379/pessoal-gabinete",
-  "verificadoEm": "2026-11-02T14:59:49Z"
+  "verificadoEm": "2026-11-12T16:59:50Z"
  },
  "camara_portal_presenca": {
   "detalhe": "HTTP 200, text/html",
   "grupo": "Câmara",
   "ok": true,
   "primeiraVerificacao": "2026-10-30T04:06:25Z",
-  "ultimoOk": "2026-11-02T14:59:49Z",
+  "ultimoOk": "2026-11-12T16:59:50Z",
   "url": "https://www.camara.leg.br/deputados/204379/presenca-plenario/2025",
-  "verificadoEm": "2026-11-02T14:59:49Z"
+  "verificadoEm": "2026-11-12T16:59:50Z"
  },
  "camara_portal_recursos": {
   "detalhe": "HTTP 200, text/html",
   "grupo": "Câmara",
   "ok": true,
   "primeiraVerificacao": "2026-10-30T04:06:25Z",
-  "ultimoOk": "2026-11-02T14:59:49Z",
+  "ultimoOk": "2026-11-12T16:59:50Z",
   "url": "https://www.camara.leg.br/deputados/204379",
-  "verificadoEm": "2026-11-02T14:59:49Z"
+  "verificadoEm": "2026-11-12T16:59:50Z"
  },
  "camara_portal_verba_ano": {
   "detalhe": "HTTP 200, text/html",
   "grupo": "Câmara",
   "ok": true,
   "primeiraVerificacao": "2026-10-30T04:06:25Z",
-  "ultimoOk": "2026-11-02T14:59:49Z",
+  "ultimoOk": "2026-11-12T16:59:50Z",
   "url": "https://www.camara.leg.br/deputados/204379/verba-gabinete?ano=2025",
-  "verificadoEm": "2026-11-02T14:59:49Z"
+  "verificadoEm": "2026-11-12T16:59:50Z"
  },
  "camara_profissoes": {
   "detalhe": "HTTP 200, application/json",
   "grupo": "Câmara",
   "ok": true,
   "primeiraVerificacao": "2026-10-24T18:31:15Z",
-  "ultimoOk": "2026-11-02T14:59:49Z",
+  "ultimoOk": "2026-11-12T16:59:50Z",
   "url": "https://dadosabertos.camara.leg.br/api/v2/deputados/204379/profissoes",
-  "verificadoEm": "2026-11-02T14:59:49Z"
+  "verificadoEm": "2026-11-12T16:59:50Z"
  },
  "camara_proposicao": {
   "detalhe": "HTTP 200, application/json",
   "grupo": "Câmara",
   "ok": true,
   "primeiraVerificacao": "2026-10-24T18:31:15Z",
-  "ultimoOk": "2026-11-02T14:59:49Z",
+  "ultimoOk": "2026-11-12T16:59:50Z",
   "url": "https://dadosabertos.camara.leg.br/api/v2/proposicoes/2270800",
-  "verificadoEm": "2026-11-02T14:59:49Z"
+  "verificadoEm": "2026-11-12T16:59:50Z"
  },
  "camara_proposicoes": {
   "detalhe": "HTTP 200, application/json",
   "grupo": "Câmara",
   "ok": true,
   "primeiraVerificacao": "2026-10-24T18:31:15Z",
-  "ultimoOk": "2026-11-02T14:59:49Z",
+  "ultimoOk": "2026-11-12T16:59:50Z",
   "url": "https://dadosabertos.camara.leg.br/api/v2/proposicoes?siglaTipo=PL&ano=2025&itens=1",
-  "verificadoEm": "2026-11-02T14:59:49Z"
+  "verificadoEm": "2026-11-12T16:59:50Z"
  },
  "camara_relacionadas": {
   "detalhe": "HTTP 200, application/json",
   "grupo": "Câmara",
   "ok": true,
   "primeiraVerificacao": "2026-10-24T18:31:15Z",
-  "ultimoOk": "2026-11-02T14:59:49Z",
+  "ultimoOk": "2026-11-12T16:59:50Z",
   "url": "https://dadosabertos.camara.leg.br/api/v2/proposicoes/2270800/relacionadas",
-  "verificadoEm": "2026-11-02T14:59:49Z"
+  "verificadoEm": "2026-11-12T16:59:50Z"
  },
  "camara_tramitacoes": {
   "detalhe": "HTTP 200, application/json",
   "grupo": "Câmara",
   "ok": true,
   "primeiraVerificacao": "2026-10-24T18:31:15Z",
-  "ultimoOk": "2026-11-02T14:59:49Z",
+  "ultimoOk": "2026-11-12T16:59:50Z",
   "url": "https://dadosabertos.camara.leg.br/api/v2/proposicoes/2270800/tramitacoes",
-  "verificadoEm": "2026-11-02T14:59:49Z"
+  "verificadoEm": "2026-11-12T16:59:50Z"
  },
  "camara_votacao": {
   "detalhe": "HTTP 200, application/json",
   "grupo": "Câmara",
   "ok": true,
   "primeiraVerificacao": "2026-10-24T18:31:15Z",
-  "ultimoOk": "2026-11-02T14:59:49Z",
+  "ultimoOk": "2026-11-12T16:59:50Z",
   "url": "https://dadosabertos.camara.leg.br/api/v2/votacoes/2442848-52",
-  "verificadoEm": "2026-11-02T14:59:49Z"
+  "verificadoEm": "2026-11-12T16:59:50Z"
  },
  "camara_votacoes": {
   "detalhe": "HTTP 200, application/json",
   "grupo": "Câmara",
   "ok": true,
   "primeiraVerificacao": "2026-10-24T18:31:15Z",
-  "ultimoOk": "2026-11-02T14:59:49Z",
+  "ultimoOk": "2026-11-12T16:59:50Z",
   "url": "https://dadosabertos.camara.leg.br/api/v2/votacoes?dataInicio=2025-03-01&dataFim=2025-03-31&itens=1",
-  "verificadoEm": "2026-11-02T14:59:49Z"
+  "verificadoEm": "2026-11-12T16:59:50Z"
  },
  "camara_votos": {
   "detalhe": "HTTP 200, application/json",
   "grupo": "Câmara",
   "ok": true,
   "primeiraVerificacao": "2026-10-24T18:31:15Z",
-  "ultimoOk": "2026-11-02T14:59:49Z",
+  "ultimoOk": "2026-11-12T16:59:50Z",
   "url": "https://dadosabertos.camara.leg.br/api/v2/votacoes/2442848-52/votos",
-  "verificadoEm": "2026-11-02T14:59:49Z"
+  "verificadoEm": "2026-11-12T16:59:50Z"
  },
  "ce_deputados": {
   "detalhe": "HTTP 200, text/html, 20 KB",
   "grupo": "Assembleias (estaduais)",
   "ok": true,
   "primeiraVerificacao": "2026-10-24T18:31:15Z",
-  "ultimoOk": "2026-11-02T14:59:49Z",
+  "ultimoOk": "2026-11-12T16:59:50Z",
   "url": "https://www.al.ce.gov.br/deputados",
-  "verificadoEm": "2026-11-02T14:59:49Z"
+  "verificadoEm": "2026-11-12T16:59:50Z"
  },
  "ce_proposicoes": {
   "detalhe": "HTTP 200, text/html, 0 KB",
   "grupo": "Assembleias (estaduais)",
   "ok": true,
   "primeiraVerificacao": "2026-10-24T18:31:15Z",
-  "ultimoOk": "2026-11-02T14:59:49Z",
+  "ultimoOk": "2026-11-12T16:59:50Z",
   "url": "https://www2.al.ce.gov.br/legislativo/proposicoes/numero.php",
-  "verificadoEm": "2026-11-02T14:59:49Z"
+  "verificadoEm": "2026-11-12T16:59:50Z"
  },
  "ce_transparencia": {
   "detalhe": "HTTP 200, text/html",
   "grupo": "Assembleias (estaduais)",
   "ok": true,
   "primeiraVerificacao": "2026-10-24T18:31:15Z",
-  "ultimoOk": "2026-11-02T14:59:49Z",
+  "ultimoOk": "2026-11-12T16:59:50Z",
   "url": "https://transparencia.al.ce.gov.br",
-  "verificadoEm": "2026-11-02T14:59:49Z"
+  "verificadoEm": "2026-11-12T16:59:50Z"
  },
  "df_geoserver_ras": {
   "detalhe": "HTTP 200, application/json",
   "grupo": "DF",
   "ok": true,
   "primeiraVerificacao": "2026-10-24T18:31:15Z",
-  "ultimoOk": "2026-11-02T14:59:49Z",
+  "ultimoOk": "2026-11-12T16:59:50Z",
   "url": "https://catalogo.ipe.df.gov.br/geoserver/ows?service=WFS&version=1.0.0&request=GetFeature&typeName=geonode:regioes_administrativas&outputFormat=application/json&srsName=EPSG:4326&maxFeatures=1",
-  "verificadoEm": "2026-11-02T14:59:49Z"
+  "verificadoEm": "2026-11-12T16:59:50Z"
  },
  "es_dados_despesas": {
   "detalhe": "HTTP 200, application/json, 83 KB",
   "grupo": "Assembleias (estaduais)",
   "ok": true,
   "primeiraVerificacao": "2026-10-24T18:31:15Z",
-  "ultimoOk": "2026-11-02T14:59:49Z",
+  "ultimoOk": "2026-11-12T16:59:50Z",
   "url": "https://dados.es.gov.br/api/3/action/package_show?id=portal-da-transparencia-despesas-execucao-orcamentaria-e-financeira",
-  "verificadoEm": "2026-11-02T14:59:49Z"
+  "verificadoEm": "2026-11-12T16:59:50Z"
  },
  "go_portal": {
-  "detalhe": "HTTP 200, text/html",
+  "detalhe": "ConnectTimeout: HTTPSConnectionPool(host='portal.al.go.leg.br', port=443): Max retries exceeded with url: /deputados",
   "grupo": "Assembleias (estaduais)",
-  "ok": true,
+  "ok": false,
   "primeiraVerificacao": "2026-10-24T18:31:15Z",
-  "ultimoOk": "2026-11-02T14:59:49Z",
+  "ultimoOk": "2026-11-08T15:18:54Z",
   "url": "https://portal.al.go.leg.br/deputados/em-exercicio",
-  "verificadoEm": "2026-11-02T14:59:49Z"
+  "verificadoEm": "2026-11-12T16:59:50Z"
  },
  "go_suap": {
   "detalhe": "HTTP 200, text/html, 4 KB; só com a cadeia extra de scripts/certs",
   "grupo": "Câmara de Goiânia",
   "ok": true,
   "primeiraVerificacao": "2026-10-24T18:31:15Z",
-  "ultimoOk": "2026-11-02T14:59:49Z",
+  "ultimoOk": "2026-11-12T16:59:50Z",
   "url": "https://suap.camaragyn.go.gov.br/camara/consulta_publica/?classificacao=PL&interessado=Prefeito&ano=2025&page=1",
-  "verificadoEm": "2026-11-02T14:59:49Z"
+  "verificadoEm": "2026-11-12T16:59:50Z"
  },
  "go_transparencia": {
-  "detalhe": "HTTP 200, application/json",
+  "detalhe": "ConnectTimeout: HTTPSConnectionPool(host='transparencia.al.go.leg.br', port=443): Max retries exceeded with url: /ap",
   "grupo": "Assembleias (estaduais)",
-  "ok": true,
+  "ok": false,
   "primeiraVerificacao": "2026-10-24T18:31:15Z",
-  "ultimoOk": "2026-11-02T14:59:49Z",
+  "ultimoOk": "2026-11-08T15:18:54Z",
   "url": "https://transparencia.al.go.leg.br/api/transparencia/verbas_indenizatorias?ano=2026&mes=8",
-  "verificadoEm": "2026-11-02T14:59:49Z"
+  "verificadoEm": "2026-11-12T16:59:50Z"
  },
  "google_fonts": {
   "detalhe": "HTTP 200, text/css",
   "grupo": "Links e recursos do site",
   "ok": true,
   "primeiraVerificacao": "2026-10-24T18:31:15Z",
-  "ultimoOk": "2026-11-02T14:59:49Z",
+  "ultimoOk": "2026-11-12T16:59:50Z",
   "url": "https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible",
-  "verificadoEm": "2026-11-02T14:59:49Z"
+  "verificadoEm": "2026-11-12T16:59:50Z"
  },
  "ibge_malha_estado": {
   "detalhe": "ConnectTimeout: HTTPSConnectionPool(host='servicodados.ibge.gov.br', port=443): Max retries exceeded with url: /api/",
@@ -492,7 +492,7 @@
   "primeiraVerificacao": "2026-10-24T18:31:15Z",
   "ultimoOk": "2026-10-21",
   "url": "https://servicodados.ibge.gov.br/api/v3/malhas/estados/53?formato=application/vnd.geo%2Bjson&intrarregiao=municipio&qualidade=minima",
-  "verificadoEm": "2026-11-02T14:59:49Z"
+  "verificadoEm": "2026-11-12T16:59:50Z"
  },
  "ibge_malha_pais": {
   "detalhe": "ConnectTimeout: HTTPSConnectionPool(host='servicodados.ibge.gov.br', port=443): Max retries exceeded with url: /api/",
@@ -501,7 +501,7 @@
   "primeiraVerificacao": "2026-10-24T18:31:15Z",
   "ultimoOk": "2026-10-21",
   "url": "https://servicodados.ibge.gov.br/api/v3/malhas/paises/BR?formato=application/vnd.geo%2Bjson&intrarregiao=UF&qualidade=minima",
-  "verificadoEm": "2026-11-02T14:59:49Z"
+  "verificadoEm": "2026-11-12T16:59:50Z"
  },
  "ibge_municipios": {
   "detalhe": "ConnectTimeout: HTTPSConnectionPool(host='servicodados.ibge.gov.br', port=443): Max retries exceeded with url: /api/",
@@ -510,25 +510,25 @@
   "primeiraVerificacao": "2026-10-24T18:31:15Z",
   "ultimoOk": "2026-10-21",
   "url": "https://servicodados.ibge.gov.br/api/v1/localidades/municipios",
-  "verificadoEm": "2026-11-02T14:59:49Z"
+  "verificadoEm": "2026-11-12T16:59:50Z"
  },
  "leaflet_js": {
   "detalhe": "HTTP 200, application/javascript, 41 KB",
   "grupo": "Links e recursos do site",
   "ok": true,
   "primeiraVerificacao": "2026-10-24T18:31:15Z",
-  "ultimoOk": "2026-11-02T14:59:49Z",
+  "ultimoOk": "2026-11-12T16:59:50Z",
   "url": "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js",
-  "verificadoEm": "2026-11-02T14:59:49Z"
+  "verificadoEm": "2026-11-12T16:59:50Z"
  },
  "lexml_norma": {
   "detalhe": "HTTP 200, text/html, 15 KB",
   "grupo": "Legislação",
   "ok": true,
   "primeiraVerificacao": "2026-10-30T04:06:25Z",
-  "ultimoOk": "2026-11-02T14:59:49Z",
+  "ultimoOk": "2026-11-12T16:59:50Z",
   "url": "https://www.lexml.gov.br/urn/urn:lex:br:federal:lei:1995-12-26;9250",
-  "verificadoEm": "2026-11-02T14:59:49Z"
+  "verificadoEm": "2026-11-12T16:59:50Z"
  },
  "mg_dadosabertos": {
   "detalhe": "HTTP 404",
@@ -537,25 +537,25 @@
   "primeiraVerificacao": "2026-10-24T18:31:15Z",
   "ultimoOk": null,
   "url": "https://dadosabertos.almg.gov.br/api/v2",
-  "verificadoEm": "2026-11-02T14:59:49Z"
+  "verificadoEm": "2026-11-12T16:59:50Z"
  },
  "mg_site": {
   "detalhe": "HTTP 200, text/html, 20 KB",
   "grupo": "Assembleias (estaduais)",
   "ok": true,
   "primeiraVerificacao": "2026-10-24T18:31:15Z",
-  "ultimoOk": "2026-11-02T14:59:49Z",
+  "ultimoOk": "2026-11-12T16:59:50Z",
   "url": "https://www.almg.gov.br/transparencia/prestacao-de-contas/deputados/verba-indenizatoria/",
-  "verificadoEm": "2026-11-02T14:59:49Z"
+  "verificadoEm": "2026-11-12T16:59:50Z"
  },
  "ms_pauta": {
   "detalhe": "HTTP 200, text/html",
   "grupo": "Assembleias (estaduais)",
   "ok": true,
   "primeiraVerificacao": "2026-11-02T14:59:49Z",
-  "ultimoOk": "2026-11-02T14:59:49Z",
+  "ultimoOk": "2026-11-12T16:59:50Z",
   "url": "https://al.ms.gov.br/Pauta",
-  "verificadoEm": "2026-11-02T14:59:49Z"
+  "verificadoEm": "2026-11-12T16:59:50Z"
  },
  "ms_pauta": {
   "detalhe": "HTTP 200, text/html",
@@ -571,18 +571,18 @@
   "grupo": "Assembleias (estaduais)",
   "ok": true,
   "primeiraVerificacao": "2026-10-24T18:31:15Z",
-  "ultimoOk": "2026-11-02T14:59:49Z",
+  "ultimoOk": "2026-11-12T16:59:50Z",
   "url": "https://transparencia2.al.ms.gov.br",
-  "verificadoEm": "2026-11-02T14:59:49Z"
+  "verificadoEm": "2026-11-12T16:59:50Z"
  },
  "ms_transparencia_antigo": {
-  "detalhe": "HTTP 200, text/html",
+  "detalhe": "HTTP 200, text/html, 3 KB",
   "grupo": "Assembleias (estaduais)",
   "ok": true,
   "primeiraVerificacao": "2026-11-02T14:59:49Z",
-  "ultimoOk": "2026-11-02T14:59:49Z",
+  "ultimoOk": "2026-11-12T16:59:50Z",
   "url": "https://www.transparencia.al.ms.gov.br/pages/index.php/gerdocumento/1201",
-  "verificadoEm": "2026-11-02T14:59:49Z"
+  "verificadoEm": "2026-11-12T16:59:50Z"
  },
  "ms_transparencia_antigo": {
   "detalhe": "HTTP 200, text/html",
@@ -598,9 +598,9 @@
   "grupo": "Assembleias (estaduais)",
   "ok": true,
   "primeiraVerificacao": "2026-10-24T18:31:15Z",
-  "ultimoOk": "2026-11-02T14:59:49Z",
+  "ultimoOk": "2026-11-12T16:59:50Z",
   "url": "https://almt.eloweb.net/portaltransparencia/1/",
-  "verificadoEm": "2026-11-02T14:59:49Z"
+  "verificadoEm": "2026-11-12T16:59:50Z"
  },
  "mt_eloweb_contratos": {
   "detalhe": "HTTP 500",
@@ -609,133 +609,133 @@
   "primeiraVerificacao": "2026-11-02T14:59:49Z",
   "ultimoOk": null,
   "url": "https://almt.eloweb.net/portaltransparencia-api/api/contratos/ultimas-atualizacoes",
-  "verificadoEm": "2026-11-02T14:59:49Z"
+  "verificadoEm": "2026-11-12T16:59:50Z"
  },
  "mt_site": {
   "detalhe": "HTTP 200, text/html",
   "grupo": "Assembleias (estaduais)",
   "ok": true,
   "primeiraVerificacao": "2026-10-24T18:31:15Z",
-  "ultimoOk": "2026-11-02T14:59:49Z",
+  "ultimoOk": "2026-11-12T16:59:50Z",
   "url": "https://www.al.mt.gov.br",
-  "verificadoEm": "2026-11-02T14:59:49Z"
+  "verificadoEm": "2026-11-12T16:59:50Z"
  },
  "osm_tiles": {
   "detalhe": "HTTP 200, image/png, 6 KB",
   "grupo": "Links e recursos do site",
   "ok": true,
   "primeiraVerificacao": "2026-10-24T18:31:15Z",
-  "ultimoOk": "2026-11-02T14:59:49Z",
+  "ultimoOk": "2026-11-12T16:59:50Z",
   "url": "https://tile.openstreetmap.org/0/0/0.png",
-  "verificadoEm": "2026-11-02T14:59:49Z"
+  "verificadoEm": "2026-11-12T16:59:50Z"
  },
  "pa_alepa": {
-  "detalhe": "HTTP 200, text/html, 83 KB",
+  "detalhe": "HTTP 200, text/html, 124 KB",
   "grupo": "Assembleias (estaduais)",
   "ok": true,
   "primeiraVerificacao": "2026-10-24T18:31:15Z",
-  "ultimoOk": "2026-11-02T14:59:49Z",
+  "ultimoOk": "2026-11-12T16:59:50Z",
   "url": "https://alepa.pa.gov.br/Transparencia/FrequenciaSessoes",
-  "verificadoEm": "2026-11-02T14:59:49Z"
+  "verificadoEm": "2026-11-12T16:59:50Z"
  },
  "pa_atas": {
   "detalhe": "HTTP 200, text/html, 94 KB",
   "grupo": "Assembleias (estaduais)",
   "ok": true,
   "primeiraVerificacao": "2026-11-02T14:59:49Z",
-  "ultimoOk": "2026-11-02T14:59:49Z",
+  "ultimoOk": "2026-11-12T16:59:50Z",
   "url": "https://alepa.pa.gov.br/Legislativo/Atas",
-  "verificadoEm": "2026-11-02T14:59:49Z"
+  "verificadoEm": "2026-11-12T16:59:50Z"
  },
  "pa_contratos": {
   "detalhe": "HTTP 200, application/json, 44 KB",
   "grupo": "Assembleias (estaduais)",
   "ok": true,
   "primeiraVerificacao": "2026-11-02T14:59:49Z",
-  "ultimoOk": "2026-11-02T14:59:49Z",
+  "ultimoOk": "2026-11-12T16:59:50Z",
   "url": "https://alepa.quartertec.com.br/api/dashboard/data?dashboardId=dashboard52&itemId=gridDashboardItem1&parameters=%5B%5D&query=%7B%7D",
-  "verificadoEm": "2026-11-02T14:59:49Z"
+  "verificadoEm": "2026-11-12T16:59:50Z"
  },
  "pa_licitacoes": {
-  "detalhe": "HTTP 200, application/json, 43 KB",
+  "detalhe": "HTTP 200, application/json, 44 KB",
   "grupo": "Assembleias (estaduais)",
   "ok": true,
   "primeiraVerificacao": "2026-11-02T14:59:49Z",
-  "ultimoOk": "2026-11-02T14:59:49Z",
+  "ultimoOk": "2026-11-12T16:59:50Z",
   "url": "https://alepa.quartertec.com.br/api/dashboard/data?dashboardId=dashboard59&itemId=gridDashboardItem2&parameters=%5B%5D&query=%7B%7D",
-  "verificadoEm": "2026-11-02T14:59:49Z"
+  "verificadoEm": "2026-11-12T16:59:50Z"
  },
  "pa_normas": {
   "detalhe": "HTTP 200, application/json, 3 KB",
   "grupo": "Assembleias (estaduais)",
   "ok": true,
   "primeiraVerificacao": "2026-11-02T14:59:49Z",
-  "ultimoOk": "2026-11-02T14:59:49Z",
+  "ultimoOk": "2026-11-12T16:59:50Z",
   "url": "https://bancodeleis.alepa.pa.gov.br/api/leis.php?ano=2026&tipo=4&numero=&q=",
-  "verificadoEm": "2026-11-02T14:59:49Z"
+  "verificadoEm": "2026-11-12T16:59:50Z"
  },
  "pa_pautas": {
   "detalhe": "HTTP 200, text/html, 94 KB",
   "grupo": "Assembleias (estaduais)",
   "ok": true,
   "primeiraVerificacao": "2026-11-02T14:59:49Z",
-  "ultimoOk": "2026-11-02T14:59:49Z",
+  "ultimoOk": "2026-11-12T16:59:50Z",
   "url": "https://alepa.pa.gov.br/Legislativo/Pautas",
-  "verificadoEm": "2026-11-02T14:59:49Z"
+  "verificadoEm": "2026-11-12T16:59:50Z"
  },
  "pa_quartertec": {
-  "detalhe": "HTTP 200, application/json, 45 KB",
+  "detalhe": "HTTP 200, application/json, 48 KB",
   "grupo": "Assembleias (estaduais)",
   "ok": true,
   "primeiraVerificacao": "2026-10-24T18:31:15Z",
-  "ultimoOk": "2026-11-02T14:59:49Z",
+  "ultimoOk": "2026-11-12T16:59:50Z",
   "url": "https://alepa.quartertec.com.br/api/dashboard/data?dashboardId=dashboard57&parameters=%5B%7B%22name%22%3A%22CPF_Deputados%22%2C%22value%22%3A%227BD68C11-DC21-4571-8EF6-AAB6E15355EF%22%2C%22type%22%3A%22System.String%22%2C%22allowMultiselect%22%3Atrue%2C%22selectAll%22%3Atrue%7D%5D&itemId=gridDashboardItem2&query=%7B%22Filter%22%3A%5B%7B%22dimensions%22%3A%5B%7B%22%40ItemType%22%3A%22Dimension%22%2C%22%40DataMember%22%3A%22Ano%22%2C%22%40DefaultId%22%3A%22DataItem0%22%2C%22NumericFormat%22%3A%7B%22%40FormatType%22%3A%22General%22%7D%2C%22%40SortOrder%22%3A%22Descending%22%7D%5D%2C%22values%22%3A%5B%5B2026%5D%5D%7D%5D%7D",
-  "verificadoEm": "2026-11-02T14:59:49Z"
+  "verificadoEm": "2026-11-12T16:59:50Z"
  },
  "pa_sigep": {
   "detalhe": "HTTP 200, text/html, 6 KB",
   "grupo": "Assembleias (estaduais)",
   "ok": true,
   "primeiraVerificacao": "2026-10-24T18:31:15Z",
-  "ultimoOk": "2026-11-02T14:59:49Z",
+  "ultimoOk": "2026-11-12T16:59:50Z",
   "url": "https://sigep.alepa.pa.gov.br/transp/frame_verbagabinete.php",
-  "verificadoEm": "2026-11-02T14:59:49Z"
+  "verificadoEm": "2026-11-12T16:59:50Z"
  },
  "pa_sigep_pessoal": {
   "detalhe": "HTTP 200, text/csv",
   "grupo": "Assembleias (estaduais)",
   "ok": true,
   "primeiraVerificacao": "2026-11-02T14:59:49Z",
-  "ultimoOk": "2026-11-02T14:59:49Z",
+  "ultimoOk": "2026-11-12T16:59:50Z",
   "url": "https://sigep.alepa.pa.gov.br/transp/downloadcsvpessoal.php?nb=&cb=&lt=GAB.+DEP.+GUSTAVO+SEFER",
-  "verificadoEm": "2026-11-02T14:59:49Z"
+  "verificadoEm": "2026-11-12T16:59:50Z"
  },
  "pa_sigep_servidores": {
   "detalhe": "HTTP 200, text/html, 1 KB",
   "grupo": "Assembleias (estaduais)",
   "ok": true,
   "primeiraVerificacao": "2026-11-02T14:59:49Z",
-  "ultimoOk": "2026-11-02T14:59:49Z",
+  "ultimoOk": "2026-11-12T16:59:50Z",
   "url": "https://sigep.alepa.pa.gov.br/transp/frame_servidores.php",
-  "verificadoEm": "2026-11-02T14:59:49Z"
+  "verificadoEm": "2026-11-12T16:59:50Z"
  },
  "pa_votacao_nominal_detalhe": {
   "detalhe": "HTTP 200, text/html, 94 KB",
   "grupo": "Assembleias (estaduais)",
   "ok": true,
   "primeiraVerificacao": "2026-11-02T14:59:49Z",
-  "ultimoOk": "2026-11-02T14:59:49Z",
+  "ultimoOk": "2026-11-12T16:59:50Z",
   "url": "https://alepa.pa.gov.br/Legislativo/DetalhesVotacaoNominal?IdProposicao=16339&IdVotacao=8869",
-  "verificadoEm": "2026-11-02T14:59:49Z"
+  "verificadoEm": "2026-11-12T16:59:50Z"
  },
  "pa_votacoes_nominais": {
-  "detalhe": "HTTP 200, text/html, 94 KB",
+  "detalhe": "HTTP 200, text/html, 96 KB",
   "grupo": "Assembleias (estaduais)",
   "ok": true,
   "primeiraVerificacao": "2026-11-02T14:59:49Z",
-  "ultimoOk": "2026-11-02T14:59:49Z",
+  "ultimoOk": "2026-11-12T16:59:50Z",
   "url": "https://alepa.pa.gov.br/Legislativo/VotacoesNominais",
-  "verificadoEm": "2026-11-02T14:59:49Z"
+  "verificadoEm": "2026-11-12T16:59:50Z"
  },
  "pe_dadosabertos": {
   "detalhe": "ConnectTimeout: HTTPSConnectionPool(host='dadosabertos.alepe.pe.gov.br', port=443): Max retries exceeded with url: /",
@@ -744,7 +744,7 @@
   "primeiraVerificacao": "2026-10-24T18:31:15Z",
   "ultimoOk": "2026-10-24T18:31:15Z",
   "url": "https://dadosabertos.alepe.pe.gov.br/api/v1/parlamentares/",
-  "verificadoEm": "2026-11-02T14:59:49Z"
+  "verificadoEm": "2026-11-12T16:59:50Z"
  },
  "pe_deputados": {
   "detalhe": "ConnectTimeout: HTTPSConnectionPool(host='www.alepe.pe.gov.br', port=443): Max retries exceeded with url: /servicos/",
@@ -753,7 +753,7 @@
   "primeiraVerificacao": "2026-10-24T18:31:15Z",
   "ultimoOk": "2026-10-24T18:31:15Z",
   "url": "https://www.alepe.pe.gov.br/servicos/transparencia/dep/deputados.php?leg=-16",
-  "verificadoEm": "2026-11-02T14:59:49Z"
+  "verificadoEm": "2026-11-12T16:59:50Z"
  },
  "pe_legis": {
   "detalhe": "ConnectTimeout: HTTPSConnectionPool(host='legis.alepe.pe.gov.br', port=443): Max retries exceeded with url: / (Cause",
@@ -762,7 +762,7 @@
   "primeiraVerificacao": "2026-10-24T18:31:15Z",
   "ultimoOk": "2026-10-24T18:31:15Z",
   "url": "https://legis.alepe.pe.gov.br",
-  "verificadoEm": "2026-11-02T14:59:49Z"
+  "verificadoEm": "2026-11-12T16:59:50Z"
  },
  "pe_transparencia": {
   "detalhe": "ConnectTimeout: HTTPSConnectionPool(host='transparencia.alepe.pe.gov.br', port=443): Max retries exceeded with url: ",
@@ -771,34 +771,34 @@
   "primeiraVerificacao": "2026-10-24T18:31:15Z",
   "ultimoOk": "2026-10-24T18:31:15Z",
   "url": "https://transparencia.alepe.pe.gov.br/financas/verbas-indenizatorias",
-  "verificadoEm": "2026-11-02T14:59:49Z"
+  "verificadoEm": "2026-11-12T16:59:50Z"
  },
  "planalto_codigo_eleitoral": {
-  "detalhe": "HTTP 200, text/html, 0 KB",
+  "detalhe": "ConnectionError: ('Connection aborted.', RemoteDisconnected('Remote end closed connection without response'))",
   "grupo": "Links e recursos do site",
-  "ok": true,
+  "ok": false,
   "primeiraVerificacao": "2026-10-24T18:31:15Z",
-  "ultimoOk": "2026-11-02T14:59:49Z",
+  "ultimoOk": "2026-11-11T16:21:15Z",
   "url": "https://www.planalto.gov.br/ccivil_03/leis/l4737compilado.htm",
-  "verificadoEm": "2026-11-02T14:59:49Z"
+  "verificadoEm": "2026-11-12T16:59:50Z"
  },
  "planalto_constituicao": {
-  "detalhe": "HTTP 200, text/html, 0 KB",
+  "detalhe": "ConnectionError: ('Connection aborted.', RemoteDisconnected('Remote end closed connection without response'))",
   "grupo": "Links e recursos do site",
-  "ok": true,
+  "ok": false,
   "primeiraVerificacao": "2026-10-24T18:31:15Z",
-  "ultimoOk": "2026-11-02T14:59:49Z",
+  "ultimoOk": "2026-11-11T16:21:15Z",
   "url": "https://www.planalto.gov.br/ccivil_03/constituicao/constituicao.htm",
-  "verificadoEm": "2026-11-02T14:59:49Z"
+  "verificadoEm": "2026-11-12T16:59:50Z"
  },
  "planalto_ministros": {
   "detalhe": "HTTP 200, text/html, 19 KB",
   "grupo": "Planalto",
   "ok": true,
   "primeiraVerificacao": "2026-10-29T14:56:47Z",
-  "ultimoOk": "2026-11-02T14:59:49Z",
+  "ultimoOk": "2026-11-12T16:59:50Z",
   "url": "https://www.gov.br/planalto/pt-br/conheca-a-presidencia/ministros-e-ministras",
-  "verificadoEm": "2026-11-02T14:59:49Z"
+  "verificadoEm": "2026-11-12T16:59:50Z"
  },
  "portal_transparencia_emendas": {
   "detalhe": "HTTP 401",
@@ -807,133 +807,133 @@
   "primeiraVerificacao": "2026-10-31T14:52:25Z",
   "ultimoOk": null,
   "url": "https://api.portaldatransparencia.gov.br/api-de-dados/emendas?ano=2024&pagina=1 (exige chave)",
-  "verificadoEm": "2026-11-02T14:59:49Z"
+  "verificadoEm": "2026-11-12T16:59:50Z"
  },
  "portal_transparencia_emendas_consulta": {
   "detalhe": "HTTP 200, text/html",
   "grupo": "Portal da Transparência",
   "ok": true,
   "primeiraVerificacao": "2026-10-31T14:52:25Z",
-  "ultimoOk": "2026-11-02T14:59:49Z",
+  "ultimoOk": "2026-11-12T16:59:50Z",
   "url": "https://portaldatransparencia.gov.br/emendas/consulta",
-  "verificadoEm": "2026-11-02T14:59:49Z"
+  "verificadoEm": "2026-11-12T16:59:50Z"
  },
  "pr_consultas": {
   "detalhe": "HTTP 200, text/html, 1 KB",
   "grupo": "Assembleias (estaduais)",
   "ok": true,
   "primeiraVerificacao": "2026-10-24T18:31:15Z",
-  "ultimoOk": "2026-11-02T14:59:49Z",
+  "ultimoOk": "2026-11-12T16:59:50Z",
   "url": "https://consultas.assembleia.pr.leg.br/#/pesquisa-legislativa",
-  "verificadoEm": "2026-11-02T14:59:49Z"
+  "verificadoEm": "2026-11-12T16:59:50Z"
  },
  "pr_site": {
   "detalhe": "HTTP 200, text/html",
   "grupo": "Assembleias (estaduais)",
   "ok": true,
   "primeiraVerificacao": "2026-10-24T18:31:15Z",
-  "ultimoOk": "2026-11-02T14:59:49Z",
+  "ultimoOk": "2026-11-12T16:59:50Z",
   "url": "https://www.assembleia.pr.leg.br/deputados/conheca",
-  "verificadoEm": "2026-11-02T14:59:49Z"
+  "verificadoEm": "2026-11-12T16:59:50Z"
  },
  "pr_storage_votacao": {
   "detalhe": "HTTP 200, application/zip, 57 KB",
   "grupo": "Assembleias (estaduais)",
   "ok": true,
   "primeiraVerificacao": "2026-10-31T09:20:40Z",
-  "ultimoOk": "2026-11-02T14:59:49Z",
+  "ultimoOk": "2026-11-12T16:59:50Z",
   "url": "https://storage2.assembleia.pr.leg.br/file/public-media/transparencia/sessoes/2026/dados_abertos_32_SESS_O_ORDIN_RIA_1700.zip",
-  "verificadoEm": "2026-11-02T14:59:49Z"
+  "verificadoEm": "2026-11-12T16:59:50Z"
  },
  "pr_t_atas": {
-  "detalhe": "HTTP 200, application/json",
+  "detalhe": "HTTP 403",
   "grupo": "Assembleias (estaduais)",
-  "ok": true,
+  "ok": false,
   "primeiraVerificacao": "2026-10-31T09:20:40Z",
-  "ultimoOk": "2026-11-02T14:59:49Z",
+  "ultimoOk": "2026-11-09T18:46:47Z",
   "url": "https://transparencia.assembleia.pr.leg.br/plenario/atas-sessoes-plenarias/ajax?ano=2026&mes=10",
-  "verificadoEm": "2026-11-02T14:59:49Z"
+  "verificadoEm": "2026-11-12T16:59:50Z"
  },
  "pr_t_atas_adesao_meses": {
   "detalhe": "HTTP 200, application/json",
   "grupo": "Assembleias (estaduais)",
   "ok": true,
   "primeiraVerificacao": "2026-10-31T09:20:40Z",
-  "ultimoOk": "2026-11-02T14:59:49Z",
+  "ultimoOk": "2026-11-12T16:59:50Z",
   "url": "https://transparencia.assembleia.pr.leg.br/api/atas-adesao/meses?ano=2026",
-  "verificadoEm": "2026-11-02T14:59:49Z"
+  "verificadoEm": "2026-11-12T16:59:50Z"
  },
  "pr_t_atas_registro_meses": {
   "detalhe": "HTTP 200, application/json",
   "grupo": "Assembleias (estaduais)",
   "ok": true,
   "primeiraVerificacao": "2026-10-31T09:20:40Z",
-  "ultimoOk": "2026-11-02T14:59:49Z",
+  "ultimoOk": "2026-11-12T16:59:50Z",
   "url": "https://transparencia.assembleia.pr.leg.br/api/atas-registro-preco/meses?ano=2026",
-  "verificadoEm": "2026-11-02T14:59:49Z"
+  "verificadoEm": "2026-11-12T16:59:50Z"
  },
  "pr_t_atos_normativos": {
-  "detalhe": "HTTP 200, application/json",
+  "detalhe": "HTTP 403",
   "grupo": "Assembleias (estaduais)",
-  "ok": true,
+  "ok": false,
   "primeiraVerificacao": "2026-10-31T09:20:40Z",
-  "ultimoOk": "2026-11-02T14:59:49Z",
+  "ultimoOk": "2026-11-09T18:46:47Z",
   "url": "https://transparencia.assembleia.pr.leg.br/api/atos-normativos?tipo=4",
-  "verificadoEm": "2026-11-02T14:59:49Z"
+  "verificadoEm": "2026-11-12T16:59:50Z"
  },
  "pr_t_cartoes": {
-  "detalhe": "HTTP 200, application/json",
+  "detalhe": "HTTP 403",
   "grupo": "Assembleias (estaduais)",
-  "ok": true,
+  "ok": false,
   "primeiraVerificacao": "2026-10-31T09:20:40Z",
-  "ultimoOk": "2026-11-02T14:59:49Z",
+  "ultimoOk": "2026-11-09T18:46:47Z",
   "url": "https://transparencia.assembleia.pr.leg.br/api/cartoes?ano=2026&mes=10&tipo=1",
-  "verificadoEm": "2026-11-02T14:59:49Z"
+  "verificadoEm": "2026-11-12T16:59:50Z"
  },
  "pr_t_contratos": {
   "detalhe": "HTTP 200, application/json",
   "grupo": "Assembleias (estaduais)",
   "ok": true,
   "primeiraVerificacao": "2026-10-31T09:20:40Z",
-  "ultimoOk": "2026-11-02T14:59:49Z",
+  "ultimoOk": "2026-11-12T16:59:50Z",
   "url": "https://transparencia.assembleia.pr.leg.br/compras-e-licitacoes/contratos/contratos",
-  "verificadoEm": "2026-11-02T14:59:49Z"
+  "verificadoEm": "2026-11-12T16:59:50Z"
  },
  "pr_t_diarias": {
   "detalhe": "HTTP 200, application/json",
   "grupo": "Assembleias (estaduais)",
   "ok": true,
   "primeiraVerificacao": "2026-10-31T09:20:40Z",
-  "ultimoOk": "2026-11-02T14:59:49Z",
+  "ultimoOk": "2026-11-12T16:59:50Z",
   "url": "https://transparencia.assembleia.pr.leg.br/api/diarias/meses?ano=2026",
-  "verificadoEm": "2026-11-02T14:59:49Z"
+  "verificadoEm": "2026-11-12T16:59:50Z"
  },
  "pr_t_diarias_ultimo": {
   "detalhe": "HTTP 200, application/json",
   "grupo": "Assembleias (estaduais)",
   "ok": true,
   "primeiraVerificacao": "2026-10-31T09:20:40Z",
-  "ultimoOk": "2026-11-02T14:59:49Z",
+  "ultimoOk": "2026-11-12T16:59:50Z",
   "url": "https://transparencia.assembleia.pr.leg.br/api/diarias/ultimo-periodo",
-  "verificadoEm": "2026-11-02T14:59:49Z"
+  "verificadoEm": "2026-11-12T16:59:50Z"
  },
  "pr_t_dispensas_meses": {
   "detalhe": "HTTP 200, application/json",
   "grupo": "Assembleias (estaduais)",
   "ok": true,
   "primeiraVerificacao": "2026-10-31T09:20:40Z",
-  "ultimoOk": "2026-11-02T14:59:49Z",
+  "ultimoOk": "2026-11-12T16:59:50Z",
   "url": "https://transparencia.assembleia.pr.leg.br/api/dispensas/meses?ano=2026",
-  "verificadoEm": "2026-11-02T14:59:49Z"
+  "verificadoEm": "2026-11-12T16:59:50Z"
  },
  "pr_t_estoque_meses": {
   "detalhe": "HTTP 200, application/json",
   "grupo": "Assembleias (estaduais)",
   "ok": true,
   "primeiraVerificacao": "2026-10-31T09:20:40Z",
-  "ultimoOk": "2026-11-02T14:59:49Z",
+  "ultimoOk": "2026-11-12T16:59:50Z",
   "url": "https://transparencia.assembleia.pr.leg.br/api/estoque/meses?ano=2026",
-  "verificadoEm": "2026-11-02T14:59:49Z"
+  "verificadoEm": "2026-11-12T16:59:50Z"
  },
  "pr_t_gestao_fiscal": {
   "detalhe": "HTTP 403",
@@ -942,178 +942,178 @@
   "primeiraVerificacao": "2026-10-31T09:20:40Z",
   "ultimoOk": null,
   "url": "https://transparencia.assembleia.pr.leg.br/api/gestao_fiscal",
-  "verificadoEm": "2026-11-02T14:59:49Z"
+  "verificadoEm": "2026-11-12T16:59:50Z"
  },
  "pr_t_licitacoes_meses": {
   "detalhe": "HTTP 200, application/json",
   "grupo": "Assembleias (estaduais)",
   "ok": true,
   "primeiraVerificacao": "2026-10-31T09:20:40Z",
-  "ultimoOk": "2026-11-02T14:59:49Z",
+  "ultimoOk": "2026-11-12T16:59:50Z",
   "url": "https://transparencia.assembleia.pr.leg.br/api/licitacoes/meses?ano=2026",
-  "verificadoEm": "2026-11-02T14:59:49Z"
+  "verificadoEm": "2026-11-12T16:59:50Z"
  },
  "pr_t_obras": {
-  "detalhe": "HTTP 200, application/json",
+  "detalhe": "HTTP 403",
   "grupo": "Assembleias (estaduais)",
-  "ok": true,
+  "ok": false,
   "primeiraVerificacao": "2026-10-31T09:20:40Z",
-  "ultimoOk": "2026-11-02T14:59:49Z",
+  "ultimoOk": "2026-11-09T18:46:47Z",
   "url": "https://transparencia.assembleia.pr.leg.br/api/obras/2026",
-  "verificadoEm": "2026-11-02T14:59:49Z"
+  "verificadoEm": "2026-11-12T16:59:50Z"
  },
  "pr_t_ordem_cronologica_anos": {
   "detalhe": "HTTP 200, application/json",
   "grupo": "Assembleias (estaduais)",
   "ok": true,
   "primeiraVerificacao": "2026-10-31T09:20:40Z",
-  "ultimoOk": "2026-11-02T14:59:49Z",
+  "ultimoOk": "2026-11-12T16:59:50Z",
   "url": "https://transparencia.assembleia.pr.leg.br/receitas-e-despesas/ordem-cronologica-pagamentos/anos-com-dados",
-  "verificadoEm": "2026-11-02T14:59:49Z"
+  "verificadoEm": "2026-11-12T16:59:50Z"
  },
  "pr_t_passagens": {
-  "detalhe": "HTTP 200, application/json",
+  "detalhe": "HTTP 403",
   "grupo": "Assembleias (estaduais)",
-  "ok": true,
+  "ok": false,
   "primeiraVerificacao": "2026-10-31T09:20:40Z",
-  "ultimoOk": "2026-11-02T14:59:49Z",
+  "ultimoOk": "2026-11-09T18:46:47Z",
   "url": "https://transparencia.assembleia.pr.leg.br/api/passagens?ano=2026&mes=10",
-  "verificadoEm": "2026-11-02T14:59:49Z"
+  "verificadoEm": "2026-11-12T16:59:50Z"
  },
  "pr_t_passagens_meses": {
   "detalhe": "HTTP 200, application/json",
   "grupo": "Assembleias (estaduais)",
   "ok": true,
   "primeiraVerificacao": "2026-10-31T09:20:40Z",
-  "ultimoOk": "2026-11-02T14:59:49Z",
+  "ultimoOk": "2026-11-12T16:59:50Z",
   "url": "https://transparencia.assembleia.pr.leg.br/api/passagens/meses?ano=2026",
-  "verificadoEm": "2026-11-02T14:59:49Z"
+  "verificadoEm": "2026-11-12T16:59:50Z"
  },
  "pr_t_pauta_ccj": {
-  "detalhe": "HTTP 200, application/json",
+  "detalhe": "HTTP 403",
   "grupo": "Assembleias (estaduais)",
-  "ok": true,
+  "ok": false,
   "primeiraVerificacao": "2026-10-31T09:20:40Z",
-  "ultimoOk": "2026-11-02T14:59:49Z",
+  "ultimoOk": "2026-11-09T18:46:47Z",
   "url": "https://transparencia.assembleia.pr.leg.br/plenario/pautas/ccj/ajax?ano=2026&mes=10",
-  "verificadoEm": "2026-11-02T14:59:49Z"
+  "verificadoEm": "2026-11-12T16:59:50Z"
  },
  "pr_t_pauta_comissoes": {
-  "detalhe": "HTTP 200, application/json",
+  "detalhe": "HTTP 403",
   "grupo": "Assembleias (estaduais)",
-  "ok": true,
+  "ok": false,
   "primeiraVerificacao": "2026-10-31T09:20:40Z",
-  "ultimoOk": "2026-11-02T14:59:49Z",
+  "ultimoOk": "2026-11-09T18:46:47Z",
   "url": "https://transparencia.assembleia.pr.leg.br/plenario/pautas/comissoes-tematicas/ajax?ano=2026&mes=10",
-  "verificadoEm": "2026-11-02T14:59:49Z"
+  "verificadoEm": "2026-11-12T16:59:50Z"
  },
  "pr_t_pauta_ordem_dia": {
-  "detalhe": "HTTP 200, application/json",
+  "detalhe": "HTTP 403",
   "grupo": "Assembleias (estaduais)",
-  "ok": true,
+  "ok": false,
   "primeiraVerificacao": "2026-10-31T09:20:40Z",
-  "ultimoOk": "2026-11-02T14:59:49Z",
+  "ultimoOk": "2026-11-09T18:46:47Z",
   "url": "https://transparencia.assembleia.pr.leg.br/plenario/pautas/ordem-do-dia/ajax?ano=2026&mes=10",
-  "verificadoEm": "2026-11-02T14:59:49Z"
+  "verificadoEm": "2026-11-12T16:59:50Z"
  },
  "pr_t_pessoal_adidos": {
   "detalhe": "HTTP 200, text/html",
   "grupo": "Assembleias (estaduais)",
   "ok": true,
   "primeiraVerificacao": "2026-10-31T09:20:40Z",
-  "ultimoOk": "2026-11-02T14:59:49Z",
+  "ultimoOk": "2026-11-12T16:59:50Z",
   "url": "https://transparencia.assembleia.pr.leg.br/pessoal/adidos",
-  "verificadoEm": "2026-11-02T14:59:49Z"
+  "verificadoEm": "2026-11-12T16:59:50Z"
  },
  "pr_t_pessoal_cedidos": {
   "detalhe": "HTTP 200, text/html",
   "grupo": "Assembleias (estaduais)",
   "ok": true,
   "primeiraVerificacao": "2026-10-31T09:20:40Z",
-  "ultimoOk": "2026-11-02T14:59:49Z",
+  "ultimoOk": "2026-11-12T16:59:50Z",
   "url": "https://transparencia.assembleia.pr.leg.br/pessoal/cedidos-por-outros-orgaos",
-  "verificadoEm": "2026-11-02T14:59:49Z"
+  "verificadoEm": "2026-11-12T16:59:50Z"
  },
  "pr_t_pessoal_comissionados": {
   "detalhe": "HTTP 200, text/html",
   "grupo": "Assembleias (estaduais)",
   "ok": true,
   "primeiraVerificacao": "2026-10-31T09:20:40Z",
-  "ultimoOk": "2026-11-02T14:59:49Z",
+  "ultimoOk": "2026-11-12T16:59:50Z",
   "url": "https://transparencia.assembleia.pr.leg.br/pessoal/comissionados",
-  "verificadoEm": "2026-11-02T14:59:49Z"
+  "verificadoEm": "2026-11-12T16:59:50Z"
  },
  "pr_t_pessoal_estagiarios": {
   "detalhe": "HTTP 200, text/html",
   "grupo": "Assembleias (estaduais)",
   "ok": true,
   "primeiraVerificacao": "2026-10-31T09:20:40Z",
-  "ultimoOk": "2026-11-02T14:59:49Z",
+  "ultimoOk": "2026-11-12T16:59:50Z",
   "url": "https://transparencia.assembleia.pr.leg.br/pessoal/estagiarios",
-  "verificadoEm": "2026-11-02T14:59:49Z"
+  "verificadoEm": "2026-11-12T16:59:50Z"
  },
  "pr_t_pessoal_estaveis": {
   "detalhe": "HTTP 200, text/html",
   "grupo": "Assembleias (estaduais)",
   "ok": true,
   "primeiraVerificacao": "2026-10-31T09:20:40Z",
-  "ultimoOk": "2026-11-02T14:59:49Z",
+  "ultimoOk": "2026-11-12T16:59:50Z",
   "url": "https://transparencia.assembleia.pr.leg.br/pessoal/estaveis",
-  "verificadoEm": "2026-11-02T14:59:49Z"
+  "verificadoEm": "2026-11-12T16:59:50Z"
  },
  "pr_t_pessoal_inativos": {
   "detalhe": "HTTP 200, text/html",
   "grupo": "Assembleias (estaduais)",
   "ok": true,
   "primeiraVerificacao": "2026-10-31T09:20:40Z",
-  "ultimoOk": "2026-11-02T14:59:49Z",
+  "ultimoOk": "2026-11-12T16:59:50Z",
   "url": "https://transparencia.assembleia.pr.leg.br/pessoal/inativos",
-  "verificadoEm": "2026-11-02T14:59:49Z"
+  "verificadoEm": "2026-11-12T16:59:50Z"
  },
  "pr_t_pessoal_pensionistas": {
   "detalhe": "HTTP 200, text/html",
   "grupo": "Assembleias (estaduais)",
   "ok": true,
   "primeiraVerificacao": "2026-10-31T09:20:40Z",
-  "ultimoOk": "2026-11-02T14:59:49Z",
+  "ultimoOk": "2026-11-12T16:59:50Z",
   "url": "https://transparencia.assembleia.pr.leg.br/pessoal/pensionistas",
-  "verificadoEm": "2026-11-02T14:59:49Z"
+  "verificadoEm": "2026-11-12T16:59:50Z"
  },
  "pr_t_pessoal_temporarios": {
   "detalhe": "HTTP 200, text/html",
   "grupo": "Assembleias (estaduais)",
   "ok": true,
   "primeiraVerificacao": "2026-10-31T09:20:40Z",
-  "ultimoOk": "2026-11-02T14:59:49Z",
+  "ultimoOk": "2026-11-12T16:59:50Z",
   "url": "https://transparencia.assembleia.pr.leg.br/pessoal/temporarios",
-  "verificadoEm": "2026-11-02T14:59:49Z"
+  "verificadoEm": "2026-11-12T16:59:50Z"
  },
  "pr_t_pessoal_terceirizados": {
   "detalhe": "HTTP 200, text/html",
   "grupo": "Assembleias (estaduais)",
   "ok": true,
   "primeiraVerificacao": "2026-10-31T09:20:40Z",
-  "ultimoOk": "2026-11-02T14:59:49Z",
+  "ultimoOk": "2026-11-12T16:59:50Z",
   "url": "https://transparencia.assembleia.pr.leg.br/pessoal/terceirizados",
-  "verificadoEm": "2026-11-02T14:59:49Z"
+  "verificadoEm": "2026-11-12T16:59:50Z"
  },
  "pr_t_presenca": {
   "detalhe": "HTTP 200, application/json",
   "grupo": "Assembleias (estaduais)",
   "ok": true,
   "primeiraVerificacao": "2026-10-31T09:20:40Z",
-  "ultimoOk": "2026-11-02T14:59:49Z",
+  "ultimoOk": "2026-11-12T16:59:50Z",
   "url": "https://transparencia.assembleia.pr.leg.br/api/presenca/ano?ano=2026",
-  "verificadoEm": "2026-11-02T14:59:49Z"
+  "verificadoEm": "2026-11-12T16:59:50Z"
  },
  "pr_t_presenca_datas": {
   "detalhe": "HTTP 200, application/json",
   "grupo": "Assembleias (estaduais)",
   "ok": true,
   "primeiraVerificacao": "2026-10-31T09:20:40Z",
-  "ultimoOk": "2026-11-02T14:59:49Z",
+  "ultimoOk": "2026-11-12T16:59:50Z",
   "url": "https://transparencia.assembleia.pr.leg.br/api/presenca/datas?ano=2026&mes=10",
-  "verificadoEm": "2026-11-02T14:59:49Z"
+  "verificadoEm": "2026-11-12T16:59:50Z"
  },
  "pr_t_presenca_mensal": {
   "detalhe": "HTTP 404",
@@ -1122,43 +1122,43 @@
   "primeiraVerificacao": "2026-10-31T09:20:40Z",
   "ultimoOk": null,
   "url": "https://transparencia.assembleia.pr.leg.br/api/presenca/mensal?ano=2026&mes=10",
-  "verificadoEm": "2026-11-02T14:59:49Z"
+  "verificadoEm": "2026-11-12T16:59:50Z"
  },
  "pr_t_presenca_meses": {
   "detalhe": "HTTP 200, application/json",
   "grupo": "Assembleias (estaduais)",
   "ok": true,
   "primeiraVerificacao": "2026-10-31T09:20:40Z",
-  "ultimoOk": "2026-11-02T14:59:49Z",
+  "ultimoOk": "2026-11-12T16:59:50Z",
   "url": "https://transparencia.assembleia.pr.leg.br/api/presenca/meses?ano=2026",
-  "verificadoEm": "2026-11-02T14:59:49Z"
+  "verificadoEm": "2026-11-12T16:59:50Z"
  },
  "pr_t_receitas": {
   "detalhe": "HTTP 200, text/html",
   "grupo": "Assembleias (estaduais)",
   "ok": true,
   "primeiraVerificacao": "2026-10-31T09:20:40Z",
-  "ultimoOk": "2026-11-02T14:59:49Z",
+  "ultimoOk": "2026-11-12T16:59:50Z",
   "url": "https://transparencia.assembleia.pr.leg.br/receitas-e-despesas/receitas/compilado-de-receitas",
-  "verificadoEm": "2026-11-02T14:59:49Z"
+  "verificadoEm": "2026-11-12T16:59:50Z"
  },
  "pr_t_remuneracao_recente": {
   "detalhe": "HTTP 200, application/json",
   "grupo": "Assembleias (estaduais)",
   "ok": true,
   "primeiraVerificacao": "2026-10-31T09:20:40Z",
-  "ultimoOk": "2026-11-02T14:59:49Z",
+  "ultimoOk": "2026-11-12T16:59:50Z",
   "url": "https://transparencia.assembleia.pr.leg.br/api/remuneracao/recente",
-  "verificadoEm": "2026-11-02T14:59:49Z"
+  "verificadoEm": "2026-11-12T16:59:50Z"
  },
  "pr_t_ressarcimento_meses": {
   "detalhe": "HTTP 200, application/json",
   "grupo": "Assembleias (estaduais)",
   "ok": true,
   "primeiraVerificacao": "2026-10-31T09:20:40Z",
-  "ultimoOk": "2026-11-02T14:59:49Z",
+  "ultimoOk": "2026-11-12T16:59:50Z",
   "url": "https://transparencia.assembleia.pr.leg.br/api/ressarcimento/meses?ano=2026",
-  "verificadoEm": "2026-11-02T14:59:49Z"
+  "verificadoEm": "2026-11-12T16:59:50Z"
  },
  "pr_t_rreo": {
   "detalhe": "HTTP 403",
@@ -1167,277 +1167,277 @@
   "primeiraVerificacao": "2026-10-31T09:20:40Z",
   "ultimoOk": null,
   "url": "https://transparencia.assembleia.pr.leg.br/api/rreo",
-  "verificadoEm": "2026-11-02T14:59:49Z"
+  "verificadoEm": "2026-11-12T16:59:50Z"
  },
  "pr_t_siafic_meses": {
   "detalhe": "HTTP 200, application/json",
   "grupo": "Assembleias (estaduais)",
   "ok": true,
   "primeiraVerificacao": "2026-10-31T09:20:40Z",
-  "ultimoOk": "2026-11-02T14:59:49Z",
+  "ultimoOk": "2026-11-12T16:59:50Z",
   "url": "https://transparencia.assembleia.pr.leg.br/siafic/ordem-bancaria/meses",
-  "verificadoEm": "2026-11-02T14:59:49Z"
+  "verificadoEm": "2026-11-12T16:59:50Z"
  },
  "pr_t_votacoes_datas": {
   "detalhe": "HTTP 200, application/json",
   "grupo": "Assembleias (estaduais)",
   "ok": true,
   "primeiraVerificacao": "2026-10-31T09:20:40Z",
-  "ultimoOk": "2026-11-02T14:59:49Z",
+  "ultimoOk": "2026-11-12T16:59:50Z",
   "url": "https://transparencia.assembleia.pr.leg.br/api/votacoes/datas?ano=2026&mes=10",
-  "verificadoEm": "2026-11-02T14:59:49Z"
+  "verificadoEm": "2026-11-12T16:59:50Z"
  },
  "pr_t_votacoes_itens": {
-  "detalhe": "HTTP 200, application/json",
+  "detalhe": "HTTP 403",
   "grupo": "Assembleias (estaduais)",
-  "ok": true,
+  "ok": false,
   "primeiraVerificacao": "2026-10-31T09:20:40Z",
-  "ultimoOk": "2026-11-02T14:59:49Z",
+  "ultimoOk": "2026-11-06T16:14:47Z",
   "url": "https://transparencia.assembleia.pr.leg.br/api/votacoes?ano=2026&mes=10&data=2026-10-01&sessao=2116",
-  "verificadoEm": "2026-11-02T14:59:49Z"
+  "verificadoEm": "2026-11-12T16:59:50Z"
  },
  "pr_t_votacoes_meses": {
   "detalhe": "HTTP 200, application/json",
   "grupo": "Assembleias (estaduais)",
   "ok": true,
   "primeiraVerificacao": "2026-10-31T09:20:40Z",
-  "ultimoOk": "2026-11-02T14:59:49Z",
+  "ultimoOk": "2026-11-12T16:59:50Z",
   "url": "https://transparencia.assembleia.pr.leg.br/api/votacoes/meses?ano=2026",
-  "verificadoEm": "2026-11-02T14:59:49Z"
+  "verificadoEm": "2026-11-12T16:59:50Z"
  },
  "pr_t_votacoes_sessoes": {
   "detalhe": "HTTP 200, application/json",
   "grupo": "Assembleias (estaduais)",
   "ok": true,
   "primeiraVerificacao": "2026-10-31T09:20:40Z",
-  "ultimoOk": "2026-11-02T14:59:49Z",
+  "ultimoOk": "2026-11-12T16:59:50Z",
   "url": "https://transparencia.assembleia.pr.leg.br/api/votacoes/sessoes?ano=2026&mes=10&data=2026-10-01",
-  "verificadoEm": "2026-11-02T14:59:49Z"
+  "verificadoEm": "2026-11-12T16:59:50Z"
  },
  "pr_t_votacoes_zip": {
   "detalhe": "HTTP 200, application/json",
   "grupo": "Assembleias (estaduais)",
   "ok": true,
   "primeiraVerificacao": "2026-10-31T09:20:40Z",
-  "ultimoOk": "2026-11-02T14:59:49Z",
+  "ultimoOk": "2026-11-12T16:59:50Z",
   "url": "https://transparencia.assembleia.pr.leg.br/api/votacoes/dados-abertos?sessao=1700",
-  "verificadoEm": "2026-11-02T14:59:49Z"
+  "verificadoEm": "2026-11-12T16:59:50Z"
  },
  "pr_transparencia": {
   "detalhe": "HTTP 200, application/json",
   "grupo": "Assembleias (estaduais)",
   "ok": true,
   "primeiraVerificacao": "2026-10-24T18:31:15Z",
-  "ultimoOk": "2026-11-02T14:59:49Z",
+  "ultimoOk": "2026-11-12T16:59:50Z",
   "url": "https://transparencia.assembleia.pr.leg.br/api/remuneracao/meses?ano=2026",
-  "verificadoEm": "2026-11-02T14:59:49Z"
+  "verificadoEm": "2026-11-12T16:59:50Z"
  },
  "pr_webservices": {
   "detalhe": "HTTP 200, application/json",
   "grupo": "Assembleias (estaduais)",
   "ok": true,
   "primeiraVerificacao": "2026-10-24T18:31:15Z",
-  "ultimoOk": "2026-11-02T14:59:49Z",
+  "ultimoOk": "2026-11-12T16:59:50Z",
   "url": "http://webservices.assembleia.pr.leg.br/api/public/proposicao/campos",
-  "verificadoEm": "2026-11-02T14:59:49Z"
+  "verificadoEm": "2026-11-12T16:59:50Z"
  },
  "pr_webservices_norma": {
   "detalhe": "HTTP 200, application/json",
   "grupo": "Assembleias (estaduais)",
   "ok": true,
   "primeiraVerificacao": "2026-10-31T09:20:40Z",
-  "ultimoOk": "2026-11-02T14:59:49Z",
+  "ultimoOk": "2026-11-12T16:59:50Z",
   "url": "http://webservices.assembleia.pr.leg.br/api/public/norma-legal/63009",
-  "verificadoEm": "2026-11-02T14:59:49Z"
+  "verificadoEm": "2026-11-12T16:59:50Z"
  },
  "pr_webservices_norma_campos": {
   "detalhe": "HTTP 200, application/json",
   "grupo": "Assembleias (estaduais)",
   "ok": true,
   "primeiraVerificacao": "2026-10-31T09:20:40Z",
-  "ultimoOk": "2026-11-02T14:59:49Z",
+  "ultimoOk": "2026-11-12T16:59:50Z",
   "url": "http://webservices.assembleia.pr.leg.br/api/public/norma-legal/campos",
-  "verificadoEm": "2026-11-02T14:59:49Z"
+  "verificadoEm": "2026-11-12T16:59:50Z"
  },
  "pr_webservices_proposicao": {
   "detalhe": "HTTP 200, application/json",
   "grupo": "Assembleias (estaduais)",
   "ok": true,
   "primeiraVerificacao": "2026-10-31T09:20:40Z",
-  "ultimoOk": "2026-11-02T14:59:49Z",
+  "ultimoOk": "2026-11-12T16:59:50Z",
   "url": "http://webservices.assembleia.pr.leg.br/api/public/proposicao/121701",
-  "verificadoEm": "2026-11-02T14:59:49Z"
+  "verificadoEm": "2026-11-12T16:59:50Z"
  },
  "receita_cnpj": {
   "detalhe": "HTTP 200, application/zip, 21 KB",
   "grupo": "Receita Federal",
   "ok": true,
   "primeiraVerificacao": "2026-10-24T18:31:15Z",
-  "ultimoOk": "2026-11-02T14:59:49Z",
+  "ultimoOk": "2026-11-12T16:59:50Z",
   "url": "https://YggdBLfdninEJX9:@arquivos.receitafederal.gov.br/public.php/webdav/2026-09/Cnaes.zip",
-  "verificadoEm": "2026-11-02T14:59:49Z"
+  "verificadoEm": "2026-11-12T16:59:50Z"
  },
  "rj_atas_comissoes": {
   "detalhe": "HTTP 200, text/html",
   "grupo": "Assembleias (estaduais)",
   "ok": true,
   "primeiraVerificacao": "2026-11-02T14:59:49Z",
-  "ultimoOk": "2026-11-02T14:59:49Z",
+  "ultimoOk": "2026-11-12T16:59:50Z",
   "url": "http://alerjln1.alerj.rj.gov.br/compcom.nsf/AtasInt?OpenForm",
-  "verificadoEm": "2026-11-02T14:59:49Z"
+  "verificadoEm": "2026-11-12T16:59:50Z"
  },
  "rj_atas_registro": {
   "detalhe": "HTTP 200, text/html",
   "grupo": "Assembleias (estaduais)",
   "ok": true,
   "primeiraVerificacao": "2026-11-02T14:59:49Z",
-  "ultimoOk": "2026-11-02T14:59:49Z",
+  "ultimoOk": "2026-11-12T16:59:50Z",
   "url": "https://transparencia.alerj.rj.gov.br/section/report/51",
-  "verificadoEm": "2026-11-02T14:59:49Z"
+  "verificadoEm": "2026-11-12T16:59:50Z"
  },
  "rj_atas_temporarias": {
   "detalhe": "HTTP 200, text/html",
   "grupo": "Assembleias (estaduais)",
   "ok": true,
   "primeiraVerificacao": "2026-11-02T14:59:49Z",
-  "ultimoOk": "2026-11-02T14:59:49Z",
+  "ultimoOk": "2026-11-12T16:59:50Z",
   "url": "http://alerjln1.alerj.rj.gov.br/comtemp.nsf/AtasInt?OpenForm",
-  "verificadoEm": "2026-11-02T14:59:49Z"
+  "verificadoEm": "2026-11-12T16:59:50Z"
  },
  "rj_contlei": {
   "detalhe": "HTTP 200, text/html",
   "grupo": "Assembleias (estaduais)",
   "ok": true,
   "primeiraVerificacao": "2026-11-02T14:59:49Z",
-  "ultimoOk": "2026-11-02T14:59:49Z",
+  "ultimoOk": "2026-11-12T16:59:50Z",
   "url": "http://alerjln1.alerj.rj.gov.br/contlei.nsf/LeiOrdInt?OpenForm",
-  "verificadoEm": "2026-11-02T14:59:49Z"
+  "verificadoEm": "2026-11-12T16:59:50Z"
  },
  "rj_contratos": {
   "detalhe": "HTTP 200, text/html",
   "grupo": "Assembleias (estaduais)",
   "ok": true,
   "primeiraVerificacao": "2026-11-02T14:59:49Z",
-  "ultimoOk": "2026-11-02T14:59:49Z",
+  "ultimoOk": "2026-11-12T16:59:50Z",
   "url": "https://transparencia.alerj.rj.gov.br/section/report/118",
-  "verificadoEm": "2026-11-02T14:59:49Z"
+  "verificadoEm": "2026-11-12T16:59:50Z"
  },
  "rj_ordemdia": {
   "detalhe": "HTTP 200, text/html",
   "grupo": "Assembleias (estaduais)",
   "ok": true,
   "primeiraVerificacao": "2026-10-24T18:31:15Z",
-  "ultimoOk": "2026-11-02T14:59:49Z",
+  "ultimoOk": "2026-11-12T16:59:50Z",
   "url": "https://alerjln1.alerj.rj.gov.br/ordemdia.nsf/presint?OpenForm",
-  "verificadoEm": "2026-11-02T14:59:49Z"
+  "verificadoEm": "2026-11-12T16:59:50Z"
  },
  "rj_pauta_plenaria": {
   "detalhe": "HTTP 200, text/html",
   "grupo": "Assembleias (estaduais)",
   "ok": true,
   "primeiraVerificacao": "2026-11-02T14:59:49Z",
-  "ultimoOk": "2026-11-02T14:59:49Z",
+  "ultimoOk": "2026-11-12T16:59:50Z",
   "url": "http://alerjln1.alerj.rj.gov.br/ordemdia.nsf/OrdemInt?OpenForm",
-  "verificadoEm": "2026-11-02T14:59:49Z"
+  "verificadoEm": "2026-11-12T16:59:50Z"
  },
  "rj_scpro": {
   "detalhe": "HTTP 200, text/html",
   "grupo": "Assembleias (estaduais)",
   "ok": true,
   "primeiraVerificacao": "2026-11-02T14:59:49Z",
-  "ultimoOk": "2026-11-02T14:59:49Z",
+  "ultimoOk": "2026-11-12T16:59:50Z",
   "url": "http://alerjln1.alerj.rj.gov.br/scpro2327.nsf/Internet/PropInt?OpenForm",
-  "verificadoEm": "2026-11-02T14:59:49Z"
+  "verificadoEm": "2026-11-12T16:59:50Z"
  },
  "rj_transparencia": {
   "detalhe": "HTTP 200, text/html",
   "grupo": "Assembleias (estaduais)",
   "ok": true,
   "primeiraVerificacao": "2026-10-24T18:31:15Z",
-  "ultimoOk": "2026-11-02T14:59:49Z",
+  "ultimoOk": "2026-11-12T16:59:50Z",
   "url": "https://transparencia.alerj.rj.gov.br/section/report/121",
-  "verificadoEm": "2026-11-02T14:59:49Z"
+  "verificadoEm": "2026-11-12T16:59:50Z"
  },
  "rn_api_transparencia": {
   "detalhe": "HTTP 200, application/json, 32 KB",
   "grupo": "Assembleias (estaduais)",
   "ok": true,
   "primeiraVerificacao": "2026-10-24T18:31:15Z",
-  "ultimoOk": "2026-11-02T14:59:49Z",
+  "ultimoOk": "2026-11-12T16:59:50Z",
   "url": "https://api-transparencialegislativa.al.rn.leg.br/elegis-api-transp-legislativa/parlamentar",
-  "verificadoEm": "2026-11-02T14:59:49Z"
+  "verificadoEm": "2026-11-12T16:59:50Z"
  },
  "rn_legisvideos": {
   "detalhe": "HTTP 200, , 102 KB",
   "grupo": "Assembleias (estaduais)",
   "ok": true,
   "primeiraVerificacao": "2026-11-02T14:59:49Z",
-  "ultimoOk": "2026-11-02T14:59:49Z",
+  "ultimoOk": "2026-11-12T16:59:50Z",
   "url": "https://api-legisvideos.al.rn.leg.br/video/ata/34214e4cd2c6d02887da552b1b84a310",
-  "verificadoEm": "2026-11-02T14:59:49Z"
+  "verificadoEm": "2026-11-12T16:59:50Z"
  },
  "rn_pncp": {
   "detalhe": "HTTP 200, application/json",
   "grupo": "Assembleias (estaduais)",
   "ok": true,
   "primeiraVerificacao": "2026-11-02T14:59:49Z",
-  "ultimoOk": "2026-11-02T14:59:49Z",
+  "ultimoOk": "2026-11-12T16:59:50Z",
   "url": "https://pncp.gov.br/api/consulta/v1/contratos?dataInicial=20260101&dataFinal=20261231&cnpjOrgao=08493371000164&pagina=1&tamanhoPagina=10",
-  "verificadoEm": "2026-11-02T14:59:49Z"
+  "verificadoEm": "2026-11-12T16:59:50Z"
  },
  "rn_transparencia_legislativa": {
   "detalhe": "HTTP 200, text/html",
   "grupo": "Assembleias (estaduais)",
   "ok": true,
   "primeiraVerificacao": "2026-10-24T18:31:15Z",
-  "ultimoOk": "2026-11-02T14:59:49Z",
+  "ultimoOk": "2026-11-12T16:59:50Z",
   "url": "https://transparencialegislativa.al.rn.leg.br",
-  "verificadoEm": "2026-11-02T14:59:49Z"
+  "verificadoEm": "2026-11-12T16:59:50Z"
  },
  "rn_transparencia_verbas": {
   "detalhe": "HTTP 200, text/html",
   "grupo": "Assembleias (estaduais)",
   "ok": true,
   "primeiraVerificacao": "2026-10-24T18:31:15Z",
-  "ultimoOk": "2026-11-02T14:59:49Z",
+  "ultimoOk": "2026-11-12T16:59:50Z",
   "url": "https://transparencia.al.rn.leg.br/verbas",
-  "verificadoEm": "2026-11-02T14:59:49Z"
+  "verificadoEm": "2026-11-12T16:59:50Z"
  },
  "rr_contratos": {
   "detalhe": "HTTP 200, text/html",
   "grupo": "Assembleias (estaduais)",
   "ok": true,
   "primeiraVerificacao": "2026-11-02T14:59:49Z",
-  "ultimoOk": "2026-11-02T14:59:49Z",
+  "ultimoOk": "2026-11-12T16:59:50Z",
   "url": "https://transparencia.al.rr.leg.br/execucao-orcamentaria-e-financeira/contratos-a-partir-de-out25/",
-  "verificadoEm": "2026-11-02T14:59:49Z"
+  "verificadoEm": "2026-11-12T16:59:50Z"
  },
  "rr_deputados": {
   "detalhe": "HTTP 200, text/html, 35 KB",
   "grupo": "Assembleias (estaduais)",
   "ok": true,
   "primeiraVerificacao": "2026-10-24T18:31:15Z",
-  "ultimoOk": "2026-11-02T14:59:49Z",
+  "ultimoOk": "2026-11-12T16:59:50Z",
   "url": "https://al.rr.leg.br/deputados-estaduais-2023/",
-  "verificadoEm": "2026-11-02T14:59:49Z"
+  "verificadoEm": "2026-11-12T16:59:50Z"
  },
  "rr_gestao_pessoal": {
   "detalhe": "HTTP 200, text/html",
   "grupo": "Assembleias (estaduais)",
   "ok": true,
   "primeiraVerificacao": "2026-11-02T14:59:49Z",
-  "ultimoOk": "2026-11-02T14:59:49Z",
+  "ultimoOk": "2026-11-12T16:59:50Z",
   "url": "https://transparencia.al.rr.leg.br/execucao-orcamentaria-e-financeira/gestao-de-pessoal-a-partir-de-set25/",
-  "verificadoEm": "2026-11-02T14:59:49Z"
+  "verificadoEm": "2026-11-12T16:59:50Z"
  },
  "rr_licitacoes": {
   "detalhe": "HTTP 200, text/html",
   "grupo": "Assembleias (estaduais)",
   "ok": true,
   "primeiraVerificacao": "2026-11-02T14:59:49Z",
-  "ultimoOk": "2026-11-02T14:59:49Z",
+  "ultimoOk": "2026-11-12T16:59:50Z",
   "url": "https://transparencia.al.rr.leg.br/execucao-orcamentaria-e-financeira/licitacoes-a-partir-de-out25/",
-  "verificadoEm": "2026-11-02T14:59:49Z"
+  "verificadoEm": "2026-11-12T16:59:50Z"
  },
  "rr_sapl": {
   "detalhe": "HTTP 403",
@@ -1446,205 +1446,205 @@
   "primeiraVerificacao": "2026-10-24T18:31:15Z",
   "ultimoOk": null,
   "url": "https://sapl.al.rr.leg.br",
-  "verificadoEm": "2026-11-02T14:59:49Z"
+  "verificadoEm": "2026-11-12T16:59:50Z"
  },
  "rr_transparencia": {
   "detalhe": "HTTP 200, text/html",
   "grupo": "Assembleias (estaduais)",
   "ok": true,
   "primeiraVerificacao": "2026-10-24T18:31:15Z",
-  "ultimoOk": "2026-11-02T14:59:49Z",
+  "ultimoOk": "2026-11-12T16:59:50Z",
   "url": "https://transparencia.al.rr.leg.br",
-  "verificadoEm": "2026-11-02T14:59:49Z"
+  "verificadoEm": "2026-11-12T16:59:50Z"
  },
  "rs_dados_diarias": {
   "detalhe": "HTTP 200, application/json",
   "grupo": "Assembleias (estaduais)",
   "ok": true,
   "primeiraVerificacao": "2026-10-24T18:31:15Z",
-  "ultimoOk": "2026-11-02T14:59:49Z",
+  "ultimoOk": "2026-11-12T16:59:50Z",
   "url": "https://dados.rs.gov.br/api/3/action/package_show?id=diarias-do-estado",
-  "verificadoEm": "2026-11-02T14:59:49Z"
+  "verificadoEm": "2026-11-12T16:59:50Z"
  },
  "rs_transparencia_diarias": {
   "detalhe": "HTTP 200, text/html",
   "grupo": "Assembleias (estaduais)",
   "ok": true,
   "primeiraVerificacao": "2026-10-24T18:31:15Z",
-  "ultimoOk": "2026-11-02T14:59:49Z",
+  "ultimoOk": "2026-11-12T16:59:50Z",
   "url": "https://www.transparencia.rs.gov.br/relatorios/externo/diarias-assembleia/dados/",
-  "verificadoEm": "2026-11-02T14:59:49Z"
+  "verificadoEm": "2026-11-12T16:59:50Z"
  },
  "sapl_estadual_AC": {
   "detalhe": "HTTP 200, application/json, 0 KB",
   "grupo": "SAPL (Assembleias)",
   "ok": true,
   "primeiraVerificacao": "2026-10-24T18:31:15Z",
-  "ultimoOk": "2026-11-02T14:59:49Z",
+  "ultimoOk": "2026-11-12T16:59:50Z",
   "url": "https://sapl.al.ac.leg.br/api/parlamentares/legislatura/?page_size=1",
-  "verificadoEm": "2026-11-02T14:59:49Z"
+  "verificadoEm": "2026-11-12T16:59:50Z"
  },
  "sapl_estadual_AL": {
   "detalhe": "HTTP 200, application/json, 0 KB",
   "grupo": "SAPL (Assembleias)",
   "ok": true,
   "primeiraVerificacao": "2026-10-24T18:31:15Z",
-  "ultimoOk": "2026-11-02T14:59:49Z",
+  "ultimoOk": "2026-11-12T16:59:50Z",
   "url": "https://sapl.al.al.leg.br/api/parlamentares/legislatura/?page_size=1",
-  "verificadoEm": "2026-11-02T14:59:49Z"
+  "verificadoEm": "2026-11-12T16:59:50Z"
  },
  "sapl_estadual_AM": {
   "detalhe": "HTTP 200, application/json, 0 KB",
   "grupo": "SAPL (Assembleias)",
   "ok": true,
   "primeiraVerificacao": "2026-10-24T18:31:15Z",
-  "ultimoOk": "2026-11-02T14:59:49Z",
+  "ultimoOk": "2026-11-12T16:59:50Z",
   "url": "https://sapl.al.am.leg.br/api/parlamentares/legislatura/?page_size=1",
-  "verificadoEm": "2026-11-02T14:59:49Z"
+  "verificadoEm": "2026-11-12T16:59:50Z"
  },
  "sapl_estadual_PB": {
   "detalhe": "HTTP 200, application/json, 0 KB",
   "grupo": "SAPL (Assembleias)",
   "ok": true,
   "primeiraVerificacao": "2026-10-24T18:31:15Z",
-  "ultimoOk": "2026-11-02T14:59:49Z",
+  "ultimoOk": "2026-11-12T16:59:50Z",
   "url": "https://sapl.al.pb.leg.br/api/parlamentares/legislatura/?page_size=1",
-  "verificadoEm": "2026-11-02T14:59:49Z"
+  "verificadoEm": "2026-11-12T16:59:50Z"
  },
  "sapl_estadual_PI": {
   "detalhe": "HTTP 200, application/json, 0 KB",
   "grupo": "SAPL (Assembleias)",
   "ok": true,
   "primeiraVerificacao": "2026-10-24T18:31:15Z",
-  "ultimoOk": "2026-11-02T14:59:49Z",
+  "ultimoOk": "2026-11-12T16:59:50Z",
   "url": "https://sapl.al.pi.leg.br/api/parlamentares/legislatura/?page_size=1",
-  "verificadoEm": "2026-11-02T14:59:49Z"
+  "verificadoEm": "2026-11-12T16:59:50Z"
  },
  "sapl_estadual_RO": {
   "detalhe": "HTTP 200, application/json, 0 KB",
   "grupo": "SAPL (Assembleias)",
   "ok": true,
   "primeiraVerificacao": "2026-10-24T18:31:15Z",
-  "ultimoOk": "2026-11-02T14:59:49Z",
+  "ultimoOk": "2026-11-12T16:59:50Z",
   "url": "https://sapl.al.ro.leg.br/api/parlamentares/legislatura/?page_size=1",
-  "verificadoEm": "2026-11-02T14:59:49Z"
+  "verificadoEm": "2026-11-12T16:59:50Z"
  },
  "sapl_estadual_TO": {
   "detalhe": "HTTP 200, application/json, 0 KB",
   "grupo": "SAPL (Assembleias)",
   "ok": true,
   "primeiraVerificacao": "2026-10-24T18:31:15Z",
-  "ultimoOk": "2026-11-02T14:59:49Z",
+  "ultimoOk": "2026-11-12T16:59:50Z",
   "url": "https://sapl.al.to.leg.br/api/parlamentares/legislatura/?page_size=1",
-  "verificadoEm": "2026-11-02T14:59:49Z"
+  "verificadoEm": "2026-11-12T16:59:50Z"
  },
  "sapl_materia_PB": {
   "detalhe": "HTTP 200, application/json, 1 KB",
   "grupo": "SAPL (Assembleias)",
   "ok": true,
   "primeiraVerificacao": "2026-10-24T18:31:15Z",
-  "ultimoOk": "2026-11-02T14:59:49Z",
+  "ultimoOk": "2026-11-12T16:59:50Z",
   "url": "https://sapl.al.pb.leg.br/api/materia/materialegislativa/?page_size=1&ano=2025",
-  "verificadoEm": "2026-11-02T14:59:49Z"
+  "verificadoEm": "2026-11-12T16:59:50Z"
  },
  "sapl_municipal_AC": {
   "detalhe": "HTTP 200, application/json, 0 KB",
   "grupo": "SAPL (Câmaras municipais)",
   "ok": true,
   "primeiraVerificacao": "2026-10-24T18:31:15Z",
-  "ultimoOk": "2026-11-02T14:59:49Z",
+  "ultimoOk": "2026-11-12T16:59:50Z",
   "url": "https://sapl.riobranco.ac.leg.br/api/base/autor/?page_size=1",
-  "verificadoEm": "2026-11-02T14:59:49Z"
+  "verificadoEm": "2026-11-12T16:59:50Z"
  },
  "sapl_municipal_PB": {
   "detalhe": "HTTP 200, application/json, 0 KB",
   "grupo": "SAPL (Câmaras municipais)",
   "ok": true,
   "primeiraVerificacao": "2026-10-24T18:31:15Z",
-  "ultimoOk": "2026-11-02T14:59:49Z",
+  "ultimoOk": "2026-11-12T16:59:50Z",
   "url": "https://sapl.joaopessoa.pb.leg.br/api/base/autor/?page_size=1",
-  "verificadoEm": "2026-11-02T14:59:49Z"
+  "verificadoEm": "2026-11-12T16:59:50Z"
  },
  "sapl_municipal_RN": {
   "detalhe": "HTTP 200, application/json, 0 KB",
   "grupo": "SAPL (Câmaras municipais)",
   "ok": true,
   "primeiraVerificacao": "2026-10-24T18:31:15Z",
-  "ultimoOk": "2026-11-02T14:59:49Z",
+  "ultimoOk": "2026-11-12T16:59:50Z",
   "url": "https://sapl.natal.rn.leg.br/api/base/autor/?page_size=1",
-  "verificadoEm": "2026-11-02T14:59:49Z"
+  "verificadoEm": "2026-11-12T16:59:50Z"
  },
  "sapl_municipal_RR": {
   "detalhe": "HTTP 200, application/json, 0 KB",
   "grupo": "SAPL (Câmaras municipais)",
   "ok": true,
   "primeiraVerificacao": "2026-10-24T18:31:15Z",
-  "ultimoOk": "2026-11-02T14:59:49Z",
+  "ultimoOk": "2026-11-12T16:59:50Z",
   "url": "https://sapl.boavista.rr.leg.br/api/base/autor/?page_size=1",
-  "verificadoEm": "2026-11-02T14:59:49Z"
+  "verificadoEm": "2026-11-12T16:59:50Z"
  },
  "sapl_votoparlamentar_PB": {
   "detalhe": "HTTP 200, application/json, 0 KB",
   "grupo": "SAPL (Assembleias)",
   "ok": true,
   "primeiraVerificacao": "2026-10-24T18:31:15Z",
-  "ultimoOk": "2026-11-02T14:59:49Z",
+  "ultimoOk": "2026-11-12T16:59:50Z",
   "url": "https://sapl.al.pb.leg.br/api/sessao/votoparlamentar/?page_size=1",
-  "verificadoEm": "2026-11-02T14:59:49Z"
+  "verificadoEm": "2026-11-12T16:59:50Z"
  },
  "sc_leis": {
   "detalhe": "HTTP 200, text/html",
   "grupo": "Assembleias (estaduais)",
   "ok": true,
   "primeiraVerificacao": "2026-11-02T14:59:49Z",
-  "ultimoOk": "2026-11-02T14:59:49Z",
+  "ultimoOk": "2026-11-12T16:59:50Z",
   "url": "https://leis.alesc.sc.gov.br/alesc/regulamentacao-interna",
-  "verificadoEm": "2026-11-02T14:59:49Z"
+  "verificadoEm": "2026-11-12T16:59:50Z"
  },
  "sc_portal_elegis": {
   "detalhe": "HTTP 200, text/html",
   "grupo": "Assembleias (estaduais)",
   "ok": true,
   "primeiraVerificacao": "2026-10-24T18:31:15Z",
-  "ultimoOk": "2026-11-02T14:59:49Z",
+  "ultimoOk": "2026-11-12T16:59:50Z",
   "url": "https://portalelegis.alesc.sc.gov.br",
-  "verificadoEm": "2026-11-02T14:59:49Z"
+  "verificadoEm": "2026-11-12T16:59:50Z"
  },
  "sc_transparencia": {
   "detalhe": "HTTP 200, text/html",
   "grupo": "Assembleias (estaduais)",
   "ok": true,
   "primeiraVerificacao": "2026-10-24T18:31:15Z",
-  "ultimoOk": "2026-11-02T14:59:49Z",
+  "ultimoOk": "2026-11-12T16:59:50Z",
   "url": "https://transparencia.alesc.sc.gov.br/deputados?ano=&mes=",
-  "verificadoEm": "2026-11-02T14:59:49Z"
+  "verificadoEm": "2026-11-12T16:59:50Z"
  },
  "se_contratos": {
   "detalhe": "HTTP 200, application/json",
   "grupo": "Assembleias (estaduais)",
   "ok": true,
   "primeiraVerificacao": "2026-11-02T14:59:49Z",
-  "ultimoOk": "2026-11-02T14:59:49Z",
+  "ultimoOk": "2026-11-12T16:59:50Z",
   "url": "https://al.se.leg.br/wp-json/wp/v2/pages?slug=contratos",
-  "verificadoEm": "2026-11-02T14:59:49Z"
+  "verificadoEm": "2026-11-12T16:59:50Z"
  },
  "se_deputados": {
   "detalhe": "HTTP 200, text/html",
   "grupo": "Assembleias (estaduais)",
   "ok": true,
   "primeiraVerificacao": "2026-10-24T18:31:15Z",
-  "ultimoOk": "2026-11-02T14:59:49Z",
+  "ultimoOk": "2026-11-12T16:59:50Z",
   "url": "https://al.se.leg.br/",
-  "verificadoEm": "2026-11-02T14:59:49Z"
+  "verificadoEm": "2026-11-12T16:59:50Z"
  },
  "se_folha": {
   "detalhe": "HTTP 200, application/json",
   "grupo": "Assembleias (estaduais)",
   "ok": true,
   "primeiraVerificacao": "2026-11-02T14:59:49Z",
-  "ultimoOk": "2026-11-02T14:59:49Z",
+  "ultimoOk": "2026-11-12T16:59:50Z",
   "url": "https://al.se.leg.br/wp-json/wp/v2/pages?slug=subsidio-e-remuneracoes",
-  "verificadoEm": "2026-11-02T14:59:49Z"
+  "verificadoEm": "2026-11-12T16:59:50Z"
  },
  "se_legis": {
   "detalhe": "ConnectTimeout: HTTPSConnectionPool(host='aleselegis.al.se.leg.br', port=443): Max retries exceeded with url: /spl/p",
@@ -1653,349 +1653,349 @@
   "primeiraVerificacao": "2026-10-24T18:31:15Z",
   "ultimoOk": null,
   "url": "https://aleselegis.al.se.leg.br/spl/parlamentar.aspx",
-  "verificadoEm": "2026-11-02T14:59:49Z"
+  "verificadoEm": "2026-11-12T16:59:50Z"
  },
  "se_ressarcimento": {
   "detalhe": "HTTP 200, application/json",
   "grupo": "Assembleias (estaduais)",
   "ok": true,
   "primeiraVerificacao": "2026-11-02T14:59:49Z",
-  "ultimoOk": "2026-11-02T14:59:49Z",
+  "ultimoOk": "2026-11-12T16:59:50Z",
   "url": "https://al.se.leg.br/wp-json/wp/v2/pages?slug=ressarcimento-dos-deputados",
-  "verificadoEm": "2026-11-02T14:59:49Z"
+  "verificadoEm": "2026-11-12T16:59:50Z"
  },
  "senado_afastados": {
   "detalhe": "HTTP 200, application/json",
   "grupo": "Senado",
   "ok": true,
   "primeiraVerificacao": "2026-10-29T14:56:47Z",
-  "ultimoOk": "2026-11-02T14:59:49Z",
+  "ultimoOk": "2026-11-12T16:59:50Z",
   "url": "https://legis.senado.leg.br/dadosabertos/senador/lista/afastados.json",
-  "verificadoEm": "2026-11-02T14:59:49Z"
+  "verificadoEm": "2026-11-12T16:59:50Z"
  },
  "senado_apartes": {
   "detalhe": "HTTP 200, application/json, 62 KB",
   "grupo": "Senado",
   "ok": true,
   "primeiraVerificacao": "2026-10-31T14:52:25Z",
-  "ultimoOk": "2026-11-02T14:59:49Z",
+  "ultimoOk": "2026-11-12T16:59:50Z",
   "url": "https://legis.senado.leg.br/dadosabertos/senador/5012/apartes.json",
-  "verificadoEm": "2026-11-02T14:59:49Z"
+  "verificadoEm": "2026-11-12T16:59:50Z"
  },
  "senado_aposentados": {
   "detalhe": "HTTP 200, application/json, 7 KB",
   "grupo": "Senado",
   "ok": true,
   "primeiraVerificacao": "2026-10-30T04:06:25Z",
-  "ultimoOk": "2026-11-02T14:59:49Z",
+  "ultimoOk": "2026-11-12T16:59:50Z",
   "url": "https://adm.senado.gov.br/adm-dadosabertos/api/v1/senadores/aposentados",
-  "verificadoEm": "2026-11-02T14:59:49Z"
+  "verificadoEm": "2026-11-12T16:59:50Z"
  },
  "senado_cargos": {
   "detalhe": "HTTP 200, application/json, 1 KB",
   "grupo": "Senado",
   "ok": true,
   "primeiraVerificacao": "2026-10-31T14:52:25Z",
-  "ultimoOk": "2026-11-02T14:59:49Z",
+  "ultimoOk": "2026-11-12T16:59:50Z",
   "url": "https://legis.senado.leg.br/dadosabertos/senador/5012/cargos.json",
-  "verificadoEm": "2026-11-02T14:59:49Z"
+  "verificadoEm": "2026-11-12T16:59:50Z"
  },
  "senado_ceaps": {
   "detalhe": "HTTP 200, application/json, 10.0 MB",
   "grupo": "Senado",
   "ok": true,
   "primeiraVerificacao": "2026-10-24T18:31:15Z",
-  "ultimoOk": "2026-11-02T14:59:49Z",
+  "ultimoOk": "2026-11-12T16:59:50Z",
   "url": "https://adm.senado.gov.br/adm-dadosabertos/api/v1/senadores/despesas_ceaps/2025",
-  "verificadoEm": "2026-11-02T14:59:49Z"
+  "verificadoEm": "2026-11-12T16:59:50Z"
  },
  "senado_comissoes": {
   "detalhe": "HTTP 200, application/json, 5 KB",
   "grupo": "Senado",
   "ok": true,
   "primeiraVerificacao": "2026-10-24T18:31:15Z",
-  "ultimoOk": "2026-11-02T14:59:49Z",
+  "ultimoOk": "2026-11-12T16:59:50Z",
   "url": "https://legis.senado.leg.br/dadosabertos/senador/5012/comissoes.json",
-  "verificadoEm": "2026-11-02T14:59:49Z"
+  "verificadoEm": "2026-11-12T16:59:50Z"
  },
  "senado_discursos": {
-  "detalhe": "HTTP 200, application/json, 18 KB",
+  "detalhe": "HTTP 200, application/json, 19 KB",
   "grupo": "Senado",
   "ok": true,
   "primeiraVerificacao": "2026-10-31T14:52:25Z",
-  "ultimoOk": "2026-11-02T14:59:49Z",
+  "ultimoOk": "2026-11-12T16:59:50Z",
   "url": "https://legis.senado.leg.br/dadosabertos/senador/5012/discursos.json?dataInicio=20260101&dataFim=20261030",
-  "verificadoEm": "2026-11-02T14:59:49Z"
+  "verificadoEm": "2026-11-12T16:59:50Z"
  },
  "senado_escritorios": {
-  "detalhe": "HTTP 200, application/json",
+  "detalhe": "HTTP 200, application/json, 26 KB",
   "grupo": "Senado",
   "ok": true,
   "primeiraVerificacao": "2026-10-24T18:31:15Z",
-  "ultimoOk": "2026-11-02T14:59:49Z",
+  "ultimoOk": "2026-11-12T16:59:50Z",
   "url": "https://adm.senado.gov.br/adm-dadosabertos/api/v1/senadores/escritorios-apoio",
-  "verificadoEm": "2026-11-02T14:59:49Z"
+  "verificadoEm": "2026-11-12T16:59:50Z"
  },
  "senado_licencas": {
   "detalhe": "HTTP 200, application/json, 0 KB",
   "grupo": "Senado",
   "ok": true,
   "primeiraVerificacao": "2026-10-31T14:52:25Z",
-  "ultimoOk": "2026-11-02T14:59:49Z",
+  "ultimoOk": "2026-11-12T16:59:50Z",
   "url": "https://legis.senado.leg.br/dadosabertos/senador/5012/licencas.json",
-  "verificadoEm": "2026-11-02T14:59:49Z"
+  "verificadoEm": "2026-11-12T16:59:50Z"
  },
  "senado_liderancas": {
   "detalhe": "HTTP 200, application/json",
   "grupo": "Senado",
   "ok": true,
   "primeiraVerificacao": "2026-10-31T14:52:25Z",
-  "ultimoOk": "2026-11-02T14:59:49Z",
+  "ultimoOk": "2026-11-12T16:59:50Z",
   "url": "https://legis.senado.leg.br/dadosabertos/composicao/lideranca",
-  "verificadoEm": "2026-11-02T14:59:49Z"
+  "verificadoEm": "2026-11-12T16:59:50Z"
  },
  "senado_lista": {
   "detalhe": "HTTP 200, application/json, 11 KB",
   "grupo": "Senado",
   "ok": true,
   "primeiraVerificacao": "2026-10-24T18:31:15Z",
-  "ultimoOk": "2026-11-02T14:59:49Z",
+  "ultimoOk": "2026-11-12T16:59:50Z",
   "url": "https://legis.senado.leg.br/dadosabertos/senador/lista/atual.json",
-  "verificadoEm": "2026-11-02T14:59:49Z"
+  "verificadoEm": "2026-11-12T16:59:50Z"
  },
  "senado_mandatos": {
   "detalhe": "HTTP 200, application/json, 0 KB",
   "grupo": "Senado",
   "ok": true,
   "primeiraVerificacao": "2026-10-24T18:31:15Z",
-  "ultimoOk": "2026-11-02T14:59:49Z",
+  "ultimoOk": "2026-11-12T16:59:50Z",
   "url": "https://legis.senado.leg.br/dadosabertos/senador/5012/mandatos.json",
-  "verificadoEm": "2026-11-02T14:59:49Z"
+  "verificadoEm": "2026-11-12T16:59:50Z"
  },
  "senado_materia_portal": {
   "detalhe": "HTTP 200, text/html",
   "grupo": "Links e recursos do site",
   "ok": true,
   "primeiraVerificacao": "2026-10-24T18:31:15Z",
-  "ultimoOk": "2026-11-02T14:59:49Z",
+  "ultimoOk": "2026-11-12T16:59:50Z",
   "url": "https://www25.senado.leg.br/web/atividade/materias/-/materia/99175",
-  "verificadoEm": "2026-11-02T14:59:49Z"
+  "verificadoEm": "2026-11-12T16:59:50Z"
  },
  "senado_processo": {
   "detalhe": "HTTP 200, application/json, 2 KB",
   "grupo": "Senado",
   "ok": true,
   "primeiraVerificacao": "2026-10-24T18:31:15Z",
-  "ultimoOk": "2026-11-02T14:59:49Z",
+  "ultimoOk": "2026-11-12T16:59:50Z",
   "url": "https://legis.senado.leg.br/dadosabertos/processo/1582415",
-  "verificadoEm": "2026-11-02T14:59:49Z"
+  "verificadoEm": "2026-11-12T16:59:50Z"
  },
  "senado_processos": {
   "detalhe": "HTTP 200, application/json",
   "grupo": "Senado",
   "ok": true,
   "primeiraVerificacao": "2026-10-24T18:31:15Z",
-  "ultimoOk": "2026-11-02T14:59:49Z",
+  "ultimoOk": "2026-11-12T16:59:50Z",
   "url": "https://legis.senado.leg.br/dadosabertos/processo?codigoParlamentarAutor=5012",
-  "verificadoEm": "2026-11-02T14:59:49Z"
+  "verificadoEm": "2026-11-12T16:59:50Z"
  },
  "senado_recursos": {
-  "detalhe": "HTTP 200, application/json",
+  "detalhe": "HTTP 200, application/json, 1 KB",
   "grupo": "Senado",
   "ok": true,
   "primeiraVerificacao": "2026-10-24T18:31:15Z",
-  "ultimoOk": "2026-11-02T14:59:49Z",
+  "ultimoOk": "2026-11-12T16:59:50Z",
   "url": "https://adm.senado.gov.br/adm-dadosabertos/api/v1/senadores/5012/recursos-utilizados?ano=2025",
-  "verificadoEm": "2026-11-02T14:59:49Z"
+  "verificadoEm": "2026-11-12T16:59:50Z"
  },
  "senado_relatorias": {
   "detalhe": "HTTP 200, application/json",
   "grupo": "Senado",
   "ok": true,
   "primeiraVerificacao": "2026-10-31T14:52:25Z",
-  "ultimoOk": "2026-11-02T14:59:49Z",
+  "ultimoOk": "2026-11-12T16:59:50Z",
   "url": "https://legis.senado.leg.br/dadosabertos/processo/relatoria?codigoParlamentar=5012",
-  "verificadoEm": "2026-11-02T14:59:49Z"
+  "verificadoEm": "2026-11-12T16:59:50Z"
  },
  "senado_requerimentos": {
   "detalhe": "HTTP 200, application/json",
   "grupo": "Senado",
   "ok": true,
   "primeiraVerificacao": "2026-10-29T14:56:47Z",
-  "ultimoOk": "2026-11-02T14:59:49Z",
+  "ultimoOk": "2026-11-12T16:59:50Z",
   "url": "https://legis.senado.leg.br/dadosabertos/processo?sigla=RQS&ano=2026",
-  "verificadoEm": "2026-11-02T14:59:49Z"
+  "verificadoEm": "2026-11-12T16:59:50Z"
  },
  "senado_senador": {
   "detalhe": "HTTP 200, application/xml, 1 KB",
   "grupo": "Senado",
   "ok": true,
   "primeiraVerificacao": "2026-10-24T18:31:15Z",
-  "ultimoOk": "2026-11-02T14:59:49Z",
+  "ultimoOk": "2026-11-12T16:59:50Z",
   "url": "https://legis.senado.leg.br/dadosabertos/senador/5012",
-  "verificadoEm": "2026-11-02T14:59:49Z"
+  "verificadoEm": "2026-11-12T16:59:50Z"
  },
  "senado_transparencia": {
   "detalhe": "HTTP 200, text/html, 44 KB",
   "grupo": "Links e recursos do site",
   "ok": true,
   "primeiraVerificacao": "2026-10-24T18:31:15Z",
-  "ultimoOk": "2026-11-02T14:59:49Z",
+  "ultimoOk": "2026-11-12T16:59:50Z",
   "url": "https://www6g.senado.leg.br/transparencia/sen/5012",
-  "verificadoEm": "2026-11-02T14:59:49Z"
+  "verificadoEm": "2026-11-12T16:59:50Z"
  },
  "senado_votacoes": {
   "detalhe": "HTTP 200, application/json",
   "grupo": "Senado",
   "ok": true,
   "primeiraVerificacao": "2026-10-24T18:31:15Z",
-  "ultimoOk": "2026-11-02T14:59:49Z",
+  "ultimoOk": "2026-11-12T16:59:50Z",
   "url": "https://legis.senado.leg.br/dadosabertos/votacao?dataInicio=2025-03-01&dataFim=2025-03-31",
-  "verificadoEm": "2026-11-02T14:59:49Z"
+  "verificadoEm": "2026-11-12T16:59:50Z"
  },
  "siconfi_dca": {
   "detalhe": "HTTP 200, application/json",
   "grupo": "Tesouro (SICONFI)",
   "ok": true,
   "primeiraVerificacao": "2026-10-30T04:06:25Z",
-  "ultimoOk": "2026-11-02T14:59:49Z",
+  "ultimoOk": "2026-11-12T16:59:50Z",
   "url": "https://apidatalake.tesouro.gov.br/ords/siconfi/tt/dca?an_exercicio=2024&no_anexo=DCA-Anexo%20I-E&id_ente=35&limit=1",
-  "verificadoEm": "2026-11-02T14:59:49Z"
+  "verificadoEm": "2026-11-12T16:59:50Z"
  },
  "siconfi_portal": {
   "detalhe": "HTTP 200, text/html, 0 KB",
   "grupo": "Tesouro (SICONFI)",
   "ok": true,
   "primeiraVerificacao": "2026-10-30T04:06:25Z",
-  "ultimoOk": "2026-11-02T14:59:49Z",
+  "ultimoOk": "2026-11-12T16:59:50Z",
   "url": "https://siconfi.tesouro.gov.br/",
-  "verificadoEm": "2026-11-02T14:59:49Z"
+  "verificadoEm": "2026-11-12T16:59:50Z"
  },
  "siconfi_rgf": {
   "detalhe": "HTTP 200, application/json",
   "grupo": "Tesouro (SICONFI)",
   "ok": true,
   "primeiraVerificacao": "2026-10-24T18:31:15Z",
-  "ultimoOk": "2026-11-02T14:59:49Z",
+  "ultimoOk": "2026-11-12T16:59:50Z",
   "url": "https://apidatalake.tesouro.gov.br/ords/siconfi/tt/rgf?an_exercicio=2025&in_periodicidade=Q&nr_periodo=3&co_tipo_demonstrativo=RGF&no_anexo=RGF-Anexo%2001&co_esfera=E&co_poder=L&id_ente=16&limit=1",
-  "verificadoEm": "2026-11-02T14:59:49Z"
+  "verificadoEm": "2026-11-12T16:59:50Z"
  },
  "sp_contratos": {
   "detalhe": "HTTP 200, text/html",
   "grupo": "Assembleias (estaduais)",
   "ok": true,
   "primeiraVerificacao": "2026-11-02T14:59:49Z",
-  "ultimoOk": "2026-11-02T14:59:49Z",
+  "ultimoOk": "2026-11-12T16:59:50Z",
   "url": "https://www.al.sp.gov.br/alesp/contratos/",
-  "verificadoEm": "2026-11-02T14:59:49Z"
+  "verificadoEm": "2026-11-12T16:59:50Z"
  },
  "sp_contratos_detalhe": {
   "detalhe": "HTTP 200, text/html",
   "grupo": "Assembleias (estaduais)",
   "ok": true,
   "primeiraVerificacao": "2026-11-02T14:59:49Z",
-  "ultimoOk": "2026-11-02T14:59:49Z",
+  "ultimoOk": "2026-11-12T16:59:50Z",
   "url": "https://www.al.sp.gov.br/alesp/contratos/detalhe/?detContrato=34494620f2524439b93eb453de874dc9",
-  "verificadoEm": "2026-11-02T14:59:49Z"
+  "verificadoEm": "2026-11-12T16:59:50Z"
  },
  "sp_dados_abertos": {
   "detalhe": "HTTP 200, application/xml",
   "grupo": "Assembleias (estaduais)",
   "ok": true,
   "primeiraVerificacao": "2026-10-24T18:31:15Z",
-  "ultimoOk": "2026-11-02T14:59:49Z",
+  "ultimoOk": "2026-11-12T16:59:50Z",
   "url": "https://www.al.sp.gov.br/repositorioDados/deputados/deputados.xml",
-  "verificadoEm": "2026-11-02T14:59:49Z"
+  "verificadoEm": "2026-11-12T16:59:50Z"
  },
  "sp_legis": {
   "detalhe": "HTTP 200, text/html",
   "grupo": "Assembleias (estaduais)",
   "ok": true,
   "primeiraVerificacao": "2026-10-24T18:31:15Z",
-  "ultimoOk": "2026-11-02T14:59:49Z",
+  "ultimoOk": "2026-11-12T16:59:50Z",
   "url": "https://www3.al.sp.gov.br/legis/",
-  "verificadoEm": "2026-11-02T14:59:49Z"
+  "verificadoEm": "2026-11-12T16:59:50Z"
  },
  "sp_legis_api": {
   "detalhe": "HTTP 200, application/json",
   "grupo": "Assembleias (estaduais)",
   "ok": true,
   "primeiraVerificacao": "2026-10-24T18:31:15Z",
-  "ultimoOk": "2026-11-02T14:59:49Z",
+  "ultimoOk": "2026-11-12T16:59:50Z",
   "url": "https://legis-api-portal-prd.al.sp.gov.br/parlamentar-portal",
-  "verificadoEm": "2026-11-02T14:59:49Z"
+  "verificadoEm": "2026-11-12T16:59:50Z"
  },
  "sp_legis_integra": {
   "detalhe": "HTTP 200, application/json",
   "grupo": "Assembleias (estaduais)",
   "ok": true,
   "primeiraVerificacao": "2026-11-02T14:59:49Z",
-  "ultimoOk": "2026-11-02T14:59:49Z",
+  "ultimoOk": "2026-11-12T16:59:50Z",
   "url": "https://legis-api-portal-prd.al.sp.gov.br/sessoes-plenarias/24176/integra",
-  "verificadoEm": "2026-11-02T14:59:49Z"
+  "verificadoEm": "2026-11-12T16:59:50Z"
  },
  "sp_legis_normas": {
   "detalhe": "HTTP 200, application/json",
   "grupo": "Assembleias (estaduais)",
   "ok": true,
   "primeiraVerificacao": "2026-11-02T14:59:49Z",
-  "ultimoOk": "2026-11-02T14:59:49Z",
+  "ultimoOk": "2026-11-12T16:59:50Z",
   "url": "https://legis-api-portal-prd.al.sp.gov.br/processo?listaIdTipoProcesso=1&transformadoNorma=true&ano=2025&page=0&size=5",
-  "verificadoEm": "2026-11-02T14:59:49Z"
+  "verificadoEm": "2026-11-12T16:59:50Z"
  },
  "sp_legis_processo": {
   "detalhe": "HTTP 200, application/json",
   "grupo": "Assembleias (estaduais)",
   "ok": true,
   "primeiraVerificacao": "2026-11-02T14:59:49Z",
-  "ultimoOk": "2026-11-02T14:59:49Z",
+  "ultimoOk": "2026-11-12T16:59:50Z",
   "url": "https://legis-api-portal-prd.al.sp.gov.br/processo/detalhes/todos/PL/2025/1373",
-  "verificadoEm": "2026-11-02T14:59:49Z"
+  "verificadoEm": "2026-11-12T16:59:50Z"
  },
  "sp_legis_reunioes": {
   "detalhe": "HTTP 200, application/json",
   "grupo": "Assembleias (estaduais)",
   "ok": true,
   "primeiraVerificacao": "2026-11-02T14:59:49Z",
-  "ultimoOk": "2026-11-02T14:59:49Z",
+  "ultimoOk": "2026-11-12T16:59:50Z",
   "url": "https://legis-api-portal-prd.al.sp.gov.br/colegiado/reunioes?ano=2026&page=0&size=5",
-  "verificadoEm": "2026-11-02T14:59:49Z"
+  "verificadoEm": "2026-11-12T16:59:50Z"
  },
  "sp_legis_sessoes": {
   "detalhe": "HTTP 200, application/json",
   "grupo": "Assembleias (estaduais)",
   "ok": true,
   "primeiraVerificacao": "2026-11-02T14:59:49Z",
-  "ultimoOk": "2026-11-02T14:59:49Z",
+  "ultimoOk": "2026-11-12T16:59:50Z",
   "url": "https://legis-api-portal-prd.al.sp.gov.br/sessoes-plenarias/consulta?ano=2026&page=0&size=5",
-  "verificadoEm": "2026-11-02T14:59:49Z"
+  "verificadoEm": "2026-11-12T16:59:50Z"
  },
  "splegis_consulta": {
   "detalhe": "HTTP 200, text/html, 5 KB",
   "grupo": "Câmara de São Paulo",
   "ok": true,
   "primeiraVerificacao": "2026-10-24T18:31:15Z",
-  "ultimoOk": "2026-11-02T14:59:49Z",
+  "ultimoOk": "2026-11-12T16:59:50Z",
   "url": "https://splegisconsulta.saopaulo.sp.leg.br",
-  "verificadoEm": "2026-11-02T14:59:49Z"
+  "verificadoEm": "2026-11-12T16:59:50Z"
  },
  "splegis_projetos": {
   "detalhe": "HTTP 200, application/json",
   "grupo": "Câmara de São Paulo",
   "ok": true,
   "primeiraVerificacao": "2026-10-24T18:31:15Z",
-  "ultimoOk": "2026-11-02T14:59:49Z",
+  "ultimoOk": "2026-11-12T16:59:50Z",
   "url": "https://splegisws.saopaulo.sp.leg.br/ws/ws2.asmx/ProjetosPorAnoJSON?Ano=2025",
-  "verificadoEm": "2026-11-02T14:59:49Z"
+  "verificadoEm": "2026-11-12T16:59:50Z"
  },
  "splegis_promoventes": {
   "detalhe": "HTTP 200, application/json, 11 KB",
   "grupo": "Câmara de São Paulo",
   "ok": true,
   "primeiraVerificacao": "2026-10-24T18:31:15Z",
-  "ultimoOk": "2026-11-02T14:59:49Z",
+  "ultimoOk": "2026-11-12T16:59:50Z",
   "url": "https://splegisws.saopaulo.sp.leg.br/ws/ws2.asmx/PromoventesCMSPJSON",
-  "verificadoEm": "2026-11-02T14:59:49Z"
+  "verificadoEm": "2026-11-12T16:59:50Z"
  },
  "stf_composicao": {
   "detalhe": "HTTP 403",
@@ -2004,79 +2004,79 @@
   "primeiraVerificacao": "2026-10-31T14:52:25Z",
   "ultimoOk": null,
   "url": "https://portal.stf.jus.br/ostf/ministros/",
-  "verificadoEm": "2026-11-02T14:59:49Z"
+  "verificadoEm": "2026-11-12T16:59:50Z"
  },
  "stj_composicao": {
   "detalhe": "HTTP 200, text/html",
   "grupo": "STJ",
   "ok": true,
   "primeiraVerificacao": "2026-10-31T14:52:25Z",
-  "ultimoOk": "2026-11-02T14:59:49Z",
+  "ultimoOk": "2026-11-12T16:59:50Z",
   "url": "https://www.stj.jus.br/sites/portalp/Institucional/Ministros",
-  "verificadoEm": "2026-11-02T14:59:49Z"
+  "verificadoEm": "2026-11-12T16:59:50Z"
  },
  "stj_dados_abertos": {
   "detalhe": "HTTP 200, application/json",
   "grupo": "STJ",
   "ok": true,
   "primeiraVerificacao": "2026-10-31T14:52:25Z",
-  "ultimoOk": "2026-11-02T14:59:49Z",
+  "ultimoOk": "2026-11-12T16:59:50Z",
   "url": "https://dadosabertos.web.stj.jus.br/api/3/action/package_show?id=espelhos-de-acordaos-corte-especial",
-  "verificadoEm": "2026-11-02T14:59:49Z"
+  "verificadoEm": "2026-11-12T16:59:50Z"
  },
  "stm_composicao": {
   "detalhe": "HTTP 200, text/html, 0 KB",
   "grupo": "STM",
   "ok": true,
   "primeiraVerificacao": "2026-10-31T14:52:25Z",
-  "ultimoOk": "2026-11-02T14:59:49Z",
+  "ultimoOk": "2026-11-12T16:59:50Z",
   "url": "https://www.stm.jus.br/o-stm-stm/composicao-da-corte",
-  "verificadoEm": "2026-11-02T14:59:49Z"
+  "verificadoEm": "2026-11-12T16:59:50Z"
  },
  "tcu_acordaos": {
   "detalhe": "HTTP 200, application/json",
   "grupo": "TCU",
   "ok": true,
   "primeiraVerificacao": "2026-10-31T14:52:25Z",
-  "ultimoOk": "2026-11-02T14:59:49Z",
+  "ultimoOk": "2026-11-12T16:59:50Z",
   "url": "https://dados-abertos.apps.tcu.gov.br/api/acordao/recupera-acordaos?inicio=0&quantidade=1000",
-  "verificadoEm": "2026-11-02T14:59:49Z"
+  "verificadoEm": "2026-11-12T16:59:50Z"
  },
  "tcu_composicao": {
   "detalhe": "HTTP 200, text/html, 7 KB",
   "grupo": "TCU",
   "ok": true,
   "primeiraVerificacao": "2026-10-31T14:52:25Z",
-  "ultimoOk": "2026-11-02T14:59:49Z",
+  "ultimoOk": "2026-11-12T16:59:50Z",
   "url": "https://portal.tcu.gov.br/ministros-e-ministros-substitutos",
-  "verificadoEm": "2026-11-02T14:59:49Z"
+  "verificadoEm": "2026-11-12T16:59:50Z"
  },
  "tcu_inabilitados": {
   "detalhe": "HTTP 200, application/json",
   "grupo": "TCU",
   "ok": true,
   "primeiraVerificacao": "2026-10-30T04:06:25Z",
-  "ultimoOk": "2026-11-02T14:59:49Z",
+  "ultimoOk": "2026-11-12T16:59:50Z",
   "url": "https://contas.tcu.gov.br/ords/condenacao/consulta/inabilitados",
-  "verificadoEm": "2026-11-02T14:59:49Z"
+  "verificadoEm": "2026-11-12T16:59:50Z"
  },
  "tcu_inidoneos": {
   "detalhe": "HTTP 200, application/json",
   "grupo": "TCU",
   "ok": true,
   "primeiraVerificacao": "2026-10-30T04:06:25Z",
-  "ultimoOk": "2026-11-02T14:59:49Z",
+  "ultimoOk": "2026-11-12T16:59:50Z",
   "url": "https://contas.tcu.gov.br/ords/condenacao/consulta/inidoneos",
-  "verificadoEm": "2026-11-02T14:59:49Z"
+  "verificadoEm": "2026-11-12T16:59:50Z"
  },
  "tse_bem_candidato": {
-  "detalhe": "HTTP 200, application/zip, 44.3 MB",
+  "detalhe": "HTTP 200, application/zip, 45.8 MB",
   "grupo": "TSE",
   "ok": true,
   "primeiraVerificacao": "2026-10-24T18:31:15Z",
-  "ultimoOk": "2026-11-02T14:59:49Z",
+  "ultimoOk": "2026-11-12T16:59:50Z",
   "url": "https://cdn.tse.jus.br/estatistica/sead/odsele/bem_candidato/bem_candidato_2024.zip",
-  "verificadoEm": "2026-11-02T14:59:49Z"
+  "verificadoEm": "2026-11-12T16:59:50Z"
  },
  "tse_composicao": {
   "detalhe": "HTTP 403",
@@ -2085,52 +2085,52 @@
   "primeiraVerificacao": "2026-10-31T14:52:25Z",
   "ultimoOk": null,
   "url": "https://www.tse.jus.br/institucional/composicao-do-tse",
-  "verificadoEm": "2026-11-02T14:59:49Z"
+  "verificadoEm": "2026-11-12T16:59:50Z"
  },
  "tse_consulta_cand": {
-  "detalhe": "HTTP 200, application/zip, 69.1 MB",
+  "detalhe": "HTTP 200, application/zip, 67.6 MB",
   "grupo": "TSE",
   "ok": true,
   "primeiraVerificacao": "2026-10-24T18:31:15Z",
-  "ultimoOk": "2026-11-02T14:59:49Z",
+  "ultimoOk": "2026-11-12T16:59:50Z",
   "url": "https://cdn.tse.jus.br/estatistica/sead/odsele/consulta_cand/consulta_cand_2024.zip",
-  "verificadoEm": "2026-11-02T14:59:49Z"
+  "verificadoEm": "2026-11-12T16:59:50Z"
  },
  "tse_consulta_coligacao": {
   "detalhe": "HTTP 200, application/zip, 11.0 MB",
   "grupo": "TSE",
   "ok": true,
   "primeiraVerificacao": "2026-10-24T18:31:15Z",
-  "ultimoOk": "2026-11-02T14:59:49Z",
+  "ultimoOk": "2026-11-12T16:59:50Z",
   "url": "https://cdn.tse.jus.br/estatistica/sead/odsele/consulta_coligacao/consulta_coligacao_2024.zip",
-  "verificadoEm": "2026-11-02T14:59:49Z"
+  "verificadoEm": "2026-11-12T16:59:50Z"
  },
  "tse_consulta_vagas": {
-  "detalhe": "HTTP 200, application/zip, 564 KB",
+  "detalhe": "HTTP 200, application/zip, 565 KB",
   "grupo": "TSE",
   "ok": true,
   "primeiraVerificacao": "2026-10-24T18:31:15Z",
-  "ultimoOk": "2026-11-02T14:59:49Z",
+  "ultimoOk": "2026-11-12T16:59:50Z",
   "url": "https://cdn.tse.jus.br/estatistica/sead/odsele/consulta_vagas/consulta_vagas_2024.zip",
-  "verificadoEm": "2026-11-02T14:59:49Z"
+  "verificadoEm": "2026-11-12T16:59:50Z"
  },
  "tse_dados_abertos": {
   "detalhe": "HTTP 200, text/html, 15 KB",
   "grupo": "TSE",
   "ok": true,
   "primeiraVerificacao": "2026-10-24T18:31:15Z",
-  "ultimoOk": "2026-11-02T14:59:49Z",
+  "ultimoOk": "2026-11-12T16:59:50Z",
   "url": "https://dadosabertos.tse.jus.br",
-  "verificadoEm": "2026-11-02T14:59:49Z"
+  "verificadoEm": "2026-11-12T16:59:50Z"
  },
  "tse_detalhe_votacao_munzona": {
   "detalhe": "HTTP 200, application/zip, 1.5 MB",
   "grupo": "TSE",
   "ok": true,
   "primeiraVerificacao": "2026-10-24T18:31:15Z",
-  "ultimoOk": "2026-11-02T14:59:49Z",
+  "ultimoOk": "2026-11-12T16:59:50Z",
   "url": "https://cdn.tse.jus.br/estatistica/sead/odsele/detalhe_votacao_munzona/detalhe_votacao_munzona_2024.zip",
-  "verificadoEm": "2026-11-02T14:59:49Z"
+  "verificadoEm": "2026-11-12T16:59:50Z"
  },
  "tse_divulgacandcontas": {
   "detalhe": "HTTP 403",
@@ -2139,141 +2139,141 @@
   "primeiraVerificacao": "2026-10-24T18:31:15Z",
   "ultimoOk": null,
   "url": "https://divulgacandcontas.tse.jus.br/divulga/",
-  "verificadoEm": "2026-11-02T14:59:49Z"
+  "verificadoEm": "2026-11-12T16:59:50Z"
  },
  "tse_eleitorado_locais_votacao": {
   "detalhe": "HTTP 200, application/zip, 45.3 MB",
   "grupo": "TSE",
   "ok": true,
   "primeiraVerificacao": "2026-10-24T18:31:15Z",
-  "ultimoOk": "2026-11-02T14:59:49Z",
+  "ultimoOk": "2026-11-12T16:59:50Z",
   "url": "https://cdn.tse.jus.br/estatistica/sead/odsele/eleitorado_locais_votacao/eleitorado_local_votacao_2024.zip",
-  "verificadoEm": "2026-11-02T14:59:49Z"
+  "verificadoEm": "2026-11-12T16:59:50Z"
  },
  "tse_fotos": {
   "detalhe": "HTTP 200, application/zip, 25.4 MB",
   "grupo": "TSE",
   "ok": true,
   "primeiraVerificacao": "2026-10-24T18:31:15Z",
-  "ultimoOk": "2026-11-02T14:59:49Z",
+  "ultimoOk": "2026-11-12T16:59:50Z",
   "url": "https://cdn.tse.jus.br/estatistica/sead/eleicoes/eleicoes2022/fotos/foto_cand2022_DF_div.zip",
-  "verificadoEm": "2026-11-02T14:59:49Z"
+  "verificadoEm": "2026-11-12T16:59:50Z"
  },
  "tse_fotos_2024": {
   "detalhe": "HTTP 200, application/zip, 68.3 MB",
   "grupo": "TSE",
   "ok": true,
   "primeiraVerificacao": "2026-10-24T18:31:15Z",
-  "ultimoOk": "2026-11-02T14:59:49Z",
+  "ultimoOk": "2026-11-12T16:59:50Z",
   "url": "https://cdn.tse.jus.br/estatistica/sead/eleicoes/eleicoes2024/fotos/foto_cand2024_AC_div.zip",
-  "verificadoEm": "2026-11-02T14:59:49Z"
+  "verificadoEm": "2026-11-12T16:59:50Z"
  },
  "tse_motivo_cassacao": {
   "detalhe": "HTTP 200, application/zip, 587 KB",
   "grupo": "TSE",
   "ok": true,
   "primeiraVerificacao": "2026-10-24T18:31:15Z",
-  "ultimoOk": "2026-11-02T14:59:49Z",
+  "ultimoOk": "2026-11-12T16:59:50Z",
   "url": "https://cdn.tse.jus.br/estatistica/sead/odsele/motivo_cassacao/motivo_cassacao_2024.zip",
-  "verificadoEm": "2026-11-02T14:59:49Z"
+  "verificadoEm": "2026-11-12T16:59:50Z"
  },
  "tse_perfil_eleitorado": {
   "detalhe": "HTTP 200, application/zip, 333.6 MB",
   "grupo": "TSE",
   "ok": true,
   "primeiraVerificacao": "2026-10-24T18:31:15Z",
-  "ultimoOk": "2026-11-02T14:59:49Z",
+  "ultimoOk": "2026-11-12T16:59:50Z",
   "url": "https://cdn.tse.jus.br/estatistica/sead/odsele/perfil_eleitorado/perfil_eleitorado_2024.zip",
-  "verificadoEm": "2026-11-02T14:59:49Z"
+  "verificadoEm": "2026-11-12T16:59:50Z"
  },
  "tse_prestacao_contas": {
-  "detalhe": "HTTP 200, application/zip, 1354.9 MB",
+  "detalhe": "HTTP 200, application/zip, 1335.0 MB",
   "grupo": "TSE",
   "ok": true,
   "primeiraVerificacao": "2026-10-24T18:31:15Z",
-  "ultimoOk": "2026-11-02T14:59:49Z",
+  "ultimoOk": "2026-11-12T16:59:50Z",
   "url": "https://cdn.tse.jus.br/estatistica/sead/odsele/prestacao_contas/prestacao_de_contas_eleitorais_candidatos_2024.zip",
-  "verificadoEm": "2026-11-02T14:59:49Z"
+  "verificadoEm": "2026-11-12T16:59:50Z"
  },
  "tse_rede_social_candidato": {
-  "detalhe": "HTTP 200, application/zip, 20.1 MB",
+  "detalhe": "HTTP 200, application/zip, 20.0 MB",
   "grupo": "TSE",
   "ok": true,
   "primeiraVerificacao": "2026-10-24T18:31:15Z",
-  "ultimoOk": "2026-11-02T14:59:49Z",
+  "ultimoOk": "2026-11-12T16:59:50Z",
   "url": "https://cdn.tse.jus.br/estatistica/sead/odsele/consulta_cand/rede_social_candidato_2024.zip",
-  "verificadoEm": "2026-11-02T14:59:49Z"
+  "verificadoEm": "2026-11-12T16:59:50Z"
  },
  "tse_rede_social_candidato_2022_UF": {
   "detalhe": "HTTP 200, application/zip, 188 KB",
   "grupo": "TSE",
   "ok": true,
   "primeiraVerificacao": "2026-10-24T18:31:15Z",
-  "ultimoOk": "2026-11-02T14:59:49Z",
+  "ultimoOk": "2026-11-12T16:59:50Z",
   "url": "https://cdn.tse.jus.br/estatistica/sead/odsele/consulta_cand/rede_social_candidato_2022_DF.zip",
-  "verificadoEm": "2026-11-02T14:59:49Z"
+  "verificadoEm": "2026-11-12T16:59:50Z"
  },
  "tse_votacao_candidato_munzona": {
-  "detalhe": "HTTP 200, application/zip, 50.3 MB",
+  "detalhe": "HTTP 200, application/zip, 48.0 MB",
   "grupo": "TSE",
   "ok": true,
   "primeiraVerificacao": "2026-10-24T18:31:15Z",
-  "ultimoOk": "2026-11-02T14:59:49Z",
+  "ultimoOk": "2026-11-12T16:59:50Z",
   "url": "https://cdn.tse.jus.br/estatistica/sead/odsele/votacao_candidato_munzona/votacao_candidato_munzona_2024.zip",
-  "verificadoEm": "2026-11-02T14:59:49Z"
+  "verificadoEm": "2026-11-12T16:59:50Z"
  },
  "tse_votacao_partido_munzona": {
   "detalhe": "HTTP 200, application/zip, 6.1 MB",
   "grupo": "TSE",
   "ok": true,
   "primeiraVerificacao": "2026-10-24T18:31:15Z",
-  "ultimoOk": "2026-11-02T14:59:49Z",
+  "ultimoOk": "2026-11-12T16:59:50Z",
   "url": "https://cdn.tse.jus.br/estatistica/sead/odsele/votacao_partido_munzona/votacao_partido_munzona_2024.zip",
-  "verificadoEm": "2026-11-02T14:59:49Z"
+  "verificadoEm": "2026-11-12T16:59:50Z"
  },
  "tse_votacao_secao": {
   "detalhe": "HTTP 200, application/zip, 34.3 MB",
   "grupo": "TSE",
   "ok": true,
   "primeiraVerificacao": "2026-10-24T18:31:15Z",
-  "ultimoOk": "2026-11-02T14:59:49Z",
+  "ultimoOk": "2026-11-12T16:59:50Z",
   "url": "https://cdn.tse.jus.br/estatistica/sead/odsele/votacao_secao/votacao_secao_2022_DF.zip",
-  "verificadoEm": "2026-11-02T14:59:49Z"
+  "verificadoEm": "2026-11-12T16:59:50Z"
  },
  "tse_votacao_secao_2024": {
   "detalhe": "HTTP 200, application/zip, 5.6 MB",
   "grupo": "TSE",
   "ok": true,
   "primeiraVerificacao": "2026-10-24T18:31:15Z",
-  "ultimoOk": "2026-11-02T14:59:49Z",
+  "ultimoOk": "2026-11-12T16:59:50Z",
   "url": "https://cdn.tse.jus.br/estatistica/sead/odsele/votacao_secao/votacao_secao_2024_AC.zip",
-  "verificadoEm": "2026-11-02T14:59:49Z"
+  "verificadoEm": "2026-11-12T16:59:50Z"
  },
  "tst_composicao": {
   "detalhe": "HTTP 202, text/html",
   "grupo": "TST",
   "ok": true,
   "primeiraVerificacao": "2026-10-31T14:52:25Z",
-  "ultimoOk": "2026-11-02T14:59:49Z",
+  "ultimoOk": "2026-11-12T16:59:50Z",
   "url": "https://www.tst.jus.br/ministros",
-  "verificadoEm": "2026-11-02T14:59:49Z"
+  "verificadoEm": "2026-11-12T16:59:50Z"
  },
  "wikipedia_ministros": {
   "detalhe": "HTTP 200, text/html",
   "grupo": "Wikipédia",
   "ok": true,
   "primeiraVerificacao": "2026-10-30T04:06:25Z",
-  "ultimoOk": "2026-11-02T14:59:49Z",
+  "ultimoOk": "2026-11-12T16:59:50Z",
   "url": "https://pt.wikipedia.org/wiki/Gabinete_do_Brasil",
-  "verificadoEm": "2026-11-02T14:59:49Z"
+  "verificadoEm": "2026-11-12T16:59:50Z"
  },
  "wikipedia_tribunais_api": {
   "detalhe": "HTTP 200, application/json",
   "grupo": "Wikipédia",
   "ok": true,
   "primeiraVerificacao": "2026-10-31T14:52:25Z",
-  "ultimoOk": "2026-11-02T14:59:49Z",
+  "ultimoOk": "2026-11-12T16:59:50Z",
   "url": "https://pt.wikipedia.org/w/api.php?action=parse&prop=text&format=json&formatversion=2&redirects=1&page=Supremo_Tribunal_Federal",
-  "verificadoEm": "2026-11-02T14:59:49Z"
+  "verificadoEm": "2026-11-12T16:59:50Z"
  }
 }

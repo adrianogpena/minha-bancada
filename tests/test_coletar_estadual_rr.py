@@ -3,6 +3,8 @@ import zipfile
 from datetime import date
 from io import BytesIO
 
+import pytest
+
 import coletar_estadual_rr as rr
 import estaduais_comum as comum
 from conftest import RAIZ
@@ -370,3 +372,478 @@ def test_coletar_grava_gabinete_contratos_e_licitacoes(tmp_path, monkeypatch):
     (direta_item,) = licitacoes["itens"].values()
     assert licitacoes["referencia"] == {"contratacao_direta": f"{ano}-03"} and direta_item["fonte"] == "http://x/d.pdf?wpdf_download=true"
     assert direta_item["vencedor"] == "NEW SERVICE LTDA" and direta_item["data"] == "2026-01-14"
+
+
+class Resposta:
+    def __init__(self, texto=None, conteudo=None, dados=None):
+        self.text, self.content, self._dados = texto, conteudo, dados
+
+    def raise_for_status(self):
+        pass
+
+    def json(self):
+        return self._dados
+
+
+class SessaoArquivos:
+    def __init__(self, conteudos=None, paginas=None):
+        self.conteudos, self.paginas, self.posts = conteudos or {}, paginas or {}, []
+
+    def get(self, url, timeout=None):
+        if url in self.paginas:
+            return Resposta(texto=self.paginas[url])
+        return Resposta(conteudo=self.conteudos[url])
+
+    def post(self, url, data=None, timeout=None):
+        self.posts.append((url, data))
+        return Resposta(dados={"inner_content": self.paginas[data["folder_path"]]})
+
+
+def instalar_listas(monkeypatch, raizes, pastas):
+    chamadas = []
+
+    class ListaFalsa:
+        def __init__(self, s, pagina):
+            self.s, self.raiz = s, raizes[pagina]
+
+        def pasta(self, caminho):
+            chamadas.append(caminho)
+            return pastas[caminho]
+
+    monkeypatch.setattr(rr, "Lista", ListaFalsa)
+    return chamadas
+
+
+def arquivo(nome, tipo, url=None):
+    return {"nome": nome, "tipo": tipo, "url": url or f"http://x/{nome}"}
+
+
+def test_cartoes_remove_duplicados_e_decodifica_foto():
+    html = (f'<a href="{rr.SITE}/deputados/ana-lima/" class="x"><img alt="" src="https://al.rr.leg.br/a.jpg?x=1&#038;y=2" /></a>'
+            f'<a href="{rr.SITE}/deputados/ana-lima/"><img src="https://al.rr.leg.br/outra.jpg" /></a>'
+            f'<a href="{rr.SITE}/deputados/bia/"><img src="https://al.rr.leg.br/b.jpg" /></a><a href="{rr.SITE}/outra/">x</a>')
+    achados = rr.cartoes(html)
+    assert [c["slug"] for c in achados] == ["ana-lima", "bia"]
+    assert achados[0]["foto"] == "https://al.rr.leg.br/a.jpg?x=1&y=2" and achados[0]["url"] == f"{rr.SITE}/deputados/ana-lima/"
+    assert rr.cartoes("") == []
+
+
+def test_parse_ficha_usa_titulo_sem_h1_e_aceita_ficha_vazia():
+    sem_h1 = ('<title>Ana Lima | ALE-RR</title><meta property="og:description" content="Nome: Ana Lima Souza Data de Nascimento: 01 '
+              'Partido: Partido Progressista Gabinete: 2 e-mail: a@al.rr.leg.br" />')
+    f = rr.parse_ficha(sem_h1)
+    assert f["nome"] == "Ana Lima" and f["nomeCivil"] == "Ana Lima Souza" and f["email"] == "a@al.rr.leg.br"
+    assert rr.parse_ficha("<html></html>") == {"nome": None, "nomeCivil": None, "partido": None, "email": None}
+
+
+def test_coletar_deputados_ignora_ficha_sem_nome_e_usa_nome_como_civil():
+    lista = (f'<a href="{rr.SITE}/deputados/ana/"><img src="https://al.rr.leg.br/a.jpg" /></a>'
+             f'<a href="{rr.SITE}/deputados/vazio/"><img src="https://al.rr.leg.br/v.jpg" /></a>')
+    paginas = {rr.LISTA_DEPUTADOS: lista, f"{rr.SITE}/deputados/ana/": "<h1>Ana Lima</h1>", f"{rr.SITE}/deputados/vazio/": "<html></html>"}
+    deputados = rr.coletar_deputados(SessaoArquivos(paginas=paginas))
+    assert deputados == [{"id": "ana", "nome": "Ana Lima", "nomeCivil": "Ana Lima", "foto": "https://al.rr.leg.br/a.jpg", "email": None,
+                          "titular": True, "partido": None, "fonte": f"{rr.SITE}/deputados/ana/"}]
+
+
+def test_credenciais_e_erro_sem_lista_de_arquivos():
+    assert rr.credenciais('x "wpdf_nonce":"ab12" y <div data-sid="42">') == ("ab12", "42")
+    with pytest.raises(RuntimeError, match="wpdf_nonce"):
+        rr.credenciais('<div data-sid="42">')
+    with pytest.raises(RuntimeError):
+        rr.credenciais('"wpdf_nonce":"ab12"')
+
+
+def test_entradas_ignora_arquivo_sem_link_de_download_e_decodifica():
+    html = ('<li data-type="folder" data-name="03 - Mar&#231;o" data-path="Ano 2026/03/"></li>'
+            '<li class="file_record" data-name="A &amp; B.PDF" data-file-type="PDF"><a href="http://x/a?wpdf_download=1&#038;i=2"></a></li>'
+            '<li class="file_record" data-name="sem.pdf" data-file-type="pdf"><a href="http://x/sem.pdf"></a></li>')
+    pastas, arquivos = rr.entradas(html)
+    assert pastas == [("03 - Março", "Ano 2026/03/")]
+    assert arquivos == [{"nome": "A & B.PDF", "tipo": "pdf", "url": "http://x/a?wpdf_download=1&i=2"}]
+
+
+def test_lista_le_credenciais_raiz_e_posta_a_pasta():
+    pagina = ('<script>{"wpdf_nonce":"n1"}</script><div data-sid="4"></div>'
+              '<li data-type="folder" data-name="Ano 2026" data-path="Ano 2026/"></li>')
+    interno = ('<li data-type="folder" data-name="03-Março" data-path="Ano 2026/03-Março/"></li>'
+               '<li class="file_record" data-name="a.odt" data-file-type="odt"><a href="http://x/a?wpdf_download=1"></a></li>')
+    sessao = SessaoArquivos(paginas={rr.VERBAS_PAGINA: pagina, "Ano 2026/": interno})
+    lista = rr.Lista(sessao, rr.VERBAS_PAGINA)
+    assert (lista.nonce, lista.sid, lista.raiz[0]) == ("n1", "4", [("Ano 2026", "Ano 2026/")])
+    pastas, arquivos = lista.pasta("Ano 2026/")
+    assert pastas == [("03-Março", "Ano 2026/03-Março/")] and arquivos[0]["nome"] == "a.odt"
+    url, data = sessao.posts[0]
+    assert url == rr.AJAX
+    assert data == {"action": "wpdf_load_folder_data", "folder_name": "Ano 2026", "folder_path": "Ano 2026/", "sid": "4", "wpdf_nonce": "n1"}
+
+
+def test_numero_do_mes_e_ano_da_pasta_invalidos():
+    assert rr.numero_do_mes("13 - Mês") is None
+    assert rr.numero_do_mes("00 - Zero") is None
+    assert rr.numero_do_mes("2026") is None
+    assert rr.numero_do_mes("") is None
+    assert rr.ano_da_pasta("Contratos") is None
+    assert rr.ano_da_pasta("") is None
+
+
+def test_linhas_odf_colunas_repetidas():
+    corpo = ('<table:table-row><table:table-cell table:number-columns-repeated="3"><text:p>x</text:p></table:table-cell>'
+             '<table:table-cell table:number-columns-repeated="200"/></table:table-row>'
+             '<table:table-row><table:table-cell table:number-columns-repeated="60"><text:p>y</text:p></table:table-cell></table:table-row>'
+             '<table:table-row><table:table-cell/><table:table-cell/></table:table-row>')
+    xml = (f'<?xml version="1.0"?><office:document-content xmlns:office="urn:oasis:names:tc:opendocument:xmlns:office:1.0" xmlns:table="{NS_TABELA}" '
+           f'xmlns:text="{NS_TEXTO}"><office:body><office:text><table:table>{corpo}</table:table></office:text></office:body></office:document-content>')
+    buf = BytesIO()
+    with zipfile.ZipFile(buf, "w") as z:
+        z.writestr("content.xml", xml)
+    assert rr.linhas_odf(buf.getvalue()) == [["x", "x", "x", ""], ["y"]]
+
+
+def test_linhas_planilha_escolhe_leitor_pelo_tipo():
+    assert rr.linhas_planilha(xlsx([["A", "B"]]), "xlsx") == [["A", "B"]]
+    assert rr.linhas_planilha(odt([["A", "B"]]), "ods") == [["A", "B"]]
+
+
+def test_parse_verba_ignora_valor_zero_codigo_invalido_e_usa_rotulo_da_fonte():
+    linhas = [["4.1", "x", "0,00"], ["TOTAL", "x", "9,00"], ["4.1", "x"], ["9.9", " Item novo ", "10,50"], [" 2.1 ", "x", "1.000,00"]]
+    itens = rr.parse_verba(linhas)
+    assert [(i["item"], i["categoria"], i["grupo"], i["valor"]) for i in itens] == [
+        ("9.9", "Item novo", "Especialização de servidores de gabinete", 10.5), ("2.1", "Aluguel de imóveis", "Manutenção de escritório", 1000.0)]
+
+
+def test_nome_do_arquivo_sem_ponto_e_sem_nome():
+    assert rr.nome_do_arquivo("Dep Fulano de Tal - Maio 2026.odt") == "Fulano de Tal"
+    assert rr.nome_do_arquivo("Dep. Fulano - 2026.odt") is None
+
+
+def test_itens_verba_avisa_nome_sem_deputado_e_ignora_nome_so_com_pdf(capsys):
+    arquivos = [arquivo("Dep. Desconhecido Fulano - Janeiro 2026.odt", "odt"), arquivo("Dep. Marcos Jorge de Lima - Janeiro 2026.pdf", "pdf"),
+                arquivo("Dep. Angela Aguida Portela Alves - Janeiro 2026.odt", "odt", "http://x/a.odt"), arquivo("RESUMO.pdf", "pdf"),
+                arquivo("Dep. Joilma Teodora - Janeiro 2026.xlsx", "xlsx")]
+    itens = rr.itens_verba(arquivos, lambda url: odt([["4.1", "x", "100,00"]]), DEPUTADOS, 2026, 1)
+    assert [(i["idDeputado"], i["fonte"]) for i in itens] == [("angela", "http://x/a.odt")]
+    assert "verba de 'Desconhecido Fulano' não casou" in capsys.readouterr().err
+
+
+def test_periodo_para_datas_virada_de_mes_e_invalidos():
+    assert rr.periodo_para_datas("30 A 02/01/2026") == ("2025-12-30", "2026-01-02")
+    assert rr.periodo_para_datas("31 A 02/03/2026") == (None, "2026-03-02")
+    assert rr.periodo_para_datas("31/02/2026") == (None, None)
+    assert rr.periodo_para_datas("05/02") == (None, None)
+    assert rr.periodo_para_datas("05/02/2026") == ("2026-02-05", "2026-02-05")
+    assert rr.periodo_para_datas("") == (None, None)
+    assert rr.periodo_para_datas(None) == (None, None)
+    assert rr.periodo_para_datas("46197.0") == ("2026-06-24", "2026-06-24")
+    assert rr.periodo_para_datas("28/12 A 02/01/2026") == ("2025-12-28", "2026-01-02")
+
+
+def test_registros_diarias_cabecalho_deslocado_e_colunas_faltando():
+    linhas = [["Diárias de fevereiro"], ["NOME", "CARGO", "DESTINO"], ["JOILMA", "Deputado(a)", "BRASÍLIA"], ["", "DEPUTADA", "X"], ["ANA", "ASSESSOR", "Y"]]
+    assert rr.registros_diarias(linhas) == [{"nome": "JOILMA", "destino": "BRASÍLIA", "motivo": "", "periodo": "", "valor": None}]
+
+
+def test_itens_diarias_avisa_sem_deputado_e_usa_fim_quando_sem_inicio(capsys):
+    registros = [{"nome": "JOILMA TEODORA DE ARAUJO SILVA", "destino": "", "motivo": "", "periodo": "31 A 02/03/2026", "valor": 100.0},
+                 {"nome": "FULANO DESCONHECIDO", "destino": "X", "motivo": "Y", "periodo": "05/02/2026", "valor": 1.0}]
+    itens = rr.itens_diarias(registros, DEPUTADOS, "http://f")
+    assert itens == [{"idDeputado": "joilma", "data": "2026-03-02", "dataFim": "2026-03-02", "destino": None, "motivo": None, "valor": 100.0, "fonte": "http://f"}]
+    assert "diária de 'FULANO DESCONHECIDO' não casou" in capsys.readouterr().err
+
+
+def test_titulo_e_simbolo_do_cargo():
+    assert rr.titulo("MARIA DA SILVA E SOUZA") == "Maria da Silva e Souza"
+    assert rr.titulo("DE ANA") == "De Ana"
+    assert rr.titulo(None) == ""
+    assert rr.simbolo_do_cargo("FS-11 Secretario  Parlamentar ") == ("FS-11", "Secretario Parlamentar")
+    assert rr.simbolo_do_cargo("MOTORISTA") == (None, "MOTORISTA")
+    assert rr.simbolo_do_cargo(None) == (None, None)
+
+
+def test_servidores_do_gabinete_ignora_linha_sem_matricula_ou_nome_e_ordena():
+    gab = "GAB. DEP. JOILMA TEODORA"
+    linhas = [CAB_PESSOAL,
+              ["", "SEM MATRICULA", "C", "01/04/2026", "FS-1 A", "x", gab, "x"],
+              ["5", "", "C", "01/04/2026", "FS-1 A", "x", gab, "x"],
+              ["7", "ZE", "C", "01/04/2026", "FS-2 B", "x", gab, "x"],
+              ["6", "ANA", "C", "01/04/2026", "FS-1 B", "x", gab, "x"]]
+    assert [i["matricula"] for i in rr.servidores_do_gabinete(linhas, DEPUTADOS)] == ["6", "7"]
+
+
+def test_coletar_gabinete_usa_planilha_do_mes_mais_novo_que_tem_servidores(tmp_path, monkeypatch, capsys):
+    pessoal = xlsx([CAB_PESSOAL, ["36499", "ABADI JONATHAN", "COMISSIONADOS", "01/04/2026", "FS-11 Secretario", "x", "GAB. DEP. JOILMA TEODORA", "x"]])
+    raizes = {rr.GESTAO_PAGINA: ([("Ano 2026", "G26/")], [])}
+    pastas = {"G26/": ([("01 - Janeiro", "G1/"), ("02 - Fevereiro", "G2/")], []),
+              "G1/": ([], [arquivo("CONSULTA SERVIDORES.xlsx", "xlsx", "http://x/p.xlsx")]),
+              "G2/": ([], [arquivo("Resumo.pdf", "pdf"), arquivo("OUTRA.xlsx", "xlsx")])}
+    instalar_listas(monkeypatch, raizes, pastas)
+    rr.coletar_gabinete(SessaoArquivos({"http://x/p.xlsx": pessoal}), DEPUTADOS, tmp_path, date(2026, 6, 1))
+    grav = json.loads((tmp_path / "gabinete.json").read_text(encoding="utf-8"))
+    assert grav["referencia"] == "2026-01" and grav["coletadoEm"] == "2026-06-01" and grav["fonte"] == rr.GESTAO_PAGINA
+    assert [i["idDeputado"] for i in grav["itens"]] == ["joilma"]
+    assert "gabinetes 1 servidores de 1 deputados (01/2026)" in capsys.readouterr().out
+
+
+def test_coletar_gabinete_falha_sem_planilha_ou_sem_servidor_ligado(tmp_path, monkeypatch):
+    raizes = {rr.GESTAO_PAGINA: ([("Ano 2026", "G26/")], [])}
+    pastas = {"G26/": ([("01 - Janeiro", "G1/")], []), "G1/": ([], [arquivo("Resumo.pdf", "pdf")])}
+    instalar_listas(monkeypatch, raizes, pastas)
+    with pytest.raises(RuntimeError, match="sem planilha"):
+        rr.coletar_gabinete(SessaoArquivos(), DEPUTADOS, tmp_path, date(2026, 6, 1))
+    pastas["G1/"] = ([], [arquivo("CONSULTA SERVIDORES.xlsx", "xlsx", "http://x/p.xlsx")])
+    outro = xlsx([CAB_PESSOAL, ["1", "FULANO", "C", "01/04/2026", "FS-1 A", "x", "GAB. DEP. SEM PAR NENHUM", "x"]])
+    with pytest.raises(RuntimeError, match="nenhum servidor"):
+        rr.coletar_gabinete(SessaoArquivos({"http://x/p.xlsx": outro}), DEPUTADOS, tmp_path, date(2026, 6, 1))
+    assert not (tmp_path / "gabinete.json").exists()
+
+
+def test_rotulo_do_arquivo():
+    assert rr.rotulo_do_arquivo("PRIMEIRO TERMO ADITIVO CONTRATO 12-2025.pdf") == "Termo aditivo"
+    assert rr.rotulo_do_arquivo("TERMO DE APOSTILAMENTO 12-2025.pdf") == "Termo de apostilamento"
+    assert rr.rotulo_do_arquivo("TERMO DE RERRATIFICAÇÃO.pdf") == "Termo de rerratificação"
+    assert rr.rotulo_do_arquivo("CONTRATO 11-2025.pdf") == "Contrato"
+    assert rr.rotulo_do_arquivo("EMPENHO 767-2026.pdf") == "Documento"
+    assert rr.rotulo_do_arquivo("PUBLICACAO DO ADITIVO.pdf") == "Publicação: termo aditivo"
+    assert rr.rotulo_do_arquivo("PUBLICACAO.pdf") == "Publicação: documento"
+
+
+def test_contratos_da_pasta_documento_de_outro_numero_com_varios_contratos_e_pasta_sem_processo():
+    arquivos = [arq("CONTRATO 11-2025.pdf"), arq("CONTRATO 12-2025.pdf"), arq("TERMO ADITIVO CONTRATO 99-2025.pdf"), arq("SOLTO.pdf"),
+                arquivo("CONTRATO 13-2025.docx", "docx")]
+    itens = rr.contratos_da_pasta("Pasta sem numero", arquivos, "http://fonte")
+    assert sorted(i["numero"] for i in itens.values()) == ["11/2025", "12/2025"]
+    assert all(len(i["arquivos"]) == 1 and i["processo"] is None for i in itens.values())
+    assert rr.contratos_da_pasta("Pasta", [], "f") == {}
+    assert rr.contratos_da_pasta("Pasta", [arquivo("CONTRATO 5-2025.docx", "docx")], "f") == {}
+
+
+def test_contratos_da_pasta_ordena_por_ano_e_numero_e_normaliza_zeros():
+    itens = rr.contratos_da_pasta("Processo nº 007-2024", [arq("CONTRATO 0003-2025.pdf"), arq("CONTRATO 10-2024.pdf")], "f")
+    assert [i["numero"] for i in itens.values()] == ["10/2024", "03/2025"]
+    assert {i["processo"] for i in itens.values()} == {"7/2024"}
+
+
+def test_coletar_contratos_pula_ano_encerrado_e_pasta_sem_ano_e_avisa_falha_sem_perder_arquivo(tmp_path, monkeypatch, capsys):
+    hoje = date(2025, 6, 1)
+    (tmp_path / "orgao_2022.json").write_text("{}", encoding="utf-8")
+    anterior = {"coletadoEm": "2025-01-01", "fonte": rr.CONTRATOS_PAGINA, "itens": {"ctr_x": {"numero": "1/2025"}}}
+    comum.salvar(tmp_path / "orgao_2025.json", anterior)
+    raizes = {rr.CONTRATOS_PAGINA: ([("Ano 2022", "C22/"), ("Outros", "CX/"), ("Ano 2025", "C25/"), ("Ano 2024", "C24/")], [])}
+    pastas = {"C25/": ([("Processo nº 1-2025", "P1/")], []), "P1/": ([], [arq("EMPENHO 1-2025.pdf")]),
+              "C24/": ([("Processo nº 5-2024", "P5/")], []), "P5/": ([], [arq("CONTRATO 02-2024.pdf")])}
+    chamadas = instalar_listas(monkeypatch, raizes, pastas)
+    rr.coletar_contratos(object(), tmp_path, hoje)
+    assert "C22/" not in chamadas and "CX/" not in chamadas
+    assert json.loads((tmp_path / "orgao_2025.json").read_text(encoding="utf-8")) == anterior
+    assert "RR: contratos 2025: 2025 sem contrato na lista; mantém o arquivo anterior" in capsys.readouterr().err
+    novo = json.loads((tmp_path / "orgao_2024.json").read_text(encoding="utf-8"))
+    assert [i["numero"] for i in novo["itens"].values()] == ["02/2024"] and novo["coletadoEm"] == "2025-06-01"
+
+
+def test_contratos_do_ano_sem_contrato_e_sem_arquivo_anterior_grava_vazio(tmp_path, monkeypatch, capsys):
+    instalar_listas(monkeypatch, {"p": ([], [])}, {"C25/": ([], [])})
+    arq_ano = tmp_path / "orgao_2025.json"
+    rr.contratos_do_ano(rr.Lista(None, "p"), "C25/", 2025, arq_ano, date(2025, 6, 1))
+    assert json.loads(arq_ano.read_text(encoding="utf-8")) == {"coletadoEm": "2025-06-01", "fonte": rr.CONTRATOS_PAGINA, "itens": {}}
+    assert "2025 contratos 0 do órgão" in capsys.readouterr().out
+
+
+def test_tipo_da_planilha():
+    assert rr.tipo_da_planilha("CONTRATACOES DIRETAS FEV.xlsx") == "contratacao_direta"
+    assert rr.tipo_da_planilha("licitações fev.XLSX") == "licitacao"
+    assert rr.tipo_da_planilha("LICITACOES FEV.pdf") is None
+    assert rr.tipo_da_planilha("OUTRA.xlsx") is None
+
+
+def test_cnpj_do_texto():
+    assert rr.cnpj_do_texto("LOTE: GRZ LTDA CNPJ: 07.872.397/0001-50") == "07872397000150"
+    assert rr.cnpj_do_texto("A 07.872.397/0001-50 e B 07.872.397/0001-50") == "07872397000150"
+    assert rr.cnpj_do_texto("A 07.872.397/0001-50 e B 11.222.333/0001-81") is None
+    assert rr.cnpj_do_texto("CNPJ 07.872.397/0001-51") is None
+    assert rr.cnpj_do_texto("sem documento") is None
+    assert rr.cnpj_do_texto(None) is None
+
+
+def test_itens_licitacoes_repetido_acrescenta_edital_ignora_linha_incompleta_e_traco():
+    linhas = [["PROCESSO", "EDITAL", "OBJETO", "VENCEDOR (ES)", "VALOR HOMOLOGADO", "DATA", "SITUAÇÃO"],
+              ["1/2026", "E1", "Obj A", "-", "-", "05/02/2026", "ABERTA"],
+              ["1/2026", "E2", "Obj B", "EMPRESA X", "1.500,00", "", "HOMOLOGADA"],
+              ["2/2026", "E3", "", "Y", "1", "", "X"],
+              ["", "E4", "Obj C", "Y", "1", "", "X"]]
+    itens = rr.itens_licitacoes(linhas, "licitacao", "f", 3)
+    por_idf = {i["idFonte"]: i for i in itens.values()}
+    assert sorted(por_idf) == ["1/2026", "1/2026|E2"]
+    assert por_idf["1/2026"]["vencedor"] is None and por_idf["1/2026"]["valorHomologado"] is None and por_idf["1/2026"]["data"] == "2026-02-05"
+    assert por_idf["1/2026|E2"]["vencedor"] == "EMPRESA X" and por_idf["1/2026|E2"]["valorHomologado"] == 1500.0
+    assert por_idf["1/2026|E2"]["data"] is None and por_idf["1/2026|E2"]["mes"] == 3 and por_idf["1/2026|E2"]["procedimento"] is None
+
+
+def test_coletar_licitacoes_le_mes_mais_novo_de_cada_tipo_e_usa_pdf_como_fonte(tmp_path, monkeypatch, capsys):
+    hoje = date(2026, 6, 1)
+    (tmp_path / "licitacoes_2023.json").write_text("{}", encoding="utf-8")
+    anterior = {"coletadoEm": "2026-01-01", "itens": {"lic_x": {}}}
+    comum.salvar(tmp_path / "licitacoes_2025.json", anterior)
+    lic = xlsx([["PROCESSO", "OBJETO", "DATA", "SITUAÇÃO"], ["1/2026", "Obj jan", "46044", "ABERTA"]])
+    direta = xlsx([["PROCEDIMENTO", "PROCESSO", "OBJETO", "VENCEDOR (ES)", "DATA", "SITUAÇÃO"], ["001/2026", "3/2026", "Limpeza", "DOALE ED 1", "46044", "HOMOLOGADA"]])
+    raizes = {rr.LICITACOES_PAGINA: ([("Ano 2023", "L23/"), ("Ano 2024", "L24/"), ("Ano 2025", "L25/"), ("Ano 2026", "L26/")], [])}
+    pastas = {"L23/": ([("12 - Dezembro", "L23/12")], []), "L24/": ([("03 - Março", "L24/3")], []), "L25/": ([("03 - Março", "L25/3")], []),
+              "L26/": ([("01 - Janeiro", "L26/1"), ("02 - Fevereiro", "L26/2")], []),
+              "L24/3": ([], [arquivo("x.pdf", "pdf")]), "L25/3": ([], []),
+              "L26/1": ([], [arquivo("LICITACOES JAN.xlsx", "xlsx", "http://x/l.xlsx")]),
+              "L26/2": ([], [arquivo("CONTRATACOES DIRETAS FEV.xlsx", "xlsx", "http://x/d.xlsx"), arquivo("CONTRATACOES DIRETAS FEV.pdf", "pdf", "http://x/d.pdf")])}
+    chamadas = instalar_listas(monkeypatch, raizes, pastas)
+    rr.coletar_licitacoes(SessaoArquivos({"http://x/l.xlsx": lic, "http://x/d.xlsx": direta}), tmp_path, hoje)
+    assert "L23/12" not in chamadas and {"L26/1", "L26/2", "L24/3", "L25/3"} <= set(chamadas)
+    grav = json.loads((tmp_path / "licitacoes_2026.json").read_text(encoding="utf-8"))
+    assert grav["referencia"] == {"contratacao_direta": "2026-02", "licitacao": "2026-01"} and grav["fonte"] == rr.LICITACOES_PAGINA
+    por_tipo = {i["tipo"]: i for i in grav["itens"].values()}
+    assert por_tipo["licitacao"]["fonte"] == "http://x/l.xlsx" and por_tipo["contratacao_direta"]["fonte"] == "http://x/d.pdf"
+    assert por_tipo["contratacao_direta"]["referenciaDiario"] == "DOALE ED 1" and por_tipo["licitacao"]["mes"] == 1
+    assert not (tmp_path / "licitacoes_2024.json").exists()
+    assert json.loads((tmp_path / "licitacoes_2025.json").read_text(encoding="utf-8")) == anterior
+    captura = capsys.readouterr()
+    assert "RR: licitações 2025: 2025 sem planilha de licitações na lista; mantém o arquivo anterior" in captura.err
+    assert "2026 licitações 1 e contratações diretas 1 do órgão" in captura.out
+
+
+def test_licitacoes_do_ano_para_no_mes_que_completa_os_dois_tipos(tmp_path, monkeypatch):
+    lic = xlsx([["PROCESSO", "OBJETO"], ["1/2026", "A"]])
+    direta = xlsx([["PROCEDIMENTO", "PROCESSO", "OBJETO"], ["001/2026", "2/2026", "B"]])
+    chamadas = instalar_listas(monkeypatch, {"p": ([], [])}, {
+        "M3": ([], [arquivo("LICITACOES.xlsx", "xlsx", "http://x/l.xlsx"), arquivo("DIRETAS.xlsx", "xlsx", "http://x/d.xlsx")]), "M2": ([], [])})
+    conteudos = {"http://x/l.xlsx": lic, "http://x/d.xlsx": direta}
+    arq_ano = tmp_path / "licitacoes_2026.json"
+    rr.licitacoes_do_ano(rr.Lista(None, "p"), conteudos.__getitem__, 2026, [(3, "M3"), (2, "M2")], arq_ano, date(2026, 6, 1))
+    assert chamadas == ["M3"]
+    assert json.loads(arq_ano.read_text(encoding="utf-8"))["referencia"] == {"licitacao": "2026-03", "contratacao_direta": "2026-03"}
+
+
+def test_coletar_verbas_incremental_substitui_meses_recentes_e_pula_antigos(tmp_path, monkeypatch, capsys):
+    hoje = date(2026, 6, 15)
+    existente = {"itens": [{"idDeputado": "marcos", "mes": 1, "item": "1.1", "valor": 1.0}, {"idDeputado": "angela", "mes": 5, "item": "9.9", "valor": 2.0}],
+                 "mesesColetados": [1, 5]}
+    comum.salvar(tmp_path / "verbas_2026.json", existente)
+    raizes = {rr.VERBAS_PAGINA: ([("Ano 2026", "V26/")], [])}
+    pastas = {"V26/": ([(f"{m:02d} - Mes", f"V{m}") for m in range(1, 6)], []),
+              "V2": ([], []), "V4": ([], [arquivo("RESUMO GERAL.pdf", "pdf")]),
+              "V3": ([], [arquivo("Dep. Marcos Jorge de Lima - Março 2026.odt", "odt", "http://x/m.odt")]),
+              "V5": ([], [arquivo("Dep. Angela Aguida Portela Alves - Maio 2026.odt", "odt", "http://x/a.odt")])}
+    chamadas = instalar_listas(monkeypatch, raizes, pastas)
+    conteudos = {"http://x/m.odt": odt([["6.1", "z", "7.500,00"]]), "http://x/a.odt": odt([["4.1", "x", "5.000,00"]])}
+    rr.coletar_verbas(SessaoArquivos(conteudos), DEPUTADOS, tmp_path, hoje)
+    assert "V1" not in chamadas and {"V2", "V3", "V4", "V5"} <= set(chamadas)
+    grav = json.loads((tmp_path / "verbas_2026.json").read_text(encoding="utf-8"))
+    assert grav["mesesColetados"] == [1, 3, 4, 5] and grav["coletadoEm"] == "2026-06-15" and grav["fonte"] == rr.VERBAS_PAGINA
+    assert [(i["mes"], i["idDeputado"], i["item"], i["valor"]) for i in grav["itens"]] == [
+        (1, "marcos", "1.1", 1.0), (3, "marcos", "6.1", 7500.0), (5, "angela", "4.1", 5000.0)]
+    assert "verbas 2026 3 lançamentos em 4 meses" in capsys.readouterr().out
+
+
+def test_coletar_diarias_divide_por_ano_da_data_pula_encerrado_e_sem_efeito(tmp_path, monkeypatch, capsys):
+    hoje = date(2026, 6, 15)
+    (tmp_path / "diarias_2023.json").write_text('{"itens":[]}', encoding="utf-8")
+    cab = ["NOME", "CARGO", "DESTINO", "FINALIDADE", "PERÍODO", "VALOR"]
+    jan = xlsx([cab, ["JOILMA TEODORA DE ARAUJO SILVA", "DEPUTADA", "BRASÍLIA", "REUNIAO", "05/02/2026", "1250"],
+                ["JOILMA TEODORA DE ARAUJO SILVA", "DEPUTADA", "BRASÍLIA", "REUNIAO", "28/12/2025", "300"],
+                ["MARCOS JORGE DE LIMA", "DEPUTADO", "BRASÍLIA", "REUNIAO", "05/03/2023", "10"],
+                ["FULANO DESCONHECIDO", "DEPUTADO", "BRASÍLIA", "REUNIAO", "05/02/2026", "10"],
+                ["ASSESSOR X", "ASSESSOR", "BRASÍLIA", "REUNIAO", "05/02/2026", "10"]])
+    fev = odt([cab, ["MARCOS JORGE DE LIMA", "DEPUTADO", "BOA VISTA", "VISITA", "46100", "900"]])
+    raizes = {rr.DIARIAS_PAGINA: ([("Ano 2023", "D23/"), ("Ano 2026", "D26/")], [])}
+    pastas = {"D23/": ([("10 - Outubro", "D23/10")], []), "D26/": ([("01 - Janeiro", "D1"), ("02 - Fevereiro", "D2")], []),
+              "D1": ([], [arquivo("SEM EFEITO.pdf", "pdf", "http://x/se.pdf"), arquivo("DIARIAS JAN.pdf", "pdf", "http://x/j.pdf"),
+                          arquivo("DIARIAS JAN.xlsx", "xlsx", "http://x/j.xlsx"), arquivo("DIARIAS SEM EFEITO.xlsx", "xlsx", "http://x/se.xlsx")]),
+              "D2": ([], [arquivo("DIARIAS FEV.ods", "ods", "http://x/f.ods")])}
+    chamadas = instalar_listas(monkeypatch, raizes, pastas)
+    rr.coletar_diarias(SessaoArquivos({"http://x/j.xlsx": jan, "http://x/f.ods": fev}), DEPUTADOS, tmp_path, hoje)
+    assert "D23/10" not in chamadas
+    d26 = json.loads((tmp_path / "diarias_2026.json").read_text(encoding="utf-8"))
+    assert [(i["data"], i["idDeputado"], i["fonte"]) for i in d26["itens"]] == [
+        ("2026-02-05", "joilma", "http://x/j.pdf"), ("2026-03-19", "marcos", "http://x/f.ods")]
+    d25 = json.loads((tmp_path / "diarias_2025.json").read_text(encoding="utf-8"))
+    assert [(i["data"], i["valor"]) for i in d25["itens"]] == [("2025-12-28", 300.0)]
+    assert (tmp_path / "diarias_2023.json").read_text(encoding="utf-8") == '{"itens":[]}'
+    captura = capsys.readouterr()
+    assert "diária de 'FULANO DESCONHECIDO' não casou" in captura.err
+    assert "diárias 2026 2 registros" in captura.out and "diárias 2025 1 registros" in captura.out
+
+
+def test_coletar_lista_de_deputados_vazia_avisa_e_nao_coleta_mais_nada(tmp_path, monkeypatch, capsys):
+    chamadas = []
+    monkeypatch.setattr(comum, "DADOS", tmp_path)
+    monkeypatch.setattr(comum, "sessao", lambda: object())
+    monkeypatch.setattr(rr, "coletar_deputados", lambda s: [])
+    for nome in ("coletar_verbas", "coletar_diarias", "coletar_gabinete", "coletar_contratos", "coletar_licitacoes"):
+        monkeypatch.setattr(rr, nome, lambda *a, nome=nome: chamadas.append(nome))
+    rr.coletar()
+    assert chamadas == [] and not (tmp_path / "RR").exists()
+    assert "RR: lista de deputados vazia" in capsys.readouterr().err
+
+
+def test_coletar_falha_em_uma_etapa_nao_derruba_as_outras(tmp_path, monkeypatch, capsys):
+    chamadas = []
+    sessao = object()
+    monkeypatch.setattr(comum, "DADOS", tmp_path)
+    monkeypatch.setattr(comum, "sessao", lambda: sessao)
+    monkeypatch.setattr(rr, "coletar_deputados", lambda s: DEPUTADOS)
+    monkeypatch.setattr(rr, "coletar_verbas", lambda s, deps, pasta, hoje: chamadas.append(("verbas", s, deps, pasta)))
+    monkeypatch.setattr(rr, "coletar_diarias", lambda s, deps, pasta, hoje: chamadas.append(("diarias", s, deps, pasta)))
+
+    def gabinete(*a):
+        raise RuntimeError("pessoal fora do ar")
+
+    monkeypatch.setattr(rr, "coletar_gabinete", gabinete)
+    monkeypatch.setattr(rr, "coletar_contratos", lambda s, pasta, hoje: chamadas.append(("contratos", pasta)))
+    monkeypatch.setattr(rr, "coletar_licitacoes", lambda s, pasta, hoje: chamadas.append(("licitacoes", pasta)))
+    rr.coletar()
+    assert [c[0] for c in chamadas] == ["verbas", "diarias", "contratos", "licitacoes"]
+    assert chamadas[0][1:] == (sessao, DEPUTADOS, tmp_path / "RR")
+    assert "RR: gabinete: pessoal fora do ar" in capsys.readouterr().err
+    assert json.loads((tmp_path / "RR" / "deputados.json").read_text(encoding="utf-8"))["legislatura"] == "2023-2027"
+
+
+def test_conferir_verba_sinaliza_item_novo_e_demonstrativo_vazio():
+    falhas, avisos = rr._conferir_verba({"arquivo": "Dep. Ana - Maio 2026.odt", "linhas": [["9.9", "Novo", "10,00"]]})
+    assert falhas == [] and avisos == ["item de despesa novo: 9.9"]
+    falhas, _ = rr._conferir_verba({"arquivo": "RESUMO.odt", "linhas": [["x"]]})
+    assert falhas == ["nome do ODT fora do padrão", "demonstrativo sem item de despesa com valor"]
+
+
+def test_conferir_listagem_sem_pastas_arquivos_e_nome_fora_do_padrao():
+    falhas, _ = rr._conferir_listagem({"raiz": "", "pasta": ""})
+    assert falhas == ["lista de arquivos sem pastas por ano", "pasta mensal sem arquivos com link de download"]
+    pasta = '<li class="file_record" data-name="RESUMO.pdf" data-file-type="pdf"><a href="http://x/r?wpdf_download=1"></a></li>'
+    falhas, _ = rr._conferir_listagem({"raiz": '<li data-type="folder" data-name="Ano 2026" data-path="A/"></li>', "pasta": pasta})
+    assert falhas == ["nome de arquivo fora do padrão 'Dep. Nome - Mês Ano': RESUMO.pdf"]
+
+
+def test_conferir_diarias_sinaliza_periodo_ilegivel_e_sem_valor():
+    linhas = [["NOME", "CARGO", "DESTINO", "FINALIDADE", "PERÍODO", "VALOR"], ["ANA", "DEPUTADA", "X", "Y", "sem data", ""]]
+    falhas, _ = rr._conferir_diarias({"linhas": linhas})
+    assert falhas == ["período ilegível: 'sem data'", "diária sem valor"]
+    falhas, _ = rr._conferir_diarias({"linhas": [["x"]]})
+    assert falhas == ["planilha de diárias sem linha de deputado (cabeçalho NOME/CARGO/DESTINO mudou?)"]
+
+
+def test_conferir_gabinete_sem_cabecalho_e_sem_servidor():
+    falhas, _ = rr._conferir_gabinete({"linhas": [["x"]]})
+    assert falhas == ["planilha de pessoal sem o cabeçalho (Matrícula, Nome, Setor...)"]
+    falhas, _ = rr._conferir_gabinete({"linhas": [CAB_PESSOAL]})
+    assert falhas == ["planilha de pessoal sem servidor em setor 'GAB. DEP. <nome>'"]
+
+
+def test_conferir_contratos_sem_contrato_e_sem_publicacao():
+    falhas, _ = rr._conferir_contratos({"pasta": "Processo nº 1-2025", "arquivos": [arq("EMPENHO 1-2025.pdf")]})
+    assert falhas == ["pasta de processo sem arquivo 'CONTRATO NN-AAAA'"]
+    falhas, avisos = rr._conferir_contratos({"pasta": "Processo nº 1-2025", "arquivos": [arq("CONTRATO 1-2025.pdf")]})
+    assert falhas == [] and avisos == ["pasta sem PDF de publicação"]
+
+
+def test_conferir_licitacoes_sinaliza_planilha_sem_linhas_procedimento_e_data():
+    vazio = {"linhas": [["x"]]}
+    falhas, _ = rr._conferir_licitacoes({"licitacao": vazio, "contratacao_direta": vazio})
+    assert falhas == ["planilha de licitacao sem linha com objeto e processo (cabeçalho mudou?)",
+                      "planilha de contratacao_direta sem linha com objeto e processo (cabeçalho mudou?)"]
+    lic = {"linhas": [["PROCESSO", "OBJETO", "MODALIDADE", "SITUAÇÃO", "DATA"], ["1/2026", "Obj", "PREGÃO", "ABERTA", "46044"]]}
+    direta = {"linhas": [["PROCESSO", "OBJETO", "MODALIDADE", "SITUAÇÃO"], ["2/2026", "Obj", "DISPENSA", "ABERTA"]]}
+    falhas, _ = rr._conferir_licitacoes({"licitacao": lic, "contratacao_direta": direta})
+    assert falhas == ["contratação direta sem número do procedimento", "contratacao_direta: nenhuma data legível"]

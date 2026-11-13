@@ -7,7 +7,7 @@
     "gerar": "python scripts/gerar.py",
     "test": "npm run test:py && npm run test:js",
     "test:py": "python -m pytest -q",
-    "test:js": "node --test tests/js/app.test.js",
+    "test:js": "node --test tests/js/*.test.js",
     "test:e2e": "node --test tests/e2e/fumaca.test.js",
     "test:mobile": "node --test tests/e2e/mobile.test.js"
   }

@@ -1,5 +1,7 @@
 import json
 
+import pytest
+
 import coletar_estadual_mt as mt
 import estaduais_comum as comum
 from conftest import RAIZ
@@ -210,3 +212,237 @@ def test_regras_das_diarias_resolucao_primeiro():
     assert [d["titulo"] for d in regra["documentos"]][1] == "Tabela Diárias Atualizada.xlsx" and regra["fonte"] == mt.PUBLICACOES_PAGINA
     assert mt.regras_das_diarias({"outro": [{"valor": "PORTARIAS", "arquivos": [{"idArquivo": 1}]}]}, 2026) is None
     assert mt._conferir_publicacoes(r) == ([], [])
+
+
+class RespHttp:
+    def __init__(self, dados, status=200):
+        self.dados, self.status_code = dados, status
+
+    def raise_for_status(self):
+        if self.status_code >= 400:
+            raise RuntimeError(self.status_code)
+
+    def json(self):
+        return self.dados
+
+
+class SessaoFn:
+    def __init__(self, fn):
+        self.fn, self.chamadas = fn, []
+
+    def get(self, url, params=None, headers=None, timeout=None):
+        caminho = url.replace(mt.API, "")
+        self.chamadas.append((caminho, dict(params or {}), headers))
+        return self.fn(caminho, params or {})
+
+
+REGISTRO_CONTRATO = {"contrato": 5, "nome": "EMPRESA ALFA", "cnpjCpf": "11222333000181", "valorContratado": 10.0, "tipoAto": 1, "inicioVigencia": "2026-01-01",
+                     "terminoVigencia": "2026-12-31", "objeto": "o", "displayContrato": "5/2026"}
+
+
+def test_json_404_so_e_ignorado_quando_pedido():
+    s = SessaoFn(lambda caminho, params: RespHttp({"x": 1}, 404))
+    assert mt._json(s, "/x", 2026, ignorar_404=True) == {}
+    with pytest.raises(RuntimeError, match="404"):
+        mt._json(s, "/x", 2026)
+    com_erro = SessaoFn(lambda caminho, params: RespHttp(None, 500))
+    with pytest.raises(RuntimeError, match="500"):
+        mt._json(com_erro, "/x", 2026, ignorar_404=True)
+
+
+BUSCAS = [("buscar_servidores", "/servidores"), ("buscar_diarias", "/diarias"), ("buscar_gabinete", "/servidores"), ("buscar_contratos", "/contratos")]
+
+
+@pytest.mark.parametrize("funcao,caminho", BUSCAS)
+def test_busca_paginada_junta_as_paginas(funcao, caminho):
+    def resposta(c, params):
+        assert c == caminho
+        return RespHttp({"content": [{"pagina": params["page"]}], "last": params["page"] == 1})
+
+    s = SessaoFn(resposta)
+    assert getattr(mt, funcao)(s, 2026) == [{"pagina": 0}, {"pagina": 1}]
+    assert s.chamadas[0][2] == mt.cabecalhos(2026)
+
+
+@pytest.mark.parametrize("funcao,caminho", BUSCAS)
+def test_busca_paginada_propaga_erro_e_para_em_pagina_vazia(funcao, caminho):
+    with pytest.raises(RuntimeError, match="500"):
+        getattr(mt, funcao)(SessaoFn(lambda c, p: RespHttp(None, 500)), 2026)
+    vazia = SessaoFn(lambda c, p: RespHttp({"content": [], "last": False}))
+    assert getattr(mt, funcao)(vazia, 2026) == [] and len(vazia.chamadas) == 1
+
+
+def test_coletar_gabinete_grava_e_levanta_sem_servidor_ligado(tmp_path, monkeypatch):
+    registros = amostra("estadual_mt_gabinete")["content"]
+    monkeypatch.setattr(mt, "buscar_gabinete", lambda s, ano: registros)
+    mt.coletar_gabinete(None, tmp_path, DEPUTADOS, mt.date(2026, 11, 3))
+    env = json.loads((tmp_path / "gabinete.json").read_text(encoding="utf-8"))
+    assert [i["matricula"] for i in env["itens"]] == [50063, 50071] and env["coletadoEm"] == "2026-11-03"
+    monkeypatch.setattr(mt, "buscar_gabinete", lambda s, ano: [])
+    with pytest.raises(RuntimeError, match="nenhum servidor"):
+        mt.coletar_gabinete(None, tmp_path / "outra", DEPUTADOS, mt.date(2026, 11, 3))
+    assert not (tmp_path / "outra").exists()
+
+
+def test_arquivos_do_contrato_lista_vazia_e_item_sem_id():
+    assert mt.arquivos_do_contrato([], 2026) == [] and mt.arquivos_do_contrato(None, 2026) == []
+    assert mt.arquivos_do_contrato([{"nomeArquivo": "x"}], 2026) == []
+
+
+def test_itens_contratos_cnpj_invalido_e_registros_sem_chave():
+    registros = [{**REGISTRO_CONTRATO, "cnpjCpf": "12345"}, {"contrato": None, "nome": "X"}, {"contrato": 6, "nome": " "}]
+    (item,) = mt.itens_contratos(registros, 2026).values()
+    assert item["cnpj"] is None and item["tipo"] == "contrato" and item["idFonte"] == "2026|5" and item["valor"] == 10.0
+
+
+def test_buscar_arquivos_usa_o_tipo_do_ato_e_tolera_resposta_que_nao_e_lista():
+    s = SessaoFn(lambda c, p: RespHttp([{"idArquivo": 1, "nomeArquivo": "a.pdf"}]))
+    assert mt.buscar_arquivos(s, 2026, {"contrato": 7, "tipoAto": 2})[0]["url"].endswith("/files/arquivo/1?entidade=1&exercicio=2026")
+    mt.buscar_arquivos(s, 2026, {"contrato": 8, "tipoAto": 1})
+    assert [(c[1]["contrato"], c[1]["tipoAto"]) for c in s.chamadas] == [(7, 2), (8, 1)]
+    assert mt.buscar_arquivos(SessaoFn(lambda c, p: RespHttp({})), 2026, {"contrato": 7}) == []
+    with pytest.raises(RuntimeError, match="500"):
+        mt.buscar_arquivos(SessaoFn(lambda c, p: RespHttp(None, 500)), 2026, {"contrato": 7})
+
+
+def test_ultima_atualizacao_do_modulo_de_contratos():
+    s = SessaoFn(lambda c, p: RespHttp([{"modulo": 3, "ultimoAcesso": "x"}, {"modulo": "10", "ultimoAcesso": "t1"}]))
+    assert mt.ultima_atualizacao(s, 2026) == "t1" and s.chamadas[0][0] == "/contratos/ultimas-atualizacoes"
+    assert mt.ultima_atualizacao(SessaoFn(lambda c, p: RespHttp([{"modulo": 3, "ultimoAcesso": "x"}])), 2026) is None
+    assert mt.ultima_atualizacao(SessaoFn(lambda c, p: RespHttp({})), 2026) is None
+
+
+def test_contratos_erro_nos_arquivos_vira_aviso_e_o_item_fica_sem_link(tmp_path, capsys):
+    def resposta(c, params):
+        return RespHttp({"content": [REGISTRO_CONTRATO], "last": True}) if c == "/contratos" else RespHttp(None, 404)
+
+    mt.contratos_do_ano(SessaoFn(resposta), tmp_path, 2026, mt.date(2026, 11, 2), None)
+    (item,) = json.loads((tmp_path / "orgao_2026.json").read_text(encoding="utf-8"))["itens"].values()
+    assert item["arquivos"] == []
+    assert "arquivos do contrato 2026|5" in capsys.readouterr().err
+
+
+def test_contratos_prazo_esgotado_nos_arquivos_propaga_sem_gravar(tmp_path):
+    def resposta(c, params):
+        if c == "/contratos":
+            return RespHttp({"content": [REGISTRO_CONTRATO], "last": True})
+        raise comum.PrazoEsgotado("fim")
+
+    with pytest.raises(comum.PrazoEsgotado):
+        mt.contratos_do_ano(SessaoFn(resposta), tmp_path, 2026, mt.date(2026, 11, 2), None)
+    assert not (tmp_path / "orgao_2026.json").exists()
+
+
+def test_contratos_lista_vazia_com_arquivo_anterior_levanta(tmp_path):
+    (tmp_path / "orgao_2026.json").write_text(json.dumps({"completaEm": "2026-11-01", "itens": {"x": {"idFonte": "2026|1", "arquivos": []}}}), encoding="utf-8")
+    with pytest.raises(RuntimeError, match="lista vazia"):
+        mt.contratos_do_ano(SessaoFn(lambda c, p: RespHttp({"content": [], "last": True})), tmp_path, 2026, mt.date(2026, 11, 2), None)
+
+
+def test_contratos_nao_busca_de_novo_os_arquivos_ja_guardados(tmp_path):
+    guardado = {"completaEm": "2026-11-01", "atualizacao": "t1", "itens": {"x": {"idFonte": "2026|5", "arquivos": [{"url": "u", "nome": "n", "data": None}]}}}
+    (tmp_path / "orgao_2026.json").write_text(json.dumps(guardado), encoding="utf-8")
+    s = SessaoFn(lambda c, p: RespHttp({"content": [REGISTRO_CONTRATO], "last": True}))
+    mt.contratos_do_ano(s, tmp_path, 2026, mt.date(2026, 11, 2), "t2")
+    assert [c[0] for c in s.chamadas] == ["/contratos"]
+    (item,) = json.loads((tmp_path / "orgao_2026.json").read_text(encoding="utf-8"))["itens"].values()
+    assert item["arquivos"] == [{"url": "u", "nome": "n", "data": None}]
+
+
+def test_coletar_contratos_passa_atualizacao_so_ao_ano_corrente_e_isola_falha(tmp_path, monkeypatch, capsys):
+    monkeypatch.setattr(mt, "PRIMEIRO_ANO", 2025)
+    monkeypatch.setattr(mt, "ultima_atualizacao", lambda s, ano: "t9")
+    chamadas = []
+
+    def contratos_do_ano(s, pasta, ano, hoje, atualizacao):
+        chamadas.append((ano, atualizacao))
+        if ano == 2025:
+            raise RuntimeError("fora do ar")
+
+    monkeypatch.setattr(mt, "contratos_do_ano", contratos_do_ano)
+    mt.coletar_contratos(None, tmp_path, mt.date(2026, 11, 3))
+    assert chamadas == [(2025, None), (2026, "t9")]
+    assert "MT: contratos 2025: fora do ar" in capsys.readouterr().err
+
+
+def test_grupos_por_nome_aninhado_e_arquivos_do_grupo():
+    arvore = {"a": [{"b": {"valor": "Legislações de Diárias", "x": []}}], "valor": 5}
+    assert [g["valor"] for g in mt.grupos_por_nome(arvore, mt.GRUPO_DIARIAS)] == ["Legislações de Diárias"]
+    assert mt.grupos_por_nome(arvore, "inexistente") == []
+    assert mt.arquivos_do_grupo({"valor": "x"}) == [] and mt.arquivos_do_grupo("texto") == [] and mt.arquivos_do_grupo([]) == []
+    assert [a["idArquivo"] for a in mt.arquivos_do_grupo({"n": [{"idArquivo": 0}, {"k": {"idArquivo": 1}}]})] == [0, 1]
+
+
+def test_regras_das_diarias_sem_resolucao_vale_o_mais_novo():
+    arvore = [{"valor": "Legislações de Diárias", "arquivos": [{"idArquivo": 1, "nomeArquivo": "Tabela A.xlsx", "dataArquivo": "2024-01-05"},
+                                                              {"idArquivo": 2, "nomeArquivo": "Tabela B.xlsx", "dataArquivo": "2025-02-01"},
+                                                              {"idArquivo": 3, "nomeArquivo": "Sem data.xlsx"}]}]
+    regra = mt.regras_das_diarias(arvore, 2026)
+    assert regra["titulo"] == "Tabela B.xlsx" and regra["ano"] == 2025
+    assert [d["ano"] for d in regra["documentos"]] == [2025, 2024, None]
+
+
+def test_coletar_regras_grava_e_levanta_sem_grupo(tmp_path, monkeypatch):
+    arvore = {"grupos": [{"valor": "Legislações de Diárias", "arquivos": [{"idArquivo": 1, "nomeArquivo": "Resolução 1", "dataArquivo": "2023-03-01"}]}]}
+    monkeypatch.setattr(mt, "_json", lambda s, caminho, ano, **kw: arvore)
+    mt.coletar_regras(None, tmp_path, mt.date(2026, 11, 3))
+    env = json.loads((tmp_path / "regras_ressarcimento.json").read_text(encoding="utf-8"))
+    assert env["titulo"] == "Resolução 1" and env["ano"] == 2023
+    monkeypatch.setattr(mt, "_json", lambda s, caminho, ano, **kw: {})
+    with pytest.raises(RuntimeError, match="não achado"):
+        mt.coletar_regras(None, tmp_path / "outra", mt.date(2026, 11, 3))
+    assert not (tmp_path / "outra").exists()
+
+
+def test_coletar_sem_deputados_avisa_e_nao_grava(tmp_path, monkeypatch, capsys):
+    monkeypatch.setattr(comum, "DADOS", tmp_path)
+    monkeypatch.setattr(comum, "sessao", lambda: None)
+    monkeypatch.setattr(mt, "buscar_servidores", lambda s, ano: [])
+    mt.coletar()
+    assert "nenhum deputado ativo" in capsys.readouterr().err
+    assert not (tmp_path / "MT").exists()
+
+
+def test_coletar_pula_ano_encerrado_e_avisa_etapas_que_falham(tmp_path, monkeypatch, capsys):
+    pasta = tmp_path / "estaduais" / "MT"
+    pasta.mkdir(parents=True)
+    for nome in ("remuneracao_2023.json", "diarias_2023.json"):
+        (pasta / nome).write_text("{}", encoding="utf-8")
+    monkeypatch.setattr(mt, "PRIMEIRO_ANO", 2023)
+    monkeypatch.setattr(comum, "DADOS", tmp_path / "estaduais")
+    monkeypatch.setattr(comum, "sessao", lambda: None)
+    monkeypatch.setattr(mt, "buscar_servidores", lambda s, ano: [servidor(100176, "ALBERTO MACHADO", "GAB DEP BETO")])
+    monkeypatch.setattr(mt, "deputados_do_tse", lambda: [])
+    monkeypatch.setattr(mt, "_json", lambda s, caminho, ano, **kw: {})
+    anos = []
+    monkeypatch.setattr(mt, "buscar_diarias", lambda s, ano: anos.append(ano) or [])
+    chamadas = []
+
+    def falha(*a, **k):
+        raise RuntimeError("fora do ar")
+
+    monkeypatch.setattr(mt, "coletar_gabinete", falha)
+    monkeypatch.setattr(mt, "coletar_contratos", lambda *a, **k: chamadas.append("contratos"))
+    monkeypatch.setattr(mt, "coletar_regras", falha)
+    mt.coletar()
+    assert anos == list(range(2024, mt.date.today().year + 1))
+    assert (pasta / "remuneracao_2023.json").read_text(encoding="utf-8") == "{}"
+    assert json.loads((pasta / "deputados.json").read_text(encoding="utf-8"))["deputados"][0]["id"] == "100176"
+    err = capsys.readouterr().err
+    assert chamadas == ["contratos"] and "MT: gabinete: fora do ar" in err and "MT: regras das diárias: fora do ar" in err
+
+
+def test_conferir_com_falhas():
+    assert mt._conferir_gabinete({"content": []}) == (["/servidores?lotacao=GAB sem lotação de deputado"], [])
+    assert "servidor de gabinete sem nome" in mt._conferir_gabinete({"content": [{"matricula": 1}]})[0]
+    assert mt._conferir_contratos({"content": [], "ano": 2026, "arquivos": [], "atualizacoes": []}) == (
+        ["/contratos sem contrato nem ata no ano", "/contratos sem ata de registro de preço (descricaoTipoAto)", "/contratos/arquivos sem idArquivo",
+         "/contratos/ultimas-atualizacoes sem o módulo 10"], [])
+    assert mt._conferir_publicacoes({"grupos": [], "ano": 2026}) == (['/publicacoes sem o grupo "Legislações de Diárias" com arquivos'], [])
+    assert mt._conferir_servidores({"content": []}) == (["nenhum deputado ativo em /servidores?cargo=DEPUTADO"], [])
+    assert "servidor sem nome" in mt._conferir_servidores({"content": [{"matricula": 1}]})[0]
+    assert mt._conferir_remuneracao({"matricula": 1, "ano": 2026, "dadosFinanceiros": []}) == (["/servidores/{matrícula} sem dadosFinanceiros do ano"], [])
+    sem_valores = {"matricula": 1, "ano": 2026, "dadosFinanceiros": [{"anoCompetencia": 2026, "mesCompetencia": 1, "vencimentos": None, "descontos": None}]}
+    assert mt._conferir_remuneracao(sem_valores) == (["folha sem vencimentos ou descontos"], [])
+    assert mt._conferir_diarias({"content": []}) == (["/diarias sem registros no ano"], [])
+    assert "diária sem dataSaida" in mt._conferir_diarias({"content": [{"nome": "x"}]})[0]

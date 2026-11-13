@@ -1,6 +1,8 @@
 import json
 from datetime import date
 
+import pytest
+
 import coletar_estadual_pa as pa
 import estaduais_comum as comum
 from conftest import RAIZ
@@ -441,3 +443,335 @@ def test_ligar_nome_de_urna_com_sobrenome_a_mais():
     deputados = [{"id": "1037", "nome": "Torrinho", "nomeCivil": "Francisco Torres de Paula Filho"},
                  {"id": "1038", "nome": "Torres", "nomeCivil": "Pedro Torres"}]
     assert pa.ligar(["TORRINHO TORRES", "TORRINHO"], deputados) == {"TORRINHO TORRES": "1037", "TORRINHO": "1037"}
+
+
+class RespostaHttp:
+    def __init__(self, texto="", dados=None, status=200):
+        self.text, self._dados, self.status_code = texto, dados, status
+
+    def raise_for_status(self):
+        if self.status_code >= 400:
+            raise RuntimeError(f"HTTP {self.status_code}")
+
+    def json(self):
+        return self._dados
+
+
+class SessaoHttp:
+    def __init__(self, resposta):
+        self.resposta = resposta
+        self.chamadas = []
+
+    def get(self, url, **kw):
+        self.chamadas.append(("GET", url, kw))
+        return self.resposta
+
+    def post(self, url, **kw):
+        self.chamadas.append(("POST", url, kw))
+        return self.resposta
+
+
+def test_mes_anterior_vira_o_ano():
+    assert pa.mes_anterior(2026, 1) == (2025, 12) and pa.mes_anterior(2026, 5) == (2026, 4)
+
+
+def test_consulta_lista_votacoes_e_votacao_montam_a_requisicao():
+    s = SessaoHttp(RespostaHttp("<html/>"))
+    assert pa.consulta_lista_votacoes(s, 2026, 10) == "<html/>"
+    metodo, url, kw = s.chamadas[0]
+    assert (metodo, url) == ("POST", pa.VOTACOES_LISTA_URL) and kw["data"] == {"__DXCallbackName": "cbpPautas", "__DXCallbackArgument": "c0:", "ano": "2026", "mes": "10"}
+    assert pa.consulta_votacao(s, {"idProposicao": "16339", "idVotacao": "8869"}) == "<html/>"
+    assert s.chamadas[1][:2] == ("GET", pa.VOTACAO_URL.format("16339", "8869"))
+    with pytest.raises(RuntimeError, match="HTTP 500"):
+        pa.consulta_lista_votacoes(SessaoHttp(RespostaHttp(status=500)), 2026, 10)
+    with pytest.raises(RuntimeError, match="HTTP 404"):
+        pa.consulta_votacao(SessaoHttp(RespostaHttp(status=404)), {"idProposicao": "1", "idVotacao": "2"})
+
+
+def test_consulta_frequencia_e_gabinete_enviam_ano_e_mes():
+    s = SessaoHttp(RespostaHttp("<tabela/>"))
+    assert pa.consulta_frequencia(s, 2026, 9) == "<tabela/>"
+    assert s.chamadas[0][1] == pa.FREQUENCIA_URL and s.chamadas[0][2]["data"] == {"__DXCallbackName": "cbpFrequencia", "__DXCallbackArgument": "c0:", "ano": "2026", "mes": "9", "tipoSessao": "0"}
+    assert pa.consulta_gabinete(s, 2026, 9) == "<tabela/>"
+    assert s.chamadas[1][1] == pa.GABINETE_URL and s.chamadas[1][2]["data"] == {"anoref": "26", "mes": "09"}
+    with pytest.raises(RuntimeError, match="HTTP 502"):
+        pa.consulta_frequencia(SessaoHttp(RespostaHttp(status=502)), 2026, 9)
+
+
+def test_consulta_pautas_usa_a_url_e_o_callback_de_cada_tipo():
+    s = SessaoHttp(RespostaHttp("<a/>"))
+    assert pa.consulta_pautas(s, "atas", 2026, 3) == "<a/>"
+    assert pa.consulta_pautas(s, "ordem-do-dia", 2026, 12) == "<a/>"
+    assert s.chamadas[0][1] == pa.PAUTAS["atas"][1] and s.chamadas[0][2]["data"] == {"__DXCallbackName": "cbpAtas", "__DXCallbackArgument": "c0:", "ano": "2026", "mes": "3"}
+    assert s.chamadas[1][1] == pa.PAUTAS["ordem-do-dia"][1] and s.chamadas[1][2]["data"]["__DXCallbackName"] == "cbpPautas"
+    with pytest.raises(RuntimeError, match="HTTP 500"):
+        pa.consulta_pautas(SessaoHttp(RespostaHttp(status=500)), "atas", 2026, 3)
+
+
+def test_consulta_normas_devolve_resultados_e_levanta_com_status_falso(monkeypatch):
+    monkeypatch.setattr(pa.time, "sleep", lambda s: None)
+    s = SessaoHttp(RespostaHttp(dados={"status": True, "resultados": [{"id": 1}]}))
+    assert pa.consulta_normas(s, 2026, 3, "12") == [{"id": 1}]
+    assert s.chamadas[0][1] == pa.NORMAS_API and s.chamadas[0][2]["params"] == {"ano": 2026, "tipo": 3, "numero": "12", "q": ""}
+    assert pa.consulta_normas(SessaoHttp(RespostaHttp(dados={"status": True, "resultados": None})), 2026, 3) == []
+    with pytest.raises(RuntimeError, match="leis.php ano=2026 tipo=3 numero=12: status falso"):
+        pa.consulta_normas(SessaoHttp(RespostaHttp(dados={"status": False})), 2026, 3, "12")
+    with pytest.raises(RuntimeError, match="HTTP 500"):
+        pa.consulta_normas(SessaoHttp(RespostaHttp(status=500)), 2026, 3)
+
+
+def test_consulta_grade_e_dashboard_leem_o_datastorage():
+    dto = {"Slices": [], "EncodeMaps": {}}
+    s = SessaoHttp(RespostaHttp(dados={"ItemData": {"DataStorageDTO": dto}}))
+    assert pa.consulta_grade(s, pa.DASHBOARD_CONTRATOS) == dto
+    assert s.chamadas[0][1] == pa.DASHBOARD_URL
+    assert s.chamadas[0][2]["params"] == {"dashboardId": "dashboard52", "parameters": "[]", "itemId": "gridDashboardItem1", "query": "{}"}
+    assert pa.consulta_dashboard(s, pa.DASHBOARD_VERBA, 2026) == dto
+    params = s.chamadas[1][2]["params"]
+    assert params["dashboardId"] == "dashboard57" and json.loads(params["query"])["Filter"][0]["values"] == [[2026]]
+    with pytest.raises(RuntimeError, match="HTTP 500"):
+        pa.consulta_grade(SessaoHttp(RespostaHttp(status=500)), pa.DASHBOARD_LICITACOES)
+    with pytest.raises(RuntimeError, match="HTTP 403"):
+        pa.consulta_dashboard(SessaoHttp(RespostaHttp(status=403)), pa.DASHBOARD_VERBA, 2026)
+
+
+def test_normas_do_ano_junta_tipos_e_ordena(monkeypatch):
+    tipos = []
+
+    def consulta(_s, ano, tipo, numero=""):
+        tipos.append(tipo)
+        n = {1: "20", 2: "3"}.get(tipo)
+        if not n:
+            return []
+        return [{"id": tipo, "numero": n, "ano": "2026", "tipo": "Lei Ordinária", "ementa": "x", "link_pdf": f"https://x/{n}.pdf"}]
+
+    monkeypatch.setattr(pa, "consulta_normas", consulta)
+    achadas = pa.normas_do_ano(None, 2026)
+    assert tipos == list(pa.NORMAS_TIPOS) and list(achadas) == ["2", "1"]
+
+
+def test_ultimo_mes_publicado_sem_filtros_levanta():
+    with pytest.raises(RuntimeError, match="sem os filtros"):
+        pa.ultimo_mes_publicado("<html>sem select</html>")
+
+
+def test_coletar_gabinete_sem_servidor_ligado_nao_grava(tmp_path):
+    with pytest.raises(RuntimeError, match="nenhum servidor ligado"):
+        pa.coletar_gabinete(SessaoSigep({}), tmp_path / "PA", [], "2026-11-01")
+    assert not (tmp_path / "PA" / "gabinete.json").exists()
+
+
+class SessaoDuasLinhas(SessaoSigep):
+    def post(self, url, data=None, timeout=None):
+        self.buscas.append((data["anoref"], data["mes"], data["b_nome"]))
+        mes = int(data["mes"])
+        self.folhas["081309"] = (2026, mes)
+        self.folhas["055"] = (2026, mes)
+        if "GUSTAVO" in data["b_nome"]:
+            return RespostaSigep(tabela_servidores(("081309", "GUSTAVO BEMERGUY SEFER", "DEPUTADO ESTADUAL", "PLENARIO"),
+                                                  ("055", "ANA MARIA DO SOCORRO MAGNO CUNHA", "DEPUTADO ESTADUAL", "PLENARIO")))
+        return RespostaSigep(tabela_servidores())
+
+
+def test_remuneracao_do_mes_nao_busca_quem_ja_veio_ligado(monkeypatch):
+    sessao = SessaoDuasLinhas({})
+    monkeypatch.setattr(pa.time, "sleep", lambda _s: None)
+    buscas = {}
+    itens = pa.remuneracao_do_mes(sessao, 2026, 10, DEPUTADOS_SIGEP[:2], buscas)
+    assert [i["idDeputado"] for i in itens] == ["1011", "1021"]
+    assert len(sessao.buscas) == 1 and buscas == {"1021": "GUSTAVO BEMERGUY SEFER"}
+
+
+def test_remuneracao_do_mes_busca_primeiro_o_termo_que_deu_certo(monkeypatch):
+    sessao = SessaoSigep({})
+    monkeypatch.setattr(pa.time, "sleep", lambda _s: None)
+    buscas = {"1021": "GUSTAVO SEFER"}
+    itens = pa.remuneracao_do_mes(sessao, 2026, 10, DEPUTADOS_SIGEP[:1], buscas)
+    assert len(itens) == 1 and sessao.buscas == [("26", "10", "GUSTAVO SEFER")] and buscas == {"1021": "GUSTAVO SEFER"}
+
+
+def test_remuneracao_do_mes_avisa_deputado_sem_linha_e_descarta_folha_de_outro_mes(monkeypatch, capsys):
+    monkeypatch.setattr(pa.time, "sleep", lambda _s: None)
+    sem_par = {"id": "9999", "nome": "Fulano Inexistente", "nomeCivil": "Fulano Inexistente Da Silva"}
+    itens = pa.remuneracao_do_mes(SessaoSigep({}), 2026, 10, [DEPUTADOS_SIGEP[0], sem_par], {})
+    assert [i["idDeputado"] for i in itens] == ["1021"]
+    assert "AVISO: PA: remuneração 2026-10 sem linha de deputado para: Fulano Inexistente" in capsys.readouterr().err
+
+    class Divergente(SessaoSigep):
+        def post(self, url, data=None, timeout=None):
+            r = super().post(url, data, timeout)
+            self.folhas["081309"] = (2026, 10)
+            return r
+
+    assert pa.remuneracao_do_mes(Divergente({}), 2026, 9, [DEPUTADOS_SIGEP[0], sem_par], {}) == []
+    assert capsys.readouterr().err == ""
+
+    monkeypatch.setattr(pa, "parse_detalhe", lambda html: {"ano": 2026, "mes": 10, "valores": {"total bruto": None}})
+    assert pa.remuneracao_do_mes(SessaoSigep({}), 2026, 10, DEPUTADOS_SIGEP[:1], {}) == []
+
+
+def test_coletar_remuneracao_pula_ano_encerrado_e_meses_lidos(tmp_path, monkeypatch):
+    sessao = SessaoSigep({})
+    monkeypatch.setattr(pa.time, "sleep", lambda _s: None)
+    monkeypatch.setattr(comum, "arquivo_tse", lambda uf: tmp_path / "sem_tse.json")
+    monkeypatch.setattr(pa, "PRIMEIRO_MES_REMUNERACAO", (2025, 12))
+    pasta = tmp_path / "PA"
+    comum.salvar(pasta / "remuneracao_2025.json", {"marca": "antiga", "meses": {}, "itens": []})
+    comum.salvar(pasta / "remuneracao_2026.json", {"meses": {f"2026-{m:02d}": "2026-12-01" for m in range(1, 9)}, "buscas": {"1021": "GUSTAVO SEFER"},
+                                                   "itens": [{"idDeputado": "1021", "mes": 8, "bruto": 1.0, "liquido": 1.0, "componentes": {}}]})
+    pa.coletar_remuneracao(sessao, pasta, DEPUTADOS_SIGEP[:1], date(2027, 1, 15), "2027-01-15")
+    assert json.loads((pasta / "remuneracao_2025.json").read_text(encoding="utf-8"))["marca"] == "antiga"
+    assert sorted(m for _, m, _ in sessao.buscas) == ["09", "10"] and {t for _, _, t in sessao.buscas} == {"GUSTAVO SEFER"}
+    arq = json.loads((pasta / "remuneracao_2026.json").read_text(encoding="utf-8"))
+    assert [i["mes"] for i in arq["itens"]] == [8, 9, 10] and arq["itens"][0]["bruto"] == 1.0
+
+
+def test_coletar_remuneracao_mes_sem_deputado_levanta_e_nao_grava(tmp_path, monkeypatch):
+    class SemLinhas(SessaoSigep):
+        def post(self, url, data=None, timeout=None):
+            return RespostaSigep(tabela_servidores())
+
+    monkeypatch.setattr(pa.time, "sleep", lambda _s: None)
+    monkeypatch.setattr(comum, "arquivo_tse", lambda uf: tmp_path / "sem_tse.json")
+    monkeypatch.setattr(pa, "PRIMEIRO_MES_REMUNERACAO", (2026, 8))
+    with pytest.raises(RuntimeError, match="folha de 2026-08 sem nenhum deputado; mantém o arquivo anterior"):
+        pa.coletar_remuneracao(SemLinhas({}), tmp_path / "PA", DEPUTADOS_SIGEP[:1], date(2026, 11, 1), "2026-11-01")
+    assert not (tmp_path / "PA" / "remuneracao_2026.json").exists()
+
+
+def orgao_de_amostra(s, dashboard):
+    registro = amostra("estadual_pa_orgao")
+    return registro["contratos"] if dashboard == pa.DASHBOARD_CONTRATOS else registro["licitacoes"]
+
+
+def test_coletar_catalogos_grava_pautas_normas_e_orgao_por_ano(tmp_path, monkeypatch, capsys):
+    pasta = tmp_path / "PA"
+    monkeypatch.setattr(pa, "pautas_do_ano", lambda s, ano, hoje, anterior: ({f"atas|{ano}": {"id": str(ano)}}, {f"atas|{ano}-01": "2026-11-02"}))
+    monkeypatch.setattr(pa, "normas_do_ano", lambda s, ano: {"1": {"numero": "1", "ano": ano}})
+    monkeypatch.setattr(pa, "consulta_grade", orgao_de_amostra)
+    pa.coletar_catalogos(None, pasta, date(2026, 11, 2))
+    for ano in (2025, 2026):
+        assert list(json.loads((pasta / f"pautas_{ano}.json").read_text(encoding="utf-8"))["itens"]) == [f"atas|{ano}"]
+        assert json.loads((pasta / f"leis_{ano}.json").read_text(encoding="utf-8"))["normas"] == {"1": {"numero": "1", "ano": ano}}
+    orgaos = sorted(pasta.glob("orgao_[0-9]*.json"))
+    assert orgaos and all(json.loads(p.read_text(encoding="utf-8"))["itens"] for p in orgaos)
+    assert capsys.readouterr().err == ""
+
+
+def test_coletar_catalogos_erros_viram_aviso_e_normas_recentes_nao_sao_relidas(tmp_path, monkeypatch, capsys):
+    pasta = tmp_path / "PA"
+    comum.salvar(pasta / "leis_2025.json", {"coletadoEm": "2026-01-01", "normas": {"1": {}}})
+    comum.salvar(pasta / "leis_2026.json", {"coletadoEm": "2026-11-01", "normas": {"2": {}}})
+    comum.salvar(pasta / "orgao_2020.json", {"itens": {"ctr_x": {}}})
+    normas_lidas = []
+
+    def normas_vazias(s, ano):
+        normas_lidas.append(ano)
+        return {}
+
+    def pautas(s, ano, hoje, anterior):
+        raise RuntimeError(f"HTTP 500 {ano}")
+
+    monkeypatch.setattr(pa, "pautas_do_ano", pautas)
+    monkeypatch.setattr(pa, "normas_do_ano", normas_vazias)
+    monkeypatch.setattr(pa, "consulta_grade", lambda s, dashboard: {})
+    monkeypatch.setattr(pa, "celulas_grade", lambda dto: [])
+    pa.coletar_catalogos(None, pasta, date(2026, 11, 2))
+    erro = capsys.readouterr().err
+    assert normas_lidas == [2025]
+    assert "AVISO: PA: pautas e atas 2025: HTTP 500 2025" in erro and "AVISO: PA: pautas e atas 2026: HTTP 500 2026" in erro
+    assert "AVISO: PA: normas 2025: banco de leis devolveu lista vazia para 2025; mantém o arquivo anterior" in erro
+    assert "AVISO: PA: contratos e atas de registro do órgão: dashboards devolveram lista vazia; mantém os arquivos anteriores" in erro
+    assert json.loads((pasta / "leis_2025.json").read_text(encoding="utf-8"))["normas"] == {"1": {}}
+    assert json.loads((pasta / "orgao_2020.json").read_text(encoding="utf-8"))["itens"] == {"ctr_x": {}}
+
+
+class DataFixa(date):
+    @classmethod
+    def today(cls):
+        return cls(2026, 11, 2)
+
+
+class SessaoRastreada(Sessao):
+    def __init__(self, *a):
+        super().__init__(*a)
+        self.dashboards, self.meses_frequencia, self.fichas = [], [], []
+
+    def get(self, url, params=None, timeout=None):
+        if url == pa.DASHBOARD_URL:
+            self.dashboards.append(params["dashboardId"])
+        elif url not in (pa.FREQUENCIA_URL, pa.NORMAS_API):
+            self.fichas.append(url)
+        return super().get(url, params, timeout)
+
+    def post(self, url, data=None, timeout=None):
+        if url == pa.FREQUENCIA_URL:
+            self.meses_frequencia.append(data["mes"])
+        return super().post(url, data, timeout)
+
+
+def preparar_coletar_pa(monkeypatch, tmp_path, html_frequencia):
+    dto = amostra("estadual_pa_verba_indenizatoria")["DataStorageDTO"]
+    gabinete = amostra("estadual_pa_verba_gabinete")["html"]
+    sessao = SessaoRastreada(html_frequencia, dto, f"<table>{gabinete}</table>")
+    monkeypatch.setattr(comum, "DADOS", tmp_path)
+    monkeypatch.setattr(comum, "sessao", lambda: sessao)
+    monkeypatch.setattr(pa, "date", DataFixa)
+    monkeypatch.setattr(pa.time, "sleep", lambda _s: None)
+    return sessao, tmp_path / "PA"
+
+
+def test_coletar_sem_deputados_avisa_e_ainda_coleta_os_catalogos(monkeypatch, tmp_path, capsys):
+    sessao, pasta = preparar_coletar_pa(monkeypatch, tmp_path, "<html></html>")
+    catalogos = []
+    monkeypatch.setattr(pa, "coletar_catalogos", lambda s, p, hoje: catalogos.append((p, hoje)))
+    pa.coletar()
+    assert "AVISO: PA: nenhum deputado na página de frequência" in capsys.readouterr().err
+    assert catalogos == [(pasta, DataFixa(2026, 11, 2))] and not (pasta / "deputados.json").exists() and sessao.dashboards == []
+
+
+def test_coletar_reaproveita_nome_civil_le_presenca_incremental_e_pula_ano_encerrado(monkeypatch, tmp_path):
+    trecho = amostra("estadual_pa_frequencia")["trecho"]
+    sessao, pasta = preparar_coletar_pa(monkeypatch, tmp_path, trecho)
+    monkeypatch.setattr(pa, "PRIMEIRO_MES", (2026, 8))
+    monkeypatch.setattr(pa, "PRIMEIRO_ANO", 2024)
+    comum.salvar(pasta / "deputados.json", {"deputados": [{"id": "1024", "nomeCivil": "Nome Antigo", "email": "antigo@x.gov.br"}]})
+    comum.salvar(pasta / "presenca.json", {"itens": [{"idDeputado": "1024", "periodo": "2026-08", "totalSessoes": 1}, {"idDeputado": "1024", "periodo": "2026-10", "totalSessoes": 1}]})
+    comum.salvar(pasta / "verbas_2024.json", {"marca": "antiga", "itens": []})
+    comum.salvar(pasta / "diarias_2024.json", {"marca": "antiga", "itens": []})
+    chamadas = []
+    monkeypatch.setattr(pa, "coletar_gabinete", lambda s, p, deputados, agora: chamadas.append(("gabinete", [d["id"] for d in deputados], agora)))
+    monkeypatch.setattr(pa, "coletar_remuneracao", lambda s, p, deputados, hoje, agora: chamadas.append(("remuneracao", agora)))
+    monkeypatch.setattr(pa, "votacoes_dos_meses", lambda s, deputados, anterior, hoje, gravar: chamadas.append(("votacoes", sorted(anterior))) or ({}, {}, {}))
+    monkeypatch.setattr(pa, "coletar_catalogos", lambda s, p, hoje: chamadas.append(("catalogos", hoje)))
+    pa.coletar()
+    deputados = json.loads((pasta / "deputados.json").read_text(encoding="utf-8"))["deputados"]
+    assert deputados[0]["nomeCivil"] == "Nome Antigo" and deputados[0]["email"] == "antigo@x.gov.br" and deputados[1]["id"] == "1011"
+    assert [u for u in sessao.fichas if "/Institucional/Deputado/" in u] == [pa.FICHA_URL.format("1011")]
+    assert sessao.meses_frequencia == ["9", "10", "11"]
+    presenca = json.loads((pasta / "presenca.json").read_text(encoding="utf-8"))["itens"]
+    assert [i["periodo"] for i in presenca if i["idDeputado"] == "1024"][0] == "2026-08" and {i["periodo"] for i in presenca} == {"2026-08", "2026-09", "2026-10", "2026-11"}
+    assert sorted(sessao.dashboards) == ["dashboard57", "dashboard57", "dashboard58", "dashboard58"]
+    assert json.loads((pasta / "verbas_2024.json").read_text(encoding="utf-8"))["marca"] == "antiga"
+    assert (pasta / "verbas_2025.json").exists() and (pasta / "diarias_2026.json").exists()
+    assert chamadas == [("gabinete", ["1024", "1011"], "2026-11-02"), ("remuneracao", "2026-11-02"), ("votacoes", ["materias"]), ("catalogos", DataFixa(2026, 11, 2))]
+
+
+def test_coletar_etapa_que_falha_vira_aviso_e_nao_para_as_outras(monkeypatch, tmp_path, capsys):
+    trecho = amostra("estadual_pa_frequencia")["trecho"]
+    sessao, pasta = preparar_coletar_pa(monkeypatch, tmp_path, trecho)
+    monkeypatch.setattr(pa, "PRIMEIRO_MES", (2026, 10))
+    monkeypatch.setattr(pa, "PRIMEIRO_ANO", 2026)
+    chamadas = []
+
+    def quebra(*a, **k):
+        raise RuntimeError("quebrou")
+
+    monkeypatch.setattr(pa, "coletar_gabinete", quebra)
+    monkeypatch.setattr(pa, "coletar_remuneracao", quebra)
+    monkeypatch.setattr(pa, "votacoes_dos_meses", quebra)
+    monkeypatch.setattr(pa, "coletar_catalogos", lambda s, p, hoje: chamadas.append("catalogos"))
+    pa.coletar()
+    erro = capsys.readouterr().err
+    assert "AVISO: PA: gabinete: quebrou" in erro and "AVISO: PA: remuneração: quebrou" in erro and "AVISO: PA: votações: quebrou" in erro
+    assert chamadas == ["catalogos"] and (pasta / "presenca.json").exists()

@@ -29,6 +29,8 @@ const PAGINAS = [
   ["votacoes.html", "PL 1/2026"],
   ["votacao.html?id=1-1", "PL 1/2026"],
   ["fornecedores.html", "Cia Aérea"],
+  ["assembleia.html", "Paraná"],
+  ["assembleia.html?uf=PR", "Limpa Tudo Ltda"],
   ["politico.html?f=t/2024/71072&i=500", "Comparecimento e vagas", "attached"],
   ["sobre.html", "Como ler os números"],
   ["mapa-dados.html", "Como uma ligação é feita"],

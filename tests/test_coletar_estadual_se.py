@@ -1,4 +1,6 @@
 import json
+import sys
+import types
 from datetime import date
 
 import pytest
@@ -260,3 +262,263 @@ def test_contratos_do_modulo():
     for c in se.CONTRATOS:
         assert c["fonte"].startswith("https://al.se.leg.br") and callable(c["buscar"]) and callable(c["html"])
         assert (FIX / f"{c['nome']}.json").exists()
+
+
+ARQUIVOS = [{"ano": 2026, "mes": 1, "id": "a", "slug": "s"}, {"ano": 2026, "mes": 2, "id": "b", "slug": "s"}, {"ano": 2025, "mes": 3, "id": "z", "slug": "s"}]
+CABECALHO_PAGINA = '<h2 class="elementor-heading-title elementor-size-default">2026</h2>'
+
+
+def ler_fingido(falham=(), lidos=None):
+    def ler(arquivo, linhas):
+        if lidos is not None:
+            lidos.append(arquivo["id"])
+        if arquivo["id"] in falham:
+            raise ValueError("pdf quebrado")
+        return [{"idDeputado": "1", "mes": arquivo["mes"], "pdf": arquivo["id"], "categoria": "c"}]
+    return ler
+
+
+class RespostaPagina:
+    def __init__(self, dados):
+        self.dados = dados
+
+    def raise_for_status(self):
+        pass
+
+    def json(self):
+        return self.dados
+
+
+class SessaoPagina:
+    def __init__(self, dados):
+        self.dados, self.urls = dados, []
+
+    def get(self, url, timeout=None):
+        self.urls.append(url)
+        return RespostaPagina(self.dados)
+
+
+def sessao_home(html):
+    class Resposta:
+        text = html
+
+        def raise_for_status(self):
+            pass
+
+    class Sessao:
+        def get(self, url, timeout=None):
+            return Resposta()
+
+    return Sessao
+
+
+def test_deputados_da_pagina_sem_cartoes():
+    assert se.deputados_da_pagina("<html></html>") == []
+
+
+def test_titulo_e_reparar_nome():
+    assert se.titulo("MARIA DA SILVA E SOUZA") == "Maria da Silva e Souza" and se.titulo(None) == ""
+    deputados = [{"nome": "Cavalcante", "nomeCivil": None}, {"nome": "Outro", "nomeCivil": "Fulano de Tal"}]
+    assert se.reparar_nome("CA VALCANTE", deputados) == "Cavalcante"
+    assert se.reparar_nome("FULANO DESCONHECIDO", deputados) == "FULANO DESCONHECIDO"
+    ambiguos = [{"nome": "Cavalcante", "nomeCivil": None}, {"nome": "Ca Valcante", "nomeCivil": None}]
+    assert se.reparar_nome("CAVALCANTE", ambiguos) == "CAVALCANTE"
+
+
+def test_arquivos_da_pagina_aba_sem_ano():
+    html = ('<span class="elementor-tab-mobile-title">Janeiro</span><a data-downloadurl="https://al.se.leg.br/download/x-1/?wpdmdl=5">d</a>')
+    assert se.arquivos_da_pagina(html) == []
+
+
+def test_buscar_pagina_devolve_html_e_data_ou_levanta():
+    s = SessaoPagina([{"content": {"rendered": "<p>x</p>"}, "modified": "2026-01-01T00:00:00"}])
+    assert se.buscar_pagina(s, "contratos") == ("<p>x</p>", "2026-01-01T00:00:00")
+    assert s.urls == [se.API_PAGINAS.format("contratos")]
+    with pytest.raises(RuntimeError, match="não existe mais"):
+        se.buscar_pagina(SessaoPagina([]), "contratos")
+
+
+def test_texto_do_pdf_junta_as_linhas_de_todas_as_paginas(monkeypatch):
+    class Pagina:
+        def __init__(self, texto):
+            self.texto = texto
+
+        def extract_text(self):
+            return self.texto
+
+    class Leitor:
+        def __init__(self, conteudo):
+            self.pages = [Pagina("a\nb"), Pagina(None), Pagina("c")]
+
+    monkeypatch.setitem(sys.modules, "pypdf", types.SimpleNamespace(PdfReader=Leitor))
+    assert se.texto_do_pdf(b"x") == ["a", "b", "", "c"]
+
+
+def test_baixar_pdf_pausa_baixa_e_le_o_texto(monkeypatch):
+    pausas, baixados = [], []
+    monkeypatch.setattr(se.time, "sleep", lambda t: pausas.append(t))
+    monkeypatch.setattr(comum, "baixar", lambda s, url, timeout=None: baixados.append((url, timeout)) or b"pdf")
+    monkeypatch.setattr(se, "texto_do_pdf", lambda conteudo: [conteudo.decode()])
+    assert se.baixar_pdf(None, ARQ) == ["pdf"]
+    assert pausas == [se.PAUSA] and baixados == [(se.url_pdf(ARQ), 180)]
+
+
+def test_ressarcimento_bloco_sem_competencia_e_deputado_sem_ligacao():
+    linhas = ["Mês/Ano de Pagamento: 01/2026", "Deputado: Adailton Martins", "1 Art. 4º I - Contratação X R$ 100,00", "Total: R$ 100,00",
+              "Deputado: Fulano Desconhecido", "Competência: 12/2025", "1 Art. 4º I - Y 50,00", "Total: 50,00"]
+    _, blocos = se.blocos_ressarcimento(linhas)
+    assert [b["competencia"] for b in blocos] == [None, (2025, 12)]
+    itens = se.itens_ressarcimento(linhas, ARQ, DEPUTADOS)
+    assert [(i["idDeputado"], i["competencia"], i["valor"]) for i in itens] == [("545", None, 100.0)]
+
+
+def test_folha_sem_referencia_no_cabecalho():
+    assert se.servidores_da_folha(["texto sem cabecalho"]) == (None, [])
+
+
+def test_lotacao_e_cargo_de_deputado():
+    assert se.nome_da_lotacao(None) is None and se.nome_da_lotacao("SECRETARIA") is None
+    assert se.nome_da_lotacao("GABINETE DA DEPUTADA ANA  SILVA") == "ANA SILVA"
+    assert se.eh_deputado({"cargo": "Deputada"}) is True and se.eh_deputado({"cargo": None}) is False and se.eh_deputado({"cargo": "Assessor"}) is False
+
+
+def test_remuneracao_e_gabinete_ignoram_servidor_sem_ligacao():
+    deputado = {"matricula": "1", "nome": "FULANO DESCONHECIDO", "lotacao": "SECRETARIA", "cargo": "Deputado", "bruto": 1.0, "liquido": 1.0, "descontos": 0.0}
+    assert se.itens_remuneracao([deputado], {"ano": 2026, "mes": 1, "id": "x", "slug": "s"}, DEPUTADOS) == []
+    assessores = [{"matricula": "2", "nome": "X", "lotacao": "GABINETE DO DEPUTADO NINGUEM SABE", "cargo": "Assessor", "admissao": None},
+                  {"matricula": "3", "nome": "Y", "lotacao": None, "cargo": "Assessor", "admissao": None}]
+    assert se.servidores_do_gabinete(assessores, DEPUTADOS) == []
+
+
+def test_pdfs_do_ano_erro_de_pdf_nao_entra_e_nao_marca_completa(tmp_path, monkeypatch, capsys):
+    monkeypatch.setattr(se, "baixar_pdf", lambda s, a: ["linha"])
+    se.pdfs_do_ano(None, tmp_path, "verbas", 2026, ARQUIVOS, date(2026, 6, 1), "fonte", ler_fingido({"a"}))
+    env = json.loads((tmp_path / "verbas_2026.json").read_text(encoding="utf-8"))
+    assert env["pdfs"] == {"b": 2} and env["completaEm"] is None and [i["pdf"] for i in env["itens"]] == ["b"]
+    assert "verbas 2026-01 (PDF a): pdf quebrado" in capsys.readouterr().err
+
+
+def test_pdfs_do_ano_prazo_esgotado_grava_o_lido_e_levanta(tmp_path, monkeypatch):
+    monkeypatch.setattr(se, "baixar_pdf", lambda s, a: ["linha"])
+
+    def ler(arquivo, linhas):
+        if arquivo["id"] == "b":
+            raise comum.PrazoEsgotado("fim")
+        return [{"idDeputado": "1", "mes": arquivo["mes"], "pdf": arquivo["id"]}]
+
+    with pytest.raises(comum.PrazoEsgotado):
+        se.pdfs_do_ano(None, tmp_path, "verbas", 2026, ARQUIVOS, date(2026, 6, 1), "fonte", ler)
+    env = json.loads((tmp_path / "verbas_2026.json").read_text(encoding="utf-8"))
+    assert env["pdfs"] == {"a": 1} and env["completaEm"] is None
+
+
+def test_pdfs_do_ano_completa_velha_rele_so_os_meses_recentes(tmp_path, monkeypatch):
+    monkeypatch.setattr(se, "baixar_pdf", lambda s, a: ["linha"])
+    arquivos = ARQUIVOS[:2] + [{"ano": 2026, "mes": 5, "id": "c", "slug": "s"}]
+    (tmp_path / "verbas_2026.json").write_text(json.dumps({"completaEm": "2026-05-01", "pdfs": {"a": 1, "b": 2, "c": 5}, "itens": []}), encoding="utf-8")
+    lidos = []
+    se.pdfs_do_ano(None, tmp_path, "verbas", 2026, arquivos, date(2026, 6, 1), "fonte", ler_fingido(lidos=lidos))
+    assert lidos == ["c"]
+    assert json.loads((tmp_path / "verbas_2026.json").read_text(encoding="utf-8"))["completaEm"] == "2026-06-01"
+    se.pdfs_do_ano(None, tmp_path, "verbas", 2026, arquivos, date(2026, 6, 2), "fonte", ler_fingido(lidos=lidos))
+    assert lidos == ["c"]
+    se.pdfs_do_ano(None, tmp_path, "verbas", 2026, arquivos, date(2026, 6, 3), "fonte", ler_fingido(lidos=lidos), forcar=("a",))
+    assert lidos == ["c", "a"]
+
+
+def test_coletar_ressarcimento_e_folha_sem_pdf_na_pagina_levantam(tmp_path, monkeypatch):
+    fingir_pdfs(monkeypatch, {"ressarcimento-dos-deputados": "<html></html>", "subsidio-e-remuneracoes": "<html></html>"}, {})
+    with pytest.raises(RuntimeError, match="nenhum PDF de ressarcimento"):
+        se.coletar_ressarcimento(object(), tmp_path, DEPUTADOS, date(2026, 6, 1))
+    with pytest.raises(RuntimeError, match="nenhum PDF da folha"):
+        se.coletar_folha(object(), tmp_path, DEPUTADOS, date(2026, 6, 1))
+    assert list(tmp_path.iterdir()) == []
+
+
+def test_folha_sem_gabinete_ligado_levanta_depois_de_gravar_a_remuneracao(tmp_path, monkeypatch):
+    html = amostra("estadual_se_folha")["html"]
+    linhas = amostra("estadual_se_folha")["linhas"]
+    fevereiro = [l.replace("JANEIRO/2026", "FEVEREIRO/2026") for l in linhas]
+    fingir_pdfs(monkeypatch, {"subsidio-e-remuneracoes": html}, {"184481": linhas, "186255": fevereiro})
+    monkeypatch.setattr(se, "PRIMEIRO_ANO_FOLHA", 2026)
+    outros = [{"id": "999", "nome": "Outro", "nomeCivil": "Outro"}]
+    with pytest.raises(RuntimeError, match="gabinete não lido"):
+        se.coletar_folha(object(), tmp_path, outros, date(2026, 6, 1))
+    assert json.loads((tmp_path / "remuneracao_2026.json").read_text(encoding="utf-8"))["itens"] == []
+    assert not (tmp_path / "gabinete.json").exists()
+
+
+def test_folha_pdf_sem_servidor_avisa_e_nao_entra(tmp_path, monkeypatch, capsys):
+    html = amostra("estadual_se_folha")["html"]
+    fingir_pdfs(monkeypatch, {"subsidio-e-remuneracoes": html}, {"184481": ["JANEIRO/2026"], "186255": ["FEVEREIRO/2026"]})
+    monkeypatch.setattr(se, "PRIMEIRO_ANO_FOLHA", 2026)
+    with pytest.raises(RuntimeError, match="gabinete não lido"):
+        se.coletar_folha(object(), tmp_path, DEPUTADOS, date(2026, 6, 1))
+    assert "nenhum servidor lido da folha" in capsys.readouterr().err
+    assert json.loads((tmp_path / "remuneracao_2026.json").read_text(encoding="utf-8"))["pdfs"] == {}
+
+
+def test_itens_contratos_item_sem_link_de_download():
+    html = (CABECALHO_PAGINA + '<h3 class="package-title"><a href=\'https://al.se.leg.br/download/c-1/\'>Contrato 1</a></h3>'
+            '<a data-downloadurl="https://al.se.leg.br/download/outro/?wpdmdl=9">Download</a>')
+    (item,) = se.itens_contratos(html, 2026).values()
+    assert item["tipo"] == "contrato" and item["arquivos"] == []
+
+
+def test_coletar_contratos_pagina_sem_anos_levanta(tmp_path, monkeypatch):
+    monkeypatch.setattr(se, "buscar_pagina", lambda s, slug: ("<html></html>", None))
+    with pytest.raises(RuntimeError, match="sem anos"):
+        se.coletar_contratos(object(), tmp_path, date(2026, 8, 1))
+
+
+def test_coletar_contratos_ano_sem_item_avisa_e_mantem_arquivo(tmp_path, monkeypatch, capsys):
+    monkeypatch.setattr(se, "PRIMEIRO_ANO", 2026)
+    monkeypatch.setattr(se, "buscar_pagina", lambda s, slug: (CABECALHO_PAGINA, "2026-07-13T10:00:00"))
+    se.coletar_contratos(object(), tmp_path, date(2026, 8, 1))
+    assert "contratos 2026: nenhum item" in capsys.readouterr().err
+    assert not (tmp_path / "orgao_2026.json").exists()
+
+
+def test_coletar_contratos_ano_encerrado_nao_e_gravado(tmp_path, monkeypatch):
+    html = amostra("estadual_se_contratos")["html"].replace(">2026<", ">2023<")
+    (tmp_path / "orgao_2023.json").write_text("{}", encoding="utf-8")
+    monkeypatch.setattr(se, "PRIMEIRO_ANO", 2023)
+    monkeypatch.setattr(se, "buscar_pagina", lambda s, slug: (html, "2026-07-13T10:00:00"))
+    se.coletar_contratos(object(), tmp_path, date(2026, 8, 1))
+    assert (tmp_path / "orgao_2023.json").read_text(encoding="utf-8") == "{}"
+
+
+def test_coletar_sem_deputados_avisa_e_nao_grava(tmp_path, monkeypatch, capsys):
+    monkeypatch.setattr(comum, "DADOS", tmp_path)
+    monkeypatch.setattr(comum, "sessao", sessao_home("<html></html>"))
+    se.coletar()
+    assert "nenhum deputado na página inicial" in capsys.readouterr().err
+    assert not (tmp_path / "SE").exists()
+
+
+def test_coletar_avisa_etapa_que_falha_e_roda_as_outras(tmp_path, monkeypatch, capsys):
+    monkeypatch.setattr(comum, "DADOS", tmp_path)
+    monkeypatch.setattr(comum, "sessao", sessao_home(amostra("estadual_se_deputados")["trecho"]))
+    monkeypatch.setattr(se, "eleitos_do_tse", lambda: [])
+    chamadas = []
+
+    def ressarcimento(*a, **k):
+        raise RuntimeError("fora do ar")
+
+    monkeypatch.setattr(se, "coletar_ressarcimento", ressarcimento)
+    monkeypatch.setattr(se, "coletar_folha", lambda *a, **k: chamadas.append("folha"))
+    monkeypatch.setattr(se, "coletar_contratos", lambda *a, **k: chamadas.append("contratos"))
+    se.coletar()
+    assert chamadas == ["folha", "contratos"] and (tmp_path / "SE" / "deputados.json").exists()
+    assert "SE: ressarcimento: fora do ar" in capsys.readouterr().err
+
+
+def test_conferir_com_falhas():
+    sem_dados = ('<article class="qodef-portfolio-item"><a href="https://aleselegis.al.se.leg.br/spl/parlamentar.aspx?id=7"></a>'
+                 '<h4 class="qodef-item-title">Fulano</h4></article>')
+    assert se._conferir_deputados({"trecho": sem_dados}) == (["cartão sem partido: Fulano", "cartão sem foto: Fulano"], [])
+    assert len(se._conferir_ressarcimento({"html": "", "linhas": []})[0]) == 2
+    assert len(se._conferir_folha({"html": "", "linhas": []})[0]) == 4
+    assert se._conferir_contratos({"html": ""}) == (["página de contratos sem item (título e link de download)"], [])
+    sem_link = CABECALHO_PAGINA + '<h3 class="package-title"><a href=\'https://al.se.leg.br/download/c-1/\'>Contrato 1</a></h3>'
+    assert se._conferir_contratos({"html": sem_link}) == (["item de contrato sem link wpdmdl"], [])

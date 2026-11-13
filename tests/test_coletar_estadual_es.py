@@ -2,6 +2,8 @@ import json
 import re
 from datetime import date
 
+import pytest
+
 import coletar_estadual_es as es
 import estaduais_comum as comum
 from conftest import RAIZ
@@ -262,3 +264,204 @@ def test_completa_velha_ou_arquivo_menor_le_tudo(tmp_path, monkeypatch):
     assert len(itens_2026(pasta)["itens"]) == len(antes["itens"]) and itens_2026(pasta)["completaEm"] == date.today().isoformat()
     assert len(sessao.pedidos) > 1 and min(o for _, o in sessao.pedidos[1:]) > 0
     assert sessao.pedidos[-1][1] < antes["tamanho"]
+
+
+def fatia(inicio, fim, offset, alinhada):
+    return {"inicio": inicio, "fim": fim, "offset": offset, "alinhada": alinhada, "linhas": []}
+
+
+def test_linha_da_assembleia_ignora_linha_curta_e_outra_unidade():
+    cabecalho = ["UnidadeGestora", "Favorecido", "Documento"]
+    assert es.linha_da_assembleia(b"ASSEMBLEIA LEGISLATIVA;A", cabecalho) is None
+    assert es.linha_da_assembleia(b"SECRETARIA;A;2026OB1", cabecalho) is None
+    assert es.linha_da_assembleia(b"SECRETARIA;PAGO A ASSEMBLEIA LEGISLATIVA;2026OB1", cabecalho) is None
+    assert es.linha_da_assembleia(b"ASSEMBLEIA LEGISLATIVA;A;2026OB1", cabecalho)["Favorecido"] == "A"
+
+
+def test_e_diaria_recusa_outro_elemento_e_sem_campo():
+    assert es.e_diaria({"ElementoDespesa": "DIÁRIAS - CIVIL"})
+    assert not es.e_diaria({"ElementoDespesa": "MATERIAL DE CONSUMO"})
+    assert not es.e_diaria({})
+
+
+def test_itens_diarias_descarta_favorecido_nao_ligado():
+    assert es.itens_diarias(linhas_do_contrato(), [{"id": "1", "nome": "Ninguém", "nomeCivil": "Ninguém"}]) == []
+
+
+def test_cabecalho_e_tamanho_le_cabecalho_e_content_range():
+    sessao = Sessao(PACOTE)
+    cabecalho, fim, total = es.cabecalho_e_tamanho(sessao, "https://x/26.csv")
+    assert cabecalho == cab() and csv_bytes()[fim - 1:fim] == b"\n" and total == len(csv_bytes())
+    assert sessao.pedidos == [("https://x/26.csv", 0)]
+
+
+def test_cabecalho_e_tamanho_recusa_fonte_sem_range():
+    class SemRange:
+        def get(self, url, timeout=None, stream=False, headers=None):
+            return Resp(conteudo=csv_bytes(), status=200)
+
+    with pytest.raises(RuntimeError, match="Range"):
+        es.cabecalho_e_tamanho(SemRange(), "https://x/26.csv")
+
+
+def test_planejar_fatias_arquivo_pequeno_fica_numa_fatia_so():
+    fatias = es.planejar_fatias(100, 200)
+    assert [(f["inicio"], f["fim"], f["offset"], f["alinhada"]) for f in fatias] == [(100, 200, 100, True)]
+
+
+def test_planejar_fatias_divide_em_conexoes_contiguas():
+    total = 3 * es.FATIA_MIN
+    fatias = es.planejar_fatias(0, total, 3)
+    assert [f["alinhada"] for f in fatias] == [True, False, False]
+    assert fatias[0]["inicio"] == 0 and fatias[-1]["fim"] == total
+    assert all(a["fim"] == b["inicio"] for a, b in zip(fatias, fatias[1:]))
+
+
+def test_ler_fatia_recusa_resposta_que_ignora_range():
+    class SemRange:
+        def get(self, url, timeout=None, stream=False, headers=None):
+            return Resp(conteudo=csv_bytes(), status=200)
+
+    with pytest.raises(RuntimeError, match="ignorou o Range"):
+        es.ler_fatia(SemRange(), "https://x/26.csv", fatia(0, 10, 0, True), cab())
+
+
+def test_ler_fatia_leitura_incompleta_levanta_e_mantem_o_que_leu():
+    dados = csv_bytes()
+    f = fatia(0, len(dados) + 50, 0, True)
+    with pytest.raises(RuntimeError, match="incompleta"):
+        es.ler_fatia(Sessao(PACOTE), "https://x/26.csv", f, cab())
+    assert f["linhas"] and f["offset"] == len(dados)
+
+
+def test_ler_fatia_retomada_apos_prazo_completa_sem_duplicar():
+    dados = csv_bytes()
+    fim_cab = dados.index(b"\n") + 1
+    inteira = fatia(fim_cab, len(dados), fim_cab, True)
+    es.ler_fatia(Sessao(PACOTE), "https://x/26.csv", inteira, cab())
+
+    f = fatia(fim_cab, len(dados), fim_cab, True)
+    with pytest.raises(comum.PrazoEsgotado):
+        es.ler_fatia(Sessao(PACOTE, falhar_em=len(dados) // 2), "https://x/26.csv", f, cab())
+    assert fim_cab < f["offset"] < len(dados)
+    es.ler_fatia(Sessao(PACOTE), "https://x/26.csv", f, cab())
+    assert f["linhas"] == inteira["linhas"] and f["offset"] == len(dados)
+
+
+def test_ler_fatia_linha_que_cruza_a_fronteira_fica_na_fatia_anterior():
+    dados = csv_bytes()
+    fim_cab = dados.index(b"\n") + 1
+    inteira = fatia(fim_cab, len(dados), fim_cab, True)
+    es.ler_fatia(Sessao(PACOTE), "https://x/26.csv", inteira, cab())
+    inicio_util, pos = None, 0
+    for bruta in dados.split(b"\n"):
+        if pos >= fim_cab and es.e_cota(es.linha_da_assembleia(bruta.rstrip(b"\r"), cab()) or {}):
+            inicio_util = pos
+            break
+        pos += len(bruta) + 1
+    fronteira = inicio_util + 20
+    primeira = fatia(fim_cab, fronteira, fim_cab, True)
+    segunda = fatia(fronteira, len(dados), fronteira, False)
+    sessao = Sessao(PACOTE)
+    es.ler_fatia(sessao, "https://x/26.csv", primeira, cab())
+    es.ler_fatia(sessao, "https://x/26.csv", segunda, cab())
+    assert primeira["linhas"] + segunda["linhas"] == inteira["linhas"]
+    assert segunda["alinhada"] is True
+
+
+def test_ler_fatias_sem_pendentes_nao_le_nada(monkeypatch):
+    monkeypatch.setattr(es, "ler_fatia", lambda *a: pytest.fail("fatia lida sem pendência"))
+    parcial = {"cabecalho": [], "fatias": [fatia(0, 10, 10, True)]}
+    es.ler_fatias(None, "https://x", parcial)
+
+
+def test_ler_fatias_termina_todas_e_prazo_tem_prioridade(monkeypatch):
+    lidas = []
+
+    def falso(s, url, f, cabecalho):
+        lidas.append(f["inicio"])
+        if f["inicio"] == 0:
+            raise ValueError("falha")
+        if f["inicio"] == 1:
+            raise comum.PrazoEsgotado("prazo")
+
+    monkeypatch.setattr(es, "ler_fatia", falso)
+    fatias = [fatia(i, 100, i, False) for i in (0, 1, 2)]
+    with pytest.raises(comum.PrazoEsgotado):
+        es.ler_fatias(None, "https://x", {"cabecalho": [], "fatias": fatias})
+    assert sorted(lidas) == [0, 1, 2]
+    with pytest.raises(ValueError):
+        es.ler_fatias(None, "https://x", {"cabecalho": [], "fatias": fatias[:1]})
+
+
+def test_parcial_novo_completa_quando_nao_ha_arquivo_anterior():
+    hoje = date(2026, 11, 3)
+    p = es.parcial_novo(Sessao(PACOTE), "https://x/26.csv", "m1", {}, hoje)
+    assert p["incremental"] is False and p["completaEm"] == "2026-11-03" and p["tamanho"] == len(csv_bytes())
+    assert p["inicio"] == csv_bytes().index(b"\n") + 1 and p["recursoModificadoEm"] == "m1" and p["cabecalho"] == cab()
+
+
+def test_parcial_novo_incremental_le_do_tamanho_anterior():
+    hoje = date(2026, 11, 3)
+    antigo = {"tamanho": len(csv_bytes()) - 100, "completaEm": "2026-10-30"}
+    p = es.parcial_novo(Sessao(PACOTE), "https://x/26.csv", "m1", antigo, hoje)
+    assert p["incremental"] is True and p["inicio"] == len(csv_bytes()) - 100 and p["completaEm"] == "2026-10-30"
+
+
+def test_parcial_novo_le_tudo_se_arquivo_encolheu_ou_completa_velha():
+    hoje = date(2026, 11, 3)
+    encolheu = es.parcial_novo(Sessao(PACOTE), "https://x/26.csv", "m1", {"tamanho": len(csv_bytes()) + 1, "completaEm": "2026-11-01"}, hoje)
+    velha = es.parcial_novo(Sessao(PACOTE), "https://x/26.csv", "m1", {"tamanho": 100, "completaEm": "2026-10-01"}, hoje)
+    for p in (encolheu, velha):
+        assert p["incremental"] is False and p["completaEm"] == "2026-11-03" and p["inicio"] == csv_bytes().index(b"\n") + 1
+
+
+def test_conferir_despesas_sem_cota_diaria_e_linha_ilegivel():
+    cabecalho = ";".join(es.CAMPOS)
+    linha = "xx;abc;F;D;H;ASSEMBLEIA LEGISLATIVA;OUTRO;OUTRO"
+    falhas, _ = es._conferir_despesas({"csv": f"{cabecalho}\n{linha}"})
+    assert "nenhuma linha de cota parlamentar da Assembleia no CSV" in falhas
+    assert "nenhuma linha de diárias da Assembleia no CSV" in falhas
+    assert "linha sem data ou valor pago legível" in falhas
+
+
+def test_coletar_sem_eleitos_avisa_e_nao_abre_sessao(tmp_path, monkeypatch, capsys):
+    monkeypatch.setattr(es, "TSE_ARQUIVO", tmp_path / "inexistente.json")
+    monkeypatch.setattr(comum, "DADOS", tmp_path / "estaduais")
+    monkeypatch.setattr(comum, "sessao", lambda *a: pytest.fail("sessão aberta sem deputados"))
+    es.coletar()
+    assert "ES: sem eleitos de 2022" in capsys.readouterr().err
+    assert not (tmp_path / "estaduais" / "ES" / "deputados.json").exists()
+
+
+def test_coletar_erro_que_nao_e_prazo_avisa_sem_gravar_o_ano(tmp_path, monkeypatch, capsys):
+    pacote = {"result": {"resources": [{"name": "Despesas-2026.csv", "url": "https://dados.es.gov.br/26.csv", "last_modified": "m1"}]}}
+
+    class SemRange:
+        def get(self, url, timeout=None, stream=False, headers=None):
+            if "package_show" in url:
+                return Resp(dados=pacote)
+            return Resp(conteudo=csv_bytes(), status=200)
+
+    pasta = preparar(tmp_path, monkeypatch, SemRange())
+    es.coletar()
+    saida = capsys.readouterr()
+    assert "despesas 2026 não lidas por inteiro" in saida.err and "Range" in saida.err
+    assert not (pasta / "verbas_2026.json").exists() and not (pasta / "parcial_2026.json").exists()
+    assert (pasta / "deputados.json").exists() and "ES: 1 deputados" in saida.out
+
+
+def test_coletar_incremental_junta_diarias_guardadas(tmp_path, monkeypatch):
+    sessao, pasta = coletar_de_novo(tmp_path, monkeypatch)
+    es.coletar()
+    diarias = json.loads((pasta / "diarias_2026.json").read_text(encoding="utf-8"))
+    guardada = {"idDeputado": "80", "data": "2026-01-01", "documento": "2026OB000001", "valor": 1.0}
+    diarias["itens"].append(guardada)
+    (pasta / "diarias_2026.json").write_text(json.dumps(diarias), encoding="utf-8")
+    tamanho = len(csv_bytes())
+    sessao.conteudo = csv_bytes() + linha_nova()
+    sessao.pacote["result"]["resources"][0]["last_modified"] = "2026-10-23T10:00:00"
+    es.coletar()
+    depois = json.loads((pasta / "diarias_2026.json").read_text(encoding="utf-8"))
+    assert guardada in depois["itens"] and len(depois["itens"]) == len(diarias["itens"])
+    assert (pasta / "verbas_2026.json").exists() and json.loads((pasta / "verbas_2026.json").read_text(encoding="utf-8"))["tamanho"] == tamanho + len(linha_nova())

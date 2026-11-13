@@ -1,5 +1,5 @@
 /* Fornecedores que mais recebem das cotas e verbas: Câmara, Senado e Assembleias. */
-import { $, esc, reais, data, semAcento, carregar, urlSegura } from "./util.js";
+import { $, esc, reais, data, semAcento, carregar, urlSegura, param } from "./util.js";
 import { listaPaginada, erro } from "./comum.js";
 import { linkParlamentar } from "./apis.js";
 
@@ -33,6 +33,8 @@ export async function paginaFornecedores() {
   };
   $("#busca").addEventListener("input", desenhar);
   $("#casa").addEventListener("change", desenhar);
+  const pedido = param("busca");   // assembleia.html liga o fornecedor do órgão pelo CNPJ base
+  if (pedido) $("#busca").value = pedido;
   desenhar();
   doadoresEFornecedores(CASAS, empresa, inidonea);
 }

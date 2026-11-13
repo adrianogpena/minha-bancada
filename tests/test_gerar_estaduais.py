@@ -175,10 +175,22 @@ def test_orgao_agrupa_fornecedor_e_separa_valor_registrado(tmp_path, monkeypatch
         "ctr_b": item("ata_adesao", "CS", "23324543000160", 50.0, "2026-02-01"),
         "ctr_c": item("ata_registro", "CS", "23324543000160", 900.0, "2026-03-01"),
         "ctr_d": item("contrato", "SEM CNPJ", None, 10.0, "2026-04-01")}})
-    escrever(pasta, "regras_ressarcimento.json", {"url": "https://r.pdf", "ano": 2025})
-    ge.gerar_assembleia("PR", pasta)
+    escrever(pasta, "regras_ressarcimento.json", {"url": "https://r.pdf", "ano": 2025, "fonte": "https://f"})
+    escrever(bruto / "PA", "deputados.json", {"deputados": []})
+    escrever(bruto / "PA", "leis_2026.json", {"fonte": "https://leis", "normas": {"7": {"tipo": "Lei", "numero": "1", "ano": 2026}}})
+    escrever(bruto / "MG", "deputados.json", {"deputados": []})
+    ge.gerar()
     o = json.loads((tmp_path / "saida" / "orgao" / "PR.json").read_text(encoding="utf-8"))
     cs, sem = o["fornecedores"]
     assert cs["contratos"] == 2 and cs["valorContratado"] == 150.0 and cs["atas"] == 1 and cs["valorRegistrado"] == 900.0 and cs["idFornecedor"] == "for_23324543"
     assert sem["nome"] == "SEM CNPJ" and "idFornecedor" not in sem
-    assert [i["id"] for i in o["itens"]] == ["ctr_d", "ctr_c", "ctr_b", "ctr_a"] and o["regrasRessarcimento"]["ano"] == 2025
+    assert [i["id"] for i in o["itens"]] == ["ctr_d", "ctr_c", "ctr_b", "ctr_a"]
+    assert o["regrasRessarcimento"] == {"ano": 2025, "fonte": "https://f", "documentos": [{"ano": 2025, "titulo": "Texto da regra do ressarcimento", "url": "https://r.pdf"}]}
+    indice = json.loads((tmp_path / "saida" / "assembleias.json").read_text(encoding="utf-8"))
+    assert indice == [{"uf": "PA", "normas": 1}, {"uf": "PR", "contratos": 2, "atas": 2, "fornecedores": 2, "regras": 1}]
+
+
+def test_regras_com_documentos_ficam_como_estao():
+    r = {"ano": 2024, "fonte": "https://f", "documentos": [{"titulo": "Res. 1", "url": "https://r"}]}
+    assert ge.regras_em_documentos(r) is r and ge.regras_em_documentos(None) is None
+    assert ge.regras_em_documentos({"ano": 2025})["documentos"] == []

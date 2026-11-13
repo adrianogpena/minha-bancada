@@ -2,6 +2,8 @@ import json
 import zipfile
 from io import BytesIO
 
+import pytest
+
 import coletar_estadual_rs as rs
 import estaduais_comum as comum
 from conftest import RAIZ
@@ -94,3 +96,73 @@ def test_coletar_grava_deputados_e_diarias(tmp_path, monkeypatch):
     diarias = json.loads((pasta / "diarias_2026.json").read_text(encoding="utf-8"))
     assert diarias["itens"] and all(i["idDeputado"] == "10" for i in diarias["itens"])
     assert not (pasta / "diarias_2020.json").exists()
+
+
+def preparar_rs(tmp_path, monkeypatch, sessao):
+    tse = [{"cargo": "DEPUTADO ESTADUAL", "situacao": "eleito", "sequencial": "10", "urna": "Adriano", "nome": "ADRIANO MARQUES DORNELLES", "partido": "PP", "email": None}]
+    arquivo = tmp_path / "RS.json"
+    arquivo.write_text(json.dumps(tse), encoding="utf-8")
+    monkeypatch.setattr(rs, "TSE_ARQUIVO", arquivo)
+    monkeypatch.setattr(comum, "DADOS", tmp_path / "estaduais")
+    monkeypatch.setattr(comum, "sessao", lambda: sessao)
+    return tmp_path / "estaduais" / "RS"
+
+
+def test_ler_zip_csv_sem_csv_levanta_stopiteration():
+    buf = BytesIO()
+    with zipfile.ZipFile(buf, "w") as z:
+        z.writestr("leia-me.txt", "nada")
+    with pytest.raises(StopIteration):
+        rs.ler_zip_csv(buf.getvalue())
+
+
+def test_coletar_sem_eleitos_avisa_e_nao_acessa_a_fonte(tmp_path, monkeypatch, capsys):
+    monkeypatch.setattr(rs, "TSE_ARQUIVO", tmp_path / "inexistente.json")
+    monkeypatch.setattr(comum, "DADOS", tmp_path / "estaduais")
+    monkeypatch.setattr(comum, "sessao", lambda: pytest.fail("sessão aberta sem deputados"))
+    rs.coletar()
+    assert "RS: sem eleitos de 2022" in capsys.readouterr().err
+    assert not (tmp_path / "estaduais" / "RS" / "deputados.json").exists()
+
+
+def test_coletar_nao_baixa_de_novo_ano_encerrado_com_arquivo(tmp_path, monkeypatch):
+    a = amostra("estadual_rs_diarias")
+    buf = BytesIO()
+    with zipfile.ZipFile(buf, "w") as z:
+        z.writestr("Diarias.csv", a["csv"].encode("cp1252", errors="replace"))
+    pacote = {"result": {"resources": [{"name": "Diárias 2024", "url": "https://x/24.zip"}, {"name": "Diárias 2026", "url": "https://x/26.zip"}]}}
+    pedidos = []
+
+    class Resp:
+        def __init__(self, conteudo=None, dados=None):
+            self.content, self._dados = conteudo, dados
+
+        def raise_for_status(self):
+            pass
+
+        def json(self):
+            return self._dados
+
+    class Sessao:
+        def get(self, url, timeout=None):
+            pedidos.append(url)
+            return Resp(dados=pacote) if "package_show" in url else Resp(conteudo=buf.getvalue())
+
+    pasta = preparar_rs(tmp_path, monkeypatch, Sessao())
+    pasta.mkdir(parents=True)
+    (pasta / "diarias_2024.json").write_text('{"itens": ["antigo"]}', encoding="utf-8")
+    rs.coletar()
+    assert "https://x/24.zip" not in pedidos and "https://x/26.zip" in pedidos
+    assert json.loads((pasta / "diarias_2024.json").read_text(encoding="utf-8")) == {"itens": ["antigo"]}
+    assert (pasta / "diarias_2026.json").exists()
+
+
+def test_conferir_diarias_sem_linhas_da_assembleia():
+    falhas, _ = rs._conferir_diarias({"csv": "Exercicio;Orgao;Favorecido;DataInicio;DataFim;Destino;Tipo;Motivo;Valor\n2026;SAUDE;F;01/01/2026;;;;;10,00"})
+    assert falhas == ["nenhuma linha da Assembleia no CSV de diárias"]
+
+
+def test_conferir_diarias_linha_sem_data_ou_valor():
+    cabecalho = "Exercicio;Orgao;Favorecido;DataInicio;DataFim;Destino;Tipo;Motivo;Valor"
+    falhas, _ = rs._conferir_diarias({"csv": f"{cabecalho}\n2026;ASSEMBLEIA;F;xx;;;;;10,00\n2026;ASSEMBLEIA;F;01/01/2026;;;;;abc"})
+    assert falhas == ["diária sem data ou valor legível"] * 2

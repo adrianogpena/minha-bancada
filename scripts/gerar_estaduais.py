@@ -5,6 +5,9 @@ que o site lê para deputados estaduais:
   site/dados/estadual/<UF>/<id>.json     votos e projetos de um deputado, mais (quando a coleta tem os
                                          arquivos) resumos de verba, remuneração, presença, diárias, emendas e gabinete
   site/dados/votacoes_estadual_<UF>.json lista das votações nominais da Assembleia
+  site/dados/orgao/<UF>.json             contratos, atas e maiores fornecedores da Assembleia (despesa do órgão)
+  site/dados/leis/<UF>.json              normas legais que a Assembleia publica sem autoria
+  site/dados/assembleias.json            índice das Assembleias com dados de órgão ou normas (página assembleia.html)
 
 Devolve o mapa nome -> (UF, id), que o gerar_politicos usa para ligar a ficha
 do TSE à página com votos e projetos. Não acessa a internet.
@@ -189,7 +192,15 @@ def gerar_governo(uf: str, pasta: Path, host: str) -> None:
     salvar(SAIDA / "governo" / f"{uf}.json", {"host": host, "materias": itens})
 
 
-def gerar_orgao(uf: str, pasta: Path) -> None:
+def regras_em_documentos(regras: dict | None) -> dict | None:
+    """Regras da verba sempre como {ano, fonte, documentos: [{ano, titulo, url}]}; o PR grava um texto só ({ano, fonte, url})."""
+    if not regras or "documentos" in regras:
+        return regras
+    doc = {"ano": regras.get("ano"), "titulo": regras.get("titulo") or "Texto da regra do ressarcimento", "url": regras.get("url")}
+    return {"ano": regras.get("ano"), "fonte": regras.get("fonte"), "documentos": [doc] if doc["url"] else []}
+
+
+def gerar_orgao(uf: str, pasta: Path) -> dict | None:
     """site/dados/orgao/<UF>.json: contratos e atas da Assembleia (despesa do órgão, não de deputado) e maiores fornecedores.
 
     Fornecedor liga a nucleo/fornecedores só por CNPJ (a ata de adesão traz; o contrato só o nome, então fica sem ligação).
@@ -199,9 +210,9 @@ def gerar_orgao(uf: str, pasta: Path) -> None:
         env = ler(arq, {})
         itens |= env.get("itens", {})
         fonte = env.get("fonte") or fonte
-    regras = ler(pasta / "regras_ressarcimento.json")
+    regras = regras_em_documentos(ler(pasta / "regras_ressarcimento.json"))
     if not itens and not regras:
-        return
+        return None
     nucleo = {f["id"] for f in ler(SAIDA / "nucleo" / "fornecedores.json", [])}
     grupos = {}
     for iid, i in itens.items():
@@ -222,9 +233,11 @@ def gerar_orgao(uf: str, pasta: Path) -> None:
     lista = sorted(({"id": iid, **i} for iid, i in itens.items()), key=lambda i: (i["inicio"] or "", i["id"]), reverse=True)
     salvar(SAIDA / "orgao" / f"{uf}.json", {"fonte": fonte, "regrasRessarcimento": regras,
                                               "fornecedores": ranking, "itens": lista})
+    return {"contratos": sum(i["tipo"] == "contrato" for i in lista), "atas": sum(i["tipo"] != "contrato" for i in lista),
+            "fornecedores": len(ranking), "regras": len((regras or {}).get("documentos") or [])}
 
 
-def gerar_leis(uf: str, pasta: Path) -> None:
+def gerar_leis(uf: str, pasta: Path) -> int:
     """site/dados/leis/<UF>.json: catálogo de normas legais que a Assembleia publica sem autoria (`leis_<ano>.json`), da mais nova à mais antiga."""
     normas, fonte = [], None
     for arq in sorted(pasta.glob("leis_[0-9]*.json")):
@@ -232,12 +245,13 @@ def gerar_leis(uf: str, pasta: Path) -> None:
         fonte = env.get("fonte") or fonte
         normas += [{"id": nid, **n} for nid, n in env.get("normas", {}).items()]
     if not normas:
-        return
+        return 0
     normas.sort(key=lambda n: (n["ano"] or 0, int(n["numero"]) if n["numero"].isdigit() else 0, n["id"]), reverse=True)
     salvar(SAIDA / "leis" / f"{uf}.json", {"fonte": fonte, "normas": normas})
+    return len(normas)
 
 
-def gerar_assembleia(uf: str, pasta: Path) -> list[dict]:
+def gerar_assembleia(uf: str, pasta: Path, indice: dict | None = None) -> list[dict]:
     info = ler(pasta / "deputados.json")
     if not info:
         return []
@@ -309,8 +323,9 @@ def gerar_assembleia(uf: str, pasta: Path) -> list[dict]:
             **novos.get(str(pid), {}),
         })
     gerar_governo(uf, pasta, host)
-    gerar_orgao(uf, pasta)
-    gerar_leis(uf, pasta)
+    orgao, normas = gerar_orgao(uf, pasta), gerar_leis(uf, pasta)
+    if indice is not None and (orgao or normas):
+        indice[uf] = {"uf": uf, **(orgao or {}), **({"normas": normas} if normas else {})}
     print(f"Gerado: {uf}, {len(deputados)} deputados, {len(resumo)} votações nominais, "
           f"{sum(len(v) for v in projetos.values())} autorias de projetos")
     return list(deputados.values())
@@ -322,10 +337,12 @@ def gerar() -> dict:
     ligacao = {}
     if not BRUTO.exists():
         return ligacao
+    indice = {}
     for pasta in sorted(p for p in BRUTO.iterdir() if p.is_dir()):
-        for d in gerar_assembleia(pasta.name, pasta):
+        for d in gerar_assembleia(pasta.name, pasta, indice):
             civil = re.sub(r"\s*\(.*?\)", "", d.get("nomeCivil") or "")  # "Fulano da Silva (Fulaninho)" -> nome sem apelido
             for nome in (d.get("nome"), d.get("nomeCivil"), civil):
                 if nome:
                     ligacao[chave_nome(nome, pasta.name)] = (pasta.name, d["id"])
+    salvar(SAIDA / "assembleias.json", sorted(indice.values(), key=lambda x: x["uf"]))
     return ligacao

@@ -1,5 +1,8 @@
 import json
 
+import pytest
+import requests
+
 import coletar_estadual_pr as pr
 from conftest import RAIZ
 
@@ -411,3 +414,399 @@ def test_gabinete_atual_decodifica_utf8_e_rejeita_lista_vazia():
     except RuntimeError:
         return
     raise AssertionError("lista vazia deveria falhar")
+
+
+
+class RespPr:
+    def __init__(self, dados=None, status=200, texto=""):
+        self.status_code = status
+        self.dados = dados
+        self.text = texto
+        self.content = texto.encode("utf-8")
+
+    def raise_for_status(self):
+        if self.status_code >= 400:
+            raise RuntimeError(f"HTTP {self.status_code}")
+
+    def json(self):
+        if self.dados is None:
+            raise ValueError("sem json")
+        return self.dados
+
+
+class SessaoPr:
+    def __init__(self, get=None, post=None):
+        self.chamadas_get, self.chamadas_post = [], []
+        self.fn_get, self.fn_post = get, post
+
+    def get(self, url, **kw):
+        self.chamadas_get.append((url, kw))
+        return self.fn_get(url, kw)
+
+    def post(self, url, **kw):
+        self.chamadas_post.append((url, kw))
+        return self.fn_post(url, kw)
+
+
+def test_get_json_passa_parametros_cabecalho_e_levanta_em_erro():
+    s = SessaoPr(get=lambda url, kw: RespPr({"meses": {"1": 1}}))
+    assert pr.get_json(s, "https://x/api", ano=2026) == {"meses": {"1": 1}}
+    url, kw = s.chamadas_get[0]
+    assert url == "https://x/api" and kw["params"] == {"ano": 2026} and kw["headers"]["X-Requested-With"] == "XMLHttpRequest"
+    with pytest.raises(RuntimeError, match="HTTP 500"):
+        pr.get_json(SessaoPr(get=lambda url, kw: RespPr(status=500)), "https://x/api")
+
+
+def test_detalhe_remuneracao_espera_429_e_desiste_depois_de_seis(monkeypatch):
+    esperas = []
+    monkeypatch.setattr(pr.time, "sleep", esperas.append)
+    respostas = [RespPr(status=429), RespPr(status=429), RespPr({"valores": []})]
+    s = SessaoPr(post=lambda url, kw: respostas.pop(0))
+    r = {"matricula": 77, "id": 5}
+    assert pr.detalhe_remuneracao(s, r, 10, 2026, {"X-CSRF-TOKEN": "t"}) == {"valores": []}
+    assert esperas == [5, 10, pr.PAUSA]
+    url, kw = s.chamadas_post[0]
+    assert url == f"{pr.PORTAL}/api/remuneracao/77" and kw["data"] == {"t": pr.TIPO_REMUNERACAO, "mes": 10, "ano": 2026, "id": 5}
+    assert kw["headers"] == {"X-CSRF-TOKEN": "t"}
+
+    esperas.clear()
+    sempre = SessaoPr(post=lambda url, kw: RespPr(status=429))
+    with pytest.raises(RuntimeError, match="HTTP 429"):
+        pr.detalhe_remuneracao(sempre, r, 10, 2026, {})
+    assert len(sempre.chamadas_post) == 6 and esperas == [5, 10, 15, 20, 25, 30]
+
+
+def test_remuneracao_do_mes_pagina_liga_pelo_gabinete_e_pula_sem_par(monkeypatch):
+    monkeypatch.setattr(pr.time, "sleep", lambda s: None)
+    paginas = {1: {"remuneracoes": [{"id": 1, "matricula": 11, "nome": "ALEXANDRE MARANHAO KHURY", "lotacao": "GAB. DEP. ALEXANDRE CURI"},
+                                    {"id": 2, "matricula": 22, "nome": "FULANO SEM PAR", "lotacao": "SETOR X"}], "last_page": 2},
+               2: {"remuneracoes": [{"id": 3, "matricula": 33, "nome": "ANA JULIA RIBEIRO", "lotacao": "GAB. DEP. ANA JÚLIA"}], "last_page": 2}}
+
+    def get(url, kw):
+        if url == pr.REMUNERACAO_PAGINA:
+            return RespPr(texto='<meta name="csrf-token" content="tok123">')
+        return RespPr(paginas[kw["params"]["page"]])
+
+    def post(url, kw):
+        assert kw["headers"]["X-CSRF-TOKEN"] == "tok123"
+        return RespPr({"valores": [["Total Bruto", "Valor Bruto (- Descontos Obrigatórios)", "Subsídio (1)"], ["35.000,00", "30.000,00", "20.000,00"]]})
+
+    s = SessaoPr(get=get, post=post)
+    itens = pr.remuneracao_do_mes(s, 2026, 10, DEPUTADOS)
+    assert [(i["idDeputado"], i["mes"], i["bruto"], i["liquido"], i["componentes"]) for i in itens] == [
+        ("alexandre-curi", 10, 35000.0, 30000.0, {"Subsídio": 20000.0}), ("ana-julia", 10, 35000.0, 30000.0, {"Subsídio": 20000.0})]
+    assert [url for url, _ in s.chamadas_post] == [f"{pr.PORTAL}/api/remuneracao/11", f"{pr.PORTAL}/api/remuneracao/33"]
+    assert [kw["params"]["page"] for url, kw in s.chamadas_get if url != pr.REMUNERACAO_PAGINA] == [1, 2]
+    assert itens[0]["fonte"] == pr.REMUNERACAO_PAGINA
+
+
+def test_remuneracao_do_mes_sem_token_envia_cabecalho_vazio_e_lista_vazia(monkeypatch):
+    s = SessaoPr(get=lambda url, kw: RespPr(texto="<html></html>") if url == pr.REMUNERACAO_PAGINA else RespPr({"remuneracoes": [], "last_page": 0}))
+    assert pr.remuneracao_do_mes(s, 2026, 10, DEPUTADOS) == []
+    assert s.chamadas_get[1][1]["headers"]["X-CSRF-TOKEN"] == ""
+
+
+def test_regras_do_ressarcimento_pega_a_resolucao_mais_nova():
+    pagina = ('<a href="https://x/ressarcimento_da_atividade_parlamentar/2019/Resolução 11.pdf">a</a>'
+              '<a href="https://x/ressarcimento_da_atividade_parlamentar/2024/Ato 5 de 2024.pdf">b</a>'
+              '<a href="https://x/outra/2025/z.pdf">c</a>')
+    regra = pr.regras_do_ressarcimento(SessaoPr(get=lambda url, kw: RespPr(texto=pagina)))
+    assert regra == {"url": "https://x/ressarcimento_da_atividade_parlamentar/2024/Ato%205%20de%202024.pdf", "ano": 2024, "fonte": pr.RESSARCIMENTO_REGRAS_PAGINA}
+    assert pr.regras_do_ressarcimento(SessaoPr(get=lambda url, kw: RespPr(texto="<p>sem pdf</p>"))) is None
+    with pytest.raises(RuntimeError, match="HTTP 500"):
+        pr.regras_do_ressarcimento(SessaoPr(get=lambda url, kw: RespPr(status=500)))
+
+
+def test_proposicoes_do_ano_tenta_de_novo_so_em_erro_de_rede(monkeypatch):
+    esperas = []
+    monkeypatch.setattr(pr.time, "sleep", esperas.append)
+    respostas = [requests.ConnectionError("caiu"), requests.Timeout("lento"), RespPr({"sucesso": True, "lista": [{"codigo": 1}]})]
+
+    def post(url, kw):
+        r = respostas.pop(0)
+        if isinstance(r, Exception):
+            raise r
+        return r
+
+    s = SessaoPr(post=post)
+    assert pr.proposicoes_do_ano(s, 2026) == [{"codigo": 1}]
+    assert esperas == [15, 15] and s.chamadas_post[0][0] == f"{pr.API_PROPOSICOES}/proposicao/filtrar" and s.chamadas_post[0][1]["json"] == {"ano": 2026}
+
+    def sempre(url, kw):
+        raise requests.ConnectionError("caiu")
+
+    with pytest.raises(requests.ConnectionError):
+        pr.proposicoes_do_ano(SessaoPr(post=sempre), 2026)
+    with pytest.raises(RuntimeError, match="proposicao/filtrar 2026: falhou"):
+        pr.proposicoes_do_ano(SessaoPr(post=lambda url, kw: RespPr({"sucesso": False, "erro": "falhou"})), 2026)
+    assert pr.proposicoes_do_ano(SessaoPr(post=lambda url, kw: RespPr({"sucesso": True, "lista": None})), 2026) == []
+
+
+def test_normas_do_ano_levanta_quando_o_webservice_nao_tem_sucesso():
+    s = SessaoPr(post=lambda url, kw: RespPr({"sucesso": True, "lista": [{"codigo": 3}]}))
+    assert pr.normas_do_ano(s, 2026) == [{"codigo": 3}]
+    assert s.chamadas_post[0][0] == f"{pr.API_PROPOSICOES}/norma-legal/filtrar"
+    with pytest.raises(RuntimeError, match="norma-legal/filtrar 2026: erro"):
+        pr.normas_do_ano(SessaoPr(post=lambda url, kw: RespPr({"sucesso": False, "erro": "erro"})), 2026)
+    with pytest.raises(RuntimeError, match="HTTP 502"):
+        pr.normas_do_ano(SessaoPr(post=lambda url, kw: RespPr(status=502)), 2026)
+
+
+def test_sessoes_do_ano_completa_lista_todos_os_meses_e_incremental_so_os_recentes(monkeypatch):
+    consultas = []
+
+    def get_json(s, url, **params):
+        consultas.append((url.rsplit("/", 1)[1], params.get("mes")))
+        if url.endswith("/meses"):
+            return {"meses": {"1": 1, "9": 9, "10": 10}}
+        if url.endswith("/datas"):
+            return ["05"]
+        return [params["mes"] * 100]
+
+    monkeypatch.setattr(pr, "get_json", get_json)
+    hoje = pr.date(2026, 10, 31)
+    assert pr.sessoes_do_ano(None, 2026, hoje, True) == [("100", "2026-01-05", 1, "05"), ("900", "2026-09-05", 9, "05"), ("1000", "2026-10-05", 10, "05")]
+    consultas.clear()
+    assert pr.sessoes_do_ano(None, 2026, hoje, False) == [("900", "2026-09-05", 9, "05"), ("1000", "2026-10-05", 10, "05")]
+    assert ("datas", 1) not in consultas
+
+
+def test_zip_da_sessao_trata_erro_5xx_e_corpo_sem_json():
+    def sessao(resp):
+        return SessaoPr(get=lambda url, kw: resp)
+
+    assert pr.zip_da_sessao(sessao(RespPr({"arquivo": "https://storage2/s.zip"})), "55") == "https://storage2/s.zip"
+    assert pr.zip_da_sessao(sessao(RespPr({"arquivo": ""})), "55") is None
+    assert pr.zip_da_sessao(sessao(RespPr(status=404)), "55") is None
+    with pytest.raises(RuntimeError, match="HTTP 503"):
+        pr.zip_da_sessao(sessao(RespPr(status=503)), "55")
+    s = sessao(RespPr({"arquivo": None}))
+    pr.zip_da_sessao(s, "55")
+    assert s.chamadas_get[0][1]["params"] == {"sessao": "55"}
+
+
+def test_pdfs_da_sessao_indexa_pelo_numero_do_item(monkeypatch):
+    consulta = []
+
+    def get_json(s, url, **params):
+        consulta.append((url, params))
+        return [{"item": "ITEM 2 - PL", "arquivo": "https://x/2.pdf"}, {"item": "ITEM 3", "arquivo": None}, {"item": "Mesa", "arquivo": "https://x/m.pdf"},
+                {"item": None, "arquivo": "https://x/n.pdf"}]
+
+    monkeypatch.setattr(pr, "get_json", get_json)
+    assert pr.pdfs_da_sessao(None, 2026, 10, "05", "55") == {"2": "https://x/2.pdf"}
+    assert consulta == [(pr.VOTACOES_API, {"ano": 2026, "mes": 10, "data": "05", "sessao": "55"})]
+
+
+def test_votacoes_do_ano_avisa_nomes_sem_par_e_guarda_sessao_sem_zip(monkeypatch, capsys):
+    hoje = pr.date(2026, 10, 31)
+    monkeypatch.setattr(pr, "sessoes_do_ano", lambda s, ano, h, completa: [("1", "2026-10-20", 10, "20"), ("2", "2026-10-21", 10, "21")])
+    monkeypatch.setattr(pr, "zip_da_sessao", lambda s, sid: "u/1.zip" if sid == "1" else None)
+    monkeypatch.setattr(pr, "pdfs_da_sessao", lambda *a: {})
+    monkeypatch.setattr(pr.comum, "baixar", lambda s, url, **kw: b"zip")
+    monkeypatch.setattr(pr.time, "sleep", lambda s: None)
+    monkeypatch.setattr(pr, "votacoes_do_zip", lambda *a: ({"v1": {"sessao": "1", "votos": []}}, {"v1": {"tipo": "PRO"}}, {"ZULU", "ALFA"}))
+    votos, mats, estado, completa = pr.votacoes_do_ano(None, 2026, DEPUTADOS_VOTO, {}, hoje)
+    assert estado == {"1": {"data": "2026-10-20", "zip": True, "lidoEm": "2026-10-31", "semPar": 2}, "2": {"data": "2026-10-21", "zip": False, "lidoEm": "2026-10-31"}}
+    assert "AVISO: PR: votos de nomes sem deputado ligado (não gravados): ALFA, ZULU" in capsys.readouterr().err
+    assert completa and list(votos) == ["v1"]
+
+
+def test_votacoes_do_ano_troca_votacoes_da_sessao_relida_e_descarta_materias_orfas(monkeypatch):
+    hoje = pr.date(2026, 10, 31)
+    monkeypatch.setattr(pr, "sessoes_do_ano", lambda s, ano, h, completa: [("1", "2026-10-20", 10, "20")])
+    monkeypatch.setattr(pr, "zip_da_sessao", lambda s, sid: "u/1.zip")
+    monkeypatch.setattr(pr, "pdfs_da_sessao", lambda *a: {})
+    monkeypatch.setattr(pr.comum, "baixar", lambda s, url, **kw: b"zip")
+    monkeypatch.setattr(pr.time, "sleep", lambda s: None)
+    monkeypatch.setattr(pr, "votacoes_do_zip", lambda *a: ({"novo": {"sessao": "1"}}, {"novo": {"tipo": "PRO"}}, set()))
+    arquivo = {"completaEm": "2026-10-01", "sessoes": {"1": {"data": "2026-10-20", "zip": True, "semPar": 1}},
+               "votacoes": {"velho": {"sessao": "1"}, "outro": {"sessao": "9"}}, "materiasVotadas": {"velho": {"tipo": "X"}, "outro": {"tipo": "Y"}}}
+    votos, mats, estado, completa = pr.votacoes_do_ano(None, 2026, DEPUTADOS_VOTO, arquivo, hoje)
+    assert completa and sorted(votos) == ["novo", "outro"] and sorted(mats) == ["novo", "outro"]
+
+
+def servidor_de_endpoints_vazios(ressarcimento, passagens, estoque, postados):
+    def get_json(s, url, **params):
+        if url.endswith("/meses"):
+            nome = url.rsplit("/", 2)[1]
+            tem = (nome == "ressarcimento" and ressarcimento) or (nome == "estoque" and estoque)
+            return {"meses": {"3": 3} if tem else {}}
+        return passagens
+
+    def post(url, kw):
+        postados.append(kw["data"])
+        return RespPr({"data": [{"id": 1}] if ressarcimento else []})
+
+    return get_json, SessaoPr(post=post)
+
+
+def test_publicados_no_ano_e_avisar_publicados(monkeypatch, capsys):
+    postados = []
+    get_json, s = servidor_de_endpoints_vazios(True, [{"id": 1}], True, postados)
+    monkeypatch.setattr(pr, "get_json", get_json)
+    assert pr.publicados_no_ano(s, pr.date(2026, 10, 31)) == ["ressarcimento", "passagens", "estoque"]
+    assert postados == [{"ano": 2026, "mes": 3}]
+    pr.avisar_publicados(s, pr.date(2026, 10, 31))
+    assert "AVISO: PR: ressarcimento, passagens, estoque passaram a trazer registros" in capsys.readouterr().err
+
+    get_json, s = servidor_de_endpoints_vazios(False, [], False, [])
+    monkeypatch.setattr(pr, "get_json", get_json)
+    assert pr.publicados_no_ano(s, pr.date(2026, 10, 31)) == []
+    pr.avisar_publicados(s, pr.date(2026, 10, 31))
+    assert capsys.readouterr().err == ""
+
+    def erro(s, url, **params):
+        raise RuntimeError("HTTP 500")
+
+    monkeypatch.setattr(pr, "get_json", erro)
+    with pytest.raises(RuntimeError, match="HTTP 500"):
+        pr.publicados_no_ano(s, pr.date(2026, 10, 31))
+
+
+def preparar_coleta_pr(monkeypatch, tmp_path, html):
+    monkeypatch.setattr(pr.comum, "DADOS", tmp_path)
+    monkeypatch.setattr(pr.comum, "sessao", lambda: SessaoPr(get=lambda url, kw: RespPr(texto=html)))
+    monkeypatch.setattr(pr.time, "sleep", lambda s: None)
+    return tmp_path / "PR"
+
+
+def test_coletar_lista_de_deputados_vazia_para_na_hora(monkeypatch, tmp_path, capsys):
+    pasta = preparar_coleta_pr(monkeypatch, tmp_path, "<html></html>")
+
+    def get_json(*a, **k):
+        raise AssertionError("não deveria consultar a API")
+
+    monkeypatch.setattr(pr, "get_json", get_json)
+    pr.coletar()
+    assert "AVISO: PR: lista de deputados vazia" in capsys.readouterr().err and not pasta.exists()
+
+
+def test_coletar_monta_arquivos_pula_ano_encerrado_e_isola_etapas_com_erro(monkeypatch, tmp_path, capsys):
+    hoje = pr.date.today()
+    antigo = hoje.year - 3
+    html = amostra("deputados")["html"]
+    pasta = preparar_coleta_pr(monkeypatch, tmp_path, html)
+    monkeypatch.setattr(pr, "PRIMEIRO_ANO", antigo)
+    pr.comum.salvar(pasta / f"materias_{antigo}.json", {"materias": {"1": {}}})
+    pr.comum.salvar(pasta / f"normas_{antigo}.json", {"normas": {"1": {}}})
+    pr.comum.salvar(pasta / f"diarias_{antigo}.json", {"itens": [{"marca": "antiga"}]})
+    pr.comum.salvar(pasta / f"orgao_{antigo}.json", {"itens": {"ctr_x": {}}})
+    pr.comum.salvar(pasta / f"normas_{hoje.year}.json", {"normas": {"1": {"ano": 2026}}})
+    pr.comum.salvar(pasta / "presenca.json", {"itens": [{"idDeputado": "x", "periodo": "2020", "presente": 1, "ausente": 0, "licenca": 0, "totalSessoes": 1}]})
+    chamadas = {"proposicoes": [], "normas": [], "diarias": [], "contratos": [], "pautas": [], "votacoes": [], "remuneracao": [], "presenca": []}
+
+    def get_json(s, url, **params):
+        if url == f"{pr.PORTAL}/api/remuneracao/meses":
+            return {"meses": {"9": 9, "10": 10}}
+        if url == f"{pr.PORTAL}/api/remuneracao":
+            return {"remuneracoes": [{"nome": "ALEXANDRE MARANHAO KHURY", "lotacao": "GAB. DEP. ALEXANDRE CURI"}]}
+        if url == f"{pr.PORTAL}/api/presenca/ano":
+            chamadas["presenca"].append(params["ano"])
+            return {"sessoes": [{"data": "05/02/2026", "linhas": [["PRESENTES", "JUSTIFICADOS", "AUSENTES"], ["ALEXANDRE CURI", "", ""]]}]}
+        if url in pr.ORGAO_APIS.values():
+            return {"data": []}
+        raise AssertionError(url)
+
+    def proposicoes(s, ano):
+        chamadas["proposicoes"].append(ano)
+        return [{"codigo": 1, "autor": "DEPUTADO ALEXANDRE CURI", "tipoProposicao": "PROJETO DE LEI", "ementa": "x", "numero": 1, "ano": ano,
+                 "status": "TRAMITANDO", "dataRecebimento": "2026-02-01"}]
+
+    def normas_vazias(s, ano):
+        chamadas["normas"].append(ano)
+        return []
+
+    def diarias(s, ano, deputados, existentes, hoje_):
+        chamadas["diarias"].append(ano)
+        return [{"idDeputado": "alexandre-curi", "data": "2026-02-01", "protocolo": "1"}]
+
+    def contratos(s, ano):
+        chamadas["contratos"].append(ano)
+        return [{"id": 7, "fornecedor": "ACME LTDA", "objeto": "x", "inicio_vigencia": "05/10/2026", "valor": 10.0, "contrato": "1/2026"}]
+
+    def pautas(s, ano, hoje_, anterior, completa):
+        chamadas["pautas"].append((ano, completa))
+        return {"ordem-do-dia|1": {"id": "1", "tipo": "ordem-do-dia"}}
+
+    def votacoes(s, ano, deputados, arquivo, hoje_):
+        chamadas["votacoes"].append(ano)
+        return {"v": {}}, {"v": {}}, {"1": {"zip": True}}, True
+
+    def remuneracao(s, ano, deputados, anterior, hoje_):
+        chamadas["remuneracao"].append(ano)
+        return [], {"mes": 10, "dia": hoje_.isoformat()}
+
+    monkeypatch.setattr(pr, "get_json", get_json)
+    monkeypatch.setattr(pr, "proposicoes_do_ano", proposicoes)
+    monkeypatch.setattr(pr, "normas_do_ano", normas_vazias)
+    monkeypatch.setattr(pr, "diarias_do_ano", diarias)
+    monkeypatch.setattr(pr, "contratos_do_ano", contratos)
+    monkeypatch.setattr(pr, "pautas_do_ano", pautas)
+    monkeypatch.setattr(pr, "votacoes_do_ano", votacoes)
+    monkeypatch.setattr(pr, "remuneracao_do_ano", remuneracao)
+    monkeypatch.setattr(pr, "gabinete_atual", lambda s, deputados: [{"idDeputado": "alexandre-curi", "matricula": "1", "nome": "F", "simbolo": "G-1"}])
+    monkeypatch.setattr(pr, "regras_do_ressarcimento", lambda s: {"url": "https://x/r.pdf", "ano": 2024, "fonte": pr.RESSARCIMENTO_REGRAS_PAGINA})
+    monkeypatch.setattr(pr, "avisar_publicados", lambda s, h: None)
+    pr.coletar()
+
+    anos = list(range(antigo, hoje.year + 1))
+    erro = capsys.readouterr().err
+    assert chamadas["pautas"] == [(a, True) for a in anos] and chamadas["votacoes"] == anos
+    assert chamadas["proposicoes"] == anos[1:] and chamadas["normas"] == anos[1:] and chamadas["diarias"] == anos[1:] and chamadas["contratos"] == anos[1:]
+    assert chamadas["remuneracao"] == [hoje.year] and chamadas["presenca"] == [hoje.year - 1, hoje.year]
+    assert f"AVISO: PR: normas {hoje.year}: webservice devolveu lista vazia para {hoje.year}; mantém o arquivo anterior" in erro
+    assert json.loads((pasta / f"diarias_{antigo}.json").read_text(encoding="utf-8"))["itens"] == [{"marca": "antiga"}]
+    assert json.loads((pasta / f"normas_{hoje.year}.json").read_text(encoding="utf-8"))["normas"] == {"1": {"ano": 2026}}
+    deputados = json.loads((pasta / "deputados.json").read_text(encoding="utf-8"))["deputados"]
+    assert next(d for d in deputados if d["id"] == "alexandre-curi")["nomeCivil"] == "ALEXANDRE MARANHAO KHURY"
+    assert list(json.loads((pasta / f"materias_{hoje.year}.json").read_text(encoding="utf-8"))["materias"]) == ["1"]
+    assert len(json.loads((pasta / f"orgao_{hoje.year}.json").read_text(encoding="utf-8"))["itens"]) == 1
+    assert json.loads((pasta / f"remuneracao_{hoje.year}.json").read_text(encoding="utf-8"))["ultimoMesLidoEm"]["mes"] == 10
+    assert set(json.loads((pasta / f"pautas_{hoje.year}.json").read_text(encoding="utf-8"))["itens"]) == {"ordem-do-dia|1"}
+    assert json.loads((pasta / "votacoes.json").read_text(encoding="utf-8"))["sessoes"] == {"1": {"zip": True}}
+    assert (pasta / "materias_votadas.json").exists()
+    presenca = json.loads((pasta / "presenca.json").read_text(encoding="utf-8"))["itens"]
+    assert presenca[0]["periodo"] == "2020" and {i["idDeputado"] for i in presenca[1:]} == {"alexandre-curi"}
+    assert json.loads((pasta / "gabinete.json").read_text(encoding="utf-8"))["itens"][0]["idDeputado"] == "alexandre-curi"
+    assert json.loads((pasta / "regras_ressarcimento.json").read_text(encoding="utf-8"))["ano"] == 2024
+
+
+def test_coletar_etapas_sem_resultado_viram_aviso_e_nao_gravam(monkeypatch, tmp_path, capsys):
+    hoje = pr.date.today()
+    pasta = preparar_coleta_pr(monkeypatch, tmp_path, amostra("deputados")["html"])
+    pr.comum.salvar(pasta / f"orgao_{hoje.year}.json", {"itens": {"ctr_x": {}}})
+    pr.comum.salvar(pasta / f"materias_{hoje.year}.json", {"materias": {"1": {}}})
+
+    def get_json(s, url, **params):
+        if url == f"{pr.PORTAL}/api/remuneracao/meses":
+            return {"meses": {}}
+        if url == f"{pr.PORTAL}/api/presenca/ano":
+            return {}
+        if url in pr.ORGAO_APIS.values():
+            return {"data": []}
+        raise RuntimeError("HTTP 500")
+
+    monkeypatch.setattr(pr, "get_json", get_json)
+    monkeypatch.setattr(pr, "contratos_do_ano", lambda s, ano: [])
+    monkeypatch.setattr(pr, "proposicoes_do_ano", lambda s, ano: [])
+    monkeypatch.setattr(pr, "normas_do_ano", lambda s, ano: (_ for _ in ()).throw(RuntimeError("norma-legal/filtrar: falhou")))
+    monkeypatch.setattr(pr, "pautas_do_ano", lambda *a: (_ for _ in ()).throw(RuntimeError("HTTP 500")))
+    monkeypatch.setattr(pr, "votacoes_do_ano", lambda *a: (_ for _ in ()).throw(RuntimeError("HTTP 500")))
+    monkeypatch.setattr(pr, "gabinete_atual", lambda s, deputados: [])
+    monkeypatch.setattr(pr, "regras_do_ressarcimento", lambda s: None)
+    monkeypatch.setattr(pr, "avisar_publicados", lambda s, h: (_ for _ in ()).throw(RuntimeError("fora do ar")))
+    pr.coletar()
+    erro = capsys.readouterr().err
+    ano = hoje.year
+    assert "AVISO: PR: sem nome civil (sem diárias):" in erro
+    assert f"AVISO: PR: proposições {ano}: webservice devolveu lista vazia para {ano}; mantém o arquivo anterior" in erro
+    assert f"AVISO: PR: normas {ano}: norma-legal/filtrar: falhou" in erro
+    assert f"AVISO: PR: pautas e atas {ano}: HTTP 500" in erro and f"AVISO: PR: votações {ano}: HTTP 500" in erro
+    assert f"AVISO: PR: contratos e atas {ano}: portal devolveu lista vazia para {ano}; mantém o arquivo anterior" in erro
+    assert f"AVISO: PR: diárias {ano}: HTTP 500" in erro and f"AVISO: PR: remuneração {ano}" not in erro
+    assert "AVISO: PR: gabinete: nenhum servidor ligado a gabinete de deputado; mantém o arquivo anterior" in erro
+    assert "AVISO: PR: regras do ressarcimento: nenhum PDF de resolução do ressarcimento na página; mantém o arquivo anterior" in erro
+    assert "AVISO: PR: fontes vazias: fora do ar" in erro
+    assert not (pasta / "gabinete.json").exists() and not (pasta / "regras_ressarcimento.json").exists()
+    assert json.loads((pasta / f"orgao_{ano}.json").read_text(encoding="utf-8"))["itens"] == {"ctr_x": {}}

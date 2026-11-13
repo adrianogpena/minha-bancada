@@ -59,6 +59,8 @@ const PAGINAS = [
   ["votacoes.html", "PL 1/2026"],
   ["votacao.html?id=1-1", "PL 1/2026"],
   ["fornecedores.html", "Cia Aérea"],
+  ["assembleia.html", "Paraná"],
+  ["assembleia.html?uf=PR", "Limpa Tudo Ltda"],
   // blocos montados a partir de `_disputas` (ficam numa aba fechada: basta estarem na página)
   ["politico.html?f=t/2024/71072&i=500", "Comparecimento e vagas", "attached"],
   ["politico.html?f=t/2024/71072&i=500", "Quociente eleitoral", "attached"],

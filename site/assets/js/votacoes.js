@@ -6,7 +6,7 @@ import { CAMARA_API, CADEIRAS_CAMARA, quorumCamara, fontes, SENADO_API, linkMate
 /* ---------- lista de votações ---------- */
 export function barraPlacar(placar) {
   const total = Object.values(placar).reduce((a, b) => a + b, 0) || 1;
-  return `<div class="placar" role="img" aria-label="${Object.entries(placar).map(([k, n]) => `${VOTOS[k]?.rotulo || k}: ${n}`).join(", ")}">
+  return `<div class="placar" role="img" aria-label="${Object.entries(placar).map(([k, n]) => `${esc(VOTOS[k]?.rotulo || k)}: ${esc(n)}`).join(", ")}">
     ${["sim", "nao", "abstencao", "obstrucao", "secreto", "art17", "outro", "ausente"].filter((k) => placar[k]).map((k) => `<i style="width:${(placar[k] / total) * 100}%;background:${VOTOS[k].cor}"></i>`).join("")}</div>`;
 }
 

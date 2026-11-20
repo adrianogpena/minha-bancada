@@ -133,3 +133,7 @@ small { font-size: 13px; }
 .etapas .ponto { left: 0; transform: none; top: 4px; }
 .etapas b, .etapas span { display: inline; } .etapas span::before { content: " · "; }
 .etapas .ponto { display: grid; } .etapas .ponto::before { content: none; }
+
+/* linha do tempo */
+.dia { padding-left: 18px; }
+.controles > * { flex: 1 1 auto; }

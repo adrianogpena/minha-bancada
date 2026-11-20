@@ -15,6 +15,7 @@ const { paginaPoliticos } = js("politicos.js");
 const { montarEstadual } = js("estadual.js");
 const { GLOSSARIO, termo, marcarTermos } = js("glossario.js");
 const { ETAPAS_POR_TIPO, estadoProposicao, faixaEtapas, blocoEstado } = js("etapas.js");
+const { montarLinhaDoTempo, linhaDoTempoHtml, ligarLinhaDoTempo, classificarEvento } = js("linha-tempo.js");
 const fs = require("node:fs");
 const caminho = require("node:path");
 
@@ -559,24 +560,21 @@ test("paginaProposicao da Câmara monta cabeçalho, autores, leis, votações e 
     assert.match(html, /Autores \(2\)/);
     assert.match(html, /autor principal/);
     assert.match(html, /Autor &lt;Externo&gt;<span class="quando texto">sem ficha no site/);
-    assert.match(html, /Votações \(2\)/);
+    assert.match(html, /<h2>Como foi a tramitação<\/h2>/);
+    assert.match(html, /Tudo \(17 movimentações\)/);
+    assert.match(html, /Despacho &lt;d&gt;/);
+    assert.match(html, /proposicoes\/1\/tramitacoes/);
     assert.match(html, /Votação &lt;1&gt;/);
     assert.match(html, /, aprovada/);
     assert.match(html, /Votação simbólica ou em comissão: sem voto individual\./);
     assert.equal((html.match(/Ver quem votou/g) || []).length, 1);
     assert.match(html, /href="https:\/\/inteiro\.exemplo\/x\.pdf"|Inteiro teor/);
     const vida = dom.el("#vida").innerHTML;
-    assert.match(vida, /Vida do projeto \(17 movimentações\)/);
+    assert.match(vida, /<h2>Vida do projeto<\/h2>/);
     assert.doesNotMatch(vida, /Último relator designado/);
     assert.match(vida, /Por onde passou:<\/b> Órgão 0, Órgão 1/);
-    assert.match(vida, /Ver as 2 movimentações mais antigas/);
     assert.match(vida, /Proposições relacionadas \(1\):<\/b> <a href="[^"]*idProposicao=2"[^>]*>PL 2\/2025/);
-    const linha = dom.el("#linha-tempo");
-    assert.equal((linha.innerHTML.match(/<li>/g) || []).length, 0);
-    assert.match(vida, /Despacho &lt;d&gt;/);
-    await dom.el("#mais-tempo").disparar("click");
-    assert.equal(dom.el("#mais-tempo").hidden, true);
-    assert.equal((linha.innerHTML.match(/<li>/g) || []).length, 2);
+    assert.doesNotMatch(html, /mais-tempo/);
     const botao = { dataset: { i: "0" }, hidden: false };
     await dom.el("#conteudo").disparar("click", { target: { closest: () => botao } });
     await esperar();
@@ -609,7 +607,7 @@ test("paginaProposicao mostra o relator da tramitação quando ele não tem fich
     const html = dom.el("#conteudo").innerHTML;
     assert.match(html, /Situação na fonte:<\/b> ainda não consultada/);
     assert.match(html, /Autoria ainda não coletada\./);
-    assert.match(html, /Nenhuma votação registrada no Plenário\./);
+    assert.match(html, /Nenhuma movimentação nem votação registrada ainda\./);
     assert.match(dom.el("#vida").innerHTML, /Último relator designado:<\/b> Último &lt;R&gt;/);
   });
 });
@@ -652,12 +650,13 @@ test("paginaProposicao do Senado mostra situação com data, outra Casa, relator
     assert.match(html, /Orientação das lideranças: Governo Sim · PL Não\./);
     assert.match(html, /processo\?codigoMateria=5/);
     const vida = dom.el("#vida").innerHTML;
-    assert.match(vida, /Vida do projeto \(16 movimentações\)/);
+    assert.match(vida, /<h2>Vida do projeto<\/h2>/);
+    assert.match(html, /Tudo \(16 movimentações\)/);
+    assert.match(html, /Informe &lt;15&gt;/);
+    assert.match(html, /<div class="linha-tempo so-marcos">/);
     assert.match(vida, /Rel &lt;R&gt; \(MDB\/AM\), relator em Plenário, de 11 de nov\. de 2026 a 18 de nov\. de 2026 \(matéria deliberada\)/);
     assert.match(vida, /Despacho:<\/b> Ao Plenário \(PLEN\), em 11 de nov\. de 2026/);
-    assert.match(vida, /Situações \(2\)/);
-    assert.match(vida, /Informe &lt;15&gt;/);
-    assert.match(vida, /Ver as 1 movimentações mais antigas/);
+    assert.doesNotMatch(vida, /Situações \(2\)/);
     assert.match(vida, /href="https:\/\/legis\.senado\.leg\.br\/sdleg-getter\/dadosabertos\/documento\/abc-uuid"[^>]*>Parecer<\/a>/);
     assert.match(vida, /Ver todos os 2 documentos/);
     assert.match(vida, /Emendas \(2\)/);
@@ -665,9 +664,7 @@ test("paginaProposicao do Senado mostra situação com data, outra Casa, relator
     assert.match(vida, /Decisão:<\/b> Rejeitada/);
     assert.match(vida, /turno suplementar/);
     assert.match(vida, /RQS 770\/2026/);
-    assert.match(vida, /processo\/123/);
-    await dom.el("#mais-tempo").disparar("click");
-    assert.equal(dom.el("#mais-tempo").hidden, true);
+    assert.match(html, /processo\/123/);
   });
 });
 
@@ -1031,4 +1028,100 @@ test("etapas: a tabela ETAPAS_POR_TIPO tem as mesmas etapas, arestas e caminho p
     }
   }
   assert.deepEqual(vistos.sort(), Object.keys(ETAPAS_POR_TIPO).sort());
+});
+
+test("linha do tempo: PLP 299 no Senado agrupa por dia, resume as emendas e põe as votações nos dias", () => {
+  const p = lerFixture("indice.json"), f = lerFixture("ficha.json")["176328"], t = lerFixture("tramitacao_senado.json");
+  const votacoes = lerFixture("votacoes_senado.json").map((v) => ({ ...v, nominal: true }));
+  const m = montarLinhaDoTempo({ senado: true, t, votacoes, f, p, autores: { n: 1, html: "Jaques Wagner (PT/BA)" } });
+  assert.deepEqual(m.dias.map((d) => d.dia).slice(0, 3), ["2026-11-11", "2026-11-12", "2026-11-13"]);
+  assert.ok(m.dias.every((d, i, a) => !i || a[i - 1].dia < d.dia));
+  assert.equal(m.total, 88);
+  assert.equal(m.outraCasa.nome, "Câmara dos Deputados");
+  const d12 = m.dias.find((d) => d.dia === "2026-11-12");
+  assert.equal(d12.votacoes.length, 2);
+  assert.equal(d12.sessao, "Sessão Deliberativa Ordinária nº 146");
+  const emendas = d12.eventos.find((e) => e.origem === "emendas");
+  assert.match(emendas.html, /^\d+ senadores apresentam 76 .*emendas.* \(nº 1 a 76\)/);
+  assert.match(emendas.html, /<details class="detalhes"><summary>Quem apresentou<\/summary>/);
+  assert.equal(emendas.marco, true);
+  assert.ok(!d12.eventos.some((e) => /Recebidas? (as )?Emendas?/.test(e.html)));
+  assert.equal(m.dias.find((d) => d.dia === "2026-11-18").votacoes.length, 4);
+  const d11 = m.dias.find((d) => d.dia === "2026-11-11");
+  assert.equal(d11.marco, true);
+  const relator = d11.eventos.filter((e) => e.etiqueta === "Relator");
+  assert.equal(relator.length, 1);
+  assert.match(relator[0].html, /politico\.html\?f=senado&amp;i=4994/);
+  const apresentado = d11.eventos.find((e) => e.etiqueta === "Apresentado");
+  assert.match(apresentado.html, /Jaques Wagner \(PT\/BA\) apresenta o projeto/);
+  assert.ok(apresentado.docs.some((l) => /Projeto de Lei Complementar/.test(l.rotulo)));
+  const html = linhaDoTempoHtml(m);
+  assert.match(html, /<div class="linha-tempo so-marcos">/);
+  assert.match(html, /<button type="button" data-filtro="marcos" aria-pressed="true">Só os marcos<\/button>/);
+  assert.match(html, /Tudo \(88 movimentações\)/);
+  assert.match(html, /<h3>Quinta, 12\/11\/2026<\/h3>/);
+  assert.match(html, /<h3>Quarta, 11\/11\/2026<\/h3>/);
+  assert.match(html, /data-i="0"/);
+  assert.match(html, /Ver quem votou/);
+  assert.match(html, /<li class="dia futuro">\s*<h3><a href="[^"]*">Câmara dos Deputados<\/a><\/h3>\s*<p class="sessao">PLP 299\/2026 · em tramitação<\/p>/);
+  assert.match(html, /votacao\?codigoMateria=176328/);
+  assert.ok(html.indexOf("11/11/2026") < html.indexOf("19/11/2026"));
+  assert.match(html, /<li class="dia so-rotina"/);
+  assert.match(html, /\+ \d+ eventos? de rotina/);
+});
+
+test("linha do tempo: votacoesDoDia substitui a lista padrão e as regras separam marco de rotina", () => {
+  const t = { informes: [["2026-11-12 10:00", "PLEN", "Recebido o Requerimento nº 5, de 2026."]] };
+  const m = montarLinhaDoTempo({ senado: true, t, votacoes: [{ id: "a", data: "2026-11-12", descricao: "X" }], f: {}, p: { k: "s-9" } });
+  const html = linhaDoTempoHtml(m, { votacoesDoDia: (d) => `<i>gancho ${d.votacoes.length}</i>` });
+  assert.match(html, /<i>gancho 1<\/i>/);
+  assert.match(html, /<li class="rotina"><span class="etiqueta">Requerimento<\/span>/);
+  assert.deepEqual(classificarEvento("informe", "Incluído em Ordem do Dia da sessão"), { marco: true, etiqueta: "Pauta" });
+  assert.deepEqual(classificarEvento("informe", "Anexado o texto revisado."), { marco: false, etiqueta: "" });
+  assert.deepEqual(classificarEvento("informe", "Recebido o Requerimento nº 770, que solicita urgência"), { marco: true, etiqueta: "Urgência" });
+});
+
+test("linha do tempo: Câmara com eventos feitos à mão, ordem crescente, link para o Senado e rodapé", () => {
+  const t = { eventos: [
+    ["2026-08-12T15:00", "PLEN", "Aprovada em votação nominal", "Aguardando Remessa", "Aprovada pelo Plenário"],
+    ["2026-08-03", "PLEN", "Apresentação de Proposição", "Aguardando Despacho", ""],
+    ["2026-08-04", "MESA", "Despacho", "Aguardando", "Às Comissões <x>"],
+    ["2026-08-06", "CSAUDE", "Designado Relator, Dep. Ana", "Aguardando Parecer", ""],
+    ["2026-08-10", "CSAUDE", "Parecer do Relator", "Pronta para Pauta", ""],
+    ["2026-08-10", "CSAUDE", "Encaminhada à publicação", "", ""],
+  ] };
+  const m = montarLinhaDoTempo({ senado: false, t, votacoes: [], f: { sf: "55" }, p: { k: "c-900", t: "PL", n: 1, a: 2026 } });
+  assert.deepEqual(m.dias.map((d) => d.dia), ["2026-08-03", "2026-08-04", "2026-08-06", "2026-08-10", "2026-08-12"]);
+  assert.deepEqual(m.dias.map((d) => d.eventos.map((e) => e.etiqueta).join("/")), ["Apresentado", "Despacho", "Relator", "Parecer/", "Votação"]);
+  assert.equal(m.dias[3].eventos[1].marco, false);
+  assert.equal(m.total, 6);
+  assert.equal(m.dias[3].sessao, "CSAUDE");
+  const html = linhaDoTempoHtml(m);
+  assert.match(html, /Às Comissões &lt;x&gt;/);
+  assert.match(html, /<li class="dia futuro">\s*<h3><a href="proposicao\.html\?k=s-55">Senado Federal<\/a><\/h3>/);
+  assert.match(html, /proposicoes\/900\/tramitacoes/);
+  assert.ok(html.indexOf("03/08/2026") < html.indexOf("12/08/2026"));
+});
+
+test("ligarLinhaDoTempo liga os filtros e a inversão", () => {
+  const caixa = new Elemento(), lista = new Elemento(), inverter = new Elemento(), marcos = new Elemento(), tudo = new Elemento(), raiz = new Elemento();
+  marcos.dataset.filtro = "marcos";
+  tudo.dataset.filtro = "tudo";
+  caixa.classList.add("so-marcos");
+  caixa.definirTodos("[data-filtro]", [marcos, tudo]);
+  caixa._filhos.set("[data-inverter]", inverter);
+  caixa._filhos.set(".tempo", lista);
+  raiz._filhos.set(".linha-tempo", caixa);
+  ligarLinhaDoTempo(raiz);
+  tudo._ouvintes.click[0]();
+  assert.equal(caixa.classList.contains("so-marcos"), false);
+  assert.equal(tudo.getAttribute("aria-pressed"), "true");
+  assert.equal(marcos.getAttribute("aria-pressed"), "false");
+  marcos._ouvintes.click[0]();
+  assert.equal(caixa.classList.contains("so-marcos"), true);
+  inverter._ouvintes.click[0]();
+  assert.equal(lista.classList.contains("invertido"), true);
+  assert.equal(inverter.getAttribute("aria-pressed"), "true");
+  inverter._ouvintes.click[0]();
+  assert.equal(lista.classList.contains("invertido"), false);
 });

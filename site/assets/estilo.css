@@ -444,3 +444,31 @@ select:disabled { opacity: .55; }
 .estado p { margin: 0 0 6px; } .estado p:last-child { margin: 0; }
 .estado .pequeno { font-size: 15px; }
 .estado h3 { margin: 14px 0 4px; font-size: 16px; }
+
+/* linha do tempo (linha-tempo.js); o filtro é a classe so-marcos do contêiner */
+.controles { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin: 0 0 16px; }
+.segmentado { display: inline-flex; border: 1.5px solid var(--linha); border-radius: var(--raio); overflow: hidden; }
+.segmentado button, .controles .botao { font: 700 15px var(--texto); min-height: var(--alvo); padding: 8px 14px; background: var(--superficie); color: var(--tinta-suave); border: 0; cursor: pointer; }
+.segmentado button[aria-pressed="true"] { background: var(--marca); color: var(--superficie); }
+.controles .botao { border: 1.5px solid var(--linha); border-radius: var(--raio); }
+.controles .botao[aria-pressed="true"] { background: var(--marca); color: var(--superficie); }
+.tempo { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
+.tempo.invertido { flex-direction: column-reverse; }
+.dia { position: relative; padding: 0 0 22px 28px; border-left: 3px solid var(--linha); margin-left: 8px; }
+.dia::before { content: ""; position: absolute; left: -10px; top: 4px; width: 17px; height: 17px; border-radius: 50%; background: var(--superficie); border: 3px solid var(--marca); }
+.dia.marco-dia::before { background: var(--marca); }
+.dia.futuro { border-left-style: dashed; } .dia.futuro::before { border-color: var(--linha); }
+.dia > h3 { margin: 0 0 2px; font-size: 19px; }
+.dia > .sessao { margin: 0 0 8px; font-size: 14px; color: var(--tinta-suave); }
+.eventos { list-style: none; margin: 0; padding: 0; }
+.eventos > li { padding: 8px 0; border-top: 1px solid var(--linha); }
+.eventos > li:first-child { border-top: 0; }
+.etiqueta { display: inline-block; font: 700 13px/1.4 var(--texto); text-transform: uppercase; letter-spacing: .04em; color: var(--tinta-suave); margin-right: 6px; }
+.rotina { color: var(--tinta-suave); font-size: 15px; }
+.linha-tempo.so-marcos .rotina { display: none; }
+.linha-tempo.so-marcos .dia.so-rotina { display: none; }
+details.detalhes { margin-top: 6px; }
+details.detalhes summary { cursor: pointer; color: var(--marca); font-weight: 700; font-size: 15px; min-height: var(--alvo); display: flex; align-items: center; }
+details.detalhes ul { margin: 4px 0 0; padding-left: 18px; font-size: 15px; }
+.recolhidos { font-size: 14px; color: var(--tinta-suave); margin: 6px 0 0; }
+.linha-tempo:not(.so-marcos) .recolhidos { display: none; }

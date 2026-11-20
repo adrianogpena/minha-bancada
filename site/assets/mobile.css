@@ -43,7 +43,7 @@ h2 { font-size: 22px; margin: 28px 0 12px; }
 input, select { font-size: 16px; min-height: var(--alvo); }
 input[type="checkbox"], input[type="radio"] { width: 24px; min-height: 24px; }
 button { min-height: var(--alvo); }
-.termo { min-height: 0; }
+.termo { display: inline-block; min-height: var(--alvo); min-width: var(--alvo); margin: -12px 0; vertical-align: middle; line-height: var(--alvo); }
 .filtros, .filtros.dois, .hist-filtros { grid-template-columns: 1fr; gap: 8px; }
 .filtros .campo:first-child, .filtros.dois .largo { grid-column: auto; }
 

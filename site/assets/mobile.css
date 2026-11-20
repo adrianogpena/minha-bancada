@@ -137,3 +137,4 @@ small { font-size: 13px; }
 /* linha do tempo */
 .dia { padding-left: 18px; }
 .controles > * { flex: 1 1 auto; }
+.sessao-votos { padding: 10px; margin-left: -6px; margin-right: -6px; }

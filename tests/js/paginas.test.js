@@ -16,6 +16,7 @@ const { montarEstadual } = js("estadual.js");
 const { GLOSSARIO, termo, marcarTermos } = js("glossario.js");
 const { ETAPAS_POR_TIPO, estadoProposicao, faixaEtapas, blocoEstado } = js("etapas.js");
 const { montarLinhaDoTempo, linhaDoTempoHtml, ligarLinhaDoTempo, classificarEvento } = js("linha-tempo.js");
+const { votacoesDoDia, barraComNumeros } = js("votacoes-sessao.js");
 const fs = require("node:fs");
 const caminho = require("node:path");
 
@@ -565,8 +566,8 @@ test("paginaProposicao da Câmara monta cabeçalho, autores, leis, votações e 
     assert.match(html, /Despacho &lt;d&gt;/);
     assert.match(html, /proposicoes\/1\/tramitacoes/);
     assert.match(html, /Votação &lt;1&gt;/);
-    assert.match(html, /, aprovada/);
-    assert.match(html, /Votação simbólica ou em comissão: sem voto individual\./);
+    assert.match(html, /<span class="resultado ok">Aprovad[ao]/);
+    assert.match(html, /Votação simbólica, sem placar individual\./);
     assert.equal((html.match(/Ver quem votou/g) || []).length, 1);
     assert.match(html, /href="https:\/\/inteiro\.exemplo\/x\.pdf"|Inteiro teor/);
     const vida = dom.el("#vida").innerHTML;
@@ -1124,4 +1125,46 @@ test("ligarLinhaDoTempo liga os filtros e a inversão", () => {
   assert.equal(inverter.getAttribute("aria-pressed"), "true");
   inverter._ouvintes.click[0]();
   assert.equal(lista.classList.contains("invertido"), false);
+});
+
+const lerPlp = (nome) => JSON.parse(fs.readFileSync(caminho.join(__dirname, "..", "fixtures", "plp299", nome), "utf8"));
+
+test("votacoesDoDia agrupa as votações do Senado por sessão, com título, resultado, barra e significado", () => {
+  const todas = lerPlp("votacoes_senado.json").map((v, i) => ({ ...v, i, nominal: true }));
+  const t = lerPlp("tramitacao_senado.json");
+  const dia = (d) => ({ dia: d, votacoes: todas.filter((v) => v.data === d) });
+  const h12 = votacoesDoDia(dia("2026-11-12"), { senado: true, t });
+  const h18 = votacoesDoDia(dia("2026-11-18"), { senado: true, t });
+  assert.equal((h12.match(/class="sessao-votos"/g) || []).length, 1);
+  assert.match(h12, /2 votações nesta sessão/);
+  assert.match(h18, /4 votações nesta sessão/);
+  assert.equal((h18.match(/<article class="voto-card"/g) || []).length, 4);
+  assert.match(h12, /Aprovado por 40 a 38/);
+  assert.match(h12, /o projeto passou a tramitar com/);
+  assert.match(h18, /Destaque · emenda/);
+  assert.match(h18, /Rejeitada por 47 a 30/);
+  assert.match(h18.replace(/<[^>]+>/g, ""), /Emenda nº 40, de Rogerio Marinho \(PL\/RN\)/);
+  assert.match(h18, /não entrou/);
+  assert.match(h18, /Votação separada pedida por Liderança do PL \(RQS 780\)/);
+  assert.match(h18, /pedida por Liderança do Republicanos \(RQS 783\)/);
+  assert.doesNotMatch(h18, /RQS 775/);
+  assert.match(h18, /Sim \(manter\) 45/);
+  assert.match(h18, /Não \(retirar\) 32/);
+  assert.match(h18, /<p class="oficial">Texto oficial: “Vota/);
+  assert.match(h18, /<button type="button" class="mais" data-i="0">Ver quem votou<\/button>/);
+  assert.match(h18, /votacao\?codigoMateria=176328/);
+});
+
+test("votacoesDoDia mostra votação simbólica sem barra e agrupa a Câmara por data e órgão", () => {
+  const simbolica = { id: "1", i: 0, data: "2025-02-02", orgao: "PLEN", descricao: "Aprovado o Requerimento", aprovada: 1, nominal: false, placar: {} };
+  const html = votacoesDoDia({ dia: "2025-02-02", votacoes: [simbolica] }, { senado: false, t: null });
+  assert.match(html, /Votação simbólica, sem placar individual\./i);
+  assert.doesNotMatch(html, /class="placar"/);
+  assert.doesNotMatch(html, /Ver quem votou/);
+  const nominal = (id, i) => ({ id, i, data: "2025-02-02", orgao: "PLEN", descricao: "Artigo <1>", aprovada: 1, nominal: true, placar: { sim: 10, nao: 2 } });
+  const dois = votacoesDoDia({ dia: "2025-02-02", votacoes: [nominal("a", 0), nominal("b", 1)] }, { senado: false, t: null });
+  assert.equal((dois.match(/class="sessao-votos"/g) || []).length, 1);
+  assert.match(dois, /2 votações nesta sessão/);
+  assert.match(dois, /votacoes\/a"/);
+  assert.match(dois, /Artigo &lt;1&gt;/);
 });

@@ -199,11 +199,11 @@ export function montarLinhaDoTempo({ senado, t, votacoes = [], f = {}, p = {}, a
 
 /* Votações do dia, uma por linha (a g7 troca por cartões). O botão "Ver quem votou" é tratado por paginaProposicao. */
 export function votacoesPadrao(dia) {
-  return `<ul class="itens">${dia.votacoes.map((v) => `<li>
+  return `<div class="sessao-votos"><p>${plural(dia.votacoes.length, "votação", "votações")} neste dia</p><ul class="itens">${dia.votacoes.map((v) => `<li>
       <span class="quando">${v.hora ? `${esc(v.hora)}` : ""}${v.orgao ? `${v.hora ? " · " : ""}${esc(v.orgao)}` : ""}${v.aprovada === 1 ? `${v.hora || v.orgao ? ", " : ""}aprovada` : v.aprovada === 0 ? `${v.hora || v.orgao ? ", " : ""}rejeitada` : ""}</span>
       <span class="texto">${esc(v.descricao || "Votação")}${v.nominal ? barraPlacar(v.placar) : `<span class="quando">Votação simbólica ou em comissão: sem voto individual.</span>`}
         ${v.orientacoes ? `<br><span class="quando">Orientação das lideranças: ${Object.entries(v.orientacoes).map(([b, o]) => `${esc(b)} ${esc(o)}`).join(" · ")}.</span>` : ""}</span>
-      ${v.nominal ? `<button type="button" class="mais" data-i="${v.i}">Ver quem votou</button><div id="votos-${v.i}"></div>` : ""}</li>`).join("")}</ul>`;
+      ${v.nominal ? `<button type="button" class="mais" data-i="${v.i}">Ver quem votou</button><div id="votos-${v.i}"></div>` : ""}</li>`).join("")}</ul></div>`;
 }
 
 function eventoHtml(e) {
@@ -218,7 +218,7 @@ function diaHtml(d, votacoesDoDia) {
     <h3>${esc(tituloDoDia(d.dia))}</h3>
     ${d.sessao ? `<p class="sessao">${esc(d.sessao)}</p>` : ""}
     ${d.eventos.length ? `<ul class="eventos">${d.eventos.map(eventoHtml).join("")}</ul>` : ""}
-    ${d.votacoes.length ? `<div class="sessao-votos"><p>${plural(d.votacoes.length, "votação", "votações")} neste dia</p>${votacoesDoDia(d)}</div>` : ""}
+    ${d.votacoes.length ? votacoesDoDia(d) : ""}
     ${rotina ? `<p class="recolhidos">+ ${plural(rotina, "evento", "eventos")} de rotina (mostrar com “Tudo”)</p>` : ""}
   </li>`;
 }

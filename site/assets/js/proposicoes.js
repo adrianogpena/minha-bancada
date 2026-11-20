@@ -3,6 +3,7 @@ import { $, esc, data, semAcento, param, carregar, urlSegura } from "./util.js";
 import { VOTOS, selo, listaPaginada, erro, semDadosLocais, filtrosNaUrl, botaoVoltar } from "./comum.js";
 import { TIPOS_PROJETO, CAMARA_API, SENADO_API, fontes, linkTramitacao, linkMateriaSenado, linkParlamentar } from "./apis.js";
 import { barraPlacar } from "./votacoes.js";
+import { votacoesDoDia } from "./votacoes-sessao.js";
 import { estadoProposicao, faixaEtapas, blocoEstado } from "./etapas.js";
 import { montarLinhaDoTempo, linhaDoTempoHtml, ligarLinhaDoTempo, docSenado, DOC_PRINCIPAL } from "./linha-tempo.js";
 
@@ -108,7 +109,7 @@ export async function paginaProposicao() {
     ${leisCitadas(f.ls, leis)}
     ${blocoAutores(autores, casa)}
     <h2>Como foi a tramitação</h2>
-    ${modelo.dias.length || modelo.outraCasa ? linhaDoTempoHtml(modelo) : `<p class="vazio">Nenhuma movimentação nem votação registrada ainda.</p>`}
+    ${modelo.dias.length || modelo.outraCasa ? linhaDoTempoHtml(modelo, { votacoesDoDia: (dia) => votacoesDoDia(dia, { senado, t }) }) : `<p class="vazio">Nenhuma movimentação nem votação registrada ainda.</p>`}
     <div id="vida"></div>
     ${fontes([["Tramitação oficial", senado ? linkMateriaSenado(id) : linkTramitacao(id)], ["Inteiro teor", f.tx],
       senado ? ["Dados abertos do Senado (autoria e situação)", `${SENADO_API}/processo?codigoMateria=${encodeURIComponent(id)}`] : null,

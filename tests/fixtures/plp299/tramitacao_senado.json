@@ -1,0 +1,1757 @@
+{
+ "situacoes": [
+  [
+   "2026-11-11",
+   "2026-11-12",
+   "AGDESP",
+   "AGUARDANDO DESPACHO",
+   "PLEN"
+  ],
+  [
+   "2026-11-12",
+   "2026-11-13",
+   "PRONDEPLEN",
+   "PRONTO PARA DELIBERAÇÃO DO PLENÁRIO",
+   "PLEN"
+  ],
+  [
+   "2026-11-13",
+   "2026-11-17",
+   "INCLOD",
+   "INCLUÍDA EM ORDEM DO DIA",
+   "PLEN"
+  ],
+  [
+   "2026-11-17",
+   "2026-11-17",
+   "PRONDEPLEN",
+   "PRONTO PARA DELIBERAÇÃO DO PLENÁRIO",
+   "PLEN"
+  ],
+  [
+   "2026-11-17",
+   "2026-11-18",
+   "INCLOD",
+   "INCLUÍDA EM ORDEM DO DIA",
+   "PLEN"
+  ],
+  [
+   "2026-11-18",
+   "2026-11-19",
+   "APRVD",
+   "APROVADA",
+   "PLEN"
+  ],
+  [
+   "2026-11-19",
+   null,
+   "RMCD",
+   "REMETIDA À CÂMARA DOS DEPUTADOS",
+   null
+  ]
+ ],
+ "informes": [
+  [
+   "2026-11-11 16:59",
+   "PLEN",
+   "Autuado o Projeto de Lei Complementar nº 299/2026. O projeto vai à publicação."
+  ],
+  [
+   "2026-11-11 18:49",
+   "PLEN",
+   "Recebido o Requerimento nº 770, de 2026, de Líderes, que solicita urgência para a matéria."
+  ],
+  [
+   "2026-11-11 18:51",
+   "PLEN",
+   "Designado Relator de Plenário o Senador Eduardo Braga."
+  ],
+  [
+   "2026-11-11 18:52",
+   "PLEN",
+   "Recebido o Relatório do Senador Eduardo Braga."
+  ],
+  [
+   "2026-11-12 10:13",
+   "PLEN",
+   "Recebidas as Emendas n°s 1 a 3, do Senador Alessandro Vieira."
+  ],
+  [
+   "2026-11-12 10:57",
+   "PLEN",
+   "Recebida a Emenda nº 4, do Senador Otto Alencar."
+  ],
+  [
+   "2026-11-12 12:01",
+   "PLEN",
+   "Recebidas as Emendas nºs 5 a 7, do Senador Sergio Moro."
+  ],
+  [
+   "2026-11-12 12:04",
+   "PLEN",
+   "Recebidas as Emendas n°s 8 e 9, do Senador Alessandro Vieira."
+  ],
+  [
+   "2026-11-12 12:08",
+   "PLEN",
+   "Recebido o Requerimento nº 772, de 2026, do Senador Otto Alencar, solicitando a retirada definitiva da Emenda nº 4."
+  ],
+  [
+   "2026-11-12 12:21",
+   "PLEN",
+   "Recebida a Emenda nº 10, do Senador Zequinha Marinho."
+  ],
+  [
+   "2026-11-12 13:14",
+   "PLEN",
+   "Recebida a Emenda nº 11, do Senador Randolfe Rodrigues."
+  ],
+  [
+   "2026-11-12 13:22",
+   "PLEN",
+   "Recebida a Emenda nº 12, do Senador Luis Carlos Heinze."
+  ],
+  [
+   "2026-11-12 13:45",
+   "PLEN",
+   "Recebidas as Emendas nºs 13 e 14, da Senadora Damares Alves."
+  ],
+  [
+   "2026-11-12 14:01",
+   "PLEN",
+   "Recebidas as Emendas nºs 15 e 16, do Senador Jader Barbalho."
+  ],
+  [
+   "2026-11-12 14:30",
+   "PLEN",
+   "Recebida a Emenda nº 17, do Senador Jorge Seif."
+  ],
+  [
+   "2026-11-12 14:32",
+   "PLEN",
+   "Recebida a Emenda nº 18, do Senador Randolfe Rodrigues."
+  ],
+  [
+   "2026-11-12 14:36",
+   "PLEN",
+   "Recebida a Emenda nº 19, do Senador Sergio Moro."
+  ],
+  [
+   "2026-11-12 14:40",
+   "PLEN",
+   "Recebidas as Emendas nºs 20 a 25, do Senador Izalci Lucas."
+  ],
+  [
+   "2026-11-12 14:49",
+   "PLEN",
+   "Recebida a Emenda nº 26, do Senador Flávio Arns."
+  ],
+  [
+   "2026-11-12 14:57",
+   "PLEN",
+   "Recebida a Emenda nº 27, da Senadora Leany Lemos."
+  ],
+  [
+   "2026-11-12 15:01",
+   "PLEN",
+   "Recebida a Emenda nº 28, do Senador Flávio Arns e outros."
+  ],
+  [
+   "2026-11-12 15:03",
+   "PLEN",
+   "Recebida a Emenda nº 29, do Senador Alessandro Vieira."
+  ],
+  [
+   "2026-11-12 15:05",
+   "PLEN",
+   "Recebida a Emenda nº 30, do Senador Angelo Coronel."
+  ],
+  [
+   "2026-11-12 15:10",
+   "PLEN",
+   "Recebida a Emenda nº 31, do Senador Plínio Valério."
+  ],
+  [
+   "2026-11-12 15:12",
+   "PLEN",
+   "Recebida a Emenda nº 32, do Senador Sérgio Petecão."
+  ],
+  [
+   "2026-11-12 15:22",
+   "PLEN",
+   "Recebida a Emenda nº 33, do Senador Alessandro Vieira."
+  ],
+  [
+   "2026-11-12 15:38",
+   "PLEN",
+   "Recebidas as Emendas nºs 34 a 37, do Senador Izalci Lucas."
+  ],
+  [
+   "2026-11-12 15:44",
+   "PLEN",
+   "Recebidas as Emendas nºs 38 e 39, do Senador Eduardo Gomes."
+  ],
+  [
+   "2026-11-12 15:52",
+   "PLEN",
+   "Recebida a Emenda nº 40, do Senador Rogerio Marinho."
+  ],
+  [
+   "2026-11-12 16:04",
+   "PLEN",
+   "Recebida a Emenda nº 41, do Senador Eduardo Gomes."
+  ],
+  [
+   "2026-11-12 16:15",
+   "PLEN",
+   "Recebido o Requerimento nº 773, de 2026, do Senador Rogerio Marinho, de oitiva da Comissão de Assuntos Econômicos."
+  ],
+  [
+   "2026-11-12 16:21",
+   "PLEN",
+   "Recebido o Requerimento nº 774, de 2026, da Liderança do PL, que solicita destaque para votação em separado da Emenda nº 22."
+  ],
+  [
+   "2026-11-12 16:25",
+   "PLEN",
+   "Recebida a Emenda nº 42, da Senadora Tereza Cristina."
+  ],
+  [
+   "2026-11-12 16:29",
+   "PLEN",
+   "Recebida a Emenda nº 43, do Senador Romário."
+  ],
+  [
+   "2026-11-12 16:36",
+   "PLEN",
+   "Recebidas as Emendas nºs 44 a 48, do Senador Laércio Oliveira."
+  ],
+  [
+   "2026-11-12 16:40",
+   "PLEN",
+   "Recebido o Requerimento nº 775, de 2026, da Liderança do PL, que solicita destaque para votação em separado do art. 7° do projeto."
+  ],
+  [
+   "2026-11-12 16:42",
+   "PLEN",
+   "Recebida a Emenda nº 49, do Senador Magno Malta."
+  ],
+  [
+   "2026-11-12 16:48",
+   "PLEN",
+   "Recebida a Emenda nº 50, do Senador Alan Rick."
+  ],
+  [
+   "2026-11-12 16:51",
+   "PLEN",
+   "Recebido o Requerimento nº 776, de 2026, da Liderança do PL, que solicita destaque para votação em separado do art. 2° do projeto."
+  ],
+  [
+   "2026-11-12 16:55",
+   "PLEN",
+   "Recebidas as Emendas nºs 51 e 52, do Senador Nelsinho Trad."
+  ],
+  [
+   "2026-11-12 16:59",
+   "PLEN",
+   "Recebida a Emenda nº 53, do Senador Randolfe Rodrigues."
+  ],
+  [
+   "2026-11-12 17:01",
+   "PLEN",
+   "Recebida a Emenda nº 54, do Senador Luis Carlos Heinze."
+  ],
+  [
+   "2026-11-12 17:05",
+   "PLEN",
+   "Recebidas as Emendas nºs 55 e 56, do Senador Laércio Oliveira."
+  ],
+  [
+   "2026-11-12 17:06",
+   "PLEN",
+   "Recebida a Emenda nº 57, do Senador Renan Calheiros."
+  ],
+  [
+   "2026-11-12 17:10",
+   "PLEN",
+   "Recebido o Requerimento nº 777, de 2026, do Senador Rogério Marinho, que solicita adiamento da votação da matéria por dez dias úteis."
+  ],
+  [
+   "2026-11-12 17:14",
+   "PLEN",
+   "Recebida a Emenda nº 58, do Senador Astronauta Marcos Pontes."
+  ],
+  [
+   "2026-11-12 17:16",
+   "PLEN",
+   "Recebida a Emenda nº 59, do Senador Humberto Costa."
+  ],
+  [
+   "2026-11-12 17:24",
+   "PLEN",
+   "Recebido o Requerimento nº 778, de 2026, da Liderança do Republicanos, que solicita destaque para votação em separado da Emenda nº 50."
+  ],
+  [
+   "2026-11-12 17:27",
+   "PLEN",
+   "Recebido o Requerimento nº 779, de 2026, da Liderança do PL, que solicita retirada do Requerimento nº 774, de 2026."
+  ],
+  [
+   "2026-11-12 17:31",
+   "PLEN",
+   "Recebida a Emenda nº 60, do Senador Giordano."
+  ],
+  [
+   "2026-11-12 17:37",
+   "PLEN",
+   "Recebidas as Emendas nºs 61 e 62, do Senador Lucas Barreto."
+  ],
+  [
+   "2026-11-12 17:39",
+   "PLEN",
+   "Recebido o Requerimento nº 780, de 2026, da Liderança do PL, que solicita destaque para votação em separado da Emenda nº 40."
+  ],
+  [
+   "2026-11-12 17:44",
+   "PLEN",
+   "Recebidas as Emendas nºs 63 e 64, do Senador Magno Malta."
+  ],
+  [
+   "2026-11-12 17:46",
+   "PLEN",
+   "Recebidas as Emendas nºs 65 a 68, do Senador Wellington Fagundes."
+  ],
+  [
+   "2026-11-12 17:48",
+   "PLEN",
+   "Recebida a Emenda nº 69, da Senadora Tereza Cristina."
+  ],
+  [
+   "2026-11-12 17:49",
+   "PLEN",
+   "Recebida a Emenda nº 70, do Senador Astronauta Marcos Pontes."
+  ],
+  [
+   "2026-11-12 17:50",
+   "PLEN",
+   "Recebida a Emenda nº 71, do Senador Efraim Filho."
+  ],
+  [
+   "2026-11-12 17:55",
+   "PLEN",
+   "Recebido Relatório do Senador Eduardo Braga."
+  ],
+  [
+   "2026-11-12 18:06",
+   "PLEN",
+   "Recebida a Emenda nº 72, da Senadora Leany Lemos."
+  ],
+  [
+   "2026-11-12 18:11",
+   "PLEN",
+   "Recebida a Emenda nº 73, do Senador Alan Rick."
+  ],
+  [
+   "2026-11-12 18:15",
+   "PLEN",
+   "Recebido o Requerimento nº 782, de 2026, da Liderança do PP, que solicita destaque para votação em separado da Emenda nº 69."
+  ],
+  [
+   "2026-11-12 18:32",
+   "PLEN",
+   "Recebida a Emenda nº 74, do Senador Efraim Filho."
+  ],
+  [
+   "2026-11-12 18:48",
+   "PLEN",
+   "Recebido novo Relatório do Senador Eduardo Braga, com acolhimento parcial da Emenda nº 14, e atualização do parágrafo único do art. 6º D, constante do art. 1º do substitutivo apresentado, com a expressão \"ocorrerá nos termos da lei orçamentária anual\"."
+  ],
+  [
+   "2026-11-12 18:56",
+   "PLEN",
+   "Recebida a Emenda nº 76, do Senador Wilder Morais."
+  ],
+  [
+   "2026-11-12 18:56",
+   "PLEN",
+   "Recebido o Requerimento nº 783, de 2026, da Liderança do Republicanos, que solicita destaque para votação em separado, com vistas à supressão do art. 6º-F."
+  ],
+  [
+   "2026-11-12 19:05",
+   "PLEN",
+   "Recebido o Requerimento nº 784, de 2026, da Liderança do Republicanos, que solicita retirada do Requerimento nº 778, de 2026."
+  ],
+  [
+   "2026-11-12 21:30",
+   "PLEN",
+   "(Sessão Deliberativa Ordinária de 11 de novembro de 2026 - semipresencial - continuação em 12 de novembro de 2026) Emendas nºs 1 a 74 e 76 encaminhadas à publicação. Urgência aprovada para a matéria (Requerimento nº 770/2026). Verificação de votação: (Sim: 40; Não: 38; Abstenção: 0; Presidente: 1; Total: 79). Ficam prejudicados os Requerimentos nºs 773 e 777, de 2026. Mantida pelo Plenário, após r"
+  ],
+  [
+   "2026-11-13 18:25",
+   "PLEN",
+   "Incluído em Ordem do Dia da Sessão Deliberativa Ordinária Semipresencial de 17/11/2026. Continuação da votação, em turno único."
+  ],
+  [
+   "2026-11-17 15:46",
+   "PLEN",
+   "Recebidas as Emendas nºs 77 e 78, do Senador Alessandro Vieira, à Emenda nº 75 (Substitutivo), para o turno suplementar."
+  ],
+  [
+   "2026-11-17 15:53",
+   "PLEN",
+   "Recebida a Emenda nº 79, da Senadora Leany Lemos, à Emenda nº 75 (Substitutivo), para o turno suplementar."
+  ],
+  [
+   "2026-11-17 16:38",
+   "PLEN",
+   "Recebido o Requerimento nº 789, de 2026, do Senador Alessandro Vieira, que solicita destaque para votação em separado da Emenda nº 78."
+  ],
+  [
+   "2026-11-17 16:44",
+   "PLEN",
+   "Recebida a Emenda nº 80, do Senador Wilder Morais, à Emenda nº 75 (Substitutivo), para o turno suplementar."
+  ],
+  [
+   "2026-11-17 16:57",
+   "PLEN",
+   "Recebida a Emenda nº 81, do Senador Alessandro Vieira, à Emenda nº 75 (Substitutivo), para o turno suplementar."
+  ],
+  [
+   "2026-11-17 17:12",
+   "PLEN",
+   "Recebida a Emenda nº 82, do Senador Wilder Morais, à Emenda nº 75 (Substitutivo), para o turno suplementar."
+  ],
+  [
+   "2026-11-17 17:29",
+   "PLEN",
+   "Recebida a Emenda nº 83, da Senadora Tereza Cristina, à Emenda nº 75 (Substitutivo), para o turno suplementar."
+  ],
+  [
+   "2026-11-17 17:45",
+   "PLEN",
+   "(Sessão Deliberativa Ordinária - semipresencial - de 17 de novembro de 2026) Matéria não apreciada nesta sessão."
+  ],
+  [
+   "2026-11-17 18:07",
+   "PLEN",
+   "Incluído em Ordem do Dia da Sessão Deliberativa Ordinária Semipresencial de 18/11/2026. Continuação da votação, em turno único."
+  ],
+  [
+   "2026-11-17 19:51",
+   "PLEN",
+   "Recebida a Emenda nº 84, do Senador Humberto Costa, à Emenda nº 75 (Substitutivo), para o turno suplementar."
+  ],
+  [
+   "2026-11-18 10:59",
+   "PLEN",
+   "Recebida a Emenda nº 85, do Senador Humberto Costa, à Emenda nº 75 (Substitutivo), para o turno suplementar."
+  ],
+  [
+   "2026-11-18 11:26",
+   "PLEN",
+   "Recebida a Emenda nº 86, do Senador Astronauta Marcos Pontes, à Emenda nº 75 (Substitutivo), para o turno suplementar."
+  ],
+  [
+   "2026-11-18 15:19",
+   "PLEN",
+   "Recebidas as Emendas nº 87 a 89, do Senador Carlos Portinho, à Emenda nº 75 (Substitutivo), para o turno suplementar."
+  ],
+  [
+   "2026-11-18 15:38",
+   "PLEN",
+   "Recebida a Emenda nº 90, do Senador Alessandro Vieira, à Emenda nº 75 (Substitutivo), para o turno suplementar."
+  ],
+  [
+   "2026-11-18 15:49",
+   "PLEN",
+   "Recebida a Emenda nº 91, do Senador Alessandro Vieira, à Emenda nº 75 (Substitutivo), para o turno suplementar."
+  ],
+  [
+   "2026-11-18 17:24",
+   "PLEN",
+   "Recebido o Requerimento nº 792, de 2026, da Liderança do PP, que solicita destaque para votação em separado da Emenda nº 83."
+  ],
+  [
+   "2026-11-18 18:36",
+   "PLEN",
+   "Recebido o Requerimento nº 793, de 2026, da Liderança do PL, que solicita destaque para votação em separado da Emenda nº 78."
+  ],
+  [
+   "2026-11-18 20:11",
+   "PLEN",
+   "(Sessão Deliberativa Ordinária - semipresencial - de 18 de novembro de 2026) (Continuação da votação da matéria iniciada na Sessão Deliberativa de 12 de novembro de 2026) Emenda nº 40 do projeto, destacada, rejeitada (Sim: 30; Não: 47; Abstenção: 0; Presidente: 1; Total: 78). Art. 7º do projeto (correspondente ao art. 6º do Substitutivo), destacado, aprovado (Sim: 45; Não: 32; Abstenção: 1; Presid"
+  ],
+  [
+   "2026-11-19 12:52",
+   null,
+   "Anexado o texto revisado."
+  ],
+  [
+   "2026-11-19 14:01",
+   null,
+   "Remetido Ofício SF nº 1503, de 2026, ao Primeiro-Secretário da Câmara dos Deputados, encaminhando autógrafo do projeto para revisão, nos termos do art. 65 da Constituição Federal."
+  ]
+ ],
+ "documentos": [
+  [
+   "2026-11-11",
+   "Avulso inicial da matéria",
+   "Avulso inicial da matéria - SF265119424999",
+   "Senado Federal",
+   "46304094-1115-4948-849e-42143cf1a841"
+  ],
+  [
+   "2026-11-11",
+   "Projeto de Lei Complementar",
+   "PLP 299/2026",
+   "Senador Jaques Wagner (PT/BA)",
+   "38df22dd-1022-46cf-ac9d-d24f038d1d0d"
+  ],
+  [
+   "2026-11-11",
+   "Requerimento",
+   "RQS 770/2026",
+   "Líder do Bloco Parlamentar Pelo Brasil Weverton (PDT/MA), Líder do Bloco Parlamentar da Resistência Democrática Eliziane Gama (PSD/MA)",
+   "ae8f86b3-1af4-4b00-9a4a-f78b440b5f4d"
+  ],
+  [
+   "2026-11-11",
+   "Relatório Legislativo",
+   "Relatório Legislativo - SF266863349580",
+   "Senador Eduardo Braga (MDB/AM)",
+   "93095d38-67e6-437d-9cd4-6cfc2cc5a3fb"
+  ],
+  [
+   "2026-11-12",
+   "Requerimento",
+   "RQS 772/2026",
+   "Senador Otto Alencar (PSD/BA)",
+   "843ab68d-e042-4b18-a19b-7e4e269a9aae"
+  ],
+  [
+   "2026-11-12",
+   "Requerimento",
+   "RQS 773/2026",
+   "Senador Rogerio Marinho (PL/RN)",
+   "d0cd5052-e02e-4ee7-84c4-9585847cda55"
+  ],
+  [
+   "2026-11-12",
+   "Requerimento",
+   "RQS 774/2026",
+   "Líder do PL Izalci Lucas (PL/DF)",
+   "43f92b65-fc25-4648-a5df-a92b9dc2fcc0"
+  ],
+  [
+   "2026-11-12",
+   "Requerimento",
+   "RQS 775/2026",
+   "Líder do PL Izalci Lucas (PL/DF)",
+   "85322d3a-bbc2-41f5-b8ad-cdb22481adb7"
+  ],
+  [
+   "2026-11-12",
+   "Requerimento",
+   "RQS 776/2026",
+   "Líder do PL Izalci Lucas (PL/DF)",
+   "126b7266-f034-4198-ad2b-3ad3311a0f68"
+  ],
+  [
+   "2026-11-12",
+   "Requerimento",
+   "RQS 777/2026",
+   "Senador Rogerio Marinho (PL/RN)",
+   "8307f5e9-0951-4c1d-9b67-44c6906853ee"
+  ],
+  [
+   "2026-11-12",
+   "Requerimento",
+   "RQS 778/2026",
+   "Líder do REPUBLICANOS Alan Rick (REPUBLICANOS/AC)",
+   "b9dd94e4-b166-4474-97c3-c541722cfec0"
+  ],
+  [
+   "2026-11-12",
+   "Requerimento",
+   "RQS 779/2026",
+   "Líder do PL Izalci Lucas (PL/DF)",
+   "1c98836d-652c-47b2-9b84-f1ef197808eb"
+  ],
+  [
+   "2026-11-12",
+   "Requerimento",
+   "RQS 780/2026",
+   "Líder do PL Izalci Lucas (PL/DF)",
+   "d65e59b1-f1e4-4e5a-873a-48d92fc97cd7"
+  ],
+  [
+   "2026-11-12",
+   "Relatório Legislativo",
+   "Relatório Legislativo - SF262782853330",
+   "Senador Eduardo Braga (MDB/AM)",
+   "36361027-80b5-453d-9116-a3b9eade1374"
+  ],
+  [
+   "2026-11-12",
+   "Requerimento",
+   "RQS 782/2026",
+   "Líder do PP Tereza Cristina (PP/MS)",
+   "770631c0-044a-4780-98e7-f60ba0db9440"
+  ],
+  [
+   "2026-11-12",
+   "Relatório Legislativo",
+   "Relatório Legislativo - SF269139104569",
+   "Senador Eduardo Braga (MDB/AM)",
+   "9085c41c-5734-40ec-ba13-0f3e46ecdc13"
+  ],
+  [
+   "2026-11-12",
+   "Requerimento",
+   "RQS 783/2026",
+   "Líder do REPUBLICANOS Alan Rick (REPUBLICANOS/AC)",
+   "99b723dc-2f23-441e-8eac-a5143717238b"
+  ],
+  [
+   "2026-11-12",
+   "Requerimento",
+   "RQS 784/2026",
+   "Líder do REPUBLICANOS Alan Rick (REPUBLICANOS/AC)",
+   "52920f52-8ed7-4d63-9149-3e3dd6f24d10"
+  ],
+  [
+   "2026-11-12",
+   "Listagem ou relatório descritivo",
+   "Listagem ou relatório descritivo - SF263955108521",
+   "Senado Federal",
+   "df9ee0e4-835e-4506-9cc2-a2a025e6a3cd"
+  ],
+  [
+   "2026-11-12",
+   "Parecer",
+   "P.S 221/2026 - PLEN",
+   "Senador Eduardo Braga (MDB/AM)",
+   "e4b23c0b-5465-4e0c-a80d-d4f656468969"
+  ],
+  [
+   "2026-11-12",
+   "Listagem ou relatório descritivo",
+   "Listagem ou relatório descritivo - SF268120074507",
+   "Senado Federal",
+   "fcfc26e0-1dbb-4e0d-b3c2-2e88a0d93d4d"
+  ],
+  [
+   "2026-11-17",
+   "Requerimento",
+   "RQS 789/2026",
+   "Senador Alessandro Vieira (MDB/SE)",
+   "e438719e-f24e-49ad-bb36-946903be0234"
+  ],
+  [
+   "2026-11-18",
+   "Requerimento",
+   "RQS 792/2026",
+   "Líder do PP Tereza Cristina (PP/MS)",
+   "aa1f6bc4-7240-4ea2-9fdc-233cf336944b"
+  ],
+  [
+   "2026-11-18",
+   "Requerimento",
+   "RQS 793/2026",
+   "Líder do PL Carlos Portinho (PL/RJ)",
+   "8ae7ff43-b3ba-4d77-ab51-d4e41a616c51"
+  ],
+  [
+   "2026-11-18",
+   "Listagem ou relatório descritivo",
+   "Listagem ou relatório descritivo - SF261339178200",
+   "Senado Federal",
+   "40ba287c-7dd7-427c-a533-c1d4d5407150"
+  ],
+  [
+   "2026-11-18",
+   "Listagem ou relatório descritivo",
+   "Listagem ou relatório descritivo - SF260409733008",
+   "Senado Federal",
+   "59ac88a2-92be-4871-980d-418e8d67811c"
+  ],
+  [
+   "2026-11-18",
+   "Parecer",
+   "P.S 223/2026 - PLEN",
+   "Senador Eduardo Braga (MDB/AM)",
+   "851b5ce7-4a1d-45ce-b229-672fc925c87a"
+  ],
+  [
+   "2026-11-18",
+   "Parecer de redação",
+   "P.S 222/2026 - PLEN",
+   "Comissão Diretora do Senado Federal",
+   "0972ec27-3790-4dda-854f-3996b77b553f"
+  ],
+  [
+   "2026-11-18",
+   "Listagem ou relatório descritivo",
+   "Listagem ou relatório descritivo - SF261496537957",
+   "Senado Federal",
+   "fa095989-bd6e-4de4-9145-bcc1a864696f"
+  ],
+  [
+   "2026-11-18",
+   "Listagem ou relatório descritivo",
+   "Listagem ou relatório descritivo - SF263805950270",
+   "Senado Federal",
+   "f37db35b-eda2-4a98-9082-a05215ae142d"
+  ],
+  [
+   "2026-11-19",
+   "Minuta",
+   "Minuta - SF269609008619",
+   "Senado Federal",
+   "b0a67330-938f-4aa1-a917-1c28579dd563"
+  ],
+  [
+   "2026-11-19",
+   "Ofício",
+   "OFSF 1503/2026",
+   "Primeiro-Secretário do Senado Federal",
+   "0164f276-1cb9-4c66-bc67-dae7ff40946f"
+  ],
+  [
+   "2026-11-19",
+   "Projeto de Lei Complementar",
+   "Autógrafo - PLP 299/2026",
+   "Senado Federal",
+   "fbcb6261-9de0-468f-bb86-0d68883ae790"
+  ]
+ ],
+ "despachos": [
+  [
+   "2026-11-11",
+   "Ao Plenário",
+   [
+    "PLEN"
+   ],
+   false
+  ]
+ ],
+ "relatorias": [
+  [
+   "4994",
+   "Eduardo Braga",
+   "MDB",
+   "AM",
+   "PLEN",
+   "Plenário do Senado Federal",
+   "Relator",
+   "2026-11-11",
+   "2026-11-18",
+   "Matéria deliberada no plenário"
+  ]
+ ],
+ "emendas": [
+  [
+   "1",
+   "Senador Alessandro Vieira (MDB/SE)",
+   "2026-11-12",
+   "EMENDA_PARCIAL",
+   "Emenda ao PLP 299/2026 - Redação art. 8º",
+   "NORMAL",
+   "531a5911-8467-42a5-9fd7-71e8c13c5edf",
+   null
+  ],
+  [
+   "2",
+   "Senador Alessandro Vieira (MDB/SE)",
+   "2026-11-12",
+   "EMENDA_PARCIAL",
+   "Emenda ao PLP 299/2026 - Supressão art. 14 (abertura de crédito)",
+   "NORMAL",
+   "36b39045-bc88-4200-99c1-76056d96b5c5",
+   null
+  ],
+  [
+   "3",
+   "Senador Alessandro Vieira (MDB/SE)",
+   "2026-11-12",
+   "EMENDA_PARCIAL",
+   "Emenda ao PLP 299/2026 - Supressão art. 15 (diesel)",
+   "NORMAL",
+   "ddf22bc5-b809-4aee-bf5c-6b0601471e71",
+   null
+  ],
+  [
+   "4",
+   "Senador Otto Alencar (PSD/BA)",
+   "2026-11-12",
+   "EMENDA_PARCIAL",
+   "Emenda ao PLP 299/2026",
+   "NORMAL",
+   "2536446f-e540-46f4-ba41-35411ecd995e",
+   null
+  ],
+  [
+   "5",
+   "Senador Sergio Moro (PL/PR)",
+   "2026-11-12",
+   "EMENDA_PARCIAL",
+   "Emenda 1 ao PLP 299/2026",
+   "NORMAL",
+   "ddbb0077-1a92-43a7-a1f6-dd6de374c5cd",
+   null
+  ],
+  [
+   "6",
+   "Senador Sergio Moro (PL/PR)",
+   "2026-11-12",
+   "EMENDA_PARCIAL",
+   "Emenda 3 ao PLP 299/2026",
+   "NORMAL",
+   "81b9043e-7568-41ac-bda7-26c28949dfe8",
+   null
+  ],
+  [
+   "7",
+   "Senador Sergio Moro (PL/PR)",
+   "2026-11-12",
+   "EMENDA_PARCIAL",
+   "Emenda 2 ao PLP 299/2026",
+   "NORMAL",
+   "8d38663c-0a75-47cc-b967-e5ae8e7be447",
+   null
+  ],
+  [
+   "8",
+   "Senador Alessandro Vieira (MDB/SE)",
+   "2026-11-12",
+   "EMENDA_PARCIAL",
+   "Emenda ao PLP 299/2026 - emenda-A-trajetora",
+   "NORMAL",
+   "79d735cc-53bc-4eab-afb6-e6e17c6d5a84",
+   null
+  ],
+  [
+   "9",
+   "Senador Alessandro Vieira (MDB/SE)",
+   "2026-11-12",
+   "EMENDA_PARCIAL",
+   "Emenda ao PLP 299/2026 - emenda-B-correcao-verificacao",
+   "NORMAL",
+   "d2f7fdb7-abce-49ff-8b14-6ef9b98f8de9",
+   null
+  ],
+  [
+   "10",
+   "Senador Zequinha Marinho (PODE/PA)",
+   "2026-11-12",
+   "EMENDA_PARCIAL",
+   "Emenda ao PLP 299/2026",
+   "NORMAL",
+   "3472068d-da40-4a6d-87c5-083c807c2bd0",
+   null
+  ],
+  [
+   "11",
+   "Senador Randolfe Rodrigues (PT/AP)",
+   "2026-11-12",
+   "EMENDA_PARCIAL",
+   "Emenda do Senador Randolfe Rodrigues ao PLP 299/2026 - Art. 16",
+   "NORMAL",
+   "32dafbee-c0d6-4fe0-afd9-346bb495baee",
+   null
+  ],
+  [
+   "12",
+   "Senador Luis Carlos Heinze (PP/RS)",
+   "2026-11-12",
+   "EMENDA_PARCIAL",
+   "Emenda 01 ao PLP 299/2026",
+   "NORMAL",
+   "6025cf4a-8653-4ad8-a5c8-e5219f353eab",
+   null
+  ],
+  [
+   "13",
+   "Senadora Damares Alves (REPUBLICANOS/DF)",
+   "2026-11-12",
+   "EMENDA_PARCIAL",
+   "Emenda ao PLP 299/2026 - Preservar os benefícios tributários destinados à aquisição de veículos automotores por pessoas com deficiência e pessoas com transtorno do espectro autista.",
+   "NORMAL",
+   "aa8bf6c5-a472-4446-8f75-a0cd00cd8034",
+   null
+  ],
+  [
+   "14",
+   "Senadora Damares Alves (REPUBLICANOS/DF)",
+   "2026-11-12",
+   "EMENDA_PARCIAL",
+   "Emenda ao PLP 299/2026 - emenda para proteção integral do FCDF",
+   "NORMAL",
+   "2ef77f28-7d21-49ac-b74e-8fd596fd6753",
+   null
+  ],
+  [
+   "15",
+   "Senador Jader Barbalho (MDB/PA)",
+   "2026-11-12",
+   "EMENDA_PARCIAL",
+   "Emenda 1 ao PLP 299/2026",
+   "NORMAL",
+   "d6e46b2e-ebb2-466b-b4ad-d54f44bc50be",
+   null
+  ],
+  [
+   "16",
+   "Senador Jader Barbalho (MDB/PA)",
+   "2026-11-12",
+   "EMENDA_PARCIAL",
+   "Emenda 2 ao PLP 299/2026",
+   "NORMAL",
+   "699c07c7-2a78-455e-8e77-7a492c2b971c",
+   null
+  ],
+  [
+   "17",
+   "Senador Jorge Seif (PL/SC)",
+   "2026-11-12",
+   "EMENDA_PARCIAL",
+   "Emenda ao PLP 299/2026",
+   "NORMAL",
+   "0bb84833-8ad6-4780-a466-cd0e79db8e38",
+   null
+  ],
+  [
+   "18",
+   "Senador Randolfe Rodrigues (PT/AP)",
+   "2026-11-12",
+   "EMENDA_PARCIAL",
+   "Emenda do Senador Randolfe Rodrigues ao PLP 299/2026 - Art. 6o-D",
+   "NORMAL",
+   "050e75c6-9bd9-4fa3-a740-e94fc4369fe7",
+   null
+  ],
+  [
+   "19",
+   "Senador Sergio Moro (PL/PR)",
+   "2026-11-12",
+   "EMENDA_PARCIAL",
+   "Emenda 4 ao PLP 299/2026",
+   "NORMAL",
+   "36815c1e-2475-498c-ae43-038dc7d40b60",
+   null
+  ],
+  [
+   "20",
+   "Senador Izalci Lucas (PL/DF)",
+   "2026-11-12",
+   "EMENDA_PARCIAL",
+   "Emenda ao PLP 299/2026 afastamento vedações FCDF",
+   "NORMAL",
+   "6ad6a9f9-fc9e-474d-905e-32d3dfe6cc23",
+   null
+  ],
+  [
+   "21",
+   "Senador Izalci Lucas (PL/DF)",
+   "2026-11-12",
+   "EMENDA_PARCIAL",
+   "Emenda ao PLP 299/2026 preservação de recursos administração tributária",
+   "NORMAL",
+   "417c3956-f2d0-46ce-8eb9-8bbf1dd87c72",
+   null
+  ],
+  [
+   "22",
+   "Senador Izalci Lucas (PL/DF)",
+   "2026-11-12",
+   "EMENDA_PARCIAL",
+   "Emenda ao PLP 299/2026 Base de cálculo e reajuste anual do FCDF",
+   "NORMAL",
+   "aa689318-a218-4ab5-ae33-2029e229f6f3",
+   null
+  ],
+  [
+   "23",
+   "Senador Izalci Lucas (PL/DF)",
+   "2026-11-12",
+   "EMENDA_PARCIAL",
+   "Emenda ao PLP 299/2026 Proteção dos recursos vinculados",
+   "NORMAL",
+   "c23f4d53-8a70-4647-bebb-4700e5a94da6",
+   null
+  ],
+  [
+   "24",
+   "Senador Izalci Lucas (PL/DF)",
+   "2026-11-12",
+   "EMENDA_PARCIAL",
+   "Emenda ao PLP 299/2026 Proteção contra contingenciamento",
+   "NORMAL",
+   "7617debf-ff0d-4469-9d5a-5a5d38b41d13",
+   null
+  ],
+  [
+   "25",
+   "Senador Izalci Lucas (PL/DF)",
+   "2026-11-12",
+   "EMENDA_PARCIAL",
+   "Emenda ao PLP 299/2026 Preservação dos repasses federais ao DF",
+   "NORMAL",
+   "3312c0fc-fa5d-425d-90d4-92d2bd2bf3c4",
+   null
+  ],
+  [
+   "26",
+   "Senador Flávio Arns (PSB/PR)",
+   "2026-11-12",
+   "EMENDA_PARCIAL",
+   "Emenda Supressiva ao PLP 299/2026 (exclui Lei Kandir do Ajuste Fiscal)",
+   "NORMAL",
+   "9092226a-e950-42d0-a585-2a16544983c6",
+   null
+  ],
+  [
+   "27",
+   "Senadora Leany Lemos (PSB/DF)",
+   "2026-11-12",
+   "EMENDA_PARCIAL",
+   "Emenda ao PLP 299/2026 limite dedução Saúde",
+   "NORMAL",
+   "ab14b9bc-b66c-40c7-9b27-49b91f5a684a",
+   null
+  ],
+  [
+   "28",
+   "Senador Flávio Arns (PSB/PR), Senadora Mara Gabrilli (PSD/SP), Senador Eduardo Gomes (PL/TO), Senador Jorge Kajuru (PSB/GO), Senador Confúcio Moura (MDB/RO), Senador Romário (S/Partido/RJ), Senador Carlos Viana (PSD/MG)",
+   "2026-11-12",
+   "EMENDA_PARCIAL",
+   "Emenda ao PLP 299/2026 - impede corte de benefícios da PcD na compra veicular e nas doações de IRPJ para projetos sociais",
+   "NORMAL",
+   "fa14bf12-d387-4372-b8cf-e250967783a3",
+   null
+  ],
+  [
+   "29",
+   "Senador Alessandro Vieira (MDB/SE)",
+   "2026-11-12",
+   "EMENDA_PARCIAL",
+   "Emenda ao PLP 299/2026 - Subvenção óleo diesel",
+   "NORMAL",
+   "1b79d177-8082-4bac-bc83-7c8d8cc23280",
+   null
+  ],
+  [
+   "30",
+   "Senador Angelo Coronel (REPUBLICANOS/BA)",
+   "2026-11-12",
+   "EMENDA_PARCIAL",
+   "Emenda ao PLP 299/2026 - SUDENE e SUDAM",
+   "NORMAL",
+   "363de011-72dc-4607-99b7-abe9dc8e2855",
+   null
+  ],
+  [
+   "31",
+   "Senador Plínio Valério (PSDB/AM)",
+   "2026-11-12",
+   "EMENDA_PARCIAL",
+   "Emenda ao PLP 299/2026",
+   "NORMAL",
+   "dee1840c-e852-4cb2-bdda-2adc4e877354",
+   null
+  ],
+  [
+   "32",
+   "Senador Sérgio Petecão (PSD/AC)",
+   "2026-11-12",
+   "EMENDA_PARCIAL",
+   "Emenda ao PLP 299/2026 administração tributária",
+   "NORMAL",
+   "69c948bc-d8c1-48e1-937c-1fae1c2d0c42",
+   null
+  ],
+  [
+   "33",
+   "Senador Alessandro Vieira (MDB/SE)",
+   "2026-11-12",
+   "EMENDA_PARCIAL",
+   "Emenda ao PLP 299/2026 - Manutenção só do diesel",
+   "NORMAL",
+   "b418d763-011e-430b-956f-bad5d52209d2",
+   null
+  ],
+  [
+   "34",
+   "Senador Izalci Lucas (PL/DF)",
+   "2026-11-12",
+   "EMENDA_PARCIAL",
+   "Emenda ao PLP 299/2026 art 15",
+   "NORMAL",
+   "71321078-c8f2-47c9-b870-64f7b5285c65",
+   null
+  ],
+  [
+   "35",
+   "Senador Izalci Lucas (PL/DF)",
+   "2026-11-12",
+   "EMENDA_PARCIAL",
+   "Emenda ao PLP 299/2026 suprimir art. 6-F LC 200",
+   "NORMAL",
+   "ee8ccbe6-3814-459f-b0b1-d0be11272196",
+   null
+  ],
+  [
+   "36",
+   "Senador Izalci Lucas (PL/DF)",
+   "2026-11-12",
+   "EMENDA_PARCIAL",
+   "Emenda ao PLP 299/2026 suprimir art 4",
+   "NORMAL",
+   "f43280a3-08a3-4063-8d09-21b3777daabc",
+   null
+  ],
+  [
+   "37",
+   "Senador Izalci Lucas (PL/DF)",
+   "2026-11-12",
+   "EMENDA_PARCIAL",
+   "Emenda ao PLP 299/2026 suprimir art. 3",
+   "NORMAL",
+   "2270c473-7a4a-4714-a69b-b935dc9f095d",
+   null
+  ],
+  [
+   "38",
+   "Senador Eduardo Gomes (PL/TO)",
+   "2026-11-12",
+   "EMENDA_PARCIAL",
+   "Emenda ao PLP 299/2026 1",
+   "NORMAL",
+   "ad2e9117-fc92-4ea9-a33b-4b8c639cabea",
+   null
+  ],
+  [
+   "39",
+   "Senador Eduardo Gomes (PL/TO)",
+   "2026-11-12",
+   "EMENDA_PARCIAL",
+   "Emenda ao PLP 299/2026 2",
+   "NORMAL",
+   "df12599c-af46-4534-bfe4-79432b0ebe1d",
+   null
+  ],
+  [
+   "40",
+   "Senador Rogerio Marinho (PL/RN)",
+   "2026-11-12",
+   "EMENDA_PARCIAL",
+   "Emenda ao PLP 299/2026",
+   "NORMAL",
+   "59ec1c44-38f4-4ca5-90b1-0cb904109a9d",
+   null
+  ],
+  [
+   "41",
+   "Senador Eduardo Gomes (PL/TO)",
+   "2026-11-12",
+   "EMENDA_PARCIAL",
+   "Emenda ao PLP 299/2026",
+   "NORMAL",
+   "601a6c33-8ba4-471c-ab78-446a18c4a04f",
+   null
+  ],
+  [
+   "42",
+   "Senadora Tereza Cristina (PP/MS)",
+   "2026-11-12",
+   "EMENDA_PARCIAL",
+   "Emenda ao PLP 299/2026 - nova redação do art. 6D",
+   "NORMAL",
+   "8f84cfcf-ad1b-4f29-9fd4-a9ef8122c3a4",
+   null
+  ],
+  [
+   "43",
+   "Senador Romário (S/Partido/RJ)",
+   "2026-11-12",
+   "EMENDA_PARCIAL",
+   "Emenda ao PLP 299/2026",
+   "NORMAL",
+   "64795385-c595-471d-bc56-f2137b10ade0",
+   null
+  ],
+  [
+   "44",
+   "Senador Laércio Oliveira (PP/SE)",
+   "2026-11-12",
+   "EMENDA_PARCIAL",
+   "Emenda ao PLP 299/2026",
+   "NORMAL",
+   "3effcbe2-6194-41f5-83cb-95fecef180c4",
+   null
+  ],
+  [
+   "45",
+   "Senador Laércio Oliveira (PP/SE)",
+   "2026-11-12",
+   "EMENDA_PARCIAL",
+   "Emenda 4 ao PLP 299/2026",
+   "NORMAL",
+   "ccf958d5-6768-4ea5-b3a4-01c3a63dfd26",
+   null
+  ],
+  [
+   "46",
+   "Senador Laércio Oliveira (PP/SE)",
+   "2026-11-12",
+   "EMENDA_PARCIAL",
+   "Emenda 3 ao PLP 299/2026",
+   "NORMAL",
+   "7afbacd5-cf89-46ae-8fc6-16edb0b557d3",
+   null
+  ],
+  [
+   "47",
+   "Senador Laércio Oliveira (PP/SE)",
+   "2026-11-12",
+   "EMENDA_PARCIAL",
+   "Emenda 2 ao PLP 299/2026",
+   "NORMAL",
+   "4c50a984-ecb4-4ee5-a2eb-8716aded8137",
+   null
+  ],
+  [
+   "48",
+   "Senador Laércio Oliveira (PP/SE)",
+   "2026-11-12",
+   "EMENDA_PARCIAL",
+   "Emenda 1 ao PLP 299/2026",
+   "NORMAL",
+   "05a2a7fa-50bf-408a-a532-1a65dbbe9acf",
+   null
+  ],
+  [
+   "49",
+   "Senador Magno Malta (PL/ES)",
+   "2026-11-12",
+   "EMENDA_PARCIAL",
+   "Emenda ao PLP 299/2026 - Supressão art. 2º",
+   "NORMAL",
+   "bb3a426d-d939-4b3a-b6c8-efc1003f435f",
+   null
+  ],
+  [
+   "50",
+   "Senador Alan Rick (REPUBLICANOS/AC)",
+   "2026-11-12",
+   "EMENDA_PARCIAL",
+   "Emenda ao PLP 299/2026 - Supressão art 6º-F - Compensação de créditos tributários",
+   "NORMAL",
+   "29c53c80-debc-488e-a3d0-56c45413226f",
+   null
+  ],
+  [
+   "51",
+   "Senador Nelsinho Trad (PSD/MS)",
+   "2026-11-12",
+   "EMENDA_PARCIAL",
+   "Emenda ao PLP 299/2026 - Lei Kandir",
+   "NORMAL",
+   "51e427b1-f34a-4dee-89c9-96d124852f6e",
+   null
+  ],
+  [
+   "52",
+   "Senador Nelsinho Trad (PSD/MS)",
+   "2026-11-12",
+   "EMENDA_PARCIAL",
+   "Emenda ao PLP 299/2026 - Compensação Tributária",
+   "NORMAL",
+   "7c635a22-3206-4072-a0cd-f9693ae69496",
+   null
+  ],
+  [
+   "53",
+   "Senador Randolfe Rodrigues (PT/AP)",
+   "2026-11-12",
+   "EMENDA_PARCIAL",
+   "Emenda Supressiva Art. 6o do PLP 299/2026",
+   "NORMAL",
+   "6edc0f62-7ddf-4216-8496-0833f13c3b80",
+   null
+  ],
+  [
+   "54",
+   "Senador Luis Carlos Heinze (PP/RS)",
+   "2026-11-12",
+   "EMENDA_PARCIAL",
+   "Emenda 02 ao PLP 299/2026",
+   "NORMAL",
+   "074df270-5ecf-4226-a7a2-1018ea5e0c69",
+   null
+  ],
+  [
+   "55",
+   "Senador Laércio Oliveira (PP/SE)",
+   "2026-11-12",
+   "EMENDA_PARCIAL",
+   "Emenda ao PLP 299/2026",
+   "NORMAL",
+   "ab200651-dda9-4af6-958f-359a91f07bdf",
+   null
+  ],
+  [
+   "56",
+   "Senador Laércio Oliveira (PP/SE)",
+   "2026-11-12",
+   "EMENDA_PARCIAL",
+   "Emenda ao PLP 299/2026",
+   "NORMAL",
+   "74becf02-ff5a-42e2-8689-7d6e9530a2ab",
+   null
+  ],
+  [
+   "57",
+   "Senador Renan Calheiros (MDB/AL)",
+   "2026-11-12",
+   "EMENDA_PARCIAL",
+   "Emenda PLP 299/2026",
+   "NORMAL",
+   "ddd3809d-7a41-4134-b2b6-ad8c4b595a2c",
+   null
+  ],
+  [
+   "58",
+   "Senador Astronauta Marcos Pontes (PL/SP)",
+   "2026-11-12",
+   "EMENDA_PARCIAL",
+   "Emenda ao PLP 299/2026 (FNDCT)",
+   "NORMAL",
+   "1f5ec4c2-34d2-450e-a82e-0dc39b0b38ef",
+   null
+  ],
+  [
+   "59",
+   "Senador Humberto Costa (PT/PE)",
+   "2026-11-12",
+   "EMENDA_PARCIAL",
+   "Emenda ao PLP 299/2026_despesas indenizatórias vedadas até lei complementar (enviado por 44332674812 em 12-11-2026 16:49)",
+   "NORMAL",
+   "fc14f64e-ffec-44e0-82fe-c1597e05e86c",
+   null
+  ],
+  [
+   "60",
+   "Senador Giordano (PODE/SP)",
+   "2026-11-12",
+   "EMENDA_PARCIAL",
+   "Emenda PLP",
+   "NORMAL",
+   "13570e8b-0383-497d-a567-f77975aabb63",
+   null
+  ],
+  [
+   "61",
+   "Senador Lucas Barreto (PSD/AP)",
+   "2026-11-12",
+   "EMENDA_PARCIAL",
+   "Emenda ao PLP 299/2026 para alterar a redação do art. 11",
+   "NORMAL",
+   "6d40c626-58be-405c-994e-9dc64e8ae1e2",
+   null
+  ],
+  [
+   "62",
+   "Senador Lucas Barreto (PSD/AP)",
+   "2026-11-12",
+   "EMENDA_PARCIAL",
+   "Emenda ao PLP 299/2026 para alterar a redação do art. 12",
+   "NORMAL",
+   "d25463ab-2afa-4c1e-80ca-04b38e0ac598",
+   null
+  ],
+  [
+   "63",
+   "Senador Magno Malta (PL/ES)",
+   "2026-11-12",
+   "EMENDA_PARCIAL",
+   "Emenda ao PLP 299/2026 - Supressão art. 4º - Incentivos Fiscais",
+   "NORMAL",
+   "6c670fae-4aed-4222-bdf3-00d1490aa2a8",
+   null
+  ],
+  [
+   "64",
+   "Senador Magno Malta (PL/ES)",
+   "2026-11-12",
+   "EMENDA_PARCIAL",
+   "Emenda ao PLP 299/2026 - Suprimir art. 6º-F LC 200, de 2026",
+   "NORMAL",
+   "e23dbed3-233c-4dc8-99ad-4e69dc1a80e6",
+   null
+  ],
+  [
+   "65",
+   "Senador Wellington Fagundes (PL/MT)",
+   "2026-11-12",
+   "EMENDA_PARCIAL",
+   "Emenda ao PLP 299/2026 - suprime art. 2 Lei Kandir",
+   "NORMAL",
+   "bfcf075f-8916-4159-8a5f-fa283d1c8c8d",
+   null
+  ],
+  [
+   "66",
+   "Senador Wellington Fagundes (PL/MT)",
+   "2026-11-12",
+   "EMENDA_PARCIAL",
+   "Emenda ao PLP 299/2026 - Suprima-se o inciso VII do § 4º do art.",
+   "NORMAL",
+   "c96d443a-1431-460e-a966-0756b980c08a",
+   null
+  ],
+  [
+   "67",
+   "Senador Wellington Fagundes (PL/MT)",
+   "2026-11-12",
+   "EMENDA_PARCIAL",
+   "Emenda ao PLP 299/2026 - Suprima-se o art. 10",
+   "NORMAL",
+   "d4fc1036-7daf-4e65-942f-cda18f5496a3",
+   null
+  ],
+  [
+   "68",
+   "Senador Wellington Fagundes (PL/MT)",
+   "2026-11-12",
+   "EMENDA_PARCIAL",
+   "Emenda ao PLP 299/2026 - Suprima-se o art. 6º-F",
+   "NORMAL",
+   "c8350c77-2849-47e9-9b8f-fa8e90d181ad",
+   null
+  ],
+  [
+   "69",
+   "Senadora Tereza Cristina (PP/MS)",
+   "2026-11-12",
+   "EMENDA_PARCIAL",
+   "Emenda ao PLP 299/2026 - Art. 6-D",
+   "NORMAL",
+   "c4ad61e9-71ad-41e4-90ca-b8f87fcccdee",
+   null
+  ],
+  [
+   "70",
+   "Senador Astronauta Marcos Pontes (PL/SP)",
+   "2026-11-12",
+   "EMENDA_PARCIAL",
+   "Emenda Modificativa ao PLP 299/2026 -",
+   "NORMAL",
+   "f9fdbfa4-65df-455c-b85c-c592e43ff2d8",
+   null
+  ],
+  [
+   "71",
+   "Senador Efraim Filho (PL/PB)",
+   "2026-11-12",
+   "EMENDA_PARCIAL",
+   "Emenda ao PLP 299/2026",
+   "NORMAL",
+   "d1ae0a10-e2e7-4045-af89-f723a71ba58e",
+   null
+  ],
+  [
+   "72",
+   "Senadora Leany Lemos (PSB/DF)",
+   "2026-11-12",
+   "EMENDA_PARCIAL",
+   "Emenda ao PLP 299/2026 FCDF II",
+   "NORMAL",
+   "9aae21c7-08b9-4a91-a341-a5781c42ef5a",
+   null
+  ],
+  [
+   "73",
+   "Senador Alan Rick (REPUBLICANOS/AC)",
+   "2026-11-12",
+   "EMENDA_PARCIAL",
+   "Emenda ao PLP 299/2026",
+   "NORMAL",
+   "ba8ff040-ca64-4ce6-8a08-2bcd0e8ed421",
+   null
+  ],
+  [
+   "74",
+   "Senador Efraim Filho (PL/PB)",
+   "2026-11-12",
+   "EMENDA_PARCIAL",
+   "Emenda ao PLP 299/2026",
+   "NORMAL",
+   "133f2887-c85d-4bc1-b0fb-81e8166b2152",
+   null
+  ],
+  [
+   "75",
+   "Senador Eduardo Braga (MDB/AM)",
+   "2026-11-12",
+   "EMENDA_PARCIAL",
+   "Emenda nº 75 (Substitutivo)",
+   "NORMAL",
+   "d262286e-9b74-4b02-9dcb-c15a08f194b2",
+   null
+  ],
+  [
+   "76",
+   "Senador Wilder Morais (PL/GO)",
+   "2026-11-12",
+   "EMENDA_PARCIAL",
+   "Emenda ao PLP 299/2026 B",
+   "NORMAL",
+   "85c07405-2274-43ac-aed7-95f43415dac9",
+   null
+  ],
+  [
+   "77",
+   "Senador Alessandro Vieira (MDB/SE)",
+   "2026-11-16",
+   "EMENDA_PARCIAL",
+   "Emenda ao PLP 299/2026 - Piso superávit 0,5% do PIB",
+   "SUPLEMENTAR",
+   "ddc3fa9e-25d6-4215-99a2-efb3528e5343",
+   null
+  ],
+  [
+   "78",
+   "Senador Alessandro Vieira (MDB/SE)",
+   "2026-11-16",
+   "EMENDA_PARCIAL",
+   "Emenda ao PLP 299/2026 - Supersalários",
+   "SUPLEMENTAR",
+   "db8baf2c-aa00-481e-ad5d-53994c3c2572",
+   null
+  ],
+  [
+   "79",
+   "Senadora Leany Lemos (PSB/DF)",
+   "2026-11-17",
+   "EMENDA_PARCIAL",
+   "Emenda ao PLP 299/2026 dedução despesa saúde IR",
+   "SUPLEMENTAR",
+   "92bda5d7-975b-472d-9a73-d550a1587d31",
+   null
+  ],
+  [
+   "80",
+   "Senador Wilder Morais (PL/GO)",
+   "2026-11-17",
+   "EMENDA_PARCIAL",
+   "Emenda ao PLP 299/2026 agro",
+   "SUPLEMENTAR",
+   "cc4c94a5-4638-415f-875a-fc286d812f30",
+   null
+  ],
+  [
+   "81",
+   "Senador Alessandro Vieira (MDB/SE)",
+   "2026-11-17",
+   "EMENDA_PARCIAL",
+   "Emenda ao PLP 299/2026 - Supressiva Supersalários",
+   "SUPLEMENTAR",
+   "0fd4d84d-96c3-4856-a111-9a25424bb24e",
+   null
+  ],
+  [
+   "82",
+   "Senador Wilder Morais (PL/GO)",
+   "2026-11-17",
+   "EMENDA_PARCIAL",
+   "Emenda substitutivo ao PLP 299/2026",
+   "SUPLEMENTAR",
+   "61929a0f-ae0a-4a8b-a1d8-516d08d23980",
+   null
+  ],
+  [
+   "83",
+   "Senadora Tereza Cristina (PP/MS)",
+   "2026-11-17",
+   "EMENDA_PARCIAL",
+   "Emenda ao Substitutivo do PLP 299/2026 - Turno Suplementar",
+   "SUPLEMENTAR",
+   "89b619af-2546-489c-a4a1-880f5e8bdc1b",
+   null
+  ],
+  [
+   "84",
+   "Senador Humberto Costa (PT/PE)",
+   "2026-11-17",
+   "EMENDA_PARCIAL",
+   "Emenda ao Substitutivo do PLP 299_2026_despesas indenizatórias vedadas até lei complementar (enviado por 44332674812 em 17-11-2026 16_10)",
+   "SUPLEMENTAR",
+   "49027870-37d3-4cf9-874d-587e9426b6f9",
+   null
+  ],
+  [
+   "85",
+   "Senador Humberto Costa (PT/PE)",
+   "2026-11-18",
+   "EMENDA_PARCIAL",
+   "Emenda ao Substitutivo do PLP 299/2026 - Turno Suplementar",
+   "SUPLEMENTAR",
+   "e560cc4f-0880-422f-95b9-28ffa43d1b4e",
+   null
+  ],
+  [
+   "86",
+   "Senador Astronauta Marcos Pontes (PL/SP)",
+   "2026-11-18",
+   "EMENDA_PARCIAL",
+   "Emenda ao Substitutivo do PLP 299/2026 - Turno suplementar.",
+   "SUPLEMENTAR",
+   "a9dc04f3-9bf8-46e3-ab1c-661511187397",
+   null
+  ],
+  [
+   "87",
+   "Senador Carlos Portinho (PL/RJ)",
+   "2026-11-18",
+   "EMENDA_PARCIAL",
+   "Emenda ao PLP 299/2026 Emenda ao Art. 7",
+   "SUPLEMENTAR",
+   "d3b52284-af1d-4734-aaa9-b3c0e6580dd0",
+   null
+  ],
+  [
+   "88",
+   "Senador Carlos Portinho (PL/RJ)",
+   "2026-11-18",
+   "EMENDA_PARCIAL",
+   "Emenda ao PLP 299/2026 Altera Art. 4 da LC 224",
+   "SUPLEMENTAR",
+   "7ff4ebb4-3651-410e-9dd5-efb39e6ca408",
+   null
+  ],
+  [
+   "89",
+   "Senador Carlos Portinho (PL/RJ)",
+   "2026-11-18",
+   "EMENDA_PARCIAL",
+   "Emenda ao PLP 299/2026 Emenda ao Art. 10 Defesa Nacional",
+   "SUPLEMENTAR",
+   "103c125c-a547-4775-b164-9619e4e4450a",
+   null
+  ],
+  [
+   "90",
+   "Senador Alessandro Vieira (MDB/SE)",
+   "2026-11-18",
+   "EMENDA_PARCIAL",
+   "Emenda ao PLP 299/2026 - Supersalários - 60 dias",
+   "SUPLEMENTAR",
+   "de393b66-b806-4f3b-82db-bca3d5e4aa99",
+   null
+  ],
+  [
+   "91",
+   "Senador Alessandro Vieira (MDB/SE)",
+   "2026-11-18",
+   "EMENDA_PARCIAL",
+   "Emenda ao PLP 299/2026 - prestacao de contas",
+   "SUPLEMENTAR",
+   "f15ea18e-2be5-4519-9f82-a693407e4795",
+   null
+  ]
+ ],
+ "relacionados": [
+  [
+   "REFERENCIA",
+   "RQS",
+   "770",
+   2026
+  ],
+  [
+   "REFERENCIA",
+   "RQS",
+   "772",
+   2026
+  ],
+  [
+   "REFERENCIA",
+   "RQS",
+   "773",
+   2026
+  ],
+  [
+   "REFERENCIA",
+   "RQS",
+   "774",
+   2026
+  ],
+  [
+   "REFERENCIA",
+   "RQS",
+   "775",
+   2026
+  ],
+  [
+   "REFERENCIA",
+   "RQS",
+   "776",
+   2026
+  ],
+  [
+   "REFERENCIA",
+   "RQS",
+   "777",
+   2026
+  ],
+  [
+   "REFERENCIA",
+   "RQS",
+   "778",
+   2026
+  ],
+  [
+   "REFERENCIA",
+   "RQS",
+   "779",
+   2026
+  ],
+  [
+   "REFERENCIA",
+   "RQS",
+   "780",
+   2026
+  ],
+  [
+   "REFERENCIA",
+   "RQS",
+   "782",
+   2026
+  ],
+  [
+   "REFERENCIA",
+   "RQS",
+   "783",
+   2026
+  ],
+  [
+   "REFERENCIA",
+   "RQS",
+   "784",
+   2026
+  ],
+  [
+   "REFERENCIA",
+   "RQS",
+   "792",
+   2026
+  ],
+  [
+   "REFERENCIA",
+   "RQS",
+   "793",
+   2026
+  ]
+ ],
+ "processo": 9127383
+}

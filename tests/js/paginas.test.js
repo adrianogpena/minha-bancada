@@ -14,6 +14,7 @@ const { paginaProposicoes, paginaProposicao } = js("proposicoes.js");
 const { paginaPoliticos } = js("politicos.js");
 const { montarEstadual } = js("estadual.js");
 const { GLOSSARIO, termo, marcarTermos } = js("glossario.js");
+const { ETAPAS_POR_TIPO, estadoProposicao, faixaEtapas, blocoEstado } = js("etapas.js");
 const fs = require("node:fs");
 const caminho = require("node:path");
 
@@ -542,8 +543,8 @@ test("paginaProposicao da Câmara monta cabeçalho, autores, leis, votações e 
     assert.match(html, /Projeto de lei<\/p>/);
     assert.match(html, /<p class="texto-longo">Ementa oficial<\/p>/);
     assert.match(html, /Detalhada &lt;d&gt;/);
-    assert.match(html, /Situação:<\/b> Em tramitação \(PLEN\)/);
-    assert.match(html, /Situação:<\/b> Em tramitação \(PLEN\), desde 02 de fev\. de 2025/);
+    assert.match(html, /<h2>Em que pé está<\/h2><ol class="etapas" aria-label="Etapas do projeto"/);
+    assert.match(html, /Situação na fonte:<\/b> Em tramitação \(PLEN\), desde 02 de fev\. de 2025/);
     assert.match(html, /Última tramitação:<\/b> Aprovado · regime: Urgência/);
     assert.match(html, /Relator:<\/b> <a href="[^"]*">Rel &lt;A&gt;<\/a> \(X\/SP\)/);
     assert.match(html, /Temas:<\/b> Saúde, Tema &lt;2&gt;/);
@@ -606,7 +607,7 @@ test("paginaProposicao mostra o relator da tramitação quando ele não tem fich
     await paginaProposicao();
     await esperar();
     const html = dom.el("#conteudo").innerHTML;
-    assert.match(html, /Situação:<\/b> ainda não consultada/);
+    assert.match(html, /Situação na fonte:<\/b> ainda não consultada/);
     assert.match(html, /Autoria ainda não coletada\./);
     assert.match(html, /Nenhuma votação registrada no Plenário\./);
     assert.match(dom.el("#vida").innerHTML, /Último relator designado:<\/b> Último &lt;R&gt;/);
@@ -641,8 +642,8 @@ test("paginaProposicao do Senado mostra situação com data, outra Casa, relator
     const html = dom.el("#conteudo").innerHTML;
     assert.match(html, /<p>Senado<\/p>/);
     assert.match(html, /Apelido:<\/b> “Ajuste &lt;f&gt;”/);
-    assert.match(html, /Situação:<\/b> REMETIDA, desde 19 de nov\. de 2026/);
-    assert.match(html, /Deliberação:<\/b> Aprovada pelo Plenário em 18 de nov\. de 2026; remetida à Câmara dos Deputados/);
+    assert.match(html, /Situação na fonte:<\/b> REMETIDA, desde 19 de nov\. de 2026/);
+    assert.match(html, /<b>Transformado em Lei &lt;N&gt; em 01\/12\/2026\.<\/b>/);
     assert.match(html, /Virou norma:<\/b> <a href="https:\/\/legis\.senado\.leg\.br\/norma\/1"[^>]*>Lei &lt;N&gt;<\/a>, assinada em 01 de dez\. de 2026/);
     assert.match(html, /Na Câmara dos Deputados:<\/b> <a href="proposicao\.html\?k=c-77">PLP 299\/2026<\/a>/);
     assert.match(html, /Relator:<\/b> <a href="[^"]*">Rel &lt;R&gt;<\/a> \(MDB\/AM\)/);
@@ -939,4 +940,95 @@ test("significado: eventos da linha do tempo", () => {
   assert.equal(semTags(significado({ texto: "REMETIDA À CÂMARA DOS DEPUTADOS", tipo: "evento" })), "o Senado terminou a sua parte; agora a Câmara, como Casa revisora, analisa o texto.");
   assert.match(semTags(significado({ texto: "ARQUIVADA AO FINAL DA LEGISLATURA", tipo: "evento" })), /fim da legislatura e deixou de tramitar/);
   assert.equal(significado({ texto: "Recebido o ofício", tipo: "evento" }), "");
+});
+
+const lerFixture = (nome) => JSON.parse(fs.readFileSync(caminho.join(__dirname, "..", "fixtures", "plp299", nome), "utf8"));
+const estadosDe = (e) => Object.fromEntries(e.etapas.map((x) => [x.id, x.estado]));
+
+test("etapas: PLP 299 (Senado) tem Comissões pulada, Câmara atual e a frase do estado", () => {
+  const p = lerFixture("indice.json"), f = lerFixture("ficha.json")["176328"], t = lerFixture("tramitacao_senado.json");
+  const e = estadoProposicao({ tipo: "PLP", senado: true, p, f, t });
+  assert.deepEqual(estadosDe(e), { apresentado: "feito", comissoes: "pulado", "plenario-origem": "feito", "casa-revisora": "atual", "sancao-veto": "futuro", lei: "futuro" });
+  assert.deepEqual(e.etapas.map((x) => x.rotulo), ["Apresentado", "Comissões", "Plenário do Senado", "Câmara dos Deputados", "Sanção ou veto", "Lei"]);
+  assert.equal(e.etapas[3].detalhe, "desde 19/11 · agora");
+  assert.equal(e.etapas[1].detalhe, "não passou: foi direto ao Plenário");
+  assert.equal(e.frase, "Aprovado pelo Plenário do Senado em 18/11/2026 e enviado à Câmara dos Deputados em 19/11/2026, onde tem o número PLP 299/2026");
+  assert.equal(e.segunda, "Ainda não é lei. A Câmara, como Casa revisora, pode aprovar, mudar ou rejeitar o texto; se mudar, ele volta ao Senado. Depois vai à sanção.");
+  assert.deepEqual(e.proximos.map((x) => x.rotulo), ["Sanção ou veto", "Volta à Casa de origem", "Arquivado"]);
+  assert.equal(e.crua.texto, "REMETIDA À CÂMARA DOS DEPUTADOS");
+  assert.match(e.crua.fonte, /materia\/176328$/);
+  const faixa = faixaEtapas(e);
+  assert.equal((faixa.match(/aria-current="step"/g) || []).length, 1);
+  assert.match(faixa, /<li class="pulado">/);
+  const bloco = blocoEstado(e);
+  assert.match(bloco, /<b>Aprovado pelo Plenário do Senado em 18\/11\/2026/);
+  assert.match(bloco, /O que pode acontecer agora/);
+  assert.match(bloco, /Situação na fonte:<\/b> .*REMETIDA À CÂMARA DOS DEPUTADOS.*desde 19 de nov\. de 2026/);
+  assert.match(bloco, /ver na fonte/);
+});
+
+test("paginaProposicao com as fixtures do PLP 299 mostra a faixa e a frase do estado", async () => {
+  const respostas = {
+    "dados/proposicoes.json": [lerFixture("indice.json")],
+    "dados/proposicao/s-2026.json": lerFixture("ficha.json"),
+    "dados/senadores.json": [],
+    "dados/votacoes_senado.json": [],
+    "dados/tramitacao_senado/176328.json": lerFixture("tramitacao_senado.json"),
+  };
+  await comPagina({ search: "?k=s-176328" }, respostas, async (dom) => {
+    await paginaProposicao();
+    await esperar();
+    const html = dom.el("#conteudo").innerHTML;
+    assert.match(html, /<h2>Em que pé está<\/h2>/);
+    assert.match(html, /<li class="atual" aria-current="step"><span class="ponto" aria-hidden="true">4<\/span><b>Câmara dos Deputados<\/b>/);
+    assert.match(html, /<b>Aprovado pelo Plenário do Senado em 18\/11\/2026 e enviado à Câmara dos Deputados em 19\/11\/2026, onde tem o número PLP 299\/2026\.<\/b>/);
+    assert.doesNotMatch(html, /Deliberação:/);
+  });
+});
+
+test("etapas: PEC no plenário, MPV na Câmara e proposição arquivada (parada)", () => {
+  const pec = estadoProposicao({
+    tipo: "PEC", senado: true, p: { k: "s-9", t: "PEC", s: "PRONTO PARA DELIBERAÇÃO DO PLENÁRIO" }, f: { ds: "2026-02-01" },
+    t: { situacoes: [["2026-01-02", null, "x", "AGUARDANDO DESPACHO", "PLEN"], ["2026-01-05", null, "x", "MATÉRIA COM A RELATORIA", "CCJ"], ["2026-02-01", null, "x", "PRONTO PARA DELIBERAÇÃO DO PLENÁRIO", "PLEN"]], despachos: [["2026-01-03", "Análise", ["CCJ"], false]] },
+  });
+  assert.deepEqual(estadosDe(pec), { apresentado: "feito", comissoes: "feito", "plenario-1-turno": "atual", "plenario-2-turno": "futuro", "casa-revisora": "futuro", promulgacao: "futuro" });
+  assert.match(pec.segunda, /^Ainda não é emenda à Constituição\. O Plenário vota em primeiro turno/);
+  const mpv = estadoProposicao({
+    tipo: "MPV", senado: false, p: { k: "c-5", t: "MPV", s: "Aguardando Apreciação pelo Senado Federal" }, f: {},
+    t: { eventos: [["2026-03-01", "PLEN", "Apresentação", "Aguardando Despacho", ""], ["2026-03-10", "CMMPV", "Parecer", "Aguardando Parecer", "comissão mista"], ["2026-04-01", "PLEN", "Votação", "Aprovada no Plenário da Câmara dos Deputados", ""], ["2026-04-02", "PLEN", "Remessa", "Aguardando Apreciação pelo Senado Federal", ""]] },
+  });
+  assert.deepEqual(estadosDe(mpv), { publicada: "feito", "comissao-mista": "feito", "plenario-camara": "feito", "plenario-senado": "atual", "sancao-veto": "futuro", lei: "futuro" });
+  const arq = estadoProposicao({
+    tipo: "PL", senado: false, p: { k: "c-7", t: "PL", s: "Arquivada" }, f: { ds: "2025-03-01" },
+    t: { eventos: [["2025-01-01", "PLEN", "Apresentação", "Aguardando Despacho", ""], ["2025-02-01", "CCJC", "Parecer", "Aguardando Parecer", ""], ["2025-03-01", "CCJC", "Arquivamento", "Arquivada", ""]] },
+  });
+  assert.deepEqual(estadosDe(arq), { apresentado: "feito", comissoes: "parado", "plenario-origem": "futuro", "casa-revisora": "futuro", "sancao-veto": "futuro", lei: "futuro" });
+  assert.equal(arq.frase, "Parou nesta etapa: Arquivada, desde 01/03/2025");
+  assert.equal(arq.proximos[0].rotulo, "Comissões");
+  assert.match(faixaEtapas(arq), /<li class="parado">/);
+  assert.doesNotMatch(faixaEtapas(arq), /aria-current/);
+  assert.equal(estadoProposicao({ tipo: "REQ", p: { k: "c-1", t: "REQ" }, f: {} }), null);
+});
+
+test("etapas: a tabela ETAPAS_POR_TIPO tem as mesmas etapas, arestas e caminho principal de docs/regras-tramitacao.md", () => {
+  const md = fs.readFileSync(caminho.join(__dirname, "..", "..", "docs", "regras-tramitacao.md"), "utf8").replace(/\r\n/g, "\n");
+  const secoes = md.split(/^## Tipo: /m).slice(1);
+  assert.equal(secoes.length, 5);
+  const vistos = [];
+  for (const sec of secoes) {
+    const tipos = sec.split("\n")[0].split(",").map((x) => x.trim());
+    const corpo = sec.split(/^## /m)[0];
+    const ids = [...corpo.matchAll(/^#### `([^`]+)`/gm)].map((m) => m[1]);
+    const pares = [...corpo.matchAll(/^\| `([^`]+)` \| `([^`]+)` \|/gm)].map((m) => `${m[1]}>${m[2]}`);
+    const principal = [...corpo.match(/\*\*Caminho principal:\*\*(.*)/)[1].matchAll(/`([^`]+)`/g)].map((m) => m[1]);
+    for (const tipo of tipos) {
+      const def = ETAPAS_POR_TIPO[tipo];
+      vistos.push(tipo);
+      assert.ok(def, tipo);
+      assert.deepEqual(def.etapas.map((e) => e.id), ids, `etapas de ${tipo}`);
+      assert.deepEqual(def.arestas.map((a) => `${a.de}>${a.para}`), pares, `arestas de ${tipo}`);
+      assert.deepEqual(def.principal, principal, `caminho principal de ${tipo}`);
+    }
+  }
+  assert.deepEqual(vistos.sort(), Object.keys(ETAPAS_POR_TIPO).sort());
 });

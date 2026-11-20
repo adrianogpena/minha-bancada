@@ -3,6 +3,7 @@ import { $, esc, data, semAcento, param, carregar, urlSegura } from "./util.js";
 import { VOTOS, selo, listaPaginada, erro, semDadosLocais, filtrosNaUrl, botaoVoltar } from "./comum.js";
 import { TIPOS_PROJETO, CAMARA_API, SENADO_API, fontes, linkTramitacao, linkMateriaSenado, linkParlamentar } from "./apis.js";
 import { barraPlacar } from "./votacoes.js";
+import { estadoProposicao, faixaEtapas, blocoEstado } from "./etapas.js";
 
 const DESTINOS = { aprovada: "Aprovada", rejeitada: "Rejeitada/arquivada", tramitando: "Em tramitação", sem: "Sem situação" };
 const nomeCasa = (c) => (c === "s" ? "Senado" : "Câmara");
@@ -79,6 +80,11 @@ export async function paginaProposicao() {
   const autores = (f.au || []).map((a) => ({ ...a, ...(a.id ? quem.get(a.id) : {}), principal: !!a.p }));
   const votacoes = (f.v || []).map((v) => ({ ...v, ...(nominais.get(v.id) || {}), nominal: nominais.has(v.id) }));
   const outra = senado ? null : f.sf;   // projeto da Câmara que veio do Senado
+  let t = null;   // tramitação (opcional): alimenta "Em que pé está" e "Vida do projeto"
+  try { t = await carregar(`dados/${senado ? "tramitacao_senado" : "tramitacao"}/${encodeURIComponent(id)}.json`); } catch { t = null; }
+  const estado = estadoProposicao({ tipo: p.t, senado, p, f, t });
+  const situacao = estado ? `<h2>Em que pé está</h2>${faixaEtapas(estado)}${blocoEstado(estado)}` : `<p class="texto-longo"><b>Situação:</b> ${esc(p.s || "ainda não consultada")}${f.o ? ` (${esc(f.o)})` : ""}${f.ds ? `, desde ${data(f.ds)}` : `<span class="quando"> · data da situação não informada pela fonte</span>`}</p>
+      ${f.dl ? `<p class="texto-longo"><b>Deliberação:</b> ${esc(f.dl.t || "")}${f.dl.d ? ` em ${data(f.dl.d)}` : ""}${f.dl.p ? `; ${esc(f.dl.p.replace(/^À /, "remetida à "))}` : ""}</p>` : ""}`;
   document.title = `${rotulo(p)} | Minha Bancada`;
   alvo.innerHTML = `
     ${botaoVoltar("Proposições", "proposicoes.html")}
@@ -89,8 +95,7 @@ export async function paginaProposicao() {
       ${TIPOS_PROJETO[p.t] ? `<p>${esc(TIPOS_PROJETO[p.t])}</p>` : ""}
       <p class="texto-longo">${esc(f.em || p.e)}</p>
       ${f.ed ? `<details class="texto"><summary>Ementa detalhada</summary>${esc(f.ed)}</details>` : ""}
-      <p class="texto-longo"><b>Situação:</b> ${esc(p.s || "ainda não consultada")}${f.o ? ` (${esc(f.o)})` : ""}${f.ds ? `, desde ${data(f.ds)}` : `<span class="quando"> · data da situação não informada pela fonte</span>`}</p>
-      ${f.dl ? `<p class="texto-longo"><b>Deliberação:</b> ${esc(f.dl.t || "")}${f.dl.d ? ` em ${data(f.dl.d)}` : ""}${f.dl.p ? `; ${esc(f.dl.p.replace(/^À /, "remetida à "))}` : ""}</p>` : ""}
+      ${situacao}
       ${f.ng ? `<p class="texto-longo"><b>Virou norma:</b> ${f.ng.u ? `<a href="${esc(f.ng.u)}" rel="noopener">${esc(f.ng.d || "norma")}</a>` : esc(f.ng.d || "")}${f.ng.dt ? `, assinada em ${data(f.ng.dt)}` : ""}</p>` : ""}
       ${outraCasa(f, senado)}
       ${f.tr ? `<p class="texto-longo"><b>Última tramitação:</b> ${esc(f.tr)}${f.rg ? ` · regime: ${esc(f.rg)}` : ""}</p>` : f.rg ? `<p class="texto-longo"><b>Regime:</b> ${esc(f.rg)}</p>` : ""}
@@ -112,8 +117,8 @@ export async function paginaProposicao() {
       senado ? ["Dados abertos do Senado (autoria e situação)", `${SENADO_API}/processo?codigoMateria=${encodeURIComponent(id)}`] : null,
       outra ? ["Matéria no Senado", linkMateriaSenado(outra)] : null])}`;
 
-  if (senado) vidaNoSenado($("#vida"), id, !!relator);
-  else vidaDoProjeto($("#vida"), id, !!relator);
+  if (senado) vidaNoSenado($("#vida"), id, t, !!relator);
+  else vidaDoProjeto($("#vida"), id, t, !!relator);
 
   alvo.addEventListener("click", async (e) => {
     const b = e.target.closest("button[data-i]");
@@ -151,9 +156,8 @@ function leisCitadas(ids, leis) {
 }
 
 /* Linha do tempo, relator, comissões e projetos relacionados (coletar.py: coletar_tramitacoes_proposicoes). */
-async function vidaDoProjeto(alvo, id, comRelator) {
-  let t;
-  try { t = await carregar(`dados/tramitacao/${encodeURIComponent(id)}.json`); } catch { return; }
+function vidaDoProjeto(alvo, id, t, comRelator) {
+  if (!t) return;
   const eventos = t.eventos || [], orgaos = [...new Set(eventos.map((e) => e[1]).filter(Boolean))];
   const relacionadas = t.relacionadas || [];
   const [tempo, ligar] = linhaDoTempo(eventos.map(([dia, orgao, tipo, situacao, despacho]) => [dia, orgao, situacao, tipo || "Movimentação", despacho]));
@@ -167,9 +171,8 @@ async function vidaDoProjeto(alvo, id, comRelator) {
 }
 
 /* Linha do tempo de uma matéria do Senado (coletar.py: coletar_processos_senado): relatoria, situações, informes, documentos e emendas. */
-async function vidaNoSenado(alvo, id, comRelator) {
-  let t;
-  try { t = await carregar(`dados/tramitacao_senado/${encodeURIComponent(id)}.json`); } catch { return; }
+function vidaNoSenado(alvo, id, t, comRelator) {
+  if (!t) return;
   const informes = t.informes || [], situacoes = t.situacoes || [], relatorias = t.relatorias || [];
   const emendas = t.emendas || [], documentos = t.documentos || [], despachos = t.despachos || [];
   const colegiados = [...new Set(situacoes.map((s) => s[4]).concat(informes.map((i) => i[1])).filter(Boolean))];

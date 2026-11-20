@@ -16,6 +16,7 @@
   --ausente: #c9cfcb;
   --foco: #f2b705;
   --raio: 6px;
+  --alvo: 44px;
   --display: "Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
   --texto: "Atkinson Hyperlegible", system-ui, sans-serif;
   color-scheme: light;
@@ -408,3 +409,15 @@ select:disabled { opacity: .55; }
 .sem-fonte { color: #b45309; font-weight: 600; }
 .lista-eleicao { list-style: none; padding: 0; margin: 0 0 12px; }
 .lista-eleicao li { margin: 4px 0; }
+
+/* Glossário (glossario.js): termo com "?" e explicação aberta logo abaixo do bloco */
+.termo { font: inherit; color: inherit; background: none; border: 0; padding: 0; cursor: pointer; min-height: 0;
+  text-decoration: underline dotted var(--marca) 2px; text-underline-offset: 4px; position: relative; }
+.termo::after { content: "?"; display: inline-grid; place-items: center; width: 20px; height: 20px; margin-left: 3px; border-radius: 50%;
+  background: var(--marca-clara); color: var(--marca); font: 700 13px/1 var(--texto); vertical-align: 2px; text-decoration: none; }
+.termo::before { content: ""; position: absolute; inset: -12px -4px; }
+.termo[aria-expanded="true"] { background: var(--marca-clara); border-radius: 3px; }
+.definicao { display: block; margin: 8px 0; padding: 10px 12px; background: var(--marca-clara); border-radius: 8px; font-size: 15px; color: var(--tinta); }
+.definicao b { font-family: var(--display); }
+.definicao .fechar { float: right; font: inherit; font-size: 14px; background: none; border: 0; color: var(--marca); cursor: pointer; min-height: var(--alvo); min-width: var(--alvo); margin: -12px -8px 0 0; }
+.definicao .fonte-link { display: block; margin-top: 4px; }

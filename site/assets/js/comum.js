@@ -1,5 +1,6 @@
 /* Peças de interface usadas por várias páginas. */
 import { $, esc, carregar, urlSegura } from "./util.js";
+import { ligarGlossario } from "./glossario.js";
 
 export const VOTOS = {
   sim: { rotulo: "Sim", cor: "var(--sim)" },
@@ -156,6 +157,7 @@ function rotularTabelasAoMontar() {
 }
 
 export function moldura(pagina) {
+  ligarGlossario();
   rotularTabelasAoMontar();
   const links = [
     ["Políticos", [["index.html", "Buscar políticos", "inicio"], ["camara.html", "Câmara", "camara"], ["senado.html", "Senado", "senado"], ["assembleia.html", "Assembleias", "assembleia"], ["ministerios.html", "Ministérios", "ministerios"], ["tribunais.html", "Tribunais", "tribunais"]]],

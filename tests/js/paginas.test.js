@@ -13,6 +13,9 @@ const { paginaVotacoes, paginaVotacao } = js("votacoes.js");
 const { paginaProposicoes, paginaProposicao } = js("proposicoes.js");
 const { paginaPoliticos } = js("politicos.js");
 const { montarEstadual } = js("estadual.js");
+const { GLOSSARIO, termo, marcarTermos } = js("glossario.js");
+const fs = require("node:fs");
+const caminho = require("node:path");
 
 const esperar = async (n = 4) => { for (let i = 0; i < n; i++) await new Promise((r) => setTimeout(r, 0)); };
 const ul = (el) => el.querySelector("ul").innerHTML;
@@ -817,4 +820,52 @@ test("textoValor e vigencia não inventam valor nem data", () => {
   assert.equal(textoValor({ fornecedor: "X", valor: null }), "valor não publicado");
   assert.equal(vigencia({ ano: 2023 }), "ano 2023");
   assert.equal(vigencia({}), "");
+});
+
+test("glossário: todo termo tem definição curta e fonte https, sem id nem variante repetidos", () => {
+  const ids = new Set();
+  const variantes = new Set();
+  for (const t of GLOSSARIO) {
+    assert.ok(!ids.has(t.id), `id repetido ${t.id}`);
+    ids.add(t.id);
+    assert.ok(t.termo && t.variantes.length > 0, t.id);
+    assert.ok(t.definicao && t.definicao.split(/(?<=[.!?])\s+/).length <= 2, `definição longa: ${t.id}`);
+    assert.match(t.fonte.url, /^https:\/\//, t.id);
+    assert.ok(t.fonte.rotulo, t.id);
+    for (const v of t.variantes) {
+      const chave = v === v.toUpperCase() ? v : v.normalize("NFD").replace(/\p{M}/gu, "").toLowerCase();
+      assert.ok(!variantes.has(chave), `variante repetida ${v}`);
+      variantes.add(chave);
+    }
+  }
+});
+
+test("glossário: todo termo('id') usado nos scripts do site existe", () => {
+  const pasta = caminho.join(__dirname, "../../site/assets/js");
+  const ids = new Set(GLOSSARIO.map((t) => t.id));
+  for (const nome of fs.readdirSync(pasta).filter((n) => n.endsWith(".js"))) {
+    const fonte = fs.readFileSync(caminho.join(pasta, nome), "utf8");
+    for (const m of fonte.matchAll(/termo\(\s*"([^"]+)"/g)) assert.ok(ids.has(m[1]), `${nome}: termo("${m[1]}") não existe`);
+  }
+});
+
+test("termo devolve o botão com aria-expanded e rótulo", () => {
+  assert.equal(termo("destaque", "destacado"), '<button type="button" class="termo" data-termo="destaque" aria-expanded="false" aria-label="destacado: o que é?">destacado</button>');
+  assert.match(termo("rmcd"), />RMCD<\/button>/);
+});
+
+test("marcarTermos marca só a 1ª ocorrência, a variante mais longa, e não mexe em tags nem em links", () => {
+  const html = marcarTermos('<p title="destaque">Aprovado, ressalvados os destaques. Veja o <a href="x">destaque</a> e o Destaque de novo.</p>');
+  assert.match(html, /^<p title="destaque">Aprovado, <button[^>]*data-termo="ressalvados"[^>]*>ressalvados os destaques<\/button>\. /);
+  assert.match(html, /<a href="x">destaque<\/a> e o <button[^>]*data-termo="destaque"[^>]*>Destaque<\/button> de novo/);
+  assert.equal((html.match(/data-termo="destaque"/g) || []).length, 1);
+  assert.equal(marcarTermos("Emenda e emendas"), termo("emenda", "Emenda") + " e emendas");
+});
+
+test("marcarTermos ignora acento e caixa, exige palavra inteira e sigla em caixa alta", () => {
+  assert.match(marcarTermos("Matéria PREJUDICADA"), /data-termo="prejudicado"/);
+  assert.doesNotMatch(marcarTermos("a emendaria"), /termo/);
+  assert.match(marcarTermos("situação RMCD"), /data-termo="rmcd"/);
+  assert.doesNotMatch(marcarTermos("situação rmcd"), /termo/);
+  assert.equal(marcarTermos("Sem jargão aqui"), "Sem jargão aqui");
 });

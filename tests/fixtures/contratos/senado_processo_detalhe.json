@@ -1,0 +1,1513 @@
+{
+ "fonte": "https://legis.senado.leg.br/dadosabertos/processo/{id}",
+ "capturadoEm": "2026-11-20",
+ "amostra": {
+  "id": 9127383,
+  "codigoMateria": 176328,
+  "identificacao": "PLP 299/2026",
+  "sigla": "PLP",
+  "descricaoSigla": "Projeto de Lei Complementar",
+  "numero": "299",
+  "ano": 2026,
+  "apelido": "Ajuste fiscal",
+  "objetivo": "Iniciadora",
+  "casaIdentificadora": "SF",
+  "siglaEnteIdentificador": "SF",
+  "identificacaoExterna": {},
+  "conteudo": {
+   "id": 7675334,
+   "idTipo": 11,
+   "siglaTipo": "NORMA_GERAL",
+   "tipo": "Norma Geral",
+   "ementa": "Altera a Lei Complementar nº 200, de 30 de agosto de 2023, para conferir ao Poder Executivo federal novos instrumentos de gestão com vistas a garantir a estabilidade macroeconômica do País e criar as condições adequadas ao crescimento socioeconômico; e dá outras providências.",
+   "tipoNormaIndicada": "LCP"
+  },
+  "documento": {
+   "id": 10351198,
+   "siglaTipo": "PROJETO_LEI_COMPLEMENTAR",
+   "tipo": "Projeto de Lei Complementar",
+   "dataApresentacao": "2026-11-11",
+   "indexacao": " ALTERAÇÃO ,  LEI COMPLEMENTAR ,  REDUÇÃO ,  BENEFICIO FISCAL ,  INCENTIVO FISCAL ,  NATUREZA TRIBUTARIA ,  IMPLEMENTAÇÃO ,  ALIQUOTA ,  BASE DE CALCULO ,  CREDITO TRIBUTARIO . ALTERAÇÃO ,  LEI COMPLEMENTAR ,  LEI KANDIR ,  REDUÇÃO ,  VALOR ,  TRANSFERENCIA FINANCEIRA ,  UNIÃO FEDERAL ,  ESTADOS ,  ",
+   "url": "https://legis.senado.gov.br/sdleg-getter/dadosabertos/documento/38df22dd-1022-46cf-ac9d-d24f038d1d0d",
+   "autoria": [
+    {
+     "autor": "Jaques Wagner",
+     "sexo": "M",
+     "siglaTipo": "SENADOR",
+     "descricaoTipo": "SENADOR",
+     "ordem": 1,
+     "outrosAutoresNaoInformados": "Não",
+     "codigoParlamentar": 581,
+     "uf": "BA",
+     "siglaPartido": "PT",
+     "partido": "Partido dos Trabalhadores",
+     "siglaCargo": "SENADOR",
+     "cargo": "Senador",
+     "idEnte": 1,
+     "siglaEnte": "SF",
+     "casaEnte": "SF",
+     "ente": "Senado Federal"
+    }
+   ],
+   "resumoAutoria": "Senador Jaques Wagner (PT/BA)"
+  },
+  "tramitando": "Não",
+  "dataInicioEfetivo": "2026-11-11",
+  "situacaoAtual": "REMETIDA À CÂMARA DOS DEPUTADOS",
+  "siglaSituacaoAtual": "RMCD",
+  "dataSituacaoAtual": "2026-11-19",
+  "classificacoes": [
+   {
+    "codigo": 33805002,
+    "descricao": "Administração Tributária",
+    "descricaoHierarquia": "Economia e Desenvolvimento / Tributos / Administração Tributária"
+   },
+   {
+    "codigo": 33805107,
+    "descricao": "Pesquisa Científica",
+    "descricaoHierarquia": "Economia e Desenvolvimento / Ciência, Tecnologia e Informática / Pesquisa Científica"
+   }
+  ],
+  "autoriaIniciativa": [
+   {
+    "autor": "Jaques Wagner",
+    "sexo": "M",
+    "siglaTipo": "SENADOR",
+    "descricaoTipo": "SENADOR",
+    "ordem": 1,
+    "outrosAutoresNaoInformados": "Não",
+    "codigoParlamentar": 581,
+    "uf": "BA",
+    "siglaPartido": "PT",
+    "partido": "Partido dos Trabalhadores",
+    "siglaCargo": "SENADOR",
+    "cargo": "Senador",
+    "idEnte": 1,
+    "siglaEnte": "SF",
+    "casaEnte": "SF",
+    "ente": "Senado Federal"
+   }
+  ],
+  "idProcessoCasaInicial": 9127383,
+  "identificacaoProcessoInicial": "PLP 299/2026",
+  "siglaCasaIniciadora": "SF",
+  "comissaoMpv": "{}",
+  "outrosNumeros": [
+   {
+    "idOutroProcesso": 9135034,
+    "sigla": "PLP",
+    "numero": "00299",
+    "ano": 2026,
+    "tramitando": "Sim",
+    "externaAoCongresso": "Não",
+    "casaIdentificadora": "CD",
+    "siglaEnteIdentificador": "CD",
+    "enteIdentificador": "Câmara dos Deputados"
+   }
+  ],
+  "processosRelacionados": [
+   {
+    "idOutroProcesso": 9127647,
+    "tipoRelacao": "REFERENCIA",
+    "sigla": "RQS",
+    "numero": "770",
+    "ano": 2026,
+    "tramitando": "Não",
+    "casaIdentificadora": "SF",
+    "siglaEnteIdentificador": "PLEN",
+    "enteIdentificador": "Plenário do Senado Federal"
+   },
+   {
+    "idOutroProcesso": 9128239,
+    "tipoRelacao": "REFERENCIA",
+    "sigla": "RQS",
+    "numero": "772",
+    "ano": 2026,
+    "tramitando": "Não",
+    "casaIdentificadora": "SF",
+    "siglaEnteIdentificador": "PLEN",
+    "enteIdentificador": "Plenário do Senado Federal"
+   }
+  ],
+  "despachos": [
+   {
+    "id": 10351499,
+    "data": "2026-11-11",
+    "siglaTipoMotivacao": "DECISAO_PRESID",
+    "tipoMotivacao": "Decisão da Presidência",
+    "cancelado": "Não",
+    "encontroLegislativo": {
+     "id": 9124414,
+     "numero": 1,
+     "data": "2026-11-11",
+     "casa": "SF",
+     "tipo": "SES",
+     "descricao": "Eventos Independentes de Sessão",
+     "colegiado": {
+      "codigo": 1998,
+      "casa": "SF",
+      "sigla": "PLEN",
+      "nome": "Plenário do Senado Federal"
+     }
+    },
+    "providencias": [
+     {
+      "id": 9127664,
+      "tipo": "AO_PLENARIO_03_2023",
+      "descricao": "Ao Plenário",
+      "ordem": 1,
+      "analiseTempo": "SUCESSIVA",
+      "analiseConteudo": null,
+      "reexame": "Não",
+      "unidadesDestinatarias": [
+       {
+        "ordem": 1,
+        "tipoAnaliseDeliberacao": "NAO_TERMINATIVA",
+        "colegiado": {
+         "codigo": 1998,
+         "sigla": "PLEN",
+         "casa": "SF",
+         "nome": "Plenário do Senado Federal"
+        }
+       }
+      ]
+     }
+    ]
+   }
+  ],
+  "autuacoes": [
+   {
+    "numero": 1,
+    "descricao": "Autuação Principal",
+    "idEnteControleAtual": 7359809,
+    "siglaEnteControleAtual": "NRELE",
+    "nomeEnteControleAtual": "Núcleo de Redação Legislativa",
+    "situacoes": [
+     {
+      "idTipo": 175,
+      "sigla": "AGDESP",
+      "descricao": "AGUARDANDO DESPACHO",
+      "inicio": "2026-11-11",
+      "fim": "2026-11-12",
+      "colegiado": {
+       "codigo": 1998,
+       "casa": "SF",
+       "sigla": "PLEN",
+       "nome": "Plenário do Senado Federal"
+      },
+      "enteAdministrativo": {
+       "id": 55312,
+       "casa": "SF",
+       "sigla": "SLSF",
+       "nome": "Secretaria Legislativa do Senado Federal"
+      }
+     },
+     {
+      "idTipo": 8,
+      "sigla": "PRONDEPLEN",
+      "descricao": "PRONTO PARA DELIBERAÇÃO DO PLENÁRIO",
+      "inicio": "2026-11-12",
+      "fim": "2026-11-13",
+      "colegiado": {
+       "codigo": 1998,
+       "casa": "SF",
+       "sigla": "PLEN",
+       "nome": "Plenário do Senado Federal"
+      },
+      "enteAdministrativo": {
+       "id": 13594,
+       "casa": "SF",
+       "sigla": "SEADI",
+       "nome": "Secretaria de Atas e Diários"
+      }
+     }
+    ],
+    "informesLegislativos": [
+     {
+      "id": 2326013,
+      "data": "2026-11-11 16:59:17",
+      "colegiado": {
+       "codigo": 1998,
+       "casa": "SF",
+       "sigla": "PLEN",
+       "nome": "Plenário do Senado Federal"
+      },
+      "enteAdministrativo": {
+       "id": 55312,
+       "casa": "SF",
+       "sigla": "SLSF",
+       "nome": "Secretaria Legislativa do Senado Federal"
+      },
+      "descricao": "Autuado o Projeto de Lei Complementar nº 299/2026. O projeto vai à publicação.",
+      "idSituacaoIniciada": 175,
+      "siglaSituacaoIniciada": "AGDESP",
+      "documentosAssociados": [
+       {
+        "id": 10351201,
+        "tipo": "Avulso inicial da matéria",
+        "siglaTipo": "AVULSO_INICIAL",
+        "identificacao": "Avulso inicial da matéria - SF265119424999",
+        "descricao": "-",
+        "data": "2026-11-11T00:00:00",
+        "autoria": "Senado Federal",
+        "url": "https://legis.senado.leg.br/sdleg-getter/dadosabertos/documento/46304094-1115-4948-849e-42143cf1a841"
+       },
+       {
+        "id": 10351198,
+        "tipo": "Projeto de Lei Complementar",
+        "siglaTipo": "PROJETO_LEI_COMPLEMENTAR",
+        "identificacao": "PLP 299/2026",
+        "descricao": "Altera a Lei Complementar nº 200, de 30 de agosto de 2023, para conferir ao Poder Executivo federal novos instrumentos de gestão com vistas a garantir a estabilidade macroeconômica do País e criar as condições adequadas ao crescimento socioeconômico; e dá outras providências.",
+        "data": "2026-11-11T16:59:06",
+        "autoria": "Senador Jaques Wagner (PT/BA)",
+        "url": "https://legis.senado.leg.br/sdleg-getter/dadosabertos/documento/38df22dd-1022-46cf-ac9d-d24f038d1d0d"
+       }
+      ]
+     },
+     {
+      "id": 2326125,
+      "data": "2026-11-11 18:49:06",
+      "colegiado": {
+       "codigo": 1998,
+       "casa": "SF",
+       "sigla": "PLEN",
+       "nome": "Plenário do Senado Federal"
+      },
+      "enteAdministrativo": {
+       "id": 55312,
+       "casa": "SF",
+       "sigla": "SLSF",
+       "nome": "Secretaria Legislativa do Senado Federal"
+      },
+      "descricao": "Recebido o Requerimento nº 770, de 2026, de Líderes, que solicita urgência para a matéria.",
+      "documentosAssociados": [
+       {
+        "id": 10351483,
+        "tipo": "Requerimento",
+        "siglaTipo": "REQUERIMENTO",
+        "identificacao": "RQS 770/2026",
+        "descricao": "Requer urgência para o Projeto de Lei Complementar nº 299, de 2026, nos termos dos arts. 336, III, e 338, III, do Regimento Interno do Senado Federal.",
+        "data": "2026-11-11T18:44:24",
+        "autoria": "Líder do Bloco Parlamentar Pelo Brasil Weverton (PDT/MA), Líder do Bloco Parlamentar da Resistência Democrática Eliziane Gama (PSD/MA)",
+        "url": "https://legis.senado.leg.br/sdleg-getter/dadosabertos/documento/ae8f86b3-1af4-4b00-9a4a-f78b440b5f4d"
+       }
+      ]
+     }
+    ],
+    "movimentacoes": [
+     {
+      "id": 10354205,
+      "dataEnvio": "2026-11-12 21:28:35",
+      "enteOrigem": {
+       "id": 55312,
+       "casa": "SF",
+       "sigla": "SLSF",
+       "nome": "Secretaria Legislativa do Senado Federal"
+      },
+      "dataRecebimento": "2026-11-12 21:29:52",
+      "enteDestino": {
+       "id": 13594,
+       "casa": "SF",
+       "sigla": "SEADI",
+       "nome": "Secretaria de Atas e Diários"
+      },
+      "colegiadoDestino": {}
+     },
+     {
+      "id": 10354256,
+      "dataEnvio": "2026-11-12 21:42:31",
+      "enteOrigem": {
+       "id": 13594,
+       "casa": "SF",
+       "sigla": "SEADI",
+       "nome": "Secretaria de Atas e Diários"
+      },
+      "dataRecebimento": null,
+      "enteDestino": {
+       "id": 55312,
+       "casa": "SF",
+       "sigla": "SLSF",
+       "nome": "Secretaria Legislativa do Senado Federal"
+      },
+      "colegiadoDestino": {
+       "codigo": 1998,
+       "casa": "SF",
+       "sigla": "PLEN",
+       "nome": "Plenário do Senado Federal"
+      }
+     }
+    ]
+   }
+  ],
+  "ordensDoDia": [
+   {
+    "codigoSessao": 597365,
+    "dataSessao": "2026-11-12T16:00:00",
+    "casaSessao": "SF",
+    "codigoSessaoLegislativa": 874,
+    "siglaTipoSessao": "DOR",
+    "numeroSessao": "146",
+    "tipoApreciacao": "-"
+   },
+   {
+    "codigoSessao": 597365,
+    "dataSessao": "2026-11-12T16:00:00",
+    "casaSessao": "SF",
+    "codigoSessaoLegislativa": 874,
+    "siglaTipoSessao": "DOR",
+    "numeroSessao": "146",
+    "tipoApreciacao": "-"
+   }
+  ],
+  "deliberacao": {
+   "data": "2026-11-18",
+   "siglaTipo": "APROVADA_NO_PLENARIO",
+   "tipoDeliberacao": "Aprovada pelo Plenário",
+   "idDestino": 1,
+   "siglaDestino": "CAMARA",
+   "destino": "À Câmara dos Deputados"
+  },
+  "normaGerada": {},
+  "ultimaInformacaoAtualizada": "PUBLICACAO_OFICIAL",
+  "dthUltimaAtualizacao": "2026-11-19T18:15:33.790000"
+ },
+ "forma": {
+  "ano": {
+   "tipos": [
+    "int"
+   ]
+  },
+  "apelido": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "autoriaIniciativa": {
+   "tipos": [
+    "list"
+   ]
+  },
+  "autoriaIniciativa[]": {
+   "tipos": [
+    "dict"
+   ]
+  },
+  "autoriaIniciativa[].autor": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "autoriaIniciativa[].cargo": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "autoriaIniciativa[].casaEnte": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "autoriaIniciativa[].codigoParlamentar": {
+   "tipos": [
+    "int"
+   ]
+  },
+  "autoriaIniciativa[].descricaoTipo": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "autoriaIniciativa[].ente": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "autoriaIniciativa[].idEnte": {
+   "tipos": [
+    "int"
+   ]
+  },
+  "autoriaIniciativa[].ordem": {
+   "tipos": [
+    "int"
+   ]
+  },
+  "autoriaIniciativa[].outrosAutoresNaoInformados": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "autoriaIniciativa[].partido": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "autoriaIniciativa[].sexo": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "autoriaIniciativa[].siglaCargo": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "autoriaIniciativa[].siglaEnte": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "autoriaIniciativa[].siglaPartido": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "autoriaIniciativa[].siglaTipo": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "autoriaIniciativa[].uf": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "autuacoes": {
+   "tipos": [
+    "list"
+   ]
+  },
+  "autuacoes[]": {
+   "tipos": [
+    "dict"
+   ]
+  },
+  "autuacoes[].descricao": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "autuacoes[].idEnteControleAtual": {
+   "tipos": [
+    "int"
+   ]
+  },
+  "autuacoes[].informesLegislativos": {
+   "tipos": [
+    "list"
+   ]
+  },
+  "autuacoes[].informesLegislativos[]": {
+   "tipos": [
+    "dict"
+   ]
+  },
+  "autuacoes[].informesLegislativos[].colegiado": {
+   "tipos": [
+    "dict"
+   ]
+  },
+  "autuacoes[].informesLegislativos[].colegiado.casa": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "autuacoes[].informesLegislativos[].colegiado.codigo": {
+   "tipos": [
+    "int"
+   ]
+  },
+  "autuacoes[].informesLegislativos[].colegiado.nome": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "autuacoes[].informesLegislativos[].colegiado.sigla": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "autuacoes[].informesLegislativos[].data": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "autuacoes[].informesLegislativos[].descricao": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "autuacoes[].informesLegislativos[].documentosAssociados": {
+   "tipos": [
+    "list"
+   ]
+  },
+  "autuacoes[].informesLegislativos[].documentosAssociados[]": {
+   "tipos": [
+    "dict"
+   ]
+  },
+  "autuacoes[].informesLegislativos[].documentosAssociados[].autoria": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "autuacoes[].informesLegislativos[].documentosAssociados[].data": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "autuacoes[].informesLegislativos[].documentosAssociados[].descricao": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "autuacoes[].informesLegislativos[].documentosAssociados[].id": {
+   "tipos": [
+    "int"
+   ]
+  },
+  "autuacoes[].informesLegislativos[].documentosAssociados[].identificacao": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "autuacoes[].informesLegislativos[].documentosAssociados[].siglaTipo": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "autuacoes[].informesLegislativos[].documentosAssociados[].tipo": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "autuacoes[].informesLegislativos[].documentosAssociados[].url": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "autuacoes[].informesLegislativos[].enteAdministrativo": {
+   "tipos": [
+    "dict"
+   ]
+  },
+  "autuacoes[].informesLegislativos[].enteAdministrativo.casa": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "autuacoes[].informesLegislativos[].enteAdministrativo.id": {
+   "tipos": [
+    "int"
+   ]
+  },
+  "autuacoes[].informesLegislativos[].enteAdministrativo.nome": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "autuacoes[].informesLegislativos[].enteAdministrativo.sigla": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "autuacoes[].informesLegislativos[].id": {
+   "tipos": [
+    "int"
+   ]
+  },
+  "autuacoes[].informesLegislativos[].idSituacaoIniciada": {
+   "tipos": [
+    "int"
+   ],
+   "opcional": true
+  },
+  "autuacoes[].informesLegislativos[].siglaSituacaoIniciada": {
+   "tipos": [
+    "str"
+   ],
+   "opcional": true
+  },
+  "autuacoes[].movimentacoes": {
+   "tipos": [
+    "list"
+   ]
+  },
+  "autuacoes[].movimentacoes[]": {
+   "tipos": [
+    "dict"
+   ]
+  },
+  "autuacoes[].movimentacoes[].colegiadoDestino": {
+   "tipos": [
+    "dict"
+   ]
+  },
+  "autuacoes[].movimentacoes[].colegiadoDestino.casa": {
+   "tipos": [
+    "str"
+   ],
+   "opcional": true
+  },
+  "autuacoes[].movimentacoes[].colegiadoDestino.codigo": {
+   "tipos": [
+    "int"
+   ],
+   "opcional": true
+  },
+  "autuacoes[].movimentacoes[].colegiadoDestino.nome": {
+   "tipos": [
+    "str"
+   ],
+   "opcional": true
+  },
+  "autuacoes[].movimentacoes[].colegiadoDestino.sigla": {
+   "tipos": [
+    "str"
+   ],
+   "opcional": true
+  },
+  "autuacoes[].movimentacoes[].dataEnvio": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "autuacoes[].movimentacoes[].dataRecebimento": {
+   "tipos": [
+    "null",
+    "str"
+   ]
+  },
+  "autuacoes[].movimentacoes[].enteDestino": {
+   "tipos": [
+    "dict"
+   ]
+  },
+  "autuacoes[].movimentacoes[].enteDestino.casa": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "autuacoes[].movimentacoes[].enteDestino.id": {
+   "tipos": [
+    "int"
+   ]
+  },
+  "autuacoes[].movimentacoes[].enteDestino.nome": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "autuacoes[].movimentacoes[].enteDestino.sigla": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "autuacoes[].movimentacoes[].enteOrigem": {
+   "tipos": [
+    "dict"
+   ]
+  },
+  "autuacoes[].movimentacoes[].enteOrigem.casa": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "autuacoes[].movimentacoes[].enteOrigem.id": {
+   "tipos": [
+    "int"
+   ]
+  },
+  "autuacoes[].movimentacoes[].enteOrigem.nome": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "autuacoes[].movimentacoes[].enteOrigem.sigla": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "autuacoes[].movimentacoes[].id": {
+   "tipos": [
+    "int"
+   ]
+  },
+  "autuacoes[].nomeEnteControleAtual": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "autuacoes[].numero": {
+   "tipos": [
+    "int"
+   ]
+  },
+  "autuacoes[].siglaEnteControleAtual": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "autuacoes[].situacoes": {
+   "tipos": [
+    "list"
+   ]
+  },
+  "autuacoes[].situacoes[]": {
+   "tipos": [
+    "dict"
+   ]
+  },
+  "autuacoes[].situacoes[].colegiado": {
+   "tipos": [
+    "dict"
+   ]
+  },
+  "autuacoes[].situacoes[].colegiado.casa": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "autuacoes[].situacoes[].colegiado.codigo": {
+   "tipos": [
+    "int"
+   ]
+  },
+  "autuacoes[].situacoes[].colegiado.nome": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "autuacoes[].situacoes[].colegiado.sigla": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "autuacoes[].situacoes[].descricao": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "autuacoes[].situacoes[].enteAdministrativo": {
+   "tipos": [
+    "dict"
+   ]
+  },
+  "autuacoes[].situacoes[].enteAdministrativo.casa": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "autuacoes[].situacoes[].enteAdministrativo.id": {
+   "tipos": [
+    "int"
+   ]
+  },
+  "autuacoes[].situacoes[].enteAdministrativo.nome": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "autuacoes[].situacoes[].enteAdministrativo.sigla": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "autuacoes[].situacoes[].fim": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "autuacoes[].situacoes[].idTipo": {
+   "tipos": [
+    "int"
+   ]
+  },
+  "autuacoes[].situacoes[].inicio": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "autuacoes[].situacoes[].sigla": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "casaIdentificadora": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "classificacoes": {
+   "tipos": [
+    "list"
+   ]
+  },
+  "classificacoes[]": {
+   "tipos": [
+    "dict"
+   ]
+  },
+  "classificacoes[].codigo": {
+   "tipos": [
+    "int"
+   ]
+  },
+  "classificacoes[].descricao": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "classificacoes[].descricaoHierarquia": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "codigoMateria": {
+   "tipos": [
+    "int"
+   ]
+  },
+  "comissaoMpv": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "conteudo": {
+   "tipos": [
+    "dict"
+   ]
+  },
+  "conteudo.ementa": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "conteudo.id": {
+   "tipos": [
+    "int"
+   ]
+  },
+  "conteudo.idTipo": {
+   "tipos": [
+    "int"
+   ]
+  },
+  "conteudo.siglaTipo": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "conteudo.tipo": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "conteudo.tipoNormaIndicada": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "dataInicioEfetivo": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "dataSituacaoAtual": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "deliberacao": {
+   "tipos": [
+    "dict"
+   ]
+  },
+  "deliberacao.data": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "deliberacao.destino": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "deliberacao.idDestino": {
+   "tipos": [
+    "int"
+   ]
+  },
+  "deliberacao.siglaDestino": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "deliberacao.siglaTipo": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "deliberacao.tipoDeliberacao": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "descricaoSigla": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "despachos": {
+   "tipos": [
+    "list"
+   ]
+  },
+  "despachos[]": {
+   "tipos": [
+    "dict"
+   ]
+  },
+  "despachos[].cancelado": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "despachos[].data": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "despachos[].encontroLegislativo": {
+   "tipos": [
+    "dict"
+   ]
+  },
+  "despachos[].encontroLegislativo.casa": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "despachos[].encontroLegislativo.colegiado": {
+   "tipos": [
+    "dict"
+   ]
+  },
+  "despachos[].encontroLegislativo.colegiado.casa": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "despachos[].encontroLegislativo.colegiado.codigo": {
+   "tipos": [
+    "int"
+   ]
+  },
+  "despachos[].encontroLegislativo.colegiado.nome": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "despachos[].encontroLegislativo.colegiado.sigla": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "despachos[].encontroLegislativo.data": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "despachos[].encontroLegislativo.descricao": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "despachos[].encontroLegislativo.id": {
+   "tipos": [
+    "int"
+   ]
+  },
+  "despachos[].encontroLegislativo.numero": {
+   "tipos": [
+    "int"
+   ]
+  },
+  "despachos[].encontroLegislativo.tipo": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "despachos[].id": {
+   "tipos": [
+    "int"
+   ]
+  },
+  "despachos[].providencias": {
+   "tipos": [
+    "list"
+   ]
+  },
+  "despachos[].providencias[]": {
+   "tipos": [
+    "dict"
+   ]
+  },
+  "despachos[].providencias[].analiseConteudo": {
+   "tipos": [
+    "null"
+   ]
+  },
+  "despachos[].providencias[].analiseTempo": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "despachos[].providencias[].descricao": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "despachos[].providencias[].id": {
+   "tipos": [
+    "int"
+   ]
+  },
+  "despachos[].providencias[].ordem": {
+   "tipos": [
+    "int"
+   ]
+  },
+  "despachos[].providencias[].reexame": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "despachos[].providencias[].tipo": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "despachos[].providencias[].unidadesDestinatarias": {
+   "tipos": [
+    "list"
+   ]
+  },
+  "despachos[].providencias[].unidadesDestinatarias[]": {
+   "tipos": [
+    "dict"
+   ]
+  },
+  "despachos[].providencias[].unidadesDestinatarias[].colegiado": {
+   "tipos": [
+    "dict"
+   ]
+  },
+  "despachos[].providencias[].unidadesDestinatarias[].colegiado.casa": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "despachos[].providencias[].unidadesDestinatarias[].colegiado.codigo": {
+   "tipos": [
+    "int"
+   ]
+  },
+  "despachos[].providencias[].unidadesDestinatarias[].colegiado.nome": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "despachos[].providencias[].unidadesDestinatarias[].colegiado.sigla": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "despachos[].providencias[].unidadesDestinatarias[].ordem": {
+   "tipos": [
+    "int"
+   ]
+  },
+  "despachos[].providencias[].unidadesDestinatarias[].tipoAnaliseDeliberacao": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "despachos[].siglaTipoMotivacao": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "despachos[].tipoMotivacao": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "documento": {
+   "tipos": [
+    "dict"
+   ]
+  },
+  "documento.autoria": {
+   "tipos": [
+    "list"
+   ]
+  },
+  "documento.autoria[]": {
+   "tipos": [
+    "dict"
+   ]
+  },
+  "documento.autoria[].autor": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "documento.autoria[].cargo": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "documento.autoria[].casaEnte": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "documento.autoria[].codigoParlamentar": {
+   "tipos": [
+    "int"
+   ]
+  },
+  "documento.autoria[].descricaoTipo": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "documento.autoria[].ente": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "documento.autoria[].idEnte": {
+   "tipos": [
+    "int"
+   ]
+  },
+  "documento.autoria[].ordem": {
+   "tipos": [
+    "int"
+   ]
+  },
+  "documento.autoria[].outrosAutoresNaoInformados": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "documento.autoria[].partido": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "documento.autoria[].sexo": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "documento.autoria[].siglaCargo": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "documento.autoria[].siglaEnte": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "documento.autoria[].siglaPartido": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "documento.autoria[].siglaTipo": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "documento.autoria[].uf": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "documento.dataApresentacao": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "documento.id": {
+   "tipos": [
+    "int"
+   ]
+  },
+  "documento.indexacao": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "documento.resumoAutoria": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "documento.siglaTipo": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "documento.tipo": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "documento.url": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "dthUltimaAtualizacao": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "id": {
+   "tipos": [
+    "int"
+   ]
+  },
+  "idProcessoCasaInicial": {
+   "tipos": [
+    "int"
+   ]
+  },
+  "identificacao": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "identificacaoExterna": {
+   "tipos": [
+    "dict"
+   ]
+  },
+  "identificacaoProcessoInicial": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "normaGerada": {
+   "tipos": [
+    "dict"
+   ]
+  },
+  "numero": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "objetivo": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "ordensDoDia": {
+   "tipos": [
+    "list"
+   ]
+  },
+  "ordensDoDia[]": {
+   "tipos": [
+    "dict"
+   ]
+  },
+  "ordensDoDia[].casaSessao": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "ordensDoDia[].codigoSessao": {
+   "tipos": [
+    "int"
+   ]
+  },
+  "ordensDoDia[].codigoSessaoLegislativa": {
+   "tipos": [
+    "int"
+   ]
+  },
+  "ordensDoDia[].dataSessao": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "ordensDoDia[].numeroSessao": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "ordensDoDia[].siglaTipoSessao": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "ordensDoDia[].tipoApreciacao": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "outrosNumeros": {
+   "tipos": [
+    "list"
+   ]
+  },
+  "outrosNumeros[]": {
+   "tipos": [
+    "dict"
+   ]
+  },
+  "outrosNumeros[].ano": {
+   "tipos": [
+    "int"
+   ]
+  },
+  "outrosNumeros[].casaIdentificadora": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "outrosNumeros[].enteIdentificador": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "outrosNumeros[].externaAoCongresso": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "outrosNumeros[].idOutroProcesso": {
+   "tipos": [
+    "int"
+   ]
+  },
+  "outrosNumeros[].numero": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "outrosNumeros[].sigla": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "outrosNumeros[].siglaEnteIdentificador": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "outrosNumeros[].tramitando": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "processosRelacionados": {
+   "tipos": [
+    "list"
+   ]
+  },
+  "processosRelacionados[]": {
+   "tipos": [
+    "dict"
+   ]
+  },
+  "processosRelacionados[].ano": {
+   "tipos": [
+    "int"
+   ]
+  },
+  "processosRelacionados[].casaIdentificadora": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "processosRelacionados[].enteIdentificador": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "processosRelacionados[].idOutroProcesso": {
+   "tipos": [
+    "int"
+   ]
+  },
+  "processosRelacionados[].numero": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "processosRelacionados[].sigla": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "processosRelacionados[].siglaEnteIdentificador": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "processosRelacionados[].tipoRelacao": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "processosRelacionados[].tramitando": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "sigla": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "siglaCasaIniciadora": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "siglaEnteIdentificador": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "siglaSituacaoAtual": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "situacaoAtual": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "tramitando": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "ultimaInformacaoAtualizada": {
+   "tipos": [
+    "str"
+   ]
+  }
+ }
+}

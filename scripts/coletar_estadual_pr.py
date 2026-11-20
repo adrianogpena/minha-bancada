@@ -500,8 +500,8 @@ def votacoes_do_zip(conteudo: bytes, sessao: str, data: str, pdfs: dict, url_zip
             m = re.search(r"ITEM-[^-]+-(\d+)-", nome)
             if v:
                 lidas.append((m.group(1) if m else nome, v))
-    ligacao = ligar({n for _, v in lidas for n, _ in v["votos"]}, [{**d, "nome": d["nomeCivil"] or d["nome"]} for d in deputados])
-    sem_par = {n for _, v in lidas for n, _ in v["votos"] if n not in ligacao}
+    ligacao = ligar({n for _, v in lidas for n, _ in v["votos"]}, [{**d, "nome": d["nomeCivil"] or d["nome"]} for d in deputados], sem_nome=True)
+    sem_par = {n for _, v in lidas for n, _ in v["votos"] if ligacao.get(n) == identidades.SEM_NOME}
     votacoes, materias_votadas = {}, {}
     for chave, v in sorted(lidas, key=lambda x: x[0]):
         vid = ids.gerar_id("vot", FONTE_ID, f"{sessao}|{chave}")

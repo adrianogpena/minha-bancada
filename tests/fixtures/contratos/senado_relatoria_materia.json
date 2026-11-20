@@ -1,0 +1,201 @@
+{
+ "fonte": "https://legis.senado.leg.br/dadosabertos/processo/relatoria?codigoMateria={id}",
+ "capturadoEm": "2026-11-20",
+ "amostra": [
+  {
+   "autoriaProcesso": "Senador Jaques Wagner (PT/BA)",
+   "casaRelator": "SF",
+   "codigoColegiado": 1998,
+   "codigoMateria": 176328,
+   "codigoParlamentar": 4994,
+   "codigoTipoColegiado": 128,
+   "dataApresentacaoProcesso": "2026-11-11 16:59:06",
+   "dataDesignacao": "2026-11-11 18:48:00",
+   "dataDestituicao": "2026-11-18 20:10:00",
+   "dataFimColegiado": null,
+   "descricaoTipoEncerramento": "Matéria deliberada no plenário",
+   "descricaoTipoRelator": "Relator",
+   "emailParlamentar": "sen.eduardobraga@senado.leg.br",
+   "ementaProcesso": "Altera a Lei Complementar nº 200, de 30 de agosto de 2023, para conferir ao Poder Executivo federal novos instrumentos de gestão com vistas a garantir a estabilidade macroeconômica do País e criar as condições adequadas ao crescimento socioeconômico; e dá outras providências.",
+   "formaTratamentoParlamentar": "Senador",
+   "id": 10351500,
+   "idProcesso": 9127383,
+   "idTipoRelator": 1,
+   "identificacaoProcesso": "PLP 299/2026",
+   "nomeColegiado": "Plenário do Senado Federal",
+   "nomeCompleto": "Carlos Eduardo de Souza Braga",
+   "nomeParlamentar": "Eduardo Braga",
+   "numeroAutuacao": "1",
+   "sexoParlamentar": "M",
+   "siglaCasa": "SF",
+   "siglaColegiado": "PLEN",
+   "siglaPartidoParlamentar": "MDB",
+   "tramitando": "N",
+   "ufParlamentar": "AM",
+   "urlFotoParlamentar": "http://www.senado.leg.br/senadores/img/fotos-oficiais/senador4994.jpg",
+   "urlPaginaParlamentar": "http://www25.senado.leg.br/web/senadores/senador/-/perfil/4994"
+  }
+ ],
+ "forma": {
+  "[]": {
+   "tipos": [
+    "dict"
+   ]
+  },
+  "[].autoriaProcesso": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "[].casaRelator": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "[].codigoColegiado": {
+   "tipos": [
+    "int"
+   ]
+  },
+  "[].codigoMateria": {
+   "tipos": [
+    "int"
+   ]
+  },
+  "[].codigoParlamentar": {
+   "tipos": [
+    "int"
+   ]
+  },
+  "[].codigoTipoColegiado": {
+   "tipos": [
+    "int"
+   ]
+  },
+  "[].dataApresentacaoProcesso": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "[].dataDesignacao": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "[].dataDestituicao": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "[].dataFimColegiado": {
+   "tipos": [
+    "null"
+   ]
+  },
+  "[].descricaoTipoEncerramento": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "[].descricaoTipoRelator": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "[].emailParlamentar": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "[].ementaProcesso": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "[].formaTratamentoParlamentar": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "[].id": {
+   "tipos": [
+    "int"
+   ]
+  },
+  "[].idProcesso": {
+   "tipos": [
+    "int"
+   ]
+  },
+  "[].idTipoRelator": {
+   "tipos": [
+    "int"
+   ]
+  },
+  "[].identificacaoProcesso": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "[].nomeColegiado": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "[].nomeCompleto": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "[].nomeParlamentar": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "[].numeroAutuacao": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "[].sexoParlamentar": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "[].siglaCasa": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "[].siglaColegiado": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "[].siglaPartidoParlamentar": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "[].tramitando": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "[].ufParlamentar": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "[].urlFotoParlamentar": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "[].urlPaginaParlamentar": {
+   "tipos": [
+    "str"
+   ]
+  }
+ }
+}

@@ -3,10 +3,13 @@ Resumo oficial das leis citadas nas proposições: a ementa de cada lei, lida no
 que também aponta o texto no Planalto, no Senado e na Câmara.
 
 Quais leis: as citadas (com data completa) na ementa e na ementa detalhada das proposições da Câmara e nas matérias do Senado
-(leis.py extrai a citação e monta a URN). Grava dados/leis.json: {id da lei: {rotulo, urn, ementa, planalto, consultadoEm}}.
+(leis.py extrai a citação e monta a URN). Grava dados/leis.json: {id da lei: {rotulo, urn, ementa, senado, camara, consultadoEm}}:
+`senado` e `camara` são as páginas da norma no Senado e na Câmara que o LexML aponta (o link do Planalto que ele traz, um
+`legislacao.planalto.gov.br/...websearch`, está fora do ar e não é guardado).
 O id vem de leis.py (`ids.gerar_id("lei", "lexml", urn)`).
 
-Lei já com ementa não é consultada de novo (a ementa de uma lei não muda). Lei sem ementa na resposta é tentada outra vez depois de
+Lei já com ementa e links não é consultada de novo (a ementa de uma lei não muda); a lida antes de guardarmos os links
+(sem `links` no registro) é lida uma vez mais. Lei sem ementa na resposta é tentada outra vez depois de
 RENOVAR_VAZIAS_DIAS. Cada execução consulta no máximo ORCAMENTO_LEIS, com pausa entre consultas.
 
 Uso:
@@ -49,11 +52,14 @@ def citadas(textos) -> dict[str, dict]:
 
 
 def ler_pagina(pagina: str) -> dict:
-    """Ementa e link do Planalto da página de uma norma no LexML (a ementa fica na linha 'Ementa' da tabela de metadados)."""
+    """Ementa e as páginas da norma no Senado e na Câmara, da página de uma norma no LexML (a ementa fica na linha 'Ementa' da
+    tabela de metadados; os links, nas linhas 'Mais detalhes'). Os links saem em https e no domínio atual da Câmara (camara.leg.br)."""
     m = re.search(r"<strong>Ementa</strong></div>\s*<div[^>]*>(.*?)</div>", pagina, re.S)
     ementa = " ".join(html.unescape(re.sub(r"<[^>]+>", " ", m.group(1))).split()) if m else None
-    p = re.search(r'href="(https?://(?:www\.|legislacao\.)?planalto\.gov\.br[^"]*)"', pagina)
-    return {"ementa": ementa or None, "planalto": html.unescape(p.group(1)) if p else None}
+    s = re.search(r'href="https?://legis\.senado\.leg\.br/norma/(\d+)"', pagina)
+    c = re.search(r'href="https?://www2\.camara\.(?:gov|leg)\.br(/legin/[^"]*-norma-pl\.html)"', pagina)
+    return {"ementa": ementa or None, "senado": f"https://legis.senado.leg.br/norma/{s.group(1)}" if s else None,
+            "camara": f"https://www2.camara.leg.br{html.unescape(c.group(1))}" if c else None}
 
 
 def coletar(dados: Path = DADOS, sessao=None, hoje: dt.date | None = None) -> dict:
@@ -62,7 +68,7 @@ def coletar(dados: Path = DADOS, sessao=None, hoje: dt.date | None = None) -> di
     cache = comum.ler(arquivo, {}) or {}
     achadas = citadas(textos_citantes(dados))
     limite = (hoje - dt.timedelta(days=RENOVAR_VAZIAS_DIAS)).isoformat()
-    fila = [i for i in achadas if i not in cache
+    fila = [i for i in achadas if i not in cache or "links" not in cache[i]
             or (not cache[i].get("ementa") and cache[i].get("consultadoEm", "") < limite)][:ORCAMENTO_LEIS]
     print(f"Leis citadas: {len(achadas)}, no cache: {len(achadas.keys() & cache.keys())}; consultando {len(fila)}")
     s = sessao or comum.sessao(1)
@@ -72,7 +78,7 @@ def coletar(dados: Path = DADOS, sessao=None, hoje: dt.date | None = None) -> di
         try:
             pagina = comum.get(s, leis.url_lexml(lei["urn"]), timeout=40).text
             cache[i] = {"rotulo": lei["rotulo"], "urn": lei["urn"], **{k: v for k, v in ler_pagina(pagina).items() if v},
-                        "consultadoEm": hoje.isoformat()}
+                        "links": True, "consultadoEm": hoje.isoformat()}
             feitas += 1
         except Exception as e:
             comum.avisar(f"lei {lei['rotulo']}: {e}")

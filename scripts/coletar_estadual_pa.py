@@ -530,19 +530,19 @@ def votacoes_dos_meses(sessao, deputados: list[dict], arquivo: dict, hoje: date,
             if chave not in lidas:
                 time.sleep(PAUSA)
                 novos.append((chave, item, parse_votacao(consulta_votacao(sessao, item))))
-        ligacao = ligar({n for _, _, lido in novos for lista in lido["votos"].values() for n, _ in lista}, deputados)
+        ligacao = ligar({n for _, _, lido in novos for lista in lido["votos"].values() for n, _ in lista}, deputados, sem_nome=True)
         for chave, item, lido in novos:
             lidas.add(chave)
             if not any(lido["votos"].get(r) for r in VOTOS_PA):
                 continue
-            sem_par |= {n for lista in lido["votos"].values() for n, _ in lista if n not in ligacao}
+            sem_par |= {n for lista in lido["votos"].values() for n, _ in lista if ligacao.get(n) == identidades.SEM_NOME}
             vid, votacao, materia = votacao_gravada(lido, item, ligacao)
             votacoes[vid], materias[vid] = votacao, materia
         estado[periodo] = {"lidoEm": hoje.isoformat(), "lidas": sorted(lidas)}
         if salvar_parcial:
             salvar_parcial(votacoes, materias, estado)
     if sem_par:
-        comum.avisar(f"PA: votos de nomes sem deputado ligado (não gravados): {', '.join(sorted(sem_par))}")
+        comum.avisar(f"PA: votos de nomes ligados a Sem Nome: {', '.join(sorted(sem_par))}")
     return votacoes, materias, estado
 
 

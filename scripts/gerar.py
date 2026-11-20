@@ -434,6 +434,8 @@ def gerar_senadores(ministro_de: dict | None = None, emendas: dict | None = None
             "placar": placar, "placarOficial": bool(totais), "ausentes": contagem["ausente"],
             **({"secreta": True} if secreta else {}),
             **({"sessao": v["sessao"]} if v.get("sessao") else {}),
+            # orientação de cada liderança (coletar_orientacoes_senado); votação secreta ou de autoridade costuma vir sem
+            **({"orientacoes": v["orientacoes"]} if v.get("orientacoes") else {}),
         }
         resumo.append(item)
         por_partido = defaultdict(Counter)
@@ -690,7 +692,8 @@ def main():
     total = gerar_proposicoes.gerar(SAIDA, deputados, detalhes, autorias, votacoes_projetos, nominais,
                                     ler(BRUTO / "senado.json", []) or [], ler(BRUTO / "senado_autorias.json", {}) or {},
                                     votacoes_senado, TIPOS_PROJETO, destino_projeto, nucleo["chaves"],
-                                    temas, ler(BRUTO / "leis.json", {}) or {})
+                                    temas, ler(BRUTO / "leis.json", {}) or {},
+                                    {mid: r for arq in sorted((BRUTO / "senado_processos").glob("[0-9]*.json")) for mid, r in (ler(arq, {}) or {}).items()})
     print(f"Gerado: {total} proposições para a busca")
     forn = nucleo_fornecedores.construir(deputados, BRUTO, nucleo)
     cruzamento = doadores.construir(BRUTO, nucleo, forn)

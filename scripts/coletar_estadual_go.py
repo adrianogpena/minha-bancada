@@ -322,8 +322,8 @@ def coletar_votacoes(s, deputados: list[dict]) -> None:
     sem_par = set()
     for ano in range(hoje.year - 1 if votacoes else ANO_INICIAL, hoje.year + 1):
         linhas = pegar_json(s, "votacoes.json", tipo="detalhes", ano=ano)
-        ligacao = identidades.ligar_nomes({lin["parlamentar"] for lin in linhas}, deputados, UF)
-        sem_par |= {lin["parlamentar"] for lin in linhas if lin["parlamentar"] not in ligacao}
+        ligacao = identidades.ligar_nomes({lin["parlamentar"] for lin in linhas}, deputados, UF, sem_nome=True)
+        sem_par |= {lin["parlamentar"] for lin in linhas if ligacao.get(lin["parlamentar"]) == identidades.SEM_NOME}
         v, m = montar_votacoes(linhas, ligacao, ano)
         votacoes.update(v)
         materias.update(m)
@@ -331,7 +331,7 @@ def coletar_votacoes(s, deputados: list[dict]) -> None:
     comum.salvar(PASTA / "materias_votadas.json", materias)
     print(f"GO: {len(votacoes)} votações nominais")
     if sem_par:
-        comum.avisar(f"GO: votos sem deputado em exercício ({len(sem_par)}): {sorted(sem_par)[:12]}")
+        comum.avisar(f"GO: votos ligados a Sem Nome ({len(sem_par)}): {sorted(sem_par)[:12]}")
 
 
 def itens_requerimentos(registros: list[dict], ligacao: dict, ano: int) -> dict:

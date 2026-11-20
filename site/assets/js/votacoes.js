@@ -67,6 +67,7 @@ export async function paginaVotacao() {
       ${v.secreta ? `<p class="aviso">Votação secreta: o Senado informa que cada senador votou, mas não como. O voto individual não é público.</p>` : ""}
       ${barraPlacar(semVoto ? { ...v.placar, ausente: semVoto } : v.placar)}
       ${notaSemVoto}
+      ${v.orientacoes ? `<p class="texto-longo"><b>Orientação das lideranças:</b> ${Object.entries(v.orientacoes).map(([b, o]) => `${esc(b)} ${esc(o)}`).join(" · ")}</p>` : ""}
       <div class="numeros">
         <div><b>${v.placar.sim || 0}</b><span>Sim</span></div>
         <div><b>${v.placar.nao || 0}</b><span>Não</span></div>
@@ -83,7 +84,8 @@ export async function paginaVotacao() {
     <div class="filtros" style="grid-template-columns:2fr 1fr"><label class="campo">Buscar ${quem}<input id="busca-dep" type="search" placeholder="Nome, partido ou estado"></label>
       <label class="campo">Voto<select id="filtro-voto"><option value="">Todos</option>${["sim", "nao", "abstencao", "obstrucao", ...(senado ? ["art17", "secreto", "ausente"] : ["art17", "ausente"])].map((k) => `<option value="${k}">${VOTOS[k].rotulo}</option>`).join("")}</select></label></div>
     <div id="lista-dep"></div>
-    ${senado ? fontes([["Votos de cada senador (API do Senado)", `${SENADO_API}/votacao?dataInicio=${v.data.replaceAll("-", "")}&dataFim=${v.data.replaceAll("-", "")}`], v.propId ? ["Tramitação da matéria", linkMateriaSenado(v.propId)] : null]) : ""}`;
+    ${senado ? fontes([["Votos de cada senador (API do Senado)", `${SENADO_API}/votacao?dataInicio=${v.data.replaceAll("-", "")}&dataFim=${v.data.replaceAll("-", "")}`],
+      v.orientacoes ? ["Orientação das lideranças (API do Senado)", `${SENADO_API}/plenario/votacao/orientacaoBancada/${v.data.replaceAll("-", "")}`] : null, v.propId ? ["Tramitação da matéria", linkMateriaSenado(v.propId)] : null]) : ""}`;
 
   const todos = [...v.votos, ...ausentes].sort((a, b) => a.nome.localeCompare(b.nome, "pt-BR"));
   const render = (d) => `<li>${linkQuem(d) ? `<a href="${esc(linkQuem(d))}">${esc(d.nome)}</a>` : esc(d.nome)}${selo(d.voto)}<span class="quando texto">${esc(d.partido)}${d.uf ? `/${esc(d.uf)}` : ""}${d.motivo ? ` · ${esc(d.motivo)}` : ""}</span></li>`;

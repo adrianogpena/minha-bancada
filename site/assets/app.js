@@ -4,6 +4,7 @@ import { moldura } from "./js/comum.js";
 const PAGINAS = {
   inicio: ["politicos", "paginaPoliticos"],
   politico: ["politico", "paginaPolitico"],
+  semnome: ["sem_nome", "paginaSemNome"],
   camara: ["camara", "paginaCamara"],
   senado: ["senado", "paginaSenado"],
   fornecedores: ["fornecedores", "paginaFornecedores"],

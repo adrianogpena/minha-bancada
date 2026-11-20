@@ -545,7 +545,8 @@ test("paginaProposicao da Câmara monta cabeçalho, autores, leis, votações e 
     assert.match(html, /Projeto de lei<\/p>/);
     assert.match(html, /<p class="texto-longo">Ementa oficial<\/p>/);
     assert.match(html, /Detalhada &lt;d&gt;/);
-    assert.match(html, /<h2>Em que pé está<\/h2><ol class="etapas" aria-label="Etapas do projeto"/);
+    assert.match(html, /<h2>Em que pé está<\/h2><div class="estado">/);
+    assert.doesNotMatch(html, /class="etapas"/);
     assert.match(html, /Situação na fonte:<\/b> Em tramitação \(PLEN\), desde 02 de fev\. de 2025/);
     assert.match(html, /Última tramitação:<\/b> Aprovado · regime: Urgência/);
     assert.match(html, /Relator:<\/b> <a href="[^"]*">Rel &lt;A&gt;<\/a> \(X\/SP\)/);
@@ -1002,7 +1003,7 @@ test("etapas: PEC no plenário, MPV na Câmara e proposição arquivada (parada)
   });
   assert.deepEqual(estadosDe(arq), { apresentado: "feito", comissoes: "parado", "plenario-origem": "futuro", "casa-revisora": "futuro", "sancao-veto": "futuro", lei: "futuro" });
   assert.equal(arq.frase, "Parou nesta etapa: Arquivada, desde 01/03/2025");
-  assert.equal(arq.proximos[0].rotulo, "Comissões");
+  assert.deepEqual(arq.proximos, []);
   assert.match(faixaEtapas(arq), /<li class="parado">/);
   assert.doesNotMatch(faixaEtapas(arq), /aria-current/);
   assert.equal(estadoProposicao({ tipo: "REQ", p: { k: "c-1", t: "REQ" }, f: {} }), null);
@@ -1029,6 +1030,76 @@ test("etapas: a tabela ETAPAS_POR_TIPO tem as mesmas etapas, arestas e caminho p
     }
   }
   assert.deepEqual(vistos.sort(), Object.keys(ETAPAS_POR_TIPO).sort());
+});
+
+const lerContrato = (nome) => JSON.parse(fs.readFileSync(caminho.join(__dirname, "..", "fixtures", "contratos", nome), "utf8"));
+const normaSit = (x) => String(x ?? "").normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().replace(/\s+/g, " ").trim();
+const ETAPA_DA_CLASSE = { abertura: "apresentado", comissao: "comissoes", plenario: "plenario-origem", "outra-casa": "casa-revisora", sancao: "sancao-veto", veto: "veto-congresso", norma: "lei" };
+const classeReconhecida = (casa, tipo, situacao) => {
+  const e = estadoProposicao({ tipo, senado: casa === "s", p: { k: `${casa}-1`, t: tipo, s: situacao }, f: {} });
+  if (!e.identificada) return null;
+  if (/^Parou nesta etapa/.test(e.frase)) return "parada";
+  const atual = e.etapas.find((x) => x.estado === "atual" || (x.estado === "feito" && x.id === "lei"));
+  return Object.keys(ETAPA_DA_CLASSE).find((c) => ETAPA_DA_CLASSE[c] === atual?.id) ?? `?${atual?.id}`;
+};
+
+test("situações: toda entrada das listas oficiais de códigos tem classe declarada em situacoes_etapas.json", () => {
+  const tab = lerContrato("situacoes_etapas.json");
+  const pares = [
+    ["senadoSituacao", "senado_tipos_situacao.json", (x) => x.sigla, 175],
+    ["senadoDecisao", "senado_tipos_decisao.json", (x) => x.sigla, 33],
+    ["camaraSituacao", "camara_cod_situacao.json", (x) => x.cod, 99],
+    ["camaraTipoTramitacao", "camara_cod_tipo_tramitacao.json", (x) => x.cod, 235],
+  ];
+  for (const [chave, arq, cod, n] of pares) {
+    const lista = lerContrato(arq).dados;
+    assert.equal(lista.length, n, arq);
+    assert.deepEqual(Object.keys(tab[chave]).sort(), lista.map(cod).sort(), `códigos de ${chave}`);
+    for (const c of Object.values(tab[chave])) assert.ok(c === null || c in tab.classes, `${chave}: classe ${c}`);
+  }
+});
+
+test("situações: a classe declarada de cada código é a que o reconhecimento de etapas encontra, e o que não tem classe fica sem etapa identificada", () => {
+  const tab = lerContrato("situacoes_etapas.json");
+  const falhas = [];
+  for (const [chave, arq, casa, cod, desc] of [["senadoSituacao", "senado_tipos_situacao.json", "s", (x) => x.sigla, (x) => x.descricao], ["camaraSituacao", "camara_cod_situacao.json", "c", (x) => x.cod, (x) => x.nome]]) {
+    for (const item of lerContrato(arq).dados) {
+      const esperado = tab[chave][cod(item)], achado = classeReconhecida(casa, "PL", desc(item).trim());
+      if (esperado !== achado) falhas.push(`${casa} ${cod(item)} ${desc(item).trim()}: declarado ${esperado}, reconhecido ${achado}`);
+    }
+  }
+  assert.deepEqual(falhas, []);
+});
+
+test("situações: toda combinação (casa, tipo, situação) do índice cai numa etapa ou está declarada sem classe", () => {
+  const tab = lerContrato("situacoes_etapas.json");
+  const classes = { s: new Map(), c: new Map() };
+  for (const [chave, arq, casa, cod, desc] of [["senadoSituacao", "senado_tipos_situacao.json", "s", (x) => x.sigla, (x) => x.descricao], ["camaraSituacao", "camara_cod_situacao.json", "c", (x) => x.cod, (x) => x.nome]]) {
+    for (const item of lerContrato(arq).dados) { const n = normaSit(desc(item)); classes[casa].set(n, classes[casa].get(n) || tab[chave][cod(item)] || null); }
+  }
+  const raiz = caminho.join(__dirname, "..", "..");
+  const reais = caminho.join(raiz, "site", "dados", "proposicoes.json");
+  const combos = new Map(lerContrato("situacoes_indice.json").map(([c, t, x]) => [`${c}|${t}|${x}`, [c, t, x]]));
+  if (fs.existsSync(reais)) for (const p of JSON.parse(fs.readFileSync(reais, "utf8"))) combos.set(`${p.c}|${p.t}|${p.s || ""}`, [p.c, p.t, p.s || ""]);
+  const falhas = [];
+  for (const [casa, tipo, situacao] of combos.values()) {
+    if (!ETAPAS_POR_TIPO[tipo] || !situacao) continue;
+    const n = normaSit(situacao), classe = classes[casa].get(n), achada = classeReconhecida(casa, tipo, situacao);
+    if (classe === undefined) falhas.push(`${casa} ${tipo} "${situacao}": situação fora da lista oficial`);
+    else if (classe === null && achada !== null) falhas.push(`${casa} ${tipo} "${situacao}": sem classe declarada, mas o reconhecimento achou etapa`);
+    else if (classe && achada === null && !(tipo === "PEC" && classe === "plenario")) falhas.push(`${casa} ${tipo} "${situacao}": tem classe declarada, mas caiu sem etapa`);
+  }
+  assert.deepEqual(falhas, []);
+});
+
+test("etapas: situação que nenhuma etapa reconhece não aponta etapa e a faixa não aparece", () => {
+  const e = estadoProposicao({ tipo: "PL", senado: false, p: { k: "c-3", t: "PL", s: "Aguardando Criação de Comissão Temporária" }, f: {} });
+  assert.equal(e.identificada, false);
+  assert.equal(faixaEtapas(e), "");
+  assert.equal(e.frase, "");
+  assert.deepEqual(e.proximos, []);
+  assert.equal(e.crua.texto, "Aguardando Criação de Comissão Temporária");
+  assert.match(blocoEstado(e), /Situação na fonte:<\/b> Aguardando Criação de Comissão Temporária/);
 });
 
 test("linha do tempo: PLP 299 no Senado agrupa por dia, resume as emendas e põe as votações nos dias", () => {

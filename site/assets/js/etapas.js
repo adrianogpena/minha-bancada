@@ -13,18 +13,20 @@ const aresta = (de, para, condicao) => ({ de, para, condicao });
 /* reconhece: campo do fato -> RegExp (sobre o texto sem acento e em minúsculas) ou função (valor, fato). Basta um campo bater.
    Campos: situacao, deliberacao, despacho, orgao, outraCasa, norma. `parada` marca etapa em que a proposição para (só vale a situação atual).
    `falta` é a 2ª frase (o que ainda falta); `rotulo` e `falta` podem ser funções do contexto {senado, vemDeFora, revisora, origem, ng}. */
-const ABRE = { situacao: /aguardando (despacho|recebimento de emendas|encaminhamento|designacao do relator)/ };
+/* Cada regex de situação lista os nomes inteiros (sem caixa nem acento) que o doc e a tabela tests/fixtures/contratos/situacoes_etapas.json
+   declaram para a etapa; o teste "situações" confere os dois contra as listas oficiais de códigos. Nome fora daqui não aponta etapa. */
+const ABRE = { situacao: /^(aguardando despacho|aguardando recebimento de emendas|aguardando designacao do relator|aguardando despacho do presidente da camara dos deputados( \(chancela\))?|aguardando encaminhamento)\s*$/ };
 const COMISSOES = {
-  situacao: /materia despachada|materia com a relatoria|incluida na pauta da reuniao|pronta para a pauta|aprovado parecer|pedido de vista|aguardando audiencia|aguardando designacao de relator|aguardando parecer|tramitando em conjunto|decisao terminativa|aguardando interposicao/,
+  situacao: /^(materia despachada|materia com a relatoria|incluida na pauta da reuniao|pronta para (a )?pauta( na comissao)?|aprovado parecer na comissao|pedido de vista concedido|aguardando audiencia publica|aguardando designacao de relator\(a\)|aguardando parecer|tramitando em conjunto|apreciada em decisao terminativa pelas comissoes|aguardando interposicao de recurso)\s*$/,
   despacho: /analise/, orgao: COMISSAO,
 };
-const PLENARIO = { situacao: /pronto para deliberacao do plenario|incluida em ordem do dia|^aprovada$/, deliberacao: /plenario/, despacho: /(votacao|apreciacao|discussao|aprovad[ao]).*plenario/ };
-const REVISORA = { situacao: /remetid[ao] a (camara|senado)|aguardando apreciacao pelo senado/, outraCasa: existe };
+const PLENARIO = { situacao: /^(pronto para deliberacao do plenario|incluida em ordem do dia|aprovada)\s*$/, deliberacao: /plenario/, despacho: /(votacao|apreciacao|discussao|aprovad[ao]).*plenario/ };
+const REVISORA = { situacao: /^(remetid[ao] a (camara|senado)( dos deputados| federal)?|aguardando apreciacao pelo senado federal)\s*$/, outraCasa: existe };
 const RETORNO = { situacao: /(emendas?|substitutivo) d[oa] (senado|camara)/ };
-const SANCAO = { situacao: /sancao/ };
-const VETO = { situacao: /\bveto\b|vetad/ };
-const NORMA = { norma: existe, situacao: /transformad[ao] em norma/ };
-const PARADA = { situacao: /arquivad|retirad[ao] pelo autor|prejudicad|rejeitad/, deliberacao: /rejeitad/ };
+const SANCAO = { situacao: /^(remetida a sancao|aguardando sancao)\s*$/ };
+const VETO = { situacao: /^(vetada|vetado totalmente|aguardando apreciacao do veto|veto deliberado pelo plenario|veto derrubado)\s*$/ };
+const NORMA = { norma: existe, situacao: /^transformad[ao] em norma juridica( com veto parcial)?\s*$/ };
+const PARADA = { situacao: /^(arquivada|arquivada ao final da legislatura|retirad[ao] pelo autor|retirado pelo\(a\) autor\(a\)|prejudicada|prejudicada ao final da legislatura|rejeitada|rejeitada a materia \(decisao terminativa\))\s*$/, deliberacao: /rejeitad/ };
 const ARQUIVADO = (rotulo) => ({ id: "arquivado", rotulo, parada: true, reconhece: PARADA, falta: "Não tramita mais." });
 const casaDe = (c) => (c.senado || c.vemDeFora ? "Câmara dos Deputados" : "Senado Federal");
 
@@ -50,8 +52,8 @@ const PL_PLP = {
     aresta("apresentado", "comissoes", "o presidente da Casa despacha o projeto às comissões"),
     aresta("apresentado", "plenario-origem", "urgência aprovada ou despacho direto \"Ao Plenário\": as comissões ficam puladas"),
     aresta("comissoes", "plenario-origem", "o parecer é aprovado e o projeto é incluído em pauta"),
-    aresta("comissoes", "casa-revisora", "comissão em decisão terminativa (Senado) ou conclusiva (Câmara) aprova e ninguém recorre ao Plenário"),
-    aresta("comissoes", "plenario-origem", "há recurso contra a decisão terminativa ou conclusiva e o projeto vai ao Plenário"),
+    aresta("comissoes", "casa-revisora", "decisão terminativa (Senado, só projeto de lei ordinária de autoria de Senador) ou conclusiva (Câmara, nunca projeto de lei complementar) aprova e ninguém recorre ao Plenário"),
+    aresta("comissoes", "plenario-origem", "há recurso contra a decisão terminativa (cinco dias úteis, um décimo dos Senadores) ou conclusiva (cinco sessões, um décimo dos Deputados) e o projeto vai ao Plenário"),
     aresta("comissoes", "arquivado", "a comissão rejeita o projeto, o autor o retira ou ele fica prejudicado"),
     aresta("plenario-origem", "casa-revisora", "o Plenário aprova o texto e o remete à outra Casa"),
     aresta("plenario-origem", "arquivado", "o Plenário rejeita o projeto"),
@@ -61,9 +63,8 @@ const PL_PLP = {
     aresta("retorno-origem", "sancao-veto", "a Casa de origem decide sobre as mudanças e remete à sanção"),
     aresta("sancao-veto", "lei", "o Presidente sanciona (ou deixa passar 15 dias úteis sem decidir)"),
     aresta("sancao-veto", "veto-congresso", "o Presidente veta, total ou parcialmente"),
-    aresta("veto-congresso", "lei", "o veto é derrubado (partes vetadas promulgadas) ou é mantido só em parte"),
-    aresta("veto-congresso", "arquivado", "veto total mantido"),
-    aresta("arquivado", "comissoes", "desarquivamento a pedido do autor, por exemplo ao fim da legislatura"),
+    aresta("veto-congresso", "lei", "o veto não é mantido (o projeto é enviado para promulgação) ou é mantido só em parte"),
+    aresta("veto-congresso", "arquivado", "veto total mantido (destino não conferido nas fontes lidas)"),
   ],
 };
 
@@ -73,25 +74,24 @@ const PEC = {
     { id: "comissoes", rotulo: "Comissão de Constituição e Justiça", reconhece: COMISSOES, pulou: "não passou por comissão", falta: "Ainda não é emenda à Constituição. A comissão examina se a proposta pode tramitar e dá o parecer." },
     { id: "plenario-1-turno", rotulo: "Plenário, 1º turno", reconhece: { situacao: /pronto para deliberacao do plenario|incluida em ordem do dia|1[ºo°] turno|primeiro turno/, deliberacao: /1[ºo°] turno|primeiro turno/, despacho: /1[ºo°] turno|primeiro turno/ }, falta: "Ainda não é emenda à Constituição. O Plenário vota em primeiro turno; precisa de três quintos." },
     { id: "plenario-2-turno", rotulo: "Plenário, 2º turno", reconhece: { situacao: /2[ºo°] turno|segundo turno/, deliberacao: /2[ºo°] turno|segundo turno/, despacho: /2[ºo°] turno|segundo turno/ }, falta: "Ainda não é emenda à Constituição. Falta a votação em segundo turno nesta Casa." },
-    { id: "casa-revisora", rotulo: "Outra Casa (2 turnos)", reconhece: REVISORA, falta: "Ainda não é emenda à Constituição. A outra Casa também vota em dois turnos; se mudar o texto, ele volta à Casa de origem. Depois é promulgada, sem sanção." },
-    { id: "retorno-origem", rotulo: "Volta à Casa de origem", reconhece: RETORNO, falta: "Ainda não é emenda à Constituição. O texto mudou na outra Casa e volta para decisão." },
+    { id: "casa-revisora", rotulo: "Outra Casa (2 turnos)", reconhece: REVISORA, falta: "Ainda não é emenda à Constituição. A outra Casa também vota em dois turnos; se mudar o texto, o regimento da Casa de origem define o que acontece. Depois é promulgada, sem sanção." },
+    { id: "retorno-origem", rotulo: "Volta à Casa de origem", reconhece: RETORNO, falta: "Ainda não é emenda à Constituição. O texto mudou na outra Casa; o regimento da Casa de origem define o que acontece com a mudança." },
     { id: "promulgacao", rotulo: "Promulgação", reconhece: NORMA, final: true, depois: "pelas Mesas da Câmara e do Senado", falta: jaE("emenda à Constituição") },
     ARQUIVADO("Arquivada"),
   ],
   principal: ["apresentado", "comissoes", "plenario-1-turno", "plenario-2-turno", "casa-revisora", "promulgacao"],
   arestas: [
     aresta("apresentado", "comissoes", "a proposta é despachada à comissão de constituição e justiça"),
-    aresta("comissoes", "plenario-1-turno", "a proposta é admitida e o parecer é aprovado"),
-    aresta("comissoes", "arquivado", "a comissão a declara inadmissível ou o autor a retira"),
-    aresta("plenario-1-turno", "plenario-2-turno", "três quintos aprovam em 1º turno (há prazo entre os turnos, salvo calendário especial)"),
+    aresta("comissoes", "plenario-1-turno", "a proposta é admitida e o parecer é aprovado, ou (Senado) o prazo da comissão acaba sem parecer"),
+    aresta("comissoes", "arquivado", "a comissão a declara inadmissível (Senado: salvo recurso de um décimo dos Senadores; Câmara: sem requerimento de apreciação preliminar em Plenário, regra de arquivamento não conferida) ou o autor a retira"),
+    aresta("plenario-1-turno", "plenario-2-turno", "três quintos aprovam em 1º turno (interstício de cinco dias úteis no Senado e de cinco sessões na Câmara)"),
     aresta("plenario-1-turno", "arquivado", "não alcança três quintos"),
     aresta("plenario-2-turno", "casa-revisora", "aprovada em 2º turno na Casa de origem"),
     aresta("plenario-2-turno", "promulgacao", "aprovada em 2º turno na revisora sem mudança do texto"),
     aresta("casa-revisora", "promulgacao", "a outra Casa aprova nos dois turnos sem mudar o texto"),
     aresta("casa-revisora", "retorno-origem", "a outra Casa muda o texto"),
     aresta("casa-revisora", "arquivado", "rejeitada na outra Casa"),
-    aresta("retorno-origem", "promulgacao", "a Casa de origem conclui a votação do texto final"),
-    aresta("arquivado", "comissoes", "desarquivamento na legislatura seguinte"),
+    aresta("retorno-origem", "promulgacao", "só com a Câmara como Casa de origem: aprova as emendas do Senado pelo rito da PEC e a sessão de promulgação é convocada"),
   ],
 };
 
@@ -100,7 +100,7 @@ const MPV = {
     { id: "publicada", rotulo: "Publicada (já vale)", reconhece: {}, falta: "Já vale como lei, mas só por tempo limitado. O Congresso precisa convertê-la em lei em até 120 dias." },
     { id: "comissao-mista", rotulo: "Comissão mista", reconhece: { despacho: /comissao mista/, situacao: /comissao mista/, orgao: /^cm/ }, pulou: "sem comissão mista", falta: "Já vale como lei. A comissão mista analisa antes de a Câmara votar." },
     { id: "plenario-camara", rotulo: "Câmara dos Deputados", reconhece: { situacao: /plenario da camara|remetid[ao] a camara/, despacho: /plenario da camara/ }, falta: "Já vale como lei. A Câmara vota primeiro; depois o Senado." },
-    { id: "plenario-senado", rotulo: "Senado Federal", reconhece: { situacao: /pronto para deliberacao do plenario|incluida em ordem do dia|aguardando apreciacao pelo senado|remetid[ao] ao senado/ }, falta: "Já vale como lei. O Senado vota; se mudar o texto, o projeto de lei de conversão vai à sanção." },
+    { id: "plenario-senado", rotulo: "Senado Federal", reconhece: { situacao: /pronto para deliberacao do plenario|incluida em ordem do dia|aguardando apreciacao pelo senado|remetid[ao] ao senado/ }, falta: "Já vale como lei. O Senado vota; se mudar o texto, ele volta à Câmara; se aprovar o projeto de lei de conversão, ele vai à sanção." },
     { id: "sancao-veto", rotulo: "Sanção ou veto", reconhece: SANCAO, pulou: "sem alteração: não precisou de sanção", falta: "Já vale como lei. Falta a sanção ou o veto do Presidente ao texto convertido." },
     { id: "veto-congresso", rotulo: "Veto no Congresso", reconhece: VETO, falta: "O veto aguarda a sessão do Congresso, que pode derrubá-lo ou mantê-lo." },
     { id: "lei", rotulo: "Lei de conversão", reconhece: NORMA, final: true, depois: "publicada", falta: (c) => `Convertida em lei${c.ng ? `: ${c.ng}` : ""}.` },
@@ -111,19 +111,20 @@ const MPV = {
   arestas: [
     aresta("publicada", "comissao-mista", "o Congresso instala a comissão mista"),
     aresta("publicada", "perdeu-validade", "os 120 dias acabam sem votação"),
-    aresta("comissao-mista", "plenario-camara", "o parecer é aprovado, ou a matéria segue sem parecer no prazo"),
+    aresta("comissao-mista", "plenario-camara", "o parecer da comissão mista é aprovado (a votação começa na Câmara; sem o parecer a MPV não vai ao Plenário)"),
     aresta("comissao-mista", "perdeu-validade", "os 120 dias acabam"),
     aresta("plenario-camara", "plenario-senado", "a Câmara aprova"),
     aresta("plenario-camara", "arquivado", "a Câmara rejeita"),
     aresta("plenario-camara", "perdeu-validade", "os 120 dias acabam"),
-    aresta("plenario-senado", "lei", "o Senado aprova sem mudar o texto"),
-    aresta("plenario-senado", "sancao-veto", "o Senado aprova projeto de lei de conversão com alterações"),
+    aresta("plenario-senado", "lei", "o Senado aprova sem alteração de mérito: o texto é promulgado pelo Presidente da Mesa do Congresso"),
+    aresta("plenario-senado", "sancao-veto", "é aprovado projeto de lei de conversão: vai à sanção"),
+    aresta("plenario-senado", "plenario-camara", "o Senado modifica o texto aprovado pela Câmara: volta como emenda, em turno único (3 dias)"),
     aresta("plenario-senado", "arquivado", "o Senado rejeita"),
     aresta("plenario-senado", "perdeu-validade", "os 120 dias acabam"),
     aresta("sancao-veto", "lei", "o Presidente sanciona"),
     aresta("sancao-veto", "veto-congresso", "o Presidente veta"),
-    aresta("veto-congresso", "lei", "o veto é derrubado"),
-    aresta("veto-congresso", "arquivado", "veto total mantido"),
+    aresta("veto-congresso", "lei", "o veto não é mantido"),
+    aresta("veto-congresso", "arquivado", "veto total mantido (destino não conferido nas fontes lidas)"),
   ],
 };
 
@@ -133,7 +134,7 @@ const PDL = {
     { id: "comissoes", rotulo: "Comissões", reconhece: COMISSOES, pulou: "não passou: foi direto ao Plenário", falta: "Ainda não é decreto legislativo. As comissões dão o parecer; depois segue ao Plenário." },
     { id: "plenario-origem", rotulo: (c) => (c.senado ? "Plenário do Senado" : "Plenário da Câmara"), reconhece: PLENARIO, falta: "Ainda não é decreto legislativo. Se o Plenário aprovar, o texto vai à outra Casa." },
     { id: "casa-revisora", rotulo: (c) => casaDe(c), reconhece: REVISORA, falta: (c) => REVISORA_FALTA_2(c, "decreto legislativo") },
-    { id: "retorno-origem", rotulo: "Volta à Casa de origem", reconhece: RETORNO, falta: "O texto mudou na outra Casa e volta para decisão." },
+    { id: "retorno-origem", rotulo: "Volta à Casa de origem", reconhece: RETORNO, falta: "O texto mudou na outra Casa e volta para a Casa de origem decidir sobre as mudanças." },
     { id: "promulgacao", rotulo: "Promulgação", reconhece: NORMA, final: true, depois: "sem sanção", falta: jaE("decreto legislativo") },
     ARQUIVADO("Arquivado"),
   ],
@@ -142,15 +143,15 @@ const PDL = {
     aresta("apresentado", "comissoes", "despacho às comissões"),
     aresta("apresentado", "plenario-origem", "urgência ou despacho ao Plenário: as comissões ficam puladas"),
     aresta("comissoes", "plenario-origem", "parecer aprovado"),
-    aresta("comissoes", "casa-revisora", "comissão em caráter terminativo ou conclusivo aprova e ninguém recorre"),
+    aresta("comissoes", "casa-revisora", "no Senado, como Casa de origem: decreto legislativo do art. 223 §1º da Constituição (radiodifusão) com decisão terminativa da comissão e sem recurso"),
+    aresta("comissoes", "promulgacao", "no Senado, como Casa revisora: decreto legislativo do art. 223 §1º da Constituição com decisão terminativa da comissão e sem recurso"),
     aresta("comissoes", "arquivado", "rejeitado, retirado ou prejudicado"),
     aresta("plenario-origem", "casa-revisora", "Plenário aprova"),
     aresta("plenario-origem", "arquivado", "Plenário rejeita"),
     aresta("casa-revisora", "promulgacao", "aprovado sem mudar o texto"),
     aresta("casa-revisora", "retorno-origem", "texto mudado"),
     aresta("casa-revisora", "arquivado", "rejeitado"),
-    aresta("retorno-origem", "promulgacao", "a Casa de origem decide sobre as mudanças"),
-    aresta("arquivado", "comissoes", "desarquivamento na legislatura seguinte"),
+    aresta("retorno-origem", "promulgacao", "a Casa de origem decide sobre as mudanças; o decreto legislativo é promulgado pelo Presidente do Senado"),
   ],
 };
 
@@ -167,10 +168,10 @@ const PRS_PRC = {
     aresta("apresentado", "comissoes", "despacho às comissões"),
     aresta("apresentado", "plenario", "urgência ou despacho ao Plenário: as comissões ficam puladas"),
     aresta("comissoes", "plenario", "parecer aprovado"),
+    aresta("comissoes", "promulgacao", "só projeto de resolução do Senado que suspende lei declarada inconstitucional pelo STF: decisão terminativa da comissão e sem recurso"),
     aresta("comissoes", "arquivado", "rejeitado, retirado ou prejudicado"),
     aresta("plenario", "promulgacao", "o Plenário aprova: a resolução é promulgada pela Casa, sem sanção"),
     aresta("plenario", "arquivado", "o Plenário rejeita"),
-    aresta("arquivado", "comissoes", "desarquivamento na legislatura seguinte"),
   ],
 };
 
@@ -243,7 +244,7 @@ export function estadoProposicao({ tipo, senado, p = {}, f = {}, t = null } = {}
   const parou = def.etapas.findIndex((e, i) => e.parada && achados[i].length);
   let alto = -1;
   visiveis.forEach((i, pos) => { if (achados[i].length) alto = pos; });
-  if (alto < 0 && (p.s || parou >= 0)) alto = 0;
+  if (alto < 0 && parou >= 0) alto = 0;
   const viaOutraCasa = alto >= 0 && achados[visiveis[alto]].length > 0 && achados[visiveis[alto]].every((x) => x.outraCasa != null);
 
   const etapas = visiveis.map((i, pos) => {
@@ -280,7 +281,7 @@ export function estadoProposicao({ tipo, senado, p = {}, f = {}, t = null } = {}
   const proximos = fim ? def.arestas.filter((a) => a.de === fim.id).map((a) => ({ rotulo: rotuloDe(a.para), condicao: a.condicao })) : [];
   const ps = p.s || "";
   return {
-    etapas, frase, segunda: falta, proximos,
+    identificada: alto >= 0, etapas, frase, segunda: falta, proximos,
     crua: { texto: ps ? `${ps}${f.o ? ` (${f.o})` : ""}` : "ainda não consultada", desde: f.ds || null, fonte: id ? (senado ? linkMateriaSenado(id) : linkTramitacao(id)) : null },
   };
 }
@@ -288,6 +289,7 @@ export function estadoProposicao({ tipo, senado, p = {}, f = {}, t = null } = {}
 const PONTO = { feito: "✓", pulado: "–", parado: "✕" };
 
 export function faixaEtapas(estado) {
+  if (!estado.identificada) return "";
   const itens = estado.etapas.map((e, i) => `<li class="${e.estado}"${e.estado === "atual" ? ` aria-current="step"` : ""}><span class="ponto" aria-hidden="true">${PONTO[e.estado] || i + 1}</span><b>${esc(e.rotulo)}</b>${e.detalhe ? `<span>${esc(e.detalhe)}</span>` : ""}</li>`);
   return `<ol class="etapas" aria-label="Etapas do projeto" style="--n:${estado.etapas.length}">${itens.join("")}</ol>`;
 }

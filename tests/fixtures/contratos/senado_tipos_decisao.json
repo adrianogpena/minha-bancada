@@ -1,0 +1,138 @@
+{
+ "fonte": "https://legis.senado.leg.br/dadosabertos/processo/tipos-decisao",
+ "capturadoEm": "2026-11-20",
+ "dados": [
+  {
+   "sigla": "APROVADA_EM_COMISSAO_TERMINATIVA",
+   "descricao": "Aprovada por Comissão em decisão terminativa"
+  },
+  {
+   "sigla": "APROVADA_NO_PLENARIO",
+   "descricao": "Aprovada pelo Plenário"
+  },
+  {
+   "sigla": "APROVADA_PARCIALMENTE",
+   "descricao": "Aprovada parcialmente pelo Plenário"
+  },
+  {
+   "sigla": "APROVADO_CDIR",
+   "descricao": "Aprovada pela Comissão Diretora"
+  },
+  {
+   "sigla": "APROVADO_NA_INTEGRA",
+   "descricao": "Aprovada na íntegra"
+  },
+  {
+   "sigla": "APROVADO_PLV",
+   "descricao": "Aprovada na forma de Projeto de Lei de Conversão"
+  },
+  {
+   "sigla": "ARQUIVADO_FIM_LEGISLATURA",
+   "descricao": "Arquivada ao final da Legislatura (art. 332 do RISF)"
+  },
+  {
+   "sigla": "CONHECIDA",
+   "descricao": "Conhecida"
+  },
+  {
+   "sigla": "DEFERIDO_CDIR",
+   "descricao": "Deferida pela Comissão Diretora"
+  },
+  {
+   "sigla": "DEFERIDO_PRESIDENCIA_ART_101_RISF",
+   "descricao": "Deferida pela Presidência (art. 101, inc. I, do RISF)"
+  },
+  {
+   "sigla": "DEFERIDO_PRESIDENCIA_ART_214_RISF",
+   "descricao": "Deferida pela Presidência (art. 214, parágrafo único, III, do RISF)"
+  },
+  {
+   "sigla": "DEFERIDO_PRESIDENCIA_ART_215_RISF",
+   "descricao": "Deferida pela Presidência (art. 215, inc. II, e art. 256, § 2, inc. I, do RISF)"
+  },
+  {
+   "sigla": "DEFERIDO_PRESIDENCIA_ART_41_RISF",
+   "descricao": "Deferida pela Presidência (art. 41 do RISF)"
+  },
+  {
+   "sigla": "DEFERIDO_PRESIDENCIA_ART_48_RISF",
+   "descricao": "Deferida pela Presidência (art. 48, inc. XXXIII, do RISF)"
+  },
+  {
+   "sigla": "DEVOLVIDO_CD_ACAO_JUD",
+   "descricao": "Devolvido à Câmara dos Deputados em virtude de decisão judicial"
+  },
+  {
+   "sigla": "IMPUGNADO_PRESIDENCIA",
+   "descricao": "Impugnada pela Presidência (art. 48, inc. XI, do RISF)"
+  },
+  {
+   "sigla": "INADIMITIDA_URGENCIA",
+   "descricao": "Inadmitida quanto aos pressupostos constitucionais de relevância e urgência"
+  },
+  {
+   "sigla": "PARA_PUBLICACAO",
+   "descricao": "À publicação para que produza efeitos"
+  },
+  {
+   "sigla": "PERDA_EFICACIA",
+   "descricao": "Perda de eficácia, em decorrência do término do prazo para sua votação no Congresso"
+  },
+  {
+   "sigla": "PREJUDICADO",
+   "descricao": "Prejudicada"
+  },
+  {
+   "sigla": "PUBLICADO",
+   "descricao": "Publicada"
+  },
+  {
+   "sigla": "REEDITADA",
+   "descricao": "Reeditada"
+  },
+  {
+   "sigla": "REJEITADO_COMISSAO_NAO_TERM",
+   "descricao": "Rejeitada por Comissão em decisão não terminativa (art. 254 do RISF)"
+  },
+  {
+   "sigla": "REJEITADO_COMISSAO_TERM",
+   "descricao": "Rejeitada por Comissão em decisão terminativa (art. 91, § 5º, do RISF)"
+  },
+  {
+   "sigla": "REJEITADO_INCONSTICIONALIDADE_CCJ",
+   "descricao": "Rejeitada pela CCJ por inconstitucionalidade (art. 101, § 1º, do RISF)"
+  },
+  {
+   "sigla": "REJEITADO_PLENARIO",
+   "descricao": "Rejeitada pelo Plenário"
+  },
+  {
+   "sigla": "REJEITADO_PLENARIO_CD",
+   "descricao": "Rejeitada pelo Plenário da Câmara dos Deputados"
+  },
+  {
+   "sigla": "RETIRADA_DE_ASSINATURA",
+   "descricao": "Retirada de assinaturas (art. 244 do RISF)"
+  },
+  {
+   "sigla": "RETIRADO_PELO_AUTOR",
+   "descricao": "Retirada pelo autor"
+  },
+  {
+   "sigla": "REVOGADO",
+   "descricao": "Revogada"
+  },
+  {
+   "sigla": "SEM_EFICACIA",
+   "descricao": "Sem eficácia (art. 48, II e XI, do RISF)"
+  },
+  {
+   "sigla": "TRANSF_PROJ_LEI_SEN",
+   "descricao": "Transformada em Projeto de Lei do Senado"
+  },
+  {
+   "sigla": "TRANSF_PROJ_RES_SEN",
+   "descricao": "Transformada em Projeto de Resolução do Senado"
+  }
+ ]
+}

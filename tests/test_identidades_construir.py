@@ -56,5 +56,5 @@ def test_construir_liga_ministros_e_tribunais_e_deixa_vazio_sem_arquivos(tmp_pat
 
     vazio = ident.construir({}, tmp_path / "vazio")
     assert vazio["ministros"] == [] and vazio["tribunais"] == {} and vazio["aposentados"] == []
-    assert vazio["inabilitados"] == [] and vazio["emendas"] == [] and vazio["pessoas"] == []
+    assert vazio["inabilitados"] == [] and vazio["emendas"] == [] and [p["id"] for p in vazio["pessoas"]] == ["pes_sem_nome"]
     assert vazio["ligacoes"]["ambiguos"] == [] and vazio["ligacoes"]["registros"] == {} and vazio["partidos"]["federacoes"] == []

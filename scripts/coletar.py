@@ -467,7 +467,8 @@ def coletar_detalhes_proposicoes() -> None:
     cache = ler(arquivo, {})
     todos = ids_de_projetos(TIPOS_PRINCIPAIS)
     # projeto principal de um apensado pode ser de autor fora da legislatura (e é nele que a Câmara registra o relator): entra na fila
-    principais = {c["apensadoA"] for c in cache.values() if c.get("apensadoA")} - todos
+    # e o projeto que veio do Senado (ids_camara_do_senado), para a ficha da matéria do Senado seguir o que acontece na Câmara
+    principais = ({c["apensadoA"] for c in cache.values() if c.get("apensadoA")} | ids_camara_do_senado()) - todos
     todos |= principais
     hoje = dt.date.today()
     limite_velho = (hoje - dt.timedelta(days=RENOVAR_APOS_DIAS)).isoformat()
@@ -552,7 +553,7 @@ def coletar_autores_proposicoes() -> None:
     máximo ORCAMENTO_AUTORES (os mais novos primeiro) e com os dias o arquivo se completa."""
     arquivo = DADOS / "proposicoes_autores.json"
     cache = ler(arquivo, {})
-    todos = ids_de_projetos(TIPOS_PROJETO)
+    todos = ids_de_projetos(TIPOS_PROJETO) | ids_camara_do_senado()
     faltam = todos - cache.keys()
     fila = sorted(faltam, key=int, reverse=True)[:ORCAMENTO_AUTORES]
     print(f"Autores de proposições: {len(todos)} projetos, {len(faltam)} sem autoria; consultando {len(fila)}")
@@ -654,7 +655,7 @@ def coletar_tramitacoes_proposicoes() -> None:
     arquivo = DADOS / "proposicoes_tramitacoes.json"
     cache = ler(arquivo, {})
     detalhes = ler(DADOS / "proposicoes_detalhe.json", {})
-    todos = ids_de_projetos(TIPOS_PROJETO)
+    todos = ids_de_projetos(TIPOS_PROJETO) | ids_camara_do_senado()
     hoje = dt.date.today()
     limite_velho = (hoje - dt.timedelta(days=RENOVAR_APOS_DIAS)).isoformat()
     novos = sorted(todos - cache.keys(), key=int, reverse=True)
@@ -783,7 +784,7 @@ def coletar_votacoes_proposicoes() -> None:
     o que já estava guardado."""
     arquivo = DADOS / "proposicoes_votacoes.json"
     cache = ler(arquivo, {})
-    meus = ids_de_projetos(TIPOS_PROJETO)
+    meus = ids_de_projetos(TIPOS_PROJETO) | ids_camara_do_senado()
     mudou = False
     for ano in range(int(INICIO_LEGISLATURA[:4]), dt.date.today().year + 1):
         try:
@@ -1031,7 +1032,9 @@ def coletar_votacoes_senado() -> None:
         mapa = ler(pasta / f"{ano}.json", {})
         for n in achadas:
             if n["data"][:4] == str(ano):
-                mapa[n["id"]] = n
+                # a orientação das lideranças vem de outra consulta (coletar_orientacoes_senado): não se perde ao reler o ano
+                antes = mapa.get(n["id"]) or {}
+                mapa[n["id"]] = {**n, **({"orientacoes": antes["orientacoes"]} if "orientacoes" in antes else {})}
         salvar(pasta / f"{ano}.json", mapa)
         total += len(achadas)
         print(f"  Senado {ano}: {len(achadas)} votações nominais")
@@ -1230,7 +1233,9 @@ def autoria_senado(p: dict, nome: str | None) -> dict | None:
                 "partidosDistintos": len({a[1] for a in autores if a[1]})} if len(autores) > 1 else {}),
             **({"parceiros": outros} if 1 < len(autores) <= 30 else {}),
             "dataApresentacao": comum.data_iso(p.get("dataApresentacao")),
-            "situacao": p.get("situacaoAtual"), "dataSituacao": comum.data_iso(p.get("dataSituacaoAtual"))}
+            "situacao": p.get("situacaoAtual"), "dataSituacao": comum.data_iso(p.get("dataSituacaoAtual")),
+            # marca de alteração da matéria: o detalhe (coletar_processos_senado) só é relido quando ela muda
+            **({"atualizadoEm": p["dataUltimaAtualizacao"]} if p.get("dataUltimaAtualizacao") else {})}
 
 
 def coletar_autorias_senado() -> None:
@@ -1266,6 +1271,236 @@ def coletar_autorias_senado() -> None:
         materias = {**ler(arquivo, {}), **materias}
     salvar(arquivo, materias)
     print(f"Matérias do Senado: {len(materias)} projetos")
+
+
+# ---------------------------------------------------------------- senado: detalhe de cada matéria (linha do tempo, relatoria, emendas, outra Casa)
+
+ORCAMENTO_PROCESSOS_SENADO = int(os.environ.get("PROCESSOS_SENADO_POR_EXECUCAO", "2000"))
+RENOVAR_PROCESSO_SENADO_DIAS = 7   # matéria sem marca de alteração na lista: relida depois disso, enquanto tramita
+TAMANHO_INFORME = 400
+DOCS_FORA = {"Emenda", "Avulso de emendas"}   # as emendas vêm de /processo/emenda, uma a uma
+DOC_SENADO = re.compile(r"^https?://legis\.senado\.(?:leg|gov)\.br/sdleg-getter/dadosabertos/documento/([0-9a-f-]{36})$")
+
+
+def doc_senado(url: str | None) -> str | None:
+    """Link de documento do Senado -> só o código (uuid), que o site completa com SENADO_DOC; outro link fica inteiro."""
+    m = DOC_SENADO.match(url or "")
+    return m.group(1) if m else (url or None)
+
+
+def _sim(x) -> bool:
+    return str(x or "").strip().lower() in ("sim", "s")
+
+
+def indexacao_senado(texto: str | None) -> list[str]:
+    """Termos de indexação do Senado (" ALTERAÇÃO ,  LEI KANDIR ,  ... . ") -> lista na ordem, sem repetição nem os termos genéricos."""
+    vistos, saida = set(), []
+    for t in re.split(r"\s+[,.](?=\s|$)", texto or ""):
+        t = " ".join(t.split()).strip(" ,.")
+        if t and t.lower() not in vistos and t.lower() not in ASSUNTOS_GENERICOS:
+            vistos.add(t.lower())
+            saida.append(t)
+    return saida
+
+
+def _decisao_emenda(decisoes) -> str | None:
+    if not decisoes:
+        return None
+    itens = decisoes if isinstance(decisoes, list) else [decisoes]
+    textos = [str(x.get("descricao") or x.get("tipoDecisao") or x.get("decisao") or "").strip() if isinstance(x, dict) else str(x).strip() for x in itens]
+    return "; ".join(t for t in textos if t) or None
+
+
+def processo_senado(d: dict, relatorias: list, emendas: list) -> dict:
+    """Detalhe da matéria (/processo/{id}), relatorias (/processo/relatoria) e emendas (/processo/emenda) -> registro compacto de
+    dados/senado_processos/<ano>.json. Listas como tuplas na ordem do docstring de cada campo, para o arquivo ficar pequeno."""
+    doc = d.get("documento") or {}
+    autoria = sorted(doc.get("autoria") or d.get("autoriaIniciativa") or [], key=lambda a: a.get("ordem") or 0)
+    situacoes, informes, documentos, vistos = [], [], [], set()
+    for au in d.get("autuacoes") or []:
+        for s in au.get("situacoes") or []:
+            situacoes.append([s.get("inicio"), s.get("fim"), s.get("sigla"), s.get("descricao"), (s.get("colegiado") or {}).get("sigla")])
+        for i in au.get("informesLegislativos") or []:
+            informes.append([(i.get("data") or "")[:16] or None, (i.get("colegiado") or {}).get("sigla"),
+                             " ".join((i.get("descricao") or "").split())[:TAMANHO_INFORME] or None])
+            for x in i.get("documentosAssociados") or []:
+                if x.get("tipo") in DOCS_FORA or not x.get("url") or x["url"] in vistos:
+                    continue
+                vistos.add(x["url"])
+                documentos.append([comum.data_iso(x.get("data")), x.get("tipo"), (x.get("identificacao") or "").strip() or None,
+                                   (x.get("autoria") or "").strip() or None, doc_senado(x["url"])])
+    despachos = []
+    for x in d.get("despachos") or []:
+        if _sim(x.get("cancelado")):
+            continue
+        for p in x.get("providencias") or []:
+            destinos = [(u.get("colegiado") or {}).get("sigla") for u in p.get("unidadesDestinatarias") or [] if (u.get("colegiado") or {}).get("sigla")]
+            terminativa = any(u.get("tipoAnaliseDeliberacao") == "TERMINATIVA" for u in p.get("unidadesDestinatarias") or [])
+            despachos.append([x.get("data"), p.get("descricao"), destinos, terminativa])
+    delib = d.get("deliberacao") or {}
+    norma = d.get("normaGerada") or {}
+    return {k: v for k, v in {
+        "apelido": (d.get("apelido") or "").strip() or None,
+        "texto": doc_senado(doc.get("url")),
+        "tramitando": _sim(d.get("tramitando")),
+        "classificacoes": [c["descricaoHierarquia"] for c in d.get("classificacoes") or [] if c.get("descricaoHierarquia")],
+        "indexacao": indexacao_senado(doc.get("indexacao")),
+        # [código no Senado, nome, tipo (SENADOR, DEPUTADO, COMISSAO...), partido, UF]
+        "autores": [[str(a["codigoParlamentar"]) if a.get("codigoParlamentar") else None, a["autor"].strip(), a.get("siglaTipo"), a.get("siglaPartido"), a.get("uf")]
+                    for a in autoria if (a.get("autor") or "").strip()],
+        "situacoes": situacoes,          # [início, fim, sigla, descrição, colegiado]
+        "informes": informes,            # [data e hora, colegiado, descrição]
+        "documentos": documentos,        # [data, tipo, identificação, autoria, documento (uuid ou link)]
+        "despachos": despachos,          # [data, providência, colegiados de destino, terminativa]
+        "deliberacao": {"data": delib.get("data"), "tipo": delib.get("tipoDeliberacao"), "destino": delib.get("destino")} if delib.get("data") else None,
+        # [Casa, sigla, número, ano, tramitando]: o mesmo projeto com número de outra Casa
+        "outrasCasas": [[o.get("casaIdentificadora"), o.get("sigla"), int(o["numero"]), o.get("ano"), _sim(o.get("tramitando"))]
+                        for o in d.get("outrosNumeros") or [] if not _sim(o.get("externaAoCongresso")) and str(o.get("numero") or "").isdigit()],
+        "relacionados": [[r.get("tipoRelacao"), r.get("sigla"), r.get("numero"), r.get("ano")] for r in d.get("processosRelacionados") or []],
+        "norma": {"codigo": norma.get("codigo"), "descricao": norma.get("descricao"), "data": norma.get("dataAssinatura"),
+                  "publicacao": norma.get("veiculoPublicacao")} if norma.get("codigo") else None,
+        # [código do senador, nome, partido, UF, colegiado, nome do colegiado, tipo de relator, desde, até, encerramento]
+        "relatorias": [[str(r["codigoParlamentar"]) if r.get("codigoParlamentar") else None, r.get("nomeParlamentar"), r.get("siglaPartidoParlamentar"),
+                        r.get("ufParlamentar"), r.get("siglaColegiado"), r.get("nomeColegiado"), r.get("descricaoTipoRelator"),
+                        comum.data_iso(r.get("dataDesignacao")), comum.data_iso(r.get("dataDestituicao")), r.get("descricaoTipoEncerramento")]
+                       for r in sorted(relatorias, key=lambda r: r.get("dataDesignacao") or "")],
+        # [número, autoria, data, tipo, descrição, turno, documento (uuid ou link), decisão]
+        "emendas": [[e.get("numero"), (e.get("autoria") or "").strip() or None, comum.data_iso(e.get("dataApresentacao")), e.get("tipo"),
+                     " ".join((e.get("descricaoDocumentoEmenda") or "").split()) or None, e.get("turnoApresentacao"), doc_senado(e.get("urlDocumentoEmenda")),
+                     _decisao_emenda(e.get("decisoes"))]
+                    for e in sorted(emendas, key=lambda e: int(e["numero"]) if str(e.get("numero") or "").isdigit() else 10**6)],
+    }.items() if v not in (None, [], "")}
+
+
+def ids_camara_do_senado(dados: Path | None = None) -> set:
+    """Ids na Câmara dos projetos que vieram do Senado (campo `camara` de dados/senado_processos/): entram na coleta de detalhe,
+    autores, tramitação e votações da Câmara, para a ficha seguir o projeto na outra Casa."""
+    pasta = (dados or DADOS) / "senado_processos"
+    return {str(r["camara"]) for arq in pasta.glob("[0-9]*.json") for r in ler(arq, {}).values() if r.get("camara")}
+
+
+def coletar_processos_senado(hoje: dt.date | None = None) -> None:
+    """Detalhe de cada projeto dos senadores em exercício: linha do tempo, documentos, relatoria, emendas, número na Câmara e norma gerada.
+    Um arquivo por ano da matéria em dados/senado_processos/ (vai para o git). Incremental: a matéria só é relida quando a marca
+    `dataUltimaAtualizacao` da lista de autorias muda (ou depois de RENOVAR_PROCESSO_SENADO_DIAS, se a lista não trouxer a marca);
+    no máximo ORCAMENTO_PROCESSOS_SENADO por execução, as mais novas antes."""
+    hoje = hoje or dt.date.today()
+    pasta = DADOS / "senado_processos"
+    materias = {i["id"]: i for itens in (ler(DADOS / "senado_autorias.json", {}) or {}).values() for i in itens if i["tipo"] in TIPOS_PROJETO_SENADO}
+    if not materias:
+        raise RuntimeError("sem autorias do Senado; detalhes das matérias não coletados")
+    por_ano = {int(a.stem): ler(a, {}) for a in pasta.glob("[0-9]*.json")}
+    cache = {mid: r for anos in por_ano.values() for mid, r in anos.items()}
+    limite = (hoje - dt.timedelta(days=RENOVAR_PROCESSO_SENADO_DIAS)).isoformat()
+
+    def precisa(m: dict) -> bool:
+        r = cache.get(m["id"])
+        if not r:
+            return True
+        if m.get("atualizadoEm"):
+            return m["atualizadoEm"] != r.get("atualizadoEm")
+        return r.get("tramitando", True) and r.get("consultadoEm", "") < limite
+
+    fila = sorted((m for m in materias.values() if precisa(m)), key=lambda m: (m["ano"], int(m["id"])), reverse=True)
+    print(f"Detalhe das matérias do Senado: {len(materias)} projetos, {len(fila)} novos ou alterados; consultando {min(len(fila), ORCAMENTO_PROCESSOS_SENADO)}")
+    fila = fila[:ORCAMENTO_PROCESSOS_SENADO]
+
+    def camara_id(registro: dict, anterior: dict) -> dict:
+        """{camara: id na Câmara, camaraNumero: "PLP 299/2026"} do número que a matéria tem na Câmara; o id já achado não é procurado de novo."""
+        for casa, sigla, numero, ano, _ in registro.get("outrasCasas") or []:
+            if casa != "CD" or sigla not in TIPOS_PROJETO:
+                continue
+            rotulo = f"{sigla} {numero}/{ano}"
+            if anterior.get("camara") and anterior.get("camaraNumero") == rotulo:
+                return {"camara": anterior["camara"], "camaraNumero": rotulo}
+            try:
+                achados = get("/proposicoes", siglaTipo=sigla, numero=numero, ano=ano).get("dados") or []
+            except Exception as e:   # sem o id da Câmara a ficha só não liga à outra Casa
+                avisar(f"projeto do Senado na Câmara ({rotulo}): {e}")
+                achados = []
+            return {"camara": str(achados[0]["id"]), "camaraNumero": rotulo} if achados else {}
+        return {}
+
+    def buscar(m: dict) -> tuple[dict, dict]:
+        d = get_senado(f"/processo/{m['processo']}")
+        reg = processo_senado(d, get_senado("/processo/relatoria", codigoMateria=m["id"]) or [],
+                              get_senado("/processo/emenda", codigoMateria=m["id"]) or [])
+        reg.update(camara_id(reg, cache.get(m["id"]) or {}))
+        return m, {**reg, "processo": m["processo"], **({"atualizadoEm": m["atualizadoEm"]} if m.get("atualizadoEm") else {}),
+                   "consultadoEm": hoje.isoformat()}
+
+    def gravar(anos: set) -> None:
+        for ano in anos:
+            salvar(pasta / f"{ano}.json", dict(sorted(por_ano[ano].items(), key=lambda kv: int(kv[0]))))
+
+    feitos = falhas = 0
+    mudados: set = set()
+    with ThreadPoolExecutor(TRABALHADORES_SENADO) as ex:
+        for f in as_completed([ex.submit(buscar, m) for m in fila]):
+            try:
+                m, reg = f.result()
+            except Exception as e:
+                falhas += 1
+                if falhas <= 5:
+                    avisar(f"detalhe de matéria do Senado: {e}")
+                continue
+            por_ano.setdefault(m["ano"], {})[m["id"]] = reg
+            mudados.add(m["ano"])
+            feitos += 1
+            if feitos % 300 == 0:   # não perde o trabalho se a execução for interrompida
+                gravar(mudados)
+    gravar(mudados)
+    print(f"Detalhes de matérias do Senado salvos: {feitos}, falhas: {falhas}, no arquivo: {sum(len(x) for x in por_ano.values())}")
+
+
+def orientacoes_senado(resposta: dict) -> dict[int, dict]:
+    """/plenario/votacao/orientacaoBancada/{AAAAMMDD} -> {sequencial da votação: {partido ou bloco: orientação}}; vale a última orientação dada."""
+    saida = {}
+    for v in (resposta or {}).get("votacoes") or []:
+        if v.get("sequencialVotacao") is None:
+            continue
+        o = {}
+        for x in sorted(v.get("orientacoesLideranca") or [], key=lambda x: x.get("dataHora") or ""):
+            if (x.get("partido") or "").strip() and (x.get("voto") or "").strip():
+                o[x["partido"].strip()] = x["voto"].strip().capitalize()
+        saida[int(v["sequencialVotacao"])] = o
+    return saida
+
+
+ORCAMENTO_ORIENTACOES_SENADO = int(os.environ.get("ORIENTACOES_SENADO_POR_EXECUCAO", "300"))
+
+
+def coletar_orientacoes_senado(hoje: dt.date | None = None) -> None:
+    """Orientação de cada liderança nas votações nominais do Senado já guardadas (campo `orientacoes` em dados/senado_votacoes/<ano>.json).
+    Uma consulta por dia de sessão, só para votações ainda sem o campo; no máximo ORCAMENTO_ORIENTACOES_SENADO dias por execução, os
+    mais recentes antes. Dia recente (até 2 dias) sem orientação publicada fica sem o campo e é consultado de novo na próxima vez."""
+    hoje = hoje or dt.date.today()
+    pasta = DADOS / "senado_votacoes"
+    arquivos = {a: ler(a, {}) for a in sorted(pasta.glob("[0-9]*.json"))}
+    dias = sorted({v["data"] for mapa in arquivos.values() for v in mapa.values()
+                   if "orientacoes" not in v and (v.get("sessao") or {}).get("votacao") is not None}, reverse=True)
+    print(f"Orientações do Senado: {len(dias)} dias de votação sem orientação; consultando {min(len(dias), ORCAMENTO_ORIENTACOES_SENADO)}")
+    recente = (hoje - dt.timedelta(days=2)).isoformat()
+    lidos = {}
+    for dia in dias[:ORCAMENTO_ORIENTACOES_SENADO]:
+        try:
+            lidos[dia] = orientacoes_senado(get_senado(f"/plenario/votacao/orientacaoBancada/{dia.replace('-', '')}"))
+        except Exception as e:
+            avisar(f"orientações do Senado em {dia}: {str(e)[:200]}")
+    com = 0
+    for arq, mapa in arquivos.items():
+        mudou = False
+        for v in mapa.values():
+            if v["data"] not in lidos or "orientacoes" in v:
+                continue
+            o = lidos[v["data"]].get(int((v.get("sessao") or {}).get("votacao", -1)))
+            if o or v["data"] < recente:
+                v["orientacoes"] = o or {}
+                com += bool(o)
+                mudou = True
+        if mudou:
+            salvar(arq, mapa)
+    print(f"Orientações do Senado gravadas: {com} votações com orientação")
 
 
 # ---------------------------------------------------------------- senado: relatorias, discursos, cargos, licenças e lideranças
@@ -1702,7 +1937,7 @@ def main():
             coletar_senado()
         except Exception as e:
             avisar(f"senado: {e}")
-        for etapa in (coletar_votacoes_senado, coletar_autorias_senado, coletar_ceaps_senado, coletar_recursos_senado, coletar_aposentados_senado, coletar_ficha_senado, coletar_atividade_senado):  # complementos: cada um falha sozinho
+        for etapa in (coletar_votacoes_senado, coletar_orientacoes_senado, coletar_autorias_senado, coletar_processos_senado, coletar_ceaps_senado, coletar_recursos_senado, coletar_aposentados_senado, coletar_ficha_senado, coletar_atividade_senado):  # complementos: cada um falha sozinho
             try:
                 etapa()
             except Exception as e:

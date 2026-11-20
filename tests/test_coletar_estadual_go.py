@@ -385,8 +385,8 @@ def test_votacoes_avisa_voto_sem_deputado_em_exercicio(monkeypatch, tmp_path, ca
     monkeypatch.setattr(go, "pegar_json", lambda s, caminho, **params: linhas)
     go.coletar_votacoes(None, DEPUTADOS)
     env = go.comum.ler(tmp_path / "votacoes.json")
-    assert list(env["votacoes"]) == ["1"] and env["votacoes"]["1"]["votos"] == [["117", "Sim"]]
-    assert "votos sem deputado em exercício (1)" in capsys.readouterr().err
+    assert list(env["votacoes"]) == ["1"] and env["votacoes"]["1"]["votos"] == [["117", "Sim"], ["sem-nome", "Sim"]]
+    assert "votos ligados a Sem Nome (1)" in capsys.readouterr().err
 
 
 def test_requerimentos_grava_o_ano_e_nao_le_arquivo_existente(monkeypatch, tmp_path):

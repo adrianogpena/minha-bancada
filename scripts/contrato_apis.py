@@ -383,7 +383,38 @@ def _(ctx):
     return http_json(f"{SENADO}/processo", codigoParlamentarAutor=ctx["senador"])
 
 
-@ep("senado_ceaps", f"{SENADO_ADM}/senadores/despesas_ceaps/{{ano}}",
+MATERIA_SENADO, PROCESSO_SENADO = 176328, 9127383   # PLP 299/2026: tem relator, emendas, número na Câmara e votações com orientação
+
+
+@ep("senado_processo_detalhe", f"{SENADO}/processo/{{id}}",
+    campos("", "apelido", "tramitando", "normaGerada", "outrosNumeros", "processosRelacionados", "deliberacao", "classificacoes", "despachos", "autuacoes")
+    + campos("documento", "url", "indexacao", "autoria") + campos("documento.autoria[]", "autor", "siglaTipo", "codigoParlamentar", "siglaPartido", "uf", "ordem")
+    + campos("autuacoes[].situacoes[]", "inicio", "fim", "sigla", "descricao") + campos("autuacoes[].informesLegislativos[]", "data", "descricao", "documentosAssociados")
+    + campos("outrosNumeros[]", "casaIdentificadora", "sigla", "numero", "ano", "tramitando", "externaAoCongresso"), independente=True)
+def _(ctx):
+    return http_json(f"{SENADO}/processo/{PROCESSO_SENADO}")
+
+
+@ep("senado_relatoria_materia", f"{SENADO}/processo/relatoria?codigoMateria={{id}}",
+    campos("[]", "codigoParlamentar", "nomeParlamentar", "siglaPartidoParlamentar", "ufParlamentar", "siglaColegiado", "nomeColegiado",
+           "descricaoTipoRelator", "dataDesignacao", "dataDestituicao", "descricaoTipoEncerramento"), independente=True)
+def _(ctx):
+    return http_json(f"{SENADO}/processo/relatoria", codigoMateria=MATERIA_SENADO)
+
+
+@ep("senado_emendas", f"{SENADO}/processo/emenda?codigoMateria={{id}}",
+    campos("[]", "numero", "autoria", "dataApresentacao", "tipo", "descricaoDocumentoEmenda", "turnoApresentacao", "urlDocumentoEmenda", "decisoes"), independente=True)
+def _(ctx):
+    return http_json(f"{SENADO}/processo/emenda", codigoMateria=MATERIA_SENADO)
+
+
+@ep("senado_orientacoes", f"{SENADO}/plenario/votacao/orientacaoBancada/{{AAAAMMDD}}",
+    campos("votacoes[]", "sequencialVotacao", "orientacoesLideranca") + campos("votacoes[].orientacoesLideranca[]", "partido", "voto", "dataHora"), independente=True)
+def _(ctx):
+    return http_json(f"{SENADO}/plenario/votacao/orientacaoBancada/20261118")
+
+
+@ep("senado_ceaps",f"{SENADO_ADM}/senadores/despesas_ceaps/{{ano}}",
     campos("[]", "codSenador", "mes", "tipoDespesa", "valorReembolsado", "fornecedor", "cpfCnpj", "data"))
 def _(ctx):
     return http_json(f"{SENADO_ADM}/senadores/despesas_ceaps/{HOJE.year}")

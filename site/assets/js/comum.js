@@ -162,7 +162,7 @@ export function moldura(pagina) {
     ["Atuação", [["proposicoes.html", "Proposições", "proposicoes"], ["votacoes.html", "Votações", "votacoes"]]],
     ["historico.html", "Histórico", "historico"], ["informado.html", "Fique informado", "informado"],
     ["Dados", [["sobre.html", "Sobre os dados", "sobre"], ["mapa-dados.html", "Mapa dos dados", "mapadados"]]]];
-  const atual = { fornecedores: "camara", coautoria: "camara", deputado: "camara", votacao: "votacoes", proposicao: "proposicoes", politico: "inicio", ministro: "ministerios", fonte: "sobre" }[pagina] || pagina;
+  const atual = { fornecedores: "camara", coautoria: "camara", deputado: "camara", votacao: "votacoes", proposicao: "proposicoes", politico: "inicio", semnome: "inicio", ministro: "ministerios", fonte: "sobre" }[pagina] || pagina;
   document.body.insertAdjacentHTML("afterbegin", `
     <header class="topo"><div class="recipiente">
       <a class="marca" href="index.html"><span class="marca-icone" aria-hidden="true">${"<i></i>".repeat(9)}</span>Minha Bancada</a>

@@ -240,6 +240,8 @@ class _IndiceTse:
 POSSES = {(x["pasta"], x["nome"]): x for x in ler(Path(__file__).with_name("ministros_posse.json"), []) or []}   # posse e quem nomeou (Wikipédia), por pasta e nome do Planalto
 MANUAIS = ler(Path(__file__).with_name("ligacoes_manuais.json"), {}) or {}   # {uf: {nome da fonte, como em `chave_manual`: nome do deputado}}
 CAMPOS_NOME = ("nome", "nomeCivil")
+SEM_NOME = "sem-nome"   # id da pessoa "Sem Nome": quem uma fonte cita e não achamos (ou achamos ambíguo) no banco; página sem-nome.html
+SEM_NOME_PESSOA = "pes_sem_nome"
 _LOG: dict = defaultdict(lambda: {"nomes": {}, "ambiguos": {}, "semPar": set()})   # uf -> o que `ligar_nomes` decidiu neste processo
 
 TITULOS_UF = {
@@ -469,8 +471,8 @@ ESTRATEGIAS = {"CE": _estrategia_ce, "MS": _estrategia_ms, "MT": _estrategia_mt,
                "RJ": _estrategia_palavras, "RR": _estrategia_rr, "SC": _estrategia_sc, "SE": _estrategia_mt}
 
 
-def ligar_nomes(nomes, deputados: list[dict], uf: str | None = None) -> dict:
-    """{nome como veio da fonte: id do deputado}. Nome ambíguo ou sem par fica de fora (e entra em `ambiguos` ou `semPar` do log).
+def ligar_nomes(nomes, deputados: list[dict], uf: str | None = None, sem_nome: bool = False) -> dict:
+    """{nome como veio da fonte: id do deputado}. Com `sem_nome=True`, nome ambíguo ou sem par vale `SEM_NOME`; sem ele fica de fora (e entra em `ambiguos` ou `semPar` do log); nome em branco fica de fora. `sem_nome=True` só onde o nome é o político da ação (autor, voto): em fonte que filtra (favorecido, servidor, diária) quem não liga não é político que faltou. Sem o parâmetro, devolve só o que ligou.
     `uf` escolhe a regra em `ESTRATEGIAS` (padrão: nome ou nome civil igual, sem acento nem prefixo "DEP") e identifica o log."""
     nomes = [n for n in dict.fromkeys(nomes) if isinstance(n, str)]
     ligados, ambiguos = ESTRATEGIAS.get(uf, lambda n, d, u: _casar_exato(n, d))(nomes, deputados, uf)
@@ -487,7 +489,12 @@ def ligar_nomes(nomes, deputados: list[dict], uf: str | None = None) -> dict:
                 log["ambiguos"][n] = ambiguos[n]
             else:
                 log["semPar"].add(n)
-    return {n: i for n, (i, _, _) in ligados.items()}
+    saida = {n: i for n, (i, _, _) in ligados.items()}
+    if sem_nome:
+        for n in nomes:
+            if n.strip() and n not in saida:
+                saida[n] = SEM_NOME
+    return saida
 
 
 def ligar_doadores(doadores, fornecedores: list[dict]) -> tuple[dict, dict]:
@@ -943,6 +950,8 @@ def construir(deputados: dict, bruto: Path) -> dict:
         pessoas.append({k: v for k, v in {
             "id": pid, "nome": p["nome"], "nascimento": p["nascimento"], "genero": p["genero"], "nomes": nomes,
             "partido": atual, "fontes": fontes, "ligacao": p["ligacao"]}.items() if v})
+
+    pessoas.append({"id": SEM_NOME_PESSOA, "nome": "Sem Nome", "semNome": True})
 
     usadas = {pid for pid in seen_partido}
     linhas = []

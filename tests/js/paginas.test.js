@@ -524,7 +524,7 @@ test("paginaProposicao da Câmara monta cabeçalho, autores, leis, votações e 
     "dados/proposicao/c-2025.json": { 1: f },
     "dados/deputados.json": [{ id: "7", nome: "Rel <A>", partido: "X", uf: "SP" }],
     "dados/votacoes.json": [{ id: "v1", placar: { sim: 1 } }],
-    "dados/leis.json": { l1: { r: "Lei <1>", e: "Resumo", u: "https://lexml.exemplo", p: "https://planalto.exemplo" }, l2: { r: "Lei 2", u: "https://lexml.exemplo/2", p: "javascript:1" } },
+    "dados/leis.json": { l1: { r: "Lei <1>", e: "Resumo", u: "https://lexml.exemplo", s: "https://senado.exemplo", c: "https://camara.exemplo" }, l2: { r: "Lei 2", u: "https://lexml.exemplo/2", s: "javascript:1" } },
     "dados/tramitacao/1.json": { eventos, relator: "Último <R>", relacionadas: [["2", "PL 2/2025"]] },
     "dados/votacao/v1.json": { votos: [{ id: "7", nome: "Rel <A>", partido: "X", uf: "SP", voto: "sim" }, { nome: "Ex", partido: "Y", uf: "", voto: "nao", anterior: true }] },
   };
@@ -540,7 +540,8 @@ test("paginaProposicao da Câmara monta cabeçalho, autores, leis, votações e 
     assert.match(html, /<p class="texto-longo">Ementa oficial<\/p>/);
     assert.match(html, /Detalhada &lt;d&gt;/);
     assert.match(html, /Situação:<\/b> Em tramitação \(PLEN\)/);
-    assert.match(html, /Última tramitação:<\/b> Aprovado, em 02 de fev\. de 2025 · regime: Urgência/);
+    assert.match(html, /Situação:<\/b> Em tramitação \(PLEN\), desde 02 de fev\. de 2025/);
+    assert.match(html, /Última tramitação:<\/b> Aprovado · regime: Urgência/);
     assert.match(html, /Relator:<\/b> <a href="[^"]*">Rel &lt;A&gt;<\/a> \(X\/SP\)/);
     assert.match(html, /Temas:<\/b> Saúde, Tema &lt;2&gt;/);
     assert.match(html, /Palavras-chave:<\/b> palavra &lt;k&gt;/);
@@ -548,7 +549,9 @@ test("paginaProposicao da Câmara monta cabeçalho, autores, leis, votações e 
     assert.match(html, /Leis citadas \(2\)/);
     assert.match(html, /<b>Lei &lt;1&gt;<\/b>: Resumo/);
     assert.match(html, /Resumo ainda não coletado\./);
-    assert.equal((html.match(/>Planalto<\/a>/g) || []).length, 1);
+    assert.equal((html.match(/>Senado<\/a>/g) || []).length, 1);
+    assert.match(html, /Texto da Lei &lt;1&gt;:<\/span> <a href="https:\/\/lexml\.exemplo"[^>]*>LexML<\/a> · <a href="https:\/\/senado\.exemplo"[^>]*>Senado<\/a> · <a href="https:\/\/camara\.exemplo"[^>]*>Câmara<\/a>/);
+    assert.match(html, /2 autores, de 1 partido\./);
     assert.match(html, /Autores \(2\)/);
     assert.match(html, /autor principal/);
     assert.match(html, /Autor &lt;Externo&gt;<span class="quando texto">sem ficha no site/);
@@ -607,21 +610,76 @@ test("paginaProposicao mostra o relator da tramitação quando ele não tem fich
   });
 });
 
-test("paginaProposicao do Senado não busca a tramitação da Câmara e liga ao Senado", async () => {
+test("paginaProposicao do Senado mostra situação com data, outra Casa, relator, autores sem ficha, orientações e a vida no Senado", async () => {
+  const f = {
+    au: [{ id: "3", p: 1 }, { nome: "Dep <D>", pt: "PL", uf: "SP", tp: "DEPUTADO" }], ds: "2026-11-19", rl: "4", apl: "Ajuste <f>", cd: "77", cn: "PLP 299/2026",
+    dl: { d: "2026-11-18", t: "Aprovada pelo Plenário", p: "À Câmara dos Deputados" }, ng: { d: "Lei <N>", dt: "2026-12-01", u: "https://legis.senado.leg.br/norma/1" },
+    tm: ["Tributos: X"], pc: "A, B", tx: "https://legis.senado.leg.br/doc", v: [{ id: "9", data: "2026-11-18" }],
+  };
+  const informes = Array.from({ length: 16 }, (_, i) => [`2026-11-${String(i + 1).padStart(2, "0")} 10:00`, "PLEN", `Informe <${i}>`]);
   const respostas = {
-    "dados/proposicoes.json": [proposicao({ k: "s-5", c: "s", a: 2024 })],
-    "dados/proposicao/s-2024.json": { 5: { au: [{ id: "3" }] } },
-    "dados/senadores.json": [{ id: "3", nome: "Sen <S>", partido: "X", uf: "SP" }],
-    "dados/votacoes_senado.json": [],
+    "dados/proposicoes.json": [proposicao({ k: "s-5", c: "s", a: 2026, s: "REMETIDA" })],
+    "dados/proposicao/s-2026.json": { 5: f },
+    "dados/senadores.json": [{ id: "3", nome: "Sen <S>", partido: "X", uf: "SP" }, { id: "4", nome: "Rel <R>", partido: "MDB", uf: "AM" }],
+    "dados/votacoes_senado.json": [{ id: "9", placar: { sim: 2 }, aprovada: 1, descricao: "Nominal", orientacoes: { Governo: "Sim", "PL": "Não" } }],
+    "dados/tramitacao_senado/5.json": {
+      processo: 123, informes, situacoes: [["2026-11-11", "2026-11-19", "AGDESP", "AGUARDANDO <x>", "PLEN"], ["2026-11-19", null, "RMCD", "REMETIDA", null]],
+      relatorias: [["4", "Rel <R>", "MDB", "AM", "PLEN", "Plenário", "Relator", "2026-11-11", "2026-11-18", "Matéria deliberada"]],
+      despachos: [["2026-11-11", "Ao Plenário", ["PLEN"], false]],
+      documentos: [["2026-11-12", "Parecer", "PLEN 1", "Sen <A>", "abc-uuid"], ["2026-11-12", "Requerimento", "RQS 1", null, "https://x.exemplo/r"]],
+      emendas: [["1", "Sen <A>", "2026-11-12", "EMENDA_PARCIAL", "Art. <1>", "NORMAL", "u1", null], ["2", "Sen <A>", "2026-11-13", "EMENDA_PARCIAL", null, "SUPLEMENTAR", null, "Rejeitada"]],
+      relacionados: [["REFERENCIA", "RQS", "770", 2026]],
+    },
   };
   await comPagina({ search: "?k=s-5" }, respostas, async (dom, chamadas) => {
     await paginaProposicao();
     await esperar();
-    assert.ok(!chamadas.some((c) => c.includes("tramitacao")));
+    assert.ok(!chamadas.some((c) => c.includes("dados/tramitacao/")));
     const html = dom.el("#conteudo").innerHTML;
     assert.match(html, /<p>Senado<\/p>/);
-    assert.match(html, /Sen &lt;S&gt;/);
-    assert.match(html, /Tramitação oficial/);
+    assert.match(html, /Apelido:<\/b> “Ajuste &lt;f&gt;”/);
+    assert.match(html, /Situação:<\/b> REMETIDA, desde 19 de nov\. de 2026/);
+    assert.match(html, /Deliberação:<\/b> Aprovada pelo Plenário em 18 de nov\. de 2026; remetida à Câmara dos Deputados/);
+    assert.match(html, /Virou norma:<\/b> <a href="https:\/\/legis\.senado\.leg\.br\/norma\/1"[^>]*>Lei &lt;N&gt;<\/a>, assinada em 01 de dez\. de 2026/);
+    assert.match(html, /Na Câmara dos Deputados:<\/b> <a href="proposicao\.html\?k=c-77">PLP 299\/2026<\/a>/);
+    assert.match(html, /Relator:<\/b> <a href="[^"]*">Rel &lt;R&gt;<\/a> \(MDB\/AM\)/);
+    assert.match(html, /2 autores, de 2 partidos\./);
+    assert.match(html, /Dep &lt;D&gt;<span class="quando texto">PL\/SP · deputado\(a\)/);
+    assert.match(html, /Orientação das lideranças: Governo Sim · PL Não\./);
+    assert.match(html, /processo\?codigoMateria=5/);
+    const vida = dom.el("#vida").innerHTML;
+    assert.match(vida, /Vida do projeto \(16 movimentações\)/);
+    assert.match(vida, /Rel &lt;R&gt; \(MDB\/AM\), relator em Plenário, de 11 de nov\. de 2026 a 18 de nov\. de 2026 \(matéria deliberada\)/);
+    assert.match(vida, /Despacho:<\/b> Ao Plenário \(PLEN\), em 11 de nov\. de 2026/);
+    assert.match(vida, /Situações \(2\)/);
+    assert.match(vida, /Informe &lt;15&gt;/);
+    assert.match(vida, /Ver as 1 movimentações mais antigas/);
+    assert.match(vida, /href="https:\/\/legis\.senado\.leg\.br\/sdleg-getter\/dadosabertos\/documento\/abc-uuid"[^>]*>Parecer<\/a>/);
+    assert.match(vida, /Ver todos os 2 documentos/);
+    assert.match(vida, /Emendas \(2\)/);
+    assert.match(vida, /Quem mais apresentou: Sen &lt;A&gt; \(2\)/);
+    assert.match(vida, /Decisão:<\/b> Rejeitada/);
+    assert.match(vida, /turno suplementar/);
+    assert.match(vida, /RQS 770\/2026/);
+    assert.match(vida, /processo\/123/);
+    await dom.el("#mais-tempo").disparar("click");
+    assert.equal(dom.el("#mais-tempo").hidden, true);
+  });
+});
+
+test("paginaProposicao da Câmara liga à matéria de origem no Senado", async () => {
+  const respostas = {
+    "dados/proposicoes.json": [proposicao()],
+    "dados/proposicao/c-2025.json": { 1: { sf: "176328", au: [{ nome: "Senado Federal" }] } },
+    "dados/deputados.json": [],
+    "dados/votacoes.json": [],
+  };
+  await comPagina({ search: "?k=c-1" }, respostas, async (dom) => {
+    await paginaProposicao();
+    await esperar();
+    const html = dom.el("#conteudo").innerHTML;
+    assert.match(html, /Veio do Senado:<\/b> <a href="proposicao\.html\?k=s-176328">/);
+    assert.match(html, /data da situação não informada pela fonte/);
   });
 });
 

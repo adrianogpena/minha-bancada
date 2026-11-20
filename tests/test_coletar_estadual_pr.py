@@ -253,7 +253,7 @@ def test_votacoes_do_zip_liga_deputado_grava_pdf_como_fonte_e_deixa_sem_par_de_f
     (vid, v), = votacoes.items()
     assert vid == pr.ids.gerar_id("vot", "alep_pr", "1763|33638") and v["idMateria"] == vid
     assert v["data"] == "2026-10-05" and v["fonte"] == "https://storage2/item2.pdf" and v["fonteZip"] == "https://storage2/s.zip"
-    assert {i for i, _ in v["votos"]} <= {"arilson-maroldi-chiorato", "artagao-junior"} and v["votos"]
+    assert {i for i, _ in v["votos"]} <= {"arilson-maroldi-chiorato", "artagao-junior", "sem-nome"} and v["votos"]
     assert dict(v["votos"])["artagao-junior"] == "sim" and dict(v["votos"])["arilson-maroldi-chiorato"] == "não votou"
     assert sem_par and not sem_par & {"ARTAGAO DE MATTOS LEAO JUNIOR"}
     assert materias[vid]["tipo"] == "PRO" and materias[vid]["numero"] == 134 and materias[vid]["ano"] == 2026 and "turno" in materias[vid]["tipoDescricao"]

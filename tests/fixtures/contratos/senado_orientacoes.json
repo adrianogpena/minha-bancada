@@ -1,0 +1,278 @@
+{
+ "fonte": "https://legis.senado.leg.br/dadosabertos/plenario/votacao/orientacaoBancada/{AAAAMMDD}",
+ "capturadoEm": "2026-11-20",
+ "amostra": {
+  "votacoes": [
+   {
+    "codigoVotacaoSve": 13475,
+    "sequencialVotacao": 4431,
+    "descricaoVotacao": null,
+    "dataInicioVotacao": "2026-11-18T17:03:34",
+    "dataTerminoVotacao": "2026-11-18T17:19:36",
+    "siglaTipoMateria": "PLP",
+    "descricaoMateria": "Emenda nº 40 ao Projeto de Lei Complementar nº 299, de 2026, destacada",
+    "numeroMateria": 299,
+    "anoMateria": 2026,
+    "dispositivo": "Emenda nº 40",
+    "descricaoSessao": "Sessão Deliberativa Ordinária, às 14 horas",
+    "tipoSessao": "Deliberativa Ordinária",
+    "numeroSessao": 152,
+    "presidenteSessao": "Davi Alcolumbre",
+    "qtdVotosSim": 30,
+    "qtdVotosNao": 47,
+    "qtdVotosAbstencao": 0,
+    "qtdObstrucoes": 0,
+    "quorumInicial": 77,
+    "quorumFinal": 81,
+    "orientacoesLideranca": [
+     {
+      "dataHora": "2026-11-18T17:10:16",
+      "partido": "PSDB",
+      "voto": "SIM"
+     },
+     {
+      "dataHora": "2026-11-18T17:04:48",
+      "partido": "PSD",
+      "voto": "NÃO"
+     }
+    ],
+    "votosParlamentar": [
+     {
+      "nomeParlamentar": "Camilo Santana",
+      "partido": "PT",
+      "voto": "NÃO",
+      "uf": "CE"
+     },
+     {
+      "nomeParlamentar": "Eliziane Gama",
+      "partido": "PSD",
+      "voto": "NÃO",
+      "uf": "MA"
+     }
+    ],
+    "votosLideranca": []
+   },
+   {
+    "codigoVotacaoSve": 13481,
+    "sequencialVotacao": 4432,
+    "descricaoVotacao": null,
+    "dataInicioVotacao": "2026-11-18T17:31:50",
+    "dataTerminoVotacao": "2026-11-18T17:46:03",
+    "siglaTipoMateria": "PLP",
+    "descricaoMateria": "Art. 6º do Substitutivo ao Projeto de Lei Complementar nº 299, de 2026, destacado",
+    "numeroMateria": 299,
+    "anoMateria": 2026,
+    "dispositivo": "Art. 6º",
+    "descricaoSessao": "Sessão Deliberativa Ordinária, às 14 horas",
+    "tipoSessao": "Deliberativa Ordinária",
+    "numeroSessao": 152,
+    "presidenteSessao": "Davi Alcolumbre",
+    "qtdVotosSim": 45,
+    "qtdVotosNao": 32,
+    "qtdVotosAbstencao": 1,
+    "qtdObstrucoes": 0,
+    "quorumInicial": 81,
+    "quorumFinal": 81,
+    "orientacoesLideranca": [
+     {
+      "dataHora": "2026-11-18T17:33:35",
+      "partido": "Progressistas",
+      "voto": "NÃO"
+     },
+     {
+      "dataHora": "2026-11-18T17:37:24",
+      "partido": "Governo",
+      "voto": "SIM"
+     }
+    ],
+    "votosParlamentar": [
+     {
+      "nomeParlamentar": "Eduardo Gomes",
+      "partido": "PL",
+      "voto": "NÃO",
+      "uf": "TO"
+     },
+     {
+      "nomeParlamentar": "Romário",
+      "partido": "-",
+      "voto": "NÃO",
+      "uf": "RJ"
+     }
+    ],
+    "votosLideranca": []
+   }
+  ]
+ },
+ "forma": {
+  "votacoes": {
+   "tipos": [
+    "list"
+   ]
+  },
+  "votacoes[]": {
+   "tipos": [
+    "dict"
+   ]
+  },
+  "votacoes[].anoMateria": {
+   "tipos": [
+    "int"
+   ]
+  },
+  "votacoes[].codigoVotacaoSve": {
+   "tipos": [
+    "int"
+   ]
+  },
+  "votacoes[].dataInicioVotacao": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "votacoes[].dataTerminoVotacao": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "votacoes[].descricaoMateria": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "votacoes[].descricaoSessao": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "votacoes[].descricaoVotacao": {
+   "tipos": [
+    "null"
+   ]
+  },
+  "votacoes[].dispositivo": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "votacoes[].numeroMateria": {
+   "tipos": [
+    "int"
+   ]
+  },
+  "votacoes[].numeroSessao": {
+   "tipos": [
+    "int"
+   ]
+  },
+  "votacoes[].orientacoesLideranca": {
+   "tipos": [
+    "list"
+   ]
+  },
+  "votacoes[].orientacoesLideranca[]": {
+   "tipos": [
+    "dict"
+   ]
+  },
+  "votacoes[].orientacoesLideranca[].dataHora": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "votacoes[].orientacoesLideranca[].partido": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "votacoes[].orientacoesLideranca[].voto": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "votacoes[].presidenteSessao": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "votacoes[].qtdObstrucoes": {
+   "tipos": [
+    "int"
+   ]
+  },
+  "votacoes[].qtdVotosAbstencao": {
+   "tipos": [
+    "int"
+   ]
+  },
+  "votacoes[].qtdVotosNao": {
+   "tipos": [
+    "int"
+   ]
+  },
+  "votacoes[].qtdVotosSim": {
+   "tipos": [
+    "int"
+   ]
+  },
+  "votacoes[].quorumFinal": {
+   "tipos": [
+    "int"
+   ]
+  },
+  "votacoes[].quorumInicial": {
+   "tipos": [
+    "int"
+   ]
+  },
+  "votacoes[].sequencialVotacao": {
+   "tipos": [
+    "int"
+   ]
+  },
+  "votacoes[].siglaTipoMateria": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "votacoes[].tipoSessao": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "votacoes[].votosLideranca": {
+   "tipos": [
+    "list"
+   ]
+  },
+  "votacoes[].votosParlamentar": {
+   "tipos": [
+    "list"
+   ]
+  },
+  "votacoes[].votosParlamentar[]": {
+   "tipos": [
+    "dict"
+   ]
+  },
+  "votacoes[].votosParlamentar[].nomeParlamentar": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "votacoes[].votosParlamentar[].partido": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "votacoes[].votosParlamentar[].uf": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "votacoes[].votosParlamentar[].voto": {
+   "tipos": [
+    "str"
+   ]
+  }
+ }
+}

@@ -1,0 +1,150 @@
+{
+ "fonte": "https://legis.senado.leg.br/dadosabertos/processo/emenda?codigoMateria={id}",
+ "capturadoEm": "2026-11-20",
+ "amostra": [
+  {
+   "autoria": "Senador Alessandro Vieira (MDB/SE)",
+   "casa": "SF",
+   "codigoColegiado": 1998,
+   "dataApresentacao": "2026-11-12",
+   "decisoes": null,
+   "descricaoDocumentoEmenda": "Emenda  ao PLP 299/2026 - Redação art. 8º",
+   "id": 10352414,
+   "idCiEmenda": 7675413,
+   "idCiEmendado": 7675334,
+   "idDocumentoEmenda": 10352413,
+   "idProcesso": 9127383,
+   "identificacao": "EMENDA 1 PLEN - PLP 299/2026",
+   "nomeColegiado": "Plenário do Senado Federal",
+   "numero": "1",
+   "siglaColegiado": "PLEN",
+   "subemendas": null,
+   "tipo": "EMENDA_PARCIAL",
+   "turnoApresentacao": "NORMAL",
+   "urlDocumentoEmenda": "https://legis.senado.leg.br/sdleg-getter/dadosabertos/documento/531a5911-8467-42a5-9fd7-71e8c13c5edf"
+  },
+  {
+   "autoria": "Senador Alessandro Vieira (MDB/SE)",
+   "casa": "SF",
+   "codigoColegiado": 1998,
+   "dataApresentacao": "2026-11-12",
+   "decisoes": null,
+   "descricaoDocumentoEmenda": "Emenda  ao PLP 299/2026 - Supressão art. 14 (abertura de crédito)",
+   "id": 10352418,
+   "idCiEmenda": 7675414,
+   "idCiEmendado": 7675334,
+   "idDocumentoEmenda": 10352417,
+   "idProcesso": 9127383,
+   "identificacao": "EMENDA 2 PLEN - PLP 299/2026",
+   "nomeColegiado": "Plenário do Senado Federal",
+   "numero": "2",
+   "siglaColegiado": "PLEN",
+   "subemendas": null,
+   "tipo": "EMENDA_PARCIAL",
+   "turnoApresentacao": "NORMAL",
+   "urlDocumentoEmenda": "https://legis.senado.leg.br/sdleg-getter/dadosabertos/documento/36b39045-bc88-4200-99c1-76056d96b5c5"
+  }
+ ],
+ "forma": {
+  "[]": {
+   "tipos": [
+    "dict"
+   ]
+  },
+  "[].autoria": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "[].casa": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "[].codigoColegiado": {
+   "tipos": [
+    "int"
+   ]
+  },
+  "[].dataApresentacao": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "[].decisoes": {
+   "tipos": [
+    "null"
+   ]
+  },
+  "[].descricaoDocumentoEmenda": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "[].id": {
+   "tipos": [
+    "int"
+   ]
+  },
+  "[].idCiEmenda": {
+   "tipos": [
+    "int"
+   ]
+  },
+  "[].idCiEmendado": {
+   "tipos": [
+    "int"
+   ]
+  },
+  "[].idDocumentoEmenda": {
+   "tipos": [
+    "int"
+   ]
+  },
+  "[].idProcesso": {
+   "tipos": [
+    "int"
+   ]
+  },
+  "[].identificacao": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "[].nomeColegiado": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "[].numero": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "[].siglaColegiado": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "[].subemendas": {
+   "tipos": [
+    "null"
+   ]
+  },
+  "[].tipo": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "[].turnoApresentacao": {
+   "tipos": [
+    "str"
+   ]
+  },
+  "[].urlDocumentoEmenda": {
+   "tipos": [
+    "str"
+   ]
+  }
+ }
+}

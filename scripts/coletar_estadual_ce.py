@@ -353,8 +353,8 @@ def coletar_votacoes(s, deputados: list[dict]) -> None:
     for v, dados in resultados:
         if not dados:
             continue
-        ligacao = ligar({n for n, _, _ in dados["votos"]}, deputados)
-        sem_par |= {n for n, _, _ in dados["votos"] if n not in ligacao}
+        ligacao = ligar({n for n, _, _ in dados["votos"]}, deputados, sem_nome=True)
+        sem_par |= {n for n, _, _ in dados["votos"] if ligacao.get(n) == identidades.SEM_NOME}
         votos = [[ligacao[n], voto] for n, _, voto in dados["votos"] if n in ligacao]
         contagem = {k: int(dados["apuracao"][k]) if str(dados["apuracao"].get(k) or "").isdigit() else sum(1 for _, _, x in dados["votos"] if x == nome)
                     for k, nome in (("sim", "sim"), ("nao", "não"), ("abstencao", "abstenção"))}

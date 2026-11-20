@@ -26,7 +26,8 @@ def test_citacoes_com_data_completa():
 def test_ler_pagina_do_lexml():
     assert coletar_leis.ler_pagina(PAGINA) == {
         "ementa": "Altera a legislação do imposto de renda das pessoas físicas e dá outras providências.",
-        "planalto": "http://legislacao.planalto.gov.br/legisla/legislacao.nsf/websearch?openagent&tipo=LEI&codigo=9.250&ementa=2&data=19951226"}
+        "senado": "https://legis.senado.leg.br/norma/551126",
+        "camara": "https://www2.camara.leg.br/legin/fed/lei/1995/lei-9250-26-dezembro-1995-362566-norma-pl.html"}
 
 
 class Resp:
@@ -55,7 +56,10 @@ def test_coletar_so_consulta_lei_nova(tmp_path, monkeypatch):
     [(i, lei)] = cache.items()
     assert lei["rotulo"] == "Lei nº 9.250/1995" and lei["ementa"].startswith("Altera a legislação") and len(s.urls) == 1
     coletar_leis.coletar(tmp_path, s)
-    assert len(s.urls) == 1   # já tem ementa: não consulta de novo
+    assert len(s.urls) == 1   # já tem ementa e links: não consulta de novo
+    antiga = {i: {k: v for k, v in lei.items() if k != "links"}}   # lida antes de guardarmos os links: lê uma vez mais
+    (tmp_path / "leis.json").write_text(json.dumps(antiga), encoding="utf-8")
+    assert coletar_leis.coletar(tmp_path, s)[i]["senado"] == "https://legis.senado.leg.br/norma/551126" and len(s.urls) == 2
 
 
 def test_ficha_traz_ementa_inteira_e_leis(tmp_path):
@@ -65,11 +69,11 @@ def test_ficha_traz_ementa_inteira_e_leis(tmp_path):
                       "inteiroTeor": "https://www.camara.leg.br/x", "apensadoA": "7", "relator": "220645"}}
     lei = leis.citacoes(longa)[0]
     gerar_proposicoes.gerar(tmp_path, deps, detalhes, {}, {}, {}, [], {}, [], TIPOS_PROJETO, destino_projeto, {},
-                            {"5": ["Saúde"]}, {lei["id"]: {"ementa": "Resumo oficial", "planalto": "https://p"}})
+                            {"5": ["Saúde"]}, {lei["id"]: {"ementa": "Resumo oficial", "senado": "https://s", "camara": "https://c"}})
     lido = lambda n: json.loads((tmp_path / n).read_text(encoding="utf-8"))
     ficha = lido("proposicao/c-2026.json")["5"]
     assert ficha["em"] == longa.strip() and len(lido("proposicoes.json")[0]["e"]) == gerar_proposicoes.TAMANHO_EMENTA
     assert ficha["ed"] == "Detalhe" and ficha["tm"] == ["Saúde"] and ficha["pr"] == "7" and ficha["rl"] == "220645" and ficha["tx"] == "https://www.camara.leg.br/x"
     assert "rg" not in ficha   # regime "." é vazio na Câmara
     assert ficha["ls"] == [lei["id"]]
-    assert lido("leis.json") == {lei["id"]: {"r": "Lei nº 9.250/1995", "u": leis.url_lexml(lei["urn"]), "e": "Resumo oficial", "p": "https://p"}}
+    assert lido("leis.json") == {lei["id"]: {"r": "Lei nº 9.250/1995", "u": leis.url_lexml(lei["urn"]), "e": "Resumo oficial", "s": "https://s", "c": "https://c"}}

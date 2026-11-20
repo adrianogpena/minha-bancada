@@ -1,4 +1,5 @@
 /* Painel da eleição e mapas dos locais de votação (Leaflet). */
+import { marcarTermos } from "./glossario.js";
 import { esc, data, carregar, carregarMalha, numeroBr } from "./util.js";
 import { divulgaUrl, CODIGO_ELEITORAL_URL, ARTIGO_ELEICAO, MAJORITARIOS, linkCF, semFonte, rotuloResultado, blocoCampanha, blocoDisputa, blocoPartido, blocoAlianca, blocoOndeVotou } from "./ficha.js";
 import { TSE_CDN, fontes, UFS, COD_UF, MALHAS, SENADO_API } from "./apis.js";
@@ -64,7 +65,7 @@ export function painelEleicao(nome, e, o = {}) {
   const fontesLista = [...(o.fontes || [])];
   let corpo = "";
   if (o.suplente) {
-    corpo += `<p><b>${esc(nome)}</b> exerce o mandato como <b>${esc((o.condicao || "suplente").toLowerCase())}</b>${o.titular ? `, no lugar de <b>${esc(o.titular)}</b>` : ""}${o.desde ? `, desde ${esc(data(o.desde, true))}` : ""}.</p>`;
+    corpo += `<p><b>${esc(nome)}</b> exerce o mandato como <b>${marcarTermos(esc((o.condicao || "suplente").toLowerCase()))}</b>${o.titular ? `, no lugar de <b>${esc(o.titular)}</b>` : ""}${o.desde ? `, desde ${esc(data(o.desde, true))}` : ""}.</p>`;
     if (!o.titular) corpo += `<p>${semFonte("não sabemos quem foi substituído")}</p>`;
     if (!o.desde) corpo += `<p>${semFonte("data em que assumiu")}</p>`;
     corpo += `<p>O suplente é eleito junto com o titular, na mesma chapa, e assume quando o titular se afasta${o.titular ? `. A eleição abaixo é a da chapa de ${esc(o.titular)}` : ""}.</p>`;

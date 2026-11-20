@@ -129,3 +129,16 @@ export function significado({ texto, aprovada, tipo, contexto = {} } = {}) {
   }
   return "";
 }
+
+const SENTIDO_VOTO = {
+  "destaque-trecho": { sim: "queria manter o trecho", nao: "queria retirar o trecho" },
+  "destaque-emenda": { sim: "queria incluir a mudança da emenda", nao: "não queria a mudança" },
+  "emenda": { sim: "queria incluir a mudança da emenda", nao: "não queria a mudança" },
+  "texto-principal": { sim: "a favor do texto", nao: "contra o texto" },
+};
+
+/* O que o voto Sim ou Não quis dizer neste tipo de votação. Sem regra (ou outro voto): "". */
+export function sentidoDoVoto({ tipo, voto } = {}) {
+  const v = String(voto ?? "").toLowerCase().replace(/ã/g, "a");
+  return SENTIDO_VOTO[tipo]?.[v] || "";
+}

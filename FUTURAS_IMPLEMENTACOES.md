@@ -27,6 +27,17 @@ Revisado em 2026-11-09 contra o código, os dados em `dados/` e o `CHANGELOG.md`
 - **Perfil dos eleitos:** a bancada federal já usa a composição de hoje; Assembleias, Senado e Câmaras Municipais seguem com
   os eleitos de 2018/2022/2024 (suplentes que assumiram não entram).
 
+### 1.2 Glossário e "O que isso significou" nas demais páginas
+
+Feito: lista de proposições, votações, votos do político, ficha (partido e situação, suplente) e verbas (CEAP, CEAPS, Assembleias). Falta:
+- `historico.js` (`itemHistorico`): descrição de cada passo da tramitação; serve a lógica da linha do tempo, falta o tipo do evento.
+- `eventos.js`, `emendas.js`: situação e tipo da emenda; só `marcarTermos`.
+- `ministros.js` (`avisoLicenca`): licença e afastamento; só `marcarTermos`.
+- `assembleia.js` (normas, `situacao` das contratações) e `estadual.js` (normas, proposições): só `marcarTermos`.
+- `politico.js` (`situacao`, "Em exercício como suplente"): só `marcarTermos`.
+- Termos de cargo e verba (suplente, licença, CEAP, empenho) ainda não estão no glossário; a ligação já está feita.
+- Etapas e linha do tempo nas proposições das Assembleias: falta padronizar a situação por UF.
+
 ## Nível 3: raspagem ou chave de API
 
 ### 3.1 Recursos do deputado no portal da Câmara

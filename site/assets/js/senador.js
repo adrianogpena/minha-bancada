@@ -1,4 +1,5 @@
 /* Senador: presença, recursos e abas. */
+import { marcarTermos } from "./glossario.js";
 import { esc, reais, reaisCentavos, pct, data, carregar, numeroBr, urlSegura } from "./util.js";
 import { itemFicha, selosPar } from "./comum.js";
 import { TIPOS_PROJETO, fontes, UFS, SENADO_API, SENADO_ADM_API, linkMateriaSenado, temResultado } from "./apis.js";
@@ -28,7 +29,7 @@ function painelRecursos(rec) {
     ${rec.foraCota?.length ? `<h3>Gastos fora da cota: ${reaisCentavos(rec.totalForaCota)}</h3>
       <div class="rolagem"><table class="tabela"><thead><tr><th>Recurso</th><th>Valor</th></tr></thead><tbody>
       ${rec.foraCota.map(([r, v]) => `<tr><td>${esc(r)}</td><td>${reais(v)}</td></tr>`).join("")}</tbody></table></div>
-      <p class="vazio">Diárias, correios e material pagos pelo Senado, que não entram na cota (CEAPS).</p>` : ""}
+      <p class="vazio">${marcarTermos("Diárias, correios e material pagos pelo Senado, que não entram na cota (CEAPS).")}</p>` : ""}
     ${rec.escritorios?.length ? `<h3>Escritório${rec.escritorios.length > 1 ? "s" : ""} de apoio no estado</h3>
       <ul>${rec.escritorios.map((e) => `<li>${esc(e.endereco || e.nome || "")}${e.telefone ? ` · ${esc(e.telefone)}` : ""}</li>`).join("")}</ul>` : ""}`;
 }

@@ -1,4 +1,6 @@
 /* Lista de votações e detalhe de uma votação. */
+import { classificarVotacao, significado, rotuloResultado } from "./significado.js";
+import { marcarTermos } from "./glossario.js";
 import { $, esc, data, dataHora, semAcento, param, carregar } from "./util.js";
 import { VOTOS, selo, listaPaginada, erro, semDadosLocais, filtrosNaUrl, botaoVoltar } from "./comum.js";
 import { CAMARA_API, CADEIRAS_CAMARA, quorumCamara, fontes, SENADO_API, linkMateriaSenado, linkParlamentar } from "./apis.js";
@@ -10,6 +12,11 @@ export function barraPlacar(placar) {
     ${["sim", "nao", "abstencao", "obstrucao", "secreto", "art17", "outro", "ausente"].filter((k) => placar[k]).map((k) => `<i style="width:${(placar[k] / total) * 100}%;background:${VOTOS[k].cor}"></i>`).join("")}</div>`;
 }
 
+const significadoDe = (v) => {
+  const s = significado({ texto: v.descricao, aprovada: v.aprovada });
+  return s ? `<span class="quando">O que isso significou: ${s}</span>` : "";
+};
+
 export async function paginaVotacoes() {
   const alvo = $("#resultado");
   let lista;
@@ -17,7 +24,8 @@ export async function paginaVotacoes() {
   const render = (v) => `<li>
     <span class="quando">${data(v.data)}${v.proposicao ? `, <b>${esc(v.proposicao)}</b>` : ""}</span>
     <span class="quando">${v.aprovada === 1 ? "Aprovada" : v.aprovada === 0 ? "Rejeitada" : ""}</span>
-    <a class="texto" href="votacao.html?id=${encodeURIComponent(v.id)}">${esc(v.descricao || "Votação sem descrição")}</a>
+    <a class="texto" href="votacao.html?id=${encodeURIComponent(v.id)}">${marcarTermos(esc(v.descricao || "Votação sem descrição"))}</a>
+    ${significadoDe(v)}
     <span class="texto">${barraPlacar(v.placar)}<span class="quando">Sim ${v.placar.sim || 0}, Não ${v.placar.nao || 0}</span></span></li>`;
   const desenhar = () => {
     const b = semAcento($("#busca").value.trim());
@@ -29,6 +37,16 @@ export async function paginaVotacoes() {
 }
 
 /* ---------- detalhe de uma votação ---------- */
+function descricaoVotacao(v) {
+  const { tipo, titulo } = classificarVotacao(v.descricao);
+  const rot = rotuloResultado({ tipo, aprovada: v.aprovada, placar: v.placar });
+  const s = significado({ texto: v.descricao, aprovada: v.aprovada, tipo });
+  return `${titulo && titulo !== v.descricao ? `<h2 class="titulo-votacao">${marcarTermos(esc(titulo))}</h2>` : ""}
+      ${rot ? `<p class="resultado-votacao"><b>${marcarTermos(esc(rot))}</b></p>` : ""}
+      <p class="texto-longo">${marcarTermos(esc(v.descricao))}</p>
+      ${s ? `<p class="significado"><b>O que isso significou:</b> ${s}</p>` : ""}`;
+}
+
 export async function paginaVotacao() {
   const alvo = $("#conteudo");
   const senado = param("casa") === "senado";
@@ -59,7 +77,7 @@ export async function paginaVotacao() {
       <h1 style="max-width:none;font-size:clamp(28px,4.5vw,44px)">${esc(v.proposicao || "Votação no Plenário")}</h1>
       ${v.propId ? `<p><a href="proposicao.html?k=${senado ? "s" : "c"}-${encodeURIComponent(v.propId)}">Ver autores e outras votações desta proposição</a></p>` : ""}
       ${v.ementa ? `<p class="texto-longo"><b>Sobre o quê:</b> ${esc(v.ementa)}</p>` : ""}
-      <p class="texto-longo">${esc(v.descricao)}</p>
+      ${descricaoVotacao(v)}
     </section>
     <section class="painel">
       <div class="painel-titulo"><h2>Placar</h2><p>${v.aprovada === 1 ? "Aprovada" : v.aprovada === 0 ? "Rejeitada" : ""}</p></div>

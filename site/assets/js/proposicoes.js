@@ -1,4 +1,5 @@
 /* Busca de proposições (projetos, PECs…) e ficha de uma: autores e votações, com os políticos ligados a elas. */
+import { marcarTermos } from "./glossario.js";
 import { $, esc, data, semAcento, param, carregar, urlSegura } from "./util.js";
 import { VOTOS, selo, listaPaginada, erro, semDadosLocais, filtrosNaUrl, botaoVoltar } from "./comum.js";
 import { TIPOS_PROJETO, CAMARA_API, SENADO_API, fontes, linkTramitacao, linkMateriaSenado, linkParlamentar } from "./apis.js";
@@ -22,7 +23,7 @@ export async function paginaProposicoes() {
   $("#situacao").innerHTML = `<option value="">Todas</option>${Object.entries(DESTINOS).map(([k, v]) => `<option value="${k}">${v}</option>`).join("")}`;
   const indexada = lista.map((p) => ({ p, texto: semAcento(`${rotulo(p)} ${p.t} ${p.n} ${p.a} ${p.e} ${p.l || ""}`) }));
   const render = (p) => `<li>
-    <span class="quando">${nomeCasa(p.c)}, ${esc(p.s || "situação não consultada")}</span>
+    <span class="quando">${nomeCasa(p.c)}, ${marcarTermos(esc(p.s || "situação não consultada"))}</span>
     <a class="texto" href="proposicao.html?k=${encodeURIComponent(p.k)}"><b>${esc(rotulo(p))}</b>${p.l ? ` (“${esc(p.l)}”)` : ""}${p.e ? `: ${esc(p.e)}` : ""}</a></li>`;
   const desenhar = () => {
     const termos = semAcento($("#busca").value.trim()).split(/\s+/).filter(Boolean);

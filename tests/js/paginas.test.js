@@ -869,7 +869,7 @@ test("marcarTermos ignora acento e caixa, exige palavra inteira e sigla em caixa
   assert.equal(marcarTermos("Sem jargão aqui"), "Sem jargão aqui");
 });
 
-const { classificarVotacao, rotuloResultado, significado } = js("significado.js");
+const { classificarVotacao, rotuloResultado, significado, sentidoDoVoto } = js("significado.js");
 const semTags = (html) => html.replace(/<[^>]+>/g, "");
 
 test("significado: requerimento de urgência no Senado e na Câmara", () => {
@@ -1167,4 +1167,14 @@ test("votacoesDoDia mostra votação simbólica sem barra e agrupa a Câmara por
   assert.match(dois, /2 votações nesta sessão/);
   assert.match(dois, /votacoes\/a"/);
   assert.match(dois, /Artigo &lt;1&gt;/);
+});
+
+test("sentidoDoVoto traduz Sim e Não por tipo de votação", () => {
+  assert.equal(sentidoDoVoto({ tipo: "destaque-trecho", voto: "sim" }), "queria manter o trecho");
+  assert.equal(sentidoDoVoto({ tipo: "destaque-trecho", voto: "nao" }), "queria retirar o trecho");
+  assert.equal(sentidoDoVoto({ tipo: "emenda", voto: "sim" }), "queria incluir a mudança da emenda");
+  assert.equal(sentidoDoVoto({ tipo: "destaque-emenda", voto: "nao" }), "não queria a mudança");
+  assert.equal(sentidoDoVoto({ tipo: "texto-principal", voto: "sim" }), "a favor do texto");
+  assert.equal(sentidoDoVoto({ tipo: "requerimento", voto: "sim" }), "");
+  assert.equal(sentidoDoVoto({ tipo: "destaque-trecho", voto: "abstencao" }), "");
 });

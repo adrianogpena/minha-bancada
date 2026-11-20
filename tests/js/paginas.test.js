@@ -869,3 +869,74 @@ test("marcarTermos ignora acento e caixa, exige palavra inteira e sigla em caixa
   assert.doesNotMatch(marcarTermos("situação rmcd"), /termo/);
   assert.equal(marcarTermos("Sem jargão aqui"), "Sem jargão aqui");
 });
+
+const { classificarVotacao, rotuloResultado, significado } = js("significado.js");
+const semTags = (html) => html.replace(/<[^>]+>/g, "");
+
+test("significado: requerimento de urgência no Senado e na Câmara", () => {
+  const t = "Votação nominal do Requerimento n° 770, de 2026, de Líderes.";
+  const c = classificarVotacao(t);
+  assert.equal(c.tipo, "requerimento");
+  assert.equal(c.titulo, "Requerimento nº 770/2026, de Líderes");
+  assert.equal(semTags(significado({ texto: t, aprovada: 1, tipo: c.tipo, contexto: { assunto: "urgência" } })), "o projeto passou a tramitar com urgência.");
+  assert.equal(significado({ texto: t, aprovada: 1, tipo: c.tipo }), "");
+  const cam = "Aprovado o Requerimento de Urgência (Art. 155 do RICD). Sim: 320; Não: 67; Abstenção: 1; Total: 388.";
+  assert.equal(classificarVotacao(cam).tipo, "requerimento");
+  assert.equal(semTags(significado({ texto: cam, aprovada: 1 })), "o projeto passou a tramitar com urgência.");
+});
+
+test("significado: texto do relator com destaques ressalvados", () => {
+  const t = "Votação nominal da Emenda nº 75 (Substitutivo) ao PLP nº 299/2026, nos termos do parecer, ressalvados os destaques.";
+  const c = classificarVotacao(t);
+  assert.equal(c.tipo, "texto-principal");
+  assert.equal(c.titulo, "Texto do relator (substitutivo, Emenda nº 75), exceto os trechos destacados");
+  assert.equal(semTags(significado({ texto: t, aprovada: 1 })), "o substitutivo passou a ser o texto do projeto; o texto original e as outras emendas ficaram prejudicados. Os trechos destacados ficaram para votação separada (ressalvados os destaques).");
+  const cam = "Aprovada a Subemenda Substitutiva Global ao Projeto de Lei Complementar nº 186, de 2026, adotada pelo relator da Comissão de Indústria, Comércio e Serviços, ressalvados os destaques. Sim: 461; Não: 4;";
+  assert.equal(classificarVotacao(cam).tipo, "texto-principal");
+  assert.match(semTags(significado({ texto: cam, aprovada: 1 })), /^a subemenda substitutiva passou a ser o texto do projeto/);
+});
+
+test("significado: destaque de emenda e emenda", () => {
+  const t = "Votação nominal da Emenda nº 40 ao Projeto de Lei Complementar nº 299, de 2026, destacada.";
+  const c = classificarVotacao(t);
+  assert.deepEqual(c, { tipo: "destaque-emenda", titulo: "Emenda nº 40" });
+  assert.equal(semTags(significado({ texto: t, aprovada: 0, tipo: c.tipo })), "a mudança proposta pela emenda não entrou no texto.");
+  assert.equal(rotuloResultado({ tipo: c.tipo, aprovada: 0, placar: { sim: 30, nao: 47 } }), "Rejeitada por 47 a 30");
+  const cam = "Rejeitada a Emenda de Plenário nº 1. Sim: 105; Não: 233; Total: 338.";
+  assert.equal(classificarVotacao(cam).tipo, "emenda");
+  assert.equal(semTags(significado({ texto: cam, aprovada: 0 })), "a mudança proposta pela emenda não entrou no texto.");
+});
+
+test("significado: destaque de trecho", () => {
+  const t4 = "Votação nominal do Art. 6º do Substitutivo ao Projeto de Lei Complementar nº 299, de 2026, destacado.";
+  const c4 = classificarVotacao(t4);
+  assert.deepEqual(c4, { tipo: "destaque-trecho", titulo: "Art. 6º do substitutivo" });
+  assert.equal(semTags(significado({ texto: t4, aprovada: 1 })), "o trecho continua no texto.");
+  assert.equal(semTags(significado({ texto: t4, aprovada: 0 })), "o trecho saiu do texto.");
+  assert.equal(rotuloResultado({ tipo: c4.tipo, aprovada: 1, placar: { sim: 45, nao: 32 } }), "Mantido por 45 a 32");
+  const t5 = "Votação nominal do Art. 6º-F da Lei Complementar nº 200, de 2023, constante do art. 1º do Substitutivo ao PLP nº 299/2026, destacado.";
+  assert.deepEqual(classificarVotacao(t5), { tipo: "destaque-trecho", titulo: "Art. 6º-F da Lei Complementar nº 200/2023, como fica pelo art. 1º do substitutivo" });
+  assert.equal(semTags(significado({ texto: t5, aprovada: 1 })), "o trecho continua no texto.");
+});
+
+test("significado: turno suplementar", () => {
+  const t = "Votação nominal das Emendas, subemenda e adequações redacionais do Relator, em turno suplementar, nos termos do parecer.";
+  const c = classificarVotacao(t);
+  assert.deepEqual(c, { tipo: "turno-suplementar", titulo: "Ajustes finais do relator no turno suplementar (emendas, subemenda e correções de redação)" });
+  assert.equal(semTags(significado({ texto: t, aprovada: 1 })), "os ajustes do relator entraram no texto e o turno suplementar terminou.");
+  assert.equal(rotuloResultado({ tipo: c.tipo, aprovada: 1, placar: { sim: 69, nao: 2 } }), "Aprovados por 69 a 2");
+  assert.equal(rotuloResultado({ tipo: c.tipo, aprovada: 1, placar: {} }), "");
+  assert.equal(rotuloResultado({ tipo: c.tipo, aprovada: null, placar: { sim: 1, nao: 2 } }), "");
+});
+
+test("significado: sem regra devolve vazio e o texto oficial", () => {
+  const t = "Votação nominal do Projeto de Resolução nº 12";
+  assert.deepEqual(classificarVotacao(t), { tipo: "outro", titulo: t });
+  assert.equal(significado({ texto: t, aprovada: 1 }), "");
+});
+
+test("significado: eventos da linha do tempo", () => {
+  assert.equal(semTags(significado({ texto: "REMETIDA À CÂMARA DOS DEPUTADOS", tipo: "evento" })), "o Senado terminou a sua parte; agora a Câmara, como Casa revisora, analisa o texto.");
+  assert.match(semTags(significado({ texto: "ARQUIVADA AO FINAL DA LEGISLATURA", tipo: "evento" })), /fim da legislatura e deixou de tramitar/);
+  assert.equal(significado({ texto: "Recebido o ofício", tipo: "evento" }), "");
+});

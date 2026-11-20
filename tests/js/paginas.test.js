@@ -1093,13 +1093,13 @@ test("situações: toda combinação (casa, tipo, situação) do índice cai num
 });
 
 test("etapas: situação que nenhuma etapa reconhece não aponta etapa e a faixa não aparece", () => {
-  const e = estadoProposicao({ tipo: "PL", senado: false, p: { k: "c-3", t: "PL", s: "Aguardando Criação de Comissão Temporária" }, f: {} });
+  const e = estadoProposicao({ tipo: "PL", senado: false, p: { k: "c-3", t: "PL", s: "Aguardando Definição Encaminhamento" }, f: {} });
   assert.equal(e.identificada, false);
   assert.equal(faixaEtapas(e), "");
   assert.equal(e.frase, "");
   assert.deepEqual(e.proximos, []);
-  assert.equal(e.crua.texto, "Aguardando Criação de Comissão Temporária");
-  assert.match(blocoEstado(e), /Situação na fonte:<\/b> Aguardando Criação de Comissão Temporária/);
+  assert.equal(e.crua.texto, "Aguardando Definição Encaminhamento");
+  assert.match(blocoEstado(e), /Situação na fonte:<\/b> Aguardando Definição Encaminhamento/);
 });
 
 test("linha do tempo: PLP 299 no Senado agrupa por dia, resume as emendas e põe as votações nos dias", () => {

@@ -34,9 +34,10 @@ MAX_VOTACOES = 30
 
 
 def _item(casa: str, p: dict, destino) -> dict:
-    """Linha do índice: chave, tipo, número, ano, ementa curta, situação e destino (aprovada, rejeitada, tramitando, sem)."""
+    """Linha do índice: chave, tipo, número, ano, ementa curta, situação (nome e, na Câmara, o código) e destino (aprovada, rejeitada, tramitando, sem)."""
     return {"k": f"{casa}-{p['id']}", "c": casa, "t": p["tipo"], "n": p["numero"], "a": p["ano"],
-            "e": (p.get("ementa") or "").strip()[:TAMANHO_EMENTA], "s": p.get("situacao"), "d": destino(p.get("situacao"), bool(p.get("tramitacao") or p.get("dataSituacao")))}
+            "e": (p.get("ementa") or "").strip()[:TAMANHO_EMENTA], "s": p.get("situacao"), **({"sc": str(p["codSituacao"])} if p.get("codSituacao") else {}),
+            "d": destino(p.get("situacao"), bool(p.get("tramitacao") or p.get("dataSituacao")))}
 
 
 def _sem_vazios(d: dict) -> dict:
@@ -158,7 +159,7 @@ def gerar(saida, deputados: dict, detalhes: dict, autorias: dict, votacoes_proje
     for did, d in deputados.items():
         for p in d["proposicoes"]:
             if p.get("tipo") in tipos:
-                por_id.setdefault(p["id"], {**p, **{c: v for c, v in (detalhes.get(str(p["id"])) or {}).items() if c in ("situacao", "orgao", "dataApresentacao")}})
+                por_id.setdefault(p["id"], {**p, **{c: v for c, v in (detalhes.get(str(p["id"])) or {}).items() if c in ("situacao", "codSituacao", "orgao", "dataApresentacao")}})
                 donos[p["id"]].append(str(did))
     for pid, p in por_id.items():
         aut = autorias.get(str(pid)) or {}
@@ -186,7 +187,7 @@ def gerar(saida, deputados: dict, detalhes: dict, autorias: dict, votacoes_proje
     conhecidas = {str(i) for i in por_id}
     for pid, det in detalhes.items():
         if det.get("tipo") in tipos and pid not in conhecidas:
-            p = {"id": pid, **{c: det.get(c) for c in ("tipo", "numero", "ano", "ementa", "situacao", "tramitacao", "dataSituacao")}}
+            p = {"id": pid, **{c: det.get(c) for c in ("tipo", "numero", "ano", "ementa", "situacao", "codSituacao", "tramitacao", "dataSituacao")}}
             indice.append(_item("c", p, destino))
             # autores fora da legislatura (ou o Senado, no projeto que veio de lá): só o nome, como a Câmara registra
             autores = [_sem_ficha({"nome": nome}, (resto[0] if resto else "Deputado" if i is not None else None)) for i, nome, *resto in (autorias.get(pid) or {}).get("autores", [])]

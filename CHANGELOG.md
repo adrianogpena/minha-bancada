@@ -5,6 +5,11 @@ Regra: toda fonte nova ou mudança de coleta ganha uma entrada aqui, no mesmo co
 Datas dos conjuntos que já existiam vêm do primeiro commit que os trouxe (`git log --diff-filter=A`).
 Todas as coletas rodam sozinhas no GitHub Actions (`.github/workflows/atualizar.yml`, todo dia às 05:00 de Brasília), salvo onde indicado.
 
+## Código da situação da Câmara no índice de proposições (2026-11-20)
+
+Sem host novo: o mesmo `https://dadosabertos.camara.leg.br/api/v2/proposicoes/{id}` (já em `ENDPOINTS.md`, `camara_proposicao`). O coletor de detalhes (`coletar.py`, `coletar_detalhes_proposicoes`) passa a guardar `codSituacao` e `codTipoTramitacao` de `statusProposicao` em `dados/proposicoes_detalhe.json`, e `gerar_proposicoes.py` emite o código da situação no índice como `sc` (só quando existe). Entradas gravadas antes não têm a chave `codSituacao`: entram na fila depois dos novos e dos a renovar, as mais antigas primeiro, dentro do orçamento diário de detalhes (`DETALHES_POR_EXECUCAO`, 4000), então o índice se completa em alguns dias. Senado: o endpoint `/processo` (lista) só traz o texto da situação (`situacaoAtual`), sem sigla; a sigla existe só no detalhe da ficha (`situacoes[i][2]`), e o reconhecimento de etapa do Senado segue pelo nome. A amostra `camara_proposicao` já tinha os dois campos, sem nova gravação.
+- **Etapas:** `etapas.js` reconhece mais nomes inteiros de situação, conferidos nas listas oficiais e nos artigos citados em `docs/regras-tramitacao.md` (seção "Nomes de situação reconhecidos"): Câmara 901, 902, 911, 1170, 1296 e 1297 (comissões; RICD arts. 33, 34 e 41 VI) e Senado ARQV_CD (arquivado). `docs/regras-tramitacao.md`: "Como reconhecer" alinhado com os nomes da lista oficial, e itens "não conferido" atualizados (RICD art. 202 §8, RISF arts. 367, 368 e 372; volume 2 do RISF é só a lista de normas).
+
 ## Regras de tramitação conferidas nos textos oficiais (2026-11-20)
 
 Sem coleta nova e sem host consultado pelo código: `docs/regras-tramitacao.md`, `site/assets/js/etapas.js` e amostras em `tests/fixtures/contratos/`.

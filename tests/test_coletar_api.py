@@ -258,7 +258,7 @@ def test_detalhes_proposicoes_prioriza_novas_e_marca_situacao_final(dados, monke
     resp = {
         "/proposicoes/10": {"dados": {"dataApresentacao": "2025-01-02T10:00", "ementaDetalhada": " det ", "keywords": "a, b",
                                        "urlInteiroTeor": "http://pdf",
-                                       "statusProposicao": {"descricaoSituacao": "Arquivada", "descricaoTramitacao": "Arquivamento",
+                                       "statusProposicao": {"descricaoSituacao": "Arquivada", "codSituacao": 923, "codTipoTramitacao": "502", "descricaoTramitacao": "Arquivamento",
                                                             "despacho": " Arquive-se ", "siglaOrgao": "MESA", "dataHora": "2025-02-03T09:00", "regime": "Ordinário",
                                                             "uriUltimoRelator": "https://dadosabertos.camara.leg.br/api/v2/deputados/220645"}}},
         "/proposicoes/12": {"dados": {"dataApresentacao": "2025-03-04", "statusProposicao": {"descricaoSituacao": "Aguardando Parecer"}}},
@@ -270,13 +270,14 @@ def test_detalhes_proposicoes_prioriza_novas_e_marca_situacao_final(dados, monke
     assert cache["10"]["finalizada"] is True and cache["10"]["situacao"] == "Arquivada"
     assert cache["10"]["dataApresentacao"] == "2025-01-02" and cache["10"]["dataSituacao"] == "2025-02-03"
     assert cache["10"]["despacho"] == "Arquive-se" and cache["10"]["ementaDetalhada"] == "det"
+    assert cache["10"]["codSituacao"] == 923 and cache["10"]["codTipoTramitacao"] == "502" and cache["12"]["codSituacao"] is None
     assert cache["12"]["finalizada"] is False and cache["12"]["despacho"] is None
     assert cache["10"]["relator"] == "220645" and cache["12"]["relator"] is None
 
 
 def test_detalhes_proposicoes_busca_o_principal_dos_apensados(dados, monkeypatch):
     coletar.salvar(dados / "proposicoes" / "1.json", {"itens": [{"id": 10, "siglaTipo": "PL"}]})
-    coletar.salvar(dados / "proposicoes_detalhe.json", {"10": {"situacao": "Tramitando em Conjunto", "apensadoA": "346155",
+    coletar.salvar(dados / "proposicoes_detalhe.json", {"10": {"situacao": "Tramitando em Conjunto", "codSituacao": 930, "apensadoA": "346155",
                                                               "consultadoEm": dt.date.today().isoformat()}})
     monkeypatch.setattr(coletar, "ORCAMENTO_DETALHES", 10)
     chamadas = roteador(monkeypatch, {"/proposicoes/346155": {"dados": {"siglaTipo": "PL", "numero": 580, "ano": 2007, "ementa": " Principal ",
@@ -293,10 +294,20 @@ def test_detalhes_proposicoes_respeita_orcamento_e_renova_so_o_que_tramita(dados
     hoje = dt.date.today()
     velho = (hoje - dt.timedelta(days=30)).isoformat()
     coletar.salvar(dados / "proposicoes" / "1.json", {"itens": [{"id": i, "siglaTipo": "PL"} for i in (1, 2, 3)]})
-    coletar.salvar(dados / "proposicoes_detalhe.json", {"1": {"consultadoEm": velho, "finalizada": True}, "2": {"consultadoEm": velho, "finalizada": False}, "3": {"consultadoEm": hoje.isoformat(), "finalizada": False}})
+    coletar.salvar(dados / "proposicoes_detalhe.json", {"1": {"consultadoEm": velho, "finalizada": True, "codSituacao": None}, "2": {"consultadoEm": velho, "finalizada": False, "codSituacao": None}, "3": {"consultadoEm": hoje.isoformat(), "finalizada": False, "codSituacao": None}})
     chamadas = roteador(monkeypatch, {"/proposicoes/2": {"dados": {"statusProposicao": {"descricaoSituacao": "Em tramitação"}}}})
     coletar.coletar_detalhes_proposicoes()
     assert [c[0] for c in chamadas] == ["/proposicoes/2"]  # 1 é final, 3 é recente
+
+
+def test_detalhes_proposicoes_rele_o_que_foi_gravado_sem_o_codigo_da_situacao(dados, monkeypatch):
+    hoje = dt.date.today().isoformat()
+    coletar.salvar(dados / "proposicoes" / "1.json", {"itens": [{"id": i, "siglaTipo": "PL"} for i in (1, 2)]})
+    coletar.salvar(dados / "proposicoes_detalhe.json", {"1": {"consultadoEm": hoje, "finalizada": True}, "2": {"consultadoEm": hoje, "finalizada": False, "codSituacao": 930}})
+    chamadas = roteador(monkeypatch, {"/proposicoes/1": {"dados": {"statusProposicao": {"descricaoSituacao": "Arquivada", "codSituacao": 923}}}})
+    coletar.coletar_detalhes_proposicoes()
+    assert [c[0] for c in chamadas] == ["/proposicoes/1"]
+    assert json.loads((dados / "proposicoes_detalhe.json").read_text())["1"]["codSituacao"] == 923
 
 
 def test_detalhes_proposicoes_erro_individual_nao_perde_o_resto(dados, monkeypatch):

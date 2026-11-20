@@ -40,3 +40,12 @@ def test_principal_de_apensado_sem_autor_na_legislatura_entra_no_indice(tmp_path
     indice = {i["k"]: i for i in json.loads((tmp_path / "proposicoes.json").read_text(encoding="utf-8"))}
     assert indice["c-346155"]["n"] == 580 and indice["c-346155"]["d"] == "tramitando" and "c-99" not in indice
     assert json.loads((tmp_path / "proposicao/c-2007.json").read_text(encoding="utf-8"))["346155"] == {"o": "CCJC", "tr": "Notificações", "ds": "2025-08-22", "rl": "220645"}
+
+
+def test_item_do_indice_leva_o_codigo_da_situacao_so_quando_existe():
+    import gerar_proposicoes as gp
+    base = {"id": 1, "tipo": "PL", "numero": 2, "ano": 2026, "ementa": "x", "situacao": "Arquivada"}
+    destino = lambda s, t: "sem"
+    assert gp._item("c", {**base, "codSituacao": 923}, destino)["sc"] == "923"
+    assert "sc" not in gp._item("c", base, destino)
+    assert "sc" not in gp._item("c", {**base, "codSituacao": None}, destino)

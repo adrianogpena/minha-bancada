@@ -25,13 +25,13 @@ Projeto de lei ordinária (PL) e projeto de lei complementar (PLP). Iniciativa: 
 
 #### `apresentado` — Apresentado
 Projeto protocolado, ainda sem relator ou sem despacho às comissões.
-- **Como reconhecer.** Senado: situação AGUARDANDO DESPACHO, AGUARDANDO RECEBIMENTO DE EMENDAS, AGUARDANDO DESIGNAÇÃO DO RELATOR sem nenhum `despachos` ainda; ou primeira entrada de `situacoes`. Câmara: `p.s` "Aguardando Despacho do Presidente da Câmara dos Deputados" (inclui "(Chancela)"), "Aguardando Encaminhamento", ou `eventos` só com o tipo de apresentação.
+- **Como reconhecer.** Senado: situação da classe `abertura` (tabela "Nomes de situação reconhecidos") sem nenhum `despachos` ainda; ou primeira entrada de `situacoes`. Câmara: `p.s` da classe `abertura` (inclui "(Chancela)"), ou `eventos` só com o tipo de apresentação.
 - **O que pode acontecer depois.** Receber despacho às comissões (`comissoes`), ir direto ao plenário (`plenario-origem`, com urgência ou despacho "Ao Plenário"), ser retirado pelo autor ou arquivado (`arquivado`).
 - **O que ainda falta.** "Ainda não é lei. O projeto foi apresentado e aguarda o despacho que define por quais comissões ou plenário ele passa."
 
 #### `comissoes` — Comissões
 Análise do mérito e da constitucionalidade nas comissões da Casa de origem.
-- **Como reconhecer.** Senado: `despachos[i][1]` = "Análise" com `destinos[]` de comissões; situações MATÉRIA DESPACHADA, MATÉRIA COM A RELATORIA, INCLUÍDA NA PAUTA DA REUNIÃO, PRONTA PARA A PAUTA NA COMISSÃO, APROVADO PARECER NA COMISSÃO, PEDIDO DE VISTA CONCEDIDO, AGUARDANDO AUDIÊNCIA PÚBLICA. "Tramitação Conjunta" indica projeto apensado a outro. Câmara: `p.s` "Aguardando Designação de Relator(a)", "Aguardando Parecer", "Pronta para Pauta", "Tramitando em Conjunto"; `eventos[i][1]` com sigla de comissão (CCJC, CFT e semelhantes).
+- **Como reconhecer.** Senado: `despachos[i][1]` = "Análise" com `destinos[]` de comissões; situação da classe `comissao`. "Tramitação Conjunta" indica projeto apensado a outro. Câmara: `p.s` da classe `comissao` (inclui "Tramitando em Conjunto"); `eventos[i][1]` com sigla de comissão (CCJC, CFT e semelhantes).
 - **Etapa pulada.** Se o despacho for direto ao Plenário (provimento "Ao Plenário" no Senado) ou houver urgência aprovada antes do parecer, a etapa aparece como pulada (tracejada).
 - **O que pode acontecer depois.** Parecer aprovado e ida ao Plenário (`plenario-origem`); decisão terminativa (Senado) ou conclusiva (Câmara) que dispensa o Plenário, nos limites abaixo; rejeição que arquiva; requerimento de urgência que leva ao Plenário (no Senado, pode incluir em Ordem do Dia matéria pendente de parecer, RISF art. 336 III; na Câmara a urgência não dispensa os pareceres das Comissões ou de Relator designado, RICD art. 152 §1º II).
 - **Quando a comissão decide sozinha.** Senado (RISF art. 91 I): só projeto de lei ordinária de autoria de Senador, ressalvado projeto de código; para as demais matérias do §1º depende de o Presidente do Senado, ouvidas as lideranças, conferir a competência. **PLP e PL vindo da Câmara não estão entre os casos do art. 91 I.** Câmara (RICD art. 24 II): só projeto de lei, exceto os de lei complementar, de código, de iniciativa popular, de Comissão, os de matéria que não possa ser delegada (CF art. 68 §1º), os oriundos do Senado ou por ele emendados que tenham sido aprovados pelo Plenário de qualquer das Casas, os que tenham recebido pareceres divergentes e os em regime de urgência. **PLP nunca é conclusivo na Câmara.**
@@ -40,25 +40,25 @@ Análise do mérito e da constitucionalidade nas comissões da Casa de origem.
 
 #### `plenario-origem` — Plenário da Casa de origem
 Votação em Plenário (turno único) na Casa onde o projeto foi apresentado.
-- **Como reconhecer.** Senado: situação PRONTO PARA DELIBERAÇÃO DO PLENÁRIO, INCLUÍDA EM ORDEM DO DIA, APROVADA; na ficha `dl.p` = Plenário e `dl.d` com a data. Câmara: `p.s` "Pronta para Pauta" com órgão PLEN em `eventos`; `eventos[i][3]` com aprovação no Plenário (descrição contendo "Aprovad" e órgão PLEN) (não conferido).
+- **Como reconhecer.** Senado: situação da classe `plenario`; na ficha `dl.p` = Plenário e `dl.d` com a data. Câmara: nenhum nome de situação da classe `plenario` existe na lista oficial; vale `eventos[i][3]` com aprovação no Plenário (descrição contendo "Aprovad" e órgão PLEN) (não conferido). "Pronta para Pauta" é da classe `comissao`, mesmo com órgão PLEN.
 - **O que pode acontecer depois.** Aprovado: vai à Casa revisora (`casa-revisora`); aprovado na Casa iniciadora em decisão terminativa/conclusiva e sem recurso, segue conforme a regra do tipo (Senado: REMETIDA À CÂMARA DOS DEPUTADOS; Câmara: remessa ao Senado). Rejeitado: `arquivado`. Retirado: `arquivado`.
 - **O que ainda falta.** "Ainda não é lei. O Plenário vota; se aprovar, o texto vai à outra Casa para ser revisto."
 
 #### `casa-revisora` — Casa revisora
 A outra Casa analisa o texto: comissões e Plenário. Recebe número novo (`cn/cd/cdx` quando o projeto é do Senado e foi à Câmara).
-- **Como reconhecer.** Senado como origem: situação REMETIDA À CÂMARA DOS DEPUTADOS (em `situacoes[i][3]`), e `cn/cd/cdx` com o número na Câmara; em seguida os `eventos` da Câmara do projeto de mesmo `cn`. Câmara como origem: `p.s` "Aguardando Apreciação pelo Senado Federal" (não conferido) e, na ficha, `sf` preenchido (a matéria veio do Senado). Senado como revisora: matéria com `sf`/origem da Câmara e despacho do Senado.
+- **Como reconhecer.** Senado como origem: situação REMETIDA À CÂMARA DOS DEPUTADOS (RMCD, classe `outra-casa`; em `situacoes[i][3]`), e `cn/cd/cdx` com o número na Câmara; em seguida os `eventos` da Câmara do projeto de mesmo `cn`. Câmara como origem: `p.s` "Aguardando Apreciação pelo Senado Federal" (código 926, classe `outra-casa`) e, na ficha, `sf` preenchido (a matéria veio do Senado). Senado como revisora: matéria com `sf`/origem da Câmara e despacho do Senado.
 - **O que pode acontecer depois.** Aprovar sem mudar (`sancao-veto`); aprovar com mudanças (emendas ou substitutivo), e então volta à Casa de origem (`retorno-origem`); rejeitar (`arquivado`).
 - **O que ainda falta.** "Ainda não é lei. A [Casa revisora], como Casa revisora, pode aprovar, mudar ou rejeitar o texto; se mudar, ele volta à Casa de origem. Depois vai à sanção."
 
 #### `retorno-origem` — Volta à Casa de origem
 Só ocorre quando a Casa revisora alterou o texto. "Sendo o projeto emendado, voltará à Casa iniciadora" (CF art. 65, parágrafo único). O que a Casa de origem pode fazer com as mudanças (aceitar ou rejeitar cada uma, vedado texto novo) vem do regimento e não foi conferido nesta base.
-- **Como reconhecer.** Senado: situação que indica retorno de substitutivo ou emendas da Câmara (APRECIAÇÃO DE EMENDAS/SUBSTITUTIVO DA CÂMARA, não conferido) depois de REMETIDA À CÂMARA DOS DEPUTADOS. Câmara: `eventos` posteriores ao envio com órgão PLEN e tipo de apreciação de emendas do Senado (não conferido). Não reconhecível com os dados atuais quando a fonte não distingue o retorno.
+- **Como reconhecer.** Nenhum nome da lista oficial de situações indica o retorno: as situações "APROVADA(S) EMENDA(S) DO SENADO FEDERAL" e "REJEITADA(S) EMENDA(S) DO SENADO FEDERAL" (Senado), "Aguardando despacho de Emenda" e "Aguardando despacho de Substitutivo" (Câmara) existem na lista, mas não há texto oficial lido que as ligue a esta etapa (não conferido); por isso a etapa não é reconhecida pela situação. Câmara: `eventos` posteriores ao envio com órgão PLEN e tipo de apreciação de emendas do Senado (não conferido). Não reconhecível com os dados atuais quando a fonte não distingue o retorno.
 - **O que pode acontecer depois.** Concluída a votação, a Casa enviará o projeto ao Presidente da República (CF art. 66, caput): `sancao-veto`. O efeito de rejeitar as mudanças da revisora não foi conferido.
 - **O que ainda falta.** "Ainda não é lei. O texto foi mudado na outra Casa e voltou para a Casa de origem decidir sobre as mudanças. Depois vai à sanção."
 
 #### `sancao-veto` — Sanção ou veto
 O Presidente da República tem 15 dias úteis para sancionar ou vetar (CF art. 66).
-- **Como reconhecer.** Senado: situação REMETIDA À SANÇÃO; `dl` mais recente. Câmara: `p.s` "Aguardando Sanção" (não conferido) ou evento de remessa à sanção em `eventos`. Veto total ou parcial: informe/evento com "Veto" no texto (campo de texto de `informes` ou `eventos[i][4]`) (não conferido).
+- **Como reconhecer.** Senado: situação REMETIDA À SANÇÃO (RMSAN, classe `sancao`); `dl` mais recente. Câmara: `p.s` "Aguardando Sanção" (código 1150, classe `sancao`) ou evento de remessa à sanção em `eventos`. Veto total ou parcial: situações VETADA, VETO DELIBERADO PELO PLENÁRIO, VETO DERRUBADO (Senado) e "Vetado totalmente", "Aguardando Apreciação do Veto" (Câmara), da classe `veto`; informe/evento com "Veto" no texto (campo de texto de `informes` ou `eventos[i][4]`) (não conferido).
 - **O que pode acontecer depois.** Sancionado: `lei` (a sanção expressa ou o silêncio depois dos 15 dias, CF art. 66 §3). Vetado, total ou parcialmente: `veto-congresso`; o Presidente comunica os motivos ao Presidente do Senado em 48 horas (§1º) e o veto parcial só abrange texto integral de artigo, parágrafo, inciso ou alínea (§2º). Nos casos de sanção tácita e de veto derrubado, se a lei não for promulgada em 48 horas pelo Presidente da República, o Presidente do Senado a promulga e, se este não o fizer em igual prazo, o Vice-Presidente do Senado (§7º).
 - **O que ainda falta.** "Ainda não é lei. O Presidente da República decide em até 15 dias úteis se sanciona ou veta."
 
@@ -69,13 +69,13 @@ Sessão conjunta do Congresso aprecia o veto em até 30 dias a contar do recebim
 - **O que ainda falta.** "O veto aguarda a sessão do Congresso, que pode derrubá-lo ou mantê-lo."
 
 #### `lei` — Lei
-- **Como reconhecer.** Senado: situação TRANSFORMADA EM NORMA JURÍDICA e/ou campo `ng` (norma gerada) preenchido. Câmara: `p.s` "Transformada em Norma Jurídica" e `ng`.
+- **Como reconhecer.** Senado: situação TRANSFORMADA EM NORMA JURÍDICA (ou "... COM VETO PARCIAL") e/ou campo `ng` (norma gerada) preenchido. Câmara: `p.s` "Transformado em Norma Jurídica" e `ng`.
 - **O que pode acontecer depois.** Nada no processo legislativo; a lei pode ser alterada por novo projeto.
 - **O que ainda falta.** "Já é lei: [ng]."
 
 #### `arquivado` — Arquivado
 Etapa de parada, mostrada em vermelho na etapa onde parou.
-- **Como reconhecer.** Senado: situação RETIRADA PELO AUTOR, PREJUDICADA, ARQUIVADA AO FINAL DA LEGISLATURA, ou rejeição em `dl`. Câmara: `p.s` "Arquivada", "Retirado pelo Autor" ou "Prejudicada" (não conferido o texto exato).
+- **Como reconhecer.** Senado: situações ARQUIVADA, ARQUIVADA AO FINAL DA LEGISLATURA, RETIRADA PELO AUTOR, PREJUDICADA, PREJUDICADA AO FINAL DA LEGISLATURA, REJEITADA, REJEITADA A MATÉRIA (DECISÃO TERMINATIVA), ou rejeição em `dl`. Câmara: `p.s` "Arquivada" ou "Retirado pelo(a) Autor(a)" (lista oficial); "Prejudicada" e "Rejeitada" não constam da lista oficial de situações da Câmara.
 - **O que pode acontecer depois.** Ao fim da legislatura, **Senado** (RISF art. 332): arquivam-se as proposições em tramitação, exceto as originárias da Câmara ou por ela revisadas, as de Senadores que permaneçam no mandato ou tenham sido reeleitos, as apresentadas por Senadores no último ano de mandato, as com parecer favorável das comissões, as de competência exclusiva do Congresso (CF art. 49), as de competência privativa do Senado (CF art. 52) e o pedido de sustação de processo contra Senador. A que estiver em tramitação há duas legislaturas é arquivada automaticamente, salvo requerimento de um terço dos Senadores em até 60 dias do início da legislatura seguinte e aprovado o desarquivamento pelo Plenário; se não concluir a tramitação nessa legislatura, é arquivada definitivamente ao fim dela (§§1 e 2). A proposição prejudicada é definitivamente arquivada (RISF art. 334 §4). **Câmara** (RICD art. 105): arquivam-se as proposições em tramitação, salvo as de iniciativa popular, os projetos de código, as relativas a tratados internacionais e a concessão, renovação e permissão de radiodifusão sonora e de sons e imagens, as relativas às contas do Presidente da República, as aprovadas pela Câmara e revisadas pelo Senado, e as do inciso VI (as destinadas à elaboração das espécies normativas do art. 59 da CF "que não tenham tramitado por 3 (três) legislaturas completas"). O texto atual do art. 105 não prevê desarquivamento (a palavra não aparece no RICD): o antigo parágrafo único, da Resolução nº 17/1989, dizia que "a proposição poderá ser desarquivada mediante requerimento do Autor, ou Autores, dentro dos primeiros cento e oitenta dias da primeira sessão legislativa ordinária da legislatura subsequente, retomando a tramitação desde o estágio em que se encontrava"; a Resolução nº 33/2022 o revogou (art. 1º, "§ 1º (Revogado)") e determinou que, finda a 56ª legislatura, arquivam-se definitivamente as proposições em tramitação por cinco legislaturas completas (art. 3º). No **Senado**, o RISF art. 332 §1º só prevê o desarquivamento aprovado pelo Plenário, a requerimento de um terço dos Senadores, da proposição com duas legislaturas; o Ato da Mesa nº 2/2014 (regulamenta o art. 332) define final de legislatura (22 de dezembro da quarta sessão legislativa, art. 2º I) e as categorias de proposição, e não diz em que etapa a proposição desarquivada volta. Em nenhuma das duas Casas, pelas fontes lidas, há regra vigente sobre a etapa em que a desarquivada volta a tramitar: por isso não há aresta de saída de `arquivado`.
 - **O que ainda falta.** "Não tramita mais. [Motivo da situação]."
 
@@ -113,18 +113,18 @@ Proposta de emenda à Constituição. Não vai à sanção: é promulgada pelas 
 ### Etapas
 
 #### `apresentado` — Apresentada
-- **Como reconhecer.** Senado: AGUARDANDO DESPACHO, AGUARDANDO DESIGNAÇÃO DO RELATOR ainda sem despacho. Câmara: "Aguardando Despacho do Presidente da Câmara dos Deputados (Chancela)" ou fase de admissibilidade.
+- **Como reconhecer.** Senado: situação da classe `abertura` (tabela "Nomes de situação reconhecidos") ainda sem despacho. Câmara: "Aguardando Despacho do Presidente da Câmara dos Deputados" (com ou sem "(Chancela)") ou "Aguardando Encaminhamento"; a fase de admissibilidade não tem nome próprio na lista oficial (não conferido).
 - **O que pode acontecer depois.** Ir à comissão de constituição e justiça (`comissoes`); ser retirada ou arquivada.
 - **O que ainda falta.** "Ainda não é emenda à Constituição. A proposta aguarda o despacho e a análise de admissibilidade."
 
 #### `comissoes` — Comissão de Constituição e Justiça (CCJ)
 Admissibilidade (não pode afrontar as cláusulas pétreas, CF art. 60 §4). Câmara: a CCJC se pronuncia sobre a admissibilidade em cinco sessões; admitida, o Presidente designa Comissão Especial para o mérito, com 40 sessões para o parecer (RICD art. 202 caput e §2). Senado: a CCJ tem até 30 dias do despacho para o parecer (RISF art. 356); decorrido o prazo sem parecer, a proposta é incluída em Ordem do Dia (RISF art. 358).
-- **Como reconhecer.** Senado: despacho "Análise" com destino CCJ; MATÉRIA COM A RELATORIA, PRONTA PARA A PAUTA NA COMISSÃO. Câmara: `eventos[i][1]` = CCJC e, depois, comissão especial (não conferido); `p.s` "Aguardando Designação de Relator(a)", "Aguardando Parecer".
+- **Como reconhecer.** Senado: despacho "Análise" com destino CCJ; situações da classe `comissao`. Câmara: `eventos[i][1]` = CCJC e, depois, comissão especial (não conferido); `p.s` da classe `comissao` ("Aguardando Designação de Relator(a)", "Aguardando Parecer", "Pronta para Pauta", "Tramitando em Conjunto").
 - **O que pode acontecer depois.** Admitida e levada ao Plenário (`plenario-1-turno`); Senado: prazo da CCJ esgotado sem parecer, vai a Plenário (`plenario-1-turno`). Câmara: se inadmitida, o autor, com o apoio de líderes que representem um terço dos Deputados, pode requerer a apreciação preliminar em Plenário (RICD art. 202 §1º); o resultado dessa apreciação não foi conferido. Inadmissível sem esse requerimento, ou retirada: `arquivado`. No Senado, parecer da CCJ pela inconstitucionalidade faz a proposição ser "considerada rejeitada e arquivada definitivamente, por despacho do Presidente do Senado", salvo recurso de um décimo dos Senadores (RISF art. 101 §1º e art. 254). Na Câmara, o RICD art. 133 arquiva a proposição com pareceres contrários quanto ao mérito de todas as Comissões, mas a regra para a PEC inadmitida pela CCJC não foi encontrada (o art. 202 §1º chama de "apreciação preliminar em Plenário" o requerimento do autor; o art. 144 define esse instituto só para o recurso contra parecer terminativo, e o art. 145 §3º manda arquivar a proposição não aprovada na preliminar: se vale para a PEC, não foi conferido). A matéria "rejeitada ou havida por prejudicada" não pode ser reapresentada na mesma sessão legislativa (CF art. 60 §5 e RISF art. 373).
 - **O que ainda falta.** "Ainda não é emenda à Constituição. A comissão examina se a proposta pode tramitar e dá o parecer."
 
 #### `plenario-1-turno` — Plenário, 1º turno
-- **Como reconhecer.** Senado: situação PRONTO PARA DELIBERAÇÃO DO PLENÁRIO / INCLUÍDA EM ORDEM DO DIA, e `dl` com o primeiro turno (texto contendo "1º turno"). Câmara: `eventos` com órgão PLEN e despacho de "1º Turno" (não conferido).
+- **Como reconhecer.** Senado: situação PRONTO PARA DELIBERAÇÃO DO PLENÁRIO / INCLUÍDA EM ORDEM DO DIA (classe `plenario`), e `dl` com o primeiro turno (texto contendo "1º turno"). Câmara: nenhum nome de situação da lista oficial indica o turno; vale `eventos` com órgão PLEN e despacho de "1º Turno" (não conferido).
 - **O que pode acontecer depois.** Três quintos aprovam: `plenario-2-turno`; não alcançando o quórum: `arquivado` (a matéria rejeitada ou prejudicada não pode ser reapresentada na mesma sessão legislativa, CF art. 60 §5).
 - **O que ainda falta.** "Ainda não é emenda à Constituição. O Plenário vota em primeiro turno; precisa de três quintos."
 
@@ -134,7 +134,7 @@ Admissibilidade (não pode afrontar as cláusulas pétreas, CF art. 60 §4). Câ
 - **O que ainda falta.** "Ainda não é emenda à Constituição. Falta a votação em segundo turno nesta Casa."
 
 #### `casa-revisora` — Outra Casa (2 turnos)
-- **Como reconhecer.** Senado como origem: REMETIDA À CÂMARA (a situação das PEC aparece abreviada assim) e `cn/cd/cdx`. Câmara como origem: remessa ao Senado e `sf` na ficha.
+- **Como reconhecer.** Senado como origem: REMETIDA À CÂMARA DOS DEPUTADOS (RMCD; na ficha da PEC a situação aparece abreviada assim) e `cn/cd/cdx`. Câmara como origem: "Aguardando Apreciação pelo Senado Federal" (código 926) e `sf` na ficha.
 - **O que pode acontecer depois.** Aprovada sem mudança em dois turnos: `promulgacao`; aprovada com mudança: volta à Casa de origem (`retorno-origem`); rejeitada: `arquivado`.
 - **O que ainda falta.** "Ainda não é emenda à Constituição. A outra Casa também vota em dois turnos; se mudar o texto, o regimento da Casa de origem define o que acontece. Depois é promulgada, sem sanção."
 
@@ -146,12 +146,12 @@ A CF art. 60 não regula o retorno da PEC alterada. **Câmara como Casa de orige
 
 #### `promulgacao` — Promulgação
 Pelas Mesas da Câmara e do Senado, em sessão solene do Congresso, com número de ordem (CF art. 60 §3).
-- **Como reconhecer.** `ng` preenchido (Emenda Constitucional nº N) e/ou situação TRANSFORMADA EM NORMA JURÍDICA.
+- **Como reconhecer.** `ng` preenchido (Emenda Constitucional nº N) e/ou situação TRANSFORMADA EM NORMA JURÍDICA (Senado) ou "Transformado em Norma Jurídica" (Câmara).
 - **O que pode acontecer depois.** Nada; entra em vigor com a publicação.
 - **O que ainda falta.** "Já é emenda à Constituição: [ng]."
 
 #### `arquivado` — Arquivada
-- **Como reconhecer.** Senado: PREJUDICADA, ARQUIVADA AO FINAL DA LEGISLATURA, RETIRADA PELO AUTOR. Câmara: "Arquivada".
+- **Como reconhecer.** Senado: PREJUDICADA, PREJUDICADA AO FINAL DA LEGISLATURA, ARQUIVADA, ARQUIVADA AO FINAL DA LEGISLATURA, REJEITADA, RETIRADA PELO AUTOR. Câmara: "Arquivada", "Retirado pelo(a) Autor(a)".
 - **O que pode acontecer depois.** Regras de arquivamento ao fim da legislatura e de desarquivamento: as mesmas do tipo PL (RISF art. 332; RICD art. 105). Sem aresta de saída, porque a etapa de volta não foi conferida.
 - **O que ainda falta.** "Não tramita mais. [Motivo]."
 
@@ -190,23 +190,23 @@ Medida provisória: ato do Presidente da República com força de lei, que vale 
 
 #### `comissao-mista` — Comissão mista
 Deputados e senadores dão o parecer antes dos Plenários (CF art. 62 §9). Resolução nº 1/2002-CN: a Presidência da Mesa do Congresso designa a comissão em 48 horas da publicação (art. 2º), com 12 senadores e 12 deputados (§2º); emendas só na comissão, nos seis primeiros dias (art. 4º); parecer único sobre os aspectos constitucional, de mérito e de adequação financeira e orçamentária; a comissão pode concluir por projeto de lei de conversão e por projeto de decreto legislativo sobre as relações do período (art. 5º §4º), e o parecer aprovado vai à Câmara (§5º).
-- **Como reconhecer.** Senado: `despachos` com destino "Comissão Mista"; situação AGUARDANDO DESIGNAÇÃO DO RELATOR, MATÉRIA COM A RELATORIA. Câmara: `eventos[i][1]` com "CMMPV" ou semelhante (não conferido).
+- **Como reconhecer.** Senado: `despachos` com destino "Comissão Mista"; situação da classe `comissao` ou AGUARDANDO DESIGNAÇÃO DO RELATOR (classe `abertura`). Câmara: `eventos[i][1]` com "CMMPV" ou semelhante (não conferido).
 - **O que pode acontecer depois.** Parecer aprovado e ida à Câmara (`plenario-camara`); perda de prazo (`perdeu-validade`). A CF diz que a comissão mista examina a MPV e emite parecer "antes de serem apreciadas, em sessão separada, pelo plenário de cada uma das Casas" (art. 62 §9). A Resolução previa o prazo de 14 dias para o parecer (art. 5º, caput) e, esgotado ele, o envio do processo à Câmara, com parecer dado no Plenário pelo relator (art. 6º §§1º e 2º); o STF, na ADI 4029 (8/3/2012), declarou a inconstitucionalidade incidental desses dispositivos (art. 5º caput e art. 6º §§1º e 2º): as MPVs novas "deverão ser obrigatoriamente apreciadas por uma comissão integrada por deputados e senadores, não podendo mais ser apreciadas pelo Parlamento apenas com parecer do relator", sem alcançar as já convertidas nem as em tramitação na época (notícia do STF de 8/3/2012). Ou seja, a MPV não segue ao Plenário sem o parecer da comissão mista. O que acontece se a comissão não o emitir, o texto lido não diz; o ritmo de 14 dias aparece no texto atual do Senado só como dispositivo declarado inconstitucional. A Resolução nº 1/2002 art. 3º dá 24 horas para a instalação.
 - **O que ainda falta.** "Já vale como lei. A comissão mista analisa antes de a Câmara votar."
 
 #### `plenario-camara` — Câmara dos Deputados
-- **Como reconhecer.** Câmara: `eventos` com órgão PLEN após a comissão; `p.s` "Pronta para Pauta". Senado: situação REMETIDA À CÂMARA... (para a MPV é o inverso: o Senado só recebe depois). Campo `dl` de origem Câmara na ficha.
+- **Como reconhecer.** Câmara: `eventos` com órgão PLEN após a comissão; `p.s` "Pronta para Pauta" (classe `comissao` na lista; o órgão PLEN vem dos `eventos`). Senado: situação REMETIDA À CÂMARA DOS DEPUTADOS... (para a MPV é o inverso: o Senado só recebe depois). Campo `dl` de origem Câmara na ficha.
 - **O que pode acontecer depois.** Aprovada: `plenario-senado`; rejeitada: `arquivado`; prazo vence: `perdeu-validade`. A Câmara tem até o 28º dia de vigência (Res. 1/2002-CN, art. 6º) e, antes do mérito, o Plenário decide em apreciação preliminar se há os pressupostos de relevância e urgência e a adequação financeira e orçamentária; se não houver, a MPV é arquivada (art. 8º e parágrafo único).
 - **O que ainda falta.** "Já vale como lei. A Câmara vota primeiro; depois o Senado."
 
 #### `plenario-senado` — Senado Federal
-- **Como reconhecer.** Senado: situação PRONTO PARA DELIBERAÇÃO DO PLENÁRIO, INCLUÍDA EM ORDEM DO DIA; `dl.p` = Plenário do Senado.
+- **Como reconhecer.** Senado: situação PRONTO PARA DELIBERAÇÃO DO PLENÁRIO, INCLUÍDA EM ORDEM DO DIA (classe `plenario`); `dl.p` = Plenário do Senado.
 - **O que pode acontecer depois.** O Senado tem até o 42º dia de vigência (Res. 1/2002-CN, art. 7º). Aprovada sem alteração de mérito: o texto da MPV "será promulgado pelo Presidente da Mesa do Congresso Nacional para publicação, como lei" (art. 12) e vai a `lei`; aprovado projeto de lei de conversão, a Casa onde a votação terminou o envia à sanção (art. 13; CF art. 62 §12): `sancao-veto`; se o Senado modifica o texto aprovado pela Câmara, ele volta à Câmara, como emenda, em turno único e sem novas alterações, com 3 dias para a Câmara apreciar (art. 7º §§3º e 4º): `plenario-camara`; rejeitada em qualquer Casa: `arquivado`, com ato declaratório do Presidente da Casa (art. 14); prazo vence: `perdeu-validade`.
 - **O que ainda falta.** "Já vale como lei. O Senado vota; se mudar o texto, ele volta à Câmara; se aprovar o projeto de lei de conversão, ele vai à sanção."
 
 #### `sancao-veto` — Sanção ou veto
 Só quando o Congresso aprovou projeto de lei de conversão com alterações (CF art. 62 §12). Prazo e regras iguais às de PL (CF art. 66).
-- **Como reconhecer.** Situação REMETIDA À SANÇÃO.
+- **Como reconhecer.** Situação REMETIDA À SANÇÃO (Senado) ou "Aguardando Sanção" (Câmara), classe `sancao`.
 - **O que pode acontecer depois.** `lei` ou `veto-congresso`.
 - **O que ainda falta.** "Já vale como lei. Falta a sanção ou o veto do Presidente ao texto convertido."
 
@@ -215,12 +215,12 @@ Igual ao de PL (CF art. 66 §4). Não reconhecível com os dados atuais além da
 - **O que pode acontecer depois.** `lei` (veto derrubado ou mantido em parte) ou `arquivado` (veto total mantido).
 
 #### `lei` — Lei de conversão
-- **Como reconhecer.** `ng` preenchido ("Lei nº ..."); situação TRANSFORMADA EM NORMA JURÍDICA.
+- **Como reconhecer.** `ng` preenchido ("Lei nº ..."); situação TRANSFORMADA EM NORMA JURÍDICA (Senado) ou "Transformado em Norma Jurídica" (Câmara).
 - **O que ainda falta.** "Convertida em lei: [ng]."
 
 #### `perdeu-validade` — Perdeu a validade (caducidade)
 A MPV não foi votada em 120 dias e deixa de valer; o Congresso deve regular por decreto legislativo as relações jurídicas do período (CF art. 62 §3 e §11). Esgotado o prazo, o Presidente da Mesa do Congresso comunica o fato ao Presidente da República e publica ato declaratório de encerramento (Res. 1/2002-CN, art. 14, parágrafo único); a comissão mista elabora o projeto de decreto legislativo em 15 dias (art. 11 e §1º); sem decreto em 60 dias, as relações do período seguem regidas pela MPV (§2º).
-- **Como reconhecer.** Senado: situação como "PERDA DE EFICÁCIA" / "PERDEU A EFICÁCIA" (não conferido, nenhuma MPV no recorte local). Câmara: `p.s` "Arquivada" com despacho de perda de eficácia (não conferido).
+- **Como reconhecer.** Senado: decisão PERDA_EFICACIA (lista oficial de tipos de decisão) ou situação SEM EFICÁCIA (SEFICA, lista oficial; o texto oficial lido não liga esta situação à perda de validade da MPV, não conferido). Câmara: situação "Perdeu a Eficácia" (lista oficial de códigos; idem). Nenhuma MPV no recorte local.
 - **O que pode acontecer depois.** Nada; o Presidente não pode reeditar a MPV na mesma sessão legislativa (CF art. 62 §10).
 - **O que ainda falta.** "Perdeu a validade: não foi votada a tempo."
 
@@ -261,22 +261,22 @@ Projeto de decreto legislativo: matérias de competência exclusiva do Congresso
 ### Etapas
 
 #### `apresentado` — Apresentado
-- **Como reconhecer.** Senado: AGUARDANDO DESPACHO, AGUARDANDO DESIGNAÇÃO DO RELATOR, sem despacho. Câmara: "Aguardando Despacho..." / "Aguardando Encaminhamento".
+- **Como reconhecer.** Senado: situação da classe `abertura` (tabela "Nomes de situação reconhecidos"), sem despacho. Câmara: "Aguardando Despacho do Presidente da Câmara dos Deputados" ou "Aguardando Encaminhamento".
 - **O que pode acontecer depois.** `comissoes`, `plenario-origem` (urgência), `arquivado`.
 - **O que ainda falta.** "Ainda não é decreto legislativo. Aguarda despacho às comissões."
 
 #### `comissoes` — Comissões
-- **Como reconhecer.** Igual a PL (despacho "Análise", MATÉRIA COM A RELATORIA, PRONTA PARA A PAUTA NA COMISSÃO; Câmara: "Aguardando Designação de Relator(a)", "Aguardando Parecer", "Pronta para Pauta").
+- **Como reconhecer.** Igual a PL: despacho "Análise" e situações da classe `comissao` (Câmara: "Aguardando Designação de Relator(a)", "Aguardando Parecer", "Pronta para Pauta", "Tramitando em Conjunto").
 - **O que pode acontecer depois.** `plenario-origem`; urgência que pula esta etapa; `arquivado`.
 - **O que ainda falta.** "Ainda não é decreto legislativo. As comissões dão o parecer; depois segue ao Plenário."
 
 #### `plenario-origem` — Plenário da Casa de origem
-- **Como reconhecer.** Igual a PL: PRONTO PARA DELIBERAÇÃO DO PLENÁRIO, INCLUÍDA EM ORDEM DO DIA, APROVADA; `dl.p` = Plenário.
+- **Como reconhecer.** Igual a PL: situações da classe `plenario` (PRONTO PARA DELIBERAÇÃO DO PLENÁRIO, INCLUÍDA EM ORDEM DO DIA, APROVADA); `dl.p` = Plenário.
 - **O que pode acontecer depois.** `casa-revisora` ou `arquivado`.
 - **O que ainda falta.** "Ainda não é decreto legislativo. Se o Plenário aprovar, o texto vai à outra Casa."
 
 #### `casa-revisora` — Outra Casa
-- **Como reconhecer.** REMETIDA À CÂMARA (DOS DEPUTADOS) e `cn/cd/cdx`; ou `sf` na ficha da Câmara.
+- **Como reconhecer.** REMETIDA À CÂMARA DOS DEPUTADOS (Senado) ou "Aguardando Apreciação pelo Senado Federal" (Câmara) e `cn/cd/cdx`; ou `sf` na ficha da Câmara.
 - **O que pode acontecer depois.** Aprovado: `promulgacao`; mudado: volta à Casa de origem (`retorno-origem`); rejeitado: `arquivado`.
 - **O que ainda falta.** "Ainda não é decreto legislativo. A outra Casa pode aprovar, mudar ou rejeitar; depois é promulgado, sem sanção."
 
@@ -286,11 +286,11 @@ Projeto de decreto legislativo: matérias de competência exclusiva do Congresso
 - **O que ainda falta.** "O texto mudou na outra Casa e volta para a Casa de origem decidir sobre as mudanças."
 
 #### `promulgacao` — Promulgação
-- **Como reconhecer.** `ng` ("Decreto Legislativo nº ...") e/ou TRANSFORMADA EM NORMA JURÍDICA.
+- **Como reconhecer.** `ng` ("Decreto Legislativo nº ...") e/ou TRANSFORMADA EM NORMA JURÍDICA (Senado) / "Transformado em Norma Jurídica" (Câmara).
 - **O que ainda falta.** "Já é decreto legislativo: [ng]."
 
 #### `arquivado` — Arquivado
-- **Como reconhecer.** PREJUDICADA, RETIRADA PELO AUTOR, ARQUIVADA AO FINAL DA LEGISLATURA; Câmara: "Arquivada".
+- **Como reconhecer.** Senado: PREJUDICADA, PREJUDICADA AO FINAL DA LEGISLATURA, ARQUIVADA, ARQUIVADA AO FINAL DA LEGISLATURA, RETIRADA PELO AUTOR, REJEITADA; Câmara: "Arquivada", "Retirado pelo(a) Autor(a)".
 - **O que pode acontecer depois.** Ao fim da legislatura, no Senado, as proposições "que tratem de matéria de competência exclusiva do Congresso Nacional (Const., art. 49)" estão entre as exceções ao arquivamento (RISF art. 332 V): PDL em tramitação não é arquivado só pelo fim da legislatura, salvo a regra das duas legislaturas (§1º). O Ato da Mesa nº 2/2014 do Senado (art. 3º §4º) acrescenta que os projetos de decreto legislativo de matéria de iniciativa não parlamentar (concessão de radiodifusão, atos internacionais e outras) continuam tramitando, "mesmo aqueles que tramitem há 2 (duas) legislaturas". Na Câmara vale o RICD art. 105 (ver PL); o inciso VIII exclui do arquivamento as proposições relativas a tratados internacionais e a radiodifusão. Sem aresta de saída: a etapa de volta não está definida nas fontes lidas.
 - **O que ainda falta.** "Não tramita mais. [Motivo]."
 
@@ -322,26 +322,26 @@ Projeto de resolução do Senado (PRS, CF art. 52) e da Câmara (PRC, CF art. 51
 ### Etapas
 
 #### `apresentado` — Apresentado
-- **Como reconhecer.** Senado: AGUARDANDO DESPACHO, AGUARDANDO DESIGNAÇÃO DO RELATOR sem despacho. Câmara: "Aguardando Designação de Relator(a)" no início do rito, "Aguardando Encaminhamento".
+- **Como reconhecer.** Senado: situação da classe `abertura` (tabela "Nomes de situação reconhecidos"), sem despacho. Câmara: "Aguardando Designação de Relator(a)" (classe `comissao` na lista oficial; no início do rito vale o evento) e "Aguardando Encaminhamento".
 - **O que pode acontecer depois.** `comissoes`, `plenario` (urgência), `arquivado`.
 - **O que ainda falta.** "Ainda não é resolução. Aguarda o despacho às comissões ou ao Plenário."
 
 #### `comissoes` — Comissões
-- **Como reconhecer.** Senado: despacho "Análise"; MATÉRIA COM A RELATORIA, PRONTA PARA A PAUTA NA COMISSÃO. Câmara: "Aguardando Parecer", "Pronta para Pauta", "Tramitando em Conjunto".
+- **Como reconhecer.** Senado: despacho "Análise"; situações da classe `comissao`. Câmara: "Aguardando Parecer", "Pronta para Pauta", "Tramitando em Conjunto".
 - **O que pode acontecer depois.** `plenario` ou, com urgência/despacho direto, a etapa fica pulada; `arquivado`.
 - **O que ainda falta.** "Ainda não é resolução. As comissões dão o parecer; depois vota o Plenário."
 
 #### `plenario` — Plenário
-- **Como reconhecer.** Senado: PRONTO PARA DELIBERAÇÃO DO PLENÁRIO, INCLUÍDA EM ORDEM DO DIA, APROVADA; `dl.p` = Plenário. Câmara: PLEN em `eventos`.
+- **Como reconhecer.** Senado: situações da classe `plenario`; `dl.p` = Plenário. Câmara: PLEN em `eventos`.
 - **O que pode acontecer depois.** Aprovado: `promulgacao`; rejeitado: `arquivado`.
 - **O que ainda falta.** "Ainda não é resolução. O Plenário desta Casa decide; aprovado, é promulgado sem passar pela outra Casa."
 
 #### `promulgacao` — Promulgação
-- **Como reconhecer.** Senado: TRANSFORMADA EM NORMA JURÍDICA (a situação mais frequente em PRS no índice) e/ou `ng` ("Resolução nº ..."). Câmara: "Transformada em Norma Jurídica" / `ng`.
+- **Como reconhecer.** Senado: TRANSFORMADA EM NORMA JURÍDICA (a situação mais frequente em PRS no índice) e/ou `ng` ("Resolução nº ..."). Câmara: "Transformado em Norma Jurídica" / `ng`.
 - **O que ainda falta.** "Já é resolução: [ng]."
 
 #### `arquivado` — Arquivado
-- **Como reconhecer.** PREJUDICADA, RETIRADA PELO AUTOR; Câmara: "Arquivada".
+- **Como reconhecer.** Senado: PREJUDICADA, PREJUDICADA AO FINAL DA LEGISLATURA, ARQUIVADA, ARQUIVADA AO FINAL DA LEGISLATURA, RETIRADA PELO AUTOR; Câmara: "Arquivada", "Retirado pelo(a) Autor(a)".
 - **O que ainda falta.** "Não tramita mais. [Motivo]."
 
 ### Arestas de PRS, PRC
@@ -357,6 +357,25 @@ Projeto de resolução do Senado (PRS, CF art. 52) e da Câmara (PRC, CF art. 51
 | `plenario` | `arquivado` | o Plenário rejeita |
 
 Senado, PRS: o projeto de resolução que suspende, no todo ou em parte, lei declarada inconstitucional por decisão definitiva do STF (CF art. 52 X) tem decisão terminativa da comissão (RISF art. 91 II); sem recurso, o projeto é "encaminhado à sanção, promulgado, remetido à Câmara ou arquivado, conforme o caso" (art. 91 §5), de modo que `comissoes` leva direto a `promulgacao`. No arquivamento ao fim da legislatura, as proposições de competência privativa do Senado (CF art. 52) estão entre as exceções (RISF art. 332 VI). Sem aresta de saída de `arquivado`: a etapa de volta não foi conferida.
+
+---
+
+## Nomes de situação reconhecidos
+
+Cada nome abaixo foi conferido na lista oficial de códigos (Senado: `processo/tipos-situacao`; Câmara: `referencias/proposicoes/codSituacao`; cópias e capturas em `tests/fixtures/contratos/`) e a classe vem de `situacoes_etapas.json`. O reconhecimento compara o nome inteiro, sem caixa nem acento: nome fora desta tabela não aponta etapa. Duas classes vêm de leitura do regimento, não da lista: na Câmara, as situações de criação, constituição, instalação e eleição de presidente e relator da Comissão Especial, mais a de relator que deixou de ser membro, são da classe `comissao` porque o RICD arts. 33 e 34 criam a Comissão Especial para dar parecer e o art. 41 VI atribui ao Presidente de Comissão a designação de relatores; no Senado, "ARQUIVADO NA CÂMARA DOS DEPUTADOS" é da classe `parada` pelo texto do próprio nome (o RICD arts. 105 e 164 §4º tratam de arquivamento como fim da tramitação). A classe é leitura nossa da etapa a que o nome corresponde; o que a lista oficial não diz sobre o nome (por exemplo, a etapa de uma situação como "Aguardando Deliberação") fica sem classe, e a faixa de etapas não aparece.
+
+| Classe | Etapa | Senado (sigla: nome) | Câmara (código: nome) |
+|---|---|---|---|
+| `abertura` | `apresentado` | AGDREL: AGUARDANDO DESIGNAÇÃO DO RELATOR; AGDESP: AGUARDANDO DESPACHO; AGUARD: AGUARDANDO DESPACHO; AGREMD: AGUARDANDO RECEBIMENTO DE EMENDAS | 905: Aguardando Despacho do Presidente da Câmara dos Deputados; 910: Aguardando Encaminhamento; 1201: Aguardando Despacho do Presidente da Câmara dos Deputados (Chancela); 1382: Aguardando Despacho do Presidente da Câmara dos Deputados |
+| `comissao` | `comissoes` | AGAUDPUB: AGUARDANDO AUDIÊNCIA PÚBLICA; AGINR: AGUARDANDO INTERPOSIÇÃO DE RECURSO; APRCD(DT): APRECIADA EM DECISÃO TERMINATIVA PELAS COMISSÕES; APRVPAR: APROVADO PARECER NA COMISSÃO; INPAUTA: INCLUÍDA NA PAUTA DA REUNIÃO; RELATOR: MATÉRIA COM A RELATORIA; MATDESP: MATÉRIA DESPACHADA; PEDVISTA: PEDIDO DE VISTA CONCEDIDO; PRONTPAUT: PRONTA PARA A PAUTA NA COMISSÃO | 901: Aguardando Constituição de Comissão Temporária; 902: Aguardando Criação de Comissão Temporária; 907: Aguardando Designação de Relator(a); 911: Aguardando Instalação de Comissão Temporária; 915: Aguardando Parecer; 924: Pronta para Pauta; 925: Tramitando em Conjunto; 1170: Aguardando Designação - Aguardando Devolução de Relator(a) que deixou de ser Membro; 1296: Aguardando Eleição do(a) Presidente da Comissão Especial e do(a) Relator(a); 1297: Aguardando Parecer da Comissão Especial |
+| `plenario` | `plenario-origem` | APRVD: APROVADA; INCLOD: INCLUÍDA EM ORDEM DO DIA; PRONDEPLEN: PRONTO PARA DELIBERAÇÃO DO PLENÁRIO | — |
+| `outra-casa` | `casa-revisora` | RMCD: REMETIDA À CÂMARA DOS DEPUTADOS | 926: Aguardando Apreciação pelo Senado Federal |
+| `sancao` | `sancao-veto` | RMSAN: REMETIDA À SANÇÃO | 1150: Aguardando Sanção |
+| `veto` | `veto-congresso` | VTDA: VETADA; VETDELIB: VETO DELIBERADO PELO PLENÁRIO; VETODERR: VETO DERRUBADO | 937: Vetado totalmente; 939: Aguardando Apreciação do Veto |
+| `norma` | `lei` / `promulgacao` | TNJR: TRANSFORMADA EM NORMA JURÍDICA; TNJRVETO: TRANSFORMADA EM NORMA JURÍDICA COM VETO PARCIAL | 1140: Transformado em Norma Jurídica |
+| `parada` | `arquivado` | ARQV: ARQUIVADA; ARQVD: ARQUIVADA AO FINAL DA LEGISLATURA; ARQV_CD: ARQUIVADO NA CÂMARA DOS DEPUTADOS; PRJDA: PREJUDICADA; PREJFINLEG: PREJUDICADA AO FINAL DA LEGISLATURA; RJTDA: REJEITADA; RJTDA(DT): REJEITADA A MATÉRIA (DECISÃO TERMINATIVA); RTPA: RETIRADA PELO AUTOR | 923: Arquivada; 950: Retirado pelo(a) Autor(a) |
+
+Fora da tabela (lista oficial, sem classe declarada): as demais 144 situações do Senado e 78 da Câmara, entre elas VETOMANT (VETO MANTIDO), SEFICA (SEM EFICÁCIA), APRVD(ESF) e a "Perdeu a Eficácia" da Câmara. Decisões do Senado com classe (10 de 33): `APROVADA_EM_COMISSAO_TERMINATIVA` (comissão), `APROVADA_NO_PLENARIO` (plenário), `PERDA_EFICACIA` (`perdeu-validade`, só MPV) e, como parada, `ARQUIVADO_FIM_LEGISLATURA`, `PREJUDICADO`, `REJEITADO_COMISSAO_NAO_TERM`, `REJEITADO_COMISSAO_TERM`, `REJEITADO_INCONSTICIONALIDADE_CCJ`, `REJEITADO_PLENARIO` e `RETIRADO_PELO_AUTOR`; as outras 23 ficam sem classe.
 
 ---
 
@@ -390,11 +409,11 @@ Regra da base: vale o texto oficial; o que não foi lido na fonte fica marcado "
 
 **Conferido nos textos acima:**
 - CF art. 48 (sanção não exigida para o que está nos arts. 49, 51 e 52), 49, 51, 52, 57 §5, 59, 60 (§§1 a 5 e I a III), 61, 62 (§§3 a 12), 64, 65, 66, 69.
-- RICD arts. 17 m, 24 II, 58, 105, 108, 109, 123, 133, 138, 144, 145, 152 a 155, 196, 200, 202 a 204.
-- RISF arts. 48 XXVIII, 91, 101 §1º, 211, 254, 282, 285 a 287, 328, 332, 334, 336 a 338, 354 a 369, 373.
+- RICD arts. 17 m, 24 II, 33, 34, 41 VI, 58, 105, 108, 109, 123, 133, 138, 144, 145, 152 a 155, 164 §4º, 196, 200, 202 a 204 (§8 do art. 202 lido nesta conferência).
+- RISF arts. 48 XXVIII, 91, 101 §1º, 211, 254, 282, 285 a 287, 328, 332, 334, 336 a 338, 354 a 373 (arts. 367, 368 e 372 relidos).
 - Regimento Comum arts. 43, 46, 51, 52, 85, 104-A, 106 a 106-D; Resolução nº 1/2002-CN arts. 1º a 14, 18; Resolução da Câmara nº 33/2022 (inteira); Ato da Mesa do Senado nº 2/2014 (inteiro).
 
-**Não conferido** (aparece no texto acima como tal): o desfecho do veto mantido (nem a CF nem o Regimento Comum lidos o dizem); em que etapa uma proposição desarquivada volta a tramitar (RISF art. 332 e Ato da Mesa 2/2014 não dizem; o RICD vigente nem prevê o desarquivamento); o que acontece com a proposta nova do RISF art. 367 (substitutivo da Câmara a PEC do Senado) depois de lida; o arquivamento da PEC inadmitida na Câmara (RICD art. 202 §1º) e se a urgência do RICD vale para a PEC; quem promulga o decreto legislativo quando a Câmara é a Casa que conclui (RICD silencioso); o que acontece quando a comissão mista da MPV não emite parecer (a regra de 14 dias foi declarada inconstitucional na parte lida); o acórdão da ADI 4029; o volume 2 do RISF e os Atos da Mesa citados nas notas dos regimentos, exceto o Ato nº 2/2014.
+**Não conferido** (aparece no texto acima como tal): o desfecho do veto mantido (nem a CF nem o Regimento Comum lidos o dizem); em que etapa uma proposição desarquivada volta a tramitar (RISF art. 332 e Ato da Mesa 2/2014 não dizem; o RICD vigente nem prevê o desarquivamento); o que acontece com a proposta nova do RISF art. 367 (substitutivo da Câmara a PEC do Senado) depois de lida (os arts. 368 e 372 mandam aplicar à revisão e à tramitação as normas do Título e, no que couber, as demais do Regimento, sem dizer mais); o arquivamento da PEC inadmitida na Câmara sem requerimento de apreciação preliminar (o RICD art. 202 §1º só dá ao autor a faculdade de requerê-la; o §8 manda aplicar à PEC as regras de tramitação dos projetos de lei "no que não colidir" com o art. 202, e o art. 145 §3º manda arquivar a proposição que perde na apreciação preliminar, mas o texto não diz se há colisão nem o que ocorre sem requerimento) e se a urgência dos arts. 152 a 155 vale para a PEC (o mesmo §8 a admite se não colidir com o interstício de cinco sessões do §6º, e o art. 152 diz que a urgência dispensa interstícios, mas o texto não resolve o choque); quem promulga o decreto legislativo quando a Câmara é a Casa que conclui (RICD silencioso); o que acontece quando a comissão mista da MPV não emite parecer (a regra de 14 dias foi declarada inconstitucional na parte lida); o acórdão da ADI 4029; os Atos da Mesa citados nas notas dos regimentos, exceto o Ato nº 2/2014 (o volume 2 do RISF, "Normas conexas", agosto de 2025, foi lido: é só a lista das normas, cada uma com link, sem o texto; o link do Ato nº 2/2014 é o já usado); as situações da lista oficial que nenhum artigo lido define ("Aguardando Deliberação", "Aguardando Definição Encaminhamento" na Câmara; AGUARDANDO INCLUSÃO ORDEM DO DIA DE REQUERIMENTO e AGUARDANDO DOCUMENTAÇÃO COMPLEMENTAR SOLICITADA no Senado), que ficam sem etapa. Tentativa de ler o acórdão da ADI 4029 pelo portal do STF: a página é dinâmica e não devolveu o texto.
 
 - Glossário do Senado: https://www12.senado.leg.br/noticias/glossario-legislativo (âncoras `#<slug>-legislativo`, p. ex. `#turno-suplementar-legislativo`). Não há glossário público da Câmara.
 - Situações do Senado: https://legis.senado.leg.br/dadosabertos/processo/tipos-situacao (175 itens `{id, sigla, descricao, dataInicio, dataFim}`, p. ex. AGDESP = AGUARDANDO DESPACHO, PRONTPAUT = PRONTA PARA A PAUTA NA COMISSÃO, RMCD = REMETIDA À CÂMARA DOS DEPUTADOS). Decisões: https://legis.senado.leg.br/dadosabertos/processo/tipos-decisao (33 itens, p. ex. PERDA_EFICACIA, REEDITADA, APROVADO_PLV, REJEITADO_COMISSAO_TERM).

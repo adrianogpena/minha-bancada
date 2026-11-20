@@ -17,7 +17,7 @@ const aresta = (de, para, condicao) => ({ de, para, condicao });
    declaram para a etapa; o teste "situações" confere os dois contra as listas oficiais de códigos. Nome fora daqui não aponta etapa. */
 const ABRE = { situacao: /^(aguardando despacho|aguardando recebimento de emendas|aguardando designacao do relator|aguardando despacho do presidente da camara dos deputados( \(chancela\))?|aguardando encaminhamento)\s*$/ };
 const COMISSOES = {
-  situacao: /^(materia despachada|materia com a relatoria|incluida na pauta da reuniao|pronta para (a )?pauta( na comissao)?|aprovado parecer na comissao|pedido de vista concedido|aguardando audiencia publica|aguardando designacao de relator\(a\)|aguardando parecer|tramitando em conjunto|apreciada em decisao terminativa pelas comissoes|aguardando interposicao de recurso)\s*$/,
+  situacao: /^(materia despachada|materia com a relatoria|incluida na pauta da reuniao|pronta para (a )?pauta( na comissao)?|aprovado parecer na comissao|pedido de vista concedido|aguardando audiencia publica|aguardando designacao de relator\(a\)|aguardando designacao - aguardando devolucao de relator\(a\) que deixou de ser membro|aguardando (constituicao|criacao|instalacao) de comissao temporaria|aguardando eleicao do\(a\) presidente da comissao especial e do\(a\) relator\(a\)|aguardando parecer da comissao especial|aguardando parecer|tramitando em conjunto|apreciada em decisao terminativa pelas comissoes|aguardando interposicao de recurso)\s*$/,
   despacho: /analise/, orgao: COMISSAO,
 };
 const PLENARIO = { situacao: /^(pronto para deliberacao do plenario|incluida em ordem do dia|aprovada)\s*$/, deliberacao: /plenario/, despacho: /(votacao|apreciacao|discussao|aprovad[ao]).*plenario/ };
@@ -26,7 +26,7 @@ const RETORNO = { situacao: /(emendas?|substitutivo) d[oa] (senado|camara)/ };
 const SANCAO = { situacao: /^(remetida a sancao|aguardando sancao)\s*$/ };
 const VETO = { situacao: /^(vetada|vetado totalmente|aguardando apreciacao do veto|veto deliberado pelo plenario|veto derrubado)\s*$/ };
 const NORMA = { norma: existe, situacao: /^transformad[ao] em norma juridica( com veto parcial)?\s*$/ };
-const PARADA = { situacao: /^(arquivada|arquivada ao final da legislatura|retirad[ao] pelo autor|retirado pelo\(a\) autor\(a\)|prejudicada|prejudicada ao final da legislatura|rejeitada|rejeitada a materia \(decisao terminativa\))\s*$/, deliberacao: /rejeitad/ };
+const PARADA = { situacao: /^(arquivada|arquivada ao final da legislatura|retirad[ao] pelo autor|retirado pelo\(a\) autor\(a\)|prejudicada|prejudicada ao final da legislatura|rejeitada|rejeitada a materia \(decisao terminativa\)|arquivado na camara dos deputados)\s*$/, deliberacao: /rejeitad/ };
 const ARQUIVADO = (rotulo) => ({ id: "arquivado", rotulo, parada: true, reconhece: PARADA, falta: "Não tramita mais." });
 const casaDe = (c) => (c.senado || c.vemDeFora ? "Câmara dos Deputados" : "Senado Federal");
 

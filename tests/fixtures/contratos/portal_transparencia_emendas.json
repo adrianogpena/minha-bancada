@@ -1,0 +1,85 @@
+{
+ "fonte": "https://api.portaldatransparencia.gov.br/api-de-dados/emendas?ano={ano}&pagina={pagina}",
+ "capturadoEm": "2026-11-27",
+ "origem": "reconstruída dos itens de dados/emendas/ coletados pelo Actions (mesmos campos da API, valores em texto brasileiro); regravar com a chave: PORTAL_TRANSPARENCIA_CHAVE=... python scripts/coletar_emendas.py --amostra",
+ "amostra": [
+  {
+   "codigoEmenda": "201911170002",
+   "ano": 2019,
+   "tipoEmenda": "Emenda Individual - Transferências com Finalidade Definida",
+   "autor": "JOSE OTAVIO GERMANO",
+   "numeroEmenda": "0002",
+   "localidadeDoGasto": "DONA FRANCISCA - RS",
+   "funcao": "Saúde",
+   "subfuncao": "Atenção básica",
+   "valorEmpenhado": "100.000,00",
+   "valorLiquidado": "100.000,00",
+   "valorPago": "100.000,00"
+  },
+  {
+   "codigoEmenda": "202014110006",
+   "ano": 2020,
+   "tipoEmenda": "Emenda Individual - Transferências Especiais",
+   "autor": "REGINALDO LOPES",
+   "numeroEmenda": "0006",
+   "localidadeDoGasto": "MUTUM - MG",
+   "funcao": "Encargos especiais",
+   "subfuncao": "Outras transferências",
+   "valorEmpenhado": "500.000,00",
+   "valorLiquidado": "500.000,00",
+   "valorPago": "500.000,00"
+  },
+  {
+   "codigoEmenda": "201910630017",
+   "ano": 2019,
+   "tipoEmenda": "Emenda Individual - Transferências com Finalidade Definida",
+   "autor": "VALDIR COLATTO",
+   "numeroEmenda": "0017",
+   "localidadeDoGasto": "SANTA CATARINA (UF)",
+   "funcao": "Direitos da cidadania",
+   "subfuncao": "Assistência à criança e ao adolescente",
+   "valorEmpenhado": "239.963,44",
+   "valorLiquidado": "0,00",
+   "valorPago": "0,00"
+  },
+  {
+   "codigoEmenda": "201910630001",
+   "ano": 2019,
+   "tipoEmenda": "Emenda Individual - Transferências com Finalidade Definida",
+   "autor": "VALDIR COLATTO",
+   "numeroEmenda": "0001",
+   "localidadeDoGasto": "MÚLTIPLO",
+   "funcao": "Agricultura",
+   "subfuncao": "Promoção da produção agropecuária",
+   "valorEmpenhado": "1.263.250,00",
+   "valorLiquidado": "0,00",
+   "valorPago": "0,00"
+  },
+  {
+   "codigoEmenda": "201910740011",
+   "ano": 2019,
+   "tipoEmenda": "Emenda Individual - Transferências com Finalidade Definida",
+   "autor": "ANDRE DE PAULA",
+   "numeroEmenda": "0011",
+   "localidadeDoGasto": "Nacional",
+   "funcao": "Segurança pública",
+   "subfuncao": "Policiamento",
+   "valorEmpenhado": "144.970,00",
+   "valorLiquidado": "0,00",
+   "valorPago": "0,00"
+  },
+  {
+   "codigoEmenda": "201971020001",
+   "ano": 2019,
+   "tipoEmenda": "Emenda de Bancada",
+   "autor": "BANCADA DO ACRE",
+   "numeroEmenda": "0001",
+   "localidadeDoGasto": "RIO BRANCO - AC",
+   "funcao": "Segurança pública",
+   "subfuncao": "Policiamento",
+   "valorEmpenhado": "19.997.007,34",
+   "valorLiquidado": "0,00",
+   "valorPago": "0,00"
+  }
+ ]
+}

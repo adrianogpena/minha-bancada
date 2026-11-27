@@ -17,6 +17,7 @@ Anos encerrados (anterior ao passado, com arquivo) não são baixados de novo; o
 
 Uso:
     PORTAL_TRANSPARENCIA_CHAVE=... python scripts/coletar_emendas.py [ano ...]
+    PORTAL_TRANSPARENCIA_CHAVE=... python scripts/coletar_emendas.py --amostra   # regrava tests/fixtures/contratos/portal_transparencia_emendas.json
 """
 
 import datetime as dt
@@ -101,10 +102,32 @@ def coletar(chave: str, anos: list[int] | None = None, hoje: dt.date | None = No
         print(f"Emendas {ano}: {len(itens)}")
 
 
+AMOSTRA = Path(__file__).resolve().parent.parent / "tests" / "fixtures" / "contratos" / "portal_transparencia_emendas.json"
+AMOSTRA_ITENS = 6   # o suficiente para cobrir município, estado, região e "MÚLTIPLO"
+
+
+def gravar_amostra(chave: str, hoje: dt.date | None = None, s=None) -> None:
+    """Grava a resposta crua da API (primeiras páginas do ano corrente, sem compactar) como amostra de contrato dos testes."""
+    hoje = hoje or dt.date.today()
+    s = s or comum.sessao(1)
+    itens: list[dict] = []
+    for pagina in range(1, 6):
+        itens += comum.get(s, URL, params={"ano": hoje.year, "pagina": pagina}, headers={"chave-api-dados": chave, "Accept": "application/json"}, timeout=60).json()
+        if len(itens) >= AMOSTRA_ITENS:
+            break
+    if not itens:
+        raise RuntimeError("a API não devolveu emendas para a amostra")
+    comum.salvar(AMOSTRA, {"fonte": f"{URL}?ano={{ano}}&pagina={{pagina}}", "capturadoEm": hoje.isoformat(), "amostra": itens[:AMOSTRA_ITENS]})
+    print(f"Amostra gravada em {AMOSTRA} ({min(len(itens), AMOSTRA_ITENS)} itens)")
+
+
 def main() -> None:
     chave = os.environ.get(VARIAVEL, "").strip()
     if not chave:
         comum.avisar(f"emendas: {VARIAVEL} não definida; coleta pulada")
+        return
+    if sys.argv[1:] == ["--amostra"]:
+        gravar_amostra(chave)
         return
     coletar(chave, [int(a) for a in sys.argv[1:]] or None)
 

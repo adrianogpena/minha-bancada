@@ -54,8 +54,9 @@ Conferido em 2026-11-09: o Actions já coletou 2019 a 2026 (`dados/emendas/`, 54
 vem como "Emenda Individual - Transferências Especiais" (5.108 linhas). Ligaram 553 autores (`nome+cargo`) e 747 ficaram sem
 ligação (`semLigacao.emendas`; vale ver quantos são bancada, comissão ou nome repetido). **Feito em 2026-11-27:** totais por área na
 ficha e destino municipal corrigido (o Portal usa `SANTOS - SP`; antes nenhum município casava), com os 13.734 municípios
-ligados ao IBGE. Falta: medir o tempo da coleta no Actions e regravar `tests/test_coletar_emendas.py` com amostra real em
-`tests/fixtures/contratos/` (hoje o teste usa dados inventados; precisa da chave `PORTAL_TRANSPARENCIA_CHAVE`, que esta sessão não tem).
+ligados ao IBGE. Tempo da coleta no Actions (2026-11-27, anos encerrados em cache): 16 min 40 s. A amostra de contrato
+(`tests/fixtures/contratos/portal_transparencia_emendas.json`) foi reconstruída dos itens coletados; falta regravá-la com a
+resposta crua da API (`PORTAL_TRANSPARENCIA_CHAVE=... python scripts/coletar_emendas.py --amostra`).
 
 Ainda não feito, com a mesma chave:
 - Emendas Pix com o favorecido e o plano de ação do Transferegov (hoje só o município e os valores do Portal da Transparência).

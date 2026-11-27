@@ -64,8 +64,9 @@ Ainda não feito, com a mesma chave:
   recebe 403 do Cloudflare, no Actions também; a API nova é `https://api-publica.transferegov.gestao.gov.br/especiais` (FastAPI, sem
   chave, esquema em `/especiais/openapi.json`, dicionário em `gov.br/transferegov/.../modelo_dados_api-especiais.zip`). O plano de ação
   liga à emenda do Portal pelo código de 12 dígitos (`numero_emenda_parlamentar_plano_acao` = `codigoEmenda`), sem comparar nomes.
-  Falta: `gerar_emendas` juntar isso às emendas Pix da ficha (executor, objeto e situação do plano por emenda; registrar a ligação em
-  `site/mapa-dados.html`), conferir quantos planos não casam com emenda do Portal, e pagamentos e favorecidos finais
+  **Feito em 2026-11-27:** `gerar_emendas` junta o plano às emendas Pix da ficha (executor, objeto, situação e valores; ligação no
+  `site/mapa-dados.html`). Falta: conferir quantos planos não casam com emenda do Portal (o `gerar.py` já imprime a contagem; rodar com
+  `dados/transferegov/` do Actions) e pagamentos e favorecidos finais
   (`/gestao-financeira-subtransacoes-especiais`, `/relatorios-gestao-documento-liquidacao-especiais`,
   `/ordens-pagamentos-ordens-bancarias-especiais`, `/empenhos-especiais`).
 - Viagens a serviço e cargos do Executivo federal (ver 3.3).

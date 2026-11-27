@@ -25,7 +25,7 @@ def test_totais_por_funcao_ordenam_pelo_empenhado_e_agrupam_sem_area():
 
 
 def test_salva_um_arquivo_por_pessoa(tmp_path):
-    assert ge.salvar([item("1", 2024, "SANTOS", "SP", 1.0, 1.0)], tmp_path) == 1
+    assert ge.salvar([item("1", 2024, "SANTOS", "SP", 1.0, 1.0)], tmp_path, planos={}) == 1
     assert json.loads((tmp_path / "emendas" / "pes_a.json").read_text(encoding="utf-8"))["anos"][0]["ano"] == 2024
 
 
@@ -52,3 +52,33 @@ def test_municipio_sai_do_local_mesmo_em_arquivo_antigo_e_estado_inteiro_nao_vir
     r = ge.construir([{**base, "codigo": "1", "local": "EMBU - SP"}, {**base, "codigo": "2", "local": "SÃO PAULO (UF)", "municipio": "SÃO PAULO", "uf": "UF"}],
                      {"3515004": ["SP", "EMBU DAS ARTES"]})["pes_a"]
     assert [(m["nome"], m["uf"], m.get("ibge")) for m in r["municipios"]] == [("EMBU", "SP", "3515004")]
+
+
+PLANO = {"id": 38527, "codigo": "08.000001-X", "emenda": "202027070006", "ano": 2020, "situacao": "Concluído", "objeto": "Estradas vicinais",
+         "custeio": 0.0, "investimento": 4350000.0, "beneficiario": 7052,
+         "executores": [{"id": 1, "cnpj": "01613028000167", "nome": "MUNICIPIO DE IRACEMA", "objeto": "Estradas", "investimento": 4350000.0}]}
+
+
+def test_plano_do_transferegov_liga_pelo_codigo_da_emenda_e_fica_uma_vez_na_pessoa():
+    pix = {**item("202027070006", 2020, "IRACEMA", "RR", 10.0, 5.0), "tipo": "Emenda Individual - Transferências Especiais"}
+    r = ge.construir([pix, item("999", 2020, "IRACEMA", "RR", 1.0, 0.0)], planos={"202027070006": [PLANO]})["pes_a"]
+    assert [i.get("planos") for i in r["itens"]] == [[38527], None]
+    assert list(r["planos"]) == ["38527"]
+    plano = r["planos"]["38527"]
+    assert plano["situacao"] == "Concluído" and plano["executores"][0]["cnpj"] == "01613028000167"
+    assert "emenda" not in plano and "beneficiario" not in plano and "id" not in plano
+
+
+def test_sem_plano_o_arquivo_da_pessoa_nao_ganha_campo():
+    r = ge.construir([item("1", 2024, "SANTOS", "SP", 1.0, 1.0)], planos={"outra": [PLANO]})["pes_a"]
+    assert "planos" not in r and "planos" not in r["itens"][0]
+
+
+def test_carrega_planos_dos_arquivos_por_ano_e_confere_os_que_nao_casam(tmp_path):
+    ge.comum.salvar(tmp_path / "especiais" / "2020.json", {"planos": [PLANO, {**PLANO, "id": 2, "emenda": "000000000000"}, {"id": 3, "codigo": "x"}]})
+    planos = ge.carregar_planos(tmp_path)
+    assert sorted(planos) == ["000000000000", "202027070006"]
+    assert ge.carregar_planos(tmp_path / "nada") == {}
+    pix = {**item("202027070006", 2020, "IRACEMA", "RR", 10.0, 5.0), "tipo": "Emenda Individual - Transferências Especiais"}
+    pix2 = {**item("202027070007", 2020, "IRACEMA", "RR", 10.0, 5.0), "tipo": "Emenda Individual - Transferências Especiais"}
+    assert ge.conferir_planos([pix, pix2], planos) == {"planos": 2, "semEmenda": 1, "emendasPix": 2, "pixSemPlano": 1}

@@ -11,7 +11,7 @@ const { resumosEstadual } = js("estadual.js");
 const { linksRedes } = js("ficha.js");
 const { foto } = js("comum.js");
 const { blocoDescricao } = js("ministros.js");
-const { painelEmendas, ehPix } = js("emendas.js");
+const { painelEmendas, ehPix, planosPix } = js("emendas.js");
 const { painelCoautoria } = js("parlamentar.js");
 const { linkParlamentar } = js("apis.js");
 const { filtrarLista, consultaDaLista, mediasPor, dicaComparativa, celulaEmendas, celulaDaColuna, metrica } = js("lista-parlamentares.js");
@@ -330,4 +330,18 @@ test("celulaDaColuna marca como ativa só a coluna que explica a ordenação esc
   assert.match(celulaDaColuna(col, {}, "", "emendas"), /class="metrica ativa so-largo"/);
   assert.doesNotMatch(celulaDaColuna(col, {}, "", "nome"), /ativa/);
   assert.doesNotMatch(celulaDaColuna({ celula: () => metrica("1", "x") }, {}, "", "nome"), /ativa/);
+});
+
+test("painelEmendas mostra os planos de ação das emendas Pix, do maior valor ao menor, e escapa o texto", () => {
+  const e = { anos: [{ ano: 2024, n: 2, empenhado: 3, liquidado: 0, pago: 0 }], municipios: [],
+    itens: [{ ano: 2024, codigo: "1", numero: "1", tipo: "Emenda Individual - Transferências Especiais", local: "A (RR)", planos: [10] },
+            { ano: 2024, codigo: "2", numero: "2", tipo: "Emenda Individual - Transferências Especiais", local: "B (RR)", planos: [11] }],
+    planos: { 10: { objeto: "Pequeno", investimento: 10, situacao: "Concluído", executores: [{ nome: "<b>X</b>" }] },
+              11: { objeto: "Grande", investimento: 500, situacao: "Em execução" } } };
+  assert.deepEqual(planosPix(e).map((p) => p.objeto), ["Grande", "Pequeno"]);
+  const html = painelEmendas(e);
+  assert.match(html, /2 planos de ação/);
+  assert.match(html, /&lt;b&gt;X&lt;\/b&gt;/);
+  assert.match(html, /Transferegov/);
+  assert.doesNotMatch(painelEmendas({ ...e, planos: undefined }), /planos de ação/);
 });

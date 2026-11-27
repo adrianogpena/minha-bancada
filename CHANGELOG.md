@@ -5,6 +5,15 @@ Regra: toda fonte nova ou mudança de coleta ganha uma entrada aqui, no mesmo co
 Datas dos conjuntos que já existiam vêm do primeiro commit que os trouxe (`git log --diff-filter=A`).
 Todas as coletas rodam sozinhas no GitHub Actions (`.github/workflows/atualizar.yml`, todo dia às 05:00 de Brasília), salvo onde indicado.
 
+## Emendas Pix: plano de ação do Transferegov na ficha (2026-11-27)
+
+Sem endpoint novo: `gerar_emendas.py` passa a ler `dados/transferegov/especiais/<ano>.json` (coleta da entrada abaixo) e ligar cada plano de
+ação à emenda do Portal pelo `codigoEmenda` de 12 dígitos (`numero_emenda_parlamentar_plano_acao`), sem comparar nomes. O item da emenda em
+`site/dados/emendas/<pessoa>.json` guarda só `planos:[id]`; situação, objeto, valores e executores (CNPJ, nome, objeto, valores) ficam uma vez em
+`planos` no arquivo da pessoa, só dos planos das emendas dela. A ficha ganha o bloco "Para que a verba Pix foi planejada" (30 maiores planos).
+`gerar.py` imprime quantos planos não casam com emenda coletada do Portal e quantas Emendas Pix ficaram sem plano. Pagamentos e favorecidos
+finais do Transferegov seguem fora.
+
 ## Emendas Pix: plano de ação, beneficiário e executores pelo Transferegov (2026-11-27)
 
 Fonte nova: API de dados abertos do módulo Transferências Especiais, `https://api-publica.transferegov.gestao.gov.br/especiais` (sem chave; esquema em `/especiais/openapi.json`). O host antigo, `api.transferegov.gestao.gov.br`, foi desativado na migração e devolve 403 do Cloudflare (também no Actions), por isso nenhum código o usa. `scripts/coletar_transferegov_especiais.py` baixa `planos-acao-especiais`, `beneficiarios-especiais` e `executores-especiais` (200 por página) e grava `dados/transferegov/especiais/<ano>.json` (plano com seus executores: CNPJ, objeto, valores), `beneficiarios.json` e `atualizacao.json`. O plano liga à emenda do Portal da Transparência pelo código de 12 dígitos (`numero_emenda_parlamentar_plano_acao` = `codigoEmenda`), sem comparar nomes; o nome do parlamentar não é copiado. `/data-atualizacao` evita baixar de novo quando a API não foi renovada.

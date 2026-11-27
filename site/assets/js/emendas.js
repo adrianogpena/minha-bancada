@@ -6,6 +6,8 @@ import { svgMapa } from "./mapa.js";
 export const PORTAL_EMENDAS = "https://portaldatransparencia.gov.br/emendas/consulta";
 const ITENS_EXIBIDOS = 50;
 const MUNICIPIOS_EXIBIDOS = 15;
+const PLANOS_EXIBIDOS = 30;
+export const TRANSFEREGOV = "https://www.gov.br/transferegov/pt-br";
 
 /* Emenda Pix: emenda individual de "Transferências Especiais" (a verba vai direto ao caixa do município). */
 export const ehPix = (tipo) => semAcento(tipo || "").toLowerCase().includes("transferencias especiais");
@@ -13,6 +15,31 @@ export const ehPix = (tipo) => semAcento(tipo || "").toLowerCase().includes("tra
 export async function carregarEmendas(pessoa) {
   if (!pessoa || !/^[\w-]+$/.test(pessoa)) return null;
   try { return await carregar(`dados/emendas/${pessoa}.json`); } catch { return null; }
+}
+
+/* Planos de ação das Emendas Pix (Transferegov): uma linha por plano, do maior valor ao menor; o plano vem de e.planos[id] e liga à emenda por `planos` no item. */
+export function planosPix(e) {
+  const vistos = new Map();
+  for (const i of e.itens || []) {
+    for (const id of i.planos || []) {
+      const p = e.planos?.[id];
+      if (p && !vistos.has(id)) vistos.set(id, { ...p, local: i.local, emenda: i.numero || i.codigo });
+    }
+  }
+  const valor = (p) => (p.custeio || 0) + (p.investimento || 0);
+  return [...vistos.values()].sort((a, b) => valor(b) - valor(a));
+}
+
+function blocoPlanos(e) {
+  const planos = planosPix(e);
+  if (!planos.length) return "";
+  const executores = (p) => (p.executores || []).map((x) => esc(x.nome || x.cnpj || "")).filter(Boolean).join("; ");
+  return `<details><summary>Para que a verba Pix foi planejada (${planos.length > PLANOS_EXIBIDOS ? `os ${PLANOS_EXIBIDOS} maiores de ${planos.length}` : planos.length} planos de ação)</summary>
+      <p class="aviso">Plano de ação cadastrado no Transferegov para cada emenda Pix: o que o município disse que fará com a verba, quem executa e a situação do plano. Plano aprovado não quer dizer verba paga: veja o valor pago nas emendas acima.</p>
+      <div class="rolagem"><table class="tabela"><thead><tr><th>Emenda</th><th>Destino</th><th>Objeto</th><th>Executor</th><th>Valor do plano</th><th>Situação</th></tr></thead><tbody>
+        ${planos.slice(0, PLANOS_EXIBIDOS).map((p) => `<tr><td>${esc(p.emenda)}</td><td>${esc(p.local || "")}</td><td>${esc(p.objeto || (p.executores || []).map((x) => x.objeto).filter(Boolean).join("; "))}</td><td>${executores(p)}</td><td>${reaisCentavos((p.custeio || 0) + (p.investimento || 0))}</td><td>${esc(p.situacao || "")}</td></tr>`).join("")}
+      </tbody></table></div>
+    </details>`;
 }
 
 export function painelEmendas(e) {
@@ -41,7 +68,9 @@ export function painelEmendas(e) {
         ${itens.slice(0, ITENS_EXIBIDOS).map((i) => `<tr><td>${esc(i.ano)}</td><td>${esc(i.numero || i.codigo)}</td><td>${esc(i.tipo || "")}</td><td>${esc(i.local || "")}</td><td>${esc([i.funcao, i.subfuncao].filter(Boolean).join(" / "))}</td><td>${reaisCentavos(i.empenhado)}</td><td>${reaisCentavos(i.pago)}</td></tr>`).join("")}
       </tbody></table></div>
     </details>
-    ${fontes(e.anos.map((a) => [`Emendas de ${a.ano} (Portal da Transparência)`, `${PORTAL_EMENDAS}?ano=${encodeURIComponent(a.ano)}`]))}`;
+    ${blocoPlanos(e)}
+    ${fontes([...e.anos.map((a) => [`Emendas de ${a.ano} (Portal da Transparência)`, `${PORTAL_EMENDAS}?ano=${encodeURIComponent(a.ano)}`]),
+      ...(planosPix(e).length ? [["Planos de ação das emendas Pix (Transferegov)", TRANSFEREGOV]] : [])])}`;
 }
 
 /* Mapa dos destinos: município colorido pelo valor empenhado, de um estado por vez; filtro de só Emendas Pix. DF não tem malha municipal. */

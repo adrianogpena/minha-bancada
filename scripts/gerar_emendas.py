@@ -10,6 +10,11 @@ funcao, subfuncao, empenhado, liquidado, pago}]}. Valores em reais; o link da fo
 
 Emenda Pix é a emenda individual de "Transferências Especiais" (a verba vai direto ao caixa do município, sem convênio).
 O código IBGE vem de dados/municipios_nomes.json (gerar_municipios_ibge.py --nomes).
+
+Plano de ação do Transferegov (coletar_transferegov_especiais.py, dados/transferegov/especiais/<ano>.json): o plano liga à emenda pelo
+`codigoEmenda` do Portal (12 dígitos), sem comparar nomes. O item da emenda guarda só `planos:[id]`; os dados do plano (situação, objeto,
+valores, executores com CNPJ) ficam uma vez no arquivo da pessoa, em `planos:{id: {codigo, ano, situacao, objeto, custeio, investimento,
+executores:[{cnpj, nome, objeto, custeio, investimento}]}}`, só dos planos das emendas dela. `pessoa["planos"]` some quando nenhum casa.
 """
 
 from collections import defaultdict
@@ -20,6 +25,8 @@ import estaduais_comum as comum
 import gerar_municipios_ibge as ibge_nomes
 
 NOMES = comum.RAIZ / "dados" / "municipios_nomes.json"
+TRANSFEREGOV = comum.RAIZ / "dados" / "transferegov"
+CAMPOS_PLANO = ("codigo", "ano", "situacao", "aceite", "custeio", "investimento", "areas", "objeto", "executores")
 CAMPOS_ITEM = ("codigo", "ano", "tipo", "numero", "local", "funcao", "subfuncao", "empenhado", "liquidado", "pago")
 
 
@@ -62,8 +69,28 @@ def soma(itens: list[dict], campo: str) -> float:
     return round(sum(i.get(campo) or 0 for i in itens), 2)
 
 
-def construir(emendas: list[dict], nomes: dict | None = None) -> dict[str, dict]:
-    """{pessoa: arquivo}. `emendas`: itens ligados, cada um com `pessoa`; `nomes`: {código IBGE: [UF, nome]}."""
+def carregar_planos(raiz: Path = TRANSFEREGOV) -> dict[str, list[dict]]:
+    """{codigoEmenda: [plano]} de dados/transferegov/especiais/<ano>.json; vazio quando o Transferegov ainda não foi coletado."""
+    planos = defaultdict(list)
+    for arq in sorted((raiz / "especiais").glob("*.json")):
+        for p in (comum.ler(arq, {}) or {}).get("planos") or []:
+            if p.get("emenda"):
+                planos[p["emenda"]].append(p)
+    return dict(planos)
+
+
+def conferir_planos(emendas: list[dict], planos: dict[str, list[dict]]) -> dict:
+    """Quantos planos do Transferegov casam com uma emenda coletada do Portal (e quantas Emendas Pix ficaram sem plano)."""
+    codigos = {e["codigo"] for e in emendas}
+    todos = [p for lista in planos.values() for p in lista]
+    pix = {e["codigo"] for e in emendas if eh_pix(e.get("tipo"))}
+    return {"planos": len(todos), "semEmenda": sum(1 for p in todos if p["emenda"] not in codigos),
+            "emendasPix": len(pix), "pixSemPlano": len(pix - set(planos))}
+
+
+def construir(emendas: list[dict], nomes: dict | None = None, planos: dict[str, list[dict]] | None = None) -> dict[str, dict]:
+    """{pessoa: arquivo}. `emendas`: itens ligados, cada um com `pessoa`; `nomes`: {código IBGE: [UF, nome]};
+    `planos`: {codigoEmenda: [plano do Transferegov]} (carregar_planos)."""
     indice = indice_municipios(nomes or {})
     por_pessoa = defaultdict(list)
     for e in emendas:
@@ -79,14 +106,20 @@ def construir(emendas: list[dict], nomes: dict | None = None) -> dict[str, dict]
             if i.get("municipio"):
                 por_local[(i["municipio"], i["uf"])].append(i)
         municipios = sorted((municipio(m, uf, x, indice) for (m, uf), x in por_local.items()), key=lambda m: (-m["empenhado"], m["nome"], m["uf"]))
+        usados = {}
+        for i in itens:
+            for p in (planos or {}).get(i["codigo"], []):
+                usados[p["id"]] = {k: p[k] for k in CAMPOS_PLANO if k in p}
         saida[pid] = {
             "anos": [{"ano": a, "n": len(x), "empenhado": soma(x, "empenhado"), "liquidado": soma(x, "liquidado"), "pago": soma(x, "pago")}
                      for a, x in sorted(por_ano.items(), reverse=True)],
             "funcoes": por_funcao(itens),
             "municipios": municipios,
-            "itens": [{k: i[k] for k in CAMPOS_ITEM if k in i}
+            "itens": [{**{k: i[k] for k in CAMPOS_ITEM if k in i}, **({"planos": sorted(p["id"] for p in planos[i["codigo"]])} if i["codigo"] in (planos or {}) else {})}
                       for i in sorted(itens, key=lambda i: (-i["ano"], -(i.get("empenhado") or 0), i["codigo"]))],
         }
+        if usados:
+            saida[pid]["planos"] = {str(k): v for k, v in sorted(usados.items())}
     return saida
 
 
@@ -111,9 +144,10 @@ def municipio(nome: str, uf: str, itens: list[dict], indice: dict) -> dict:
     return m
 
 
-def salvar(emendas: list[dict], saida: Path, nomes: dict | None = None) -> int:
+def salvar(emendas: list[dict], saida: Path, nomes: dict | None = None, planos: dict[str, list[dict]] | None = None) -> int:
     nomes = comum.ler(NOMES, {}) if nomes is None else nomes
-    arquivos = construir(emendas, nomes)
+    planos = carregar_planos() if planos is None else planos
+    arquivos = construir(emendas, nomes, planos)
     for pid, arq in arquivos.items():
         comum.salvar(saida / "emendas" / f"{pid}.json", arq)
     return len(arquivos)

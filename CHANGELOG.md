@@ -11,7 +11,7 @@ Sem endpoint novo: `gerar_emendas.py` passa a ler `dados/transferegov/especiais/
 ação à emenda do Portal pelo `codigoEmenda` de 12 dígitos (`numero_emenda_parlamentar_plano_acao`), sem comparar nomes. O item da emenda em
 `site/dados/emendas/<pessoa>.json` guarda só `planos:[id]`; situação, objeto, valores e executores (CNPJ, nome, objeto, valores) ficam uma vez em
 `planos` no arquivo da pessoa, só dos planos das emendas dela. A ficha ganha o bloco "Para que a verba Pix foi planejada" (30 maiores planos).
-`gerar.py` imprime quantos planos não casam com emenda coletada do Portal e quantas Emendas Pix ficaram sem plano. Pagamentos e favorecidos
+Conferência de 2026-11-27 com a coleta do zero: 58.990 planos, 5.108 Emendas Pix (todas com plano), 159 planos sem emenda coletada (quase todos de 2026, ainda sem empenho) e 60 itens de "Finalidade Definida" com plano, que ficam fora da ficha. `gerar.py` imprime quantos planos não casam com emenda coletada do Portal e quantas Emendas Pix ficaram sem plano. Pagamentos e favorecidos
 finais do Transferegov seguem fora.
 
 ## Emendas Pix: plano de ação, beneficiário e executores pelo Transferegov (2026-11-27)

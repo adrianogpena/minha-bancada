@@ -81,4 +81,11 @@ def test_carrega_planos_dos_arquivos_por_ano_e_confere_os_que_nao_casam(tmp_path
     assert ge.carregar_planos(tmp_path / "nada") == {}
     pix = {**item("202027070006", 2020, "IRACEMA", "RR", 10.0, 5.0), "tipo": "Emenda Individual - Transferências Especiais"}
     pix2 = {**item("202027070007", 2020, "IRACEMA", "RR", 10.0, 5.0), "tipo": "Emenda Individual - Transferências Especiais"}
-    assert ge.conferir_planos([pix, pix2], planos) == {"planos": 2, "semEmenda": 1, "emendasPix": 2, "pixSemPlano": 1}
+    assert ge.conferir_planos([pix, pix2], planos) == {"planos": 2, "semEmenda": 1, "emendasPix": 2, "pixSemPlano": 1, "planosDeOutroTipo": 0}
+
+
+def test_plano_so_entra_em_emenda_pix_e_o_resto_e_contado():
+    fin = {**item("202027070006", 2020, "IRACEMA", "RR", 10.0, 5.0), "tipo": "Emenda Individual - Transferências com Finalidade Definida"}
+    planos = {"202027070006": [PLANO]}
+    assert "planos" not in ge.construir([fin], planos=planos)["pes_a"]
+    assert ge.conferir_planos([fin], planos)["planosDeOutroTipo"] == 1

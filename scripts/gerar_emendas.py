@@ -11,6 +11,9 @@ funcao, subfuncao, empenhado, liquidado, pago}]}. Valores em reais; o link da fo
 Emenda Pix é a emenda individual de "Transferências Especiais" (a verba vai direto ao caixa do município, sem convênio).
 O código IBGE vem de dados/municipios_nomes.json (gerar_municipios_ibge.py --nomes).
 
+O plano só entra em emenda do tipo Pix: o Transferegov traz plano de algumas emendas que o Portal classifica como "Finalidade Definida"
+(60 itens em 2026-11-27), e esses ficam de fora (contados em `conferir_planos`, `planosDeOutroTipo`).
+
 Plano de ação do Transferegov (coletar_transferegov_especiais.py, dados/transferegov/especiais/<ano>.json): o plano liga à emenda pelo
 `codigoEmenda` do Portal (12 dígitos), sem comparar nomes. O item da emenda guarda só `planos:[id]`; os dados do plano (situação, objeto,
 valores, executores com CNPJ) ficam uma vez no arquivo da pessoa, em `planos:{id: {codigo, ano, situacao, objeto, custeio, investimento,
@@ -85,7 +88,8 @@ def conferir_planos(emendas: list[dict], planos: dict[str, list[dict]]) -> dict:
     todos = [p for lista in planos.values() for p in lista]
     pix = {e["codigo"] for e in emendas if eh_pix(e.get("tipo"))}
     return {"planos": len(todos), "semEmenda": sum(1 for p in todos if p["emenda"] not in codigos),
-            "emendasPix": len(pix), "pixSemPlano": len(pix - set(planos))}
+            "emendasPix": len(pix), "pixSemPlano": len(pix - set(planos)),
+            "planosDeOutroTipo": sum(len(l) for c, l in planos.items() if c in codigos and c not in pix)}
 
 
 def construir(emendas: list[dict], nomes: dict | None = None, planos: dict[str, list[dict]] | None = None) -> dict[str, dict]:
@@ -108,14 +112,14 @@ def construir(emendas: list[dict], nomes: dict | None = None, planos: dict[str, 
         municipios = sorted((municipio(m, uf, x, indice) for (m, uf), x in por_local.items()), key=lambda m: (-m["empenhado"], m["nome"], m["uf"]))
         usados = {}
         for i in itens:
-            for p in (planos or {}).get(i["codigo"], []):
+            for p in (planos or {}).get(i["codigo"], []) if eh_pix(i.get("tipo")) else []:
                 usados[p["id"]] = {k: p[k] for k in CAMPOS_PLANO if k in p}
         saida[pid] = {
             "anos": [{"ano": a, "n": len(x), "empenhado": soma(x, "empenhado"), "liquidado": soma(x, "liquidado"), "pago": soma(x, "pago")}
                      for a, x in sorted(por_ano.items(), reverse=True)],
             "funcoes": por_funcao(itens),
             "municipios": municipios,
-            "itens": [{**{k: i[k] for k in CAMPOS_ITEM if k in i}, **({"planos": sorted(p["id"] for p in planos[i["codigo"]])} if i["codigo"] in (planos or {}) else {})}
+            "itens": [{**{k: i[k] for k in CAMPOS_ITEM if k in i}, **({"planos": sorted(p["id"] for p in planos[i["codigo"]])} if eh_pix(i.get("tipo")) and i["codigo"] in (planos or {}) else {})}
                       for i in sorted(itens, key=lambda i: (-i["ano"], -(i.get("empenhado") or 0), i["codigo"]))],
         }
         if usados:

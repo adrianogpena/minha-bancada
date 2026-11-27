@@ -65,8 +65,11 @@ Ainda não feito, com a mesma chave:
   chave, esquema em `/especiais/openapi.json`, dicionário em `gov.br/transferegov/.../modelo_dados_api-especiais.zip`). O plano de ação
   liga à emenda do Portal pelo código de 12 dígitos (`numero_emenda_parlamentar_plano_acao` = `codigoEmenda`), sem comparar nomes.
   **Feito em 2026-11-27:** `gerar_emendas` junta o plano às emendas Pix da ficha (executor, objeto, situação e valores; ligação no
-  `site/mapa-dados.html`). Falta: conferir quantos planos não casam com emenda do Portal (o `gerar.py` já imprime a contagem; rodar com
-  `dados/transferegov/` do Actions) e pagamentos e favorecidos finais
+  `site/mapa-dados.html`). **Conferido em 2026-11-27** (coleta do zero contra a API, 58.990 planos, com as emendas coletadas de 2019 a 2026): as 5.108 Emendas Pix
+  têm plano (0 sem plano) e 159 planos não casam com emenda do Portal (112 de 2026, 28 de 2025, 14 de 2024, 4 de 2023, 1 de 2022; todos
+  impedidos, ciente ou em elaboração, ainda sem empenho no Portal). Um código pode ter vários planos (1.789 com um, 346 com dois, até mais de cinco);
+  60 itens que o Portal classifica como "Finalidade Definida" também têm plano no Transferegov e ficam fora da ficha (só Pix recebe plano). Falta:
+  pagamentos e favorecidos finais
   (`/gestao-financeira-subtransacoes-especiais`, `/relatorios-gestao-documento-liquidacao-especiais`,
   `/ordens-pagamentos-ordens-bancarias-especiais`, `/empenhos-especiais`).
 - Viagens a serviço e cargos do Executivo federal (ver 3.3).

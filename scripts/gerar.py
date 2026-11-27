@@ -712,7 +712,7 @@ def main():
     if planos_pix:
         c = gerar_emendas.conferir_planos(nucleo["emendas"], planos_pix)
         print(f"Planos do Transferegov: {c['planos']} ({c['semEmenda']} sem emenda do Portal coletada); "
-              f"Emendas Pix: {c['emendasPix']} ({c['pixSemPlano']} sem plano)")
+              f"Emendas Pix: {c['emendasPix']} ({c['pixSemPlano']} sem plano); {c['planosDeOutroTipo']} planos de emenda de outro tipo ficam fora")
     candidaturas.salvar_candidaturas(candidaturas.construir(BRUTO, nucleo), SAIDA)
     mandatos.salvar_mandatos(mandatos.construir(deputados, BRUTO, nucleo), SAIDA)
     nucleo_fornecedores.salvar_fornecedores(forn, SAIDA)

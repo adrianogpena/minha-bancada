@@ -35,7 +35,15 @@ VARIAVEL = "PORTAL_TRANSPARENCIA_CHAVE"
 ANO_INICIAL = 2019   # legislatura 2019-2022 em diante
 LIMITE_PAGINAS = 5000   # ~75 mil emendas por ano; mais que isso é laço na paginação
 PAUSA = 0.7   # s entre páginas: o limite é 90 requisições/min de dia e mais alto na madrugada
-LOCAL = re.compile(r"^(?P<municipio>.+?)\s*-?\s*\((?P<uf>[A-Z]{2})\)$")
+# O Portal publica o município como "SANTOS - SP" (também "SANTOS (SP)"); o estado inteiro vem como "SÃO PAULO (UF)", sem município.
+LOCAL = re.compile(r"^(?P<municipio>.+?)\s*(?:-\s*(?P<uf>[A-Z]{2})|\((?P<uf2>[A-Z]{2})\))$")
+
+
+def destino(local: str | None) -> tuple[str | None, str | None]:
+    """(município, UF) do local do gasto; (None, None) para estado inteiro, região, "Nacional" e "MÚLTIPLO"."""
+    m = LOCAL.match(" ".join((local or "").split()))
+    uf = m and (m.group("uf") or m.group("uf2"))
+    return (m.group("municipio"), uf) if m and uf != "UF" else (None, None)
 
 
 def compactar(i: dict) -> dict | None:
@@ -44,10 +52,10 @@ def compactar(i: dict) -> dict | None:
     if not codigo or not autor:
         return None
     local = " ".join((i.get("localidadeDoGasto") or "").split())
-    m = LOCAL.match(local)
+    municipio, uf = destino(local)
     item = {
         "codigo": codigo, "ano": i.get("ano"), "tipo": (i.get("tipoEmenda") or "").strip(), "numero": str(i.get("numeroEmenda") or "").strip(),
-        "autor": autor, "local": local, "municipio": m.group("municipio") if m else None, "uf": m.group("uf") if m else None,
+        "autor": autor, "local": local, "municipio": municipio, "uf": uf,
         "funcao": (i.get("funcao") or "").strip(), "subfuncao": (i.get("subfuncao") or "").strip(),
         "empenhado": comum.valor_br(i.get("valorEmpenhado")), "liquidado": comum.valor_br(i.get("valorLiquidado")),
         "pago": comum.valor_br(i.get("valorPago")),

@@ -17,6 +17,13 @@ def test_resume_por_ano_e_municipio_e_ordena_itens():
     assert "pessoa" not in r["itens"][0] and "autor" not in r["itens"][0]
 
 
+def test_totais_por_funcao_ordenam_pelo_empenhado_e_agrupam_sem_area():
+    com = lambda c, f, emp, pago: {**item(c, 2024, "SANTOS", "SP", emp, pago), **({"funcao": f} if f else {})}
+    r = ge.construir([com("1", "Saúde", 10.0, 5.0), com("2", "Educação", 30.0, 0.0), com("3", "Saúde", 25.0, 25.0), com("4", None, 1.0, 0.0)])["pes_a"]
+    assert r["funcoes"] == [{"nome": "Saúde", "n": 2, "empenhado": 35.0, "pago": 30.0}, {"nome": "Educação", "n": 1, "empenhado": 30.0, "pago": 0.0},
+                            {"nome": "Sem área informada", "n": 1, "empenhado": 1.0, "pago": 0.0}]
+
+
 def test_salva_um_arquivo_por_pessoa(tmp_path):
     assert ge.salvar([item("1", 2024, "SANTOS", "SP", 1.0, 1.0)], tmp_path) == 1
     assert json.loads((tmp_path / "emendas" / "pes_a.json").read_text(encoding="utf-8"))["anos"][0]["ano"] == 2024
@@ -38,3 +45,10 @@ def test_municipio_ganha_codigo_ibge_e_soma_das_emendas_pix():
 def test_totais_somam_todos_os_anos_por_pessoa():
     t = ge.totais([item("1", 2023, "A", "SP", 100.5, 40.0), item("2", 2024, "B", "SP", 50.0, 10.0), {"pessoa": "pes_b", "codigo": "3", "ano": 2024, "empenhado": 7.0}])
     assert t == {"pes_a": {"n": 2, "empenhado": 150.5, "pago": 50.0}, "pes_b": {"n": 1, "empenhado": 7.0, "pago": 0.0}}
+
+
+def test_municipio_sai_do_local_mesmo_em_arquivo_antigo_e_estado_inteiro_nao_vira_municipio():
+    base = {"pessoa": "pes_a", "ano": 2024, "autor": "A", "tipo": "Individual", "empenhado": 10.0, "pago": 0.0}
+    r = ge.construir([{**base, "codigo": "1", "local": "EMBU - SP"}, {**base, "codigo": "2", "local": "SÃO PAULO (UF)", "municipio": "SÃO PAULO", "uf": "UF"}],
+                     {"3515004": ["SP", "EMBU DAS ARTES"]})["pes_a"]
+    assert [(m["nome"], m["uf"], m.get("ibge")) for m in r["municipios"]] == [("EMBU", "SP", "3515004")]

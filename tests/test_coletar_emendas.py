@@ -75,3 +75,11 @@ def test_sem_chave_nao_coleta(monkeypatch):
     monkeypatch.delenv(em.VARIAVEL, raising=False)
     monkeypatch.setattr(em, "coletar", lambda *a, **k: (_ for _ in ()).throw(AssertionError("coletou sem chave")))
     em.main()
+
+
+def test_destino_le_municipio_com_hifen_ou_parenteses_e_ignora_estado_e_regiao():
+    assert em.destino("JOÃO PESSOA - PB") == ("JOÃO PESSOA", "PB")
+    assert em.destino("CAMPINAS (SP)") == ("CAMPINAS", "SP")
+    assert em.destino("MOGI-MIRIM  -  SP") == ("MOGI-MIRIM", "SP")
+    for local in ("SÃO PAULO (UF)", "MÚLTIPLO", "Nacional", "Sudeste", "", None):
+        assert em.destino(local) == (None, None)

@@ -52,12 +52,12 @@ Raspagem é frágil: fonte opcional, com teste de contrato em `scripts/contrato_
 `coletar_emendas.py`, ligação do autor por nome, `site/dados/emendas/<pessoa>.json` e painel na ficha (ver `CHANGELOG.md`).
 Conferido em 2026-11-09: o Actions já coletou 2019 a 2026 (`dados/emendas/`, 54 mil linhas), o campo é `autor` e o tipo das Pix
 vem como "Emenda Individual - Transferências Especiais" (5.108 linhas). Ligaram 553 autores (`nome+cargo`) e 747 ficaram sem
-ligação (`semLigacao.emendas`; vale ver quantos são bancada, comissão ou nome repetido). Falta: medir o tempo da coleta no
-Actions, conferir quantos municípios casam com o IBGE e regravar `tests/test_coletar_emendas.py` com amostra real em
-`tests/fixtures/contratos/` (hoje o teste usa dados inventados).
+ligação (`semLigacao.emendas`; vale ver quantos são bancada, comissão ou nome repetido). **Feito em 2026-11-27:** totais por área na
+ficha e destino municipal corrigido (o Portal usa `SANTOS - SP`; antes nenhum município casava), com os 13.734 municípios
+ligados ao IBGE. Falta: medir o tempo da coleta no Actions e regravar `tests/test_coletar_emendas.py` com amostra real em
+`tests/fixtures/contratos/` (hoje o teste usa dados inventados; precisa da chave `PORTAL_TRANSPARENCIA_CHAVE`, que esta sessão não tem).
 
 Ainda não feito, com a mesma chave:
-- Totais por área (função) das emendas.
 - Emendas Pix com o favorecido e o plano de ação do Transferegov (hoje só o município e os valores do Portal da Transparência).
 - Viagens a serviço e cargos do Executivo federal (ver 3.3).
 

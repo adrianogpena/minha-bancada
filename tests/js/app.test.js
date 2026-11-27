@@ -277,6 +277,10 @@ test("painelEmendas resume as emendas Pix e prepara o mapa só com municípios d
   assert.match(html, /class="mapa-emendas" data-municipios="[^"]*3548500[^"]*" data-pix="1"/);
   assert.doesNotMatch(html.match(/data-municipios="[^"]*"/)[0], /&quot;X&quot;/);
   assert.match(html, /<th>Pix \(empenhado\)<\/th>/);
+  assert.doesNotMatch(html, /Por área/);
+  const areas = painelEmendas({ anos: [{ ano: 2024, n: 2, empenhado: 30, liquidado: 0, pago: 10 }], itens: [],
+    funcoes: [{ nome: "Saúde <b>", n: 1, empenhado: 20, pago: 10 }, { nome: "Educação", n: 1, empenhado: 10, pago: 0 }] });
+  assert.match(areas, /<h3>Por área<\/h3>[\s\S]*Saúde &lt;b&gt;[\s\S]*Educação/);
 });
 
 test("filtrarLista filtra por nome sem acento, UF e partido e ordena pela Casa", () => {

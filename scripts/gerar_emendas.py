@@ -3,6 +3,7 @@ Emendas parlamentares de cada deputado e senador: site/dados/emendas/<pessoa>.js
 (identidades.ligar_emendas, que lê dados/emendas/<ano>.json do coletar_emendas.py). Sem internet.
 
 Arquivo da pessoa: {anos:[{ano, n, empenhado, liquidado, pago}] (mais recente primeiro),
+funcoes:[{nome, n, empenhado, pago}] (totais por área, a função orçamentária como o Portal publica; do maior empenhado ao menor),
 municipios:[{nome, uf, ibge, empenhado, pago, n, pixEmpenhado, pixPago, pixN}] (todos os destinos, do maior valor empenhado ao menor; `ibge` só
 quando o nome casa com o município, e é o que o mapa do site usa; os campos pix* só nas emendas Pix), itens:[{codigo, ano, tipo, numero, local,
 funcao, subfuncao, empenhado, liquidado, pago}]}. Valores em reais; o link da fonte de cada ano é montado no site.
@@ -14,6 +15,7 @@ O código IBGE vem de dados/municipios_nomes.json (gerar_municipios_ibge.py --no
 from collections import defaultdict
 from pathlib import Path
 
+import coletar_emendas
 import estaduais_comum as comum
 import gerar_municipios_ibge as ibge_nomes
 
@@ -21,13 +23,35 @@ NOMES = comum.RAIZ / "dados" / "municipios_nomes.json"
 CAMPOS_ITEM = ("codigo", "ano", "tipo", "numero", "local", "funcao", "subfuncao", "empenhado", "liquidado", "pago")
 
 
+# (UF, nome como o Portal da Transparência escreve, sem acento) -> nome do TSE (sem acento), para o que o IBGE e o TSE grafam diferente
+GRAFIAS_PORTAL = {
+    ("SP", "embu"): "embu das artes", ("RJ", "trajano de morais"): "trajano de moraes", ("RS", "santana do livramento"): "sant ana do livramento",
+    ("PE", "iguaraci"): "iguaracy", ("BA", "muquem de sao francisco"): "muquem do sao francisco", ("MT", "poxoreo"): "poxoreu",
+    ("BA", "santa teresinha"): "santa terezinha", ("CE", "itapage"): "itapaje", ("RN", "ares"): "arez", ("RN", "acu"): "assu",
+    ("SE", "gracho cardoso"): "graccho cardoso", ("SP", "florinia"): "florinea", ("RN", "presidente juscelino"): "serra caiada",
+    ("RN", "augusto severo"): "campo grande", ("TO", "fortaleza do tabocao"): "tabocao",
+}
+
+
 def indice_municipios(nomes: dict) -> dict:
-    """{(UF, nome sem acento): código IBGE}, com as grafias do TSE e as do IBGE (ibge_nomes.AJUSTES)."""
+    """{(UF, nome sem acento): código IBGE}, com as grafias do TSE, as do IBGE (ibge_nomes.AJUSTES) e as do Portal (GRAFIAS_PORTAL)."""
     indice = {(uf, ibge_nomes.chave(nome)): cod for cod, (uf, nome) in nomes.items()}
     for (uf, tse), ibge in ibge_nomes.AJUSTES.items():
         if (uf, tse) in indice:
             indice.setdefault((uf, ibge), indice[(uf, tse)])
+    for (uf, portal), tse in GRAFIAS_PORTAL.items():
+        if (uf, tse) in indice:
+            indice.setdefault((uf, portal), indice[(uf, tse)])
     return indice
+
+
+def por_funcao(itens: list[dict]) -> list[dict]:
+    """Totais por função orçamentária (Saúde, Educação...). Sem função, o rótulo é "Sem área informada"."""
+    grupos = defaultdict(list)
+    for i in itens:
+        grupos[i.get("funcao") or "Sem área informada"].append(i)
+    return sorted(({"nome": f, "n": len(x), "empenhado": soma(x, "empenhado"), "pago": soma(x, "pago")} for f, x in grupos.items()),
+                  key=lambda f: (-f["empenhado"], f["nome"]))
 
 
 def eh_pix(tipo: str) -> bool:
@@ -43,6 +67,9 @@ def construir(emendas: list[dict], nomes: dict | None = None) -> dict[str, dict]
     indice = indice_municipios(nomes or {})
     por_pessoa = defaultdict(list)
     for e in emendas:
+        # o município sai do `local` aqui, não do que o coletor gravou: os anos encerrados não são baixados de novo
+        # e os arquivos antigos têm "SANTOS - SP" sem município e "SÃO PAULO (UF)" como se fosse município
+        e = {**e, **dict(zip(("municipio", "uf"), coletar_emendas.destino(e.get("local"))))} if "local" in e else e
         por_pessoa[e["pessoa"]].append(e)
     saida = {}
     for pid, itens in por_pessoa.items():
@@ -55,6 +82,7 @@ def construir(emendas: list[dict], nomes: dict | None = None) -> dict[str, dict]
         saida[pid] = {
             "anos": [{"ano": a, "n": len(x), "empenhado": soma(x, "empenhado"), "liquidado": soma(x, "liquidado"), "pago": soma(x, "pago")}
                      for a, x in sorted(por_ano.items(), reverse=True)],
+            "funcoes": por_funcao(itens),
             "municipios": municipios,
             "itens": [{k: i[k] for k in CAMPOS_ITEM if k in i}
                       for i in sorted(itens, key=lambda i: (-i["ano"], -(i.get("empenhado") or 0), i["codigo"]))],

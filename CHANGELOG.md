@@ -5,6 +5,12 @@ Regra: toda fonte nova ou mudança de coleta ganha uma entrada aqui, no mesmo co
 Datas dos conjuntos que já existiam vêm do primeiro commit que os trouxe (`git log --diff-filter=A`).
 Todas as coletas rodam sozinhas no GitHub Actions (`.github/workflows/atualizar.yml`, todo dia às 05:00 de Brasília), salvo onde indicado.
 
+## Emendas Pix: plano de ação, beneficiário e executores pelo Transferegov (2026-11-27)
+
+Fonte nova: API de dados abertos do módulo Transferências Especiais, `https://api-publica.transferegov.gestao.gov.br/especiais` (sem chave; esquema em `/especiais/openapi.json`). O host antigo, `api.transferegov.gestao.gov.br`, foi desativado na migração e devolve 403 do Cloudflare (também no Actions), por isso nenhum código o usa. `scripts/coletar_transferegov_especiais.py` baixa `planos-acao-especiais`, `beneficiarios-especiais` e `executores-especiais` (200 por página) e grava `dados/transferegov/especiais/<ano>.json` (plano com seus executores: CNPJ, objeto, valores), `beneficiarios.json` e `atualizacao.json`. O plano liga à emenda do Portal da Transparência pelo código de 12 dígitos (`numero_emenda_parlamentar_plano_acao` = `codigoEmenda`), sem comparar nomes; o nome do parlamentar não é copiado. `/data-atualizacao` evita baixar de novo quando a API não foi renovada.
+
+Medido contra a API real em 2026-11-27, do zero: 735 s (12 min) para 58.990 planos, 58.435 executores e 5.540 beneficiários (~590 páginas); 48 MB em JSON compacto (~12 MB comprimido), dos quais 2025 e 2026 somam 22 MB e são os que mudam a cada renovação. Sem renovação, a coleta faz uma chamada. Entra no job `emendas` do `atualizar.yml` (prazo de 30 min, falha sem derrubar o resto). Ainda não alimenta o site: a junção às emendas Pix da ficha fica em `FUTURAS_IMPLEMENTACOES.md`. Amostra real em `tests/fixtures/contratos/transferegov_especiais.json` (`--amostra`).
+
 ## Emendas: amostra de contrato com a resposta real do Portal (2026-11-27)
 
 Sem fonte nova. `python scripts/coletar_emendas.py --amostra` (com `PORTAL_TRANSPARENCIA_CHAVE`) regravou `tests/fixtures/contratos/portal_transparencia_emendas.json` com a resposta crua da API, lendo até 30 páginas de 2025 atrás de um item de cada forma (município, estado "(UF)", "Nacional", Pix e bancada). O formato real confirmou o reconstruído (`codigoEmenda`, `autor`, `localidadeDoGasto`, valores em texto brasileiro; a API também manda `nomeAutor` e `valorResto*`, que o coletor ignora), então `compactar` não mudou.

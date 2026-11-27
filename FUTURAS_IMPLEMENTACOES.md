@@ -66,7 +66,18 @@ Ainda não feito, com a mesma chave:
   `tests/fixtures/contratos/` e só então registrar o host em `ENDPOINTS.md`.
   Testado no runner do Actions em 2026-11-27 (`testar-transferegov.yml`, curl padrão): os três endereços devolveram HTTP 403 com a
   mesma página do Cloudflare (5.661 bytes, `text/html`). O coletor diário também seria bloqueado, então a API não serve. Próximo passo:
-  procurar a carga em lote das Transferências Especiais (arquivos CSV do Transferegov ou do dados.gov.br) e testar o host no mesmo workflow.
+  A API antiga (`api.transferegov.gestao.gov.br`) foi desativada na migração; a nova, `https://api-publica.transferegov.gestao.gov.br/especiais`
+  (FastAPI, sem chave, Swagger em `/especiais`, esquema em `/especiais/openapi.json`, dicionário de dados em
+  `gov.br/transferegov/.../modelo_dados_api-especiais.zip`), respondeu 200 em 2026-11-27 de uma sessão na nuvem **sem bloqueio**
+  (ainda não testada no Actions). Paginação `pagina` + `tamanho_da_pagina` (máx. 200), resposta `{data, total_pages, total_items}`;
+  `/data-atualizacao` dá a data da última carga (usar para pular a coleta quando nada mudou). Ponto de partida para o coletor:
+  - `/planos-acao-especiais`: o plano de ação, com `numero_emenda_parlamentar_plano_acao` (= `codigoEmenda` do Portal da Transparência, ex.
+    202027070006), nome e código do parlamentar, ano, situação, `id_beneficiario`, `valor_custeio/investimento`, áreas de política pública.
+  - `/beneficiarios-especiais` (5.540: município, UF, CNPJ) e `/executores-especiais` (58 mil: quem executa, CNPJ, objeto, valores, `id_plano_acao`).
+  - Pagamentos e favorecidos finais: `/gestao-financeira-subtransacoes-especiais` (nome e documento do favorecido, valor, data),
+    `/relatorios-gestao-documento-liquidacao-especiais`, `/ordens-pagamentos-ordens-bancarias-especiais`, `/empenhos-especiais`.
+  Falta: gravar amostra real em `tests/fixtures/contratos/`, registrar o host em `ENDPOINTS.md`, escrever `coletar_transferegov_especiais.py`
+  (incremental pela data de atualização; ligar a emenda pelo código, sem comparar nomes) e medir o volume e o tempo no Actions.
 - Viagens a serviço e cargos do Executivo federal (ver 3.3).
 
 ### 3.3 Ministros de Estado: o que fica para depois

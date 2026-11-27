@@ -30,6 +30,13 @@ def montar_bruto(bruto):
     gravar(bruto / "votacoes" / "2026.json", {"1-1": {
         "id": "1-1", "data": "2026-08-12", "hora": "17:58", "orgao": "PLEN", "descricao": "Aprovado.", "proposicao": "PL 1/2026",
         "propId": 900, "ementa": "Dispõe sobre algo.", "aprovada": 1, "votos": [[101, "Sim"], [102, "Não"]]}})
+    gravar(bruto / "proposicoes_tramitacoes.json", {"900": {"eventos": [
+        ["2026-08-03", "PLEN", "Apresentação de Proposição", "Aguardando Despacho do Presidente da Câmara dos Deputados", ""],
+        ["2026-08-04", "MESA", "Despacho", "Aguardando Designação de Relator", "Às Comissões de Saúde e de Constituição e Justiça."],
+        ["2026-08-06", "CSAUDE", "Designado Relator, Dep. Ana Souza", "Aguardando Parecer", ""],
+        ["2026-08-10", "CSAUDE", "Parecer do Relator", "Pronta para Pauta", "Parecer favorável."],
+        ["2026-08-12", "PLEN", "Aprovada em votação nominal", "Aguardando Remessa ao Senado Federal", "Aprovada a proposição pelo Plenário."],
+    ]}})
     gravar(bruto / "senado.json", [{"id": "7", "nome": "Bia Lima", "partido": "PL", "uf": "RJ"}])
     gravar(bruto / "senado_ficha.json", {"7": {"comissoes": [{"sigla": "CAE", "nome": "Assuntos Econômicos", "inicio": "2023-02-02", "fim": None}],
                                                "mandatos": [{"uf": "RJ", "inicio": "2023-02-01", "fim": "2031-01-31", "partidos": []}]}})

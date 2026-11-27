@@ -1,4 +1,5 @@
 /* Deputado estadual: resumos e abas. */
+import { marcarTermos } from "./glossario.js";
 import { $, esc, reais, reaisCentavos, carregar, urlSegura } from "./util.js";
 import { itemFicha, listaPaginada } from "./comum.js";
 import { semFonte, blocoPatrimonioFontes } from "./ficha.js";
@@ -24,10 +25,10 @@ export function resumosEstadual(dep) {
     html += secaoEstadual("Verba/cota", "Gastos com a verba de gabinete ou cota parlamentar, por ano.", dep.verba.anos.map((a) => `
       <h3>${esc(a.ano ?? "")}: ${reaisCentavos(a.total)}</h3>
       <p>Por mês: ${a.meses.map((m) => `${esc(rotuloMes(m.mes))} ${reais(m.total)}`).join(", ")}.</p>
-      ${tabela(["Categoria", "Total"], a.categorias.map((c) => [`<span title="${esc(c.originais.map(([r, v]) => `${r}: ${reais(v)}`).join("\n"))}">${esc(c.categoria)}</span>`, reais(c.total)]))}
+      ${tabela(["Categoria", "Total"], a.categorias.map((c) => [`<span title="${esc(c.originais.map(([r, v]) => `${r}: ${reais(v)}`).join("\n"))}">${marcarTermos(esc(c.categoria))}</span>`, reais(c.total)]))}
       ${a.fornecedores.length ? tabela(["Maiores fornecedores", "CNPJ", "Total"], a.fornecedores.map((f) => [esc(f.fornecedor), esc(f.cnpj || ""), reais(f.total)])) : ""}
       ${a.lancamentos?.length ? `<h3>Lançamentos de ${esc(a.ano)}</h3>${tabela(["Emissão ou mês", "Fornecedor", "Documento", "Empenho", "Descrição", "Valor", "Fonte"],
-        a.lancamentos.map((l) => [esc(dataBr(l.emissao) || rotuloMes(l.mes)), esc(l.fornecedor || ""), esc(l.documento || ""), esc(l.empenho || ""), esc(l.descricao || l.categoria || ""), reaisCentavos(l.valor), linkFonte(l.fonte, "fonte") || semFonte()]))}` : ""}`).join(""), dep.verba.fonte, "Verba/cota (Assembleia)");
+        a.lancamentos.map((l) => [esc(dataBr(l.emissao) || rotuloMes(l.mes)), esc(l.fornecedor || ""), esc(l.documento || ""), marcarTermos(esc(l.empenho || "")), esc(l.descricao || l.categoria || ""), reaisCentavos(l.valor), linkFonte(l.fonte, "fonte") || semFonte()]))}` : ""}`).join(""), dep.verba.fonte, "Verba/cota (Assembleia)");
   }
   if (dep.remuneracao) {
     const r = dep.remuneracao;

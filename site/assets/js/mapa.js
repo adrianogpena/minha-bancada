@@ -117,7 +117,7 @@ function perfilCasaHtml(titulo, p, chave, anoEleitorado, eleitorado) {
     ${p.ocupacoes.length ? `<h3>Ocupações mais declaradas</h3><ul class="lista-eleicao">${p.ocupacoes.map(([o, n]) => `<li>${esc(o)}: <b>${numeroBr(n)}</b></li>`).join("")}</ul>` : ""}
     <p class="fonte-link"><span class="rotulo-fonte">Fonte</span> ${anos.map((a) => `<a href="${arquivoTse("consulta_cand", { ano: a })}" rel="noopener">Candidatos ${a} (TSE)</a>`).join(" · ")}${e ? ` · <a href="${TSE_CDN}/perfil_eleitorado/perfil_eleitorado_${anoEleitorado}.zip" rel="noopener">Perfil do eleitorado ${esc(anoEleitorado)} (TSE)</a>` : ""}.
     ${p.composicao === "atual"
-      ? `Dados da candidatura de ${anos.join(" e ")} dos deputados em exercício hoje, suplentes que assumiram inclusive (${numeroBr(p.total)} de ${numeroBr(p.emExercicio)} ligados ao registro do TSE).`
+      ? `Dados da candidatura de ${anos.join(" e ")} de quem está no cargo hoje, suplentes que assumiram inclusive (${numeroBr(p.total)} de ${numeroBr(p.emExercicio)} ligados ao registro do TSE).`
       : `Dados da candidatura: os eleitos de ${anos.join(" e ")}, sem contar suplentes que assumiram depois.`} A raça e a ocupação não existem no perfil do eleitorado.
     Escolaridade e idade do eleitorado seguem as mesmas faixas; o eleitorado de ${esc(anoEleitorado || "")} pode diferir do ano da eleição.</p></details>`;
 }

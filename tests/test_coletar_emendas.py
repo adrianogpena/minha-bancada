@@ -1,3 +1,4 @@
+import json
 import datetime as dt
 
 import coletar_emendas as em
@@ -75,3 +76,32 @@ def test_sem_chave_nao_coleta(monkeypatch):
     monkeypatch.delenv(em.VARIAVEL, raising=False)
     monkeypatch.setattr(em, "coletar", lambda *a, **k: (_ for _ in ()).throw(AssertionError("coletou sem chave")))
     em.main()
+
+
+def test_destino_le_municipio_com_hifen_ou_parenteses_e_ignora_estado_e_regiao():
+    assert em.destino("JOÃO PESSOA - PB") == ("JOÃO PESSOA", "PB")
+    assert em.destino("CAMPINAS (SP)") == ("CAMPINAS", "SP")
+    assert em.destino("MOGI-MIRIM  -  SP") == ("MOGI-MIRIM", "SP")
+    for local in ("SÃO PAULO (UF)", "MÚLTIPLO", "Nacional", "Sudeste", "", None):
+        assert em.destino(local) == (None, None)
+
+
+def test_amostra_de_contrato_vira_itens_compactos():
+    amostra = json.loads(em.AMOSTRA.read_text(encoding="utf-8"))["amostra"]
+    itens = [em.compactar(i) for i in amostra]
+    assert all(itens) and len({i["codigo"] for i in itens}) == len(itens)
+    assert all(isinstance(i["empenhado"], float) and i["autor"] for i in itens)
+    municipais = [i for i in itens if i.get("municipio")]
+    assert municipais and all(len(i["uf"]) == 2 and i["uf"] != "UF" for i in municipais)
+    assert any(i["local"].endswith("(UF)") and "municipio" not in i for i in itens)   # estado inteiro não é município
+    assert any("Transferências Especiais" in i["tipo"] for i in itens)
+
+
+def test_gravar_amostra_guarda_a_resposta_crua(monkeypatch, tmp_path):
+    monkeypatch.setattr(em, "AMOSTRA", tmp_path / "a.json")
+    monkeypatch.setattr(em.time, "sleep", lambda s: None)
+    crua = [{"codigoEmenda": str(n), "autor": "A"} for n in range(15)]
+    monkeypatch.setattr(em.comum, "get", lambda s, url, **k: Resp(crua))
+    em.gravar_amostra("k", dt.date(2026, 11, 27), object())
+    d = json.loads((tmp_path / "a.json").read_text(encoding="utf-8"))
+    assert d["capturadoEm"] == "2026-11-27" and len(d["amostra"]) == 1

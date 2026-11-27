@@ -24,8 +24,19 @@ Revisado em 2026-11-09 contra o código, os dados em `dados/` e o `CHANGELOG.md`
   - **Comissão x tema:** "projetos na área da comissão que ele integra"; a Câmara não publica o tema de cada comissão.
   - **Fidelidade em blocos:** os blocos usam a composição atual e rótulos que não constam em `/blocos` seguem sem
     fidelidade; a presença em reuniões de comissão não tem total para comparar.
-- **Perfil dos eleitos:** a bancada federal já usa a composição de hoje; Assembleias, Senado e Câmaras Municipais seguem com
-  os eleitos de 2018/2022/2024 (suplentes que assumiram não entram).
+- **Perfil dos eleitos:** a bancada federal, as Assembleias e o Senado já usam quem está no cargo hoje (2026-11-27); as Câmaras
+  Municipais seguem com os vereadores eleitos de 2024 (suplentes que assumiram não entram; não há lista de quem está em exercício).
+
+### 1.2 Glossário e "O que isso significou" nas demais páginas
+
+Feito: lista de proposições, votações, votos do político, ficha (partido e situação, suplente) e verbas (CEAP, CEAPS, Assembleias). Falta:
+- `historico.js` (`itemHistorico`): descrição de cada passo da tramitação; serve a lógica da linha do tempo, falta o tipo do evento.
+- `eventos.js`, `emendas.js`: situação e tipo da emenda; só `marcarTermos`.
+- `ministros.js` (`avisoLicenca`): licença e afastamento; só `marcarTermos`.
+- `assembleia.js` (normas, `situacao` das contratações) e `estadual.js` (normas, proposições): só `marcarTermos`.
+- `politico.js` (`situacao`, "Em exercício como suplente"): só `marcarTermos`.
+- Termos de cargo e verba (suplente, licença, CEAP, empenho) ainda não estão no glossário; a ligação já está feita.
+- Etapas e linha do tempo nas proposições das Assembleias: falta padronizar a situação por UF.
 
 ## Nível 3: raspagem ou chave de API
 
@@ -41,13 +52,18 @@ Raspagem é frágil: fonte opcional, com teste de contrato em `scripts/contrato_
 `coletar_emendas.py`, ligação do autor por nome, `site/dados/emendas/<pessoa>.json` e painel na ficha (ver `CHANGELOG.md`).
 Conferido em 2026-11-09: o Actions já coletou 2019 a 2026 (`dados/emendas/`, 54 mil linhas), o campo é `autor` e o tipo das Pix
 vem como "Emenda Individual - Transferências Especiais" (5.108 linhas). Ligaram 553 autores (`nome+cargo`) e 747 ficaram sem
-ligação (`semLigacao.emendas`; vale ver quantos são bancada, comissão ou nome repetido). Falta: medir o tempo da coleta no
-Actions, conferir quantos municípios casam com o IBGE e regravar `tests/test_coletar_emendas.py` com amostra real em
-`tests/fixtures/contratos/` (hoje o teste usa dados inventados).
+ligação (`semLigacao.emendas`; vale ver quantos são bancada, comissão ou nome repetido). **Feito em 2026-11-27:** totais por área na
+ficha e destino municipal corrigido (o Portal usa `SANTOS - SP`; antes nenhum município casava), com os 13.734 municípios
+ligados ao IBGE. Tempo da coleta no Actions (2026-11-27, anos encerrados em cache): 16 min 40 s. A amostra de contrato
+(`tests/fixtures/contratos/portal_transparencia_emendas.json`) foi reconstruída dos itens coletados; falta regravá-la com a
+resposta crua da API (`PORTAL_TRANSPARENCIA_CHAVE=... python scripts/coletar_emendas.py --amostra`).
 
 Ainda não feito, com a mesma chave:
-- Totais por área (função) das emendas.
 - Emendas Pix com o favorecido e o plano de ação do Transferegov (hoje só o município e os valores do Portal da Transparência).
+  Tentado em 2026-11-27: `api.transferegov.gestao.gov.br` (PostgREST, `transferenciasespeciais/plano_acao_especial`) responde bloqueio do
+  Cloudflare ("Sorry, you have been blocked") a partir do ambiente de sessões na nuvem, então o formato real não foi medido e nenhum
+  coletor foi escrito às cegas. Fazer a medição de um ambiente que a API aceite (ou ver se o Actions passa), gravar a amostra em
+  `tests/fixtures/contratos/` e só então registrar o host em `ENDPOINTS.md`.
 - Viagens a serviço e cargos do Executivo federal (ver 3.3).
 
 ### 3.3 Ministros de Estado: o que fica para depois

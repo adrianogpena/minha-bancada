@@ -26,6 +26,10 @@ export function painelEmendas(e) {
     <div class="rolagem"><table class="tabela"><thead><tr><th>Ano</th><th>Emendas</th><th>Empenhado</th><th>Liquidado</th><th>Pago</th></tr></thead><tbody>
       ${e.anos.map((a) => `<tr><td>${esc(a.ano)}</td><td>${a.n}</td><td>${reaisCentavos(a.empenhado)}</td><td>${reaisCentavos(a.liquidado)}</td><td>${reaisCentavos(a.pago)}</td></tr>`).join("")}
     </tbody></table></div>
+    ${e.funcoes?.length > 1 ? `<h3>Por área</h3>
+      <div class="rolagem"><table class="tabela"><thead><tr><th>Área</th><th>Emendas</th><th>Empenhado</th><th>Pago</th></tr></thead><tbody>
+        ${e.funcoes.map((f) => `<tr><td>${esc(f.nome)}</td><td>${f.n}</td><td>${reaisCentavos(f.empenhado)}</td><td>${reaisCentavos(f.pago)}</td></tr>`).join("")}
+      </tbody></table></div>` : ""}
     ${pix.length ? `<p><b>Emendas Pix</b> (transferências especiais, enviadas direto ao município sem convênio): <b>${pix.length}</b>, com ${reaisCentavos(soma(pix, "empenhado"))} empenhados e ${reaisCentavos(soma(pix, "pago"))} pagos.</p>` : ""}
     ${comMapa ? `<h3>Mapa dos destinos</h3><div class="mapa-emendas" data-municipios="${esc(JSON.stringify(e.municipios.filter((m) => m.ibge)))}" data-pix="${pix.length ? 1 : 0}"><p class="aviso">Carregando o mapa...</p></div>` : ""}
     ${e.municipios?.length ? `<h3>Municípios que mais receberam</h3>

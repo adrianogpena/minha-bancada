@@ -27,6 +27,7 @@ Sem build nem linter. CI (`.github/workflows/testes.yml`): pytest + teste JS, fu
 
 - Texto, comentários, commits e mensagens em português.
 - Endpoint novo: registrar em `ENDPOINTS.md` e o conjunto no `CHANGELOG.md` (`tests/test_endpoints_doc.py` exige todo host externo consultado em `ENDPOINTS.md`). Ideias pendentes: `FUTURAS_IMPLEMENTACOES.md`.
+- Glossário (`site/assets/js/glossario.js`): um termo entra quando (1) aparece num texto que o site mostra (rótulo, situação, descrição de votação, nome de cargo ou de verba); (2) é jargão legislativo, jurídico, orçamentário ou eleitoral, ou sigla, que um leigo não entenderia pelo contexto; (3) dá para explicar em até 2 frases, sem opinião, com fonte oficial. Fica de fora: palavra comum, termo explicado no próprio texto, nome próprio e termo sem fonte oficial (avise o usuário). Candidatos: `python scripts/glossario_candidatos.py`; quem aprova é o usuário.
 - Testes nunca acessam a internet; simule a resposta no formato real da API. Mudou um coletor por mudança na API: regrave amostras com `python scripts/contrato_apis.py --gravar <nome>`.
 - Ligação entre dados (fonte -> pessoa, mandato, ministro, fornecedor, proposição etc.) criada, alterada ou removida: atualize `site/mapa-dados.html` (página "Mapa dos dados", sem nomes de pessoas) no mesmo commit.
 - Commits de dados diários (`Dados atualizados em ...`, `Histórico diário ...`) vêm do Actions; não edite `dados/` à mão.

@@ -1,0 +1,852 @@
+[
+[
+"c",
+"PDL",
+""
+],
+[
+"c",
+"PDL",
+"Aguardando Designação - Aguardando Devolução de Relator(a) que deixou de ser Membro"
+],
+[
+"c",
+"PDL",
+"Aguardando Designação de Relator(a)"
+],
+[
+"c",
+"PDL",
+"Aguardando Despacho do Presidente da Câmara dos Deputados (Autorização)"
+],
+[
+"c",
+"PDL",
+"Aguardando Despacho do Presidente da Câmara dos Deputados (Chancela)"
+],
+[
+"c",
+"PDL",
+"Aguardando Parecer"
+],
+[
+"c",
+"PDL",
+"Arquivada"
+],
+[
+"c",
+"PDL",
+"Pronta para Pauta"
+],
+[
+"c",
+"PDL",
+"Tramitando em Conjunto"
+],
+[
+"c",
+"PEC",
+""
+],
+[
+"c",
+"PEC",
+"Aguardando Apreciação pelo Senado Federal"
+],
+[
+"c",
+"PEC",
+"Aguardando Constituição de Comissão Temporária "
+],
+[
+"c",
+"PEC",
+"Aguardando Criação de Comissão Temporária"
+],
+[
+"c",
+"PEC",
+"Aguardando Designação de Relator(a)"
+],
+[
+"c",
+"PEC",
+"Aguardando Despacho do Presidente da Câmara dos Deputados (Chancela)"
+],
+[
+"c",
+"PEC",
+"Aguardando Encaminhamento"
+],
+[
+"c",
+"PEC",
+"Aguardando Parecer"
+],
+[
+"c",
+"PEC",
+"Arquivada"
+],
+[
+"c",
+"PEC",
+"Pronta para Pauta"
+],
+[
+"c",
+"PEC",
+"Retirado pelo(a) Autor(a)"
+],
+[
+"c",
+"PEC",
+"Tramitando em Conjunto"
+],
+[
+"c",
+"PEC",
+"Transformado em Norma Jurídica"
+],
+[
+"c",
+"PL",
+""
+],
+[
+"c",
+"PL",
+"Aguardando Apreciação pelo Senado Federal"
+],
+[
+"c",
+"PL",
+"Aguardando Constituição de Comissão Temporária "
+],
+[
+"c",
+"PL",
+"Aguardando Criação de Comissão Temporária"
+],
+[
+"c",
+"PL",
+"Aguardando Definição Encaminhamento"
+],
+[
+"c",
+"PL",
+"Aguardando Deliberação"
+],
+[
+"c",
+"PL",
+"Aguardando Deliberação de Recurso"
+],
+[
+"c",
+"PL",
+"Aguardando Designação - Aguardando Devolução de Relator(a) que deixou de ser Membro"
+],
+[
+"c",
+"PL",
+"Aguardando Designação de Relator(a)"
+],
+[
+"c",
+"PL",
+"Aguardando Despacho do Presidente da Câmara dos Deputados"
+],
+[
+"c",
+"PL",
+"Aguardando Despacho do Presidente da Câmara dos Deputados (Análise)"
+],
+[
+"c",
+"PL",
+"Aguardando Despacho do Presidente da Câmara dos Deputados (Autorização)"
+],
+[
+"c",
+"PL",
+"Aguardando Despacho do Presidente da Câmara dos Deputados (Chancela)"
+],
+[
+"c",
+"PL",
+"Aguardando Encaminhamento"
+],
+[
+"c",
+"PL",
+"Aguardando Envio ao Senado Federal"
+],
+[
+"c",
+"PL",
+"Aguardando Parecer"
+],
+[
+"c",
+"PL",
+"Aguardando Recurso"
+],
+[
+"c",
+"PL",
+"Arquivada"
+],
+[
+"c",
+"PL",
+"Devolvida ao(à) Autor(a)"
+],
+[
+"c",
+"PL",
+"Pronta para Pauta"
+],
+[
+"c",
+"PL",
+"Retirado pelo(a) Autor(a)"
+],
+[
+"c",
+"PL",
+"Tramitando em Conjunto"
+],
+[
+"c",
+"PL",
+"Tramitação Finalizada"
+],
+[
+"c",
+"PL",
+"Transformado em Norma Jurídica"
+],
+[
+"c",
+"PLP",
+""
+],
+[
+"c",
+"PLP",
+"Aguardando Análise de Parecer"
+],
+[
+"c",
+"PLP",
+"Aguardando Criação de Comissão Temporária"
+],
+[
+"c",
+"PLP",
+"Aguardando Designação - Aguardando Devolução de Relator(a) que deixou de ser Membro"
+],
+[
+"c",
+"PLP",
+"Aguardando Designação de Relator(a)"
+],
+[
+"c",
+"PLP",
+"Aguardando Encaminhamento"
+],
+[
+"c",
+"PLP",
+"Aguardando Parecer"
+],
+[
+"c",
+"PLP",
+"Arquivada"
+],
+[
+"c",
+"PLP",
+"Pronta para Pauta"
+],
+[
+"c",
+"PLP",
+"Tramitando em Conjunto"
+],
+[
+"c",
+"PRC",
+"Aguardando Designação - Aguardando Devolução de Relator(a) que deixou de ser Membro"
+],
+[
+"c",
+"PRC",
+"Aguardando Designação de Relator(a)"
+],
+[
+"c",
+"PRC",
+"Aguardando Despacho do Presidente da Câmara dos Deputados (Chancela)"
+],
+[
+"c",
+"PRC",
+"Pronta para Pauta"
+],
+[
+"c",
+"PRC",
+"Tramitando em Conjunto"
+],
+[
+"s",
+"PDL",
+""
+],
+[
+"s",
+"PDL",
+"AGUARDANDO AUDIÊNCIA PÚBLICA"
+],
+[
+"s",
+"PDL",
+"AGUARDANDO DESIGNAÇÃO DO RELATOR"
+],
+[
+"s",
+"PDL",
+"AGUARDANDO DESPACHO"
+],
+[
+"s",
+"PDL",
+"AGUARDANDO INCLUSÃO ORDEM DO DIA DE REQUERIMENTO"
+],
+[
+"s",
+"PDL",
+"INCLUÍDA NA PAUTA DA REUNIÃO"
+],
+[
+"s",
+"PDL",
+"MATÉRIA COM A RELATORIA"
+],
+[
+"s",
+"PDL",
+"MATÉRIA DESPACHADA"
+],
+[
+"s",
+"PDL",
+"PEDIDO DE VISTA CONCEDIDO"
+],
+[
+"s",
+"PDL",
+"PREJUDICADA"
+],
+[
+"s",
+"PDL",
+"PRONTA PARA A PAUTA NA COMISSÃO"
+],
+[
+"s",
+"PDL",
+"PRONTO PARA DELIBERAÇÃO DO PLENÁRIO"
+],
+[
+"s",
+"PDL",
+"REJEITADA"
+],
+[
+"s",
+"PDL",
+"REMETIDA À CÂMARA DOS DEPUTADOS"
+],
+[
+"s",
+"PDL",
+"RETIRADA PELO AUTOR"
+],
+[
+"s",
+"PDL",
+"TRANSFORMADA EM NORMA JURÍDICA"
+],
+[
+"s",
+"PEC",
+""
+],
+[
+"s",
+"PEC",
+"AGUARDANDO AUDIÊNCIA PÚBLICA"
+],
+[
+"s",
+"PEC",
+"AGUARDANDO DESIGNAÇÃO DO RELATOR"
+],
+[
+"s",
+"PEC",
+"AGUARDANDO DESPACHO"
+],
+[
+"s",
+"PEC",
+"AGUARDANDO INCLUSÃO ORDEM DO DIA DE REQUERIMENTO"
+],
+[
+"s",
+"PEC",
+"APROVADA"
+],
+[
+"s",
+"PEC",
+"ARQUIVADA AO FINAL DA LEGISLATURA"
+],
+[
+"s",
+"PEC",
+"AUDIÊNCIA PÚBLICA REALIZADA"
+],
+[
+"s",
+"PEC",
+"MATÉRIA COM A RELATORIA"
+],
+[
+"s",
+"PEC",
+"MATÉRIA DESPACHADA"
+],
+[
+"s",
+"PEC",
+"NÃO ADMISSÃO DOS PRESSUPOSTOS CONSTITUCIONAIS"
+],
+[
+"s",
+"PEC",
+"PEDIDO DE VISTA CONCEDIDO"
+],
+[
+"s",
+"PEC",
+"PREJUDICADA"
+],
+[
+"s",
+"PEC",
+"PRONTA PARA A PAUTA NA COMISSÃO"
+],
+[
+"s",
+"PEC",
+"PRONTO PARA DELIBERAÇÃO DO PLENÁRIO"
+],
+[
+"s",
+"PEC",
+"REJEITADA"
+],
+[
+"s",
+"PEC",
+"REMETIDA À CÂMARA DOS DEPUTADOS"
+],
+[
+"s",
+"PEC",
+"RETIRADA PELO AUTOR"
+],
+[
+"s",
+"PEC",
+"TRANSFORMADA EM NORMA JURÍDICA"
+],
+[
+"s",
+"PL",
+""
+],
+[
+"s",
+"PL",
+"AGUARDANDO AUDIÊNCIA PÚBLICA"
+],
+[
+"s",
+"PL",
+"AGUARDANDO DESIGNAÇÃO DO RELATOR"
+],
+[
+"s",
+"PL",
+"AGUARDANDO DESPACHO"
+],
+[
+"s",
+"PL",
+"AGUARDANDO DOCUMENTAÇÃO COMPLEMENTAR SOLICITADA"
+],
+[
+"s",
+"PL",
+"AGUARDANDO INCLUSÃO ORDEM DO DIA DE REQUERIMENTO"
+],
+[
+"s",
+"PL",
+"AGUARDANDO INTERPOSIÇÃO DE RECURSO"
+],
+[
+"s",
+"PL",
+"AGUARDANDO LEITURA DE REQUERIMENTO"
+],
+[
+"s",
+"PL",
+"AGUARDANDO PROVIDÊNCIAS"
+],
+[
+"s",
+"PL",
+"AGUARDANDO RECEBIMENTO DE EMENDAS"
+],
+[
+"s",
+"PL",
+"AGUARDANDO RECEBIMENTO DE EMENDAS PERANTE A MESA"
+],
+[
+"s",
+"PL",
+"APRECIADA EM DECISÃO TERMINATIVA PELAS COMISSÕES"
+],
+[
+"s",
+"PL",
+"APROVADA"
+],
+[
+"s",
+"PL",
+"APROVADO O SUBSTITUTIVO"
+],
+[
+"s",
+"PL",
+"APROVADO PARECER NA COMISSÃO"
+],
+[
+"s",
+"PL",
+"ARQUIVADA"
+],
+[
+"s",
+"PL",
+"ARQUIVADA AO FINAL DA LEGISLATURA"
+],
+[
+"s",
+"PL",
+"ARQUIVADO NA CÂMARA DOS DEPUTADOS"
+],
+[
+"s",
+"PL",
+"AUDIÊNCIA PÚBLICA REALIZADA"
+],
+[
+"s",
+"PL",
+"CONHECIDA"
+],
+[
+"s",
+"PL",
+"IMPUGNADA"
+],
+[
+"s",
+"PL",
+"INCLUÍDA NA PAUTA DA REUNIÃO"
+],
+[
+"s",
+"PL",
+"MATÉRIA COM A RELATORIA"
+],
+[
+"s",
+"PL",
+"MATÉRIA DESPACHADA"
+],
+[
+"s",
+"PL",
+"MATÉRIA EM TRAMITAÇÃO"
+],
+[
+"s",
+"PL",
+"PEDIDO DE VISTA CONCEDIDO"
+],
+[
+"s",
+"PL",
+"PREJUDICADA"
+],
+[
+"s",
+"PL",
+"PRONTA PARA A PAUTA NA COMISSÃO"
+],
+[
+"s",
+"PL",
+"PRONTO PARA DELIBERAÇÃO DO PLENÁRIO"
+],
+[
+"s",
+"PL",
+"REAUTUADO"
+],
+[
+"s",
+"PL",
+"REJEITADA"
+],
+[
+"s",
+"PL",
+"REMETIDA À CÂMARA DOS DEPUTADOS"
+],
+[
+"s",
+"PL",
+"REMETIDA À SANÇÃO"
+],
+[
+"s",
+"PL",
+"REQUERIMENTO APROVADO"
+],
+[
+"s",
+"PL",
+"RETIRADA PELO AUTOR"
+],
+[
+"s",
+"PL",
+"SEM EFICÁCIA"
+],
+[
+"s",
+"PL",
+"TRAMITAÇÃO ENCERRADA"
+],
+[
+"s",
+"PL",
+"TRANSFORMADA EM NORMA JURÍDICA"
+],
+[
+"s",
+"PL",
+"TRANSFORMADA EM NORMA JURÍDICA COM VETO PARCIAL"
+],
+[
+"s",
+"PL",
+"TRANSFORMADA EM PROJETO DE LEI DO SENADO"
+],
+[
+"s",
+"PL",
+"TRANSFORMADO EM INDICAÇÃO DO SENADO FEDERAL"
+],
+[
+"s",
+"PL",
+"VETADA"
+],
+[
+"s",
+"PLP",
+""
+],
+[
+"s",
+"PLP",
+"AGUARDANDO AUDIÊNCIA PÚBLICA"
+],
+[
+"s",
+"PLP",
+"AGUARDANDO DESIGNAÇÃO DO RELATOR"
+],
+[
+"s",
+"PLP",
+"AGUARDANDO DESPACHO"
+],
+[
+"s",
+"PLP",
+"AGUARDANDO DOCUMENTAÇÃO COMPLEMENTAR SOLICITADA"
+],
+[
+"s",
+"PLP",
+"AGUARDANDO INCLUSÃO ORDEM DO DIA DE REQUERIMENTO"
+],
+[
+"s",
+"PLP",
+"ARQUIVADO NA CÂMARA DOS DEPUTADOS"
+],
+[
+"s",
+"PLP",
+"MATÉRIA COM A RELATORIA"
+],
+[
+"s",
+"PLP",
+"PEDIDO DE VISTA CONCEDIDO"
+],
+[
+"s",
+"PLP",
+"PREJUDICADA"
+],
+[
+"s",
+"PLP",
+"PRONTA PARA A PAUTA NA COMISSÃO"
+],
+[
+"s",
+"PLP",
+"PRONTO PARA DELIBERAÇÃO DO PLENÁRIO"
+],
+[
+"s",
+"PLP",
+"REJEITADA"
+],
+[
+"s",
+"PLP",
+"REMETIDA À CÂMARA DOS DEPUTADOS"
+],
+[
+"s",
+"PLP",
+"RETIRADA PELO AUTOR"
+],
+[
+"s",
+"PLP",
+"SEM EFICÁCIA"
+],
+[
+"s",
+"PLP",
+"TRANSFORMADA EM NORMA JURÍDICA"
+],
+[
+"s",
+"PLP",
+"TRANSFORMADA EM NORMA JURÍDICA COM VETO PARCIAL"
+],
+[
+"s",
+"PLP",
+"TRANSFORMADA EM PROJETO DE LEI DO SENADO"
+],
+[
+"s",
+"PRS",
+"AGUARDANDO AUDIÊNCIA PÚBLICA"
+],
+[
+"s",
+"PRS",
+"AGUARDANDO DECISÃO DA MESA"
+],
+[
+"s",
+"PRS",
+"AGUARDANDO DESIGNAÇÃO DO RELATOR"
+],
+[
+"s",
+"PRS",
+"AGUARDANDO DESPACHO"
+],
+[
+"s",
+"PRS",
+"AGUARDANDO INCLUSÃO ORDEM DO DIA DE REQUERIMENTO"
+],
+[
+"s",
+"PRS",
+"APROVADA"
+],
+[
+"s",
+"PRS",
+"INCLUÍDA NA PAUTA DA REUNIÃO"
+],
+[
+"s",
+"PRS",
+"MATÉRIA COM A RELATORIA"
+],
+[
+"s",
+"PRS",
+"PREJUDICADA"
+],
+[
+"s",
+"PRS",
+"PRONTA PARA A PAUTA NA COMISSÃO"
+],
+[
+"s",
+"PRS",
+"PRONTO PARA DELIBERAÇÃO DO PLENÁRIO"
+],
+[
+"s",
+"PRS",
+"RETIRADA PELO AUTOR"
+],
+[
+"s",
+"PRS",
+"TRANSFORMADA EM NORMA JURÍDICA"
+]
+]

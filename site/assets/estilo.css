@@ -16,6 +16,7 @@
   --ausente: #c9cfcb;
   --foco: #f2b705;
   --raio: 6px;
+  --alvo: 44px;
   --display: "Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
   --texto: "Atkinson Hyperlegible", system-ui, sans-serif;
   color-scheme: light;
@@ -408,3 +409,86 @@ select:disabled { opacity: .55; }
 .sem-fonte { color: #b45309; font-weight: 600; }
 .lista-eleicao { list-style: none; padding: 0; margin: 0 0 12px; }
 .lista-eleicao li { margin: 4px 0; }
+
+/* Glossário (glossario.js): termo com "?" e explicação aberta logo abaixo do bloco */
+.termo { font: inherit; color: inherit; background: none; border: 0; padding: 0; cursor: pointer; min-height: 0;
+  text-decoration: underline dotted var(--marca) 2px; text-underline-offset: 4px; position: relative; }
+.termo::after { content: "?"; display: inline-grid; place-items: center; width: 20px; height: 20px; margin-left: 3px; border-radius: 50%;
+  background: var(--marca-clara); color: var(--marca); font: 700 13px/1 var(--texto); vertical-align: 2px; text-decoration: none; }
+.termo::before { content: ""; position: absolute; inset: -12px -4px; }
+.termo[aria-expanded="true"] { background: var(--marca-clara); border-radius: 3px; }
+.definicao { display: block; margin: 8px 0; padding: 10px 12px; background: var(--marca-clara); border-radius: 8px; font-size: 15px; color: var(--tinta); }
+.definicao b { font-family: var(--display); }
+.definicao .fechar { float: right; font: inherit; font-size: 14px; background: none; border: 0; color: var(--marca); cursor: pointer; min-height: var(--alvo); min-width: var(--alvo); margin: -12px -8px 0 0; }
+.definicao .fonte-link { display: block; margin-top: 4px; }
+
+/* Faixa de etapas ("Em que pé está") e frase do estado da ficha da proposição */
+.etapas { list-style: none; margin: 20px 0 0; padding: 0; display: grid; grid-template-columns: repeat(var(--n, 6), minmax(0, 1fr)); }
+.etapas li { position: relative; padding: 34px 6px 0; text-align: center; font-size: 14px; color: var(--tinta-suave); }
+.etapas li::before { content: ""; position: absolute; top: 13px; left: 0; right: 0; height: 4px; background: var(--linha); }
+.etapas li:first-child::before { left: 50%; } .etapas li:last-child::before { right: 50%; }
+.etapas li.feito::before, .etapas li.pulado::before { background: var(--marca); }
+.etapas li.atual::before { background: linear-gradient(90deg, var(--marca) 50%, var(--linha) 50%); }
+.etapas li.parado::before { background: linear-gradient(90deg, var(--marca) 50%, var(--nao) 50%); }
+.etapas .ponto { position: absolute; top: 2px; left: 50%; transform: translateX(-50%); width: 26px; height: 26px; border-radius: 50%;
+  background: var(--superficie); border: 3px solid var(--linha); display: grid; place-items: center; font-weight: 700; font-size: 14px; line-height: 1; z-index: 1; }
+.etapas .feito .ponto { background: var(--marca); border-color: var(--marca); color: var(--superficie); }
+.etapas .pulado .ponto { border-style: dashed; border-color: var(--marca); color: var(--marca); }
+.etapas .atual .ponto { border-color: var(--foco); background: var(--foco); color: #14201a; box-shadow: 0 0 0 5px color-mix(in srgb, var(--foco) 30%, transparent); }
+.etapas .parado .ponto { border-color: var(--nao); background: var(--nao); color: var(--superficie); }
+.etapas .parado span { color: var(--nao); }
+.etapas b { display: block; color: var(--tinta); font-size: 15px; }
+.etapas .atual b { font-size: 16px; }
+.etapas li:not(.feito):not(.atual):not(.pulado):not(.parado) b { color: var(--tinta-suave); font-weight: 400; }
+.estado { margin: 22px 0 0; padding: 14px 16px; border-left: 5px solid var(--foco); background: var(--superficie); border-radius: 0 8px 8px 0; font-size: 18px; }
+.estado p { margin: 0 0 6px; } .estado p:last-child { margin: 0; }
+.estado .pequeno { font-size: 15px; }
+.estado h3 { margin: 14px 0 4px; font-size: 16px; }
+
+/* linha do tempo (linha-tempo.js); o filtro é a classe so-marcos do contêiner */
+.controles { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin: 0 0 16px; }
+.segmentado { display: inline-flex; border: 1.5px solid var(--linha); border-radius: var(--raio); overflow: hidden; }
+.segmentado button, .controles .botao { font: 700 15px var(--texto); min-height: var(--alvo); padding: 8px 14px; background: var(--superficie); color: var(--tinta-suave); border: 0; cursor: pointer; }
+.segmentado button[aria-pressed="true"] { background: var(--marca); color: var(--superficie); }
+.controles .botao { border: 1.5px solid var(--linha); border-radius: var(--raio); }
+.controles .botao[aria-pressed="true"] { background: var(--marca); color: var(--superficie); }
+.tempo { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
+.tempo.invertido { flex-direction: column-reverse; }
+.dia { position: relative; padding: 0 0 22px 28px; border-left: 3px solid var(--linha); margin-left: 8px; }
+.dia::before { content: ""; position: absolute; left: -10px; top: 4px; width: 17px; height: 17px; border-radius: 50%; background: var(--superficie); border: 3px solid var(--marca); }
+.dia.marco-dia::before { background: var(--marca); }
+.dia.futuro { border-left-style: dashed; } .dia.futuro::before { border-color: var(--linha); }
+.dia > h3 { margin: 0 0 2px; font-size: 19px; }
+.dia > .sessao { margin: 0 0 8px; font-size: 14px; color: var(--tinta-suave); }
+.eventos { list-style: none; margin: 0; padding: 0; }
+.eventos > li { padding: 8px 0; border-top: 1px solid var(--linha); }
+.eventos > li:first-child { border-top: 0; }
+.etiqueta { display: inline-block; font: 700 13px/1.4 var(--texto); text-transform: uppercase; letter-spacing: .04em; color: var(--tinta-suave); margin-right: 6px; }
+.rotina { color: var(--tinta-suave); font-size: 15px; }
+.linha-tempo.so-marcos .rotina { display: none; }
+.linha-tempo.so-marcos .dia.so-rotina { display: none; }
+details.detalhes { margin-top: 6px; }
+details.detalhes summary { cursor: pointer; color: var(--marca); font-weight: 700; font-size: 15px; min-height: var(--alvo); display: flex; align-items: center; }
+details.detalhes ul { margin: 4px 0 0; padding-left: 18px; font-size: 15px; }
+.recolhidos { font-size: 14px; color: var(--tinta-suave); margin: 6px 0 0; }
+.linha-tempo:not(.so-marcos) .recolhidos { display: none; }
+
+/* votações por sessão */
+.sessao-votos { margin: 10px 0 4px; padding: 12px; border: 1.5px solid var(--linha); border-radius: 10px; background: var(--superficie); }
+.sessao-votos > p { margin: 0 0 8px; font-weight: 700; }
+.voto-card { padding: 12px 0; border-top: 1px solid var(--linha); }
+.voto-card:first-of-type { border-top: 0; padding-top: 4px; }
+.voto-card h4 { margin: 2px 0 6px; font: 700 18px/1.3 var(--display); }
+.voto-card .resultado { display: inline-block; font-weight: 700; padding: 2px 10px; border-radius: 4px; font-size: 15px; border: 0; }
+.voto-card .resultado.ok { background: color-mix(in srgb, var(--sim) 16%, transparent); color: var(--sim); }
+.voto-card .resultado.nok { background: color-mix(in srgb, var(--nao) 16%, transparent); color: var(--nao); }
+.voto-card .placar { height: 30px; margin: 8px 0 4px; background: var(--ausente); }
+.voto-card .placar i { display: grid; place-items: center; font: 700 13px/1 var(--texto); font-style: normal; color: #fff; min-width: 0; overflow: hidden; }
+.voto-card .legenda { gap: 2px 14px; margin: 0; padding: 0; list-style: none; }
+.voto-card .legenda li::before { content: ""; display: inline-block; width: 11px; height: 11px; border-radius: 2px; margin-right: 5px; background: var(--c); vertical-align: -1px; }
+.voto-card .simbolica { margin: 8px 0 0; font-size: 15px; color: var(--tinta-suave); }
+.significado { margin: 8px 0 0; font-size: 16px; }
+.oficial { margin: 6px 0 0; font-size: 14px; color: var(--tinta-suave); }
+.voto-card .acoes { display: flex; flex-wrap: wrap; gap: 4px 16px; margin-top: 4px; font-size: 14px; }
+.voto-card .acoes a, .voto-card .acoes button { min-height: var(--alvo); display: inline-flex; align-items: center; }
+.voto-card .acoes button { font: 700 14px var(--texto); background: none; border: 0; color: var(--marca); padding: 0; cursor: pointer; text-decoration: underline; }

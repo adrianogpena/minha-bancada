@@ -1,0 +1,59 @@
+{
+ "176328": {
+  "ap": "2026-11-11",
+  "au": [
+   {
+    "id": "581",
+    "p": 1
+   }
+  ],
+  "v": [
+   {
+    "id": "7117",
+    "data": "2026-11-18"
+   },
+   {
+    "id": "7118",
+    "data": "2026-11-18"
+   },
+   {
+    "id": "7119",
+    "data": "2026-11-18"
+   },
+   {
+    "id": "7120",
+    "data": "2026-11-18"
+   },
+   {
+    "id": "7115",
+    "data": "2026-11-12"
+   },
+   {
+    "id": "7116",
+    "data": "2026-11-12"
+   }
+  ],
+  "em": "Altera a Lei Complementar nº 200, de 30 de agosto de 2023, para conferir ao Poder Executivo federal novos instrumentos de gestão com vistas a garantir a estabilidade macroeconômica do País e criar as condições adequadas ao crescimento socioeconômico; e dá outras providências.",
+  "pc": "LEI COMPLEMENTAR, REDUÇÃO, BENEFICIO FISCAL, INCENTIVO FISCAL, NATUREZA TRIBUTARIA, IMPLEMENTAÇÃO, ALIQUOTA, BASE DE CALCULO, CREDITO TRIBUTARIO, LEI KANDIR, VALOR, TRANSFERENCIA FINANCEIRA, UNIÃO FEDERAL, ESTADOS, DISTRITO FEDERAL (DF), MUNICIPIOS, AUTORIZAÇÃO, EXECUTIVO, DESVINCULAÇÃO, SUPERAVIT, EXERCICIO FINANCEIRO ANTERIOR, FONTE, RECEITA VINCULADA, OBJETIVO, LIMITAÇÃO, DESPESA, PROGRAMA DE FINANCIAMENTO AS EXPORTAÇÕES (PROEX), CREDITO ADICIONAL, INVESTIMENTO, DEDUÇÃO, META FISCAL, CREDITO EXTRAORDINARIO, SUBVENÇÃO, OLEO DIESEL, RESTOS A PAGAR, CONTRATO, CONVENIO, ACORDO, AJUSTE, PRORROGAÇÃO, PRAZO, PROIBIÇÃO, CONTABILIZAÇÃO, RECEITA, IMPOSTO DE EXPORTAÇÃO, PETROLEO, CALCULO, OBRIGAÇÕES, PROGRAMAÇÃO, FUNDO NACIONAL DE DESENVOLVIMENTO CIENTIFICO E TECNOLOGICO (FNDCT), DESTINAÇÃO, RECURSOS, BOLSA DE ESTUDO, PESQUISA, ENSINO SUPERIOR, COMPENSAÇÃO FINANCEIRA, REGIME GERAL DE PREVIDENCIA SOCIAL, REGIME PROPRIO DE PREVIDENCIA SOCIAL (RPPS), LEI DE RESPONSABILIDADE FISCAL, LEI DE DIRETRIZES ORÇAMENTARIAS (LDO), ANEXO, ESTIMATIVA, VARIAÇÃO, DESPESA PRIMARIA, PLANO, COMBATE, FRAUDE, IRREGULARIDADE, CONVERSÃO, CRESCIMENTO, REGIME FISCAL, EMPENHO, CONTINGENCIAMENTO, COMPENSAÇÃO, DEBITO FISCAL",
+  "ds": "2026-11-19",
+  "tx": "https://legis.senado.leg.br/sdleg-getter/dadosabertos/documento/38df22dd-1022-46cf-ac9d-d24f038d1d0d",
+  "rl": "4994",
+  "tm": [
+   "Tributos: Administração Tributária",
+   "Ciência, Tecnologia e Informática: Pesquisa Científica",
+   "Orçamento Anual: Execução Financeira e Orçamentária",
+   "Previdência Social: Regime Geral de Previdência Social"
+  ],
+  "ls": [
+   "lei_cfd68872896a"
+  ],
+  "apl": "Ajuste fiscal",
+  "cdx": "2655570",
+  "cn": "PLP 299/2026",
+  "dl": {
+   "d": "2026-11-18",
+   "t": "Aprovada pelo Plenário",
+   "p": "À Câmara dos Deputados"
+  }
+ }
+}

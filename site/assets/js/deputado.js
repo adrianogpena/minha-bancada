@@ -1,4 +1,5 @@
 /* Perfil do deputado: gastos, painéis e abas. */
+import { marcarTermos } from "./glossario.js";
 import { $, esc, reais, reaisCentavos, pct, data, param, carregar, pctBr, urlSegura } from "./util.js";
 import { VOTOS, itemFicha, selosPar, semDadosLocais } from "./comum.js";
 import { linhaNoCargoAte, linhaSubsidio } from "./ficha.js";
@@ -38,13 +39,13 @@ export function painelGastos(desp, explicacao) {
   const maxTipo = desp.porCategoria[0]?.total || 1;
   return `
     <h2>Gastos da cota parlamentar em ${desp.ano}</h2>
-    <p>Total no ano: <b>${reaisCentavos(desp.total)}</b>. ${esc(explicacao)}</p>
+    <p>Total no ano: <b>${reaisCentavos(desp.total)}</b>. ${marcarTermos(esc(explicacao))}</p>
     ${comparativoCota(desp)}
     <div class="duas-colunas">
       <div>
         <h3>Por categoria de despesa</h3>
         ${desp.porCategoria.length ? `<div class="barras">${desp.porCategoria.map((c) => `
-          <div><div class="barra-rotulo"><span title="${esc(c.originais.map(([r, v]) => `${r}: ${reais(v)}`).join("\n"))}">${esc(c.categoria)}</span><b>${reais(c.total)}</b></div><div class="barra"><i style="width:${(c.total / maxTipo) * 100}%"></i></div></div>`).join("")}</div>`
+          <div><div class="barra-rotulo"><span title="${esc(c.originais.map(([r, v]) => `${r}: ${reais(v)}`).join("\n"))}">${marcarTermos(esc(c.categoria))}</span><b>${reais(c.total)}</b></div><div class="barra"><i style="width:${(c.total / maxTipo) * 100}%"></i></div></div>`).join("")}</div>`
           : `<p class="vazio">Nenhuma despesa registrada neste ano.</p>`}
       </div>
       <div>
@@ -80,7 +81,7 @@ function painelTrajetoria(dep) {
     ${profissoes?.length ? `<p><b>Profissão:</b> ${profissoes.map((x) => esc(x.titulo)).join(", ")}.</p>` : ""}
     ${ocupacoes?.length ? `<h3>Ocupações anteriores</h3><ul class="lista-simples">${ocupacoes.map((o) => `<li>${esc(o.titulo)}${o.entidade ? ` · ${esc(o.entidade)}` : ""}${o.uf ? `/${esc(o.uf)}` : ""}${periodo(o.inicio, o.fim) ? `<br><span class="quando">${periodo(o.inicio, o.fim)}</span>` : ""}</li>`).join("")}</ul>` : ""}
     ${mandatosExternos?.length ? `<h3>Mandatos fora da Câmara</h3><ul class="lista-simples">${mandatosExternos.map((m) => `<li>${esc(m.cargo)}${m.municipio ? ` em ${esc(m.municipio)}` : ""}${m.uf ? `/${esc(m.uf)}` : ""}<br><span class="quando">${periodo(m.inicio, m.fim)}${m.partido ? `, pelo ${esc(m.partido)}` : ""}</span></li>`).join("")}</ul>` : ""}
-    ${mudancas.length ? `<h3>Partido e situação nesta legislatura</h3><ul class="lista-simples">${mudancas.map((h) => `<li><span class="quando">${h.data ? data(h.data) : ""}</span> ${esc([h.partido, h.situacao].filter(Boolean).join(" · "))}${h.descricao ? `<br><span class="quando">${esc(h.descricao)}</span>` : ""}</li>`).join("")}</ul>` : ""}
+    ${mudancas.length ? `<h3>Partido e situação nesta legislatura</h3><ul class="lista-simples">${mudancas.map((h) => `<li><span class="quando">${h.data ? data(h.data) : ""}</span> ${marcarTermos(esc([h.partido, h.situacao].filter(Boolean).join(" · ")))}${h.descricao ? `<br><span class="quando">${esc(h.descricao)}</span>` : ""}</li>`).join("")}</ul>` : ""}
     ${resumo}
     ${discursos?.length ? `<h3>Discursos mais recentes</h3><ul class="lista-simples">${discursos.map((d) => `<li><span class="quando">${d.data ? data(d.data) : ""}${d.tipo ? `, ${esc(d.tipo.toLowerCase())}` : ""}${d.fase ? ` (${esc(d.fase)})` : ""}</span>${d.sumario ? `<br>${esc(d.sumario)}` : ""}${urlSegura(d.link) ? `<br><a href="${esc(d.link)}" rel="noopener">Ver o discurso</a>` : ""}</li>`).join("")}</ul>` : ""}
     ${agenda}

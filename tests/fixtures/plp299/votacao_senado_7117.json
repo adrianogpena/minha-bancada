@@ -1,0 +1,652 @@
+{
+ "id": "7117",
+ "data": "2026-11-18",
+ "hora": null,
+ "dataHora": null,
+ "descricao": "Votação nominal da Emenda nº 40 ao Projeto de Lei Complementar nº 299, de 2026, destacada.",
+ "proposicao": "PLP 299/2026",
+ "propId": 176328,
+ "ementa": "Altera a Lei Complementar nº 200, de 30 de agosto de 2023, para conferir ao Poder Executivo federal novos instrumentos de gestão com vistas a garantir a estabilidade macroeconômica do País e criar as condições adequadas ao crescimento socioeconômico; e dá outras providências.",
+ "aprovada": 0,
+ "resultadoTexto": "R",
+ "placar": {
+  "sim": 30,
+  "nao": 47,
+  "art17": 1
+ },
+ "placarOficial": false,
+ "ausentes": 3,
+ "sessao": {
+  "numero": 152,
+  "tipo": "DOR",
+  "sequencial": 1,
+  "votacao": 4431
+ },
+ "porPartido": {
+  "?": {
+   "nao": 1
+  },
+  "AVANTE": {
+   "sim": 1
+  },
+  "MDB": {
+   "nao": 8,
+   "sim": 1
+  },
+  "PDT": {
+   "nao": 1
+  },
+  "PL": {
+   "sim": 13,
+   "nao": 1,
+   "ausente": 1
+  },
+  "PODE": {
+   "nao": 2,
+   "sim": 1
+  },
+  "PP": {
+   "sim": 5,
+   "nao": 3
+  },
+  "PSB": {
+   "nao": 7
+  },
+  "PSD": {
+   "nao": 10,
+   "sim": 2,
+   "ausente": 1
+  },
+  "PSDB": {
+   "nao": 2,
+   "sim": 2
+  },
+  "PT": {
+   "nao": 9
+  },
+  "REPUBLICANOS": {
+   "sim": 5,
+   "ausente": 1
+  },
+  "S/Partido": {
+   "nao": 1
+  },
+  "UNIÃO": {
+   "art17": 1,
+   "nao": 2
+  }
+ },
+ "votos": [
+  {
+   "id": "5672",
+   "nome": "Alan Rick",
+   "partido": "REPUBLICANOS",
+   "uf": "AC",
+   "voto": "sim"
+  },
+  {
+   "id": "5982",
+   "nome": "Alessandro Vieira",
+   "partido": "MDB",
+   "uf": "SE",
+   "voto": "nao"
+  },
+  {
+   "id": "6358",
+   "nome": "Ana Paula Lobato",
+   "partido": "PSB",
+   "uf": "MA",
+   "voto": "nao"
+  },
+  {
+   "id": "5967",
+   "nome": "Angelo Coronel",
+   "partido": "REPUBLICANOS",
+   "uf": "BA",
+   "voto": "sim"
+  },
+  {
+   "id": "6009",
+   "nome": "Astronauta Marcos Pontes",
+   "partido": "PL",
+   "uf": "SP",
+   "voto": "sim"
+  },
+  {
+   "id": "4639",
+   "nome": "Beto Faro",
+   "partido": "PT",
+   "uf": "PA",
+   "voto": "nao"
+  },
+  {
+   "id": "6336",
+   "nome": "Camilo Santana",
+   "partido": "PT",
+   "uf": "CE",
+   "voto": "nao"
+  },
+  {
+   "id": "6295",
+   "nome": "Carlos Fávaro",
+   "partido": "PSD",
+   "uf": "MT",
+   "voto": "nao"
+  },
+  {
+   "id": "5936",
+   "nome": "Carlos Portinho",
+   "partido": "PL",
+   "uf": "RJ",
+   "voto": "sim"
+  },
+  {
+   "id": "5990",
+   "nome": "Carlos Viana",
+   "partido": "PSD",
+   "uf": "MG",
+   "voto": "sim"
+  },
+  {
+   "id": "470",
+   "nome": "Chico Rodrigues",
+   "partido": "PSB",
+   "uf": "RR",
+   "voto": "nao"
+  },
+  {
+   "id": "5973",
+   "nome": "Cid Gomes",
+   "partido": "PSB",
+   "uf": "CE",
+   "voto": "nao"
+  },
+  {
+   "id": "739",
+   "nome": "Ciro Nogueira",
+   "partido": "PP",
+   "uf": "PI",
+   "voto": "sim"
+  },
+  {
+   "id": "6337",
+   "nome": "Cleitinho",
+   "partido": "REPUBLICANOS",
+   "uf": "MG",
+   "voto": "sim"
+  },
+  {
+   "id": "475",
+   "nome": "Confúcio Moura",
+   "partido": "MDB",
+   "uf": "RO",
+   "voto": "nao"
+  },
+  {
+   "id": "6335",
+   "nome": "Damares Alves",
+   "partido": "REPUBLICANOS",
+   "uf": "DF",
+   "voto": "ausente",
+   "motivo": "Presente – Não registrou voto"
+  },
+  {
+   "id": "5998",
+   "nome": "Daniella Ribeiro",
+   "partido": "PP",
+   "uf": "PB",
+   "voto": "nao"
+  },
+  {
+   "id": "3830",
+   "nome": "Davi Alcolumbre",
+   "partido": "UNIÃO",
+   "uf": "AP",
+   "voto": "art17"
+  },
+  {
+   "id": "5793",
+   "nome": "Dr. Hiran",
+   "partido": "PP",
+   "uf": "RR",
+   "voto": "sim"
+  },
+  {
+   "id": "5906",
+   "nome": "Dra. Eudócia",
+   "partido": "PSDB",
+   "uf": "AL",
+   "voto": "nao"
+  },
+  {
+   "id": "4994",
+   "nome": "Eduardo Braga",
+   "partido": "MDB",
+   "uf": "AM",
+   "voto": "nao"
+  },
+  {
+   "id": "3777",
+   "nome": "Eduardo Gomes",
+   "partido": "PL",
+   "uf": "TO",
+   "voto": "nao"
+  },
+  {
+   "id": "4642",
+   "nome": "Efraim Filho",
+   "partido": "PL",
+   "uf": "PB",
+   "voto": "sim"
+  },
+  {
+   "id": "5718",
+   "nome": "Eliziane Gama",
+   "partido": "PSD",
+   "uf": "MA",
+   "voto": "nao"
+  },
+  {
+   "id": "22",
+   "nome": "Esperidião Amin",
+   "partido": "PP",
+   "uf": "SC",
+   "voto": "sim"
+  },
+  {
+   "id": "5953",
+   "nome": "Fabiano Contarato",
+   "partido": "PT",
+   "uf": "ES",
+   "voto": "nao"
+  },
+  {
+   "id": "5917",
+   "nome": "Fernando Dueire",
+   "partido": "PSD",
+   "uf": "PE",
+   "voto": "nao"
+  },
+  {
+   "id": "345",
+   "nome": "Flávio Arns",
+   "partido": "PSB",
+   "uf": "PR",
+   "voto": "nao"
+  },
+  {
+   "id": "5894",
+   "nome": "Flávio Bolsonaro",
+   "partido": "PL",
+   "uf": "RJ",
+   "voto": "sim"
+  },
+  {
+   "id": "6008",
+   "nome": "Giordano",
+   "partido": "PODE",
+   "uf": "SP",
+   "voto": "nao"
+  },
+  {
+   "id": "6341",
+   "nome": "Hamilton Mourão",
+   "partido": "REPUBLICANOS",
+   "uf": "RS",
+   "voto": "sim"
+  },
+  {
+   "id": "5008",
+   "nome": "Humberto Costa",
+   "partido": "PT",
+   "uf": "PE",
+   "voto": "nao"
+  },
+  {
+   "id": "5385",
+   "nome": "Irajá",
+   "partido": "PSD",
+   "uf": "TO",
+   "voto": "nao"
+  },
+  {
+   "id": "6010",
+   "nome": "Ivete da Silveira",
+   "partido": "MDB",
+   "uf": "SC",
+   "voto": "sim"
+  },
+  {
+   "id": "4770",
+   "nome": "Izalci Lucas",
+   "partido": "PL",
+   "uf": "DF",
+   "voto": "ausente",
+   "motivo": "Presente – Não registrou voto"
+  },
+  {
+   "id": "35",
+   "nome": "Jader Barbalho",
+   "partido": "MDB",
+   "uf": "PA",
+   "voto": "nao"
+  },
+  {
+   "id": "6340",
+   "nome": "Jaime Bagattoli",
+   "partido": "PL",
+   "uf": "RO",
+   "voto": "sim"
+  },
+  {
+   "id": "581",
+   "nome": "Jaques Wagner",
+   "partido": "PT",
+   "uf": "BA",
+   "voto": "nao"
+  },
+  {
+   "id": "4531",
+   "nome": "Jayme Campos",
+   "partido": "UNIÃO",
+   "uf": "MT",
+   "voto": "nao"
+  },
+  {
+   "id": "5895",
+   "nome": "Jorge Kajuru",
+   "partido": "PSB",
+   "uf": "GO",
+   "voto": "nao"
+  },
+  {
+   "id": "6342",
+   "nome": "Jorge Seif",
+   "partido": "PL",
+   "uf": "SC",
+   "voto": "sim"
+  },
+  {
+   "id": "4811",
+   "nome": "Laércio Oliveira",
+   "partido": "PP",
+   "uf": "SE",
+   "voto": "sim"
+  },
+  {
+   "id": "5977",
+   "nome": "Leany Lemos",
+   "partido": "PSB",
+   "uf": "DF",
+   "voto": "nao"
+  },
+  {
+   "id": "5926",
+   "nome": "Lucas Barreto",
+   "partido": "PSD",
+   "uf": "AP",
+   "voto": "nao"
+  },
+  {
+   "id": "1186",
+   "nome": "Luis Carlos Heinze",
+   "partido": "PP",
+   "uf": "RS",
+   "voto": "nao"
+  },
+  {
+   "id": "631",
+   "nome": "Magno Malta",
+   "partido": "PL",
+   "uf": "ES",
+   "voto": "sim"
+  },
+  {
+   "id": "5376",
+   "nome": "Mara Gabrilli",
+   "partido": "PSD",
+   "uf": "SP",
+   "voto": "nao"
+  },
+  {
+   "id": "742",
+   "nome": "Marcelo Castro",
+   "partido": "MDB",
+   "uf": "PI",
+   "voto": "nao"
+  },
+  {
+   "id": "285",
+   "nome": "Marcio Bittar",
+   "partido": "PL",
+   "uf": "AC",
+   "voto": "sim"
+  },
+  {
+   "id": "5422",
+   "nome": "Marcos Rogério",
+   "partido": "PL",
+   "uf": "RO",
+   "voto": "sim"
+  },
+  {
+   "id": "5942",
+   "nome": "Marcos do Val",
+   "partido": "AVANTE",
+   "uf": "ES",
+   "voto": "sim"
+  },
+  {
+   "id": "5985",
+   "nome": "Nelsinho Trad",
+   "partido": "PSD",
+   "uf": "MS",
+   "voto": "nao"
+  },
+  {
+   "id": "5525",
+   "nome": "Omar Aziz",
+   "partido": "PSD",
+   "uf": "AM",
+   "voto": "nao"
+  },
+  {
+   "id": "5924",
+   "nome": "Oriovisto Guimarães",
+   "partido": "PSDB",
+   "uf": "PR",
+   "voto": "sim"
+  },
+  {
+   "id": "5523",
+   "nome": "Otto Alencar",
+   "partido": "PSD",
+   "uf": "BA",
+   "voto": "nao"
+  },
+  {
+   "id": "825",
+   "nome": "Paulo Paim",
+   "partido": "PT",
+   "uf": "RS",
+   "voto": "nao"
+  },
+  {
+   "id": "5502",
+   "nome": "Plínio Valério",
+   "partido": "PSDB",
+   "uf": "AM",
+   "voto": "nao"
+  },
+  {
+   "id": "5386",
+   "nome": "Professora Dorinha Seabra",
+   "partido": "UNIÃO",
+   "uf": "TO",
+   "voto": "nao"
+  },
+  {
+   "id": "5012",
+   "nome": "Randolfe Rodrigues",
+   "partido": "PT",
+   "uf": "AP",
+   "voto": "nao"
+  },
+  {
+   "id": "70",
+   "nome": "Renan Calheiros",
+   "partido": "MDB",
+   "uf": "AL",
+   "voto": "nao"
+  },
+  {
+   "id": "5207",
+   "nome": "Renan Filho",
+   "partido": "MDB",
+   "uf": "AL",
+   "voto": "nao"
+  },
+  {
+   "id": "5257",
+   "nome": "Renzo Braz",
+   "partido": "PP",
+   "uf": "MG",
+   "voto": "nao"
+  },
+  {
+   "id": "6025",
+   "nome": "Roberta Acioly",
+   "partido": "REPUBLICANOS",
+   "uf": "RR",
+   "voto": "sim"
+  },
+  {
+   "id": "4694",
+   "nome": "Rogerio Marinho",
+   "partido": "PL",
+   "uf": "RN",
+   "voto": "sim"
+  },
+  {
+   "id": "5352",
+   "nome": "Rogério Carvalho",
+   "partido": "PT",
+   "uf": "SE",
+   "voto": "nao"
+  },
+  {
+   "id": "5322",
+   "nome": "Romário",
+   "partido": "S/Partido",
+   "uf": "RJ",
+   "voto": "nao"
+  },
+  {
+   "id": "5974",
+   "nome": "Sargento Reginauro",
+   "partido": "PSDB",
+   "uf": "CE",
+   "voto": "sim"
+  },
+  {
+   "id": "6369",
+   "nome": "Senador 6369",
+   "partido": "?",
+   "uf": "",
+   "voto": "nao",
+   "anterior": true
+  },
+  {
+   "id": "6331",
+   "nome": "Sergio Moro",
+   "partido": "PL",
+   "uf": "PR",
+   "voto": "sim"
+  },
+  {
+   "id": "5988",
+   "nome": "Soraya Thronicke",
+   "partido": "PSB",
+   "uf": "MS",
+   "voto": "nao"
+  },
+  {
+   "id": "5959",
+   "nome": "Styvenson Valentim",
+   "partido": "PODE",
+   "uf": "RN",
+   "voto": "nao"
+  },
+  {
+   "id": "4560",
+   "nome": "Sérgio Petecão",
+   "partido": "PSD",
+   "uf": "AC",
+   "voto": "ausente",
+   "motivo": "Presente – Não registrou voto"
+  },
+  {
+   "id": "6338",
+   "nome": "Teresa Leitão",
+   "partido": "PT",
+   "uf": "PE",
+   "voto": "nao"
+  },
+  {
+   "id": "5736",
+   "nome": "Tereza Cristina",
+   "partido": "PP",
+   "uf": "MS",
+   "voto": "sim"
+  },
+  {
+   "id": "5899",
+   "nome": "Vanderlan Cardoso",
+   "partido": "PSD",
+   "uf": "GO",
+   "voto": "sim"
+  },
+  {
+   "id": "5748",
+   "nome": "Veneziano Vital do Rêgo",
+   "partido": "MDB",
+   "uf": "PB",
+   "voto": "nao"
+  },
+  {
+   "id": "1173",
+   "nome": "Wellington Fagundes",
+   "partido": "PL",
+   "uf": "MT",
+   "voto": "sim"
+  },
+  {
+   "id": "5411",
+   "nome": "Weverton",
+   "partido": "PDT",
+   "uf": "MA",
+   "voto": "nao"
+  },
+  {
+   "id": "5070",
+   "nome": "Wilder Morais",
+   "partido": "PL",
+   "uf": "GO",
+   "voto": "sim"
+  },
+  {
+   "id": "5783",
+   "nome": "Zenaide Maia",
+   "partido": "PSD",
+   "uf": "RN",
+   "voto": "nao"
+  },
+  {
+   "id": "3806",
+   "nome": "Zequinha Marinho",
+   "partido": "PODE",
+   "uf": "PA",
+   "voto": "sim"
+  }
+ ]
+}

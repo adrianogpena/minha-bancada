@@ -1,0 +1,154 @@
+[
+ {
+  "id": "7117",
+  "data": "2026-11-18",
+  "hora": null,
+  "dataHora": null,
+  "descricao": "Votação nominal da Emenda nº 40 ao Projeto de Lei Complementar nº 299, de 2026, destacada.",
+  "proposicao": "PLP 299/2026",
+  "propId": 176328,
+  "ementa": "Altera a Lei Complementar nº 200, de 30 de agosto de 2023, para conferir ao Poder Executivo federal novos instrumentos de gestão com vistas a garantir a estabilidade macroeconômica do País e criar as condições adequadas ao crescimento socioeconômico; e dá outras providências.",
+  "aprovada": 0,
+  "resultadoTexto": "R",
+  "placar": {
+   "sim": 30,
+   "nao": 47,
+   "art17": 1
+  },
+  "placarOficial": false,
+  "ausentes": 3,
+  "sessao": {
+   "numero": 152,
+   "tipo": "DOR",
+   "sequencial": 1,
+   "votacao": 4431
+  }
+ },
+ {
+  "id": "7118",
+  "data": "2026-11-18",
+  "hora": null,
+  "dataHora": null,
+  "descricao": "Votação nominal do Art. 6º do Substitutivo ao Projeto de Lei Complementar nº 299, de 2026, destacado.",
+  "proposicao": "PLP 299/2026",
+  "propId": 176328,
+  "ementa": "Altera a Lei Complementar nº 200, de 30 de agosto de 2023, para conferir ao Poder Executivo federal novos instrumentos de gestão com vistas a garantir a estabilidade macroeconômica do País e criar as condições adequadas ao crescimento socioeconômico; e dá outras providências.",
+  "aprovada": 1,
+  "resultadoTexto": "A",
+  "placar": {
+   "nao": 32,
+   "sim": 45,
+   "art17": 1,
+   "abstencao": 1
+  },
+  "placarOficial": false,
+  "ausentes": 2,
+  "sessao": {
+   "numero": 152,
+   "tipo": "DOR",
+   "sequencial": 2,
+   "votacao": 4432
+  }
+ },
+ {
+  "id": "7119",
+  "data": "2026-11-18",
+  "hora": null,
+  "dataHora": null,
+  "descricao": "Votação nominal do Art. 6º-F da Lei Complementar nº 200, de 2023, constante do art. 1º do Substitutivo ao PLP nº 299/2026, destacado.",
+  "proposicao": "PLP 299/2026",
+  "propId": 176328,
+  "ementa": "Altera a Lei Complementar nº 200, de 30 de agosto de 2023, para conferir ao Poder Executivo federal novos instrumentos de gestão com vistas a garantir a estabilidade macroeconômica do País e criar as condições adequadas ao crescimento socioeconômico; e dá outras providências.",
+  "aprovada": 1,
+  "resultadoTexto": "A",
+  "placar": {
+   "nao": 31,
+   "sim": 49,
+   "art17": 1
+  },
+  "placarOficial": false,
+  "ausentes": 0,
+  "sessao": {
+   "numero": 152,
+   "tipo": "DOR",
+   "sequencial": 3,
+   "votacao": 4433
+  }
+ },
+ {
+  "id": "7120",
+  "data": "2026-11-18",
+  "hora": null,
+  "dataHora": null,
+  "descricao": "Votação nominal das Emendas, subemenda e adequações redacionais do Relator, em turno suplementar, nos termos do parecer.",
+  "proposicao": "PLP 299/2026",
+  "propId": 176328,
+  "ementa": "Altera a Lei Complementar nº 200, de 30 de agosto de 2023, para conferir ao Poder Executivo federal novos instrumentos de gestão com vistas a garantir a estabilidade macroeconômica do País e criar as condições adequadas ao crescimento socioeconômico; e dá outras providências.",
+  "aprovada": 1,
+  "resultadoTexto": "A",
+  "placar": {
+   "sim": 69,
+   "abstencao": 1,
+   "art17": 1,
+   "nao": 2
+  },
+  "placarOficial": false,
+  "ausentes": 8,
+  "sessao": {
+   "numero": 152,
+   "tipo": "DOR",
+   "sequencial": 4,
+   "votacao": 4434
+  }
+ },
+ {
+  "id": "7115",
+  "data": "2026-11-12",
+  "hora": null,
+  "dataHora": null,
+  "descricao": "Votação nominal do Requerimento n° 770, de 2026, de Líderes.",
+  "proposicao": "PLP 299/2026",
+  "propId": 176328,
+  "ementa": "Altera a Lei Complementar nº 200, de 30 de agosto de 2023, para conferir ao Poder Executivo federal novos instrumentos de gestão com vistas a garantir a estabilidade macroeconômica do País e criar as condições adequadas ao crescimento socioeconômico; e dá outras providências.",
+  "aprovada": 1,
+  "resultadoTexto": "A",
+  "placar": {
+   "nao": 38,
+   "sim": 40,
+   "art17": 1
+  },
+  "placarOficial": false,
+  "ausentes": 2,
+  "sessao": {
+   "numero": 146,
+   "tipo": "DOR",
+   "sequencial": 1,
+   "votacao": 4429
+  }
+ },
+ {
+  "id": "7116",
+  "data": "2026-11-12",
+  "hora": null,
+  "dataHora": null,
+  "descricao": "Votação nominal da Emenda nº 75 (Substitutivo) ao PLP nº 299/2026, nos termos do parecer, ressalvados os destaques.",
+  "proposicao": "PLP 299/2026",
+  "propId": 176328,
+  "ementa": "Altera a Lei Complementar nº 200, de 30 de agosto de 2023, para conferir ao Poder Executivo federal novos instrumentos de gestão com vistas a garantir a estabilidade macroeconômica do País e criar as condições adequadas ao crescimento socioeconômico; e dá outras providências.",
+  "aprovada": 1,
+  "resultadoTexto": "A",
+  "placar": {
+   "nao": 31,
+   "sim": 45,
+   "art17": 1
+  },
+  "placarOficial": false,
+  "ausentes": 4,
+  "sessao": {
+   "numero": 146,
+   "tipo": "DOR",
+   "sequencial": 2,
+   "votacao": 4430
+  }
+ }
+]

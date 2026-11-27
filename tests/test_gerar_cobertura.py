@@ -123,7 +123,7 @@ def test_perfil_das_casas_por_uf(tse):
     assert sp["municipal"]["71072"]["total"] == 2
     assert sp["municipal"]["71072"]["custo"] == {"ano": 2023, "despesaLiquidada": 500.0, "cadeiras": 2, "porParlamentar": 250.0, "fonte": "https://dca-mun"}
     rj = ler(g.SAIDA / "perfil_casas" / "RJ.json")
-    assert rj["senado"]["total"] == 2 and rj["federal"]["total"] == 0 and "municipal" not in rj
+    assert rj["senado"]["total"] == 1 and rj["senado"]["composicao"] == "atual" and rj["federal"]["total"] == 0 and "municipal" not in rj
 
 
 def test_perfil_das_casas_usa_a_bancada_atual_quando_ha_deputados(tse):
@@ -132,6 +132,23 @@ def test_perfil_das_casas_usa_a_bancada_atual_quando_ha_deputados(tse):
     federal = ler(g.SAIDA / "perfil_casas" / "SP.json")["federal"]
     assert federal["total"] == 1 and federal["composicao"] == "atual" and federal["emExercicio"] == 2
     assert federal["ocupacoes"] == [["Advogado", 1]]
+
+
+def test_perfil_das_casas_usa_quem_esta_no_cargo_na_assembleia_e_no_senado(tse):
+    (g.BRUTO / "estaduais" / "SP").mkdir(parents=True)
+    g.salvar(g.BRUTO / "estaduais" / "SP" / "deputados.json", {"deputados": [{"nome": "Sem Registro", "nomeCivil": "Fulano Qualquer"}]})
+    g.salvar(g.BRUTO / "senado.json", [{"uf": "RJ", "nome": "Sem Registro", "nomeCivil": "Beltrano"}])
+    g.gerar_perfil_casas()
+    casas = ler(g.SAIDA / "perfil_casas" / "SP.json")
+    assert casas["estadual"]["total"] == 1 and "composicao" not in casas["estadual"]   # nenhum em exercício ligou ao TSE: mantém os eleitos
+    assert casas["estadual"]["custo"]["cadeiras"] == 1
+    assert ler(g.SAIDA / "perfil_casas" / "RJ.json")["senado"]["total"] == 2
+
+
+def test_eleitos_em_exercicio_liga_por_nome_e_conta_os_sem_registro(tse):
+    achados, total = g.eleitos_em_exercicio("SP", [{"nome": "Ana Souza", "nomeCivil": "Ana Maria Souza"}, {"nome": "Ninguém"}],
+                                            {"DEPUTADO FEDERAL"}, (2022,))
+    assert len(achados) == 1 and total == 2
 
 
 def test_relatorias_do_tcu_somam_por_ano_e_guardam_recentes(bruto):
@@ -316,5 +333,5 @@ def test_integracao_eleicao_do_deputado_e_do_senador(site_completo):
 def test_integracao_perfil_das_casas_e_ficha_do_tse(site_completo):
     sp = ler(site_completo / "perfil_casas" / "SP.json")
     assert sp["federal"]["composicao"] == "atual" and sp["estadual"]["custo"]["porParlamentar"] == 2000.0
-    assert ler(site_completo / "perfil_casas" / "RJ.json")["senado"]["total"] == 2
+    assert ler(site_completo / "perfil_casas" / "RJ.json")["senado"]["total"] == 1
     assert not (site_completo / "perfil_casas" / "BR.json").exists()

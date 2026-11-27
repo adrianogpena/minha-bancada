@@ -476,8 +476,11 @@ def coletar_detalhes_proposicoes() -> None:
     velhos = sorted((i for i in todos & cache.keys()
                      if not cache[i].get("finalizada") and cache[i].get("consultadoEm", "") < limite_velho),
                     key=lambda i: cache[i].get("consultadoEm", ""))
-    fila = (novos + velhos)[:ORCAMENTO_DETALHES]
-    print(f"Detalhes de proposições: {len(todos)} projetos, {len(novos)} novos, {len(velhos)} a renovar; consultando {len(fila)}")
+    # entradas gravadas antes do código da situação existir: relidas aos poucos, as mais antigas primeiro
+    sem_codigo = sorted((i for i in todos & cache.keys() if "codSituacao" not in cache[i] and i not in velhos),
+                        key=lambda i: cache[i].get("consultadoEm", ""))
+    fila = (novos + velhos + sem_codigo)[:ORCAMENTO_DETALHES]
+    print(f"Detalhes de proposições: {len(todos)} projetos, {len(novos)} novos, {len(velhos)} a renovar, {len(sem_codigo)} sem código da situação; consultando {len(fila)}")
 
     def buscar(pid: str) -> tuple[str, dict]:
         d = get(f"/proposicoes/{pid}").get("dados", {}) or {}
@@ -489,7 +492,9 @@ def coletar_detalhes_proposicoes() -> None:
             **quem,
             "dataApresentacao": comum.data_iso(d.get("dataApresentacao")),
             "situacao": situacao or None,
+            "codSituacao": st.get("codSituacao"),
             "tramitacao": st.get("descricaoTramitacao"),
+            "codTipoTramitacao": st.get("codTipoTramitacao"),
             "despacho": (st.get("despacho") or "").strip() or None,
             "orgao": st.get("siglaOrgao"),
             "dataSituacao": comum.data_iso(st.get("dataHora")),

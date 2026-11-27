@@ -17,6 +17,7 @@ Anos encerrados (anterior ao passado, com arquivo) não são baixados de novo; o
 
 Uso:
     PORTAL_TRANSPARENCIA_CHAVE=... python scripts/coletar_emendas.py [ano ...]
+    PORTAL_TRANSPARENCIA_CHAVE=... python scripts/coletar_emendas.py --amostra   # regrava tests/fixtures/contratos/portal_transparencia_emendas.json
 """
 
 import datetime as dt
@@ -35,7 +36,15 @@ VARIAVEL = "PORTAL_TRANSPARENCIA_CHAVE"
 ANO_INICIAL = 2019   # legislatura 2019-2022 em diante
 LIMITE_PAGINAS = 5000   # ~75 mil emendas por ano; mais que isso é laço na paginação
 PAUSA = 0.7   # s entre páginas: o limite é 90 requisições/min de dia e mais alto na madrugada
-LOCAL = re.compile(r"^(?P<municipio>.+?)\s*-?\s*\((?P<uf>[A-Z]{2})\)$")
+# O Portal publica o município como "SANTOS - SP" (também "SANTOS (SP)"); o estado inteiro vem como "SÃO PAULO (UF)", sem município.
+LOCAL = re.compile(r"^(?P<municipio>.+?)\s*(?:-\s*(?P<uf>[A-Z]{2})|\((?P<uf2>[A-Z]{2})\))$")
+
+
+def destino(local: str | None) -> tuple[str | None, str | None]:
+    """(município, UF) do local do gasto; (None, None) para estado inteiro, região, "Nacional" e "MÚLTIPLO"."""
+    m = LOCAL.match(" ".join((local or "").split()))
+    uf = m and (m.group("uf") or m.group("uf2"))
+    return (m.group("municipio"), uf) if m and uf != "UF" else (None, None)
 
 
 def compactar(i: dict) -> dict | None:
@@ -44,10 +53,10 @@ def compactar(i: dict) -> dict | None:
     if not codigo or not autor:
         return None
     local = " ".join((i.get("localidadeDoGasto") or "").split())
-    m = LOCAL.match(local)
+    municipio, uf = destino(local)
     item = {
         "codigo": codigo, "ano": i.get("ano"), "tipo": (i.get("tipoEmenda") or "").strip(), "numero": str(i.get("numeroEmenda") or "").strip(),
-        "autor": autor, "local": local, "municipio": m.group("municipio") if m else None, "uf": m.group("uf") if m else None,
+        "autor": autor, "local": local, "municipio": municipio, "uf": uf,
         "funcao": (i.get("funcao") or "").strip(), "subfuncao": (i.get("subfuncao") or "").strip(),
         "empenhado": comum.valor_br(i.get("valorEmpenhado")), "liquidado": comum.valor_br(i.get("valorLiquidado")),
         "pago": comum.valor_br(i.get("valorPago")),
@@ -93,10 +102,50 @@ def coletar(chave: str, anos: list[int] | None = None, hoje: dt.date | None = No
         print(f"Emendas {ano}: {len(itens)}")
 
 
+AMOSTRA = Path(__file__).resolve().parent.parent / "tests" / "fixtures" / "contratos" / "portal_transparencia_emendas.json"
+AMOSTRA_PAGINAS = 30   # páginas lidas atrás de um exemplo de cada forma
+
+
+def _formas(i: dict) -> set[str]:
+    """Formas do item que a amostra precisa cobrir: município, estado inteiro, "Nacional", Pix e bancada."""
+    local, tipo = i.get("localidadeDoGasto") or "", i.get("tipoEmenda") or ""
+    formas = {"municipio" if destino(local)[0] else "estado" if local.endswith("(UF)") else "outro"}
+    if "Especiais" in tipo:
+        formas.add("pix")
+    if "Bancada" in tipo:
+        formas.add("bancada")
+    return formas
+
+
+def gravar_amostra(chave: str, hoje: dt.date | None = None, s=None) -> None:
+    """Grava a resposta crua da API (sem compactar) como amostra de contrato dos testes: um item de cada forma de `_formas`."""
+    hoje = hoje or dt.date.today()
+    s = s or comum.sessao(1)
+    escolhidos: dict[str, dict] = {}
+    for pagina in range(1, AMOSTRA_PAGINAS + 1):
+        lista = comum.get(s, URL, params={"ano": hoje.year - 1, "pagina": pagina}, headers={"chave-api-dados": chave, "Accept": "application/json"}, timeout=60).json()
+        if not lista:
+            break
+        for i in lista:
+            for forma in _formas(i):
+                escolhidos.setdefault(forma, i)
+        if {"municipio", "estado", "outro", "pix", "bancada"} <= escolhidos.keys():
+            break
+        time.sleep(PAUSA)
+    itens = list({i["codigoEmenda"]: i for i in escolhidos.values()}.values())
+    if not itens:
+        raise RuntimeError("a API não devolveu emendas para a amostra")
+    comum.salvar(AMOSTRA, {"fonte": f"{URL}?ano={{ano}}&pagina={{pagina}}", "capturadoEm": hoje.isoformat(), "amostra": itens})
+    print(f"Amostra gravada em {AMOSTRA} ({len(itens)} itens; formas: {', '.join(sorted(escolhidos))})")
+
+
 def main() -> None:
     chave = os.environ.get(VARIAVEL, "").strip()
     if not chave:
         comum.avisar(f"emendas: {VARIAVEL} não definida; coleta pulada")
+        return
+    if sys.argv[1:] == ["--amostra"]:
+        gravar_amostra(chave)
         return
     coletar(chave, [int(a) for a in sys.argv[1:]] or None)
 

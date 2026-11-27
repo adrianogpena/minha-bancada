@@ -1,4 +1,5 @@
 /* Montagem da ficha de um parlamentar (deputado ou senador). */
+import { classificarVotacao, sentidoDoVoto } from "./significado.js";
 import { $, esc, pct, data, dataHora, urlSegura } from "./util.js";
 import { VOTOS, foto, selo, legenda, listaPaginada, abas, ligarAbas } from "./comum.js";
 import { CAMARA_API, resultado, desfecho, movimentadoNoAno, fontes } from "./apis.js";
@@ -111,13 +112,17 @@ export function montarParlamentar(alvo, c) {
     if (v.ausentes) partes.push(`Sem voto registrado ${v.ausentes}`);
     return partes.join(" · ");
   };
+  const sentidoHtml = (v) => {
+    const s = sentidoDoVoto({ tipo: classificarVotacao(v.descricao).tipo, voto: v.voto });
+    return s ? ` <span class="quando">votou ${esc(VOTOS[v.voto]?.rotulo || v.voto)}: ${esc(s)}</span>` : "";
+  };
   const renderVoto = (v) => {
     const [res, classe] = resultado(v.aprovada);
     const pl = v.placar || {};
     const sessao = v.sessao ? [v.sessao.tipo && (TIPOS_SESSAO[v.sessao.tipo] || `Sessão ${v.sessao.tipo}`), v.sessao.numero && `nº ${v.sessao.numero}`, v.sessao.votacao && `votação ${v.sessao.votacao} do dia`].filter(Boolean).join(", ") : "";
     return `<li class="cartao-item">
       <span class="quando">${v.dataHora ? esc(dataHora(v.dataHora)) : `${data(v.data)}${v.hora ? `, ${esc(v.hora)}` : ""}`}${v.proposicao ? `, <b>${esc(v.proposicao)}</b>` : ""}</span>
-      <span>${selo(v.voto)} <span class="resultado r-${classe}">${esc(res)}</span></span>
+      <span>${selo(v.voto)}${sentidoHtml(v)} <span class="resultado r-${classe}">${esc(res)}</span></span>
       ${c.hrefVotacao ? `<a class="texto" href="${esc(c.hrefVotacao(v))}">${esc(v.descricao || "Votação sem descrição")}</a>` : `<span class="texto">${esc(v.descricao || "Votação sem descrição")}</span>`}
       ${v.secreta ? `<span class="texto aviso-ementa"><b>Votação secreta:</b> o Senado informa que cada senador votou, mas não como. O voto individual não é público.</span>` : ""}
       ${v.ementa ? `<span class="texto ementa">${esc(v.ementa)}</span>` : `<span class="texto ementa sem-ementa">Ementa não informada${c.fonteEmenta ? ` pelo ${esc(c.fonteEmenta)}` : ""}.</span>`}

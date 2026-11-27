@@ -43,6 +43,7 @@ h2 { font-size: 22px; margin: 28px 0 12px; }
 input, select { font-size: 16px; min-height: var(--alvo); }
 input[type="checkbox"], input[type="radio"] { width: 24px; min-height: 24px; }
 button { min-height: var(--alvo); }
+.termo { display: inline-block; min-height: var(--alvo); min-width: var(--alvo); margin: -12px 0; vertical-align: middle; line-height: var(--alvo); }
 .filtros, .filtros.dois, .hist-filtros { grid-template-columns: 1fr; gap: 8px; }
 .filtros .campo:first-child, .filtros.dois .largo { grid-column: auto; }
 
@@ -121,3 +122,19 @@ summary { display: flex; cursor: pointer; }
 small { font-size: 13px; }
 .linha-email { flex-direction: column; align-items: stretch; }
 .linha-email .campo:first-child, .linha-email .campo:last-child { flex: none; }
+
+/* faixa de etapas na vertical */
+.etapas { grid-template-columns: 1fr; }
+.etapas li { text-align: left; padding: 6px 0 14px 40px; min-height: var(--alvo); }
+.etapas li::before { top: 0; bottom: 0; left: 12px; right: auto; width: 4px; height: auto; }
+.etapas li:first-child::before { top: 14px; left: 12px; } .etapas li:last-child::before { bottom: auto; height: 14px; right: auto; }
+.etapas li.atual::before { background: linear-gradient(180deg, var(--marca) 50%, var(--linha) 50%); }
+.etapas li.parado::before { background: linear-gradient(180deg, var(--marca) 50%, var(--nao) 50%); }
+.etapas .ponto { left: 0; transform: none; top: 4px; }
+.etapas b, .etapas span { display: inline; } .etapas span::before { content: " · "; }
+.etapas .ponto { display: grid; } .etapas .ponto::before { content: none; }
+
+/* linha do tempo */
+.dia { padding-left: 18px; }
+.controles > * { flex: 1 1 auto; }
+.sessao-votos { padding: 10px; margin-left: -6px; margin-right: -6px; }

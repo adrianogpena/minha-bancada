@@ -64,6 +64,9 @@ Ainda não feito, com a mesma chave:
   Cloudflare ("Sorry, you have been blocked") a partir do ambiente de sessões na nuvem, então o formato real não foi medido e nenhum
   coletor foi escrito às cegas. Fazer a medição de um ambiente que a API aceite (ou ver se o Actions passa), gravar a amostra em
   `tests/fixtures/contratos/` e só então registrar o host em `ENDPOINTS.md`.
+  Testado no runner do Actions em 2026-11-27 (`testar-transferegov.yml`, curl padrão): os três endereços devolveram HTTP 403 com a
+  mesma página do Cloudflare (5.661 bytes, `text/html`). O coletor diário também seria bloqueado, então a API não serve. Próximo passo:
+  procurar a carga em lote das Transferências Especiais (arquivos CSV do Transferegov ou do dados.gov.br) e testar o host no mesmo workflow.
 - Viagens a serviço e cargos do Executivo federal (ver 3.3).
 
 ### 3.3 Ministros de Estado: o que fica para depois

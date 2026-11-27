@@ -24,8 +24,8 @@ Revisado em 2026-11-09 contra o código, os dados em `dados/` e o `CHANGELOG.md`
   - **Comissão x tema:** "projetos na área da comissão que ele integra"; a Câmara não publica o tema de cada comissão.
   - **Fidelidade em blocos:** os blocos usam a composição atual e rótulos que não constam em `/blocos` seguem sem
     fidelidade; a presença em reuniões de comissão não tem total para comparar.
-- **Perfil dos eleitos:** a bancada federal já usa a composição de hoje; Assembleias, Senado e Câmaras Municipais seguem com
-  os eleitos de 2018/2022/2024 (suplentes que assumiram não entram).
+- **Perfil dos eleitos:** a bancada federal, as Assembleias e o Senado já usam quem está no cargo hoje (2026-11-27); as Câmaras
+  Municipais seguem com os vereadores eleitos de 2024 (suplentes que assumiram não entram; não há lista de quem está em exercício).
 
 ### 1.2 Glossário e "O que isso significou" nas demais páginas
 

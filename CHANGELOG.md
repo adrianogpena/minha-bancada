@@ -5,6 +5,10 @@ Regra: toda fonte nova ou mudança de coleta ganha uma entrada aqui, no mesmo co
 Datas dos conjuntos que já existiam vêm do primeiro commit que os trouxe (`git log --diff-filter=A`).
 Todas as coletas rodam sozinhas no GitHub Actions (`.github/workflows/atualizar.yml`, todo dia às 05:00 de Brasília), salvo onde indicado.
 
+## Perfil dos eleitos com quem está no cargo: Assembleias e Senado (2026-11-27)
+
+Sem fonte nova. `gerar_politicos.eleitos_em_exercicio` (antes só a bancada federal) liga por nome quem está no cargo hoje ao registro do TSE: deputados estaduais da lista coletada (`dados/estaduais/<UF>/deputados.json`, candidaturas de 2022) e senadores de `dados/senado.json` (2018 e 2022). Suplentes que assumiram entram quando têm registro próprio; quem não liga ao TSE fica de fora e `emExercicio` guarda o total. Sem nenhum ligado (UF sem lista coletada), o perfil segue com os eleitos. `perfil_casas/<UF>.json` ganha `composicao: "atual"` e `emExercicio` em `estadual` e `senado`; o custo da Assembleia continua dividido pelas cadeiras eleitas. Câmaras Municipais seguem com os vereadores eleitos de 2024 (não há lista de quem está em exercício).
+
 ## REQ, RIC, INC, MSC e EMC lidos nas normas, sem grafo (2026-11-20)
 
 Sem coleta nova e sem host novo. `docs/regras-tramitacao.md` ganha a seção "Tipos lidos nas normas e ainda sem grafo", com o que o RICD (Res. 34/2026, arts. 113 a 125) e o RISF vol. 1 (arts. 211 a 227-A e 277 a 286) dizem de requerimento, requerimento de informação, indicação, mensagem e emenda; fontes: `https://www2.camara.leg.br/atividade-legislativa/legislacao/regimento-interno-da-camara-dos-deputados` e `https://www25.senado.leg.br/web/atividade/legislacao/regimento-interno`. Contagem do cadastro e amostra de 60 RIC e 60 INC reais em `https://dadosabertos.camara.leg.br/api/v2/proposicoes/{id}` (já em `ENDPOINTS.md`): a maioria está em "Aguardando Remessa ao Arquivo" ou "Aguardando Resposta", que nenhum texto lido define; por isso `TIPOS_PROJETO`, o coletor, o índice e `etapas.js` não mudaram.

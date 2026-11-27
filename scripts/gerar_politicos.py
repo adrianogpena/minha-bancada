@@ -301,15 +301,16 @@ def perfil_eleitos(eleitos: list, ano: int) -> dict:
             "raca": raca.most_common(), "ocupacoes": ocupacoes.most_common(OCUPACOES_POR_CASA)}
 
 
-def bancada_federal_atual(uf: str, deputados: dict) -> tuple[list, int]:
-    """Registros de 2022 (TSE) dos deputados federais em exercício pela UF, inclusive suplentes que assumiram, ligados por nome.
-    Devolve (registros achados, deputados em exercício); quem não tem registro de 2022 não entra no perfil."""
+def eleitos_em_exercicio(uf: str, atuais: list, cargos: set, anos: tuple) -> tuple[list, int]:
+    """Registros do TSE (`anos`, `cargos`) de quem está no cargo hoje pela UF, inclusive suplentes que assumiram, ligados por nome
+    (`nome` e `nomeCivil` de cada item de `atuais`). Devolve (registros achados, total em exercício); quem não tem registro não
+    entra no perfil."""
     candidatos = defaultdict(list)
-    for e in ler(BRUTO / "tse" / "2022" / f"{uf}.json", []):
-        if e["cargo"] == "DEPUTADO FEDERAL":
-            for n in (e.get("nome"), e.get("urna")):
-                candidatos[chave_nome(n, uf)].append(e)
-    atuais = [d for d in deputados.values() if d["uf"] == uf]
+    for ano in anos:
+        for e in ler(BRUTO / "tse" / str(ano) / f"{uf}.json", []):
+            if e["cargo"] in cargos:
+                for n in (e.get("nome"), e.get("urna")):
+                    candidatos[chave_nome(n, uf)].append(e)
     achados = []
     for d in atuais:
         for n in (d.get("nomeCivil"), d.get("nome")):
@@ -318,6 +319,22 @@ def bancada_federal_atual(uf: str, deputados: dict) -> tuple[list, int]:
                 achados.append(next((e for e in lista if e.get("situacao") == "eleito"), lista[0]))
                 break
     return achados, len(atuais)
+
+
+def bancada_federal_atual(uf: str, deputados: dict) -> tuple[list, int]:
+    """Registros de 2022 (TSE) dos deputados federais em exercício pela UF (ver `eleitos_em_exercicio`)."""
+    return eleitos_em_exercicio(uf, [d for d in deputados.values() if d["uf"] == uf], {"DEPUTADO FEDERAL"}, (2022,))
+
+
+def assembleia_atual(uf: str) -> tuple[list, int]:
+    """Registros de 2022 (TSE) dos deputados estaduais em exercício, da lista coletada da Assembleia (`dados/estaduais/<UF>/deputados.json`)."""
+    atuais = (ler(BRUTO / "estaduais" / uf / "deputados.json", {}) or {}).get("deputados") or []
+    return eleitos_em_exercicio(uf, atuais, {"DEPUTADO ESTADUAL", "DEPUTADO DISTRITAL"}, (2022,))
+
+
+def senado_atual(uf: str, senadores: list) -> tuple[list, int]:
+    """Registros de 2018 e 2022 (TSE) dos senadores em exercício pela UF; suplente em exercício entra se tiver registro próprio."""
+    return eleitos_em_exercicio(uf, [s for s in senadores if s.get("uf") == uf], {"SENADOR"}, (2018, 2022))
 
 
 def custo_assembleia(uf: str, cadeiras: int) -> dict:
@@ -345,10 +362,12 @@ def custo_camara_municipal(ibge: str | None, cadeiras: int, dca: dict) -> dict:
 
 def gerar_perfil_casas(deputados: dict | None = None) -> None:
     """site/dados/perfil_casas/<UF>.json: perfil dos eleitos de cada Casa, para comparar com o eleitorado.
-    Chaves: estadual (Assembleia ou Câmara Legislativa, 2022), federal (bancada em exercício na Câmara, com os dados da candidatura
-    de 2022; sem `deputados`, os eleitos de 2022), senado (senadores eleitos em 2018 e 2022) e municipal
+    Chaves: estadual (deputados em exercício na Assembleia ou Câmara Legislativa, com os dados da candidatura de 2022; sem a lista
+    coletada, os eleitos de 2022), federal (bancada em exercício na Câmara, idem; sem `deputados`, os eleitos de 2022), senado
+    (senadores em exercício, candidaturas de 2018 e 2022; sem `senado.json`, os eleitos) e municipal
     (<código TSE do município> -> vereadores de 2024)."""
     ibge_do_tse = ler(BRUTO / "municipios_ibge.json", {})
+    senadores = ler(BRUTO / "senado.json", []) or []
     for arq in sorted((BRUTO / "tse" / "2022").glob("[A-Z][A-Z].json")):
         uf = arq.stem
         if uf == "BR":
@@ -365,8 +384,12 @@ def gerar_perfil_casas(deputados: dict | None = None) -> None:
             if achados:
                 federal = {**perfil_eleitos(achados, 2022), "composicao": "atual", "emExercicio": em_exercicio}
         estadual = perfil_eleitos(eleitos(2022, {"DEPUTADO ESTADUAL", "DEPUTADO DISTRITAL"}), 2022)
+        cadeiras = estadual.get("total")
+        achados, em_exercicio = assembleia_atual(uf)
+        if achados:
+            estadual = {**perfil_eleitos(achados, 2022), "composicao": "atual", "emExercicio": em_exercicio}
         if estadual:
-            custo = custo_assembleia(uf, estadual.get("total"))
+            custo = custo_assembleia(uf, cadeiras)
             if custo:
                 estadual["custo"] = custo
         dca = ler(BRUTO / "siconfi_municipios" / f"{uf}.json", {})
@@ -375,10 +398,14 @@ def gerar_perfil_casas(deputados: dict | None = None) -> None:
             perfil = perfil_eleitos(lista, 2024)
             custo = custo_camara_municipal(ibge_do_tse.get(cod), perfil.get("total"), dca)
             municipal[cod] = {**perfil, "custo": custo} if custo else perfil
+        senado = perfil_eleitos(eleitos(2018, {"SENADOR"}) + eleitos(2022, {"SENADOR"}), 2022)
+        achados, em_exercicio = senado_atual(uf, senadores)
+        if achados:
+            senado = {**perfil_eleitos(achados, 2022), "composicao": "atual", "emExercicio": em_exercicio}
         casas = {
             "estadual": estadual,
             "federal": federal,
-            "senado": perfil_eleitos(eleitos(2018, {"SENADOR"}) + eleitos(2022, {"SENADOR"}), 2022),
+            "senado": senado,
             "municipal": municipal,
         }
         salvar(SAIDA / "perfil_casas" / f"{uf}.json", {k: v for k, v in casas.items() if v})

@@ -99,8 +99,9 @@ def test_amostra_de_contrato_vira_itens_compactos():
 
 def test_gravar_amostra_guarda_a_resposta_crua(monkeypatch, tmp_path):
     monkeypatch.setattr(em, "AMOSTRA", tmp_path / "a.json")
+    monkeypatch.setattr(em.time, "sleep", lambda s: None)
     crua = [{"codigoEmenda": str(n), "autor": "A"} for n in range(15)]
     monkeypatch.setattr(em.comum, "get", lambda s, url, **k: Resp(crua))
     em.gravar_amostra("k", dt.date(2026, 11, 27), object())
     d = json.loads((tmp_path / "a.json").read_text(encoding="utf-8"))
-    assert d["capturadoEm"] == "2026-11-27" and len(d["amostra"]) == em.AMOSTRA_ITENS
+    assert d["capturadoEm"] == "2026-11-27" and len(d["amostra"]) == 1

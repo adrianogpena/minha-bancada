@@ -103,22 +103,40 @@ def coletar(chave: str, anos: list[int] | None = None, hoje: dt.date | None = No
 
 
 AMOSTRA = Path(__file__).resolve().parent.parent / "tests" / "fixtures" / "contratos" / "portal_transparencia_emendas.json"
-AMOSTRA_ITENS = 6   # o suficiente para cobrir município, estado, região e "MÚLTIPLO"
+AMOSTRA_PAGINAS = 30   # páginas lidas atrás de um exemplo de cada forma
+
+
+def _formas(i: dict) -> set[str]:
+    """Formas do item que a amostra precisa cobrir: município, estado inteiro, "Nacional", Pix e bancada."""
+    local, tipo = i.get("localidadeDoGasto") or "", i.get("tipoEmenda") or ""
+    formas = {"municipio" if destino(local)[0] else "estado" if local.endswith("(UF)") else "outro"}
+    if "Especiais" in tipo:
+        formas.add("pix")
+    if "Bancada" in tipo:
+        formas.add("bancada")
+    return formas
 
 
 def gravar_amostra(chave: str, hoje: dt.date | None = None, s=None) -> None:
-    """Grava a resposta crua da API (primeiras páginas do ano corrente, sem compactar) como amostra de contrato dos testes."""
+    """Grava a resposta crua da API (sem compactar) como amostra de contrato dos testes: um item de cada forma de `_formas`."""
     hoje = hoje or dt.date.today()
     s = s or comum.sessao(1)
-    itens: list[dict] = []
-    for pagina in range(1, 6):
-        itens += comum.get(s, URL, params={"ano": hoje.year, "pagina": pagina}, headers={"chave-api-dados": chave, "Accept": "application/json"}, timeout=60).json()
-        if len(itens) >= AMOSTRA_ITENS:
+    escolhidos: dict[str, dict] = {}
+    for pagina in range(1, AMOSTRA_PAGINAS + 1):
+        lista = comum.get(s, URL, params={"ano": hoje.year - 1, "pagina": pagina}, headers={"chave-api-dados": chave, "Accept": "application/json"}, timeout=60).json()
+        if not lista:
             break
+        for i in lista:
+            for forma in _formas(i):
+                escolhidos.setdefault(forma, i)
+        if {"municipio", "estado", "outro", "pix", "bancada"} <= escolhidos.keys():
+            break
+        time.sleep(PAUSA)
+    itens = list({i["codigoEmenda"]: i for i in escolhidos.values()}.values())
     if not itens:
         raise RuntimeError("a API não devolveu emendas para a amostra")
-    comum.salvar(AMOSTRA, {"fonte": f"{URL}?ano={{ano}}&pagina={{pagina}}", "capturadoEm": hoje.isoformat(), "amostra": itens[:AMOSTRA_ITENS]})
-    print(f"Amostra gravada em {AMOSTRA} ({min(len(itens), AMOSTRA_ITENS)} itens)")
+    comum.salvar(AMOSTRA, {"fonte": f"{URL}?ano={{ano}}&pagina={{pagina}}", "capturadoEm": hoje.isoformat(), "amostra": itens})
+    print(f"Amostra gravada em {AMOSTRA} ({len(itens)} itens; formas: {', '.join(sorted(escolhidos))})")
 
 
 def main() -> None:

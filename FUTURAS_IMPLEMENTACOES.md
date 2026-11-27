@@ -60,6 +60,10 @@ resposta crua da API (`PORTAL_TRANSPARENCIA_CHAVE=... python scripts/coletar_eme
 
 Ainda não feito, com a mesma chave:
 - Emendas Pix com o favorecido e o plano de ação do Transferegov (hoje só o município e os valores do Portal da Transparência).
+  Tentado em 2026-11-27: `api.transferegov.gestao.gov.br` (PostgREST, `transferenciasespeciais/plano_acao_especial`) responde bloqueio do
+  Cloudflare ("Sorry, you have been blocked") a partir do ambiente de sessões na nuvem, então o formato real não foi medido e nenhum
+  coletor foi escrito às cegas. Fazer a medição de um ambiente que a API aceite (ou ver se o Actions passa), gravar a amostra em
+  `tests/fixtures/contratos/` e só então registrar o host em `ENDPOINTS.md`.
 - Viagens a serviço e cargos do Executivo federal (ver 3.3).
 
 ### 3.3 Ministros de Estado: o que fica para depois

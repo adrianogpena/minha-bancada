@@ -89,3 +89,35 @@ def test_plano_so_entra_em_emenda_pix_e_o_resto_e_contado():
     planos = {"202027070006": [PLANO]}
     assert "planos" not in ge.construir([fin], planos=planos)["pes_a"]
     assert ge.conferir_planos([fin], planos)["planosDeOutroTipo"] == 1
+
+
+def pag(i, cnpj, valor, pf=False, nome="EMPRESA"):
+    return {"id": i, "pf": True, "valor": valor} if pf else {"id": i, **({"cnpj": cnpj} if cnpj else {}), "nome": nome, "valor": valor}
+
+
+def test_resumo_da_gestao_soma_por_cnpj_separa_pessoa_fisica_e_liga_fornecedor_conhecido():
+    rels = [{"id": 1, "data": "2025-01-01", "situacao": "Parcial", "executado": 100.0, "pendente": 50.0, "pagamentos": [pag(1, "11111111000111", 60.0), pag(2, "11111111000111", 10.0)]},
+            {"id": 2, "data": "2025-06-01", "situacao": "Disponibilizado", "executado": 30.0, "pendente": 20.0,
+             "pagamentos": [pag(3, "22222222000122", 25.0), pag(4, None, 3.0), pag(5, None, 2.0, pf=True)]}]
+    r = ge.resumo_gestao(rels, {"for_11111111"})
+    assert (r["relatorios"], r["situacao"], r["data"], r["executado"], r["pendente"], r["pago"]) == (2, "Disponibilizado", "2025-06-01", 130.0, 20.0, 100.0)
+    assert [(f["cnpj"], f["valor"], f["n"], f.get("fornecedor")) for f in r["favorecidos"]] == [("11111111000111", 70.0, 2, "for_11111111"), ("22222222000122", 25.0, 1, None)]
+    assert r["outros"] == {"n": 1, "valor": 3.0} and r["pessoasFisicas"] == {"n": 1, "valor": 2.0}
+
+
+def test_resumo_limita_os_maiores_favorecidos_e_manda_o_resto_para_outros():
+    pags = [pag(i, f"{i:014d}", float(i)) for i in range(1, ge.FAVORECIDOS_EXIBIDOS + 3)]
+    r = ge.resumo_gestao([{"id": 1, "executado": 1.0, "pagamentos": pags}])
+    assert len(r["favorecidos"]) == ge.FAVORECIDOS_EXIBIDOS and r["favorecidos"][0]["valor"] == float(ge.FAVORECIDOS_EXIBIDOS + 2)
+    assert r["outros"] == {"n": 2, "valor": 3.0}
+
+
+def test_gestao_entra_no_plano_da_pessoa_e_pdf_carrega_dos_arquivos(tmp_path):
+    ge.comum.salvar(tmp_path / "gestao" / "2020.json", {"relatorios": [{"id": 1, "plano": 38527, "executado": 5.0, "pagamentos": [pag(1, "11111111000111", 5.0)]}]})
+    gestao = ge.carregar_gestao(tmp_path)
+    assert list(gestao) == [38527] and ge.carregar_gestao(tmp_path / "nada") == {}
+    pix = {**item("202027070006", 2020, "IRACEMA", "RR", 10.0, 5.0), "tipo": "Emenda Individual - Transferências Especiais"}
+    r = ge.construir([pix], planos={"202027070006": [PLANO]}, gestao=gestao)["pes_a"]
+    assert r["planos"]["38527"]["gestao"]["pago"] == 5.0
+    sem = ge.construir([pix], planos={"202027070006": [PLANO]}, gestao={})["pes_a"]
+    assert "gestao" not in sem["planos"]["38527"]

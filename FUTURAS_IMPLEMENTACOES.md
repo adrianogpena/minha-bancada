@@ -68,10 +68,15 @@ Ainda não feito, com a mesma chave:
   `site/mapa-dados.html`). **Conferido em 2026-11-27** (coleta do zero contra a API, 58.990 planos, com as emendas coletadas de 2019 a 2026): as 5.108 Emendas Pix
   têm plano (0 sem plano) e 159 planos não casam com emenda do Portal (112 de 2026, 28 de 2025, 14 de 2024, 4 de 2023, 1 de 2022; todos
   impedidos, ciente ou em elaboração, ainda sem empenho no Portal). Um código pode ter vários planos (1.789 com um, 346 com dois, até mais de cinco);
-  60 itens que o Portal classifica como "Finalidade Definida" também têm plano no Transferegov e ficam fora da ficha (só Pix recebe plano). Falta:
-  pagamentos e favorecidos finais
-  (`/gestao-financeira-subtransacoes-especiais`, `/relatorios-gestao-documento-liquidacao-especiais`,
-  `/ordens-pagamentos-ordens-bancarias-especiais`, `/empenhos-especiais`).
+  60 itens que o Portal classifica como "Finalidade Definida" também têm plano no Transferegov e ficam fora da ficha (só Pix recebe plano). **Favorecidos finais feitos em 2026-11-27** pelos relatórios de gestão (`/relatorios-gestao-novos-especiais` e
+  `/relatorios-gestao-documento-liquidacao-especiais`: 27.788 relatórios, 107.771 pagamentos, ~9 min a mais na coleta): bloco "Quem recebeu a
+  verba Pix" e coluna "Prestação de contas" na ficha, CNPJ ligado a `nucleo/fornecedores`. 27.212 dos planos têm relatório. Falta:
+  - O pagamento da União (`/empenhos-especiais`, `/documentos-habeis-especiais`, `/ordens-pagamentos-ordens-bancarias-especiais`: empenho, documento
+    hábil e ordem bancária, ligados por `id_plano_acao`, `id_empenho` e `id_dh`; ~900 páginas). Só daria data e número da ordem bancária; o valor
+    pago já vem do Portal.
+  - Gestão financeira da conta (`/gestao-financeira-subtransacoes-especiais`, 14.619 pagamentos com beneficiário e `/gestao-financeira-lancamentos-especiais`,
+    752 mil lançamentos): ligar à conta do executor exigiria guardar banco, agência e conta, que a coleta descarta.
+  - Cruzar os maiores recebedores com doadores e sanções do TCU pelo CNPJ (o link ao fornecedor já existe quando a empresa está no núcleo).
 - Viagens a serviço e cargos do Executivo federal (ver 3.3).
 
 ### 3.3 Ministros de Estado: o que fica para depois

@@ -14,6 +14,10 @@ dados/emendas/ e no núcleo); a ligação a pessoa é de identidades.py, nunca d
 Grava em dados/transferegov/:
   especiais/<ano>.json  {coletadoEm, fonte, planos:[{id, codigo, emenda, ano, situacao, aceite, beneficiario, custeio, investimento,
                         areas, objeto, executores:[{id, cnpj, nome, objeto, custeio, investimento}]}]}  (ano do plano de ação)
+  gestao/<ano>.json     {coletadoEm, fonte, relatorios:[{id, plano, executor, tipo, situacao, data, executado, pendente, pagamentos:[{id, cnpj, nome,
+                        valor, data, natureza, descricao}]}]}  relatório de gestão (prestação de contas do que o município pagou com a verba)
+                        com os pagamentos a quem recebeu (favorecido final); ano do plano de ação. Recebedor pessoa física (CPF) não guarda nome
+                        nem documento: o pagamento vem com `pf: true`.
   beneficiarios.json    {coletadoEm, fonte, itens:{<id_beneficiario>: {nome, uf, cnpj}}}
   atualizacao.json      {atualizadoEm, coletadoEm}; gravado por último. Se a data da API não mudou desde a última coleta, nada é baixado.
 Valores em reais (float), datas em ISO, CNPJ só dígitos e válido (fornecedores.documento).
@@ -40,7 +44,8 @@ AMOSTRA = comum.RAIZ / "tests" / "fixtures" / "contratos" / "transferegov_especi
 TAMANHO = 200
 PAUSA = 0.3   # s entre páginas; a API não publica limite, ~300 páginas por tabela
 LIMITE_PAGINAS = 2000   # ~59 mil planos / 200 = 295; mais que isso é laço na paginação
-RECURSOS = {"planos": "planos-acao-especiais", "beneficiarios": "beneficiarios-especiais", "executores": "executores-especiais"}
+RECURSOS = {"planos": "planos-acao-especiais", "beneficiarios": "beneficiarios-especiais", "executores": "executores-especiais",
+            "relatorios": "relatorios-gestao-novos-especiais", "liquidacoes": "relatorios-gestao-documento-liquidacao-especiais"}
 
 
 def texto(v) -> str:
@@ -84,6 +89,30 @@ def compactar_beneficiario(b: dict) -> dict | None:
     return limpar({"nome": texto(b.get("nome_beneficiario")), "uf": texto(b.get("uf_beneficiario")), "cnpj": cnpj(b.get("cnpj_beneficiario"))})
 
 
+def compactar_relatorio(r: dict) -> dict | None:
+    if r.get("id_relatorio_gestao_novo") is None or r.get("id_plano_acao") is None:
+        return None
+    return limpar({
+        "id": r["id_relatorio_gestao_novo"], "plano": r["id_plano_acao"], "executor": r.get("id_executor"), "tipo": texto(r.get("tipo_relatorio_gestao_novo")),
+        "situacao": texto(r.get("situacao_relatorio_gestao_novo")), "data": texto(r.get("data_relatorio_gestao_novo")),
+        "executado": comum.valor_br(r.get("valor_executado_relatorio_gestao_novo")), "pendente": comum.valor_br(r.get("valor_pendente_relatorio_gestao_novo")),
+    })
+
+
+def compactar_liquidacao(x: dict) -> dict | None:
+    """Pagamento do município a um recebedor. Recebedor CPF: só `pf` (sem nome nem documento); CNPJ inválido ou mascarado vale como ausente."""
+    if x.get("id_relatorio_gestao_dl") is None or x.get("id_relatorio_gestao_novo") is None:
+        return None
+    pessoa = texto(x.get("tp_doc_recebedor_relatorio_gestao_dl")).upper() == "CPF"
+    doc = None if pessoa else cnpj(x.get("tx_identificacao_recebedor_relatorio_gestao_dl") or x.get("tx_identificacao_recebedor_mascarado_relatorio_gestao_dl"))
+    return limpar({
+        "id": x["id_relatorio_gestao_dl"], "relatorio": x["id_relatorio_gestao_novo"], "pf": True if pessoa else None, "cnpj": doc,
+        "nome": None if pessoa else texto(x.get("tx_nome_recebedor_relatorio_gestao_dl")), "valor": comum.valor_br(x.get("vl_pagamento_relatorio_gestao_dl")),
+        "data": texto(x.get("dt_pagamento_relatorio_gestao_dl")), "natureza": texto(x.get("tx_natureza_relatorio_gestao_dl")).lower(),
+        "descricao": None if pessoa else texto(x.get("tx_descricao_relatorio_gestao_dl")),
+    })
+
+
 def paginas(s, recurso: str, pausa: float = PAUSA):
     """Itens crus de todas as páginas de um recurso, até `total_pages`."""
     total = 1
@@ -113,6 +142,21 @@ def montar(planos: list[dict], executores: list[dict]) -> dict[int, list[dict]]:
     return {a: sorted(v, key=lambda p: p["id"]) for a, v in anos.items() if a}
 
 
+def montar_gestao(relatorios: list[dict], liquidacoes: list[dict], planos: list[dict]) -> dict[int, list[dict]]:
+    """{ano do plano: [relatório com seus pagamentos]}; relatório de plano desconhecido e pagamento sem relatório são descartados."""
+    ano_do_plano = {p["id"]: p.get("ano") for p in planos}
+    por_relatorio = defaultdict(list)
+    for x in liquidacoes:
+        por_relatorio[x.pop("relatorio")].append(x)
+    anos = defaultdict(list)
+    for r in relatorios:
+        ano = ano_do_plano.get(r["plano"])
+        if ano:
+            pagamentos = sorted(por_relatorio.get(r["id"], []), key=lambda x: x["id"])
+            anos[ano].append({**r, **({"pagamentos": pagamentos} if pagamentos else {})})
+    return {a: sorted(v, key=lambda r: r["id"]) for a, v in anos.items()}
+
+
 def coletar(forcar: bool = False, hoje: dt.date | None = None, s=None, pausa: float = PAUSA) -> bool:
     hoje = hoje or dt.date.today()
     s = s or comum.sessao(1)
@@ -129,18 +173,22 @@ def coletar(forcar: bool = False, hoje: dt.date | None = None, s=None, pausa: fl
         beneficiarios = {b["id_beneficiario"]: c for b in paginas(s, RECURSOS["beneficiarios"], pausa) if (c := compactar_beneficiario(b))}
         planos = [c for c in map(compactar_plano, paginas(s, RECURSOS["planos"], pausa)) if c]
         executores = [c for c in map(compactar_executor, paginas(s, RECURSOS["executores"], pausa)) if c]
+        relatorios = [c for c in map(compactar_relatorio, paginas(s, RECURSOS["relatorios"], pausa)) if c]
+        liquidacoes = [c for c in map(compactar_liquidacao, paginas(s, RECURSOS["liquidacoes"], pausa)) if c]
     except Exception as e:  # noqa: BLE001
         comum.avisar(f"transferegov especiais: {e}; arquivos anteriores mantidos")
         return False
     if not planos:
         comum.avisar("transferegov especiais: a API não devolveu planos; arquivos anteriores mantidos")
         return False
+    for ano, itens in montar_gestao(relatorios, liquidacoes, planos).items():
+        comum.salvar(DADOS / "gestao" / f"{ano}.json", {"coletadoEm": hoje.isoformat(), "fonte": f"{URL}/relatorios-gestao-novos-especiais", "relatorios": itens})
     for ano, itens in montar(planos, executores).items():
         comum.salvar(DADOS / "especiais" / f"{ano}.json", {"coletadoEm": hoje.isoformat(), "fonte": f"{URL}/planos-acao-especiais", "planos": itens})
     comum.salvar(DADOS / "beneficiarios.json", {"coletadoEm": hoje.isoformat(), "fonte": f"{URL}/beneficiarios-especiais",
                                                 "itens": {str(k): v for k, v in sorted(beneficiarios.items())}})
     comum.salvar(DADOS / "atualizacao.json", {"atualizadoEm": atual, "coletadoEm": hoje.isoformat()})
-    print(f"Transferegov especiais: {len(planos)} planos, {len(executores)} executores, {len(beneficiarios)} beneficiários (API de {atual})")
+    print(f"Transferegov especiais: {len(planos)} planos, {len(executores)} executores, {len(beneficiarios)} beneficiários, {len(relatorios)} relatórios de gestão, {len(liquidacoes)} pagamentos (API de {atual})")
     return True
 
 

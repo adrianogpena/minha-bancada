@@ -5,6 +5,20 @@ Regra: toda fonte nova ou mudança de coleta ganha uma entrada aqui, no mesmo co
 Datas dos conjuntos que já existiam vêm do primeiro commit que os trouxe (`git log --diff-filter=A`).
 Todas as coletas rodam sozinhas no GitHub Actions (`.github/workflows/atualizar.yml`, todo dia às 05:00 de Brasília), salvo onde indicado.
 
+## Emendas Pix: prestação de contas e favorecidos finais pelo Transferegov (2026-11-27)
+
+Mesma API e mesmo coletor da entrada abaixo (`coletar_transferegov_especiais.py`), dois recursos a mais: `relatorios-gestao-novos-especiais`
+(relatório de gestão de cada plano: tipo, situação, valor executado e pendente) e `relatorios-gestao-documento-liquidacao-especiais` (cada
+pagamento do município: recebedor com CNPJ, valor, data, natureza e descrição). Registrados no `ENDPOINTS.md`. Grava
+`dados/transferegov/gestao/<ano do plano>.json`. Medido contra a API real em 2026-11-27: 27.788 relatórios (139 páginas, 105 s) e 107.771
+pagamentos (539 páginas, 416 s), 26 MB em JSON; a soma dos pagamentos (R$ 8,94 bi) é igual à dos valores executados dos relatórios, e os
+relatórios de um mesmo plano não repetem pagamentos. A coleta completa passa de ~12 para ~21 min; o job `emendas` ganhou `timeout-minutes: 60`.
+Recebedor pessoa física (6% dos pagamentos, CPF mascarado) não guarda nome nem documento: só `pf: true` com valor e data. `gerar_emendas.py`
+resume por plano (`gestao`: executado, pendente, pago, situação, maiores 10 recebedores por CNPJ, resto em `outros`, pessoas físicas só na soma) e
+liga o CNPJ a `nucleo/fornecedores` quando a empresa já existe lá. Na ficha: coluna "Prestação de contas" nos planos e o bloco "Quem recebeu a
+verba Pix". Declaração do município, sem conferência. Ficam fora os empenhos, documentos hábeis e ordens bancárias (pagamento da União, que o
+Portal já traz como "pago"), a gestão financeira por conta (752 mil lançamentos) e as devoluções.
+
 ## Emendas Pix: plano de ação do Transferegov na ficha (2026-11-27)
 
 Sem endpoint novo: `gerar_emendas.py` passa a ler `dados/transferegov/especiais/<ano>.json` (coleta da entrada abaixo) e ligar cada plano de

@@ -7,6 +7,7 @@ export const PORTAL_EMENDAS = "https://portaldatransparencia.gov.br/emendas/cons
 const ITENS_EXIBIDOS = 50;
 const MUNICIPIOS_EXIBIDOS = 15;
 const PLANOS_EXIBIDOS = 30;
+const FAVORECIDOS_EXIBIDOS = 15;
 export const TRANSFEREGOV = "https://www.gov.br/transferegov/pt-br";
 
 /* Emenda Pix: emenda individual de "Transferências Especiais" (a verba vai direto ao caixa do município). */
@@ -30,16 +31,51 @@ export function planosPix(e) {
   return [...vistos.values()].sort((a, b) => valor(b) - valor(a));
 }
 
+/* Quem recebeu o dinheiro: pagamentos que o município informou na prestação de contas (relatório de gestão), somados por CNPJ em todos os planos. */
+export function favorecidosPix(e) {
+  const por = new Map();
+  let pf = { n: 0, valor: 0 }, outros = { n: 0, valor: 0 }, pago = 0, planos = 0;
+  for (const p of planosPix(e)) {
+    const g = p.gestao;
+    if (!g) continue;
+    planos += 1;
+    pago += g.pago || 0;
+    pf = { n: pf.n + (g.pessoasFisicas?.n || 0), valor: pf.valor + (g.pessoasFisicas?.valor || 0) };
+    outros = { n: outros.n + (g.outros?.n || 0), valor: outros.valor + (g.outros?.valor || 0) };
+    for (const f of g.favorecidos || []) {
+      const a = por.get(f.cnpj) || { cnpj: f.cnpj, nome: f.nome, fornecedor: f.fornecedor, valor: 0, n: 0 };
+      a.valor += f.valor || 0;
+      a.n += f.n || 0;
+      por.set(f.cnpj, a);
+    }
+  }
+  return { favorecidos: [...por.values()].sort((a, b) => b.valor - a.valor), pessoasFisicas: pf, outros, pago, planos };
+}
+
+function blocoFavorecidos(e) {
+  const f = favorecidosPix(e);
+  if (!f.planos) return "";
+  const linha = (x) => `<tr><td>${x.fornecedor ? `<a href="fornecedores.html?busca=${esc(x.fornecedor.slice(4))}">${esc(x.nome || x.cnpj)}</a>` : esc(x.nome || x.cnpj)}</td><td>${esc(x.cnpj)}</td><td>${x.n}</td><td>${reaisCentavos(x.valor)}</td></tr>`;
+  return `<details><summary>Quem recebeu a verba Pix (pagamentos informados pelos municípios em ${f.planos} planos)</summary>
+      <p class="aviso">Pagamentos que o município registrou na prestação de contas (relatório de gestão do Transferegov), ${reaisCentavos(f.pago)} no total. É declaração do município, sem conferência por este site; cada plano mostra só seus 10 maiores recebedores.${f.pessoasFisicas.n ? ` Pagamentos a pessoas físicas (${f.pessoasFisicas.n}, ${reaisCentavos(f.pessoasFisicas.valor)}) entram só na soma, sem nome.` : ""}</p>
+      <div class="rolagem"><table class="tabela"><thead><tr><th>Empresa</th><th>CNPJ</th><th>Pagamentos</th><th>Valor</th></tr></thead><tbody>
+        ${f.favorecidos.slice(0, FAVORECIDOS_EXIBIDOS).map(linha).join("")}
+      </tbody></table></div>
+      ${f.favorecidos.length > FAVORECIDOS_EXIBIDOS ? `<p class="aviso">As ${FAVORECIDOS_EXIBIDOS} maiores de ${f.favorecidos.length} empresas.</p>` : ""}
+    </details>`;
+}
+
 function blocoPlanos(e) {
   const planos = planosPix(e);
   if (!planos.length) return "";
   const executores = (p) => (p.executores || []).map((x) => esc(x.nome || x.cnpj || "")).filter(Boolean).join("; ");
   return `<details><summary>Para que a verba Pix foi planejada (${planos.length > PLANOS_EXIBIDOS ? `os ${PLANOS_EXIBIDOS} maiores de ${planos.length}` : planos.length} planos de ação)</summary>
       <p class="aviso">Plano de ação cadastrado no Transferegov para cada emenda Pix: o que o município disse que fará com a verba, quem executa e a situação do plano. Plano aprovado não quer dizer verba paga: veja o valor pago nas emendas acima.</p>
-      <div class="rolagem"><table class="tabela"><thead><tr><th>Emenda</th><th>Destino</th><th>Objeto</th><th>Executor</th><th>Valor do plano</th><th>Situação</th></tr></thead><tbody>
-        ${planos.slice(0, PLANOS_EXIBIDOS).map((p) => `<tr><td>${esc(p.emenda)}</td><td>${esc(p.local || "")}</td><td>${esc(p.objeto || (p.executores || []).map((x) => x.objeto).filter(Boolean).join("; "))}</td><td>${executores(p)}</td><td>${reaisCentavos((p.custeio || 0) + (p.investimento || 0))}</td><td>${esc(p.situacao || "")}</td></tr>`).join("")}
+      <div class="rolagem"><table class="tabela"><thead><tr><th>Emenda</th><th>Destino</th><th>Objeto</th><th>Executor</th><th>Valor do plano</th><th>Situação</th><th>Prestação de contas</th></tr></thead><tbody>
+        ${planos.slice(0, PLANOS_EXIBIDOS).map((p) => `<tr><td>${esc(p.emenda)}</td><td>${esc(p.local || "")}</td><td>${esc(p.objeto || (p.executores || []).map((x) => x.objeto).filter(Boolean).join("; "))}</td><td>${executores(p)}</td><td>${reaisCentavos((p.custeio || 0) + (p.investimento || 0))}</td><td>${esc(p.situacao || "")}</td><td>${p.gestao ? `${reaisCentavos(p.gestao.pago || 0)} pagos${p.gestao.situacao ? ` (${esc(p.gestao.situacao)})` : ""}` : ""}</td></tr>`).join("")}
       </tbody></table></div>
-    </details>`;
+    </details>
+    ${blocoFavorecidos(e)}`;
 }
 
 export function painelEmendas(e) {

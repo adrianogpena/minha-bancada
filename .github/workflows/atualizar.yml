@@ -350,7 +350,7 @@ jobs:
   emendas:
     name: Coletar emendas parlamentares (Portal da Transparência e Transferegov)
     runs-on: ubuntu-24.04
-    timeout-minutes: 40
+    timeout-minutes: 60
     steps:
       - uses: actions/checkout@v7
 

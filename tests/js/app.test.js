@@ -11,7 +11,7 @@ const { resumosEstadual } = js("estadual.js");
 const { linksRedes } = js("ficha.js");
 const { foto } = js("comum.js");
 const { blocoDescricao } = js("ministros.js");
-const { painelEmendas, ehPix, planosPix } = js("emendas.js");
+const { painelEmendas, ehPix, planosPix, favorecidosPix } = js("emendas.js");
 const { painelCoautoria } = js("parlamentar.js");
 const { linkParlamentar } = js("apis.js");
 const { filtrarLista, consultaDaLista, mediasPor, dicaComparativa, celulaEmendas, celulaDaColuna, metrica } = js("lista-parlamentares.js");
@@ -344,4 +344,22 @@ test("painelEmendas mostra os planos de ação das emendas Pix, do maior valor a
   assert.match(html, /&lt;b&gt;X&lt;\/b&gt;/);
   assert.match(html, /Transferegov/);
   assert.doesNotMatch(painelEmendas({ ...e, planos: undefined }), /planos de ação/);
+});
+
+test("painelEmendas soma os favorecidos finais por CNPJ, liga fornecedor conhecido e deixa pessoa física sem nome", () => {
+  const item = (id) => ({ ano: 2024, codigo: String(id), tipo: "Emenda Individual - Transferências Especiais", local: "A (RR)", planos: [id] });
+  const e = { anos: [{ ano: 2024, n: 2, empenhado: 3, liquidado: 0, pago: 0 }], municipios: [], itens: [item(1), item(2)],
+    planos: { 1: { investimento: 100, gestao: { pago: 70, situacao: "Disponibilizado", pessoasFisicas: { n: 1, valor: 5 },
+                favorecidos: [{ cnpj: "11111111000111", nome: "<i>ACME</i>", valor: 60, n: 2, fornecedor: "for_11111111" }] } },
+              2: { investimento: 50, gestao: { pago: 30, favorecidos: [{ cnpj: "11111111000111", nome: "ACME", valor: 30, n: 1 }, { cnpj: "22222222000122", nome: "OUTRA", valor: 0, n: 1 }] } } } };
+  const f = favorecidosPix(e);
+  assert.equal(f.planos, 2);
+  assert.equal(f.pago, 100);
+  assert.deepEqual(f.favorecidos.map((x) => [x.cnpj, x.valor, x.n]), [["11111111000111", 90, 3], ["22222222000122", 0, 1]]);
+  const html = painelEmendas(e);
+  assert.match(html, /Quem recebeu a verba Pix/);
+  assert.match(html, /fornecedores\.html\?busca=11111111/);
+  assert.match(html, /&lt;i&gt;ACME&lt;\/i&gt;/);
+  assert.match(html, /pessoas físicas \(1/);
+  assert.doesNotMatch(painelEmendas({ ...e, planos: { 1: { investimento: 100 } } }), /Quem recebeu/);
 });

@@ -251,7 +251,8 @@ def test_coletar_materias_filtra_tipo_e_autoria(sapl, monkeypatch):
         {"id": 2, "tipo": 1, "ano": ano, "numero": 2, "autores": [55]},          # autor não é deputado
         {"id": 3, "tipo": 1, "ano": ano, "numero": 3, "autores": [10, 11]},
     ]
-    s = sapl(**{"materia/materialegislativa": mats})
+    s = sapl(**{"materia/materialegislativa": mats, "materia/statustramitacao": [], "materia/unidadetramitacao": [],
+                "materia/tramitacao": {"results": []}})
     tipos = {1: {"sigla": "PL", "descricao": "Projeto de Lei"}, 2: {"sigla": "REQ", "descricao": "Requerimento"}}
     est.coletar_materias("h", "PB", {"data_inicio": f"{ano}-01-01"}, {10: 100, 11: 101}, tipos)
     salvo = json.loads((est.DADOS / "PB" / f"materias_{ano}.json").read_text(encoding="utf-8"))["materias"]
@@ -264,7 +265,7 @@ def test_coletar_materias_ano_antigo_recente_vem_do_cache(sapl):
     ano = dt.date.today().year
     ontem = (dt.date.today() - dt.timedelta(days=1)).isoformat()
     est.salvar(est.DADOS / "PB" / f"materias_{ano - 1}.json", {"coletadoEm": ontem, "materias": {}})
-    s = sapl(**{"materia/materialegislativa": []})
+    s = sapl(**{"materia/materialegislativa": [], "materia/statustramitacao": [], "materia/unidadetramitacao": []})
     est.coletar_materias("h", "PB", {"data_inicio": f"{ano - 1}-01-01"}, {}, {1: {"sigla": "PL", "descricao": "Projeto de Lei"}})
     anos = {c[1]["ano"] for c in s.chamadas if c[0] == "materia/materialegislativa"}
     assert anos == {ano}

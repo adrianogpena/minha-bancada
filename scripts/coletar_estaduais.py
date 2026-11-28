@@ -42,6 +42,7 @@ ASSEMBLEIAS = {
 }
 TRABALHADORES = 4
 UFS_EM_PARALELO = 4  # Assembleias e Câmaras são servidores diferentes, então dá para coletar várias ao mesmo tempo
+MOVIMENTOS_POR_EXECUCAO = 400   # tramitações lidas (um GET por matéria) por UF e execução; o resto fica para os próximos dias
 RENOVAR_ANO_ANTIGO_DIAS = 7   # projetos de anos anteriores são consultados de novo só de vez em quando
 # só projetos de verdade; requerimentos e indicações são milhares por ano e pesariam no repositório
 TIPO_PROJETO = re.compile(r"^(projeto|proposta de emenda|medida provis)", re.I)
@@ -162,14 +163,68 @@ def compactar_materia(m: dict, tipos: dict) -> dict:
             "linkTexto": https(m.get("texto_original")) or None, "idsAutores": m.get("autores") or []}
 
 
+def tabelas_tramitacao(host: str) -> tuple[dict, dict]:
+    """id -> descrição dos status e das unidades de tramitação (uma leitura por execução)."""
+    status = {t["id"]: (t.get("descricao") or "").strip() for t in paginar(host, "materia/statustramitacao")}
+    unidades = {u["id"]: (u.get("__str__") or "").strip() for u in paginar(host, "materia/unidadetramitacao")}
+    return status, unidades
+
+
+def movimento(t: dict, status: dict, unidades: dict) -> dict | None:
+    data = data_curta(t.get("data_tramitacao"))
+    texto = " - ".join(p for p in dict.fromkeys([status.get(t.get("status"), ""), (t.get("texto") or "").strip()]) if p and p != ".")
+    if not data or not texto:
+        return None
+    orgao = unidades.get(t.get("unidade_tramitacao_destino")) or unidades.get(t.get("unidade_tramitacao_local"))
+    return {"data": data, "texto": texto, **({"orgao": orgao} if orgao else {})}
+
+
+def coletar_movimentos(host: str, uf: str, itens: dict, antigo: dict | None, tabelas, desde: str | None) -> dict:
+    """Tramitação de cada projeto. Lê só as matérias sem leitura anterior e as que tiveram movimento
+    desde a última coleta; o limite por execução espalha a primeira carga por vários dias."""
+    vistas = dict((antigo or {}).get("vistas") or {})
+    movs = {k: m["movimentos"] for k, m in ((antigo or {}).get("materias") or {}).items() if m.get("movimentos")}
+    mexidas = set()
+    if desde and antigo:
+        try:
+            mexidas = {str(t["materia"]) for t in paginar(host, "materia/tramitacao", data_tramitacao__gte=desde)}
+        except Exception as e:
+            avisar(f"{uf}: tramitações recentes: {e}")
+    fila = [k for k in itens if k not in vistas] + [k for k in itens if k in mexidas and k in vistas]
+    status, unidades = tabelas
+    hoje = dt.date.today().isoformat()
+
+    def buscar(mid):
+        return mid, [x for x in (movimento(t, status, unidades) for t in
+                     sorted(get(host, "materia/tramitacao", materia=mid, page_size=100)["results"], key=lambda t: (t["data_tramitacao"], t["id"]))) if x]
+
+    with ThreadPoolExecutor(TRABALHADORES) as ex:
+        for f in as_completed([ex.submit(buscar, k) for k in fila[:MOVIMENTOS_POR_EXECUCAO]]):
+            try:
+                mid, lista = f.result()
+                vistas[mid] = hoje
+                if lista:
+                    movs[mid] = lista
+                else:
+                    movs.pop(mid, None)
+            except Exception as e:
+                avisar(f"{uf}: tramitação: {e}")
+    for k, m in itens.items():
+        if movs.get(k):
+            m["movimentos"] = movs[k]
+    return {k: v for k, v in vistas.items() if k in itens}
+
+
 def coletar_materias(host: str, uf: str, leg: dict, autores: dict, tipos: dict) -> None:
     """Projetos da legislatura atual de que algum deputado em exercício é autor."""
     pasta = DADOS / uf
     hoje = dt.date.today()
+    tabelas = None
     for ano in range(int(leg["data_inicio"][:4]), hoje.year + 1):
         arq = pasta / f"materias_{ano}.json"
         antigo = ler(arq)
-        if antigo and ano < hoje.year and (hoje - dt.date.fromisoformat(antigo["coletadoEm"])).days < RENOVAR_ANO_ANTIGO_DIAS:
+        pendente = antigo is not None and any(k not in (antigo.get("vistas") or {}) for k in antigo["materias"])
+        if antigo and ano < hoje.year and not pendente and (hoje - dt.date.fromisoformat(antigo["coletadoEm"])).days < RENOVAR_ANO_ANTIGO_DIAS:
             continue
         itens = {}
         for tid, t in tipos.items():
@@ -179,7 +234,9 @@ def coletar_materias(host: str, uf: str, leg: dict, autores: dict, tipos: dict) 
                 deps = sorted({autores[a] for a in (m.get("autores") or []) if a in autores})
                 if deps:
                     itens[str(m["id"])] = {**compactar_materia(m, tipos), "idsDeputados": deps}
-        salvar(arq, {"coletadoEm": hoje.isoformat(), "materias": itens})
+        tabelas = tabelas or tabelas_tramitacao(host)
+        vistas = coletar_movimentos(host, uf, itens, antigo, tabelas, antigo and antigo["coletadoEm"])
+        salvar(arq, {"coletadoEm": hoje.isoformat(), "materias": itens, "vistas": vistas})
         print(f"  {uf} projetos {ano}: {len(itens)}")
 
 

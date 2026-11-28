@@ -817,6 +817,10 @@ FONTE_VEREADOR_SAPL = "vereador_sapl"                        # as outras UFs: SA
 GRAFIAS_MUNICIPIO = {("PE", "sao caetano"): "sao caitano", ("PA", "eldorado do carajas"): "eldorado dos carajas",
                      ("RO", "espigao d oeste"): "espigao do oeste"}   # (UF, nome do TCE) -> nome do TSE, ambos por `norm_municipio`
 
+# Municípios com eleição de vereador em 2024 mas sem resultado no TSE (candidaturas `#NE`, resultado `#NULO`): nossa coleta só guarda
+# eleitos e não tem o código. (UF, nome por `norm_municipio`) -> código TSE (SG_UE do `consulta_cand_2024`).
+CODIGOS_SEM_RESULTADO = {("PI", "caraubas do piaui"): "12670"}
+
 
 def _itens_sapl(arquivo: Path) -> list:
     """Vereadores de uma UF no SAPL, no formato da folha do TCE: `unidade` = URL da Câmara (a fonte), `matricula` = id no SAPL, `urna` =
@@ -970,7 +974,7 @@ def construir(deputados: dict, bruto: Path) -> dict:
     sem_ligacao = Counter()
     ambiguos = []
     eleitos_ver = defaultdict(list)    # (UF, código do município) -> eleitos vereadores de 2024
-    codigos_mun = {}                   # (UF, norm_municipio) -> código TSE, dos candidatos de 2024
+    codigos_mun = dict(CODIGOS_SEM_RESULTADO)   # (UF, norm_municipio) -> código TSE, dos candidatos de 2024
 
     def partido(sigla):
         pid = partido_id(sigla, desconhecidas)

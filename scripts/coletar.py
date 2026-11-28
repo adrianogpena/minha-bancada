@@ -779,7 +779,20 @@ def coletar_blocos() -> None:
         blocos.append({"nome": b["nome"], "federacao": bool(b.get("federacao")), "partidos": [p["sigla"] for p in partidos]})
     if blocos:
         salvar(DADOS / "blocos.json", blocos)
+        registrar_historico_blocos(blocos, dt.date.today())
     print(f"Blocos: {len(blocos)}")
+
+
+def registrar_historico_blocos(blocos: list, hoje: dt.date) -> None:
+    """Guarda em dados/blocos_historico.json ([{desde, legislatura, blocos}], do mais antigo ao mais novo) a composição dos blocos
+    a cada vez que ela muda: a Câmara só publica a de agora, então o histórico começa no primeiro dia coletado. Sem mudança, nada é gravado."""
+    arquivo = DADOS / "blocos_historico.json"
+    historico = ler(arquivo, [])
+    chave = lambda lista: sorted((b["nome"], bool(b["federacao"]), sorted(b["partidos"])) for b in lista)
+    if historico and historico[-1]["legislatura"] == LEGISLATURA and chave(historico[-1]["blocos"]) == chave(blocos):
+        return
+    historico.append({"desde": hoje.isoformat(), "legislatura": LEGISLATURA, "blocos": blocos})
+    salvar(arquivo, historico)
 
 
 def coletar_votacoes_proposicoes() -> None:

@@ -913,6 +913,16 @@ def test_coletar_blocos_guarda_partidos_de_cada_bloco(dados, monkeypatch):
         {"nome": "A, B", "federacao": False, "partidos": ["A", "B"]}, {"nome": "PL", "federacao": False, "partidos": []}]
 
 
+def test_registrar_historico_blocos_so_grava_quando_a_composicao_muda(dados):
+    dia = lambda d: dt.date(2026, 11, d)
+    ab = [{"nome": "A, B", "federacao": False, "partidos": ["A", "B"]}]
+    coletar.registrar_historico_blocos(ab, dia(1))
+    coletar.registrar_historico_blocos(list(ab), dia(2))
+    coletar.registrar_historico_blocos(ab + [{"nome": "PL", "federacao": False, "partidos": []}], dia(3))
+    historico = json.loads((dados / "blocos_historico.json").read_text(encoding="utf-8"))
+    assert [h["desde"] for h in historico] == ["2026-11-01", "2026-11-03"]
+
+
 def test_coletar_votacoes_proposicoes_guarda_so_projetos_dos_deputados(dados, monkeypatch):
     (dados / "proposicoes").mkdir()
     (dados / "proposicoes" / "7.json").write_text(json.dumps({"itens": [{"id": 10, "siglaTipo": "PL"}, {"id": 11, "siglaTipo": "REQ"}]}), encoding="utf-8")

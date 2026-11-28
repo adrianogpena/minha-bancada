@@ -5,6 +5,11 @@ Regra: toda fonte nova ou mudança de coleta ganha uma entrada aqui, no mesmo co
 Datas dos conjuntos que já existiam vêm do primeiro commit que os trouxe (`git log --diff-filter=A`).
 Todas as coletas rodam sozinhas no GitHub Actions (`.github/workflows/atualizar.yml`, todo dia às 05:00 de Brasília), salvo onde indicado.
 
+## Blocos partidários com histórico e tabela comissão x tema (2026-11-28)
+
+- **Blocos:** `coletar_blocos` (`scripts/coletar.py`) continua gravando `dados/blocos.json` (legislatura atual, de `https://dadosabertos.camara.leg.br/api/v2/blocos?idLegislatura=57` e `/blocos/{id}/partidos`) e passou a acrescentar `dados/blocos_historico.json` (`[{desde, legislatura, blocos}]`) sempre que a composição muda. A Câmara só publica a de agora, então o histórico começa no primeiro dia coletado; no Actions o arquivo é empacotado e commitado com `blocos.json`.
+- **Comissão x tema:** `scripts/comissoes_temas.json`, tabela feita à mão a partir do art. 32 do RICD (PDF oficial atualizado até a Resolução 34/2026, `https://www2.camara.leg.br/atividade-legislativa/legislacao/regimento-interno-da-camara-dos-deputados/arquivos-1/RICDatualizadoatRCD342026.pdf`). A Câmara não publica o tema de cada comissão. Cada tema traz a alínea que o justifica; CINDRE e CLP ficam sem tema (o campo não tem equivalente na lista da Câmara) e a CMO vem da CF art. 166, § 1º. Não é usada no site ainda.
+
 ## Emendas Pix: plano de ação, beneficiário e executores pelo Transferegov (2026-11-27)
 
 Fonte nova: API de dados abertos do módulo Transferências Especiais, `https://api-publica.transferegov.gestao.gov.br/especiais` (sem chave; esquema em `/especiais/openapi.json`). O host antigo, `api.transferegov.gestao.gov.br`, foi desativado na migração e devolve 403 do Cloudflare (também no Actions), por isso nenhum código o usa. `scripts/coletar_transferegov_especiais.py` baixa `planos-acao-especiais`, `beneficiarios-especiais` e `executores-especiais` (200 por página) e grava `dados/transferegov/especiais/<ano>.json` (plano com seus executores: CNPJ, objeto, valores), `beneficiarios.json` e `atualizacao.json`. O plano liga à emenda do Portal da Transparência pelo código de 12 dígitos (`numero_emenda_parlamentar_plano_acao` = `codigoEmenda`), sem comparar nomes; o nome do parlamentar não é copiado. `/data-atualizacao` evita baixar de novo quando a API não foi renovada.

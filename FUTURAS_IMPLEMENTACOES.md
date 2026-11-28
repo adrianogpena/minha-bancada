@@ -20,12 +20,10 @@ Revisado em 2026-11-09 contra o código, os dados em `dados/` e o `CHANGELOG.md`
 
 ### 1.1 Restos de pacotes feitos
 
-- **Pular até ter os dados** (não implementar enquanto a fonte não existir):
-  - **Comissão x tema:** "projetos na área da comissão que ele integra"; a Câmara não publica o tema de cada comissão.
-  - **Fidelidade em blocos:** os blocos usam a composição atual e rótulos que não constam em `/blocos` seguem sem
-    fidelidade; a presença em reuniões de comissão não tem total para comparar.
+- **Comissão x tema:** a tabela foi feita à mão em 2026-11-28 (`scripts/comissoes_temas.json`, do art. 32 do RICD, com a alínea de cada tema; registrada no `site/mapa-dados.html`). Falta usá-la: "projetos na área da comissão que ele integra" na ficha do deputado. Subcomissões e grupos de trabalho herdam da comissão de origem (sigla entre parênteses no nome); comissões especiais, externas e CPIs não têm tema.
+- **Fidelidade em blocos:** `dados/blocos_historico.json` guarda, desde 2026-11-28, a composição de cada bloco quando ela muda; o histórico anterior não existe na API. Falta usar o histórico em `partidos_do_bloco` (escolher a composição vigente na data de cada votação) e rótulos que não constam em `/blocos` seguem sem fidelidade. A presença em reuniões de comissão continua sem total para comparar (a frequência de comissão só sai em PDF no portal da Câmara).
 - **Perfil dos eleitos:** a bancada federal, as Assembleias e o Senado já usam quem está no cargo hoje (2026-11-27); as Câmaras
-  Municipais seguem com os vereadores eleitos de 2024 (suplentes que assumiram não entram; não há lista de quem está em exercício).
+  Municipais seguem com os vereadores eleitos de 2024 (suplentes que assumiram não entram; não há lista de quem está em exercício; levantamento parcial dos Tribunais de Contas em `docs/levantamento_vereadores_tce.md`: só o TCE-PE publica a lista com ingresso e afastamento, os demais não foram verificados).
 
 ### 1.2 Glossário e "O que isso significou" nas demais páginas
 

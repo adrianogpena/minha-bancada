@@ -1,0 +1,365 @@
+{
+ "fonte": {
+  "rotulo": "Regimento Interno da Câmara dos Deputados, art. 32 (texto atualizado até a Resolução 34/2026)",
+  "url": "https://www2.camara.leg.br/legin/fed/rescad/1989/resolucaodacamaradosdeputados-17-21-setembro-1989-320110-norma-pl.html",
+  "pdf": "https://www2.camara.leg.br/atividade-legislativa/legislacao/regimento-interno-da-camara-dos-deputados/arquivos-1/RICDatualizadoatRCD342026.pdf"
+ },
+ "conferidoEm": "2026-11-28",
+ "criterio": "Tabela feita à mão. Um tema entra em uma comissão só quando o texto do regimento nomeia a área na alínea indicada; os temas são os 32 que a Câmara usa em /proposicoes/{id}/temas. Comissão sem campo temático equivalente fica com a lista vazia. Subcomissões e grupos de trabalho valem pela comissão de origem (sigla entre parênteses no nome); comissões especiais, externas e CPIs não têm campo temático regimental.",
+ "comissoes": {
+  "CAPADR": {
+   "nome": "Comissão de Agricultura, Pecuária, Abastecimento e Desenvolvimento Rural",
+   "base": "RICD, art. 32, inciso I",
+   "temas": [
+    {
+     "tema": "Agricultura, Pecuária, Pesca e Extrativismo",
+     "alineas": "a"
+    },
+    {
+     "tema": "Estrutura Fundiária",
+     "alineas": "b"
+    }
+   ]
+  },
+  "CASP": {
+   "nome": "Comissão de Administração e Serviço Público",
+   "base": "RICD, art. 32, inciso XXX",
+   "temas": [
+    {
+     "tema": "Administração Pública",
+     "alineas": "a, b, c"
+    }
+   ]
+  },
+  "CCJC": {
+   "nome": "Comissão de Constituição e Justiça e de Cidadania",
+   "base": "RICD, art. 32, inciso IV",
+   "temas": [
+    {
+     "tema": "Direito Constitucional",
+     "alineas": "a, d"
+    },
+    {
+     "tema": "Direito Civil e Processual Civil",
+     "alineas": "e"
+    },
+    {
+     "tema": "Direito Penal e Processual Penal",
+     "alineas": "e"
+    },
+    {
+     "tema": "Política, Partidos e Eleições",
+     "alineas": "f"
+    },
+    {
+     "tema": "Direito e Justiça",
+     "alineas": "d"
+    },
+    {
+     "tema": "Processo Legislativo e Atuação Parlamentar",
+     "alineas": "a, p, q"
+    }
+   ]
+  },
+  "CCOM": {
+   "nome": "Comissão de Comunicação",
+   "base": "RICD, art. 32, inciso XXVII",
+   "temas": [
+    {
+     "tema": "Comunicações",
+     "alineas": "a, d"
+    }
+   ]
+  },
+  "CCTI": {
+   "nome": "Comissão de Ciência, Tecnologia e Inovação",
+   "base": "RICD, art. 32, inciso III",
+   "temas": [
+    {
+     "tema": "Ciência, Tecnologia e Inovação",
+     "alineas": "a, k, l"
+    }
+   ]
+  },
+  "CCULT": {
+   "nome": "Comissão de Cultura",
+   "base": "RICD, art. 32, inciso XXI",
+   "temas": [
+    {
+     "tema": "Arte, Cultura e Religião",
+     "alineas": "a"
+    },
+    {
+     "tema": "Homenagens e Datas Comemorativas",
+     "alineas": "f, g"
+    }
+   ]
+  },
+  "CDC": {
+   "nome": "Comissão de Defesa do Consumidor",
+   "base": "RICD, art. 32, inciso V",
+   "temas": [
+    {
+     "tema": "Direito e Defesa do Consumidor",
+     "alineas": "b"
+    }
+   ]
+  },
+  "CDE": {
+   "nome": "Comissão de Desenvolvimento Econômico",
+   "base": "RICD, art. 32, inciso VI",
+   "temas": [
+    {
+     "tema": "Economia",
+     "alineas": "b, d"
+    },
+    {
+     "tema": "Relações Internacionais e Comércio Exterior",
+     "alineas": "a, e"
+    }
+   ]
+  },
+  "CDHMIR": {
+   "nome": "Comissão de Direitos Humanos, Minorias e Igualdade Racial",
+   "base": "RICD, art. 32, inciso VIII",
+   "temas": [
+    {
+     "tema": "Direitos Humanos e Minorias",
+     "alineas": "a, e, g"
+    }
+   ]
+  },
+  "CDU": {
+   "nome": "Comissão de Desenvolvimento Urbano",
+   "base": "RICD, art. 32, inciso VII",
+   "temas": [
+    {
+     "tema": "Cidades e Desenvolvimento Urbano",
+     "alineas": "a"
+    }
+   ]
+  },
+  "CE": {
+   "nome": "Comissão de Educação",
+   "base": "RICD, art. 32, inciso IX",
+   "temas": [
+    {
+     "tema": "Educação",
+     "alineas": "a"
+    }
+   ]
+  },
+  "CESPO": {
+   "nome": "Comissão do Esporte",
+   "base": "RICD, art. 32, inciso XXII",
+   "temas": [
+    {
+     "tema": "Esporte e Lazer",
+     "alineas": "a, b"
+    }
+   ]
+  },
+  "CFFC": {
+   "nome": "Comissão de Fiscalização Financeira e Controle",
+   "base": "RICD, art. 32, inciso XI",
+   "temas": [
+    {
+     "tema": "Finanças Públicas e Orçamento",
+     "alineas": "b"
+    }
+   ]
+  },
+  "CFT": {
+   "nome": "Comissão de Finanças e Tributação",
+   "base": "RICD, art. 32, inciso X",
+   "temas": [
+    {
+     "tema": "Finanças Públicas e Orçamento",
+     "alineas": "g, h, j, l"
+    },
+    {
+     "tema": "Economia",
+     "alineas": "a"
+    }
+   ]
+  },
+  "CICS": {
+   "nome": "Comissão de Indústria, Comércio e Serviços",
+   "base": "RICD, art. 32, inciso XXVIII",
+   "temas": [
+    {
+     "tema": "Indústria, Comércio e Serviços",
+     "alineas": "a, g"
+    }
+   ]
+  },
+  "CIDOSO": {
+   "nome": "Comissão de Defesa dos Direitos da Pessoa Idosa",
+   "base": "RICD, art. 32, inciso XXV",
+   "temas": [
+    {
+     "tema": "Direitos Humanos e Minorias",
+     "alineas": "a"
+    }
+   ]
+  },
+  "CINDRE": {
+   "nome": "Comissão de Integração Nacional e Desenvolvimento Regional",
+   "base": "RICD, art. 32, inciso II",
+   "temas": [],
+   "observacao": "Campo temático (desenvolvimento e integração de regiões, defesa civil, migrações internas) sem tema correspondente na lista da Câmara."
+  },
+  "CLP": {
+   "nome": "Comissão de Legislação Participativa",
+   "base": "RICD, art. 32, inciso XII",
+   "temas": [],
+   "observacao": "Recebe sugestões da sociedade civil sobre qualquer assunto; não tem campo temático próprio."
+  },
+  "CMADS": {
+   "nome": "Comissão de Meio Ambiente e Desenvolvimento Sustentável",
+   "base": "RICD, art. 32, inciso XIII",
+   "temas": [
+    {
+     "tema": "Meio Ambiente e Desenvolvimento Sustentável",
+     "alineas": "a, c"
+    }
+   ]
+  },
+  "CME": {
+   "nome": "Comissão de Minas e Energia",
+   "base": "RICD, art. 32, inciso XIV",
+   "temas": [
+    {
+     "tema": "Energia, Recursos Hídricos e Minerais",
+     "alineas": "a, d, j"
+    }
+   ]
+  },
+  "CMO": {
+   "nome": "Comissão Mista de Orçamento",
+   "base": "Constituição Federal, art. 166, § 1º",
+   "temas": [
+    {
+     "tema": "Finanças Públicas e Orçamento",
+     "alineas": "pareceres sobre o plano plurianual, as diretrizes orçamentárias, o orçamento anual e os créditos adicionais"
+    }
+   ]
+  },
+  "CMULHER": {
+   "nome": "Comissão de Defesa dos Direitos da Mulher",
+   "base": "RICD, art. 32, inciso XXIV",
+   "temas": [
+    {
+     "tema": "Direitos Humanos e Minorias",
+     "alineas": "a"
+    }
+   ]
+  },
+  "CPASF": {
+   "nome": "Comissão de Previdência, Assistência Social, Infância, Adolescência e Família",
+   "base": "RICD, art. 32, inciso XXIX",
+   "temas": [
+    {
+     "tema": "Previdência e Assistência Social",
+     "alineas": "a, f"
+    },
+    {
+     "tema": "Direito Civil e Processual Civil",
+     "alineas": "h"
+    }
+   ]
+  },
+  "CPD": {
+   "nome": "Comissão de Defesa dos Direitos das Pessoas com Deficiência",
+   "base": "RICD, art. 32, inciso XXIII",
+   "temas": [
+    {
+     "tema": "Direitos Humanos e Minorias",
+     "alineas": "a, b"
+    }
+   ]
+  },
+  "CPOVOS": {
+   "nome": "Comissão da Amazônia e dos Povos Originários e Tradicionais",
+   "base": "RICD, art. 32, inciso XXVI",
+   "temas": [
+    {
+     "tema": "Meio Ambiente e Desenvolvimento Sustentável",
+     "alineas": "a (item 3 e 6)"
+    },
+    {
+     "tema": "Direitos Humanos e Minorias",
+     "alineas": "c"
+    }
+   ]
+  },
+  "CREDN": {
+   "nome": "Comissão de Relações Exteriores e de Defesa Nacional",
+   "base": "RICD, art. 32, inciso XV",
+   "temas": [
+    {
+     "tema": "Relações Internacionais e Comércio Exterior",
+     "alineas": "a, b"
+    },
+    {
+     "tema": "Defesa e Segurança",
+     "alineas": "f, g"
+    }
+   ]
+  },
+  "CSAUDE": {
+   "nome": "Comissão de Saúde",
+   "base": "RICD, art. 32, inciso XVII",
+   "temas": [
+    {
+     "tema": "Saúde",
+     "alineas": "a"
+    }
+   ]
+  },
+  "CSPCCO": {
+   "nome": "Comissão de Segurança Pública e Combate ao Crime Organizado",
+   "base": "RICD, art. 32, inciso XVI",
+   "temas": [
+    {
+     "tema": "Defesa e Segurança",
+     "alineas": "d, g"
+    },
+    {
+     "tema": "Direito Penal e Processual Penal",
+     "alineas": "f"
+    }
+   ]
+  },
+  "CTRAB": {
+   "nome": "Comissão de Trabalho",
+   "base": "RICD, art. 32, inciso XVIII",
+   "temas": [
+    {
+     "tema": "Trabalho e Emprego",
+     "alineas": "a, f"
+    }
+   ]
+  },
+  "CTUR": {
+   "nome": "Comissão de Turismo",
+   "base": "RICD, art. 32, inciso XIX",
+   "temas": [
+    {
+     "tema": "Turismo",
+     "alineas": "a"
+    }
+   ]
+  },
+  "CVT": {
+   "nome": "Comissão de Viação e Transportes",
+   "base": "RICD, art. 32, inciso XX",
+   "temas": [
+    {
+     "tema": "Viação, Transporte e Mobilidade",
+     "alineas": "a, h"
+    }
+   ]
+  }
+ }
+}

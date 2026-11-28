@@ -26,7 +26,8 @@ import estaduais_comum as comum
 from coletar_vereadores import DADOS, INICIO_LEGISLATURA, iso, municipio_da_camara
 
 INTERLEGIS = "https://www12.senado.leg.br/interlegis/orgaosatendidos"
-UFS_PADRAO = ["MG", "PR"]
+UFS_PADRAO = ["MG", "PR", "SP", "PE", "BA", "MT", "PB", "RS", "RN", "PI", "RO", "RJ", "CE", "TO", "GO", "SC", "AM",
+              "ES", "PA", "MA", "AC", "MS", "AP", "AL", "RR", "SE"]   # todas as UFs com Câmaras no SAPL, maiores primeiro
 DESCOBERTA_DIAS = 30
 REVISITA_DIAS = 7
 REVISITA_VAZIA_DIAS = 30
@@ -103,6 +104,9 @@ def itens_camara(camara: dict, legislatura: dict, mandatos: list[dict], parlamen
         if not nome:
             continue
         fim = iso(m.get("data_fim_mandato"))
+        inicio = iso(m.get("data_inicio_mandato"))
+        if (fim and fim < INICIO_LEGISLATURA) or (inicio and fim_legislatura and inicio > fim_legislatura):
+            continue    # o filtro `legislatura` de algumas instâncias devolve mandatos de outras legislaturas (Ponte Nova, MG: 2009-2012)
         saiu = bool(m.get("tipo_causa_fim_mandato")) or bool(fim and fim_legislatura and fim < fim_legislatura)
         itens.append({"municipio": camara["municipio"], "camara": camara["url"], "nome": nome,
                       "nomeParlamentar": (p.get("nome_parlamentar") or "").strip() or None, "cargo": "VEREADOR",

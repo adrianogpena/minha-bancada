@@ -466,9 +466,54 @@ jobs:
           if-no-files-found: ignore
           retention-days: 3
 
+  vereadores:
+    name: Coletar vereadores em exercício (TCE-PE, TCE-PB e SAPL das Câmaras)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 70
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - run: pip install -r requirements.txt
+
+      - name: Marcar o início (só o que for gravado depois disso vai no pacote)
+        run: touch "$RUNNER_TEMP/inicio"
+
+      - name: Coletar vereadores da folha dos Tribunais de Contas
+        # depois de 25 min o coletor não faz novas requisições e termina; o timeout do passo é só a rede de segurança
+        run: python scripts/coletar_vereadores.py
+        env:
+          ESTADUAIS_PRAZO_MIN: "25"
+        timeout-minutes: 30
+        continue-on-error: true
+
+      - name: Coletar vereadores pelo SAPL das Câmaras (26 UFs)
+        # Câmaras já lidas ficam em cache (dados/municipais/<UF>/vereadores_sapl.json); só as vencidas são relidas
+        run: python scripts/coletar_vereadores_sapl.py
+        env:
+          ESTADUAIS_PRAZO_MIN: "25"
+        timeout-minutes: 30
+        continue-on-error: true
+
+      - name: Empacotar o resultado
+        if: always()
+        run: scripts/empacotar.sh "$RUNNER_TEMP/vereadores.tgz" "$RUNNER_TEMP/inicio" dados/municipais
+
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: pacote-vereadores
+          path: ${{ runner.temp }}/vereadores.tgz
+          if-no-files-found: ignore
+          retention-days: 3
+
   publicar:
     name: Gerar o site e publicar
-    needs: [camara, senado, tse, executivo, ministros, estaduais, governadores, tcu, emendas, siconfi, prefeituras]
+    needs: [camara, senado, tse, executivo, ministros, estaduais, governadores, tcu, emendas, siconfi, prefeituras, vereadores]
     # Publica com o que deu certo (histórico, RSS e e-mail saem mesmo se uma coleta falhar); só não publica se todas falharam
     if: ${{ !cancelled() && contains(needs.*.result, 'success') }}
     runs-on: ubuntu-24.04

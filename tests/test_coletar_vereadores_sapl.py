@@ -33,6 +33,14 @@ def test_itens_camara_titular_suplente_e_afastamento():
     assert all("cpf" not in i and i["nome"] for i in itens)
 
 
+def test_itens_camara_descarta_mandato_de_outra_legislatura():
+    leg = s.legislatura_atual(API["legislatura"])
+    antigo = {"parlamentar": API["mandato"][0]["parlamentar"], "titular": True,
+              "data_inicio_mandato": "2009-01-01", "data_fim_mandato": "2012-12-31"}
+    itens = s.itens_camara(CAMARA, leg, API["mandato"] + [antigo], API["parlamentar"])
+    assert len(itens) == 4 and all(i["ingresso"] >= "2025-01-01" for i in itens)
+
+
 def test_vencida_respeita_revisita_e_escalonamento():
     hoje = date(2026, 11, 28)
     assert s.vencida(None, "u", hoje)

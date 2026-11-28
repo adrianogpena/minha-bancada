@@ -2,6 +2,8 @@
 import { $, esc, data, semAcento, carregar, urlSegura } from "./util.js";
 import { erro, botaoVoltar } from "./comum.js";
 import { fontes } from "./apis.js";
+import { marcarTermos } from "./glossario.js";
+import { significado } from "./significado.js";
 
 /* ---------- Histórico diário ---------- */
 /* Lê dados/historico/<dia>.json (scripts/historico.py): eventos do dia com local, políticos e fontes. */
@@ -136,10 +138,11 @@ function coberturaSemNovidade(dia, codigos, local, mostrar, unidade = "dia") {
 }
 
 export function itemHistorico(e) {
-  const mudanca = e.mudanca ? `<p class="hist-mudanca"><span>${esc(e.mudanca[0])}</span> → <b>${esc(e.mudanca[1])}</b></p>` : "";
+  const mudanca = e.mudanca ? `<p class="hist-mudanca"><span>${esc(e.mudanca[0])}</span> → <b>${marcarTermos(esc(e.mudanca[1]))}</b></p>` : "";
+  const frase = significado({ texto: [e.titulo, e.texto, e.mudanca?.[1]].filter(Boolean).join(" "), tipo: "evento" });
   return `<li class="hist-item r-${e.relevancia || 2}">
     <div class="hist-cab"><span class="hist-tag k-${esc(e.categoria)}">${esc(CATEGORIAS_HIST[e.categoria] || e.categoria)}</span> <b>${esc(e.titulo)}</b>${e.dataDoAto ? (e.dataDoAtoAproximada ? ` <span class="quando" title="A fonte não informa a data desta mudança; vale o dia em que o site a encontrou">apresentado em ${esc(data(e.dataDoAto))}, data da mudança desconhecida</span>` : ` <span class="quando">${esc(data(e.dataDoAto))}</span>`) : ""}${e._dia ? ` <span class="quando">registrado em ${esc(data(e._dia))}</span>` : ""}</div>
-    ${e.texto ? `<p class="texto">${esc(e.texto)}</p>` : ""}${mudanca}${e.resumo ? `<p class="hist-resumo">${esc(e.resumo)}</p>` : ""}${e.titulos ? `<details class="hist-lista"><summary>Ver os ${e.titulos.length} títulos</summary><p>${e.titulos.map(esc).join(" · ")}</p></details>` : ""}
+    ${e.texto ? `<p class="texto">${marcarTermos(esc(e.texto))}</p>` : ""}${mudanca}${frase ? `<p class="significado"><b>O que isso significou:</b> ${frase}</p>` : ""}${e.resumo ? `<p class="hist-resumo">${esc(e.resumo)}</p>` : ""}${e.titulos ? `<details class="hist-lista"><summary>Ver os ${e.titulos.length} títulos</summary><p>${e.titulos.map(esc).join(" · ")}</p></details>` : ""}
     ${fontes(e.fontes || [])}</li>`;
 }
 

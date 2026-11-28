@@ -29,13 +29,16 @@ Revisado em 2026-11-09 contra o código, os dados em `dados/` e o `CHANGELOG.md`
 
 ### 1.2 Glossário e "O que isso significou" nas demais páginas
 
-Feito: lista de proposições, votações, votos do político, ficha (partido e situação, suplente) e verbas (CEAP, CEAPS, Assembleias). Falta:
-- `historico.js` (`itemHistorico`): descrição de cada passo da tramitação; serve a lógica da linha do tempo, falta o tipo do evento.
-- `eventos.js`, `emendas.js`: situação e tipo da emenda; só `marcarTermos`.
-- `ministros.js` (`avisoLicenca`): licença e afastamento; só `marcarTermos`.
-- `assembleia.js` (normas, `situacao` das contratações) e `estadual.js` (normas, proposições): só `marcarTermos`.
-- `politico.js` (`situacao`, "Em exercício como suplente"): só `marcarTermos`.
-- Termos de cargo e verba (suplente, licença, CEAP, empenho) ainda não estão no glossário; a ligação já está feita.
+Feito: lista de proposições, votações, votos do político, ficha (partido e situação, suplente), verbas (CEAP, CEAPS, Assembleias) e,
+em 2026-11-28, o histórico e a aba Eventos (`itemHistorico`: "O que isso significou" pelas regras de `evento` e "?" no texto e na
+situação), o painel de emendas (empenhado, liquidado, Emenda Pix), a licença do ministro, "Em exercício como suplente" na ficha e a nota
+de atas de registro de preços na página da Assembleia. Termos novos no glossário: suplente, licença, empenho, liquidação, Emenda Pix, CEAP,
+CEAPS e ata de registro de preços. Falta:
+- Fonte do CEAPS: o link aponta a raiz do Portal da Transparência do Senado, sem página oficial que defina a cota; trocar quando achar.
+- `assembleia.js` (`situacao` e modalidade das contratações) e `estadual.js` (ementa das normas): só valores crus da fonte, sem
+  glossário (um "?" por linha repetiria o botão em listas de 20 itens).
+- Linhas da tabela de emendas (tipo da emenda): sem "?" pelo mesmo motivo; o tipo Pix é explicado no parágrafo acima da tabela.
+- Termos de cargo e verba ainda fora: decreto legislativo, resolução (norma), ementa.
 - Etapas e linha do tempo nas proposições das Assembleias: falta padronizar a situação por UF.
 
 ## Nível 3: raspagem ou chave de API

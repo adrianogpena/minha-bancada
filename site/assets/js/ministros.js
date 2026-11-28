@@ -1,5 +1,6 @@
 /* Ministros de Estado e ministérios (dados/ministerios.json, dados/ministerio/<pasta>.json, dados/ministro/<pessoa>.json; scripts/gerar_ministros.py). */
 import { $, esc, data, param, carregar, numeroBr, pct, urlSegura } from "./util.js";
+import { termo } from "./glossario.js";
 import { erro, listaPaginada, abas, ligarAbas, foto, itemFicha } from "./comum.js";
 import { fontes, CAMARA_API, SENADO_API, linkTramitacao, linkParlamentar } from "./apis.js";
 import { linkCF, semFonte } from "./ficha.js";
@@ -230,7 +231,7 @@ export async function avisoLicenca(idPessoa, casa) {
     const m = await carregar(`dados/ministro/${idPessoa}.json`);
     const c = m.cargos.find((x) => x.atual);
     if (!c) return "";
-    return `<p class="aviso"><b>Licenciado: ${esc(nomeCargo(c))}.</b> ${esc(m.nome)} deixou o exercício do mandato de ${casa} para ocupar o ministério (desde ${esc(data(c.inicio, true))}, data aproximada).
+    return `<p class="aviso"><b>${termo("licenca", "Licenciado")}: ${esc(nomeCargo(c))}.</b> ${esc(m.nome)} deixou o exercício do mandato de ${casa} para ocupar o ministério (desde ${esc(data(c.inicio, true))}, data aproximada).
       <a href="ministro.html?id=${encodeURIComponent(idPessoa)}">Ver a página do ministro</a>.</p>`;
   } catch { return ""; }
 }

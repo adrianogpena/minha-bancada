@@ -3,6 +3,7 @@
 import { $, esc, data, carregar, reaisCentavos, numeroBr, semAcento, param, urlSegura } from "./util.js";
 import { erro, listaPaginada } from "./comum.js";
 import { fontes, UFS } from "./apis.js";
+import { marcarTermos } from "./glossario.js";
 
 const TIPOS = { contrato: "Contrato", ata_registro: "Ata de registro de preços", ata_adesao: "Adesão a ata de registro de preços" };
 
@@ -61,8 +62,7 @@ function blocoFornecedores(lista) {
       <td>${numeroBr(f.contratos)}</td><td>${reaisCentavos(f.valorContratado)}</td><td>${numeroBr(f.atas)}</td><td>${reaisCentavos(f.valorRegistrado)}</td></tr>`;
   }).join("");
   return `<section><h2>Maiores fornecedores</h2>
-    <p class="nota-lista">Soma dos contratos coletados, agrupados pelo CNPJ (ou pelo nome, quando a fonte não traz CNPJ). O valor das atas de registro de preços é o teto
-      que a Assembleia pode comprar, não o que gastou, e por isso fica separado. Contrato que só existe em PDF fica fora desta soma.</p>
+    <p class="nota-lista">${marcarTermos("Soma dos contratos coletados, agrupados pelo CNPJ (ou pelo nome, quando a fonte não traz CNPJ). O valor das atas de registro de preços é o teto que a Assembleia pode comprar, não o que gastou, e por isso fica separado. Contrato que só existe em PDF fica fora desta soma.")}</p>
     <div class="rolagem"><table class="tabela"><thead><tr><th>Fornecedor</th><th>Contratos</th><th>Valor contratado</th><th>Atas</th><th>Valor registrado</th></tr></thead>
     <tbody>${linhas}</tbody></table></div>
     ${lista.length > 20 ? `<p class="nota-lista">Mostrando os 20 maiores de ${numeroBr(lista.length)} fornecedores.</p>` : ""}</section>`;

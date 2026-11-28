@@ -273,7 +273,7 @@ test("painelEmendas resume as emendas Pix e prepara o mapa só com municípios d
     municipios: [{ nome: "SANTOS", uf: "SP", ibge: "3548500", empenhado: 20, pago: 10, n: 1, pixEmpenhado: 20, pixPago: 10, pixN: 1 }, { nome: "X", uf: "SP", empenhado: 10, pago: 0, n: 1 }],
     itens: [{ codigo: "1", ano: 2024, tipo: "Emenda Individual - Transferências Especiais", empenhado: 20, pago: 10 }, { codigo: "2", ano: 2024, tipo: "Individual", empenhado: 10, pago: 0 }],
   });
-  assert.match(html, /Emendas Pix<\/b>[^<]*\(transferências especiais[^<]*<b>1<\/b>/);
+  assert.match(html, /Emendas Pix<\/button><\/b>[^<]*\(transferências especiais[^<]*<b>1<\/b>/);
   assert.match(html, /class="mapa-emendas" data-municipios="[^"]*3548500[^"]*" data-pix="1"/);
   assert.doesNotMatch(html.match(/data-municipios="[^"]*"/)[0], /&quot;X&quot;/);
   assert.match(html, /<th>Pix \(empenhado\)<\/th>/);

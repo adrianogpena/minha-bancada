@@ -2,6 +2,7 @@
 import { esc, reaisCentavos, carregar, carregarMalha, semAcento } from "./util.js";
 import { fontes, UFS, COD_UF, MALHAS } from "./apis.js";
 import { svgMapa } from "./mapa.js";
+import { termo } from "./glossario.js";
 
 export const PORTAL_EMENDAS = "https://portaldatransparencia.gov.br/emendas/consulta";
 const ITENS_EXIBIDOS = 50;
@@ -22,7 +23,7 @@ export function painelEmendas(e) {
   const soma = (lista, campo) => lista.reduce((t, i) => t + (i[campo] || 0), 0);
   const comMapa = (e.municipios || []).some((m) => m.ibge);
   return `<h2>Emendas parlamentares</h2>
-    <p class="aviso">Emendas ao orçamento federal em que o Portal da Transparência registra este nome como autor. A ligação é só pelo nome (média): confira o número da emenda no portal. <b>Empenhado</b> é o valor reservado; só o <b>pago</b> chegou a quem executa a obra ou o serviço.</p>
+    <p class="aviso">Emendas ao orçamento federal em que o Portal da Transparência registra este nome como autor. A ligação é só pelo nome (média): confira o número da emenda no portal. <b>${termo("empenho", "Empenhado")}</b> é o valor reservado; <b>${termo("liquidacao", "liquidado")}</b> é o que já teve a entrega conferida; só o <b>pago</b> chegou a quem executa a obra ou o serviço.</p>
     <div class="rolagem"><table class="tabela"><thead><tr><th>Ano</th><th>Emendas</th><th>Empenhado</th><th>Liquidado</th><th>Pago</th></tr></thead><tbody>
       ${e.anos.map((a) => `<tr><td>${esc(a.ano)}</td><td>${a.n}</td><td>${reaisCentavos(a.empenhado)}</td><td>${reaisCentavos(a.liquidado)}</td><td>${reaisCentavos(a.pago)}</td></tr>`).join("")}
     </tbody></table></div>
@@ -30,7 +31,7 @@ export function painelEmendas(e) {
       <div class="rolagem"><table class="tabela"><thead><tr><th>Área</th><th>Emendas</th><th>Empenhado</th><th>Pago</th></tr></thead><tbody>
         ${e.funcoes.map((f) => `<tr><td>${esc(f.nome)}</td><td>${f.n}</td><td>${reaisCentavos(f.empenhado)}</td><td>${reaisCentavos(f.pago)}</td></tr>`).join("")}
       </tbody></table></div>` : ""}
-    ${pix.length ? `<p><b>Emendas Pix</b> (transferências especiais, enviadas direto ao município sem convênio): <b>${pix.length}</b>, com ${reaisCentavos(soma(pix, "empenhado"))} empenhados e ${reaisCentavos(soma(pix, "pago"))} pagos.</p>` : ""}
+    ${pix.length ? `<p><b>${termo("emenda-pix", "Emendas Pix")}</b> (transferências especiais, enviadas direto ao município sem convênio): <b>${pix.length}</b>, com ${reaisCentavos(soma(pix, "empenhado"))} empenhados e ${reaisCentavos(soma(pix, "pago"))} pagos.</p>` : ""}
     ${comMapa ? `<h3>Mapa dos destinos</h3><div class="mapa-emendas" data-municipios="${esc(JSON.stringify(e.municipios.filter((m) => m.ibge)))}" data-pix="${pix.length ? 1 : 0}"><p class="aviso">Carregando o mapa...</p></div>` : ""}
     ${e.municipios?.length ? `<h3>Municípios que mais receberam</h3>
       <div class="rolagem"><table class="tabela"><thead><tr><th>Município</th><th>Emendas</th><th>Empenhado</th><th>Pago</th>${pix.length ? "<th>Pix (empenhado)</th>" : ""}</tr></thead><tbody>

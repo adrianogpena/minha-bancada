@@ -58,6 +58,22 @@ export const GLOSSARIO = [
     definicao: "Quando a comissão decide no lugar do Plenário: se aprovar e ninguém recorrer, o projeto segue sem passar pelo Plenário.", fonte: doGlossario("decisao-terminativa") },
   { id: "aguardando-despacho", termo: "Aguardando despacho", variantes: ["aguardando despacho"],
     definicao: "O projeto foi apresentado e espera o presidente da Casa decidir por quais comissões (ou se direto ao Plenário) ele vai passar.", fonte: doRegimento },
+  { id: "suplente", termo: "Suplente", variantes: ["suplente", "suplentes"],
+    definicao: "Quem foi o próximo mais votado do partido ou da coligação e assume o mandato quando o titular deixa a vaga, assume outro cargo previsto na Constituição ou fica licenciado por mais de 120 dias.", fonte: daCF(56) },
+  { id: "licenca", termo: "Licença", variantes: ["licenciado", "licenciada", "licenciados", "licença", "licenças"],
+    definicao: "Afastamento temporário em que o parlamentar não perde o mandato: por doença, por interesse particular (até 120 dias por sessão legislativa, sem remuneração) ou para ocupar cargo como o de ministro de Estado.", fonte: daCF(56) },
+  { id: "empenho", termo: "Empenho", variantes: ["empenhado", "empenhados", "empenhada", "empenhadas", "empenho", "empenhos"],
+    definicao: "Primeira etapa da despesa pública: o governo reserva o valor e assume a obrigação de pagar. Empenhar não é pagar; o dinheiro só sai depois da liquidação e do pagamento.", fonte: { rotulo: "Lei 4.320/1964, art. 58", url: "https://www.planalto.gov.br/ccivil_03/leis/l4320.htm" } },
+  { id: "liquidacao", termo: "Liquidação", variantes: ["liquidado", "liquidados", "liquidada", "liquidadas", "liquidação"],
+    definicao: "Etapa da despesa pública em que se confere se o serviço foi prestado ou o bem entregue, para só então autorizar o pagamento.", fonte: { rotulo: "Lei 4.320/1964, art. 63", url: "https://www.planalto.gov.br/ccivil_03/leis/l4320.htm" } },
+  { id: "emenda-pix", termo: "Emenda Pix", variantes: ["emenda pix", "emendas pix", "transferência especial", "transferências especiais"],
+    definicao: "Emenda individual ao orçamento que envia o dinheiro direto ao caixa do estado ou do município, sem convênio. O nome oficial é transferência especial.", fonte: { rotulo: "Constituição Federal, art. 166-A", url: linkCF("166a") } },
+  { id: "ceap", termo: "CEAP", variantes: ["CEAP"],
+    definicao: "Cota para o Exercício da Atividade Parlamentar: valor mensal que cada deputado federal pode gastar, com comprovante, em despesas do mandato, como passagens, aluguel de escritório e divulgação.", fonte: { rotulo: "Câmara dos Deputados, cota parlamentar", url: "https://www2.camara.leg.br/comunicacao/assessoria-de-imprensa/guia-para-jornalistas/cota-parlamentar" } },
+  { id: "ceaps", termo: "CEAPS", variantes: ["CEAPS"],
+    definicao: "Cota para o Exercício da Atividade Parlamentar dos Senadores: valor que o Senado reembolsa a cada senador por despesas do mandato, como passagens, aluguel de escritório e divulgação.", fonte: { rotulo: "Portal da Transparência do Senado", url: "https://www6g.senado.leg.br/transparencia/sen/" } },
+  { id: "ata-registro-precos", termo: "Ata de registro de preços", variantes: ["ata de registro de preços", "atas de registro de preços", "ata de registro de preço", "atas de registro de preço"],
+    definicao: "Documento que registra o fornecedor e os preços de uma licitação para compras futuras. O órgão pode comprar até o valor registrado, mas não é obrigado a comprar.", fonte: { rotulo: "Lei 14.133/2021, arts. 6º e 83", url: "https://www.planalto.gov.br/ccivil_03/_ato2019-2022/2021/lei/l14133.htm" } },
 ];
 
 const PORID = new Map(GLOSSARIO.map((t) => [t.id, t]));

@@ -4,6 +4,7 @@ import { itemFicha, foto, listaPaginada, erro, ligarAbas } from "./comum.js";
 import { linksRedes, fonteRedesTse, divulgaUrl, linhaNoCargoAte, linhaSubsidio, blocoPatrimonioFontes, completarEleicao } from "./ficha.js";
 import { arquivoTse, fontes, UFS, carregarAposentadoria, carregarInabilitacoes, TCU_INABILITADOS } from "./apis.js";
 import { linkPolitico } from "./mapa.js";
+import { marcarTermos } from "./glossario.js";
 import { EXECUTIVOS, casaLegislativa, itemGoverno, LEGENDA_PRESIDENTE, legendaGoverno, AVISO_PRESIDENTE, AVISO_PROPOSTAS_PRESIDENTE, avisoGovernoPropostas, avisoGoverno, itemExecutivo } from "./executivo.js";
 import { painelEleicaoDe } from "./eleicao.js";
 import { montarSenador, painelAposentadoria } from "./senador.js";
@@ -56,6 +57,7 @@ export async function paginaPolitico() {
   if (p.estado === "eleito") situacao = `Eleito em 2026. Toma posse em 2027.`;
   if (p.estado === "2turno") situacao = `Disputa o 2º turno da eleição de 2026.`;
   if (p.fonte === "senado" && p.participacao && p.participacao !== "Titular") situacao += ` Em exercício como ${esc(p.participacao.toLowerCase())}.`;
+  situacao = marcarTermos(situacao);
 
   const ficha = [
     ["Nome completo", p.nomeCivil || p.nome],

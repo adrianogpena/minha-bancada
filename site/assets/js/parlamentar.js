@@ -163,6 +163,7 @@ export function montarParlamentar(alvo, c) {
     return `${rotulo}: ${urlSegura(href) ? `<a href="${esc(href)}" rel="noopener">${texto}</a>` : texto}`;
   };
 
+  const movimentosDaCasa = (lista) => !lista?.length ? "" : `<details class="texto"><summary>Tramitação na Casa (${lista.length} ${lista.length === 1 ? "movimento" : "movimentos"})</summary><ul class="itens">${lista.map((m) => `<li><span class="texto">${m.data ? `<b>${data(m.data)}</b> · ` : ""}${esc(m.texto)}${m.orgao ? ` <span class="quando">(${esc(m.orgao)})</span>` : ""}${m.observacao ? ` <span class="quando">${esc(m.observacao.slice(0, 300))}</span>` : ""}</span></li>`).join("")}</ul></details>`;
   const renderProj = (p) => {
     const [texto, destino, cor] = desfecho(p), classe = cor || destino;
     return `<li class="cartao-item">
@@ -171,6 +172,7 @@ export function montarParlamentar(alvo, c) {
       <span class="texto">${esc(p.ementa || "Sem ementa")}</span>
       ${p.ementaDetalhada && p.ementaDetalhada !== p.ementa ? `<details class="texto"><summary>Ementa detalhada</summary>${esc(p.ementaDetalhada)}</details>` : ""}
       ${faixaEtapasEstadual(p.etapa)}
+      ${movimentosDaCasa(p.movimentos)}
       ${typeof p.emTramitacao === "boolean" ? `<span class="texto quando">${p.emTramitacao ? "Em tramitação" : "Fora de tramitação"} segundo a Casa.</span>` : ""}
       ${c.papel ? `<span class="texto"><b>Papel de ${esc(nome)}:</b> ${c.papel(p)}</span>` : ""}
       ${!p.situacao && p.tramitacao ? `<span class="texto"><b>Última tramitação:</b> ${esc(p.tramitacao)}${p.orgao ? ` (${esc(p.orgao)})` : ""}${p.dataSituacao ? `, em ${data(p.dataSituacao)}` : ""}.${p.despacho ? ` <span class="quando">Despacho: ${esc(p.despacho.slice(0, 300))}</span>` : ""}</span>` : ""}

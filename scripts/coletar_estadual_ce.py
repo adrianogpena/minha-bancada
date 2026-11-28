@@ -382,6 +382,12 @@ def campo_proposicao(bloco: str, rotulo: str) -> str:
     return m.group(1) if m else ""
 
 
+def movimento(linha: str) -> dict:
+    """"Em 02.02.23 - Departamento Legislativo" -> {"data": "2023-02-02", "texto": "Departamento Legislativo"}; linha sem data fica só com o texto."""
+    m = re.match(r"(?i)\s*em\s+(\d\d[./]\d\d[./]\d{2,4})\s*-\s*(.*)", linha, re.S)
+    return {"data": iso_data(m.group(1).replace("/", ".")), "texto": m.group(2).strip()} if m else {"data": None, "texto": linha}
+
+
 def proposicoes_da_pagina(html: str) -> list[dict]:
     itens = []
     for bloco in html.split("N&ordm; do Proj.:")[1:]:
@@ -398,9 +404,10 @@ def proposicoes_da_pagina(html: str) -> list[dict]:
         lei = comum.limpar(campo_proposicao(bloco, "Lei:"))
         obs = comum.limpar(campo_proposicao(bloco, "OBS:"))
         situacao = f"Lei {lei}" if lei and lei != "-" else (movimentos[-1] if movimentos else (obs if obs and obs != "-" else None))
+        movimentos = [movimento(x) for x in movimentos if x]
         itens.append({"numero": int(num.group(1)), "ano": ano, "autor": comum.limpar(campo_proposicao(bloco, "Autor:")),
                       "dataApresentacao": iso_data(comum.limpar(campo_proposicao(bloco, "Entrada:"))), "ementa": comum.limpar(ementa_html),
-                      "linkTexto": link.group(1) if link else None, "situacao": situacao})
+                      "linkTexto": link.group(1) if link else None, "situacao": situacao, "movimentos": movimentos})
     return itens
 
 
@@ -452,7 +459,7 @@ def coletar_proposicoes(s, deputados: list[dict]) -> None:
         por_ano.setdefault(ano, {})[f"{sigla}-{numero}-{ano}"] = {
             "tipo": sigla, "tipoDescricao": p["tipoDescricao"], "numero": numero, "ano": ano, "dataApresentacao": p["dataApresentacao"],
             "ementa": p["ementa"], "situacao": p["situacao"], "emTramitacao": p["emTramitacao"], "linkTexto": p["linkTexto"],
-            "idsAutores": ids, "idsDeputados": ids, "fonte": p["fonte"]}
+            **({"movimentos": p["movimentos"]} if p.get("movimentos") else {}), "idsAutores": ids, "idsDeputados": ids, "fonte": p["fonte"]}
     for ano, materias in por_ano.items():
         comum.salvar(PASTA / f"materias_{ano}.json", {"coletadoEm": date.today().isoformat(), "fonte": PROPOSICOES, "materias": materias})
     do_governo: dict[int, dict] = {}

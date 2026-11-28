@@ -231,6 +231,12 @@ def proposicoes_da_lista(html: str) -> list[dict]:
     return lista
 
 
+def movimento(linha: str) -> dict:
+    """"24/01/2025 - Recebido" -> {"data": "2025-01-24", "texto": "Recebido"}; linha sem data fica só com o texto."""
+    m = re.match(r"\s*(\d\d/\d\d/\d{4})\s*-\s*(.*)", linha, re.S)
+    return {"data": iso_data(m.group(1)), "texto": m.group(2).strip()} if m else {"data": None, "texto": linha}
+
+
 def detalhe_proposicao(html: str) -> dict:
     autor = re.search(r"Autor:\s*<span>(.*?)</span>", html, re.S)
     entrada = re.search(r"<strong>Data de Entrada:</strong>\s*<span>(.*?)</span>", html, re.S)
@@ -240,7 +246,8 @@ def detalhe_proposicao(html: str) -> dict:
     if bloco:
         tramitacao = [comum.limpar(x) for x in re.findall(r"<span>(.*?)</span>", bloco.group(1), re.S)]
     uteis = [t for t in tramitacao if not re.search(r"- (Recebido|Encaminhado)", t)]
-    return {"autor": comum.limpar(autor.group(1)) if autor else "", "dataApresentacao": iso_data(comum.limpar(entrada.group(1))) if entrada else None,
+    movimentos = [movimento(t) for t in tramitacao]
+    return {"movimentos": movimentos, "autor": comum.limpar(autor.group(1)) if autor else "", "dataApresentacao": iso_data(comum.limpar(entrada.group(1))) if entrada else None,
             "ementa": comum.limpar(ementa.group(1)) if ementa else None, "situacao": (uteis or tramitacao or [None])[-1]}
 
 
@@ -329,7 +336,7 @@ def coletar_proposicoes(s, deputados: list[dict]) -> None:
         por_ano.setdefault(p["ano"], {})[chave] = {
             "tipo": p["sigla"], "tipoDescricao": next(desc for sg, desc in TIPOS.values() if sg == p["sigla"]), "numero": p["numero"],
             "ano": p["ano"], "dataApresentacao": d["dataApresentacao"], "ementa": d["ementa"] or p["ementa"], "situacao": d["situacao"],
-            "emTramitacao": None, "linkTexto": p["linkTexto"], "idsAutores": ids, "idsDeputados": ids, "fonte": f"{PROPOSICAO}/{slug}"}
+            **({"movimentos": d["movimentos"]} if d["movimentos"] else {}), "emTramitacao": None, "linkTexto": p["linkTexto"], "idsAutores": ids, "idsDeputados": ids, "fonte": f"{PROPOSICAO}/{slug}"}
     for ano in sorted(set(por_ano) | set(vistas_ano)):
         comum.salvar(PASTA / f"materias_{ano}.json", {"coletadoEm": hoje.isoformat(), "fonte": PROPOSICOES, "materias": por_ano.get(ano, {}),
                                                       "vistas": vistas_ano.get(ano, {})})

@@ -209,8 +209,23 @@ def test_etapa_padrao_da_situacao_por_uf():
 
 def test_tabela_de_situacoes_so_usa_etapas_conhecidas():
     for uf, tabela in ge.SITUACOES.items():
-        if uf not in ("_comentario", "etapas"):
+        if uf not in ("_comentario", "etapas", "regras"):
             assert set(tabela.values()) <= set(ge.SITUACOES["etapas"]), uf
+    for uf, regras in ge.SITUACOES["regras"].items():
+        if uf != "_comentario":
+            assert {etapa for _, etapa in regras} <= set(ge.SITUACOES["etapas"]), uf
+
+
+def test_etapa_de_situacao_em_texto_livre_ba_e_ce():
+    assert ge.etapa_estadual("BA", "16/07/2024 - Distribuido para relatoria ao Deputado(a) DEPUTADA IVANA BASTOS") == "comissao"
+    assert ge.etapa_estadual("BA", "10/05/2024 - Publicada a Lei nº 14.500, de 9/5/2024, no Diário Oficial Eletrônico do Legislativo") == "norma"
+    assert ge.etapa_estadual("BA", "20/03/2024 - Retirado de tramitação, a pedido do autor.") == "arquivada"
+    assert ge.etapa_estadual("BA", "12/02/2025 - Incluída na Pauta - Data Inicial: 13/02/2025 08:00:00") is None
+    assert ge.etapa_estadual("CE", "Em 16.06.26 - Plenário, favorável/aprovado") == "aprovada"
+    assert ge.etapa_estadual("CE", "Lei 18.500") == "norma"
+    assert ge.etapa_estadual("CE", "Em 05.03.25 - 3ª Reunião Ordinária da Comissão de Constituição, Justiça e Redação, relator Dep. X") == "comissao"
+    assert ge.etapa_estadual("CE", "Em 03.02.25 - Leitura no expediente.") == "apresentada"
+    assert ge.etapa_estadual("CE", "") is None
 
 
 def test_proposicao_recebe_etapa_so_quando_a_tabela_conhece(tmp_path, monkeypatch):

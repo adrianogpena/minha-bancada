@@ -366,3 +366,11 @@ def test_coletar_sem_deputados_em_exercicio_avisa_e_nao_grava(monkeypatch, tmp_p
     mg.coletar()
     assert "MG: lista de deputados vazia" in capsys.readouterr().err
     assert not (tmp_path / "MG" / "deputados.json").exists()
+
+
+def test_movimentos_do_historico():
+    itens = amostra("estadual_mg_proposicoes")["resultado"]["listaItem"]
+    movs = mg.movimentos(itens[0])
+    assert [m["data"] for m in movs] == ["2026-10-14", "2026-10-16"]
+    assert movs[0]["orgao"] == "Plenário" and movs[0]["texto"].startswith("Proposição recebida em Plenário.")
+    assert mg.movimentos({}) == [] and mg.movimentos({"listaHistoricoTramitacoes": [{"passo": 1}]}) == []

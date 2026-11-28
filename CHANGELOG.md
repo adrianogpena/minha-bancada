@@ -5,6 +5,14 @@ Regra: toda fonte nova ou mudança de coleta ganha uma entrada aqui, no mesmo co
 Datas dos conjuntos que já existiam vêm do primeiro commit que os trouxe (`git log --diff-filter=A`).
 Todas as coletas rodam sozinhas no GitHub Actions (`.github/workflows/atualizar.yml`, todo dia às 05:00 de Brasília), salvo onde indicado.
 
+## Movimentos das proposições da MG, BA, CE e RN (2026-11-28)
+
+Sem host novo. Cada projeto de deputado ganha `movimentos` ([{data, texto, orgao?}] em ordem cronológica) em `dados/estaduais/<UF>/materias_<ano>.json`, e `gerar_estaduais.py` os leva ao `estadual/<UF>/<id>.json`; a ficha mostra "Tramitação na Casa". MG: `listaHistoricoTramitacoes` do item da pesquisa direcionada que o coletor já lia (passo, data, local, histórico). BA: bloco TRAMITAÇÃO da página da proposição, que o coletor já baixava (antes só a última linha era guardada). CE: lista "Localização" da listagem de proposições (`Em 02.02.23 - ...`), já baixada. RN: `GET processo/<id>/tramitacao` por projeto (uma chamada cada; nunca lidos primeiro, os em tramitação relidos a cada 7 a 13 dias, `tramitacao_vistas.json`; a primeira coleta lê todos e continua nas seguintes se o prazo do job acabar). MG, BA e CE não têm custo extra de requisição.
+
+## Etapas padrão das proposições de BA e CE (2026-11-28)
+
+Sem fonte nova: BA e CE publicam a situação em texto livre com a data embutida ("26/02/2025 - ...", "Em 16.06.26 - ..."). `etapa_estadual` tira a data do início e aplica as regras por expressão regular de `situacoes_estaduais.json` (`regras`). Medido sobre os dados de 2026-11-28: BA classifica 663 de 1.061 proposições (comissão por distribuição, parecer e relatoria; norma por lei e resolução publicadas; arquivada por retirada; apresentada por recebimento). "Incluída na Pauta" fica sem etapa porque a fonte não diz se é comissão ou Plenário. CE classifica 4.784 de 5.492 (645 sem situação). O restante fica sem etapa e o site mostra o texto cru.
+
 ## Etapas padrão das proposições de MG, GO e SC (2026-11-28)
 
 Sem fonte nova: `gerar_estaduais.py` (`etapa_estadual`) traduz a situação que a Assembleia publica em uma de seis etapas (apresentada, comissão, plenário, aprovada, virou norma, arquivada) pela tabela `scripts/situacoes_estaduais.json`, conferida contra os valores reais de `dados/estaduais/<UF>/materias_*.json`. Situação fora da tabela (por exemplo "Anexado") fica sem etapa e o site mostra só o texto da fonte. SAPL e PR seguem com "Em tramitação"/"Fora de tramitação", sem faixa; PE, RJ, RN e SP não publicam situação.

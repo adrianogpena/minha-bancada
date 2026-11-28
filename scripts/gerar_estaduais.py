@@ -35,7 +35,14 @@ SITUACOES = json.loads((Path(__file__).with_name("situacoes_estaduais.json")).re
 
 def etapa_estadual(uf: str, situacao) -> str | None:
     """Etapa padrão da proposição (tabela situacoes_estaduais.json); situação fora da tabela ou UF sem tabela: None."""
-    return (SITUACOES.get(uf) or {}).get(sem_acento(situacao or ""))
+    chave = sem_acento(situacao or "")
+    if etapa := (SITUACOES.get(uf) or {}).get(chave):
+        return etapa
+    texto = re.sub(r"^(em )?\d{1,2}[/.]\d{1,2}[/.]\d{2,4}\s*-?\s*", "", chave.strip().lower())
+    for padrao, etapa in SITUACOES["regras"].get(uf, []):
+        if re.search(padrao, texto):
+            return etapa
+    return None
 
 
 def ler(caminho: Path, padrao=None):
@@ -310,6 +317,7 @@ def gerar_assembleia(uf: str, pasta: Path, indice: dict | None = None) -> list[d
                                       "dataApresentacao": m.get("dataApresentacao"), "ementa": m["ementa"], "situacao": m["situacao"],
                                       "emTramitacao": m.get("emTramitacao"), "linkTexto": m.get("linkTexto"),
                                       **({"etapa": etapa} if (etapa := etapa_estadual(uf, m["situacao"])) else {}),
+                                      **({"movimentos": m["movimentos"]} if m.get("movimentos") else {}),
                                       **({"coautores": coautores, "totalAutores": max(len(m.get("idsAutores") or []), len(m["idsDeputados"]))} if coautores else {}),
                                       **({"fonte": m["fonte"]} if m.get("fonte") else {})})
 

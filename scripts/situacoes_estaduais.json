@@ -1,6 +1,13 @@
 {
   "_comentario": "Situação que a Assembleia publica (sem acento e em minúsculas) -> etapa padrão. Só UF com situação finita; situação fora da tabela fica sem etapa e o site mostra o texto cru. Conferida contra dados/estaduais/<UF>/materias_*.json em 2026-11-28.",
-  "etapas": ["apresentada", "comissao", "plenario", "aprovada", "norma", "arquivada"],
+  "etapas": [
+    "apresentada",
+    "comissao",
+    "plenario",
+    "aprovada",
+    "norma",
+    "arquivada"
+  ],
   "MG": {
     "aguardando parecer em comissao": "comissao",
     "aguardando diligencia em comissao": "comissao",
@@ -68,5 +75,48 @@
     "arquive-se conforme determina o regimento interno": "arquivada",
     "retirado": "arquivada",
     "deixou de ser apreciado por falta de quorum": "arquivada"
+  },
+  "regras": {
+    "_comentario": "UF com situação em texto livre (data embutida): depois de tirar a data do início, a primeira regex que casa (sem acento, minúscula) define a etapa. Pauta da BA fica sem etapa: a fonte não diz se é comissão ou Plenário.",
+    "BA": [
+      [
+        "^(publicada a (lei|resolucao|emenda constitucional)|sancionada lei|expedido autografo)",
+        "norma"
+      ],
+      [
+        "^(retirad[oa] de tramitacao|arquivada|prejudicado)",
+        "arquivada"
+      ],
+      [
+        "^(distribuido para relatoria|redistribuido|parecer|devolvido sem parecer|preliminar de inconstitucionalidade|publicado o parecer|votacao da comissao|pedido de vista)",
+        "comissao"
+      ],
+      [
+        "^recebimento proposicao",
+        "apresentada"
+      ]
+    ],
+    "CE": [
+      [
+        "^lei( |$)",
+        "norma"
+      ],
+      [
+        "^plenario[ ,/]*favoravel",
+        "aprovada"
+      ],
+      [
+        "^(req\\.? ?\\S+ - )?(solicita(do)?|retirad)[a-z ]*(retirad|tramitacao)|^retirado de tramitacao|^req\\.? ?[^-]*- retirad",
+        "arquivada"
+      ],
+      [
+        "comissao",
+        "comissao"
+      ],
+      [
+        "^leitura no expediente",
+        "apresentada"
+      ]
+    ]
   }
 }

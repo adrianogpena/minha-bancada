@@ -12,6 +12,8 @@ Fonte: API aberta, sem login, do portal Transparência Legislativa (a mesma que 
   - atas: legis-videos/reuniao/<id> devolve o vídeo da sessão e, quando a Mesa publicou, o texto da ata (`ata`); o coletor guarda só o link
     https://api-legisvideos.al.rn.leg.br/video/ata/<hash> (a página da ata, 200 sem cabeçalho de tipo), em pautas_<ano>.json com tipo "atas".
     Cobertura parcial: em 188 vídeos recentes 101 tinham ata;
+  - tramitação: processo/<id>/tramitacao de cada projeto de deputado (movimentos com data, situação e setor, em `movimentos` de materias_<ano>.json);
+    um GET por projeto, o nunca lido primeiro e os em tramitação relidos a cada 7 a 13 dias (tramitacao_vistas.json);
   - normas: processo?tipoPropositura=<1 PL, 2 PLC, 6 PDL, 8 resolução, 22 título honorífico> de iniciativa de deputado, confirmadas pela
     tramitação (processo/<id>/tramitacao com situação 27 Lei Sancionada, 26 Lei Promulgada, 127 Decreto Legislativo Promulgado ou 128
     Resolução promulgada); normas_<ano>.json. O número oficial da lei não vem no cadastro (`numeroExterno` não é o da lei): a norma leva o
@@ -208,11 +210,16 @@ def coletar_projetos(s, deputados: list[dict]) -> None:
     with ThreadPoolExecutor(EM_PARALELO) as ex:
         por_deputado = dict(ex.map(um, deputados))
     por_ano = montar_materias(por_deputado)
+    guardados = {ano: comum.ler(PASTA / f"materias_{ano}.json", {}).get("materias", {}) for ano in range(ANO_INICIAL, hoje.year + 1)}
     completa_em = hoje.isoformat()
     if incremental:
         por_ano = juntar_novos(incremental[1], por_ano)
         completa_em = incremental[1][hoje.year]["completaEm"]
     for ano, materias in por_ano.items():
+        for chave, m in materias.items():
+            antigos = (guardados.get(ano, {}).get(chave) or {}).get("movimentos")
+            if antigos and not m.get("movimentos"):
+                m["movimentos"] = antigos
         comum.salvar(PASTA / f"materias_{ano}.json", {"coletadoEm": hoje.isoformat(), "completaEm": completa_em, "fonte": f"{SITE}/projetos", "materias": materias})
     print(f"RN: {sum(len(m) for m in por_ano.values())} projetos em {len(por_ano)} anos" + (f" (lidos desde {desde})" if incremental else ""))
 
@@ -555,6 +562,75 @@ def coletar_pautas_atas(s, deputados: list[dict], sessoes: list[dict]) -> None:
         comum.avisar(f"RN: pauta ou ata de {falhas} sessões plenárias respondeu erro; tentadas de novo em {RENOVAR_FALHA_DIAS} dias")
 
 
+# ---------------------------------------------------------------- tramitação (movimentos dos projetos)
+
+def movimentos_da_tramitacao(tramitacao: list[dict]) -> list[dict]:
+    """Andamentos do processo em ordem cronológica: {data, texto (situação), orgao (setor)}; a API os devolve do mais novo para o mais antigo."""
+    itens = []
+    for t in tramitacao:
+        sit = (t.get("situacaoProcesso") or {}).get("nome")
+        setor = ((t.get("origem") or {}).get("setor") or {})
+        if not sit:
+            continue
+        itens.append({"data": dia_local((t.get("origem") or {}).get("data")), "texto": sit,
+                      **({"orgao": titulo(setor["nome"])} if setor.get("nome") else {}),
+                      **({"observacao": " ".join(t["observacao"].split())} if t.get("observacao") else {})})
+    return sorted(itens, key=lambda m: m["data"] or "")
+
+
+def id_do_processo(m: dict) -> str | None:
+    achou = re.search(r"/projeto/(\d+)$", m.get("fonte") or "")
+    return achou.group(1) if achou else None
+
+
+def coletar_tramitacao(s) -> None:
+    """Um GET processo/<id>/tramitacao por projeto de deputado: o nunca lido primeiro, depois os em tramitação relidos a cada 7 a 13 dias
+    (escalonado por id); arquivado, uma vez lido, não é relido. Grava `movimentos` em materias_<ano>.json."""
+    hoje = date.today()
+    agora = hoje.isoformat()
+    arq = PASTA / "tramitacao_vistas.json"
+    vistas = comum.ler(arq, {}).get("processos") or {}
+    anos = {a: comum.ler(PASTA / f"materias_{a}.json") for a in range(ANO_INICIAL, hoje.year + 1)}
+    alvos = {}
+    for ano, arquivo in anos.items():
+        for chave, m in (arquivo or {}).get("materias", {}).items():
+            pid = id_do_processo(m)
+            if pid:
+                alvos[pid] = (ano, chave, m)
+    novos = [pid for pid, (_, _, m) in alvos.items() if pid not in vistas]
+    velhos = [pid for pid, (_, _, m) in alvos.items() if pid in vistas and m.get("emTramitacao") and devido(vistas[pid], pid, hoje)]
+    fila = novos + velhos
+    falhas = []
+
+    def uma(pid):
+        try:
+            return pid, movimentos_da_tramitacao(pegar(s, f"processo/{pid}/tramitacao"))
+        except comum.PrazoEsgotado:
+            raise
+        except Exception:
+            falhas.append(pid)
+            return pid, None
+
+    lidos = 0
+    try:
+        with ThreadPoolExecutor(EM_PARALELO) as ex:
+            for pid, movs in ex.map(uma, fila):
+                if movs is None:
+                    continue
+                if movs:
+                    alvos[pid][2]["movimentos"] = movs
+                vistas[pid] = agora
+                lidos += 1
+    finally:
+        for ano, arquivo in anos.items():
+            if arquivo:
+                comum.salvar(PASTA / f"materias_{ano}.json", arquivo)
+        comum.salvar(arq, {"coletadoEm": agora, "processos": vistas})
+    print(f"RN: tramitação de {lidos} projetos lida ({len(novos)} nunca lidos, {len(velhos)} relidos)")
+    if falhas:
+        comum.avisar(f"RN: a API respondeu erro na tramitação de {len(falhas)} projetos (tentados de novo na próxima coleta)")
+
+
 # ---------------------------------------------------------------- normas legais (projetos de deputado que viraram lei, decreto legislativo ou resolução)
 
 def eh_de_deputado(p: dict, ids: set) -> bool:
@@ -659,7 +735,7 @@ def coletar() -> None:
     except Exception as e:
         comum.avisar(f"RN: lista de reuniões: {e}")
     hoje = date.today()
-    etapas = [("projetos", lambda: coletar_projetos(s, deputados)), ("presença", lambda: coletar_presenca(s, deputados, sessoes)),
+    etapas = [("projetos", lambda: coletar_projetos(s, deputados)), ("tramitação", lambda: coletar_tramitacao(s)), ("presença", lambda: coletar_presenca(s, deputados, sessoes)),
               ("votações", lambda: coletar_votacoes(s, deputados, sessoes)),
               ("contratos e atas de registro do órgão", lambda: coletar_orgao(sessao_pncp(), PASTA, hoje)),
               ("pautas e atas", lambda: coletar_pautas_atas(s, deputados, sessoes)), ("normas", lambda: coletar_normas(s, deputados))]

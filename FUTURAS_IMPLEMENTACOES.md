@@ -46,8 +46,7 @@ Falta:
 - `assembleia.js` (`situacao` e modalidade das contratações) e `estadual.js` (ementa das normas): só valores crus da fonte, sem
   glossário (um "?" por linha repetiria o botão em listas de 20 itens).
 - Linhas da tabela de emendas (tipo da emenda): sem "?" pelo mesmo motivo; o tipo Pix é explicado no parágrafo acima da tabela.
-- Termos de cargo e verba ainda fora: decreto legislativo, resolução (norma), ementa.
-- Etapas nas proposições das Assembleias: feitas para MG, GO e SC (`scripts/situacoes_estaduais.json`). Faltam BA e CE (texto livre com data embutida) e a linha do tempo de trâmites (só onde a API da UF traz movimentos; o PR não traz).
+- Etapas nas proposições das Assembleias: feitas para MG, GO, SC, BA e CE (`scripts/situacoes_estaduais.json`; BA e CE por regras sobre o texto livre, ~62% e ~87% classificados; "Incluída na Pauta" da BA fica sem etapa). Falta a linha do tempo de trâmites (só onde a API da UF traz movimentos; o PR não traz).
 
 ## Nível 2: raspagem ou chave de API
 

@@ -279,6 +279,15 @@ def test_pautas_e_atas_incremental(tmp_path, monkeypatch):
     assert [i["reuniao"] for i in atual["itens"].values() if i["tipo"] == "atas"] == [2]
 
 
+def test_movimentos_da_tramitacao_em_ordem_cronologica():
+    a = amostra("estadual_rn_normas")
+    movs = rn.movimentos_da_tramitacao(a["tramitacao"])
+    assert [m["data"] for m in movs] == sorted(m["data"] for m in movs) and len(movs) == len(a["tramitacao"])
+    assert movs[0]["texto"] and movs[-1]["texto"] == "Lei Sancionada"
+    assert rn.movimentos_da_tramitacao([{"situacaoProcesso": None}]) == []
+    assert rn.id_do_processo({"fonte": "https://x/projeto/123"}) == "123" and rn.id_do_processo({"fonte": None}) is None
+
+
 def test_norma_pela_tramitacao():
     a = amostra("estadual_rn_normas")
     sit = rn.situacao_da_norma(a["tramitacao"])
@@ -324,6 +333,26 @@ def test_coletar_normas_le_so_o_que_falta(tmp_path, monkeypatch):
 
     chamadas.clear()
     rn.coletar_normas(None, [{"id": parlamentar}])
+    assert chamadas == []
+
+
+def test_coletar_tramitacao_le_so_o_que_falta(tmp_path, monkeypatch):
+    a = amostra("estadual_rn_normas")
+    ano = rn.date.today().year
+    base = {"tipo": "PL", "ano": ano, "ementa": "x", "idsDeputados": ["1"], "idsAutores": ["1"]}
+    materias = {"PL-1-1": {**base, "numero": 1, "emTramitacao": True, "fonte": "https://x/projeto/10"},
+                "PL-2-1": {**base, "numero": 2, "emTramitacao": False, "fonte": "https://x/projeto/20"}}
+    monkeypatch.setattr(rn, "PASTA", tmp_path)
+    monkeypatch.setattr(rn, "ANO_INICIAL", ano)
+    (tmp_path / f"materias_{ano}.json").write_text(json.dumps({"materias": materias}), encoding="utf-8")
+    chamadas = []
+    monkeypatch.setattr(rn, "pegar", lambda s, caminho, **kw: chamadas.append(caminho) or a["tramitacao"])
+    rn.coletar_tramitacao(None)
+    assert sorted(chamadas) == ["processo/10/tramitacao", "processo/20/tramitacao"]
+    salvo = json.loads((tmp_path / f"materias_{ano}.json").read_text(encoding="utf-8"))["materias"]
+    assert salvo["PL-1-1"]["movimentos"][-1]["texto"] == "Lei Sancionada"
+    chamadas.clear()
+    rn.coletar_tramitacao(None)
     assert chamadas == []
 
 

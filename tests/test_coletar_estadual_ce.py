@@ -123,6 +123,12 @@ def test_autores(texto, esperado):
     assert ce.autores(texto) == esperado
 
 
+def test_movimento():
+    assert ce.movimento("Em 02.02.23 - Departamento Legislativo") == {"data": "2023-02-02", "texto": "Departamento Legislativo"}
+    assert ce.movimento("EM 07.06.2023 - Plenário") == {"data": "2023-06-07", "texto": "Plenário"}
+    assert ce.movimento("sem data") == {"data": None, "texto": "sem data"}
+
+
 def test_proposicoes_da_pagina():
     html = amostra("estadual_ce_proposicoes")["html"]
     assert ce.ultima_pagina(html) > 1

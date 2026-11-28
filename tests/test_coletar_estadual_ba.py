@@ -85,6 +85,13 @@ def test_detalhe_proposicao():
     assert d["situacao"] and "Recebido" not in d["situacao"]
 
 
+def test_movimentos_da_tramitacao():
+    d = ba.detalhe_proposicao(amostra("estadual_ba_proposicoes")["detalhe"])
+    assert d["movimentos"][0] == {"data": "2025-01-24", "texto": "Recebimento Proposição PaperLess"}
+    assert all(m["data"] and m["texto"] for m in d["movimentos"])
+    assert ba.movimento("sem data") == {"data": None, "texto": "sem data"}
+
+
 def test_autores():
     assert ba.autores("DEPUTADO VITOR AZEVEDO") == ["VITOR AZEVEDO"]
     assert ba.autores("DEPUTADO A, DEPUTADA B E DEPUTADO C") == ["A", "B", "C"]
@@ -332,7 +339,7 @@ def test_pequenos_parsers_com_entrada_invalida():
     assert ba.cartoes("<html></html>") == []
     assert ba.ultima_pagina("<html></html>") == 1
     assert ba.proposicoes_da_lista('<tr class="table-itens"><td>sem link</td></tr>') == []
-    assert ba.detalhe_proposicao("<html></html>") == {"autor": "", "dataApresentacao": None, "ementa": None, "situacao": None}
+    assert ba.detalhe_proposicao("<html></html>") == {"movimentos": [], "autor": "", "dataApresentacao": None, "ementa": None, "situacao": None}
 
 
 def test_cadeia_ckan_junta_raizes_e_intermediario_e_reaproveita(tmp_path, monkeypatch):

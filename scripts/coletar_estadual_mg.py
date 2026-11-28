@@ -131,6 +131,14 @@ def proposicao_url(item: dict) -> str:
     return f"{PROPOSICOES_PAGINA}?tipo={item.get('siglaTipoProjeto')}&num={item.get('numero')}&ano={item.get('ano')}"
 
 
+def movimentos(item: dict) -> list[dict]:
+    """listaHistoricoTramitacoes -> [{data, texto, orgao}] em ordem de passo; sem texto nem local, o passo não entra."""
+    achados = sorted(item.get("listaHistoricoTramitacoes") or [], key=lambda h: h.get("passo") or 0)
+    return [{"data": data_iso(h.get("data")), "texto": " ".join(h["historico"].split()) if h.get("historico") else h["local"],
+             **({"orgao": h["local"]} if h.get("historico") and h.get("local") else {})}
+            for h in achados if h.get("historico") or h.get("local")]
+
+
 def materias(itens: list[dict], deputados: list[dict]) -> dict:
     ids = identidades.ligar_nomes({a for i in itens for a in autores_deputados(i.get("autor"))}, deputados, UF)
     achadas = {}
@@ -147,7 +155,7 @@ def materias(itens: list[dict], deputados: list[dict]) -> dict:
             "tipo": i["siglaTipoProjeto"], "tipoDescricao": i.get("tipoProjeto"), "numero": int(numero) if numero.isdigit() else None,
             "ano": int(ano) if ano.isdigit() else None, "dataApresentacao": data_iso(i.get("dataPublicacao")), "ementa": ementa,
             "situacao": i.get("situacao"), "emTramitacao": (i.get("dominio") == "Tramitação") if i.get("dominio") else None,
-            "linkTexto": url, "idsAutores": autores, "idsDeputados": autores, "fonte": url}
+            "linkTexto": url, **({"movimentos": mov} if (mov := movimentos(i)) else {}), "idsAutores": autores, "idsDeputados": autores, "fonte": url}
     return achadas
 
 

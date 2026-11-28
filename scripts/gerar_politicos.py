@@ -360,13 +360,33 @@ def custo_camara_municipal(ibge: str | None, cadeiras: int, dca: dict) -> dict:
             "porParlamentar": round(reg["liquidada"] / cadeiras, 2), "fonte": reg.get("fonte")}
 
 
+def vereadores_em_exercicio(uf: str, mandatos: list) -> dict:
+    """Município (código TSE) -> (registros de 2024 do TSE, total em exercício) dos vereadores em exercício em PE e PB, a partir dos mandatos
+    `atual` do núcleo com folha do TCE (fonte `vereador_pe`/`vereador_pb`). Suplente que assumiu não tem candidatura eleita em 2024: conta no
+    total em exercício e fica fora do perfil (sem gênero, idade nem instrução), como nas demais Casas (`eleitos_em_exercicio`)."""
+    fonte = f"vereador_{uf.lower()}"
+    por_sequencial = {e["sequencial"]: e for e in ler(BRUTO / "tse" / "2024" / f"{uf}.json", []) if e["cargo"] == "VEREADOR"}
+    achados, totais = defaultdict(list), defaultdict(int)
+    for m in mandatos:
+        if m["cargo"] != "VEREADOR" or m["uf"] != uf or m["status"] != "atual" or fonte not in (m.get("fontes") or {}):
+            continue
+        cod = m.get("municipio")
+        totais[cod] += 1
+        e = por_sequencial.get((m["fontes"] or {}).get("tse"))
+        if e:
+            achados[cod].append(e)
+    return {cod: (achados.get(cod, []), total) for cod, total in totais.items()}
+
+
 def gerar_perfil_casas(deputados: dict | None = None) -> None:
     """site/dados/perfil_casas/<UF>.json: perfil dos eleitos de cada Casa, para comparar com o eleitorado.
     Chaves: estadual (deputados em exercício na Assembleia ou Câmara Legislativa, com os dados da candidatura de 2022; sem a lista
     coletada, os eleitos de 2022), federal (bancada em exercício na Câmara, idem; sem `deputados`, os eleitos de 2022), senado
     (senadores em exercício, candidaturas de 2018 e 2022; sem `senado.json`, os eleitos) e municipal
-    (<código TSE do município> -> vereadores de 2024)."""
+    (<código TSE do município> -> vereadores de 2024; em PE e PB, os em exercício pelos mandatos do núcleo, com `composicao` "atual" e
+    `emExercicio`; o custo continua dividido pelas cadeiras)."""
     ibge_do_tse = ler(BRUTO / "municipios_ibge.json", {})
+    mandatos = ler(SAIDA / "nucleo" / "mandatos.json", []) or []
     senadores = ler(BRUTO / "senado.json", []) or []
     for arq in sorted((BRUTO / "tse" / "2022").glob("[A-Z][A-Z].json")):
         uf = arq.stem
@@ -394,9 +414,14 @@ def gerar_perfil_casas(deputados: dict | None = None) -> None:
                 estadual["custo"] = custo
         dca = ler(BRUTO / "siconfi_municipios" / f"{uf}.json", {})
         municipal = {}
+        atuais = vereadores_em_exercicio(uf, mandatos) if uf in ("PE", "PB") else {}
         for cod, lista in vereadores.items():
             perfil = perfil_eleitos(lista, 2024)
             custo = custo_camara_municipal(ibge_do_tse.get(cod), perfil.get("total"), dca)
+            if cod in atuais:
+                achados, em_exercicio = atuais[cod]
+                if achados:
+                    perfil = {**perfil_eleitos(achados, 2024), "composicao": "atual", "emExercicio": em_exercicio}
             municipal[cod] = {**perfil, "custo": custo} if custo else perfil
         senado = perfil_eleitos(eleitos(2018, {"SENADOR"}) + eleitos(2022, {"SENADOR"}), 2022)
         achados, em_exercicio = senado_atual(uf, senadores)

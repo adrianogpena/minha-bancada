@@ -335,3 +335,19 @@ def test_integracao_perfil_das_casas_e_ficha_do_tse(site_completo):
     assert sp["federal"]["composicao"] == "atual" and sp["estadual"]["custo"]["porParlamentar"] == 2000.0
     assert ler(site_completo / "perfil_casas" / "RJ.json")["senado"]["total"] == 1
     assert not (site_completo / "perfil_casas" / "BR.json").exists()
+
+
+def test_perfil_municipal_de_pe_parte_dos_mandatos_em_exercicio(tse):
+    for ano in (2022, 2024):
+        (g.BRUTO / "tse" / str(ano)).mkdir(parents=True, exist_ok=True)
+    g.salvar(g.BRUTO / "tse" / "2022" / "PE.json", [])
+    base = {"cargo": "VEREADOR", "uf": "PE", "unidadeEleitoral": "26310", "situacao": "eleito", "partido": "PT", "nascimento": "1980-01-01"}
+    g.salvar(g.BRUTO / "tse" / "2024" / "PE.json", [
+        {**base, "sequencial": "a", "genero": "MASCULINO"}, {**base, "sequencial": "b", "genero": "FEMININO"}])
+    mand = lambda fontes, status="atual": {"cargo": "VEREADOR", "uf": "PE", "municipio": "26310", "status": status, "fontes": fontes}
+    g.salvar(g.SAIDA / "nucleo" / "mandatos.json", [
+        mand({"tse": "a", "vereador_pe": "x"}), mand({"vereador_pe": "y"}), mand({"tse": "b"}, "fora_de_exercicio")])
+    g.gerar_perfil_casas()
+    municipal = ler(g.SAIDA / "perfil_casas" / "PE.json")["municipal"]["26310"]
+    assert municipal["total"] == 1 and municipal["genero"] == [1, 0]
+    assert municipal["composicao"] == "atual" and municipal["emExercicio"] == 2

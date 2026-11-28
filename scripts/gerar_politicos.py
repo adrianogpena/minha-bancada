@@ -411,10 +411,11 @@ def gerar_perfil_casas(deputados: dict | None = None) -> None:
         salvar(SAIDA / "perfil_casas" / f"{uf}.json", {k: v for k, v in casas.items() if v})
 
 
-def gerar(deputados: dict, estaduais: dict | None = None, pessoas: dict | None = None) -> dict:
+def gerar(deputados: dict, estaduais: dict | None = None, pessoas: dict | None = None, camaras: dict | None = None) -> dict:
     """`pessoas` (identidades.construir()["chaves"]) acrescenta `pessoa`, o id do núcleo, às fichas do TSE e do Senado."""
     estaduais = estaduais or {}
     pessoas = pessoas or {}
+    camaras = camaras or {}          # pessoa -> URL da Câmara no SAPL (mandatos.camaras_sapl)
     indice = defaultdict(list)       # UF -> entradas
     fichas = defaultdict(dict)       # arquivo -> {id: ficha}
     comuns = defaultdict(lambda: defaultdict(dict))   # arquivo -> {disputa|partidos|coligacoes: {cargo|local: dado do TSE}}
@@ -484,6 +485,7 @@ def gerar(deputados: dict, estaduais: dict | None = None, pessoas: dict | None =
                     "secoes": secoes_de(ano, e),
                     **({"patrimonio": patrimonio_de(e)} if patrimonio_de(e) else {}),
                     **({"estadual": estadual} if estadual else {}),
+                    **({"camara": camaras[pessoa]} if cargo_tse == "VEREADOR" and estado == "atual" and (pessoa := pessoas.get(("tse", ano, e["sequencial"]))) in camaras else {}),
                 }
                 alvo = None   # código dos feeds da página Fique informado; só para quem tem dados acompanháveis (ver scripts/feeds.py)
                 if estado == "atual":

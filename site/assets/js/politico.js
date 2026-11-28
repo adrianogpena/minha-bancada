@@ -76,8 +76,9 @@ export async function paginaPolitico() {
     ["E-mail", p.email ? `<a href="mailto:${esc(p.email)}">${esc(p.email)}</a>` : null, true],
     linhaSubsidio(p),
     linhaNoCargoAte(p),
+    p.camara ? ["Página na Câmara", `<a href="${esc(urlSegura(p.camara))}" rel="noopener">${esc(p.camara)}</a> <span class="fonte-link"><span class="rotulo-fonte">Fonte</span> SAPL da Câmara Municipal</span>`, true] : null,
     ["Redes e sites declarados na candidatura", linksRedes(p.redes, { ...p, fonteRedes: fonteRedesTse(p) }), true, true],
-  ].filter(([, v]) => v);
+  ].filter((l) => l && l[1]);
 
   if (p.fonte === "senado") {
     const montado = await montarSenador(alvo, p, nome, ficha);

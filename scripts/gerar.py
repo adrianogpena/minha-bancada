@@ -709,12 +709,14 @@ def main():
     salvar(SAIDA / "inabilitados_tcu.json", dict(por_pessoa))
     print(f"Emendas parlamentares: {gerar_emendas.salvar(nucleo['emendas'], SAIDA)} políticos")
     candidaturas.salvar_candidaturas(candidaturas.construir(BRUTO, nucleo), SAIDA)
-    mandatos.salvar_mandatos(mandatos.construir(deputados, BRUTO, nucleo), SAIDA)
+    res_mandatos = mandatos.construir(deputados, BRUTO, nucleo)
+    mandatos.salvar_mandatos(res_mandatos, SAIDA)
+    camaras = mandatos.camaras_sapl(res_mandatos["mandatos"])
     nucleo_fornecedores.salvar_fornecedores(forn, SAIDA)
     doadores.salvar_doadores(cruzamento, SAIDA)
     exibidos = {f["id"] for f in forn["ranking"]["fornecedores"]} | {c["fornecedor"] for c in cruzamento["cruzamentos"]}
     empresas.salvar_empresas(empresas.construir(BRUTO, exibidos, forn["datas"]), SAIDA)
-    gerar_politicos.gerar(deputados, gerar_estaduais.gerar(), nucleo["chaves"])
+    gerar_politicos.gerar(deputados, gerar_estaduais.gerar(), nucleo["chaves"], camaras)
     gerar_prefeituras.gerar()
     gerar_eleitorado()
     if (BRUTO / "executivo.json").exists():

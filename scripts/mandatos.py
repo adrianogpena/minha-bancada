@@ -246,6 +246,16 @@ def construir(deputados: dict, bruto: Path, nucleo: dict, hoje: str | None = Non
     return {"mandatos": mandatos, "resumo": resumo}
 
 
+def camaras_sapl(lista: list) -> dict:
+    """pessoa -> URL da Câmara no SAPL, lida da chave `vereador_sapl` (URL|idParlamentar|ingresso) do mandato; vale o mais recente."""
+    achado = {}
+    for m in sorted(lista, key=lambda m: m["inicio"]):
+        chave = (m.get("fontes") or {}).get("vereador_sapl")
+        if chave:
+            achado[m["pessoa"]] = chave.split("|")[0]
+    return achado
+
+
 def salvar_mandatos(res: dict, saida: Path) -> None:
     salvar(saida / "nucleo" / "mandatos.json", res["mandatos"])
     r = res["resumo"]

@@ -47,7 +47,7 @@ Falta:
   glossário (um "?" por linha repetiria o botão em listas de 20 itens).
 - Linhas da tabela de emendas (tipo da emenda): sem "?" pelo mesmo motivo; o tipo Pix é explicado no parágrafo acima da tabela.
 - Termos de cargo e verba ainda fora: decreto legislativo, resolução (norma), ementa.
-- Etapas e linha do tempo nas proposições das Assembleias: falta padronizar a situação por UF.
+- Etapas nas proposições das Assembleias: feitas para MG, GO e SC (`scripts/situacoes_estaduais.json`). Faltam BA e CE (texto livre com data embutida) e a linha do tempo de trâmites (só onde a API da UF traz movimentos; o PR não traz).
 
 ## Nível 2: raspagem ou chave de API
 

@@ -304,3 +304,17 @@ export function blocoEstado(estado) {
     <p class="pequeno"><b>Situação na fonte:</b> ${marcarTermos(esc(crua.texto))}${desde}${crua.fonte ? ` · <a href="${esc(crua.fonte)}" rel="noopener">ver na fonte</a>` : ""}</p>
   </div>`;
 }
+
+/* Assembleias: faixa padrão de seis etapas, escolhida por scripts/situacoes_estaduais.json (campo `etapa`). Sem etapa, não desenha. */
+const ETAPAS_ESTADUAIS = [["apresentada", "Apresentada"], ["comissao", "Comissão"], ["plenario", "Plenário"], ["aprovada", "Aprovada"], ["norma", "Virou norma"]];
+
+export function faixaEtapasEstadual(etapa) {
+  if (!etapa) return "";
+  if (etapa === "arquivada") return `<ol class="etapas" aria-label="Etapas do projeto" style="--n:1"><li class="parado"><span class="ponto" aria-hidden="true">✕</span><b>Arquivada</b><span>não tramita mais</span></li></ol>`;
+  const alto = ETAPAS_ESTADUAIS.findIndex(([id]) => id === etapa);
+  const itens = ETAPAS_ESTADUAIS.map(([, rotulo], i) => {
+    const estado = i < alto ? "feito" : i === alto ? (etapa === "norma" ? "feito" : "atual") : "futuro";
+    return `<li class="${estado}"${estado === "atual" ? ` aria-current="step"` : ""}><span class="ponto" aria-hidden="true">${PONTO[estado] || i + 1}</span><b>${esc(rotulo)}</b>${estado === "atual" ? "<span>agora</span>" : ""}</li>`;
+  });
+  return `<ol class="etapas" aria-label="Etapas do projeto" style="--n:${ETAPAS_ESTADUAIS.length}">${itens.join("")}</ol>`;
+}

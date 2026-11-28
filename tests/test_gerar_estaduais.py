@@ -194,3 +194,33 @@ def test_regras_com_documentos_ficam_como_estao():
     r = {"ano": 2024, "fonte": "https://f", "documentos": [{"titulo": "Res. 1", "url": "https://r"}]}
     assert ge.regras_em_documentos(r) is r and ge.regras_em_documentos(None) is None
     assert ge.regras_em_documentos({"ano": 2025})["documentos"] == []
+
+
+def test_etapa_padrao_da_situacao_por_uf():
+    assert ge.etapa_estadual("MG", "Aguardando parecer em comissão") == "comissao"
+    assert ge.etapa_estadual("MG", "Pronto para ordem do dia em Plenário") == "plenario"
+    assert ge.etapa_estadual("MG", "Transformado em norma jurídica com veto parcial") == "norma"
+    assert ge.etapa_estadual("GO", "Aprovado - Respondido") == "aprovada"
+    assert ge.etapa_estadual("SC", "Arquive-se conforme determina o Regimento Interno") == "arquivada"
+    assert ge.etapa_estadual("MG", "Anexado") is None
+    assert ge.etapa_estadual("AC", "Em tramitação") is None
+    assert ge.etapa_estadual("MG", None) is None
+
+
+def test_tabela_de_situacoes_so_usa_etapas_conhecidas():
+    for uf, tabela in ge.SITUACOES.items():
+        if uf not in ("_comentario", "etapas"):
+            assert set(tabela.values()) <= set(ge.SITUACOES["etapas"]), uf
+
+
+def test_proposicao_recebe_etapa_so_quando_a_tabela_conhece(tmp_path, monkeypatch):
+    bruto = preparar(tmp_path, monkeypatch)
+    pasta = bruto / "MG"
+    escrever(pasta, "deputados.json", {"host": "h", "deputados": [{"id": 1, "nome": "Ana", "titular": True}]})
+    escrever(pasta, "votacoes.json", {"votacoes": {}})
+    mat = {"idsDeputados": [1], "tipo": "PL", "tipoDescricao": "Projeto", "numero": 1, "ano": 2024, "dataApresentacao": "2024-02-01", "ementa": "x"}
+    escrever(pasta, "materias_2024.json", {"materias": {
+        "9": {**mat, "situacao": "Aguardando sanção"}, "8": {**mat, "numero": 2, "situacao": "Anexado"}}})
+    ge.gerar_assembleia("MG", pasta)
+    ps = {p["id"]: p for p in json.loads((tmp_path / "saida" / "estadual" / "MG" / "1.json").read_text(encoding="utf-8"))["proposicoes"]}
+    assert ps["9"]["etapa"] == "aprovada" and "etapa" not in ps["8"]

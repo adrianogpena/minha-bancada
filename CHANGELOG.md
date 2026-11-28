@@ -5,6 +5,10 @@ Regra: toda fonte nova ou mudança de coleta ganha uma entrada aqui, no mesmo co
 Datas dos conjuntos que já existiam vêm do primeiro commit que os trouxe (`git log --diff-filter=A`).
 Todas as coletas rodam sozinhas no GitHub Actions (`.github/workflows/atualizar.yml`, todo dia às 05:00 de Brasília), salvo onde indicado.
 
+## Etapas padrão das proposições de MG, GO e SC (2026-11-28)
+
+Sem fonte nova: `gerar_estaduais.py` (`etapa_estadual`) traduz a situação que a Assembleia publica em uma de seis etapas (apresentada, comissão, plenário, aprovada, virou norma, arquivada) pela tabela `scripts/situacoes_estaduais.json`, conferida contra os valores reais de `dados/estaduais/<UF>/materias_*.json`. Situação fora da tabela (por exemplo "Anexado") fica sem etapa e o site mostra só o texto da fonte. SAPL e PR seguem com "Em tramitação"/"Fora de tramitação", sem faixa; PE, RJ, RN e SP não publicam situação.
+
 ## Fidelidade ao partido com o bloco vigente na data da votação (2026-11-28)
 
 Sem fonte nova: `gerar.py` (`blocos_por_data`) escolhe, para cada votação, a composição dos blocos de `dados/blocos_historico.json` vigente na data dela; antes do primeiro registro (2026-11-28, a API só publica a composição de agora) vale o primeiro. Rótulos de bloco que não constam em `/blocos` seguem sem fidelidade.

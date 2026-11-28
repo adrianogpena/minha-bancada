@@ -3,6 +3,7 @@ import { classificarVotacao, sentidoDoVoto } from "./significado.js";
 import { $, esc, pct, data, dataHora, urlSegura } from "./util.js";
 import { VOTOS, foto, selo, legenda, listaPaginada, abas, ligarAbas } from "./comum.js";
 import { CAMARA_API, resultado, desfecho, movimentadoNoAno, fontes } from "./apis.js";
+import { faixaEtapasEstadual } from "./etapas.js";
 import { barraPlacar } from "./votacoes.js";
 import { LEGENDA_PROJETOS, avisoDados } from "./executivo.js";
 import { abaEventos, painelEventos, montarEventos } from "./eventos.js";
@@ -169,6 +170,7 @@ export function montarParlamentar(alvo, c) {
       <span class="resultado r-${classe}">${esc(texto)}</span>
       <span class="texto">${esc(p.ementa || "Sem ementa")}</span>
       ${p.ementaDetalhada && p.ementaDetalhada !== p.ementa ? `<details class="texto"><summary>Ementa detalhada</summary>${esc(p.ementaDetalhada)}</details>` : ""}
+      ${faixaEtapasEstadual(p.etapa)}
       ${typeof p.emTramitacao === "boolean" ? `<span class="texto quando">${p.emTramitacao ? "Em tramitação" : "Fora de tramitação"} segundo a Casa.</span>` : ""}
       ${c.papel ? `<span class="texto"><b>Papel de ${esc(nome)}:</b> ${c.papel(p)}</span>` : ""}
       ${!p.situacao && p.tramitacao ? `<span class="texto"><b>Última tramitação:</b> ${esc(p.tramitacao)}${p.orgao ? ` (${esc(p.orgao)})` : ""}${p.dataSituacao ? `, em ${data(p.dataSituacao)}` : ""}.${p.despacho ? ` <span class="quando">Despacho: ${esc(p.despacho.slice(0, 300))}</span>` : ""}</span>` : ""}

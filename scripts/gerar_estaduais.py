@@ -20,6 +20,7 @@ from functools import partial
 from pathlib import Path
 
 import categorias
+from estaduais_comum import sem_acento
 
 RAIZ = Path(__file__).resolve().parent.parent
 BRUTO = RAIZ / "dados" / "estaduais"
@@ -27,6 +28,14 @@ SAIDA = RAIZ / "site" / "dados"
 
 VOTOS = {"sim": "sim", "não": "nao", "nao": "nao", "abstenção": "abstencao", "abstencao": "abstencao",
          "obstrução": "obstrucao", "obstrucao": "obstrucao", "não votou": "ausente", "nao votou": "ausente"}
+
+
+SITUACOES = json.loads((Path(__file__).with_name("situacoes_estaduais.json")).read_text(encoding="utf-8"))
+
+
+def etapa_estadual(uf: str, situacao) -> str | None:
+    """Etapa padrão da proposição (tabela situacoes_estaduais.json); situação fora da tabela ou UF sem tabela: None."""
+    return (SITUACOES.get(uf) or {}).get(sem_acento(situacao or ""))
 
 
 def ler(caminho: Path, padrao=None):
@@ -300,6 +309,7 @@ def gerar_assembleia(uf: str, pasta: Path, indice: dict | None = None) -> list[d
                 projetos[pid].append({"id": mid, "tipo": m["tipo"], "tipoDescricao": m.get("tipoDescricao"), "numero": m["numero"], "ano": m["ano"],
                                       "dataApresentacao": m.get("dataApresentacao"), "ementa": m["ementa"], "situacao": m["situacao"],
                                       "emTramitacao": m.get("emTramitacao"), "linkTexto": m.get("linkTexto"),
+                                      **({"etapa": etapa} if (etapa := etapa_estadual(uf, m["situacao"])) else {}),
                                       **({"coautores": coautores, "totalAutores": max(len(m.get("idsAutores") or []), len(m["idsDeputados"]))} if coautores else {}),
                                       **({"fonte": m["fonte"]} if m.get("fonte") else {})})
 

@@ -1,0 +1,124 @@
+{
+ "legislatura": [
+  {
+   "id": 3,
+   "numero": 17,
+   "data_inicio": "2025-01-01",
+   "data_fim": "2028-12-31",
+   "data_eleicao": "2024-10-06",
+   "observacao": ""
+  },
+  {
+   "id": 1,
+   "numero": 16,
+   "data_inicio": "2021-01-01",
+   "data_fim": "2024-12-31",
+   "data_eleicao": "2020-11-15",
+   "observacao": ""
+  },
+  {
+   "id": 2,
+   "numero": 15,
+   "data_inicio": "2017-01-01",
+   "data_fim": "2020-12-31",
+   "data_eleicao": "2016-10-02",
+   "observacao": ""
+  }
+ ],
+ "mandato": [
+  {
+   "id": 24,
+   "tipo_causa_fim_mandato": null,
+   "data_inicio_mandato": "2025-01-01",
+   "data_fim_mandato": "2028-12-31",
+   "votos_recebidos": null,
+   "data_expedicao_diploma": null,
+   "titular": true,
+   "observacao": "",
+   "parlamentar": 1,
+   "tipo_afastamento": null,
+   "legislatura": 3,
+   "coligacao": null
+  },
+  {
+   "id": 14,
+   "tipo_causa_fim_mandato": null,
+   "data_inicio_mandato": "2025-01-01",
+   "data_fim_mandato": "2028-12-31",
+   "votos_recebidos": null,
+   "data_expedicao_diploma": null,
+   "titular": true,
+   "observacao": "",
+   "parlamentar": 20,
+   "tipo_afastamento": null,
+   "legislatura": 3,
+   "coligacao": null
+  },
+  {
+   "id": 15,
+   "tipo_causa_fim_mandato": null,
+   "data_inicio_mandato": "2025-01-01",
+   "data_fim_mandato": "2028-12-31",
+   "votos_recebidos": null,
+   "data_expedicao_diploma": null,
+   "titular": true,
+   "observacao": "",
+   "parlamentar": 23,
+   "tipo_afastamento": null,
+   "legislatura": 3,
+   "coligacao": null
+  },
+  {
+   "id": 16,
+   "tipo_causa_fim_mandato": null,
+   "data_inicio_mandato": "2025-01-01",
+   "data_fim_mandato": "2025-08-10",
+   "votos_recebidos": null,
+   "data_expedicao_diploma": null,
+   "titular": true,
+   "observacao": "",
+   "parlamentar": 18,
+   "tipo_afastamento": null,
+   "legislatura": 3,
+   "coligacao": null
+  }
+ ],
+ "parlamentar": [
+  {
+   "id": 1,
+   "data_ultima_atualizacao": "2026-10-14T15:26:29.606185-03:00",
+   "nome_completo": "Braz Fernando da Silva",
+   "nome_parlamentar": "Braz da Máquina",
+   "sexo": "M",
+   "ativo": true,
+   "nivel_instrucao": null
+  },
+  {
+   "id": 20,
+   "data_ultima_atualizacao": "2026-10-14T15:26:29.606185-03:00",
+   "nome_completo": "Cirlei José de Carvalho",
+   "nome_parlamentar": "Cirlei",
+   "sexo": "M",
+   "ativo": true,
+   "nivel_instrucao": null
+  },
+  {
+   "id": 23,
+   "data_ultima_atualizacao": "2026-10-14T15:26:29.606185-03:00",
+   "nome_completo": "Ednilson Francisco Neto",
+   "nome_parlamentar": "Ednilson",
+   "sexo": "M",
+   "ativo": true,
+   "nivel_instrucao": null
+  },
+  {
+   "id": 18,
+   "data_ultima_atualizacao": "2026-10-14T15:26:29.606185-03:00",
+   "nome_completo": "Gilmar Costa da Silva",
+   "nome_parlamentar": "Gilmar Costa",
+   "sexo": "M",
+   "ativo": true,
+   "nivel_instrucao": null
+  }
+ ]
+}

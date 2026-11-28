@@ -105,7 +105,7 @@ const ARQUIVOS_CAMARA = "https://dadosabertos.camara.leg.br/arquivos";
 function painelTematico(dep) {
   const api = `${CAMARA_API}/deputados/${encodeURIComponent(dep.id)}`;
   const temas = dep.temas || [], max = temas[0]?.[1] || 1;
-  const orgaos = dep.orgaos || [], frentes = dep.frentes;
+  const orgaos = dep.orgaos || [], frentes = dep.frentes, area = dep.areaComissoes || [];
   const anos = [...new Set(dep.proposicoes.filter((p) => p.temas).map((p) => p.ano))].sort();
   return `
     <h2>Em que áreas atua</h2>
@@ -123,6 +123,8 @@ function painelTematico(dep) {
         <h3>Comissões e órgãos</h3>
         ${orgaos.length ? `<ul class="lista-simples">${orgaos.map((o) => `<li><b>${esc(o.sigla)}</b> ${esc(o.nome)}<br><span class="quando">${esc(o.cargo || "Membro")}${o.inicio ? `, desde ${data(o.inicio)}` : ""}${o.fim ? ` até ${data(o.fim)}` : ""}</span></li>`).join("")}</ul>`
           : `<p class="vazio">Nenhuma participação registrada nesta legislatura.</p>`}
+        ${area.length ? `<h3>Projetos na área das comissões atuais</h3><ul class="lista-simples">${area.map((a) => `<li><b>${esc(a.sigla)}</b>: ${a.projetos} ${a.projetos === 1 ? "projeto" : "projetos"}${a.projetos ? `, ${a.aprovados} aprovado${a.aprovados === 1 ? "" : "s"}` : ""}<br><span class="quando">${esc(a.temas.join("; "))}</span></li>`).join("")}</ul>
+          <p class="quando">Conta os projetos com algum dos temas que o regimento atribui à comissão (comissões permanentes; subcomissões valem pela comissão de origem).</p>` : ""}
       </div>
     </div>
     <h3>Frentes parlamentares${frentes ? ` <small class="sub">(${frentes.length})</small>` : ""}</h3>
@@ -130,6 +132,7 @@ function painelTematico(dep) {
       : frentes.length ? `<details><summary>Ver as ${frentes.length} frentes</summary><ul class="lista-simples">${frentes.map((f) => `<li><a href="https://www.camara.leg.br/internet/deputado/frenteDetalhe.asp?id=${encodeURIComponent(f.id)}" rel="noopener">${esc(f.titulo)}</a></li>`).join("")}</ul></details>`
       : `<p class="vazio">Não consta em nenhuma frente nesta legislatura.</p>`}
     ${fontes([["Órgãos do deputado (API da Câmara)", `${api}/orgaos`], ["Frentes do deputado (API da Câmara)", `${api}/frentes`],
+      ...(area.length ? [["Temas de cada comissão (Regimento Interno, art. 32)", "https://www2.camara.leg.br/legin/fed/rescad/1989/resolucaodacamaradosdeputados-17-21-setembro-1989-320110-norma-pl.html"]] : []),
       ...anos.map((a) => [`Temas dos projetos de ${a} (arquivo da Câmara)`, `${ARQUIVOS_CAMARA}/proposicoesTemas/json/proposicoesTemas-${a}.json`])])}`;
 }
 

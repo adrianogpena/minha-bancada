@@ -6,6 +6,7 @@ Uso:
     python scripts/gerar.py
 """
 
+import json
 import re
 import shutil
 import statistics
@@ -295,6 +296,34 @@ def resumir_temas(proposicoes: list) -> list:
             c[1] += destino_projeto(p.get("situacao"), tramitacao_lida(p)) == "aprovada"
             c[2] += bool(p.get("principal"))
     return sorted(([t, *c] for t, c in por_tema.items()), key=lambda x: (-x[1], x[0]))
+
+
+COMISSOES_TEMAS = json.loads((RAIZ / "scripts" / "comissoes_temas.json").read_text(encoding="utf-8"))["comissoes"]
+
+
+def comissao_de_origem(orgao: dict) -> str | None:
+    """Sigla da comissão permanente com tema que vale para o órgão: a própria sigla, ou a de origem entre parênteses no nome
+    (subcomissão e grupo de trabalho, ex.: "(CAPADR/SUBLEITE)"). Comissão especial, externa e CPI não têm tema."""
+    if orgao.get("sigla") in COMISSOES_TEMAS:
+        return orgao["sigla"]
+    m = re.search(r"\(([A-Z]+)(?:[/ ][^)]*)?\)\s*$", orgao.get("nome") or "")
+    return m.group(1) if m and m.group(1) in COMISSOES_TEMAS else None
+
+
+def resumir_area_das_comissoes(proposicoes: list, orgaos: list) -> list:
+    """Projetos do deputado na área das comissões permanentes de que participa agora (sem data de fim), pelos temas do art. 32 do RICD
+    (`scripts/comissoes_temas.json`): [{sigla, nome, temas, projetos, aprovados}]. Um projeto conta uma vez por comissão."""
+    vistas, saida = set(), []
+    for o in orgaos:
+        sigla = comissao_de_origem(o)
+        if o.get("fim") or not sigla or sigla in vistas or not COMISSOES_TEMAS[sigla]["temas"]:
+            continue
+        vistas.add(sigla)
+        temas = [x["tema"] for x in COMISSOES_TEMAS[sigla]["temas"]]
+        dela = [p for p in proposicoes if set(p.get("temas", [])) & set(temas)]
+        saida.append({"sigla": sigla, "nome": COMISSOES_TEMAS[sigla]["nome"], "temas": temas, "projetos": len(dela),
+                      "aprovados": sum(destino_projeto(p.get("situacao"), tramitacao_lida(p)) == "aprovada" for p in dela)})
+    return saida
 
 
 def ordenar_orgaos(orgaos: list) -> list:
@@ -654,6 +683,7 @@ def main():
             "escolaridade": d.get("escolaridade"), "redesSociais": d.get("redesSociais", []),
             "proposicoes": proposicoes, "autoria": autoria, "coautoria": coautoria_dep.get(str(did)), "relatorias": relatorias.get(str(did), []),
             "temas": resumir_temas(proposicoes), "orgaos": ordenar_orgaos(orgaos.get(str(did), [])),
+            "areaComissoes": resumir_area_das_comissoes(proposicoes, orgaos.get(str(did), [])),
             "frentes": sorted(d["frentes"], key=lambda f: f["titulo"]) if d.get("frentes") is not None else None,
             **{k: d[k] for k in ("profissoes", "ocupacoes", "mandatosExternos", "historico", "discursos", "discursosResumo", "eventos") if k in d},
             "votos": votos, "comportamento": comportamento, "presenca": presenca_do_deputado(did, presenca, medianas),

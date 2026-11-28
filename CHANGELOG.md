@@ -5,6 +5,10 @@ Regra: toda fonte nova ou mudança de coleta ganha uma entrada aqui, no mesmo co
 Datas dos conjuntos que já existiam vêm do primeiro commit que os trouxe (`git log --diff-filter=A`).
 Todas as coletas rodam sozinhas no GitHub Actions (`.github/workflows/atualizar.yml`, todo dia às 05:00 de Brasília), salvo onde indicado.
 
+## Projetos na área das comissões do deputado (2026-11-28)
+
+Sem fonte nova nem coleta nova: `gerar.py` (`resumir_area_das_comissoes`) cruza os temas dos projetos de cada deputado com `scripts/comissoes_temas.json` (art. 32 do RICD) e grava `areaComissoes` na ficha (`site/dados/deputado/<id>.json`): para cada comissão permanente com tema de que ele participa agora, quantos projetos têm algum tema dela e quantos foram aprovados. Subcomissões e grupos de trabalho valem pela comissão de origem (sigla entre parênteses no nome); comissões especiais, externas e CPIs ficam de fora. Aparece em "Em que áreas atua".
+
 ## Ligação dos vereadores do SAPL ao núcleo (2026-11-28)
 
 Sem fonte nova nem coleta nova: `identidades.ligar_vereadores` e `mandatos.py` passaram a ler `dados/municipais/<UF>/vereadores_sapl.json` (fonte `vereador_sapl`, em todas as UFs fora PE e PB, que seguem com a folha do TCE). Nome civil igual ao do eleito de 2024 no município (alta) ou nome parlamentar igual ao nome de urna (média); homônimos com ids diferentes no SAPL não ligam; sem eleito de mesmo nome, suplente com pessoa e mandato próprios. Instância com menos vereadores que cadeiras não marca eleitos como fora de exercício. Grafias do município em `GRAFIAS_MUNICIPIO`: Eldorado do Carajás (PA) e Espigão D'Oeste (RO); Caraúbas do Piauí (PI) tem eleição de vereador em 2024, mas o TSE publica as 22 candidaturas sem resultado (`#NE`/`#NULO`) e a coleta só guarda eleitos: o código 12670 entra por `CODIGOS_SEM_RESULTADO` e os vereadores do SAPL ficam com pessoa e mandato próprios, sem ligação a eleito. Medição das divergências em `docs/levantamento_vereadores_tce.md`.

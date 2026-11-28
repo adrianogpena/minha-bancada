@@ -844,6 +844,39 @@ def itens_vereadores(bruto: Path) -> list:
     return saida
 
 
+def _eleitos_parecidos(nome: str, eleitos: list) -> list:
+    """Eleitos (id, civil, urna) cujo nome civil é quase igual a `nome` (já normalizado: similaridade >= 0,85) ou tem as palavras de um nome
+    dentro do outro (o menor com ao menos 2 palavras)."""
+    palavras = set(nome.split())
+    achados = []
+    for e in eleitos:
+        outras = set(e[1].split())
+        menor = min(palavras, outras, key=len)
+        if difflib.SequenceMatcher(None, nome, e[1]).ratio() >= 0.85 or (len(menor) >= 2 and (palavras <= outras or outras <= palavras)):
+            achados.append(e)
+    return achados
+
+
+def _similares_vereadores(nomes: dict, eleitos: list) -> dict:
+    """Do SAPL de um município: {nome normalizado -> id do eleito} só para o nome sem par exato que tem um único eleito parecido, ainda sem
+    par exato e que nenhum outro nome sem par também reivindica. Qualquer dúvida deixa o nome de fora."""
+    exatos = set()
+    for n, grupo in nomes.items():
+        chaves = [(1, n)] + ([(2, norm_nome(grupo[0]["urna"]))] if grupo[0].get("urna") else []) + [(2, n)]
+        for i, k in chaves:
+            exatos |= {e[0] for e in eleitos if e[i] == k}
+    livres = [e for e in eleitos if e[0] not in exatos]
+    propostas = {}
+    for n, grupo in nomes.items():
+        sem_par = not any(e[1] == n or e[2] == n or (grupo[0].get("urna") and e[2] == norm_nome(grupo[0]["urna"])) for e in eleitos)
+        if sem_par:
+            parecidos = _eleitos_parecidos(n, livres)
+            if len(parecidos) == 1:
+                propostas[n] = parecidos[0][0]
+    contagem = Counter(propostas.values())
+    return {n: i for n, i in propostas.items() if contagem[i] == 1}
+
+
 def ligar_vereadores(bruto: Path, reg: "_Registro", eleitos: dict, codigos: dict, chaves: dict, ambiguos: list, resumo, sem_ligacao) -> dict:
     """Liga cada vereador da folha do TCE (PE, PB) ou do SAPL (demais UFs) ao eleito de 2024 do mesmo município pelo nome civil (alta) ou
     de urna (média). `eleitos`: (UF, código TSE do município) -> [(pessoa, nome civil, urna)], já normalizados; `codigos`: (UF,
@@ -852,7 +885,8 @@ def ligar_vereadores(bruto: Path, reg: "_Registro", eleitos: dict, codigos: dict
     Nome que casa com mais de um eleito, ou que a fonte traz com duas pessoas (dois CPFs mascarados no TCE, dois ids no SAPL: homônimos),
     não liga e não gera mandato. O CPF (no SAPL, o id) só separa homônimos e une mandatos da mesma pessoa. Sem eleito de mesmo nome, é um
     suplente que assumiu: ganha pessoa própria (`gerar_id("pes", "<fonte>", unidade|matrícula|ingresso)`). No SAPL o nome parlamentar
-    também casa com o nome de urna do TSE (média). Devolve {itens, municipios, semCodigo}: `municipios` são os (UF, código) com lista
+    também casa com o nome de urna do TSE (média). Sem par exato, liga por `similaridade` (baixa) só se um único eleito livre do município
+    tem nome quase igual ou contido e nenhum outro nome do SAPL o reivindica (`_similares_vereadores`); na dúvida não liga. Devolve {itens, municipios, semCodigo}: `municipios` são os (UF, código) com lista
     completa (no SAPL, com ao menos tantos vereadores quanto eleitos; instância parcial não marca ninguém como fora de exercício) e `itens`
     cada mandato ligado: {fonte, uf, municipio, chave, pessoa, eleito, ingresso, afastamento}."""
     itens, municipios, sem_codigo = [], set(), defaultdict(set)
@@ -869,6 +903,7 @@ def ligar_vereadores(bruto: Path, reg: "_Registro", eleitos: dict, codigos: dict
         for codigo, nomes in sorted(por_municipio.items()):
             if fonte != FONTE_VEREADOR_SAPL or len({chave_de(it) for g in nomes.values() for it in g}) >= len(eleitos.get((uf, codigo), [])):
                 municipios.add((uf, codigo))
+            similares = _similares_vereadores(nomes, eleitos.get((uf, codigo), [])) if fonte == FONTE_VEREADOR_SAPL else {}
             for n, grupo in sorted(nomes.items()):
                 cpfs = sorted({it["cpf"] for it in grupo if it["cpf"]})
                 pessoas = [grupo] if len(cpfs) <= 1 else [[it for it in grupo if it["cpf"] == c] for c in cpfs]
@@ -881,6 +916,8 @@ def ligar_vereadores(bruto: Path, reg: "_Registro", eleitos: dict, codigos: dict
                     cand = {e[0] for e in eleitos.get((uf, codigo), []) if e[i] == chave_nome}
                     if cand:
                         break
+                if not cand and n in similares and len(pessoas) == 1:
+                    cand, metodo, confianca = {similares[n]}, "similaridade", "baixa"
                 if cand and (len(cand) > 1 or len(pessoas) > 1):
                     ambiguos.append({"fonte": fonte, "id": f"{codigo}|{n}", "nome": grupo[0]["nome"], "uf": uf, "candidatos": sorted(cand)})
                     sem_ligacao[fonte] += 1

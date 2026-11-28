@@ -164,3 +164,16 @@ def test_sapl_instancia_parcial_nao_marca_ninguem_fora_de_exercicio(tmp_path):
 def test_sapl_homonimos_de_ids_diferentes_nao_ligam(tmp_path):
     _, n = montar_sapl(tmp_path, [sapl(1, "Ana Lins", "A"), sapl(9, "Ana Lins", "B"), sapl(2, "Bruno Reis", "B"), sapl(3, "Caio Melo", "C")])
     assert n["ligacoes"]["ambiguos"] and n["ligacoes"]["ambiguos"][0]["fonte"] == "vereador_sapl"
+
+
+def test_sapl_grafia_parecida_liga_so_com_um_eleito_livre(tmp_path):
+    res, n = montar_sapl(tmp_path, [sapl(1, "Ana Linz", "x"), sapl(2, "Bruno Reis", "Bruno"), sapl(3, "Caio Melo", "Caio")])
+    ana = next(p for p in n["pessoas"] if p["id"] == n["chaves"][("tse", 2024, "1")])
+    assert ana["ligacao"]["vereador_sapl"] == ["similaridade", "baixa"]
+    assert mandato(res, n, "1", status="atual")["confirmado"] is True
+
+
+def test_sapl_grafia_parecida_reivindicada_por_dois_nomes_nao_liga(tmp_path):
+    _, n = montar_sapl(tmp_path, [sapl(1, "Ana Linz", "x"), sapl(5, "Ana Lyns", "y"), sapl(2, "Bruno Reis", "Bruno"), sapl(3, "Caio Melo", "Caio")])
+    ana = next(p for p in n["pessoas"] if p["id"] == n["chaves"][("tse", 2024, "1")])
+    assert "vereador_sapl" not in ana.get("ligacao", {})

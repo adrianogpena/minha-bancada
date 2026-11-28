@@ -55,6 +55,7 @@ import unicodedata
 from collections import Counter, defaultdict
 from pathlib import Path
 
+import coletar_vereadores
 import estaduais_comum as comum
 import ministerios
 from fornecedores import nome_chave
@@ -110,6 +111,11 @@ def sem_acento(texto: str | None) -> str:
 def norm_nome(nome: str | None) -> str:
     """Nome sem acento, minúsculo, sem o apelido entre parênteses e com espaços simples."""
     return " ".join(sem_acento(re.sub(r"\s*\(.*?\)", "", nome or "")).lower().split())
+
+
+def norm_municipio(nome: str | None) -> str:
+    """Nome de município sem acento, minúsculo e sem pontuação (apóstrofo e hífen viram espaço)."""
+    return " ".join(re.sub(r"[^a-z0-9]+", " ", sem_acento(nome).lower()).split())
 
 
 def _chave_partido(sigla: str) -> str:
@@ -804,6 +810,72 @@ def ligar_autoria_senado(autorias, senadores: list[dict]) -> dict:
     return saida
 
 
+# ---------------------------------------------------------------- vereadores em exercício (folha do TCE) -> eleito de 2024
+
+FONTES_VEREADORES = {"PE": "vereador_pe", "PB": "vereador_pb"}
+GRAFIAS_MUNICIPIO = {("PE", "sao caetano"): "sao caitano"}   # (UF, nome do TCE) -> nome do TSE, ambos por `norm_municipio`
+
+
+def itens_vereadores(bruto: Path) -> dict:
+    """{UF: vereadores} lidos de dados/municipais/ (coletar_vereadores.py); o PB junta os anos e deriva o afastamento."""
+    pe = (ler(bruto / "municipais" / "PE" / "vereadores.json", {}) or {}).get("itens", [])
+    anos = [(ler(a, {}) or {}).get("itens", []) for a in sorted((bruto / "municipais" / "PB").glob("vereadores_*.json"))]
+    return {"PE": pe, "PB": coletar_vereadores.mandatos_pb(anos) if anos else []}
+
+
+def ligar_vereadores(bruto: Path, reg: "_Registro", eleitos: dict, codigos: dict, chaves: dict, ambiguos: list, resumo, sem_ligacao) -> dict:
+    """Liga cada vereador da folha do TCE ao eleito de 2024 do mesmo município pelo nome civil (alta) ou de urna (média). `eleitos`:
+    (UF, código TSE do município) -> [(pessoa, nome civil, urna)], já normalizados; `codigos`: (UF, `norm_municipio`) -> código TSE.
+    O município do TCE vira código por `norm_municipio` e `GRAFIAS_MUNICIPIO`; o que não casa fica em `semCodigo` e não liga.
+    Nome que casa com mais de um eleito, ou que o TCE traz com dois CPFs mascarados (homônimos), não liga e não gera mandato.
+    O CPF só separa homônimos e une mandatos da mesma pessoa. Sem eleito de mesmo nome, é um suplente que assumiu: ganha pessoa
+    própria (`gerar_id("pes", "vereador_<uf>", unidade|matrícula|ingresso)`). Devolve {itens, municipios, semCodigo}: `municipios`
+    são os (UF, código) que têm lista, `itens` cada mandato ligado: {fonte, uf, municipio, chave, pessoa, eleito, ingresso, afastamento}."""
+    itens, municipios, sem_codigo = [], set(), defaultdict(set)
+    chave_de = lambda it: f"{it['unidade']}|{it['matricula']}|{it['ingresso'] or ''}"
+    for uf, lista in sorted(itens_vereadores(bruto).items()):
+        fonte = FONTES_VEREADORES[uf]
+        por_municipio = defaultdict(lambda: defaultdict(list))
+        for it in lista:
+            nome_m = norm_municipio(it["municipio"])
+            codigo = codigos.get((uf, GRAFIAS_MUNICIPIO.get((uf, nome_m), nome_m)))
+            if codigo:
+                por_municipio[codigo][norm_nome(it["nome"])].append(it)
+            else:
+                sem_codigo[uf].add(it["municipio"])
+        for codigo, nomes in sorted(por_municipio.items()):
+            municipios.add((uf, codigo))
+            for n, grupo in sorted(nomes.items()):
+                cpfs = sorted({it["cpf"] for it in grupo if it["cpf"]})
+                pessoas = [grupo] if len(cpfs) <= 1 else [[it for it in grupo if it["cpf"] == c] for c in cpfs]
+                sem_ligacao[fonte] += len(grupo) - sum(map(len, pessoas))
+                cand, metodo, confianca = set(), None, None
+                for metodo, confianca, i in (("nome+municipio", "alta", 1), ("urna+municipio", "média", 2)):
+                    cand = {e[0] for e in eleitos.get((uf, codigo), []) if e[i] == n}
+                    if cand:
+                        break
+                if cand and (len(cand) > 1 or len(pessoas) > 1):
+                    ambiguos.append({"fonte": fonte, "id": f"{codigo}|{n}", "nome": grupo[0]["nome"], "uf": uf, "candidatos": sorted(cand)})
+                    sem_ligacao[fonte] += 1
+                    continue
+                for g in pessoas:
+                    g = sorted(g, key=chave_de)
+                    if cand:
+                        p = reg.por_id[next(iter(cand))]
+                        p["ligacao"][fonte] = [metodo, confianca]
+                        resumo[fonte][metodo] += 1
+                    else:
+                        p = reg.obter(fonte, chave_de(g[0]))
+                        _preencher(p, g[0]["nome"])
+                        _guardar_nome(p, g[0]["nome"])
+                        sem_ligacao[fonte] += 1
+                    for it in g:
+                        chaves[(fonte, chave_de(it))] = p["id"]
+                        itens.append({"fonte": fonte, "uf": uf, "municipio": codigo, "chave": chave_de(it), "pessoa": p["id"], "eleito": bool(cand),
+                                      "ingresso": it["ingresso"], "afastamento": it.get("afastamento")})
+    return {"itens": itens, "municipios": sorted(municipios), "semCodigo": {uf: sorted(v) for uf, v in sorted(sem_codigo.items())}}
+
+
 def gravar_ligacoes(uf: str | None = None, raiz: Path | None = None) -> None:
     """Junta o que `ligar_nomes` decidiu neste processo ao dados/estaduais/<UF>/ligacoes.json, de cada UF, para o cache do CI não perdê-lo:
     {nomes: {nome: [id, método, confiança]}, ambiguos: {nome: [ids]}, semPar: [nomes]}.
@@ -822,7 +894,7 @@ def gravar_ligacoes(uf: str | None = None, raiz: Path | None = None) -> None:
 
 def construir(deputados: dict, bruto: Path) -> dict:
     """Devolve {pessoas, partidos, ligacoes, chaves}. `chaves` liga a fonte à pessoa, em memória:
-    ("tse", ano, sequencial), ("camara", id), ("senado", id), ("estadual", uf, id) e ("planalto", pasta, nome) -> id da pessoa.
+    ("tse", ano, sequencial), ("camara", id), ("senado", id), ("estadual", uf, id), ("planalto", pasta, nome) e ("vereador_pe"/"vereador_pb", unidade|matrícula|ingresso) -> id da pessoa.
     `ministros` é a lista do Planalto já ligada (ligar_ministros)."""
     reg = _Registro()
     indice = _IndiceTse(reg.por_id)
@@ -833,6 +905,8 @@ def construir(deputados: dict, bruto: Path) -> dict:
     resumo = defaultdict(Counter)
     sem_ligacao = Counter()
     ambiguos = []
+    eleitos_ver = defaultdict(list)    # (UF, código do município) -> eleitos vereadores de 2024
+    codigos_mun = {}                   # (UF, norm_municipio) -> código TSE, dos candidatos de 2024
 
     def partido(sigla):
         pid = partido_id(sigla, desconhecidas)
@@ -855,6 +929,10 @@ def construir(deputados: dict, bruto: Path) -> dict:
                 indice.adicionar(p["id"], e)
                 if nome and nasc:
                     indice.por_nome_nasc[(norm_nome(nome), nasc)] = p["id"]
+                if ano == 2024 and e["cargo"] == "VEREADOR" and e.get("municipio"):
+                    codigos_mun[(e["uf"], norm_municipio(e["municipio"]))] = str(e["unidadeEleitoral"])
+                    if e.get("situacao") == "eleito" and nome:
+                        eleitos_ver[(e["uf"], str(e["unidadeEleitoral"]))].append((p["id"], norm_nome(nome), norm_nome(e.get("urna"))))
                 fed = federacao_de(e.get("federacao"), desconhecidas)
                 if fed:
                     federacoes.setdefault(fed, 0)
@@ -940,6 +1018,8 @@ def construir(deputados: dict, bruto: Path) -> dict:
     emendas = ligar_emendas([i for arq in sorted((bruto / "emendas").glob("[0-9]*.json")) for i in (ler(arq, {}) or {}).get("itens", [])],
                             reg, ambiguos, resumo, sem_ligacao)
 
+    vereadores = ligar_vereadores(bruto, reg, eleitos_ver, codigos_mun, chaves, ambiguos, resumo, sem_ligacao)
+
     pessoas = []
     for pid in sorted(reg.por_id):
         p = reg.por_id[pid]
@@ -970,9 +1050,10 @@ def construir(deputados: dict, bruto: Path) -> dict:
         "partidos": {"partidos": linhas, "federacoes": fed_saida},
         "ligacoes": {"resumo": {f: dict(c) for f, c in resumo.items()}, "semLigacao": dict(sem_ligacao),
                      "ambiguos": ambiguos, "partidosDesconhecidos": sorted(desconhecidas),
-                     "registros": registros, "resumoRegistros": resumo_registros},
+                     "registros": registros, "resumoRegistros": resumo_registros, "municipiosSemCodigo": vereadores["semCodigo"]},
         "chaves": chaves,
         "ministros": ministros,
+        "vereadores": vereadores,
         "tribunais": tribunais,
         "aposentados": aposentados,
         "inabilitados": inabilitados,

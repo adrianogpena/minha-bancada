@@ -5,7 +5,8 @@ Núcleo de mandatos: cada mandato (pessoa, cargo, Casa, local, período, partido
                                       partidoEleicao, partido, mudouPartido, ...}]
 
 Fontes: os eleitos do TSE (2018 para senadores, 2022, 2024 e 2026), que dão cargo, local, partido na eleição e o período
-do mandato (`gerar_politicos.MANDATOS`), e as listas de quem está em exercício: Câmara, Senado e Assembleias. Quem exerce
+do mandato (`gerar_politicos.MANDATOS`), e as listas de quem está em exercício: Câmara, Senado, Assembleias e, para vereadores de PE
+e PB, a folha do TCE (`nucleo["vereadores"]`; onde não há lista, nada muda). Quem exerce
 sem ter sido eleito (suplente) ganha um mandato próprio. Não acessa a internet; chamado pelo scripts/gerar.py.
 
 Campos:
@@ -186,13 +187,38 @@ def construir(deputados: dict, bruto: Path, nucleo: dict, hoje: str | None = Non
         confirmadas.add(m["id"])
         stats["ministros"] += 1
 
+    # --- Vereadores de PE e PB: folha do TCE. Eleito em exercício confirma o mandato do TSE; quem assumiu sem ser eleito (suplente) ganha o seu
+    vereadores = nucleo.get("vereadores") or {}
+    com_lista = {tuple(x) for x in vereadores.get("municipios", [])}     # (UF, código do município) que têm folha coletada
+    ini_ver, fim_ver = periodo(2024, "VEREADOR")
+    for it in vereadores.get("itens", []):
+        ativo = not it["afastamento"] or it["afastamento"] >= hoje
+        if it["eleito"]:
+            m = next((x for x in por_pessoa_cargo.get((it["pessoa"], "VEREADOR"), [])
+                      if x["uf"] == it["uf"] and x.get("municipio") == it["municipio"] and x.get("eleicao") == 2024), None)
+            if m is None or not ativo:
+                continue
+            m["fontes"][it["fonte"]] = it["chave"]
+        else:
+            ini = max(it["ingresso"] or ini_ver, ini_ver)
+            fim = it["afastamento"] if it["afastamento"] and it["afastamento"] >= ini else fim_ver
+            m = novo((it["fonte"], it["chave"]), it["pessoa"], "VEREADOR", ini, fim, it["uf"], it["municipio"], condicao="suplente", eleicao=None,
+                     partidoEleicao=None, inicioAproximado=True if not it["ingresso"] else None, fontes={it["fonte"]: it["chave"]})
+            m["status"] = _status(m, hoje)
+            stats["mandatoSemTse"] += 1
+            if not ativo:
+                continue
+        m["condicao"] = "suplente" if not it["eleito"] else "titular"
+        m["confirmado"] = True
+        confirmadas.add(m["id"])
+
     # --- quem foi eleito, está no período e a Casa não lista: o lugar é de um suplente
     tem_lista = {"camara": bool(deputados), "senado": bool(ler(bruto / "senado.json", []))}
     for m in mandatos:
         if m["status"] != "atual" or m["id"] in confirmadas:
             continue
         casa = CASAS[m["cargo"]]
-        lista = tem_lista.get(casa) if casa in tem_lista else (casa == "assembleia" and m["uf"] in ufs_com_lista)
+        lista = tem_lista.get(casa) if casa in tem_lista else (casa == "assembleia" and m["uf"] in ufs_com_lista)             or (casa == "camara_municipal" and (m["uf"], m.get("municipio")) in com_lista)
         if lista:
             m["status"] = "fora_de_exercicio"
             stats["foraDeExercicio"] += 1

@@ -122,6 +122,11 @@ Status: ✅ OK · ❌ ERRO (resposta com falha ou fora do ar) · ❔ não testad
 | sapl_estadual_RO | SAPL (Assembleias) | https://sapl.al.ro.leg.br/api/parlamentares/legislatura/?page_size=1 | scripts/coletar_estaduais.py | ✅ OK | 2026-10-24 | HTTP 200, application/json, 0 KB |
 | sapl_estadual_AC | SAPL (Assembleias) | https://sapl.al.ac.leg.br/api/parlamentares/legislatura/?page_size=1 | scripts/coletar_estaduais.py | ✅ OK | 2026-10-24 | HTTP 200, application/json, 0 KB |
 | sapl_estadual_PI | SAPL (Assembleias) | https://sapl.al.pi.leg.br/api/parlamentares/legislatura/?page_size=1 | scripts/coletar_estaduais.py | ✅ OK | 2026-10-24 | HTTP 200, application/json, 0 KB |
+| tce_pe_vereadores | TCE-PE (vereadores) | https://sistemas.tce.pe.gov.br/DadosAbertos/ListaServidores!json?NomeCargo=VEREADOR&UnidadeJurisdicionadaTCE=2 | scripts/coletar_vereadores.py | ❔ | — | — |
+| tce_pb_servidores | TCE-PB (vereadores) | https://download.tce.pb.gov.br/dados-abertos/?list-type=2&delimiter=/&prefix=dados-por-municipio/&max-keys=1 | scripts/coletar_vereadores.py | ❔ | — | — |
+| tce_pb_portal | TCE-PB (vereadores) | https://dados-abertos.tce.pb.gov.br/ | scripts/coletar_vereadores.py (link de fonte) | ❔ | — | — |
+| interlegis_sapl_cm | Interlegis (Câmaras com SAPL) | https://www12.senado.leg.br/interlegis/orgaosatendidos?servico=SAPL&uf=MG&tipocasa=CM&p=1 | scripts/coletar_vereadores_sapl.py | ❔ | — | — |
+| sapl_camara_vereadores | SAPL (Câmaras municipais, vereadores) | https://sapl.alfenas.mg.leg.br/api/parlamentares/legislatura/?page_size=1 | scripts/coletar_vereadores_sapl.py | ❔ | — | — |
 | sapl_estadual_TO | SAPL (Assembleias) | https://sapl.al.to.leg.br/api/parlamentares/legislatura/?page_size=1 | scripts/coletar_estaduais.py | ✅ OK | 2026-10-24 | HTTP 200, application/json, 0 KB |
 | sapl_materia_PB | SAPL (Assembleias) | https://sapl.al.pb.leg.br/api/materia/materialegislativa/?page_size=1&ano=2025 | scripts/coletar_estaduais.py, scripts/contrato_apis.py | ✅ OK | 2026-10-24 | HTTP 200, application/json, 1 KB |
 | sapl_votoparlamentar_PB | SAPL (Assembleias) | https://sapl.al.pb.leg.br/api/sessao/votoparlamentar/?page_size=1 | scripts/coletar_estaduais.py, scripts/contrato_apis.py | ✅ OK | 2026-10-24 | HTTP 200, application/json, 0 KB |

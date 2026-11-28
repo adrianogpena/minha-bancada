@@ -5,6 +5,10 @@ Regra: toda fonte nova ou mudança de coleta ganha uma entrada aqui, no mesmo co
 Datas dos conjuntos que já existiam vêm do primeiro commit que os trouxe (`git log --diff-filter=A`).
 Todas as coletas rodam sozinhas no GitHub Actions (`.github/workflows/atualizar.yml`, todo dia às 05:00 de Brasília), salvo onde indicado.
 
+## Fidelidade ao partido com o bloco vigente na data da votação (2026-11-28)
+
+Sem fonte nova: `gerar.py` (`blocos_por_data`) escolhe, para cada votação, a composição dos blocos de `dados/blocos_historico.json` vigente na data dela; antes do primeiro registro (2026-11-28, a API só publica a composição de agora) vale o primeiro. Rótulos de bloco que não constam em `/blocos` seguem sem fidelidade.
+
 ## Projetos na área das comissões do deputado (2026-11-28)
 
 Sem fonte nova nem coleta nova: `gerar.py` (`resumir_area_das_comissoes`) cruza os temas dos projetos de cada deputado com `scripts/comissoes_temas.json` (art. 32 do RICD) e grava `areaComissoes` na ficha (`site/dados/deputado/<id>.json`): para cada comissão permanente com tema de que ele participa agora, quantos projetos têm algum tema dela e quantos foram aprovados. Subcomissões e grupos de trabalho valem pela comissão de origem (sigla entre parênteses no nome); comissões especiais, externas e CPIs ficam de fora. Aparece em "Em que áreas atua".

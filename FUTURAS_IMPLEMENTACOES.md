@@ -34,7 +34,7 @@ Status de cada pacote (também repetido sob cada título; ao concluir um pacote,
 
 **Status: Disponível.**
 
-- **Fidelidade em blocos:** `dados/blocos_historico.json` guarda, desde 2026-11-28, a composição de cada bloco quando ela muda; o histórico anterior não existe na API. Falta usar o histórico em `partidos_do_bloco` (escolher a composição vigente na data de cada votação) e rótulos que não constam em `/blocos` seguem sem fidelidade. A presença em reuniões de comissão continua sem total para comparar (a frequência de comissão só sai em PDF no portal da Câmara).
+- **Presença em comissão:** continua sem total para comparar (a frequência de comissão só sai em PDF no portal da Câmara).
 - **Perfil dos eleitos:** feito em PE e PB (`perfil_casas`, `municipal`, parte dos mandatos em exercício; suplentes contam em `emExercicio` e ficam fora do perfil). As demais UFs seguem com os vereadores eleitos de 2024: não há lista de quem está em exercício fora do TCE-PE, TCE-PB e do SAPL (~1.145 Câmaras; levantamento em `docs/levantamento_vereadores_tce.md`). Estender ao SAPL é possível, mas o perfil perderia mais registros (sem partido, idade e instrução).
 
 ### 1.2 Glossário e "O que isso significou" nas demais páginas

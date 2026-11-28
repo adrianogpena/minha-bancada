@@ -329,3 +329,18 @@ def test_copiar_status_apis_com_e_sem_arquivo(tmp_path, monkeypatch):
     (bruto / "status_apis.json").write_text(json.dumps({"camara": "ok"}), encoding="utf-8")
     gerar.copiar_status_apis()
     assert json.loads((saida / "status_apis.json").read_text(encoding="utf-8")) == {"camara": "ok"}
+
+
+def test_blocos_por_data_usa_a_composicao_vigente_na_data():
+    def bloco(partidos):
+        return {"nome": ", ".join(partidos), "federacao": False, "partidos": partidos}
+    historico = [{"desde": "2026-11-28", "blocos": [bloco(["UNIÃO", "PP"])]},
+                 {"desde": "2027-03-01", "blocos": [bloco(["UNIÃO", "PSD"])]}]
+    na_data = gerar.blocos_por_data(historico, [], {"Bl UniPp..."})
+    assert na_data("2026-01-01") == na_data("2026-12-01") == {"Bl UniPp...": {"UNIÃO", "PP"}}
+    assert na_data("2027-03-01") == {"Bl UniPp...": set()}
+    atual = gerar.blocos_por_data([], [bloco(["UNIÃO", "PP"])], {"Bl UniPp..."})
+    assert atual("2020-01-01") == {"Bl UniPp...": {"UNIÃO", "PP"}}
+    votos = [{"id": "a", "data": "2026-12-01", "descricao": "d", "voto": "sim"}]
+    r = gerar.resumir_comportamento(votos, {"a": {"Bl UniPp...": "Sim"}}, "PP", na_data)
+    assert r["partido"] == {"total": 1, "seguiu": 1}

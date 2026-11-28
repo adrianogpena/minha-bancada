@@ -203,6 +203,20 @@ def partidos_do_bloco(rotulo: str, blocos: list) -> set:
     return {x.upper() for x in achados[0]["partidos"] or achados[0]["nome"].split(", ")}  # blocos de um partido só vêm sem lista
 
 
+def blocos_por_data(historico: list, atual: list, rotulos: set):
+    """Função data -> {rótulo: partidos} com a composição dos blocos vigente na data: a última do histórico (dados/blocos_historico.json)
+    com `desde` até o dia; antes do primeiro registro vale o primeiro (a Câmara só publica a composição de agora). Sem histórico, a atual."""
+    versoes = sorted(historico or [], key=lambda h: h["desde"]) or [{"desde": "", "blocos": atual}]
+    prontas = {}
+
+    def na_data(dia: str) -> dict:
+        i = max([k for k, h in enumerate(versoes) if h["desde"] <= (dia or "")], default=0)
+        if i not in prontas:
+            prontas[i] = {r: partidos_do_bloco(r, versoes[i]["blocos"]) for r in rotulos}
+        return prontas[i]
+    return na_data
+
+
 def bancada_do_partido(partido: str, bancadas, blocos: dict | None = None) -> str | None:
     """Nome da bancada que orientou pelo partido numa votação: a sigla do partido, a federação ("Fdr PT-PCdoB-PV", às vezes
     truncada, como "Fdr PSDB-CIDADAN") ou o bloco ("Bl UniPpPsd...", ligado aos partidos por `blocos`: {rótulo: partidos})."""
@@ -219,16 +233,16 @@ def bancada_do_partido(partido: str, bancadas, blocos: dict | None = None) -> st
     return None
 
 
-def resumir_comportamento(votos: list, orientacoes: dict, partido: str, blocos: dict | None = None) -> dict | None:
+def resumir_comportamento(votos: list, orientacoes: dict, partido: str, blocos=None) -> dict | None:
     """Quanto o deputado votou como o partido e como o Governo orientaram, só nas votações em que votou e a bancada deu
-    orientação Sim, Não ou Obstrução (Liberado não conta). Usa o partido atual do deputado. None sem nenhuma orientação."""
+    orientação Sim, Não ou Obstrução (Liberado não conta). Usa o partido atual do deputado e os blocos da data da votação (`blocos`: dict ou função data -> dict). None sem nenhuma orientação."""
     contas = {"partido": [0, 0], "governo": [0, 0]}
     divergencias = []
     for v in votos:
         o = orientacoes.get(v["id"])
         if not o or v["voto"] not in VOTOU:
             continue
-        banc = bancada_do_partido(partido, [b for b in o if b != "Governo"], blocos)
+        banc = bancada_do_partido(partido, [b for b in o if b != "Governo"], blocos(v["data"]) if callable(blocos) else blocos)
         for chave, bancada in (("partido", banc), ("governo", "Governo" if "Governo" in o else None)):
             esperado = ORIENTACOES.get(o.get(bancada)) if bancada else None
             if not esperado:
@@ -592,7 +606,8 @@ def main():
     recursos_camara = (ler(BRUTO / "camara_recursos.json", {}) or {}).get("recursos", {})
     medianas = medianas_sessoes(presenca)
     blocos_lista = ler(BRUTO / "blocos.json", []) or []
-    blocos = {b: partidos_do_bloco(b, blocos_lista) for b in {b for o in orientacoes.values() for b in o if b.startswith("Bl ")}}
+    blocos = blocos_por_data(ler(BRUTO / "blocos_historico.json", []) or [], blocos_lista,
+                             {b for o in orientacoes.values() for b in o if b.startswith("Bl ")})
     partidos = {str(i): d["partido"] for i, d in deputados.items() if d.get("partido")}
     relatorias = relatorias_por_deputado(deputados, detalhes)
     historicos = {str(i): d["historico"] for i, d in deputados.items() if d.get("historico")}

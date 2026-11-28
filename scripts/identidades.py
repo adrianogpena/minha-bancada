@@ -813,28 +813,51 @@ def ligar_autoria_senado(autorias, senadores: list[dict]) -> dict:
 # ---------------------------------------------------------------- vereadores em exercício (folha do TCE) -> eleito de 2024
 
 FONTES_VEREADORES = {"PE": "vereador_pe", "PB": "vereador_pb"}
-GRAFIAS_MUNICIPIO = {("PE", "sao caetano"): "sao caitano"}   # (UF, nome do TCE) -> nome do TSE, ambos por `norm_municipio`
+FONTE_VEREADOR_SAPL = "vereador_sapl"                        # as outras UFs: SAPL de cada Câmara (coletar_vereadores_sapl.py)
+GRAFIAS_MUNICIPIO = {("PE", "sao caetano"): "sao caitano", ("PA", "eldorado do carajas"): "eldorado dos carajas",
+                     ("RO", "espigao d oeste"): "espigao do oeste"}   # (UF, nome do TCE) -> nome do TSE, ambos por `norm_municipio`
 
 
-def itens_vereadores(bruto: Path) -> dict:
-    """{UF: vereadores} lidos de dados/municipais/ (coletar_vereadores.py); o PB junta os anos e deriva o afastamento."""
+def _itens_sapl(arquivo: Path) -> list:
+    """Vereadores de uma UF no SAPL, no formato da folha do TCE: `unidade` = URL da Câmara (a fonte), `matricula` = id no SAPL, `urna` =
+    nome parlamentar, `cpf` = id no SAPL (o SAPL não traz CPF; o id separa homônimos e une afastamentos da mesma pessoa). Câmara com erro
+    e sem itens, ou sem vereadores, não entra: o município fica como estava."""
+    itens = []
+    for url, c in sorted(((ler(arquivo, {}) or {}).get("camaras") or {}).items()):
+        for it in c.get("itens") or []:
+            if it.get("nome") and it.get("municipio"):
+                itens.append({"municipio": it["municipio"], "unidade": url, "matricula": str(it["idParlamentar"]), "nome": it["nome"],
+                              "urna": it.get("nomeParlamentar"), "cpf": f"sapl{it['idParlamentar']}", "ingresso": it.get("ingresso"),
+                              "afastamento": it.get("afastamento")})
+    return itens
+
+
+def itens_vereadores(bruto: Path) -> list:
+    """[(UF, fonte, vereadores)] lidos de dados/municipais/: folha do TCE em PE (coletar_vereadores.py) e PB (junta os anos e deriva o
+    afastamento); nas demais UFs, o SAPL das Câmaras."""
     pe = (ler(bruto / "municipais" / "PE" / "vereadores.json", {}) or {}).get("itens", [])
     anos = [(ler(a, {}) or {}).get("itens", []) for a in sorted((bruto / "municipais" / "PB").glob("vereadores_*.json"))]
-    return {"PE": pe, "PB": coletar_vereadores.mandatos_pb(anos) if anos else []}
+    saida = [("PE", "vereador_pe", pe), ("PB", "vereador_pb", coletar_vereadores.mandatos_pb(anos) if anos else [])]
+    for arq in sorted((bruto / "municipais").glob("[A-Z][A-Z]/vereadores_sapl.json")):
+        if arq.parent.name not in FONTES_VEREADORES:
+            saida.append((arq.parent.name, FONTE_VEREADOR_SAPL, _itens_sapl(arq)))
+    return saida
 
 
 def ligar_vereadores(bruto: Path, reg: "_Registro", eleitos: dict, codigos: dict, chaves: dict, ambiguos: list, resumo, sem_ligacao) -> dict:
-    """Liga cada vereador da folha do TCE ao eleito de 2024 do mesmo município pelo nome civil (alta) ou de urna (média). `eleitos`:
-    (UF, código TSE do município) -> [(pessoa, nome civil, urna)], já normalizados; `codigos`: (UF, `norm_municipio`) -> código TSE.
-    O município do TCE vira código por `norm_municipio` e `GRAFIAS_MUNICIPIO`; o que não casa fica em `semCodigo` e não liga.
-    Nome que casa com mais de um eleito, ou que o TCE traz com dois CPFs mascarados (homônimos), não liga e não gera mandato.
-    O CPF só separa homônimos e une mandatos da mesma pessoa. Sem eleito de mesmo nome, é um suplente que assumiu: ganha pessoa
-    própria (`gerar_id("pes", "vereador_<uf>", unidade|matrícula|ingresso)`). Devolve {itens, municipios, semCodigo}: `municipios`
-    são os (UF, código) que têm lista, `itens` cada mandato ligado: {fonte, uf, municipio, chave, pessoa, eleito, ingresso, afastamento}."""
+    """Liga cada vereador da folha do TCE (PE, PB) ou do SAPL (demais UFs) ao eleito de 2024 do mesmo município pelo nome civil (alta) ou
+    de urna (média). `eleitos`: (UF, código TSE do município) -> [(pessoa, nome civil, urna)], já normalizados; `codigos`: (UF,
+    `norm_municipio`) -> código TSE.
+    O município da fonte vira código por `norm_municipio` e `GRAFIAS_MUNICIPIO`; o que não casa fica em `semCodigo` e não liga.
+    Nome que casa com mais de um eleito, ou que a fonte traz com duas pessoas (dois CPFs mascarados no TCE, dois ids no SAPL: homônimos),
+    não liga e não gera mandato. O CPF (no SAPL, o id) só separa homônimos e une mandatos da mesma pessoa. Sem eleito de mesmo nome, é um
+    suplente que assumiu: ganha pessoa própria (`gerar_id("pes", "<fonte>", unidade|matrícula|ingresso)`). No SAPL o nome parlamentar
+    também casa com o nome de urna do TSE (média). Devolve {itens, municipios, semCodigo}: `municipios` são os (UF, código) com lista
+    completa (no SAPL, com ao menos tantos vereadores quanto eleitos; instância parcial não marca ninguém como fora de exercício) e `itens`
+    cada mandato ligado: {fonte, uf, municipio, chave, pessoa, eleito, ingresso, afastamento}."""
     itens, municipios, sem_codigo = [], set(), defaultdict(set)
     chave_de = lambda it: f"{it['unidade']}|{it['matricula']}|{it['ingresso'] or ''}"
-    for uf, lista in sorted(itens_vereadores(bruto).items()):
-        fonte = FONTES_VEREADORES[uf]
+    for uf, fonte, lista in sorted(itens_vereadores(bruto)):
         por_municipio = defaultdict(lambda: defaultdict(list))
         for it in lista:
             nome_m = norm_municipio(it["municipio"])
@@ -844,14 +867,18 @@ def ligar_vereadores(bruto: Path, reg: "_Registro", eleitos: dict, codigos: dict
             else:
                 sem_codigo[uf].add(it["municipio"])
         for codigo, nomes in sorted(por_municipio.items()):
-            municipios.add((uf, codigo))
+            if fonte != FONTE_VEREADOR_SAPL or len({chave_de(it) for g in nomes.values() for it in g}) >= len(eleitos.get((uf, codigo), [])):
+                municipios.add((uf, codigo))
             for n, grupo in sorted(nomes.items()):
                 cpfs = sorted({it["cpf"] for it in grupo if it["cpf"]})
                 pessoas = [grupo] if len(cpfs) <= 1 else [[it for it in grupo if it["cpf"] == c] for c in cpfs]
                 sem_ligacao[fonte] += len(grupo) - sum(map(len, pessoas))
                 cand, metodo, confianca = set(), None, None
-                for metodo, confianca, i in (("nome+municipio", "alta", 1), ("urna+municipio", "média", 2)):
-                    cand = {e[0] for e in eleitos.get((uf, codigo), []) if e[i] == n}
+                tentativas = [("nome+municipio", "alta", 1, n), ("urna+municipio", "média", 2, n)]
+                if fonte == FONTE_VEREADOR_SAPL and grupo[0].get("urna"):
+                    tentativas.append(("urna+municipio", "média", 2, norm_nome(grupo[0]["urna"])))
+                for metodo, confianca, i, chave_nome in tentativas:
+                    cand = {e[0] for e in eleitos.get((uf, codigo), []) if e[i] == chave_nome}
                     if cand:
                         break
                 if cand and (len(cand) > 1 or len(pessoas) > 1):

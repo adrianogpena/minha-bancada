@@ -121,3 +121,46 @@ def test_homonimos_com_cpf_diferente_nao_ligam(tmp_path):
     itens = [item("MARIA SOUZA", "***.333.444-**", "2", "2025-01-01"), item("MARIA SOUZA", "***.000.000-**", "7", "2025-03-01")]
     res, n = rodar(tmp_path, itens)
     assert [a["nome"] for a in n["ligacoes"]["ambiguos"] if a["fonte"] == "vereador_pe"] == ["MARIA SOUZA"]
+
+
+def sapl(idp, nome, urna, ingresso="2025-01-01", afastamento=None, titular=True):
+    return {"idParlamentar": idp, "nome": nome, "nomeParlamentar": urna, "ingresso": ingresso, "afastamento": afastamento, "titular": titular,
+            "municipio": "Abre Campo"}
+
+
+def montar_sapl(bruto, itens):
+    base = {"sequencial": "", "cargo": "VEREADOR", "uf": "MG", "partido": "PT", "genero": "MASCULINO", "federacao": None, "situacao": "eleito",
+            "unidadeEleitoral": "30001", "municipio": "Abre Campo"}
+    gravar(bruto / "tse" / "2024" / "MG.json", [
+        {**base, "sequencial": "1", "nome": "Ana Lins", "urna": "Aninha", "nascimento": "1990-01-01"},
+        {**base, "sequencial": "2", "nome": "Bruno Reis", "urna": "Bruno", "nascimento": "1980-01-01"},
+        {**base, "sequencial": "3", "nome": "Caio Melo", "urna": "Caio", "nascimento": "1970-01-01"},
+    ])
+    gravar(bruto / "municipais" / "MG" / "vereadores_sapl.json", {"camaras": {"https://sapl.abrecampo.mg.leg.br": {"municipio": "Abre Campo", "itens": itens}}})
+    nucleo = identidades.construir({}, bruto)
+    return M.construir({}, bruto, nucleo, "2026-10-23"), nucleo
+
+
+def test_sapl_liga_por_nome_civil_ou_parlamentar_e_cria_suplente(tmp_path):
+    res, n = montar_sapl(tmp_path, [sapl(1, "ANA LINS", "x"), sapl(2, "Outro Nome", "Bruno"), sapl(3, "Caio Melo", "Caio", afastamento="2025-06-30"),
+                                    sapl(4, "Duda Paz", "Duda", ingresso="2025-07-01", titular=False)])
+    ana = next(p for p in n["pessoas"] if p["id"] == n["chaves"][("tse", 2024, "1")])
+    bruno = next(p for p in n["pessoas"] if p["id"] == n["chaves"][("tse", 2024, "2")])
+    assert ana["ligacao"]["vereador_sapl"] == ["nome+municipio", "alta"]
+    assert bruno["ligacao"]["vereador_sapl"] == ["urna+municipio", "média"]
+    assert mandato(res, n, "1", status="atual")["fontes"]["vereador_sapl"].startswith("https://sapl.abrecampo.mg.leg.br|1|")
+    assert mandato(res, n, "3")["status"] == "fora_de_exercicio"
+    duda = [m for m in res["mandatos"] if m.get("condicao") == "suplente" and m["uf"] == "MG"]
+    assert len(duda) == 1 and duda[0]["status"] == "atual" and duda[0]["inicio"] == "2025-07-01"
+
+
+def test_sapl_instancia_parcial_nao_marca_ninguem_fora_de_exercicio(tmp_path):
+    res, n = montar_sapl(tmp_path, [sapl(1, "Ana Lins", "Aninha")])
+    assert mandato(res, n, "1")["status"] == "atual"
+    assert mandato(res, n, "2")["status"] == "atual"
+    assert ("MG", "30001") not in {tuple(x) for x in n["vereadores"]["municipios"]}
+
+
+def test_sapl_homonimos_de_ids_diferentes_nao_ligam(tmp_path):
+    _, n = montar_sapl(tmp_path, [sapl(1, "Ana Lins", "A"), sapl(9, "Ana Lins", "B"), sapl(2, "Bruno Reis", "B"), sapl(3, "Caio Melo", "C")])
+    assert n["ligacoes"]["ambiguos"] and n["ligacoes"]["ambiguos"][0]["fonte"] == "vereador_sapl"

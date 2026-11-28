@@ -105,6 +105,49 @@ Divergências contra os eleitos do TSE 2024 (MG e PR, ainda por medir nas outras
 
 Frente dos TCEs: repetição não feita (rede de Portugal, `ipinfo.io` = PT); continuam sem verificação os mesmos TCEs da 4ª rodada. Querido Diário não levantado.
 
+### Divergências contra o TSE 2024, 24 UFs
+
+Medido sobre as Câmaras com itens e sem erro, contra os eleitos de VEREADOR 2024 do mesmo código TSE (nome civil ou urna; sem acento, caixa e apelido entre parênteses). MG e PR entram para comparação. Colunas: SAPL = Câmaras com SAPL; itens = com mandatos; sem cód. = sem código TSE; parc. = mandatos < cadeiras; dup. = duplicata exata (mesmo nome, parlamentar, ingresso e afastamento); homôn. = nomes com 2 parlamentares distintos; fora TSE = titulares com ingresso até 2025-01-31 sem eleito de mesmo nome (Câmaras afetadas); fecha = Câmaras com titulares na posse = cadeiras (% de nomes que batem); afast. = itens com afastamento; supl. = suplentes (titular falso ou ingresso após 2025-01-31).
+
+| UF | SAPL | itens | sem cód. | parc. | dup. | homôn. | fora TSE (Câmaras) | fecha (% bate) | afast. | supl. |
+|---|---|---|---|---|---|---|---|---|---|---|
+| AC | 14 | 4 | 0 | 0 | 0 | 0 | 5 (3) | 3 (90.2%) | 20 | 2 |
+| AL | 7 | 6 | 0 | 0 | 0 | 0 | 10 (5) | 3 (87.1%) | 4 | 7 |
+| AM | 25 | 14 | 0 | 1 | 0 | 0 | 5 (4) | 9 (96.6%) | 7 | 15 |
+| AP | 10 | 3 | 0 | 0 | 0 | 0 | 4 (2) | 3 (88.6%) | 0 | 3 |
+| BA | 52 | 35 | 0 | 0 | 0 | 2 | 25 (12) | 27 (95.4%) | 20 | 20 |
+| CE | 34 | 17 | 0 | 0 | 0 | 0 | 6 (5) | 13 (98.5%) | 77 | 74 |
+| ES | 24 | 19 | 0 | 1 | 0 | 1 | 7 (5) | 16 (97.1%) | 1 | 4 |
+| GO | 30 | 19 | 0 | 0 | 0 | 1 | 9 (6) | 13 (98.7%) | 7 | 7 |
+| MA | 13 | 9 | 0 | 0 | 0 | 0 | 5 (2) | 8 (95.6%) | 4 | 4 |
+| MG | 205 | 162 | 0 | 2 | 0 | 0 | 73 (52) | 153 (95.8%) | 35 | 53 |
+| MS | 12 | 9 | 0 | 1 | 0 | 0 | 3 (2) | 7 (98.9%) | 3 | 3 |
+| MT | 51 | 41 | 0 | 0 | 0 | 2 | 32 (22) | 27 (94.7%) | 31 | 46 |
+| PA | 18 | 10 | 1 | 0 | 0 | 0 | 7 (6) | 7 (94.9%) | 0 | 7 |
+| PB | 47 | 39 | 0 | 1 | 0 | 0 | 29 (12) | 32 (97.3%) | 35 | 28 |
+| PE | 54 | 44 | 0 | 0 | 0 | 0 | 22 (16) | 41 (96.4%) | 21 | 27 |
+| PI | 45 | 35 | 1 | 1 | 0 | 1 | 14 (11) | 24 (98.2%) | 7 | 12 |
+| PR | 163 | 141 | 0 | 2 | 0 | 9 | 84 (53) | 111 (95.3%) | 81 | 100 |
+| RJ | 37 | 30 | 0 | 0 | 0 | 1 | 17 (10) | 24 (97.4%) | 11 | 39 |
+| RN | 52 | 40 | 0 | 0 | 0 | 0 | 25 (15) | 35 (95.4%) | 12 | 18 |
+| RO | 39 | 35 | 1 | 0 | 0 | 6 | 30 (16) | 27 (93.3%) | 7 | 10 |
+| RR | 5 | 5 | 0 | 0 | 0 | 0 | 5 (4) | 3 (95.3%) | 2 | 7 |
+| RS | 56 | 41 | 0 | 1 | 0 | 1 | 41 (23) | 23 (95.8%) | 32 | 51 |
+| SC | 26 | 18 | 0 | 0 | 0 | 2 | 14 (9) | 13 (94.2%) | 15 | 19 |
+| SE | 3 | 2 | 0 | 0 | 0 | 0 | 0 (0) | 2 (100.0%) | 2 | 2 |
+| SP | 80 | 66 | 0 | 1 | 0 | 0 | 31 (23) | 57 (96.6%) | 43 | 57 |
+| TO | 34 | 28 | 0 | 0 | 0 | 0 | 10 (8) | 24 (98.3%) | 3 | 4 |
+| 24 UFs | 768 | 569 | 3 | 7 | 0 | 17 | 356 (221) | 441 (96.3%) | 364 | 466 |
+
+Os nomes de município sem código TSE são 3: Eldorado do Carajás (PA), Caraúbas do Piauí (PI) e Espigão D'Oeste (RO); entram em `GRAFIAS_MUNICIPIO` (conferir a grafia do TSE). A coluna "fora TSE" conta titulares (MG 73, PR 84), não só Câmaras: os "10 de 161" e "30 de 141" acima eram Câmaras sob outro critério e não são comparáveis.
+
+Conclusões para ligar:
+
+- Instância parcial: só 7 em 24 UFs (Novo Airão 3/9, Marilândia 1/9, Rio Brilhante 5/13, Quixaba 7/9, Curral Novo do Piauí 1/9, Pareci Novo 7/9, Agudos 1/13), todas por mandatos < cadeiras. Tratar como parcial quando itens < cadeiras do TSE; ligar o que existe e não deduzir ausência de vereador.
+- Duplicata exata: nenhuma nas 24 UFs. Homônimos (2 parlamentares com o mesmo nome na mesma Câmara): 17 casos em 12 Câmaras; não ligar por nome (já é a regra de ambíguo) e separar por `idParlamentar`.
+- Ligação esperada: nas 441 Câmaras em que os titulares na posse igualam as cadeiras, 96,3% dos nomes batem com um eleito. Os 3,7% restantes e os 356 titulares fora do TSE (221 Câmaras) são, em geral, eleitos com nome civil/urna diferente ou titulares que não constam como eleitos (convocados antes da posse); não ligar à força, deixar sem ligação.
+- Suplentes (466 itens) e afastamentos (364) são frequentes: afastamento preenchido não invalida o titular; suplente sem eleito de mesmo nome ganha pessoa própria, como no PE/PB.
+
 ## SAPL das Câmaras: coletor feito (MG e PR)
 
 `scripts/coletar_vereadores_sapl.py` (ver CHANGELOG, 2026-11-28). Descoberta pelo Interlegis lê cards até a página sem cards (a página 2 de MG, por exemplo, só tem casas sem SAPL; parar na primeira página sem SAPL perdia 200 Câmaras). Resultado do zero: MG 205 Câmaras com SAPL registrado, 162 com a legislatura 2025-2028 preenchida (1.780 mandatos; as outras 43 têm instância vazia ou sem a legislatura, 2 delas por erro de DNS); PR 163, 141 com vereadores (1.493 mandatos), 1 erro. Mandatos com `titular` falso: 35 em MG. O resto da lista de UFs do Interlegis roda com `python scripts/coletar_vereadores_sapl.py <UF> ...`; todas as UFs entram no job diário (ver a seção seguinte).
